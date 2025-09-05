@@ -1,0 +1,46 @@
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Catalog.DTOs;
+using Darwin.Domain.Entities.Catalog;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+
+namespace Darwin.Application.Catalog.Queries.GetProductsPage
+{
+    public sealed class GetProductsPageHandler
+    {
+        private readonly IAppDbContext _db;
+        public GetProductsPageHandler(IAppDbContext db) { _db = db; }
+
+        public async Task<(IReadOnlyList<ProductListItemDto> Items, int Total)> HandleAsync(int page = 1, int pageSize = 20, string? culture = "de-DE", CancellationToken ct = default)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : pageSize;
+
+            var query = _db.Set<Product>()
+                .AsNoTracking()
+                .Select(p => new ProductListItemDto
+                {
+                    Id = p.Id,
+                    DefaultName = p.Translations
+                        .Where(t => t.Culture == culture)
+                        .Select(t => t.Name)
+                        .FirstOrDefault() ?? p.Translations.Select(t => t.Name).FirstOrDefault(),
+                    IsActive = p.IsActive,
+                    IsVisible = p.IsVisible,
+                    VariantCount = p.Variants.Count
+                });
+
+            var total = await query.CountAsync(ct);
+            var items = await query
+                .OrderBy(x => x.DefaultName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
+
+            return (items, total);
+        }
+    }
+}

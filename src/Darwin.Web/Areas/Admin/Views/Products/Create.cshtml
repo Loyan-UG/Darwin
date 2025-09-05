@@ -1,0 +1,159 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.ProductCreateVm
+@{
+    ViewData["Title"] = "Create Product";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <fieldset>
+                <legend>Basics</legend>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Kind</label>
+                        <select asp-for="Kind" class="form-select">
+                            <option>Simple</option>
+                            <option>Variant</option>
+                            <option>Bundle</option>
+                            <option>Digital</option>
+                            <option>Service</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Brand</label>
+                        <select asp-for="BrandId" class="form-select">
+                            <option value="">(none)</option>
+                            @if (ViewBag.Brands is IEnumerable<Darwin.Application.Catalog.Queries.LookupItem> brands)
+                            {
+                                foreach (var b in brands)
+                                {
+                                    <option value="@b.Id">@b.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Primary Category</label>
+                        <select asp-for="PrimaryCategoryId" class="form-select">
+                            <option value="">(none)</option>
+                            @if (ViewBag.Categories is IEnumerable<Darwin.Application.Catalog.Queries.LookupItem> cats)
+                            {
+                                foreach (var c in cats)
+                                {
+                                    <option value="@c.Id">@c.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <hr />
+
+            <fieldset>
+                <legend>Translations</legend>
+                @for (int i = 0; i < Model.Translations.Count; i++)
+                {
+                    <div class="border rounded p-3 mb-3">
+                        @* IMPORTANT for collection binding *@
+                        <input type="hidden" name="Translations.Index" value="@i" />
+
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label class="form-label">Culture</label>
+                                <select asp-for="Translations[@i].Culture" class="form-select">
+                                    @if (ViewBag.Cultures is IEnumerable<string> cultures)
+                                    {
+                                        foreach (var cul in cultures)
+                                        {
+                                            <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="Translations[@i].Culture" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Name</label>
+                                <input asp-for="Translations[@i].Name" class="form-control" />
+                                <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Slug</label>
+                                <input asp-for="Translations[@i].Slug" class="form-control" />
+                                <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Full Description (HTML)</label>
+                                <textarea asp-for="Translations[@i].FullDescriptionHtml" class="form-control" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </fieldset>
+
+            <hr />
+
+            <fieldset>
+                <legend>Variants</legend>
+                @for (int i = 0; i < Model.Variants.Count; i++)
+                {
+                    <div class="border rounded p-3 mb-3">
+                        @* IMPORTANT for collection binding *@
+                        <input type="hidden" name="Variants.Index" value="@i" />
+
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">SKU</label>
+                                <input asp-for="Variants[@i].Sku" class="form-control" />
+                                <span asp-validation-for="Variants[@i].Sku" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Base Price (Net, Minor)</label>
+                                <input asp-for="Variants[@i].BasePriceNetMinor" class="form-control" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Currency</label>
+                                <select asp-for="Variants[@i].Currency" class="form-select">
+                                    @if (ViewBag.Currencies is IEnumerable<string> currencies)
+                                    {
+                                        foreach (var cur in currencies)
+                                        {
+                                            <option value="@cur">@cur</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tax Category</label>
+                                <select asp-for="Variants[@i].TaxCategoryId" class="form-select">
+                                    @if (ViewBag.TaxCategories is IEnumerable<Darwin.Application.Catalog.Queries.LookupItem> taxes)
+                                    {
+                                        foreach (var t in taxes)
+                                        {
+                                            <option value="@t.Id">@t.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </fieldset>
+        </div>
+
+        <div class="card-footer text-end">
+            <a asp-action="Index" class="btn btn-secondary">Back</a>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
