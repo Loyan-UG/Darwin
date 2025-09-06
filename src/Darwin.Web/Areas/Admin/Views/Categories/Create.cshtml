@@ -43,10 +43,21 @@
             @for (int i = 0; i < Model.Translations.Count; i++)
             {
                 <div class="border rounded p-3 mb-3">
+                    @* recommended for collection binding if you add JS add/remove later *@
+                    <input type="hidden" name="Translations.Index" value="@i" />
+
                     <div class="row g-3">
                         <div class="col-md-2">
                             <label class="form-label">Culture</label>
-                            <input asp-for="Translations[@i].Culture" class="form-control" />
+                            <select asp-for="Translations[@i].Culture" class="form-select">
+                                @if (ViewBag.Cultures is IEnumerable<string> cultures)
+                                {
+                                    foreach (var cul in cultures)
+                                    {
+                                        <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
+                                    }
+                                }
+                            </select>
                             <span asp-validation-for="Translations[@i].Culture" class="text-danger"></span>
                         </div>
                         <div class="col-md-5">

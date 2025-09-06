@@ -1,0 +1,56 @@
+﻿@model IReadOnlyList<Darwin.Application.CMS.DTOs.PageListItemDto>
+@{
+    ViewData["Title"] = "Pages";
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 20);
+    var total = (int)(ViewBag.Total ?? 0);
+    var pages = (int)System.Math.Ceiling(total / (double)pageSize);
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Pages</h2>
+    <a asp-action="Create" class="btn btn-primary">Create Page</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title (de-DE)</th>
+                        <th>Status</th>
+                        <th>Publish Window (UTC)</th>
+                        <th>Modified</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        <tr>
+                            <td>@(p.Title ?? "-")</td>
+                            <td>@p.Status</td>
+                            <td>@(p.PublishStartUtc?.ToString("u") ?? "-") → @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
+                            <td>@p.ModifiedAtUtc.ToString("u")</td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (pages > 1)
+        {
+            <nav class="mt-3">
+                <ul class="pagination justify-content-end mb-0">
+                    @for (int i = 1; i <= pages; i++)
+                    {
+                        <li class="page-item @(i == page ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-pageSize="@pageSize">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>

@@ -5,29 +5,69 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Darwin.Infrastructure.Persistence.Configurations.CMS
 {
     /// <summary>
-    /// Ensures (Culture, Slug) is unique among non-deleted pages.
+    /// EF Core configuration for CMS Page and PageTranslation entities.
     /// </summary>
-    public sealed class PageConfiguration : IEntityTypeConfiguration<Page>
+    public sealed class PageConfiguration : IEntityTypeConfiguration<Page>, IEntityTypeConfiguration<PageTranslation>
     {
-        public void Configure(EntityTypeBuilder<Page> b)
+        public void Configure(EntityTypeBuilder<Page> builder)
         {
-            b.ToTable("Pages");
-            b.HasMany(p => p.Translations).WithOne().HasForeignKey(t => t.PageId).OnDelete(DeleteBehavior.Cascade);
+            builder.ToTable("Cms_Pages");
+
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Status)
+                   .IsRequired();
+
+            builder.Property(x => x.PublishStartUtc);
+            builder.Property(x => x.PublishEndUtc);
+
+            builder.HasMany(x => x.Translations)
+                   .WithOne()
+                   .HasForeignKey(t => t.PageId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            // Common base fields (if you have global conventions, this may be redundant)
+            builder.Property(x => x.CreatedAtUtc).IsRequired();
+            builder.Property(x => x.ModifiedAtUtc);
+            builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+            builder.Property(x => x.RowVersion).IsRowVersion();
         }
-    }
 
-    public sealed class PageTranslationConfiguration : IEntityTypeConfiguration<PageTranslation>
-    {
-        public void Configure(EntityTypeBuilder<PageTranslation> b)
+        public void Configure(EntityTypeBuilder<PageTranslation> builder)
         {
-            b.ToTable("PageTranslations");
-            b.Property(x => x.Culture).IsRequired().HasMaxLength(10);
-            b.Property(x => x.Slug).IsRequired().HasMaxLength(200);
+            builder.ToTable("Cms_PageTranslations");
 
-            // Unique per culture among non-deleted
-            b.HasIndex(x => new { x.Culture, x.Slug })
-             .IsUnique()
-             .HasFilter("[IsDeleted] = 0");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Culture)
+                   .HasMaxLength(10)
+                   .IsRequired();
+
+            builder.Property(x => x.Title)
+                   .HasMaxLength(300)
+                   .IsRequired();
+
+            builder.Property(x => x.Slug)
+                   .HasMaxLength(200)
+                   .IsRequired();
+
+            builder.Property(x => x.MetaTitle).HasMaxLength(300);
+            builder.Property(x => x.MetaDescription).HasMaxLength(500);
+
+            // ContentHtml per-culture (long text)
+            builder.Property(x => x.ContentHtml)
+                   .HasColumnType("nvarchar(max)")  // SQL Server
+                   .IsRequired();
+
+            // Unique slug per (Page, Culture)
+            builder.HasIndex(x => new { x.PageId, x.Culture, x.Slug })
+                   .IsUnique();
+
+            // Base
+            builder.Property(x => x.CreatedAtUtc).IsRequired();
+            builder.Property(x => x.ModifiedAtUtc);
+            builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+            builder.Property(x => x.RowVersion).IsRowVersion();
         }
     }
 }

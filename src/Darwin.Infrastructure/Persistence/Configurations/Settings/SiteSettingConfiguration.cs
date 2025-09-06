@@ -10,6 +10,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
         {
             b.ToTable("SiteSettings");
             b.Property(x => x.DefaultCulture).IsRequired().HasMaxLength(10);
+            b.Property(x => x.SupportedCulturesCsv).HasMaxLength(1000).IsRequired();
             b.Property(x => x.DefaultCountry).IsRequired().HasMaxLength(2);
             b.Property(x => x.DefaultCurrency).IsRequired().HasMaxLength(3);
 

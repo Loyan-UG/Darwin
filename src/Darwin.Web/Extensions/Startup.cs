@@ -30,7 +30,7 @@ namespace Darwin.Web.Extensions
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
 
@@ -50,6 +50,8 @@ namespace Darwin.Web.Extensions
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
+
+            await Task.CompletedTask;
         }
     }
 }

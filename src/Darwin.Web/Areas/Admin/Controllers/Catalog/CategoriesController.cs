@@ -83,9 +83,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
 
             try
             {
-                var id = await _createCategory.HandleAsync(dto, ct);
-                TempData["Success"] = "Category created successfully.";
-                return RedirectToAction(nameof(Edit), new { id });
+                await _createCategory.HandleAsync(dto, ct);
+                TempData["Success"] = "Category has been created successfully.";
+                return RedirectToAction(nameof(Index));
             }
             catch (FluentValidation.ValidationException ex)
             {
@@ -156,8 +156,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             try
             {
                 await _updateCategory.HandleAsync(dto, ct);
-                TempData["Success"] = "Category updated successfully.";
-                return RedirectToAction(nameof(Edit), new { id = vm.Id });
+                TempData["Success"] = "Category has been updated successfully.";
+                return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
             {

@@ -19,6 +19,7 @@ namespace Darwin.Domain.Entities.Settings
         public string HomeSlug { get; set; } = "home";
         /// <summary>Default culture code, e.g., "de-DE".</summary>
         public string DefaultCulture { get; set; } = "de-DE";
+        public string SupportedCulturesCsv { get; set; } = "de-DE,en-US"; // comma-separated
         /// <summary>Default ISO 3166-1 alpha-2 country code, e.g., "DE".</summary>
         public string DefaultCountry { get; set; } = "DE";
         /// <summary>Default ISO 4217 currency code (e.g., "EUR").</summary>

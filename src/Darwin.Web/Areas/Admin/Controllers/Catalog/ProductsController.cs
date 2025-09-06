@@ -51,15 +51,13 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         {
             await LoadLookupsAsync(ct);
 
+            // VM ctor already seeds one Translation/Variant, but keep it explicit and null-safe
             var vm = new ProductCreateVm();
+            vm.Translations ??= new();
+            if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
 
-            // Ensure we always render at least one item in collections for binding.
-            EnsureAtLeastOneTranslation(vm);
-            EnsureAtLeastOneVariant(vm);
-
-            // Preselect defaults
-            vm.Translations[0].Culture = "de-DE";
-            vm.Variants[0].Currency = "EUR";
+            vm.Variants ??= new();
+            if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
 
             return View(vm);
         }
@@ -68,18 +66,23 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         [HttpPost]
         public async Task<IActionResult> Create(ProductCreateVm vm, CancellationToken ct)
         {
-            // Model binding might leave collections null/empty if the form didn’t render them for any reason.
-            if (vm.Translations == null || vm.Translations.Count == 0)
+            // Defensive: make collections non-null before validation
+            vm.Translations ??= new();
+            vm.Variants ??= new();
+
+            if (vm.Translations.Count == 0)
                 ModelState.AddModelError(nameof(vm.Translations), "At least one translation is required.");
 
-            if (vm.Variants == null || vm.Variants.Count == 0)
+            if (vm.Variants.Count == 0)
                 ModelState.AddModelError(nameof(vm.Variants), "At least one variant is required.");
 
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                EnsureAtLeastOneTranslation(vm);
-                EnsureAtLeastOneVariant(vm);
+
+                if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
+                if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
+
                 return View(vm);
             }
 
@@ -88,46 +91,48 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                 BrandId = vm.BrandId,
                 PrimaryCategoryId = vm.PrimaryCategoryId,
                 Kind = vm.Kind,
-                Translations = vm.Translations.Select(t => new ProductTranslationDto
-                {
-                    Culture = t.Culture,
-                    Name = t.Name,
-                    Slug = t.Slug,
-                    ShortDescription = t.ShortDescription,
-                    FullDescriptionHtml = t.FullDescriptionHtml,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription,
-                    SearchKeywords = t.SearchKeywords
-                }).ToList(),
-                Variants = vm.Variants.Select(v => new ProductVariantCreateDto
-                {
-                    Sku = v.Sku,
-                    Gtin = v.Gtin,
-                    ManufacturerPartNumber = v.ManufacturerPartNumber,
-                    BasePriceNetMinor = v.BasePriceNetMinor,
-                    CompareAtPriceNetMinor = v.CompareAtPriceNetMinor,
-                    Currency = v.Currency,
-                    TaxCategoryId = v.TaxCategoryId,
-                    StockOnHand = v.StockOnHand,
-                    StockReserved = v.StockReserved,
-                    ReorderPoint = v.ReorderPoint,
-                    BackorderAllowed = v.BackorderAllowed,
-                    MinOrderQty = v.MinOrderQty,
-                    MaxOrderQty = v.MaxOrderQty,
-                    StepOrderQty = v.StepOrderQty,
-                    PackageWeight = v.PackageWeight,
-                    PackageLength = v.PackageLength,
-                    PackageWidth = v.PackageWidth,
-                    PackageHeight = v.PackageHeight,
-                    IsDigital = v.IsDigital
-                }).ToList()
+                Translations = (vm.Translations ?? Enumerable.Empty<ProductTranslationVm>())
+                    .Select(t => new ProductTranslationDto
+                    {
+                        Culture = t.Culture,
+                        Name = t.Name,
+                        Slug = t.Slug,
+                        ShortDescription = t.ShortDescription,
+                        FullDescriptionHtml = t.FullDescriptionHtml,
+                        MetaTitle = t.MetaTitle,
+                        MetaDescription = t.MetaDescription,
+                        SearchKeywords = t.SearchKeywords
+                    }).ToList(),
+                Variants = (vm.Variants ?? Enumerable.Empty<ProductVariantCreateVm>())
+                    .Select(v => new ProductVariantCreateDto
+                    {
+                        Sku = v.Sku,
+                        Gtin = v.Gtin,
+                        ManufacturerPartNumber = v.ManufacturerPartNumber,
+                        BasePriceNetMinor = v.BasePriceNetMinor,
+                        CompareAtPriceNetMinor = v.CompareAtPriceNetMinor,
+                        Currency = v.Currency,
+                        TaxCategoryId = v.TaxCategoryId,
+                        StockOnHand = v.StockOnHand,
+                        StockReserved = v.StockReserved,
+                        ReorderPoint = v.ReorderPoint,
+                        BackorderAllowed = v.BackorderAllowed,
+                        MinOrderQty = v.MinOrderQty,
+                        MaxOrderQty = v.MaxOrderQty,
+                        StepOrderQty = v.StepOrderQty,
+                        PackageWeight = v.PackageWeight,
+                        PackageLength = v.PackageLength,
+                        PackageWidth = v.PackageWidth,
+                        PackageHeight = v.PackageHeight,
+                        IsDigital = v.IsDigital
+                    }).ToList()
             };
 
             try
             {
-                var id = await _createProduct.HandleAsync(dto, ct);
-                TempData["Success"] = "Product created successfully.";
-                return RedirectToAction(nameof(Edit), new { id });
+                await _createProduct.HandleAsync(dto, ct);
+                TempData["Success"] = "Product has been created successfully.";
+                return RedirectToAction(nameof(Index));
             }
             catch (FluentValidation.ValidationException ex)
             {
@@ -135,9 +140,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                // Rehydrate a minimal item if lists got emptied after mapping/errors
-                EnsureAtLeastOneTranslation(vm);
-                EnsureAtLeastOneVariant(vm);
+                if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
+                if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
                 return View(vm);
             }
         }
@@ -155,7 +159,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                 PrimaryCategoryId = dto.PrimaryCategoryId,
                 Kind = dto.Kind,
                 RowVersion = dto.RowVersion,
-                Translations = dto.Translations.Select(t => new ProductTranslationVm
+                Translations = dto.Translations?.Select(t => new ProductTranslationVm
                 {
                     Culture = t.Culture,
                     Name = t.Name,
@@ -165,8 +169,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                     MetaTitle = t.MetaTitle,
                     MetaDescription = t.MetaDescription,
                     SearchKeywords = t.SearchKeywords
-                }).ToList(),
-                Variants = dto.Variants.Select(v => new ProductVariantCreateVm
+                }).ToList() ?? new(),
+                Variants = dto.Variants?.Select(v => new ProductVariantCreateVm
                 {
                     Sku = v.Sku,
                     Gtin = v.Gtin,
@@ -187,7 +191,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                     PackageWidth = v.PackageWidth,
                     PackageHeight = v.PackageHeight,
                     IsDigital = v.IsDigital
-                }).ToList()
+                }).ToList() ?? new()
             };
 
             await LoadLookupsAsync(ct);
@@ -198,6 +202,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         [HttpPost]
         public async Task<IActionResult> Edit(ProductEditVm vm, CancellationToken ct)
         {
+            vm.Translations ??= new();
+            vm.Variants ??= new();
+
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
@@ -249,8 +256,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             try
             {
                 await _updateProduct.HandleAsync(dto, ct);
-                TempData["Success"] = "Product updated successfully.";
-                return RedirectToAction(nameof(Edit), new { id = vm.Id });
+                TempData["Success"] = "Product has been updated successfully.";
+                return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -268,29 +275,13 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             }
         }
 
-        // Helpers to guarantee at least one item is present for model binding and UI rendering.
-        private static void EnsureAtLeastOneTranslation(ProductCreateVm vm)
-        {
-            if (vm.Translations == null) vm.Translations = new();
-            if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm());
-        }
-        private static void EnsureAtLeastOneVariant(ProductCreateVm vm)
-        {
-            if (vm.Variants == null) vm.Variants = new();
-            if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm());
-        }
-
         private async Task LoadLookupsAsync(CancellationToken ct)
         {
             var lookups = await _getLookups.HandleAsync("de-DE", ct);
             ViewBag.Brands = lookups.Brands;
             ViewBag.Categories = lookups.Categories;
             ViewBag.TaxCategories = lookups.TaxCategories;
-
-            // Supported cultures (later: read from SiteSetting/RequestLocalizationOptions).
             ViewBag.Cultures = new[] { "de-DE", "en-US" };
-
-            // Allowed currencies (later: from SiteSetting).
             ViewBag.Currencies = new[] { "EUR", "USD", "GBP" };
         }
     }

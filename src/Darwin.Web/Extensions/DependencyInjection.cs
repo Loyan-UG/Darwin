@@ -8,6 +8,8 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Darwin.Application.CMS.Commands;
+using Darwin.Application.CMS.Queries;
 
 namespace Darwin.Web.Extensions
 {
@@ -62,6 +64,11 @@ namespace Darwin.Web.Extensions
 
             // Lookups
             services.AddScoped<GetCatalogLookupsHandler>();
+
+            services.AddScoped<CreatePageHandler>();
+            services.AddScoped<UpdatePageHandler>();
+            services.AddScoped<GetPagesPageHandler>();
+            services.AddScoped<GetPageForEditHandler>();
 
             return services;
         }

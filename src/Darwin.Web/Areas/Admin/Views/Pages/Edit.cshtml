@@ -1,0 +1,157 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.CMS.PageEditVm
+@{
+    ViewData["Title"] = "Edit Page";
+}
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-select">
+                        @foreach (var s in Enum.GetValues(typeof(Darwin.Domain.Enums.PageStatus)))
+                        {
+                            <option value="@s" selected="@(Model.Status.Equals(s))">@s</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Publish Start (UTC)</label>
+                    <input asp-for="PublishStartUtc" type="datetime-local" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Publish End (UTC)</label>
+                    <input asp-for="PublishEndUtc" type="datetime-local" class="form-control" />
+                </div>
+            </div>
+
+            <hr />
+
+            <h5>Translations</h5>
+            @for (int i = 0; i < Model.Translations.Count; i++)
+            {
+                <div class="border rounded p-3 mb-3" data-translation-block>
+                    <input type="hidden" name="Translations.Index" value="@i" />
+
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label">Culture</label>
+                            <select asp-for="Translations[@i].Culture" class="form-select">
+                                @if (ViewBag.Cultures is IEnumerable<string> cultures)
+                                {
+                                    foreach (var cul in cultures)
+                                    {
+                                        <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Title</label>
+                            <input asp-for="Translations[@i].Title" class="form-control" />
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Slug</label>
+                            <input asp-for="Translations[@i].Slug" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Meta Title</label>
+                            <input asp-for="Translations[@i].MetaTitle" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Meta Description</label>
+                            <input asp-for="Translations[@i].MetaDescription" class="form-control" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Content (HTML)</label>
+                            <div id="quill-editor-@i" class="border rounded"></div>
+                            <textarea asp-for="Translations[@i].ContentHtml" class="d-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card-footer text-end">
+            <a asp-action="Index" class="btn btn-secondary">Back</a>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll('[id^="quill-editor-"]').forEach(function (el) {
+                const quill = new Quill(el, {
+                    theme: 'snow',
+                    placeholder: 'Write content here...',
+                    modules: {
+                        toolbar: {
+                            container: [
+                                [{ header: [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                ['link', 'image', 'video'],
+                                ['blockquote', 'code-block'],
+                                [{ 'align': [] }],
+                                ['clean']
+                            ],
+                            handlers: {
+                                image: function () {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*';
+                                    input.onchange = async () => {
+                                        const file = input.files[0];
+                                        if (!file) return;
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+                                        try {
+                                            const resp = await fetch('@Url.Action("UploadQuill", "Media", new { area = "Admin" })', {
+                                                method: 'POST',
+                                                body: formData
+                                            });
+                                            if (!resp.ok) throw new Error('Upload failed');
+                                            const json = await resp.json();
+                                            const range = quill.getSelection(true);
+                                            quill.insertEmbed(range.index, 'image', json.url);
+                                            quill.setSelection(range.index + 1);
+                                        } catch {
+                                            alert('Image upload failed.');
+                                        }
+                                    };
+                                    input.click();
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // seed from hidden textarea
+                const hidden = el.parentElement.querySelector("textarea");
+                if (hidden && hidden.value) {
+                    quill.root.innerHTML = hidden.value;
+                }
+
+                // write back HTML on submit
+                const form = el.closest("form");
+                form.addEventListener("submit", function () {
+                    if (hidden) hidden.value = quill.root.innerHTML;
+                });
+            });
+        });
+    </script>
+}
