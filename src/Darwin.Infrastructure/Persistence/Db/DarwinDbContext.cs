@@ -26,7 +26,7 @@ namespace Darwin.Infrastructure.Persistence.Db
     /// EF Core DbContext containing all aggregates for Darwin. 
     /// Applies global conventions in OnModelCreating via Conventions.Apply().
     /// </summary>
-    public sealed class DarwinDbContext : DbContext, IAppDbContext
+    public sealed partial class DarwinDbContext : DbContext, IAppDbContext
     {
         public DarwinDbContext(DbContextOptions<DarwinDbContext> options) : base(options) { }
 
@@ -93,20 +93,6 @@ namespace Darwin.Infrastructure.Persistence.Db
 
             // Apply per-entity configurations where we need explicit indexes/relations
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DarwinDbContext).Assembly);
-        }
-
-        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            // Fill auditing timestamps (UTC) here to keep it consistent in one place.
-            var utcNow = DateTime.UtcNow;
-            foreach (var entry in ChangeTracker.Entries<BaseEntity>())
-            {
-                if (entry.State == EntityState.Added)
-                    entry.Entity.CreatedAtUtc = utcNow;
-                if (entry.State == EntityState.Modified)
-                    entry.Entity.ModifiedAtUtc = utcNow;
-            }
-            return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }

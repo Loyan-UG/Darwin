@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    [Migration("20250906111645_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250908125859_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,7 +43,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("Height")
@@ -55,7 +55,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("OriginalFileName")
@@ -102,7 +102,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -111,7 +111,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -139,7 +139,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsActive")
@@ -159,7 +159,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ParentId")
@@ -194,20 +194,10 @@ namespace Darwin.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ContentHtml")
-                        .IsRequired()
-                        .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
-
-                    b.Property<string>("ContentJson")
-                        .IsRequired()
-                        .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -216,7 +206,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("PublishEndUtc")
@@ -245,10 +235,15 @@ namespace Darwin.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ContentHtml")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Culture")
@@ -257,20 +252,22 @@ namespace Darwin.Infrastructure.Migrations
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("MetaDescription")
-                        .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("MetaTitle")
-                        .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("PageId")
@@ -289,16 +286,13 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PageId");
-
-                    b.HasIndex("Culture", "Slug")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                    b.HasIndex("PageId", "Culture", "Slug")
+                        .IsUnique();
 
                     b.ToTable("PageTranslations", (string)null);
                 });
@@ -320,7 +314,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Currency")
@@ -334,7 +328,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
@@ -363,7 +357,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -372,7 +366,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
@@ -409,7 +403,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("DescriptionHtml")
@@ -425,7 +419,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -457,7 +451,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsActive")
@@ -469,7 +463,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ParentId")
@@ -486,7 +480,7 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.CategoryTranslation", b =>
@@ -501,7 +495,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Culture")
@@ -527,13 +521,13 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -569,7 +563,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsActive")
@@ -587,7 +581,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("PrimaryCategoryId")
@@ -623,7 +617,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -635,7 +629,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ProductId")
@@ -670,7 +664,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -679,7 +673,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -719,7 +713,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -728,7 +722,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ProductOptionId")
@@ -764,7 +758,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Culture")
@@ -790,7 +784,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -849,7 +843,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Currency")
@@ -880,7 +874,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("PackageHeight")
@@ -944,7 +938,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -953,7 +947,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ProductOptionId")
@@ -991,7 +985,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("IdempotencyKey")
@@ -1004,7 +998,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("OccurredAtUtc")
@@ -1054,7 +1048,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("EventRefId")
@@ -1073,7 +1067,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PayloadHash")
@@ -1119,7 +1113,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("EventType")
@@ -1136,7 +1130,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
@@ -1168,7 +1162,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1177,7 +1171,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("QuantityDelta")
@@ -1219,7 +1213,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Currency")
@@ -1243,7 +1237,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("OrderNumber")
@@ -1298,7 +1292,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1313,7 +1307,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -1372,7 +1366,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Currency")
@@ -1390,7 +1384,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderId")
@@ -1434,7 +1428,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1443,7 +1437,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderId")
@@ -1481,7 +1475,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DeliveredAtUtc")
@@ -1493,7 +1487,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderId")
@@ -1539,7 +1533,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1548,7 +1542,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderLineId")
@@ -1593,7 +1587,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Currency")
@@ -1619,7 +1613,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -1663,7 +1657,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -1672,7 +1666,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("OrderId")
@@ -1704,7 +1698,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("EffectiveFromUtc")
@@ -1716,7 +1710,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -1752,7 +1746,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("FromPath")
@@ -1769,7 +1763,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
@@ -1806,7 +1800,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("DateFormat")
@@ -1885,7 +1879,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("NumberFormattingOverridesJson")
@@ -1909,6 +1903,11 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<string>("SeoTitleTemplate")
                         .HasMaxLength(400)
                         .HasColumnType("nvarchar(400)");
+
+                    b.Property<string>("SupportedCulturesCsv")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("TimeFormat")
                         .IsRequired()
@@ -1967,7 +1966,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsActive")
@@ -1979,7 +1978,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -2012,7 +2011,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
@@ -2027,7 +2026,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<long>("PriceMinor")
@@ -2077,7 +2076,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("FullName")
@@ -2097,7 +2096,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PhoneE164")
@@ -2165,7 +2164,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedByUserId")
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Currency")
@@ -2219,7 +2218,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ModifiedByUserId")
+                    b.Property<Guid>("ModifiedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PhoneE164")

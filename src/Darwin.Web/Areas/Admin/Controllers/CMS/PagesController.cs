@@ -1,13 +1,14 @@
-﻿using Darwin.Application.CMS.Commands;
-using Darwin.Application.CMS.DTOs;
-using Darwin.Application.CMS.Queries;
-using Darwin.Web.Areas.Admin.ViewModels.CMS;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.CMS.Commands;
+using Darwin.Application.CMS.DTOs;
+using Darwin.Application.CMS.Queries;
+using Darwin.Application.Settings.Queries;
+using Darwin.Web.Areas.Admin.ViewModels.CMS;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Web.Areas.Admin.Controllers.CMS
 {
@@ -18,25 +19,37 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
         private readonly UpdatePageHandler _update;
         private readonly GetPagesPageHandler _list;
         private readonly GetPageForEditHandler _get;
+        private readonly GetCulturesHandler _getCultures;
 
-        public PagesController(CreatePageHandler create, UpdatePageHandler update,
-            GetPagesPageHandler list, GetPageForEditHandler get)
+        public PagesController(
+            CreatePageHandler create,
+            UpdatePageHandler update,
+            GetPagesPageHandler list,
+            GetPageForEditHandler get,
+            GetCulturesHandler getCultures)
         {
-            _create = create; _update = update; _list = list; _get = get;
+            _create = create;
+            _update = update;
+            _list = list;
+            _get = get;
+            _getCultures = getCultures;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", ct);
-            ViewBag.Total = total; ViewBag.Page = page; ViewBag.PageSize = pageSize;
+            ViewBag.Total = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
             return View(items);
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(CancellationToken ct)
         {
-            ViewBag.Cultures = new[] { "de-DE", "en-US" }; // later from SiteSetting
+            var (_, cultures) = await _getCultures.HandleAsync(ct);
+            ViewBag.Cultures = cultures;
             return View(new PageCreateVm());
         }
 
@@ -50,7 +63,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Cultures = new[] { "de-DE", "en-US" };
+                var (_, culturesInvalid) = await _getCultures.HandleAsync(ct);
+                ViewBag.Cultures = culturesInvalid;
                 if (vm.Translations.Count == 0) vm.Translations.Add(new PageTranslationVm());
                 return View(vm);
             }
@@ -81,7 +95,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
             {
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
-                ViewBag.Cultures = new[] { "de-DE", "en-US" };
+
+                var (_, cultures) = await _getCultures.HandleAsync(ct);
+                ViewBag.Cultures = cultures;
                 return View(vm);
             }
         }
@@ -110,7 +126,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
                 }).ToList()
             };
 
-            ViewBag.Cultures = new[] { "de-DE", "en-US" };
+            var (_, cultures) = await _getCultures.HandleAsync(ct);
+            ViewBag.Cultures = cultures;
+
             return View(vm);
         }
 
@@ -122,7 +140,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Cultures = new[] { "de-DE", "en-US" };
+                var (_, culturesInvalid) = await _getCultures.HandleAsync(ct);
+                ViewBag.Cultures = culturesInvalid;
                 return View(vm);
             }
 
@@ -153,14 +172,17 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
-                ViewBag.Cultures = new[] { "de-DE", "en-US" };
+                var (_, cultures) = await _getCultures.HandleAsync(ct);
+                ViewBag.Cultures = cultures;
                 return View(vm);
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
-                ViewBag.Cultures = new[] { "de-DE", "en-US" };
+
+                var (_, cultures) = await _getCultures.HandleAsync(ct);
+                ViewBag.Cultures = cultures;
                 return View(vm);
             }
         }

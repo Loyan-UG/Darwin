@@ -5,24 +5,45 @@
     <title>@ViewData["Title"] - Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 </head>
 <body class="container py-3">
     <header class="mb-3">
         <h1 class="h3">Darwin Admin</h1>
-        <nav>
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Dashboard</a> |
-            <a asp-area="Admin" asp-controller="Products" asp-action="Create">Products</a> |
-            <a asp-area="Admin" asp-controller="Pages" asp-action="Index">Pages</a>
+        <nav class="nav nav-pills flex-column flex-sm-row">
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="flex-sm-fill text-sm-center nav-link">
+                <i class="bi bi-house-door"></i> Dashboard
+            </a> |
+            <a asp-area="Admin" asp-controller="Products" asp-action="Create" class="flex-sm-fill text-sm-center nav-link">
+                <i class="bi bi-shop"></i> Products
+            </a> |
+            <a asp-area="Admin" asp-controller="Pages" asp-action="Index" class="flex-sm-fill text-sm-center nav-link">
+                <i class="bi bi-file-earmark"></i> Pages
+            </a> |
+            <a asp-area="Admin" asp-controller="SiteSettings" asp-action="Edit" class="flex-sm-fill text-sm-center nav-link">
+                <i class="bi bi-gear"></i> Settings
+            </a>
+
         </nav>
     </header>
     <main>
-        @await Html.PartialAsync("_Alerts")
+        <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+        @* @await Html.PartialAsync("_Alerts") *@
         @RenderBody()
     </main>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          // Enable all Bootstrap popovers on the page
+          document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
+            new bootstrap.Popover(el);
+          });
+        });
+    </script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

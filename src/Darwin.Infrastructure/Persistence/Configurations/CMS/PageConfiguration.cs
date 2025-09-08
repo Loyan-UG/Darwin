@@ -11,7 +11,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
     {
         public void Configure(EntityTypeBuilder<Page> builder)
         {
-            builder.ToTable("Cms_Pages");
+            builder.ToTable("Pages");
 
             builder.HasKey(x => x.Id);
 
@@ -26,16 +26,15 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
                    .HasForeignKey(t => t.PageId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            // Common base fields (if you have global conventions, this may be redundant)
-            builder.Property(x => x.CreatedAtUtc).IsRequired();
-            builder.Property(x => x.ModifiedAtUtc);
-            builder.Property(x => x.IsDeleted).HasDefaultValue(false);
-            builder.Property(x => x.RowVersion).IsRowVersion();
+            //builder.Property(x => x.CreatedAtUtc).IsRequired();
+            //builder.Property(x => x.ModifiedAtUtc);
+            //builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+            //builder.Property(x => x.RowVersion).IsRowVersion();
         }
 
         public void Configure(EntityTypeBuilder<PageTranslation> builder)
         {
-            builder.ToTable("Cms_PageTranslations");
+            builder.ToTable("PageTranslations");
 
             builder.HasKey(x => x.Id);
 

@@ -1,5 +1,4 @@
-﻿// File: src/Darwin.Application/CMS/DTOs/PageDtos.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Darwin.Domain.Enums;
 

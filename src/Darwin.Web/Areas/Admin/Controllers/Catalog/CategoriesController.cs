@@ -1,6 +1,7 @@
 ﻿using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
-using Darwin.Application.Catalog.Queries;
+using Darwin.Application.Catalog.Queries; // <-- GetCatalogLookupsHandler
+using Darwin.Application.Settings.Queries;
 using Darwin.Web.Areas.Admin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,30 +15,33 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
     [Area("Admin")]
     public sealed class CategoriesController : Controller
     {
-        private readonly CreateCategoryHandler _createCategory;
-        private readonly UpdateCategoryHandler _updateCategory;
-        private readonly GetCategoriesPageHandler _getCategoriesPage;
-        private readonly GetCategoryForEditHandler _getCategoryForEdit;
+        private readonly CreateCategoryHandler _create;
+        private readonly UpdateCategoryHandler _update;
+        private readonly GetCategoriesPageHandler _list;
+        private readonly GetCategoryForEditHandler _getForEdit;
         private readonly GetCatalogLookupsHandler _getLookups;
+        private readonly GetCulturesHandler _getCultures;
 
         public CategoriesController(
-            CreateCategoryHandler createCategory,
-            UpdateCategoryHandler updateCategory,
-            GetCategoriesPageHandler getCategoriesPage,
-            GetCategoryForEditHandler getCategoryForEdit,
-            GetCatalogLookupsHandler getLookups)
+            CreateCategoryHandler create,
+            UpdateCategoryHandler update,
+            GetCategoriesPageHandler list,
+            GetCategoryForEditHandler getForEdit,
+            GetCatalogLookupsHandler getLookups,
+            GetCulturesHandler getCultures)
         {
-            _createCategory = createCategory;
-            _updateCategory = updateCategory;
-            _getCategoriesPage = getCategoriesPage;
-            _getCategoryForEdit = getCategoryForEdit;
+            _create = create;
+            _update = update;
+            _list = list;
+            _getForEdit = getForEdit;
             _getLookups = getLookups;
+            _getCultures = getCultures;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
-            var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", ct);
+            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", ct);
             ViewBag.Total = total;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
@@ -48,10 +52,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadLookupsAsync(ct);
-            var vm = new CategoryCreateVm
-            {
-                Translations = { new CategoryTranslationVm { Culture = "de-DE" } }
-            };
+            var vm = new CategoryCreateVm();
+            vm.Translations ??= new();
+            if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
             return View(vm);
         }
 
@@ -59,32 +62,35 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         [HttpPost]
         public async Task<IActionResult> Create(CategoryCreateVm vm, CancellationToken ct)
         {
+            vm.Translations ??= new();
+            if (vm.Translations.Count == 0)
+                ModelState.AddModelError(nameof(vm.Translations), "At least one translation is required.");
+
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
+                if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
                 return View(vm);
             }
 
             var dto = new CategoryCreateDto
             {
                 ParentId = vm.ParentId,
-                IsActive = vm.IsActive,
                 SortOrder = vm.SortOrder,
+                IsActive = vm.IsActive,
                 Translations = vm.Translations.Select(t => new CategoryTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,
                     Slug = t.Slug,
-                    Description = t.Description,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription
+                    Description = t.Description
                 }).ToList()
             };
 
             try
             {
-                await _createCategory.HandleAsync(dto, ct);
-                TempData["Success"] = "Category has been created successfully.";
+                await _create.HandleAsync(dto, ct);
+                TempData["Success"] = "Category created successfully.";
                 return RedirectToAction(nameof(Index));
             }
             catch (FluentValidation.ValidationException ex)
@@ -100,24 +106,22 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
         {
-            var dto = await _getCategoryForEdit.HandleAsync(id, ct);
+            var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto == null) return NotFound();
 
             var vm = new CategoryEditVm
             {
                 Id = dto.Id,
-                ParentId = dto.ParentId,
-                IsActive = dto.IsActive,
-                SortOrder = dto.SortOrder,
                 RowVersion = dto.RowVersion,
+                ParentId = dto.ParentId,
+                SortOrder = dto.SortOrder,
+                IsActive = dto.IsActive,
                 Translations = dto.Translations.Select(t => new CategoryTranslationVm
                 {
                     Culture = t.Culture,
                     Name = t.Name,
                     Slug = t.Slug,
-                    Description = t.Description,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription
+                    Description = t.Description
                 }).ToList()
             };
 
@@ -129,6 +133,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         [HttpPost]
         public async Task<IActionResult> Edit(CategoryEditVm vm, CancellationToken ct)
         {
+            vm.Translations ??= new();
+
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
@@ -138,30 +144,28 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             var dto = new CategoryEditDto
             {
                 Id = vm.Id,
-                ParentId = vm.ParentId,
-                IsActive = vm.IsActive,
-                SortOrder = vm.SortOrder,
                 RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                ParentId = vm.ParentId,
+                SortOrder = vm.SortOrder,
+                IsActive = vm.IsActive,
                 Translations = vm.Translations.Select(t => new CategoryTranslationDto
                 {
                     Culture = t.Culture,
                     Name = t.Name,
                     Slug = t.Slug,
-                    Description = t.Description,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription
+                    Description = t.Description
                 }).ToList()
             };
 
             try
             {
-                await _updateCategory.HandleAsync(dto, ct);
-                TempData["Success"] = "Category has been updated successfully.";
+                await _update.HandleAsync(dto, ct);
+                TempData["Success"] = "Category updated successfully.";
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
             {
-                ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user. Please reload and try again.");
+                ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
                 await LoadLookupsAsync(ct);
                 return View(vm);
             }
@@ -178,9 +182,10 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         private async Task LoadLookupsAsync(CancellationToken ct)
         {
             var lookups = await _getLookups.HandleAsync("de-DE", ct);
-            ViewBag.Brands = lookups.Brands;        // can be used later in product forms
-            ViewBag.TaxCategories = lookups.TaxCategories;
             ViewBag.Categories = lookups.Categories;
+
+            var (_, cultures) = await _getCultures.HandleAsync(ct);
+            ViewBag.Cultures = cultures;
         }
     }
 }

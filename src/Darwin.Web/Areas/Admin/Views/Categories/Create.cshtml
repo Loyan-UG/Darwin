@@ -2,82 +2,78 @@
 @{
     ViewData["Title"] = "Create Category";
 }
-
 <h2>@ViewData["Title"]</h2>
 
-<form asp-action="Create" method="post" class="needs-validation" novalidate>
+<form asp-action="Create" method="post">
     @Html.AntiForgeryToken()
+
     <div class="card shadow-sm">
         <div class="card-body">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Parent Category</label>
-                    <select asp-for="ParentId" class="form-select">
-                        <option value="">(none)</option>
-                        @if (ViewBag.Categories is IEnumerable<Darwin.Application.Catalog.Queries.LookupItem> cats)
-                        {
-                            foreach (var c in cats)
-                            {
-                                <option value="@c.Id">@c.Name</option>
-                            }
-                        }
+                    <label class="form-label">Parent</label>
+                    <select asp-for="ParentId" class="form-select"
+                            asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))">
+                        <option value="">(root)</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Sort Order</label>
                     <input asp-for="SortOrder" class="form-control" />
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <div class="form-check">
-                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
-                        <label class="form-check-label" for="IsActive">Active</label>
-                    </div>
+                <div class="col-md-3 form-check mt-4">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                    <label class="form-check-label" for="IsActive">Active</label>
                 </div>
             </div>
 
             <hr />
 
-            <h5 class="mt-2">Translations</h5>
+            <h5>Translations</h5>
             @for (int i = 0; i < Model.Translations.Count; i++)
             {
                 <div class="border rounded p-3 mb-3">
-                    @* recommended for collection binding if you add JS add/remove later *@
                     <input type="hidden" name="Translations.Index" value="@i" />
-
                     <div class="row g-3">
                         <div class="col-md-2">
                             <label class="form-label">Culture</label>
                             <select asp-for="Translations[@i].Culture" class="form-select">
-                                @if (ViewBag.Cultures is IEnumerable<string> cultures)
+                                @foreach (var cul in (IEnumerable<string>)ViewBag.Cultures)
                                 {
-                                    foreach (var cul in cultures)
-                                    {
-                                        <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
-                                    }
+                                    <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
                                 }
                             </select>
-                            <span asp-validation-for="Translations[@i].Culture" class="text-danger"></span>
                         </div>
                         <div class="col-md-5">
                             <label class="form-label">Name</label>
                             <input asp-for="Translations[@i].Name" class="form-control" />
-                            <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
                         </div>
                         <div class="col-md-5">
                             <label class="form-label">Slug</label>
-                            <input asp-for="Translations[@i].Slug" class="form-control" />
-                            <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
+                            <div class="d-flex align-items-center">
+                                <input asp-for="Translations[@i].Slug" class="form-control" />
+                                <field-help title="Slug"
+                                            content="URL-friendly identifier. Lowercase, digits, hyphens."
+                                            placement="right"></field-help>
+                            </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Description</label>
-                            <textarea asp-for="Translations[@i].Description" class="form-control" rows="3"></textarea>
+                            <div class="d-flex align-items-center">
+                                <input asp-for="Translations[@i].Description" class="form-control" />
+                                <field-help title="Description"
+                                            content="Optional short text shown on category page."
+                                            placement="right"></field-help>
+                            </div>
                         </div>
                     </div>
                 </div>
             }
         </div>
+
         <div class="card-footer text-end">
             <a asp-action="Index" class="btn btn-secondary">Back</a>
             <button type="submit" class="btn btn-primary">Create</button>

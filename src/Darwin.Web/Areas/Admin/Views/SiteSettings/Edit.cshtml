@@ -1,0 +1,36 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Settings.SiteSettingVm
+@{
+    ViewData["Title"] = "Site Settings";
+}
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Title</label>
+                    <input asp-for="Title" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Default Culture</label>
+                    <input asp-for="DefaultCulture" class="form-control" placeholder="e.g. de-DE" />
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Supported Cultures (comma-separated)</label>
+                    <input asp-for="SupportedCulturesCsv" class="form-control" placeholder="de-DE,en-US,..." />
+                    <div class="form-text">Comma-separated list. Example: de-DE,en-US,fr-FR</div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+</form>
