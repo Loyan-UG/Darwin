@@ -1,4 +1,5 @@
-﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.ProductCreateVm
+﻿@using Darwin.Domain.Enums
+@model Darwin.Web.Areas.Admin.ViewModels.Catalog.ProductCreateVm
 @{
     ViewData["Title"] = "Create Product";
 }
@@ -25,7 +26,9 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Kind</label>
-                    <select asp-for="Kind" class="form-select"></select>
+                    @* Populate from enum without needing ViewBag *@
+                    <select asp-for="Kind" class="form-select"
+                            asp-items="Html.GetEnumSelectList<ProductKind>()"></select>
                 </div>
             </div>
 
@@ -157,6 +160,10 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            if (!window.Quill) {
+                console.error("Quill is not loaded. Ensure the Quill JS <script> is included before this section.");
+                return;
+            }
             document.querySelectorAll('[id^="quill-editor-desc-"]').forEach(function (el) {
                 const quill = new Quill(el, {
                     theme: 'snow',

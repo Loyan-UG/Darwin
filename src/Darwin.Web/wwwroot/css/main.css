@@ -1,0 +1,6 @@
+﻿/* Let the Quill editor container size itself to content so the parent grows */
+.ql-container {
+    height: auto !important; /* override any fixed heights */
+    min-height: 230px;
+}
+

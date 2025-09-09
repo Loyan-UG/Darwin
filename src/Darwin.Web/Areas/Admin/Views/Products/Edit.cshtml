@@ -1,8 +1,9 @@
-﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.ProductEditVm
+﻿@using Darwin.Domain.Enums
+@model Darwin.Web.Areas.Admin.ViewModels.Catalog.ProductEditVm
+
 @{
     ViewData["Title"] = "Edit Product";
 }
-
 <h2>@ViewData["Title"]</h2>
 
 <form asp-action="Edit" method="post">
@@ -12,6 +13,7 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
+            <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
             <fieldset>
@@ -19,14 +21,10 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">Kind</label>
-                        <select asp-for="Kind" class="form-select">
-                            <option>Simple</option>
-                            <option>Variant</option>
-                            <option>Bundle</option>
-                            <option>Digital</option>
-                            <option>Service</option>
-                        </select>
+                        <select asp-for="Kind" class="form-select"
+                                asp-items="Html.GetEnumSelectList<ProductKind>()"></select>
                     </div>
+
                     <div class="col-md-4">
                         <label class="form-label">Brand</label>
                         <select asp-for="BrandId" class="form-select">
@@ -40,6 +38,7 @@
                             }
                         </select>
                     </div>
+
                     <div class="col-md-5">
                         <label class="form-label">Primary Category</label>
                         <select asp-for="PrimaryCategoryId" class="form-select">
@@ -69,19 +68,28 @@
                                 <input asp-for="Translations[@i].Culture" class="form-control" />
                                 <span asp-validation-for="Translations[@i].Culture" class="text-danger"></span>
                             </div>
+
                             <div class="col-md-5">
                                 <label class="form-label">Name</label>
                                 <input asp-for="Translations[@i].Name" class="form-control" />
                                 <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
                             </div>
+
                             <div class="col-md-5">
                                 <label class="form-label">Slug</label>
-                                <input asp-for="Translations[@i].Slug" class="form-control" />
+                                <div class="d-flex align-items-center">
+                                    <input asp-for="Translations[@i].Slug" class="form-control" />
+                                    <field-help title="Slug"
+                                                content="URL-friendly identifier. Lowercase, digits, hyphens."
+                                                placement="right"></field-help>
+                                </div>
                                 <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
                             </div>
+
                             <div class="col-12">
                                 <label class="form-label">Full Description (HTML)</label>
-                                <textarea asp-for="Translations[@i].FullDescriptionHtml" class="form-control" rows="4"></textarea>
+                                <div id="quill-editor-desc-@i" class="border rounded"></div>
+                                <textarea asp-for="Translations[@i].FullDescriptionHtml" class="d-none"></textarea>
                             </div>
                         </div>
                     </div>
@@ -100,10 +108,12 @@
                                 <label class="form-label">SKU</label>
                                 <input asp-for="Variants[@i].Sku" class="form-control" />
                             </div>
+
                             <div class="col-md-3">
                                 <label class="form-label">Base Price (Net, Minor)</label>
                                 <input asp-for="Variants[@i].BasePriceNetMinor" class="form-control" />
                             </div>
+
                             <div class="col-md-3">
                                 <label class="form-label">Currency</label>
                                 <select asp-for="Variants[@i].Currency" class="form-select">
@@ -116,6 +126,7 @@
                                     }
                                 </select>
                             </div>
+
                             <div class="col-md-3">
                                 <label class="form-label">Tax Category</label>
                                 <select asp-for="Variants[@i].TaxCategoryId" class="form-select">
@@ -133,6 +144,7 @@
                 }
             </fieldset>
         </div>
+
         <div class="card-footer text-end">
             <a asp-action="Index" class="btn btn-secondary">Back</a>
             <button type="submit" class="btn btn-primary">Save</button>
@@ -142,4 +154,35 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (!window.Quill) {
+                console.error("Quill is not loaded. Ensure quill.js is included in _Layout BEFORE this section.");
+                return;
+            }
+            document.querySelectorAll('[id^="quill-editor-desc-"]').forEach(function (el) {
+                const quill = new Quill(el, {
+                    theme: 'snow',
+                    placeholder: 'Write product description...',
+                    modules: {
+                        toolbar: [
+                            [{ header: [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['link', 'image', 'video'],
+                            ['blockquote', 'code-block'],
+                            [{ 'align': [] }],
+                            ['clean']
+                        ]
+                    }
+                });
+                const hidden = el.parentElement.querySelector("textarea");
+                if (hidden && hidden.value) quill.root.innerHTML = hidden.value;
+                const form = el.closest("form");
+                form.addEventListener("submit", function () {
+                    if (hidden) hidden.value = quill.root.innerHTML;
+                });
+            });
+        });
+    </script>
 }
