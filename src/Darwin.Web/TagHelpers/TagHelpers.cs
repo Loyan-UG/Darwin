@@ -5,9 +5,23 @@ namespace Darwin.Web.TagHelpers
     /// <summary>
     /// Renders a small help icon that shows a Bootstrap popover with field help text.
     /// Usage:
-    ///   <field-help title="Slug" content="URL-friendly slug. Use lowercase letters, digits, and hyphens." />
-    /// Optional attributes: placement="right|left|top|bottom" (default: right)
+
     /// </summary>
+    /// <summary>
+    ///     Renders a small contextual help trigger (e.g., an "i" icon) next to form fields,
+    ///     with a Bootstrap popover containing explanatory text and optional examples.
+    ///     <field-help title="Slug" content="URL-friendly slug. Use lowercase letters, digits, and hyphens." />
+    ///     Optional attributes: placement="right|left|top|bottom" (default: right)
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Improves Admin UX by clarifying non-obvious fields (slugs, minor units, SEO metadata)
+    ///         without cluttering the form layout.
+    ///     </para>
+    ///     <para>
+    ///         The tag helper emits safe HTML and attributes for Bootstrap's popover initialization.
+    ///     </para>
+    /// </remarks>
     [HtmlTargetElement("field-help", TagStructure = TagStructure.NormalOrSelfClosing)]
     public sealed class FieldHelpTagHelper : TagHelper
     {

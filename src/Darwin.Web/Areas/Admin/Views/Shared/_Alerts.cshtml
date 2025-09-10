@@ -1,4 +1,13 @@
-﻿@{
+﻿@* 
+Partial view that renders standardized alert banners (success, error, warning, info)
+based on TempData or ViewData keys, keeping feedback UI consistent across Admin screens.
+
+Use this partial at the top of forms and lists to provide clear user feedback after actions
+such as create, update, or validation failures. 
+*@
+
+
+@{
     string? success = TempData["Success"] as string;
     string? error = TempData["Error"] as string;
     string? warning = TempData["Warning"] as string;

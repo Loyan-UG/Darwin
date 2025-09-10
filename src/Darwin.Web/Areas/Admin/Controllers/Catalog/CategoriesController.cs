@@ -12,6 +12,24 @@ using System.Threading.Tasks;
 
 namespace Darwin.Web.Areas.Admin.Controllers.Catalog
 {
+    /// <summary>
+    ///     Admin controller for category management with support for hierarchical relationships,
+    ///     per-culture translations, and SEO-friendly slugs.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Responsibilities:
+    ///         <list type="bullet">
+    ///             <item>List categories for browsing and editing.</item>
+    ///             <item>Create/edit with validation for required translations and unique slugs per culture.</item>
+    ///             <item>Provide lookup data for parent category selection.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Notes:
+    ///         Keep forms small and responsive; for large trees consider async lookups or virtualized lists in the future.
+    ///     </para>
+    /// </remarks>
     [Area("Admin")]
     public sealed class CategoriesController : Controller
     {

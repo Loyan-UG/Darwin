@@ -30,6 +30,32 @@ namespace Darwin.Infrastructure.Persistence.Db
     /// - Ensure this class is in the SAME namespace as your runtime DbContext (Darwin.Infrastructure.Persistence.Db)
     ///   so EF sees exactly one DbContext type and you avoid "More than one DbContext was found" errors.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Why needed:
+    ///         EF tooling does not bootstrap the application's DI container; it requires a deterministic way to instantiate
+    ///         the DbContext with provider and migrations assembly configured. This factory supplies those at design-time.
+    ///     </para>
+    ///     <para>
+    ///         Connection Resolution Order:
+    ///         <list type="number">
+    ///             <item>Environment variable <c>ConnectionStrings__DefaultConnection</c> (ideal for CI and local overrides).</item>
+    ///             <item>Appsettings discovery by probing typical locations (repo root / Web project) for
+    ///                 <c>appsettings.{Environment}.json</c> then <c>appsettings.json</c>.</item>
+    ///             <item>Fallback to a developer-local SQL Server LocalDB connection string.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Construction:
+    ///         <list type="bullet">
+    ///             <item>Uses the <c>DbContextOptions</c>-only constructor to avoid runtime services at design-time.</item>
+    ///             <item>Explicitly sets the migrations assembly to the Infrastructure assembly to ensure EF discovers migrations correctly.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Keep this factory in the same namespace as the runtime DbContext to avoid EF discovering multiple contexts.
+    ///     </para>
+    /// </remarks>
     public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<DarwinDbContext>
     {
         public DarwinDbContext CreateDbContext(string[] args)

@@ -46,7 +46,19 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsDigital { get; set; }
     }
 
-    /// <summary>Create DTO for product aggregate.</summary>
+    /// <summary>
+    ///     Data transfer object capturing all inputs required to create a product, including
+    ///     general attributes, per-culture translations, and at least one variant with pricing.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         A DTO is intentionally decoupled from persistence concerns; it models the input contract
+    ///         from the Admin UI to the application layer. Mapping to the domain happens in the handler.
+    ///     </para>
+    ///     <para>
+    ///         Prices are in minor units to avoid floating-point rounding issues; currency must be provided per variant.
+    ///     </para>
+    /// </remarks>
     public sealed class ProductCreateDto
     {
         public Guid? BrandId { get; set; }

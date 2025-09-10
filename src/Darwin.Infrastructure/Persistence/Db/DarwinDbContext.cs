@@ -23,9 +23,37 @@ using System.Threading.Tasks;
 namespace Darwin.Infrastructure.Persistence.Db
 {
     /// <summary>
-    /// EF Core DbContext containing all aggregates for Darwin. 
-    /// Applies global conventions in OnModelCreating via Conventions.Apply().
+    ///     Primary EF Core <c>DbContext</c> for the Darwin platform, containing all aggregate roots
+    ///     from CMS, Catalog, Inventory, Pricing, Orders, Shipping, Users, SEO/Integration, and Settings.
+    ///     This class is defined as <c>partial</c> to separate cross-cutting concerns (e.g., auditing)
+    ///     into dedicated files while keeping a single concrete <c>DbContext</c> type for runtime and design-time.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Responsibilities:
+    ///         <list type="bullet">
+    ///             <item>Expose <c>DbSet&lt;T&gt;</c> properties for domain aggregates.</item>
+    ///             <item>Apply global conventions and entity configurations via <c>OnModelCreating</c>.</item>
+    ///             <item>Remain free of web-specific or UI logic to keep the Infrastructure layer isolated.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Design:
+    ///         <list type="bullet">
+    ///             <item>Follows Clean Architecture: Infrastructure persists domain state using EF Core.</item>
+    ///             <item>Global conventions (keys, timestamps, soft delete, rowversion) are applied centrally.</item>
+    ///             <item>Per-entity configurations (indexes, relations) are discovered from the assembly.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Notes:
+    ///         <list type="bullet">
+    ///             <item>Auditing logic (Created*/Modified*) is implemented in the partial file <c>DarwinDbContext.Auditing.cs</c>.</item>
+    ///             <item>Optimistic concurrency uses SQL Server <c>rowversion</c> mapped as <c>byte[]</c>.</item>
+    ///             <item>Soft delete uses the <c>IsDeleted</c> flag; consider global query filters where appropriate.</item>
+    ///         </list>
+    ///     </para>
+    /// </remarks>
     public sealed partial class DarwinDbContext : DbContext, IAppDbContext
     {
         public DarwinDbContext(DbContextOptions<DarwinDbContext> options) : base(options) { }

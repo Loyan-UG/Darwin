@@ -10,8 +10,25 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Darwin.Web.Areas.Admin.Controllers.Media
 {
+    /// <summary>
+    ///     Handles rich-text editor media uploads (e.g., images from Quill toolbar),
+    ///     performing validation, secure file naming, and returning a JSON payload with the accessible URL.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Security & Hardening:
+    ///         <list type="bullet">
+    //             <item>Validate content type and file size limits; reject suspicious inputs.</item>
+    ///             <item>Generate SEO-friendly filenames; avoid trusting client-provided names.</item>
+    ///             <item>Store under a configurable media root; never allow path traversal.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Response Shape:
+    ///         <c>{ "url": "https://.../media/..." }</c> to be consumed by the editor's insert handler.
+    ///     </para>
+    /// </remarks>
     [Area("Admin")]
-    // [Authorize(Policy = "SystemAdmin")] // enable when AuthZ is ready
     public sealed class MediaController : Controller
     {
         private readonly IWebHostEnvironment _env;

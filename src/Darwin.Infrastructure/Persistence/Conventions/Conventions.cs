@@ -8,11 +8,21 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace Darwin.Infrastructure.Persistence.Conventions
 {
     /// <summary>
-    /// Centralized EF Core model conventions to ensure consistent mappings across entities.
-    /// - Global Query Filter: IsDeleted == false for all entities deriving from BaseEntity.
-    /// - RowVersion concurrency token mapping.
-    /// - String defaults & decimal precisions (where applicable).
+    ///     Centralized EF Core model conventions applied to all entities in the Darwin model:
+    ///     keys, required audit fields, property lengths, soft delete, and concurrency token mapping.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Goals:
+    ///         <list type="bullet">
+    ///             <item>Reduce duplication in per-entity configurations.</item>
+    ///             <item>Guarantee consistent schema for cross-cutting concerns (audit, rowversion).</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Conventions should remain deterministic and side-effect free; entity-specific rules belong in dedicated configurations.
+    ///     </para>
+    /// </remarks>
     public static class Conventions
     {
         public static void Apply(ModelBuilder modelBuilder)

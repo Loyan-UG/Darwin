@@ -14,6 +14,29 @@ using System.Threading.Tasks;
 
 namespace Darwin.Web.Areas.Admin.Controllers.Catalog
 {
+    /// <summary>
+    ///     Admin controller for managing products (list, create, edit) including translations and variants.
+    ///     Integrates with Application handlers for input validation, mapping, and persistence,
+    ///     and supplies lookups (brands, categories, tax categories, currencies) to views.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         UX:
+    ///         <list type="bullet">
+    ///             <item>Uses Bootstrap for layout and field-level help tooltips.</item>
+    ///             <item>Employs Quill v2 for rich text editing of product descriptions per translation.</item>
+    ///             <item>Enforces server-side validation via FluentValidation with friendly error display.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Concurrency:
+    ///         Edit actions include the <c>RowVersion</c> token to detect concurrent updates, surfacing a helpful error on conflict.
+    ///     </para>
+    ///     <para>
+    ///         Security:
+    ///         CSRF protection via anti-forgery tokens; input model binding restricted to view models (no over-posting).
+    ///     </para>
+    /// </remarks>
     [Area("Admin")]
     public sealed class ProductsController : Controller
     {

@@ -12,8 +12,27 @@ using Microsoft.Extensions.Logging;
 namespace Darwin.Infrastructure.Extensions
 {
     /// <summary>
-    /// Registers DbContext and exposes helper for migration & seeding during startup.
+    ///     DI extension methods for registering persistence services:
+    ///     EF Core <see cref="DbContext"/>, the application-facing <c>IAppDbContext</c> abstraction,
+    ///     and helpers for applying migrations and seeding at application startup.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Responsibilities:
+    ///         <list type="bullet">
+    ///             <item>Bind <c>DarwinDbContext</c> to SQL Server using the configured connection string.</item>
+    ///             <item>Expose <c>IAppDbContext</c> as a scoped mapping to the same DbContext for the Application layer.</item>
+    ///             <item>Provide <c>MigrateAndSeedAsync</c> to apply pending migrations and run idempotent data seeding.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Notes:
+    ///         <list type="bullet">
+    ///             <item>Enable retry-on-failure for transient SQL issues during development.</item>
+    ///             <item>Keep this extension free of web/host-specific concerns; it is reusable across entry points.</item>
+    ///         </list>
+    ///     </para>
+    /// </remarks>
     public static class ServiceCollectionExtensionsPersistence
     {
         public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration config)

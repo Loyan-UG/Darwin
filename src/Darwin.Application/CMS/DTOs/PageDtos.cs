@@ -15,6 +15,16 @@ namespace Darwin.Application.CMS.DTOs
         public string ContentHtml { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    ///     DTO representing the required information to create a CMS page, including
+    ///     status, optional publication window (UTC), and per-culture translations with content.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <c>ContentHtml</c> should be sanitized by the handler prior to persistence.
+    ///         Slug uniqueness per culture is validated against the database to provide helpful errors.
+    ///     </para>
+    /// </remarks>
     public sealed class PageCreateDto
     {
         public PageStatus Status { get; set; } = PageStatus.Draft;
@@ -23,6 +33,16 @@ namespace Darwin.Application.CMS.DTOs
         public List<PageTranslationDto> Translations { get; set; } = new();
     }
 
+    /// <summary>
+    ///     DTO for editing an existing CMS page. Includes identity, concurrency token, status,
+    ///     publication window, and per-culture translation updates.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The handler should apply upserts for translations (add/update/remove) depending on what the
+    ///         Admin UI submitted, while keeping slug uniqueness constraints intact.
+    ///     </para>
+    /// </remarks>
     public sealed class PageEditDto
     {
         public Guid Id { get; set; }

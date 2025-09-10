@@ -12,6 +12,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Web.Areas.Admin.Controllers.CMS
 {
+    /// <summary>
+    ///     Admin controller for CMS Pages covering full content lifecycle:
+    ///     draft/publish windows, per-culture translations, and rich text content with sanitization.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Features:
+    ///         <list type="bullet">
+    ///             <item>Quill v2 editor for content; server-side sanitization before persistence.</item>
+    ///             <item>Unique slug per culture; index-level enforcement in the database.</item>
+    ///             <item>Publish window fields (start/end) interpreted in UTC for unambiguous scheduling.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         UX:
+    ///         Offers culture selection sourced from <c>SiteSetting</c>; displays friendly validation summaries and alerts.
+    ///     </para>
+    /// </remarks>
     [Area("Admin")]
     public sealed class PagesController : Controller
     {

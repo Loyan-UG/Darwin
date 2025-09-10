@@ -4,6 +4,23 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 {
+    /// <summary>
+    ///     Configuration for categories and translations, capturing parent-child hierarchy,
+    ///     sorting behavior, and per-culture naming/slug rules.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Enforces:
+    ///         <list type="bullet">
+    ///             <item>Self-referencing optional parent FK for hierarchical trees.</item>
+    ///             <item>Unique slug per culture; indexes to accelerate category navigation.</item>
+    ///             <item>Stable sort order field with default values.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Large trees may benefit from additional materialized paths or closure tables in future iterations.
+    ///     </para>
+    /// </remarks>
     public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>, IEntityTypeConfiguration<CategoryTranslation>
     {
         public void Configure(EntityTypeBuilder<Category> builder)

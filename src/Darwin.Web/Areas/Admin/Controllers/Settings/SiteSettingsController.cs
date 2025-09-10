@@ -9,6 +9,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Web.Areas.Admin.Controllers.Settings
 {
+    /// <summary>
+    ///     Admin controller for viewing and editing site-wide settings, including culture/currency,
+    ///     measurement units, SEO flags, analytics IDs, and feature toggles.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Responsibilities:
+    ///         <list type="bullet">
+    ///             <item>Load the single <c>SiteSetting</c> row and map to a view model.</item>
+    ///             <item>Validate inputs via FluentValidation and persist changes atomically.</item>
+    ///             <item>Invalidate the <c>ISiteSettingCache</c> so changes are reflected immediately across the app.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Security:
+    ///         Restrict access to authorized admin roles; avoid logging PII/keys in request logs.
+    ///     </para>
+    /// </remarks>
     [Area("Admin")]
     public sealed class SiteSettingsController : Controller
     {

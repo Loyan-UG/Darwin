@@ -11,9 +11,24 @@ using FluentValidation;
 namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
-    /// Creates a product aggregate with translations and variants.
-    /// No MediatR: direct application service callable from Web controllers.
+    ///     Use-case handler that creates a new product with translations and variants,
+    ///     applying validation, sanitization (where applicable), and enforcing invariant business rules.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Responsibilities:
+    ///         <list type="bullet">
+    ///             <item>Validate input via FluentValidation.</item>
+    ///             <item>Map DTO to domain entities, normalize strings (e.g., slugs), and sanitize HTML fields.</item>
+    ///             <item>Ensure uniqueness constraints (e.g., slug per culture) are checked pre-insert for UX.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Transactions:
+    ///         Performs work within a single EF Core save operation; consider explicit transactions
+    ///         if you later expand to side-effects (events, outbox).
+    ///     </para>
+    /// </remarks>
     public sealed class CreateProductHandler
     {
         private readonly IAppDbContext _db;

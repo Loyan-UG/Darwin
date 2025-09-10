@@ -9,6 +9,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.CMS.Queries
 {
+    /// <summary>
+    ///     Paged query for listing CMS pages in Admin with minimal projected fields
+    ///     (title, slug, status, modified timestamp) filtered by culture with fallback logic.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Returns a tuple of items and total count for easy paging UI composition.
+    ///         For large datasets, consider adding search filters (title/slug) and sort options.
+    ///     </para>
+    /// </remarks>
     public sealed class GetPagesPageHandler
     {
         private readonly IAppDbContext _db;

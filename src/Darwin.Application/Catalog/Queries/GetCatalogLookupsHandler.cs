@@ -9,9 +9,25 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Catalog.Queries
 {
     /// <summary>
-    /// Provides light-weight lookup data for drop-downs in admin forms:
-    /// Brands, TaxCategories, and optionally Categories tree.
+    ///     Provides lightweight lookup data (Brands, TaxCategories, Categories) for Admin forms
+    ///     to populate drop-downs without loading full aggregates.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Performance:
+    ///         <list type="bullet">
+    ///             <item>Uses <c>AsNoTracking</c> and <c>Select</c> into slim DTOs to minimize memory and avoid change tracking.</item>
+    ///             <item>Orders by friendly fields (e.g., Name, SortOrder) for predictable UX.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Localization:
+    ///         Category names are resolved per-culture; if a translation is missing, a best-effort fallback is returned.
+    ///     </para>
+    ///     <para>
+    ///         Intended to be called by Admin controllers; cache results where appropriate to reduce DB load.
+    ///     </para>
+    /// </remarks>
     public sealed class GetCatalogLookupsHandler
     {
         private readonly IAppDbContext _db;

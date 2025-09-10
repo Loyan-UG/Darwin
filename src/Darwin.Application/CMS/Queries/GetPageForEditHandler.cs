@@ -8,6 +8,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.CMS.Queries
 {
+    /// <summary>
+    ///     Query handler that loads a single CMS page with all translations for editing,
+    ///     returning a complete DTO, including <c>RowVersion</c> for concurrency checks.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Use <c>AsNoTracking</c> to avoid leaking tracked entities into the web layer.
+    ///         Sanitize only on save; the edit form should display raw HTML previously sanitized on write.
+    ///     </para>
+    /// </remarks>
     public sealed class GetPageForEditHandler
     {
         private readonly IAppDbContext _db;

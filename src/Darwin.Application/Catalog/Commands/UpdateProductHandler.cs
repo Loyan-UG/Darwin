@@ -11,6 +11,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Catalog.Commands
 {
+    /// <summary>
+    ///     Handler that updates an existing product, honoring optimistic concurrency,
+    ///     synchronizing translations and variants, and persisting changes atomically.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Concurrency:
+    ///         <list type="bullet">
+    ///             <item>Compare RowVersion to detect conflicts; on mismatch, throw and let the controller report.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Mapping:
+    ///         Merge strategy should avoid destructive overwrites (e.g., preserve existing variant identities where possible).
+    ///     </para>
+    /// </remarks>
     public sealed class UpdateProductHandler
     {
         private readonly IAppDbContext _db;

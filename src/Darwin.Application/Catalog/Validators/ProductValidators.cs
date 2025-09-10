@@ -26,6 +26,30 @@ namespace Darwin.Application.Catalog.Validators
         }
     }
 
+    /// <summary>
+    ///     FluentValidation validator for product creation requests, enforcing business and data integrity
+    ///     before the command handler persists any changes.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Validates:
+    ///         <list type="bullet">
+    ///             <item>At least one translation with required fields (Culture, Name, Slug).</item>
+    ///             <item>At least one variant with pricing (minor units) and currency set.</item>
+    ///             <item>Optional relationships (Brand, PrimaryCategory, TaxCategory) if provided.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Business Rationale:
+    ///         <list type="bullet">
+    ///             <item>Products must be discoverable and indexable; translations and slugs are essential.</item>
+    ///             <item>Pricing must be unambiguous; storing money in minor units avoids rounding drift.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Keep validator messages user-friendly; these are surfaced in Admin UI validation summaries.
+    ///     </para>
+    /// </remarks>
     public sealed class ProductCreateDtoValidator : AbstractValidator<ProductCreateDto>
     {
         public ProductCreateDtoValidator()

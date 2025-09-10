@@ -25,12 +25,25 @@ using Darwin.Web.Auth;
 namespace Darwin.Web.Extensions
 {
     /// <summary>
-    /// Note:
-    /// We do NOT integrate FluentValidation into MVC's automatic model validation pipeline here.
-    /// Instead, validators live in the Application layer and are executed explicitly inside use-case handlers.
-    /// Controllers catch FluentValidation.ValidationException and map errors into ModelState.
-    /// This keeps validation logic close to use-cases and avoids extra MVC coupling.
+    ///     Service registration for the Web layer (composition root). Aggregates MVC/Razor setup,
+    ///     localization primitives, model binders/formatters, and Web-specific services into a single
+    ///     discoverable entrypoint that can be called from <c>Program.cs</c>.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Goals:
+    ///         <list type="bullet">
+    ///             <item>Keep <c>Program.cs</c> concise and declarative.</item>
+    ///             <item>Group related service registrations to reduce scattering and improve evolvability.</item>
+    ///             <item>Provide a single place to add/remap Admin-specific services (settings cache, tag helpers, view locations).</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Notes:
+    ///         This extension should remain free of infrastructure-specific registrations (EF, logging),
+    ///         which are handled in the Infrastructure project.
+    ///     </para>
+    /// </remarks>
     public static class DependencyInjection
     {
         public static IServiceCollection AddWebComposition(this IServiceCollection services, IConfiguration config)

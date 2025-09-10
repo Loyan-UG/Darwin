@@ -12,6 +12,16 @@ namespace Darwin.Application.Catalog.DTOs
         public int VariantCount { get; set; }
     }
 
+    /// <summary>
+    ///     DTO for editing products, including identity (<c>Id</c>) and concurrency token (<c>RowVersion</c>),
+    ///     translations, and variant mutations.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The handler should compare <c>RowVersion</c> to detect concurrent updates and throw a concurrency
+    ///         exception on mismatch, which the controller translates into a user-friendly error.
+    ///     </para>
+    /// </remarks>
     public sealed class ProductEditDto
     {
         public Guid Id { get; set; }

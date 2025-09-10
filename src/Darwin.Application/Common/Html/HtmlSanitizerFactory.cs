@@ -4,8 +4,29 @@ using Ganss.Xss;
 namespace Darwin.Application.Common.Html
 {
     /// <summary>
-    /// Factory for a preconfigured HtmlSanitizer compatible with Quill output.
+    ///     Factory for creating preconfigured HTML sanitizers used to clean user-supplied rich text content
+    ///     (e.g., CMS pages, product descriptions) before persistence or rendering.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Security:
+    ///         <list type="bullet">
+    ///             <item>Mitigates XSS by allowing only a curated set of tags, attributes, and URI schemes.</item>
+    ///             <item>Optionally rewrites or filters <c>&lt;a&gt;</c> and <c>&lt;img&gt;</c> attributes (nofollow, target, data-uris).</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Extensibility:
+    ///         <list type="bullet">
+    ///             <item>Expose a single place to adjust allowed elements across the app.</item>
+    ///             <item>Consider environment-specific policies (e.g., stricter in Public, more relaxed for Admin previews).</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Usage:
+    ///         Instantiate the sanitizer via this factory in Application handlers right before saving HTML to the database.
+    ///     </para>
+    /// </remarks>
     public static class HtmlSanitizerFactory
     {
         public static HtmlSanitizer Create()

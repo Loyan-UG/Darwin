@@ -16,20 +16,26 @@ using Microsoft.Extensions.Logging;
 namespace Darwin.Infrastructure.Persistence.Seed
 {
     /// <summary>
-    /// Initial, idempotent data seeder for Darwin.
-    /// 
-    /// Goals:
-    /// - Provide a realistic baseline dataset for a computer/electronics store.
-    /// - Ensure each key aggregate has >= 2 records (brands, categories, products, pages...).
-    /// - Keep the process idempotent so repeated runs are safe.
-    /// 
-    /// Notes:
-    /// - SiteSetting remains single-row by design (one record).
-    /// - We pre-generate GUIDs for hierarchical entities (e.g., categories) so ParentId references are correct
-    ///   even before SaveChanges assigns keys.
-    /// - All BaseEntity audit fields are filled with SystemUserId to comply with non-null auditing.
-    /// - Prices are stored as NET minor units (integers), consistent with domain guidance.
+    ///     Idempotent data seeder that populates baseline records required for the Darwin platform to boot:
+    ///     <c>SiteSetting</c>, <c>TaxCategory</c> (DE standard/reduced), base <c>Brand</c>, and sample <c>Category</c> hierarchy.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The seeder is designed to be safe to run multiple times — it checks for existence before inserting.
+    ///         It should be invoked once during application startup after migrations are applied.
+    ///     </para>
+    ///     <para>
+    ///         Best Practices:
+    ///         <list type="bullet">
+    ///             <item>Use <c>WellKnownIds.SystemUserId</c> for <c>CreatedBy/ModifiedBy</c> during seeding.</item>
+    ///             <item>Keep seeded data minimal and environment-agnostic; environment-specific data belongs to dedicated fixtures.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Logging:
+    ///         Uses <see cref="Microsoft.Extensions.Logging.ILogger{TCategoryName}"/> to report progress and anomalies.
+    ///     </para>
+    /// </remarks>
     public sealed class DataSeeder
     {
         private readonly DarwinDbContext _db;

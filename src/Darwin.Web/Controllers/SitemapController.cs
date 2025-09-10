@@ -10,8 +10,22 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Web.Controllers
 {
     /// <summary>
-    /// Dynamic sitemap.xml including CMS Pages, Categories and Products.
+    ///     Serves a dynamic XML sitemap aggregating URLs for pages, categories, and products
+    ///     with their last-modified timestamps to aid search engines in discovery and crawling.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Behavior:
+    ///         <list type="bullet">
+    ///             <item>Reads from the database with read-only projections; no tracking.</item>
+    ///             <item>Respects publication status and visibility flags.</item>
+    ///             <item>Optionally includes alternate links (hreflang) when enabled in <c>SiteSetting</c>.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Keep output compliant with the sitemap XML protocol; consider splitting into multiple files if size grows.
+    ///     </para>
+    /// </remarks>
     [ApiExplorerSettings(IgnoreApi = true)]
     public sealed class SitemapController : Controller
     {

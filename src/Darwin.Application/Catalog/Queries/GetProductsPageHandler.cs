@@ -9,6 +9,23 @@ using System.Collections.Generic;
 
 namespace Darwin.Application.Catalog.Queries.GetProductsPage
 {
+    /// <summary>
+    ///     Paged query handler for listing products in Admin, returning lightweight rows suitable
+    ///     for grid rendering (name, brand, primary category, status, modified date, etc.).
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Performance:
+    ///         <list type="bullet">
+    ///             <item>Projects directly with <c>Select</c> into DTOs to avoid materializing full aggregates.</item>
+    ///             <item>Uses <c>AsNoTracking</c> to reduce overhead for read-only scenarios.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Localization:
+    ///         Selects the best translation for the provided culture with a sensible fallback.
+    ///     </para>
+    /// </remarks>
     public sealed class GetProductsPageHandler
     {
         private readonly IAppDbContext _db;

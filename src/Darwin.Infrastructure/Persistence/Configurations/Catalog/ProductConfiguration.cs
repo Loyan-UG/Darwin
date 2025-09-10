@@ -5,8 +5,22 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 {
     /// <summary>
-    /// Product aggregate configuration: relations with Translations, Media, Variants, Options.
+    ///     Configuration for product aggregate and related entities (translations, variants, media, options),
+    ///     including indexes for lookups (SKU, GTIN), foreign keys, and price/quantity column types.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Focus Areas:
+    ///         <list type="bullet">
+    ///             <item>Unique SKU per variant; optional unique GTIN when provided.</item>
+    ///             <item>Price columns stored as 64-bit integers (minor units) for precision.</item>
+    ///             <item>Translation uniqueness per culture and slug indexes for discoverability.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Consider covering indexes for catalog listing queries in the future for performance.
+    ///     </para>
+    /// </remarks>
     public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
     {
         public void Configure(EntityTypeBuilder<Product> b)

@@ -5,8 +5,22 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Darwin.Infrastructure.Persistence.Configurations.CMS
 {
     /// <summary>
-    /// EF Core configuration for CMS Page and PageTranslation entities.
+    ///     EF Core configuration for <c>Page</c> and <c>PageTranslation</c> entities,
+    ///     defining keys, relationships, indexes (including unique slug per culture), and column constraints.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         Enforces:
+    ///         <list type="bullet">
+    ///             <item>One-to-many: Page → PageTranslations with cascade on delete.</item>
+    ///             <item>Unique index on <c>(PageId, Culture)</c> and on <c>(Culture, Slug)</c> when slugs are globally unique per culture.</item>
+    ///             <item>Reasonable maximum lengths for slugs/titles/meta fields.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Keep configuration aligned with validation rules to avoid inconsistent UX vs. DB constraints.
+    ///     </para>
+    /// </remarks>
     public sealed class PageConfiguration : IEntityTypeConfiguration<Page>, IEntityTypeConfiguration<PageTranslation>
     {
         public void Configure(EntityTypeBuilder<Page> builder)

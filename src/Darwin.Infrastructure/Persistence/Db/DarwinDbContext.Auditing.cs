@@ -9,8 +9,34 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Infrastructure.Persistence.Db
 {
     /// <summary>
-    /// Partial DbContext that applies auditing (Created*/Modified* fields) on save.
+    ///     Auditing partial of <see cref="DarwinDbContext"/> that populates audit fields
+    ///     (CreatedAtUtc, ModifiedAtUtc, CreatedByUserId, ModifiedByUserId) on <c>SaveChanges</c>.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         The auditing pipeline runs just before EF saves changes, iterating over tracked entities
+    ///         derived from <c>BaseEntity</c>. For added entities, it sets creation timestamp and creator identity.
+    ///         For modified entities, it updates modification timestamp and modifier identity.
+    ///     </para>
+    ///     <para>
+    ///         Identity Source:
+    ///         <list type="bullet">
+    ///             <item>At runtime, <c>ICurrentUserService</c> is resolved from DI and used to obtain the current user id.</item>
+    ///             <item>At design-time or when unavailable, the auditing fallbacks to <c>WellKnownIds.SystemUserId</c>.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         Concurrency:
+    ///         <list type="bullet">
+    ///             <item>The <c>RowVersion</c> property participates in optimistic concurrency checks.</item>
+    ///             <item>On INSERT, EF/SQL Server populates the rowversion column automatically.</item>
+    ///         </list>
+    ///     </para>
+    ///     <para>
+    ///         This file intentionally does not define <c>DbSet</c>s nor configuration; it only augments the behavior
+    ///         of the main context via the partial class mechanism.
+    ///     </para>
+    /// </remarks>
     public sealed partial class DarwinDbContext
     {
         private readonly ICurrentUserService? _currentUser;

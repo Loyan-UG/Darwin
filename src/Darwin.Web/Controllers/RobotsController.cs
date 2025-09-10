@@ -4,8 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 namespace Darwin.Web.Controllers
 {
     /// <summary>
-    /// Dynamic robots.txt. Basic allow-all with Sitemap link.
+    ///     Returns a dynamic <c>robots.txt</c> reflecting environment and site settings,
+    ///     enabling/disabling crawling and pointing to the sitemap endpoint.
     /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         In development environments, disallow crawling by default to prevent indexing of non-production content.
+    ///         In production, follow <c>SiteSetting</c> flags and expose the sitemap location.
+    ///     </para>
+    /// </remarks>
     [ApiExplorerSettings(IgnoreApi = true)]
     public sealed class RobotsController : Controller
     {
