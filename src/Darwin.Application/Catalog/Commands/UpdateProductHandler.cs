@@ -8,6 +8,8 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Darwin.Application.Common.Html;
+
 
 namespace Darwin.Application.Catalog.Commands
 {
@@ -31,12 +33,14 @@ namespace Darwin.Application.Catalog.Commands
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<ProductEditDto> _validator;
+        private readonly IHtmlSanitizer _sanitizer;
 
-        public UpdateProductHandler(IAppDbContext db, IValidator<ProductEditDto> validator)
+        public UpdateProductHandler(IAppDbContext db, IValidator<ProductEditDto> validator, IHtmlSanitizer sanitizer)
         {
             _db = db;
             _validator = validator;
-        }
+            _sanitizer = sanitizer;
+        }   
 
         public async Task HandleAsync(ProductEditDto dto, CancellationToken ct = default)
         {
@@ -45,10 +49,9 @@ namespace Darwin.Application.Catalog.Commands
             var product = await _db.Set<Product>()
                 .Include(p => p.Translations)
                 .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == dto.Id, ct);
+                .FirstOrDefaultAsync(p => p.Id == dto.Id, ct)
+                ?? throw new ValidationException("Product not found.");
 
-            if (product == null)
-                throw new ValidationException("Product not found.");
 
             // Concurrency check
             if (!product.RowVersion.SequenceEqual(dto.RowVersion))
@@ -69,7 +72,7 @@ namespace Darwin.Application.Catalog.Commands
                     Name = t.Name,
                     Slug = t.Slug,
                     ShortDescription = t.ShortDescription,
-                    FullDescriptionHtml = t.FullDescriptionHtml,
+                    FullDescriptionHtml = HtmlSanitizerHelper.SanitizeOrNull(_sanitizer, t.FullDescriptionHtml),
                     MetaTitle = t.MetaTitle,
                     MetaDescription = t.MetaDescription,
                     SearchKeywords = t.SearchKeywords

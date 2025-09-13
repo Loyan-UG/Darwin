@@ -1,36 +1,291 @@
 ﻿@model Darwin.Web.Areas.Admin.ViewModels.Settings.SiteSettingVm
-@{
-    ViewData["Title"] = "Site Settings";
-}
-<h2>@ViewData["Title"]</h2>
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Darwin.Web
 
-<form asp-action="Edit" method="post">
-    @Html.AntiForgeryToken()
+@{
+    ViewData["Title"] = "Edit Site Settings";
+}
+
+<h1 class="mb-3">Site Settings</h1>
+
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="Edit" method="post" class="needs-validation" novalidate>
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="RowVersion" />
 
-    <div class="card shadow-sm">
+    <!-- Basics -->
+    <div class="card mb-4">
+        <div class="card-header">Basics</div>
         <div class="card-body">
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <field-help for="Title" text="Displayed in the browser title and UI headers. Max 200 characters."></field-help>
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
 
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Title</label>
-                    <input asp-for="Title" class="form-control" />
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="LogoUrl" class="form-label"></label>
+                    <input asp-for="LogoUrl" class="form-control" />
+                    <field-help for="LogoUrl" text="Absolute or app-relative URL for logo (e.g., /img/logo.svg)."></field-help>
+                    <span asp-validation-for="LogoUrl" class="text-danger"></span>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Default Culture</label>
-                    <input asp-for="DefaultCulture" class="form-control" placeholder="e.g. de-DE" />
-                </div>
-                <div class="col-md-12">
-                    <label class="form-label">Supported Cultures (comma-separated)</label>
-                    <input asp-for="SupportedCulturesCsv" class="form-control" placeholder="de-DE,en-US,..." />
-                    <div class="form-text">Comma-separated list. Example: de-DE,en-US,fr-FR</div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ContactEmail" class="form-label"></label>
+                    <input asp-for="ContactEmail" class="form-control" />
+                    <field-help for="ContactEmail" text="Primary contact email displayed publicly in footer/contact page."></field-help>
+                    <span asp-validation-for="ContactEmail" class="text-danger"></span>
                 </div>
             </div>
         </div>
-        <div class="card-footer text-end">
-            <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+
+    <!-- Localization -->
+    <div class="card mb-4">
+        <div class="card-header">Localization</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="DefaultCulture" class="form-label"></label>
+                    <input asp-for="DefaultCulture" class="form-control" />
+                    <field-help for="DefaultCulture" text="Format: ll-CC (e.g., de-DE). Used as fallback culture."></field-help>
+                    <span asp-validation-for="DefaultCulture" class="text-danger"></span>
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label asp-for="SupportedCulturesCsv" class="form-label"></label>
+                    <input asp-for="SupportedCulturesCsv" class="form-control" />
+                    <field-help for="SupportedCulturesCsv" text="Comma-separated cultures (e.g., de-DE,en-US). Drives Admin dropdowns and hreflang."></field-help>
+                    <span asp-validation-for="SupportedCulturesCsv" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label asp-for="DefaultCountry" class="form-label"></label>
+                    <input asp-for="DefaultCountry" class="form-control" />
+                    <field-help for="DefaultCountry" text="Two-letter ISO country (e.g., DE)."></field-help>
+                    <span asp-validation-for="DefaultCountry" class="text-danger"></span>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="DefaultCurrency" class="form-label"></label>
+                    <input asp-for="DefaultCurrency" class="form-control" />
+                    <field-help for="DefaultCurrency" text="Three-letter ISO currency code (e.g., EUR)."></field-help>
+                    <span asp-validation-for="DefaultCurrency" class="text-danger"></span>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="TimeZone" class="form-label"></label>
+                    <input asp-for="TimeZone" class="form-control" />
+                    <field-help for="TimeZone" text="IANA timezone (e.g., Europe/Berlin)."></field-help>
+                    <span asp-validation-for="TimeZone" class="text-danger"></span>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="HomeSlug" class="form-label"></label>
+                    <input asp-for="HomeSlug" class="form-control" />
+                    <field-help for="HomeSlug" text="Slug of the home page for public site (e.g., 'home')."></field-help>
+                    <span asp-validation-for="HomeSlug" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DateFormat" class="form-label"></label>
+                    <input asp-for="DateFormat" class="form-control" />
+                    <field-help for="DateFormat" text="Date format pattern (e.g., yyyy-MM-dd)."></field-help>
+                    <span asp-validation-for="DateFormat" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="TimeFormat" class="form-label"></label>
+                    <input asp-for="TimeFormat" class="form-control" />
+                    <field-help for="TimeFormat" text="Time format pattern (e.g., HH:mm). "></field-help>
+                    <span asp-validation-for="TimeFormat" class="text-danger"></span>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Measurement & Units -->
+    <div class="card mb-4">
+        <div class="card-header">Measurement & Units</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="MeasurementSystem" class="form-label"></label>
+                    <select asp-for="MeasurementSystem" class="form-select">
+                        <option value="Metric">Metric</option>
+                        <option value="Imperial">Imperial</option>
+                    </select>
+                    <field-help for="MeasurementSystem" text="Metric or Imperial for display units and conversions."></field-help>
+                    <span asp-validation-for="MeasurementSystem" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="DisplayWeightUnit" class="form-label"></label>
+                    <input asp-for="DisplayWeightUnit" class="form-control" />
+                    <field-help for="DisplayWeightUnit" text="Default display weight unit (e.g., kg, lb)."></field-help>
+                    <span asp-validation-for="DisplayWeightUnit" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="DisplayLengthUnit" class="form-label"></label>
+                    <input asp-for="DisplayLengthUnit" class="form-control" />
+                    <field-help for="DisplayLengthUnit" text="Default display length unit (e.g., cm, in). "></field-help>
+                    <span asp-validation-for="DisplayLengthUnit" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO -->
+    <div class="card mb-4">
+        <div class="card-header">SEO</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="EnableCanonical" />
+                        <label class="form-check-label" asp-for="EnableCanonical"></label>
+                    </div>
+                    <field-help for="EnableCanonical" text="Emit rel=canonical on public pages."></field-help>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="HreflangEnabled" />
+                        <label class="form-check-label" asp-for="HreflangEnabled"></label>
+                    </div>
+                    <field-help for="HreflangEnabled" text="Emit hreflang links for supported cultures."></field-help>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="SeoTitleTemplate" class="form-label"></label>
+                <input asp-for="SeoTitleTemplate" class="form-control" />
+                <field-help for="SeoTitleTemplate" text="Title template (e.g., {title} | {site})."></field-help>
+                <span asp-validation-for="SeoTitleTemplate" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="SeoMetaDescriptionTemplate" class="form-label"></label>
+                <input asp-for="SeoMetaDescriptionTemplate" class="form-control" />
+                <field-help for="SeoMetaDescriptionTemplate" text="Default meta description template for pages that lack custom metadata."></field-help>
+                <span asp-validation-for="SeoMetaDescriptionTemplate" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="OpenGraphDefaultsJson" class="form-label"></label>
+                <textarea asp-for="OpenGraphDefaultsJson" class="form-control" rows="3"></textarea>
+                <field-help for="OpenGraphDefaultsJson" text="OpenGraph default values as JSON (e.g., {\" site_name\": \"MySite\", \"image\": \" /img/default-og.jpg\"})."></field-help>
+                <span asp-validation-for="OpenGraphDefaultsJson" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="card mb-4">
+        <div class="card-header">Analytics</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="GoogleAnalyticsId" class="form-label"></label>
+                    <input asp-for="GoogleAnalyticsId" class="form-control" />
+                    <field-help for="GoogleAnalyticsId" text="GA4 Measurement ID (e.g., G-XXXXXX)."></field-help>
+                    <span asp-validation-for="GoogleAnalyticsId" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="GoogleTagManagerId" class="form-label"></label>
+                    <input asp-for="GoogleTagManagerId" class="form-control" />
+                    <field-help for="GoogleTagManagerId" text="GTM Container ID (e.g., GTM-XXXXXX). "></field-help>
+                    <span asp-validation-for="GoogleTagManagerId" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="GoogleSearchConsoleVerification" class="form-label"></label>
+                    <input asp-for="GoogleSearchConsoleVerification" class="form-control" />
+                    <field-help for="GoogleSearchConsoleVerification" text="Search Console verification meta value. Enter only the verification token, not the full tag."></field-help>
+                    <span asp-validation-for="GoogleSearchConsoleVerification" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Flags -->
+    <div class="card mb-4">
+        <div class="card-header">Feature Flags</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="FeatureFlagsJson" class="form-label"></label>
+                <textarea asp-for="FeatureFlagsJson" class="form-control" rows="3"></textarea>
+                <field-help for="FeatureFlagsJson" text="JSON serialized feature flags (e.g., {&quot;darkMode&quot;:true}). Use this to toggle optional site features on or off."></field-help>
+                <span asp-validation-for="FeatureFlagsJson" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Measurement & Formatting Overrides -->
+    <div class="card mb-4">
+        <div class="card-header">Advanced Formatting</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="MeasurementSettingsJson" class="form-label"></label>
+                <textarea asp-for="MeasurementSettingsJson" class="form-control" rows="3"></textarea>
+                <field-help for="MeasurementSettingsJson" text="JSON object to extend measurement preferences (precision, rounding, symbol placement). Leave blank to use defaults."></field-help>
+                <span asp-validation-for="MeasurementSettingsJson" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="NumberFormattingOverridesJson" class="form-label"></label>
+                <textarea asp-for="NumberFormattingOverridesJson" class="form-control" rows="3"></textarea>
+                <field-help for="NumberFormattingOverridesJson" text="JSON overrides for number/currency separators and formats. When empty, defaults derived from culture will be used."></field-help>
+                <span asp-validation-for="NumberFormattingOverridesJson" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- WhatsApp Notifications -->
+    <div class="card mb-4">
+        <div class="card-header">WhatsApp Notifications</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="WhatsAppEnabled" />
+                        <label class="form-check-label" asp-for="WhatsAppEnabled"></label>
+                    </div>
+                    <field-help for="WhatsAppEnabled" text="Enable WhatsApp integration to send notifications via the WhatsApp Business Cloud API."></field-help>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="WhatsAppBusinessPhoneId" class="form-label"></label>
+                    <input asp-for="WhatsAppBusinessPhoneId" class="form-control" />
+                    <field-help for="WhatsAppBusinessPhoneId" text="The Meta Business phone ID used for WhatsApp Cloud API."></field-help>
+                    <span asp-validation-for="WhatsAppBusinessPhoneId" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="WhatsAppAccessToken" class="form-label"></label>
+                    <input asp-for="WhatsAppAccessToken" class="form-control" />
+                    <field-help for="WhatsAppAccessToken" text="Access token used for WhatsApp Cloud API calls. Rotate regularly and keep secure."></field-help>
+                    <span asp-validation-for="WhatsAppAccessToken" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="WhatsAppFromPhoneE164" class="form-label"></label>
+                    <input asp-for="WhatsAppFromPhoneE164" class="form-control" />
+                    <field-help for="WhatsAppFromPhoneE164" text="Sender phone number in E.164 format (e.g., +491234567890)."></field-help>
+                    <span asp-validation-for="WhatsAppFromPhoneE164" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="WhatsAppAdminRecipientsCsv" class="form-label"></label>
+                    <input asp-for="WhatsAppAdminRecipientsCsv" class="form-control" />
+                    <field-help for="WhatsAppAdminRecipientsCsv" text="Comma-separated list of admin recipient phone numbers (E.164 format). Notifications will be sent to these numbers."></field-help>
+                    <span asp-validation-for="WhatsAppAdminRecipientsCsv" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

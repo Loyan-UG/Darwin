@@ -1,4 +1,11 @@
-﻿namespace Darwin.Web.Services.Settings
+﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Settings.DTOs;
+using Microsoft.Extensions.Caching.Memory;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Darwin.Web.Services.Settings
 {
     /// <summary>
     ///     Abstraction for retrieving and caching site-wide settings (culture, units, SEO flags, feature toggles),
@@ -17,7 +24,18 @@
     ///         Admin controllers (dropdown options), UI helpers (formatting, culture), SEO services (canonical/hreflang).
     ///     </para>
     /// </remarks>
-    public class ISiteSettingCache
+    public interface ISiteSettingCache
     {
+        /// <summary>
+        /// Gets the current site settings with caching semantics.
+        /// </summary>
+        Task<SiteSettingDto> GetAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// Invalidates the in-memory cache so that the next read hits the database.
+        /// </summary>
+        void Invalidate();
     }
+
+
 }

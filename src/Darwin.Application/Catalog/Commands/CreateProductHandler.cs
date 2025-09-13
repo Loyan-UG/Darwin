@@ -7,6 +7,8 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
+using Darwin.Application.Common.Html;
+
 
 namespace Darwin.Application.Catalog.Commands
 {
@@ -34,12 +36,15 @@ namespace Darwin.Application.Catalog.Commands
         private readonly IAppDbContext _db;
         private readonly IMapper _mapper;
         private readonly IValidator<ProductCreateDto> _validator;
+        private readonly IHtmlSanitizer _sanitizer;
 
-        public CreateProductHandler(IAppDbContext db, IMapper mapper, IValidator<ProductCreateDto> validator)
+
+        public CreateProductHandler(IAppDbContext db, IMapper mapper, IValidator<ProductCreateDto> validator, IHtmlSanitizer sanitizer)
         {
             _db = db;
             _mapper = mapper;
             _validator = validator;
+            _sanitizer = sanitizer;
         }
 
         public async Task<Guid> HandleAsync(ProductCreateDto dto, CancellationToken ct = default)
@@ -52,6 +57,16 @@ namespace Darwin.Application.Catalog.Commands
             if (product.Kind == Domain.Enums.ProductKind.Simple && product.Variants.Count == 0)
             {
                 throw new ValidationException("Simple product must contain one variant.");
+            }
+
+            // SANITIZE translations:
+            foreach (var t in product.Translations)
+            {
+                t.FullDescriptionHtml = HtmlSanitizerHelper.SanitizeOrNull(_sanitizer, t.FullDescriptionHtml);
+                t.ShortDescription = t.ShortDescription?.Trim();
+                t.MetaTitle = t.MetaTitle?.Trim();
+                t.MetaDescription = t.MetaDescription?.Trim();
+                t.SearchKeywords = t.SearchKeywords?.Trim();
             }
 
             _db.Set<Product>().Add(product);

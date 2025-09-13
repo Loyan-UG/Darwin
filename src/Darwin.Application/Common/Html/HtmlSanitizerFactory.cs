@@ -1,43 +1,28 @@
 ﻿using AngleSharp.Dom;
 using Ganss.Xss;
+using System;
 
 namespace Darwin.Application.Common.Html
 {
     /// <summary>
-    ///     Factory for creating preconfigured HTML sanitizers used to clean user-supplied rich text content
-    ///     (e.g., CMS pages, product descriptions) before persistence or rendering.
+    /// Factory that produces configured <see cref="IHtmlSanitizer"/> instances using Ganss.Xss.
+    /// Centralizes allowed tags/attributes/schemes and post-processing rules.
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         Security:
-    ///         <list type="bullet">
-    ///             <item>Mitigates XSS by allowing only a curated set of tags, attributes, and URI schemes.</item>
-    ///             <item>Optionally rewrites or filters <c>&lt;a&gt;</c> and <c>&lt;img&gt;</c> attributes (nofollow, target, data-uris).</item>
-    ///         </list>
-    ///     </para>
-    ///     <para>
-    ///         Extensibility:
-    ///         <list type="bullet">
-    ///             <item>Expose a single place to adjust allowed elements across the app.</item>
-    ///             <item>Consider environment-specific policies (e.g., stricter in Public, more relaxed for Admin previews).</item>
-    ///         </list>
-    ///     </para>
-    ///     <para>
-    ///         Usage:
-    ///         Instantiate the sanitizer via this factory in Application handlers right before saving HTML to the database.
-    ///     </para>
-    /// </remarks>
     public static class HtmlSanitizerFactory
     {
-        public static HtmlSanitizer Create()
+        /// <summary>
+        /// Creates a sanitizer tailored for Quill-like rich text and wraps it in an adapter
+        /// that implements the app-level <see cref="IHtmlSanitizer"/> interface.
+        /// </summary>
+        public static IHtmlSanitizer Create()
         {
-            var s = new HtmlSanitizer();
+            var s = new HtmlSanitizer(); // parameterless ctor; then mutate allow-lists
 
-            // Schemes
-            s.AllowedSchemes.Add("data");      // allow data: for small inline images (remove if unwanted)
-            s.AllowedSchemes.Remove("file");
+            // URL schemes
+            s.AllowedSchemes.Add("data");    // allow inline images if needed; remove if you don't want data URIs
+            s.AllowedSchemes.Remove("file"); // disallow local files
 
-            // Tags
+            // Allowed tags
             s.AllowedTags.UnionWith(new[]
             {
                 "p","br","hr","span","div","blockquote","pre","code",
@@ -45,51 +30,59 @@ namespace Darwin.Application.Common.Html
                 "h1","h2","h3","h4","h5","h6",
                 "ul","ol","li",
                 "a","img","figure","figcaption",
-                "table","thead","tbody","tfoot","tr","th","td",
-                "video","audio","source","track",
-                "iframe"
+                "table","thead","tbody","tfoot","tr","th","td"
             });
 
-            // Attributes
+            // Allowed attributes
             s.AllowedAttributes.UnionWith(new[]
             {
                 "class","id","style","title","dir","lang",
                 "href","target","rel",
                 "src","alt","width","height","data-*",
-                "border","cellpadding","cellspacing","rowspan","colspan","scope","align","valign",
-                "controls","autoplay","loop","muted","poster","preload",
-                "frameborder","allow","allowfullscreen","referrerpolicy"
+                "border","cellpadding","cellspacing","rowspan","colspan","scope","align","valign"
             });
 
-            // (Optional) Restrict inline CSS further if you want
+            // Allowed inline CSS properties
             s.AllowedCssProperties.UnionWith(new[]
             {
                 "text-align","margin","padding","border","border-collapse","width","height",
                 "background-color","color","font-size","font-weight","font-style",
-                "list-style-type","vertical-align"
+                "list-style-type","vertical-align","border-radius","max-width"
             });
 
-            // Limit <iframe> to safe providers
-            s.PostProcessNode += (sender, e) =>
+            // Post-processing: harden anchors & images
+            s.PostProcessNode += (_, e) =>
             {
-                if (e.Node is IElement el && el.NodeName.Equals("IFRAME", System.StringComparison.OrdinalIgnoreCase))
+                if (e.Node is IElement el)
                 {
-                    var src = el.GetAttribute("src") ?? string.Empty;
-
-                    // allow-list of embed providers (extend as needed)
-                    var allowed =
-                        src.Contains("youtube.com/embed/", System.StringComparison.OrdinalIgnoreCase) ||
-                        src.Contains("player.vimeo.com/video/", System.StringComparison.OrdinalIgnoreCase);
-
-                    if (!allowed)
+                    if (el.NodeName.Equals("A", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Remove the iframe if not in allow-list
-                        el.Remove();
+                        el.SetAttribute("rel", "noopener");
+                        var target = el.GetAttribute("target");
+                        if (!string.Equals(target, "_blank", StringComparison.OrdinalIgnoreCase))
+                            el.SetAttribute("target", "_self");
+                    }
+                    else if (el.NodeName.Equals("IMG", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var src = el.GetAttribute("src") ?? string.Empty;
+                        // strip data URIs if you consider them unsafe:
+                        // if (src.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                        //     el.RemoveAttribute("src");
                     }
                 }
             };
 
-            return s;
+            return new GanssHtmlSanitizerAdapter(s);
+        }
+
+        /// <summary>
+        /// Adapter to bridge Ganss.Xss.HtmlSanitizer to the app's <see cref="IHtmlSanitizer"/>.
+        /// </summary>
+        private sealed class GanssHtmlSanitizerAdapter : IHtmlSanitizer
+        {
+            private readonly HtmlSanitizer _inner;
+            public GanssHtmlSanitizerAdapter(HtmlSanitizer inner) => _inner = inner;
+            public string Sanitize(string html) => _inner.Sanitize(html);
         }
     }
 }

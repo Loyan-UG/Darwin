@@ -13,15 +13,15 @@ namespace Darwin.Application.Settings.Commands
     public sealed class UpdateSiteSettingHandler
     {
         private readonly IAppDbContext _db;
-        private readonly IValidator<UpdateSiteSettingDto> _validator;
+        private readonly IValidator<SiteSettingDto> _validator;
 
-        public UpdateSiteSettingHandler(IAppDbContext db, IValidator<UpdateSiteSettingDto> validator)
+        public UpdateSiteSettingHandler(IAppDbContext db, IValidator<SiteSettingDto> validator)
         {
             _db = db;
             _validator = validator;
         }
 
-        public async Task HandleAsync(UpdateSiteSettingDto dto, CancellationToken ct = default)
+        public async Task HandleAsync(SiteSettingDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
