@@ -27,6 +27,7 @@ namespace Darwin.Application.CMS.Validators
         }
     }
 
+
     public sealed class PageEditUniqueSlugValidator : AbstractValidator<PageEditDto>
     {
         private readonly IAppDbContext _db;

@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Catalog\Validators\CategoryValidators.UniqueSlug.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="15.0.1" />
     <PackageReference Include="FluentValidation" Version="12.0.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
@@ -23,11 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="CMS\Mapping\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Catalog\Validators\CategoryValidators.UniqueSlug.cs" />
+    <Folder Include="x\Commands\" />
+    <Folder Include="x\DTOs\" />
+    <Folder Include="x\Validators\" />
+    <Folder Include="x\Queries\" />
   </ItemGroup>
 
 </Project>

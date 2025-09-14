@@ -1,68 +1,56 @@
 ﻿using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Cart.Commands;
+using Darwin.Application.Cart.DTOs;
+using Darwin.Application.Cart.Validators;
+using Darwin.Application.Cart.Queries;
 using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
-using Darwin.Application.Catalog.Queries.GetProductForEdit;
-using Darwin.Application.Catalog.Queries.GetProductsPage;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Application.CMS.Commands;
+using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Queries;
+using Darwin.Application.CMS.Validators;
 using Darwin.Application.Common.Html;
 using Darwin.Application.Extensions;
 using Darwin.Application.Settings.Commands;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Application.Settings.Queries;
 using Darwin.Application.Settings.Validators;
+using Darwin.Application.Shipping.Commands;
+using Darwin.Application.Shipping.DTOs;
+using Darwin.Application.Shipping.Queries;
+using Darwin.Application.Shipping.Validators;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Web.Auth;
 using Darwin.Web.Services.Seo;
 using Darwin.Web.Services.Settings;
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-
-
-
-
 namespace Darwin.Web.Extensions
 {
     /// <summary>
-    ///     Service registration for the Web layer (composition root). Aggregates MVC/Razor setup,
-    ///     localization primitives, model binders/formatters, and Web-specific services into a single
-    ///     discoverable entrypoint that can be called from <c>Program.cs</c>.
+    /// Service registration for the Web layer. Aggregates MVC/Razor setup,
+    /// localization primitives, model binders/formatters, and Web-specific services
+    /// into a single discoverable entrypoint that can be called from Program.cs.
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         Goals:
-    ///         <list type="bullet">
-    ///             <item>Keep <c>Program.cs</c> concise and declarative.</item>
-    ///             <item>Group related service registrations to reduce scattering and improve evolvability.</item>
-    ///             <item>Provide a single place to add/remap Admin-specific services (settings cache, tag helpers, view locations).</item>
-    ///         </list>
-    ///     </para>
-    ///     <para>
-    ///         Notes:
-    ///         This extension should remain free of infrastructure-specific registrations (EF, logging),
-    ///         which are handled in the Infrastructure project.
-    ///     </para>
-    /// </remarks>
     public static class DependencyInjection
     {
         /// <summary>
-        /// Registers all web-layer services and cross-cutting components used by MVC.
-        /// Keep infrastructure-specific registrations in Infrastructure project.
+        /// Adds all Web-layer services to the <see cref="IServiceCollection"/>.
+        /// This method should be invoked in Program.cs to bootstrap the Web layer.
         /// </summary>
         public static IServiceCollection AddWebComposition(this IServiceCollection services, IConfiguration config)
         {
-            // 1) MVC + Localization
+            // MVC and localization. RuntimeCompilation is useful during development; remove in production.
             services
                 .AddControllersWithViews(options =>
                 {
-                    // Avoid implicit [Required] for non-nullable reference types (we rely on explicit validators).
+                    // Avoid implicit [Required] for non-nullable reference types.
                     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
                 })
                 .AddViewLocalization()
@@ -72,55 +60,65 @@ namespace Darwin.Web.Extensions
 #endif
                 ;
 
-            // 2) Application layer (AutoMapper + Validator scanning)
+            // Application layer (includes AutoMapper + validators scanning)
             services.AddApplication();
 
-            // 3) Persistence (DbContext + IAppDbContext + Seeder)
+            // Persistence (DbContext + IAppDbContext + Seeder)
             services.AddPersistence(config);
 
-            // 4) Anti-forgery defaults (Admin forms)
+            // Anti-forgery defaults for Admin forms
             services.AddAntiforgery();
 
-            // 5) Handlers — Products
+            // Register handlers — Products
             services.AddScoped<CreateProductHandler>();
             services.AddScoped<UpdateProductHandler>();
             services.AddScoped<GetProductsPageHandler>();
             services.AddScoped<GetProductForEditHandler>();
 
-            // 6) Handlers — Categories / CMS
+            // Register handlers — Categories
             services.AddScoped<CreateCategoryHandler>();
             services.AddScoped<UpdateCategoryHandler>();
             services.AddScoped<GetCategoriesPageHandler>();
             services.AddScoped<GetCategoryForEditHandler>();
 
+            // Register handlers — CMS pages
             services.AddScoped<CreatePageHandler>();
             services.AddScoped<UpdatePageHandler>();
             services.AddScoped<GetPagesPageHandler>();
             services.AddScoped<GetPageForEditHandler>();
 
-            // 7) Lookups & Settings
+            // Register handlers — Shipping methods (admin)
+            services.AddScoped<CreateShippingMethodHandler>();
+            services.AddScoped<UpdateShippingMethodHandler>();
+            services.AddScoped<GetShippingMethodsPageHandler>();
+            services.AddScoped<GetShippingMethodForEditHandler>();
+
+            // Lookups and cultures
             services.AddScoped<GetCatalogLookupsHandler>();
             services.AddScoped<GetCulturesHandler>();
 
+            // Site settings handlers
             services.AddScoped<GetSiteSettingHandler>();
             services.AddScoped<UpdateSiteSettingHandler>();
 
-            // 8) Web services
+            // HttpContext accessor and user service
             services.AddHttpContextAccessor();
             services.AddScoped<ICanonicalUrlService, CanonicalUrlService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-            // 9) Settings cache (used by controllers/views)
+            // Settings cache
             services.AddMemoryCache();
             services.AddScoped<ISiteSettingCache, SiteSettingCache>();
 
-            // 10) HTML Sanitizer (Ganss.Xss via our factory)
+            // HTML Sanitizer using our factory (singleton across the app)
             services.AddSingleton<IHtmlSanitizer>(_ => HtmlSanitizerFactory.Create());
 
-            // 11) Product validators: base + unique slug composition (no extra libs)
+            // Composite validators for Product (Create/Edit) combining base + unique slug
             services.AddScoped<IValidator<ProductCreateDto>>(sp =>
             {
+                // Base product validation (translations, variants, required fields)
                 var baseValidator = new ProductCreateDtoValidator();
+                // Unique slug validation for product
                 var unique = new ProductCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
                 return new InlineCompositeValidator<ProductCreateDto>(baseValidator, unique);
             });
@@ -132,21 +130,103 @@ namespace Darwin.Web.Extensions
                 return new InlineCompositeValidator<ProductEditDto>(baseValidator, unique);
             });
 
-            // 12) Settings validator (Update DTO)
+            // Composite validators for Category (Create/Edit) combining base + unique slug
+            services.AddScoped<IValidator<CategoryCreateDto>>(sp =>
+            {
+                var baseValidator = new CategoryCreateDtoValidator();
+                var unique = new CategoryCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<CategoryCreateDto>(baseValidator, unique);
+            });
+
+            services.AddScoped<IValidator<CategoryEditDto>>(sp =>
+            {
+                var baseValidator = new CategoryEditDtoValidator();
+                var unique = new CategoryEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<CategoryEditDto>(baseValidator, unique);
+            });
+
+            // Composite validators for CMS pages (Create/Edit) combining base + unique slug
+            services.AddScoped<IValidator<PageCreateDto>>(sp =>
+            {
+                var baseValidator = new PageCreateDtoValidator();
+                var unique = new PageCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<PageCreateDto>(baseValidator, unique);
+            });
+
+            services.AddScoped<IValidator<PageEditDto>>(sp =>
+            {
+                var baseValidator = new PageEditDtoValidator();
+                var unique = new PageEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<PageEditDto>(baseValidator, unique);
+            });
+            // Settings validator for SiteSettingDto (combined read/update).  We use
+            // SiteSettingEditValidator as the unified validator for SiteSettingDto.
             services.AddScoped<IValidator<SiteSettingDto>, SiteSettingEditValidator>();
 
-            // 13) Register all validators from Application assembly (for other DTOs)
-            services.AddValidatorsFromAssembly(
-                Assembly.Load("Darwin.Application"),
-                includeInternalTypes: true
-            );
+            // Composite validators for Brands (Create/Edit) combining base + unique slug
+            services.AddScoped<IValidator<BrandCreateDto>>(sp =>
+            {
+                var baseValidator = new BrandCreateDtoValidator();
+                var unique = new BrandCreateUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<BrandCreateDto>(baseValidator, unique);
+            });
+
+            services.AddScoped<IValidator<BrandEditDto>>(sp =>
+            {
+                var baseValidator = new BrandEditDtoValidator();
+                var unique = new BrandEditUniqueSlugValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<BrandEditDto>(baseValidator, unique);
+            });
+
+            // Composite validators for ShippingMethods (Create/Edit) combining base + unique name
+            services.AddScoped<IValidator<ShippingMethodCreateDto>>(sp =>
+            {
+                var baseValidator = new ShippingMethodCreateDtoValidator();
+                var unique = new ShippingMethodCreateUniqueNameValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<ShippingMethodCreateDto>(baseValidator, unique);
+            });
+
+            services.AddScoped<IValidator<ShippingMethodEditDto>>(sp =>
+            {
+                var baseValidator = new ShippingMethodEditDtoValidator();
+                var unique = new ShippingMethodEditUniqueNameValidator(sp.GetRequiredService<IAppDbContext>());
+                return new InlineCompositeValidator<ShippingMethodEditDto>(baseValidator, unique);
+            });
+
+            
+
+
+            // -----------------------------------------------------------------------------
+            // Cart handlers and validators
+            //
+            // The cart module allows managing shopping carts and their items in the Admin
+            // interface (for support scenarios such as editing abandoned carts or
+            // verifying orders).  We register the command/query handlers and explicit
+            // validators for each DTO.  These validators enforce required fields and
+            // concurrency tokens.  They are also discoverable via the assembly scan below.
+            services.AddScoped<AddCartItemHandler>();
+            services.AddScoped<UpdateCartItemHandler>();
+            services.AddScoped<RemoveCartItemHandler>();
+            services.AddScoped<GetCartForEditHandler>();
+
+            // DTO validators for the cart module.  Explicit registration ensures that
+            // validators are available to the handlers via dependency injection.
+            services.AddScoped<IValidator<CartCreateDto>, CartCreateDtoValidator>();
+            services.AddScoped<IValidator<AddCartItemDto>, AddCartItemDtoValidator>();
+            services.AddScoped<IValidator<UpdateCartItemDto>, UpdateCartItemDtoValidator>();
+            services.AddScoped<IValidator<RemoveCartItemDto>, RemoveCartItemDtoValidator>();
+
+            // Register all other validators from Application assembly
+            services.AddValidatorsFromAssembly(Assembly.Load("Darwin.Application"), includeInternalTypes: true);
 
             return services;
         }
 
         /// <summary>
-        /// Minimal composite validator to combine multiple FluentValidation validators without extra packages.
+        /// Minimal composite validator that combines multiple FluentValidation validators without using
+        /// an external library. It simply includes each provided validator into a single pipeline.
         /// </summary>
+        /// <typeparam name="T">Type being validated.</typeparam>
         public sealed class InlineCompositeValidator<T> : AbstractValidator<T>
         {
             public InlineCompositeValidator(params IValidator<T>[] validators)

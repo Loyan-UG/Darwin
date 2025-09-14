@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
-using Darwin.Application.Catalog.Categories.DTOs;
+using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;

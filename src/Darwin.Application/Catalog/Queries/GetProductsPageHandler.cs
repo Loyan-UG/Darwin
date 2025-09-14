@@ -7,7 +7,7 @@ using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 
-namespace Darwin.Application.Catalog.Queries.GetProductsPage
+namespace Darwin.Application.Catalog.Queries
 {
     /// <summary>
     ///     Paged query handler for listing products in Admin, returning lightweight rows suitable

@@ -7,7 +7,7 @@ using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using Microsoft.EntityFrameworkCore;
 
-namespace Darwin.Application.Catalog.Queries.GetProductForEdit
+namespace Darwin.Application.Catalog.Queries
 {
     public sealed class GetProductForEditHandler
     {
