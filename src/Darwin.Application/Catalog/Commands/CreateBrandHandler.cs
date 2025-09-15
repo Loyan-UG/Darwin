@@ -1,55 +1,59 @@
-﻿using Darwin.Application.Abstractions.Persistence;
-using Darwin.Application.Catalog.DTOs;
-using Darwin.Domain.Entities.Catalog;
-using FluentValidation;
-using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
-#include System.Threading.Tasks;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Catalog.DTOs;
+using Darwin.Application.Catalog.Validators;
+using Darwin.Application.Common.Html;
+using Darwin.Domain.Entities.Catalog;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
-    /// Handles creation of a new brand including its translations.
+    /// Creates a new brand with translations after validating input and sanitizing HTML fields.
+    /// Enforces unique slug (when provided) with a pre-insert check for a friendly error.
     /// </summary>
     public sealed class CreateBrandHandler
     {
         private readonly IAppDbContext _db;
-        private readonly IValidator<BrandCreateDto> _validator;
+        private readonly BrandCreateDtoValidator _validator = new();
 
-        public CreateBrandHandler(IAppDbContext db, IValidator<BrandCreateDto> validator)
-        {
-            _db = db;
-            _validator = validator;
-        }
+        public CreateBrandHandler(IAppDbContext db) => _db = db;
 
-        public async Task<Guid> HandleAsync(BrandCreateDto dto, CancellationToken ct = default)
+        public async Task HandleAsync(BrandCreateDto dto, CancellationToken ct = default)
         {
-            await _validator.ValidateAndThrowAsync(dto, ct);
+            var validation = _validator.Validate(dto);
+            if (!validation.IsValid)
+                throw new FluentValidation.ValidationException(validation.Errors);
+
+            if (!string.IsNullOrWhiteSpace(dto.Slug))
+            {
+                var slugExists = await _db.Set<Brand>().AnyAsync(b => b.Slug == dto.Slug, ct);
+                if (slugExists)
+                    throw new FluentValidation.ValidationException("Slug must be unique.");
+            }
+
+            var sanitizer = HtmlSanitizerFactory.Create();
 
             var brand = new Brand
             {
-                Id = Guid.NewGuid(),
-                Translations = dto.Translations.Select(t => new BrandTranslation
-                {
-                    Id = Guid.NewGuid(),
-                    BrandId = Guid.Empty, // will be set after adding brand
-                    Culture = t.Culture,
-                    Name = t.Name,
-                    Slug = t.Slug,
-                    Description = t.Description,
-                    MetaTitle = t.MetaTitle,
-                    MetaDescription = t.MetaDescription
-                }).ToList()
+                Slug = dto.Slug?.Trim(),
+                LogoMediaId = dto.LogoMediaId
             };
-            // set BrandId for translations
-            foreach (var tr in brand.Translations)
-                tr.BrandId = brand.Id;
+
+            foreach (var tr in dto.Translations)
+            {
+                brand.Translations.Add(new BrandTranslation
+                {
+                    Culture = tr.Culture.Trim(),
+                    Name = tr.Name.Trim(),
+                    DescriptionHtml = tr.DescriptionHtml is null ? null : sanitizer.Sanitize(tr.DescriptionHtml)
+                });
+            }
 
             _db.Set<Brand>().Add(brand);
             await _db.SaveChangesAsync(ct);
-            return brand.Id;
         }
     }
 }
-,

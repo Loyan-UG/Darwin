@@ -1,59 +1,52 @@
-﻿using Darwin.Application.Catalog.DTOs;
+﻿using System.Linq;
+using Darwin.Application.Catalog.DTOs;
 using FluentValidation;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Darwin.Application.Catalog.Validators
 {
     /// <summary>
-    /// Validates translation objects for Brand.
-    /// </summary>
-    public sealed class BrandTranslationDtoValidator : AbstractValidator<BrandTranslationDto>
-    {
-        public BrandTranslationDtoValidator()
-        {
-            RuleFor(t => t.Culture)
-                .NotEmpty()
-                .Must(IsValidCulture).WithMessage("Culture must be in format ll-CC, e.g. de-DE");
-            RuleFor(t => t.Name).NotEmpty().MaximumLength(100);
-            RuleFor(t => t.Slug).NotEmpty().MaximumLength(200);
-            RuleFor(t => t.Description).MaximumLength(1000);
-            RuleFor(t => t.MetaTitle).MaximumLength(100);
-            RuleFor(t => t.MetaDescription).MaximumLength(200);
-        }
-
-        private static bool IsValidCulture(string c)
-            => Regex.IsMatch(c, "^[a-z]{2}-[A-Z]{2}$");
-    }
-
-    /// <summary>
-    /// Validates the create DTO for Brand.
+    /// Validation rules for creating a brand (requires at least one translation with Culture+Name).
     /// </summary>
     public sealed class BrandCreateDtoValidator : AbstractValidator<BrandCreateDto>
     {
         public BrandCreateDtoValidator()
         {
-            RuleFor(x => x.Translations).NotEmpty().WithMessage("At least one translation is required");
-            RuleForEach(x => x.Translations).SetValidator(new BrandTranslationDtoValidator());
             RuleFor(x => x.Translations)
-                .Must(t => t.Select(tr => tr.Culture).Distinct().Count() == t.Count)
-                .WithMessage("Duplicate cultures are not allowed in translations");
+                .NotNull().WithMessage("Translations are required.")
+                .Must(t => t.Count > 0).WithMessage("At least one translation is required.");
+
+            RuleForEach(x => x.Translations).ChildRules(tr =>
+            {
+                tr.RuleFor(t => t.Culture).NotEmpty().MaximumLength(16);
+                tr.RuleFor(t => t.Name).NotEmpty().MaximumLength(256);
+                // DescriptionHtml length intentionally not limited; sanitized on write.
+            });
+
+            RuleFor(x => x.Slug).MaximumLength(256);
         }
     }
 
     /// <summary>
-    /// Validates the edit DTO for Brand, including concurrency.
+    /// Validation rules for editing a brand. Mirrors create, and ensures RowVersion presence.
     /// </summary>
     public sealed class BrandEditDtoValidator : AbstractValidator<BrandEditDto>
     {
         public BrandEditDtoValidator()
         {
-            RuleFor(x => x.RowVersion).NotNull().Must(v => v.Length > 0);
-            RuleFor(x => x.Translations).NotEmpty();
-            RuleForEach(x => x.Translations).SetValidator(new BrandTranslationDtoValidator());
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotNull();
+
             RuleFor(x => x.Translations)
-                .Must(t => t.Select(tr => tr.Culture).Distinct().Count() == t.Count)
-                .WithMessage("Duplicate cultures are not allowed in translations");
+                .NotNull().WithMessage("Translations are required.")
+                .Must(t => t.Count > 0).WithMessage("At least one translation is required.");
+
+            RuleForEach(x => x.Translations).ChildRules(tr =>
+            {
+                tr.RuleFor(t => t.Culture).NotEmpty().MaximumLength(16);
+                tr.RuleFor(t => t.Name).NotEmpty().MaximumLength(256);
+            });
+
+            RuleFor(x => x.Slug).MaximumLength(256);
         }
     }
 }
