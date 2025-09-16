@@ -1,91 +1,59 @@
-﻿using System;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Shipping.DTOs;
+using Darwin.Application.Shipping.Validators;
 using Darwin.Domain.Entities.Shipping;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Shipping.Commands
 {
     /// <summary>
-    ///     Use‑case handler that creates a new shipping method along with its
-    ///     tiered rates. The handler performs validation, maps the DTO into
-    ///     domain entities, and persists the aggregate in a single unit of work.
+    /// Creates a new shipping method along with its tiered rates (replace-all strategy in phase 1).
+    /// Ensures (Carrier, Service) uniqueness to avoid duplicates in admin UI.
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         Responsibilities:
-    ///         <list type="bullet">
-    ///             <item>Validate input via FluentValidation (including unique
-    ///                  name constraints).</item>
-    ///             <item>Map the DTO to domain entities using AutoMapper.</item>
-    ///             <item>Persist the aggregate using the application DbContext.</item>
-    ///         </list>
-    ///     </para>
-    /// </remarks>
     public sealed class CreateShippingMethodHandler
     {
         private readonly IAppDbContext _db;
-        private readonly IValidator<ShippingMethodCreateDto> _validator;
+        private readonly ShippingMethodCreateValidator _validator = new();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CreateShippingMethodHandler"/>.
-        /// We inject only the DbContext and the validator. No AutoMapper is used here;
-        /// instead, the handler maps DTO properties to the domain entity explicitly.
-        /// Explicit mapping reduces coupling to AutoMapper configuration and makes
-        /// the mapping logic easier to follow and maintain.
-        /// </summary>
-        /// <param name="db">Database context used to persist entities.</param>
-        /// <param name="validator">FluentValidation validator for <see cref="ShippingMethodCreateDto"/>.</param>
-        public CreateShippingMethodHandler(IAppDbContext db, IValidator<ShippingMethodCreateDto> validator)
+        public CreateShippingMethodHandler(IAppDbContext db) => _db = db;
+
+        public async Task HandleAsync(ShippingMethodCreateDto dto, CancellationToken ct = default)
         {
-            _db = db;
-            _validator = validator;
-        }
+            var v = _validator.Validate(dto);
+            if (!v.IsValid) throw new ValidationException(v.Errors);
 
-        /// <summary>
-        /// Handles the creation request asynchronously.
-        /// </summary>
-        /// <param name="dto">Input DTO with method properties and rate definitions.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>Identifier of the newly created shipping method.</returns>
-        /// <exception cref="ValidationException">Thrown when validation fails.</exception>
-        public async Task<Guid> HandleAsync(ShippingMethodCreateDto dto, CancellationToken ct = default)
-        {
-            await _validator.ValidateAndThrowAsync(dto, ct);
+            var exists = await _db.Set<ShippingMethod>().AsNoTracking()
+                .AnyAsync(m => m.Carrier == dto.Carrier && m.Service == dto.Service, ct);
+            if (exists)
+                throw new ValidationException("Carrier/Service combination must be unique.");
 
-            // Manually map the DTO into a new domain entity. We avoid using AutoMapper
-            // here because there is no mapping profile configured for ShippingMethod and
-            // explicit mapping clarifies which properties are populated.
-            var entity = new ShippingMethod
+            var method = new ShippingMethod
             {
-                Name = dto.Name,
-                Carrier = dto.Carrier,
-                Service = dto.Service,
-                CountriesCsv = dto.CountriesCsv,
-                IsActive = dto.IsActive
+                Name = dto.Name.Trim(),
+                Carrier = dto.Carrier.Trim(),
+                Service = dto.Service.Trim(),
+                CountriesCsv = string.IsNullOrWhiteSpace(dto.CountriesCsv) ? null : dto.CountriesCsv.Trim(),
+                IsActive = dto.IsActive,
+                Currency = string.IsNullOrWhiteSpace(dto.Currency) ? null : dto.Currency.Trim()
             };
 
-            // Map each rate DTO into a ShippingRate domain object. We do not
-            // reuse existing rate entities because this is a new aggregate.
-            foreach (var r in dto.Rates)
+            foreach (var r in dto.Rates.OrderBy(r => r.SortOrder))
             {
-                var rate = new ShippingRate
+                method.Rates.Add(new ShippingRate
                 {
-                    MaxWeight = r.MaxWeight,
+                    MaxShipmentMass = r.MaxShipmentMass,
                     MaxSubtotalNetMinor = r.MaxSubtotalNetMinor,
                     PriceMinor = r.PriceMinor,
                     SortOrder = r.SortOrder
-                };
-                entity.Rates.Add(rate);
+                });
             }
 
-            // Add and persist the aggregate. EF Core will generate Id and RowVersion.
-            _db.Set<ShippingMethod>().Add(entity);
+            _db.Set<ShippingMethod>().Add(method);
             await _db.SaveChangesAsync(ct);
-
-            return entity.Id;
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,46 +10,36 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Shipping.Queries
 {
     /// <summary>
-    /// Query handler that retrieves a lightweight list of shipping methods for
-    /// administrative index pages. Each item includes identifying information,
-    /// carrier/service codes, activation flag and the number of associated
-    /// rate tiers. Soft‑deleted records are excluded via the global query
-    /// filter configured on <see cref="ShippingMethod"/>.
+    /// Returns a paged list of shipping methods for the Admin grid.
     /// </summary>
     public sealed class GetShippingMethodsPageHandler
     {
         private readonly IAppDbContext _db;
+        public GetShippingMethodsPageHandler(IAppDbContext db) => _db = db;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="GetShippingMethodsPageHandler"/>.
-        /// </summary>
-        /// <param name="db">Database context used for reading shipping methods.</param>
-        public GetShippingMethodsPageHandler(IAppDbContext db)
+        public async Task<(List<ShippingMethodListItemDto> Items, int Total)> HandleAsync(
+            int page, int pageSize, CancellationToken ct = default)
         {
-            _db = db;
-        }
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
 
-        /// <summary>
-        /// Retrieves all non‑deleted shipping methods and projects them into
-        /// <see cref="ShippingMethodListItemDto"/> objects. No pagination is
-        /// applied; callers may paginate or sort the results as needed.
-        /// </summary>
-        /// <param name="ct">Cancellation token for async operation.</param>
-        /// <returns>A list of shipping method list items.</returns>
-        public async Task<List<ShippingMethodListItemDto>> HandleAsync(CancellationToken ct = default)
-        {
-            return await _db.Set<ShippingMethod>()
-                .AsNoTracking()
-                .Select(sm => new ShippingMethodListItemDto
+            var baseQuery = _db.Set<ShippingMethod>().AsNoTracking();
+            var total = await baseQuery.CountAsync(ct);
+
+            var items = await baseQuery
+                .Include(m => m.Rates)
+                .OrderBy(m => m.Carrier).ThenBy(m => m.Service)
+                .Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(m => new ShippingMethodListItemDto
                 {
-                    Id = sm.Id,
-                    Name = sm.Name,
-                    Carrier = sm.Carrier,
-                    Service = sm.Service,
-                    IsActive = sm.IsActive,
-                    RateCount = sm.Rates.Count
-                })
-                .ToListAsync(ct);
+                    Id = m.Id,
+                    DisplayName = m.Carrier + " – " + m.Service,
+                    IsActive = m.IsActive,
+                    RatesCount = m.Rates.Count,
+                    ModifiedAtUtc = m.ModifiedAtUtc
+                }).ToListAsync(ct);
+
+            return (items, total);
         }
     }
 }

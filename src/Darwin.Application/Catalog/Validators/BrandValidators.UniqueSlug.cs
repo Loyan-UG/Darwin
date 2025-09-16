@@ -1,15 +1,15 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Entities.Catalog;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Darwin.Application.Catalog.Validators
 {
     /// <summary>
-    /// Ensures brand slugs are unique per culture for create operations.
+    /// Ensures the (culture-invariant) Brand.Slug is globally unique for create operations.
     /// </summary>
     public sealed class BrandCreateUniqueSlugValidator : AbstractValidator<BrandCreateDto>
     {
@@ -18,20 +18,22 @@ namespace Darwin.Application.Catalog.Validators
         public BrandCreateUniqueSlugValidator(IAppDbContext db)
         {
             _db = db;
-            RuleForEach(x => x.Translations)
-                .MustAsync(BeUniqueSlug).WithMessage("Slug must be unique per culture");
+
+            RuleFor(x => x.Slug)
+                .MaximumLength(256)
+                .MustAsync(BeUniqueSlug).WithMessage("Slug must be unique.")
+                .When(x => !string.IsNullOrWhiteSpace(x.Slug));
         }
 
-        private async Task<bool> BeUniqueSlug(BrandTranslationDto t, CancellationToken ct)
+        private async Task<bool> BeUniqueSlug(string? slug, CancellationToken ct)
         {
-            return !await _db.Set<BrandTranslation>()
-                .AsNoTracking()
-                .AnyAsync(x => x.Culture == t.Culture && x.Slug == t.Slug, ct);
+            if (string.IsNullOrWhiteSpace(slug)) return true;
+            return !await _db.Set<Brand>().AsNoTracking().AnyAsync(b => b.Slug == slug, ct);
         }
     }
 
     /// <summary>
-    /// Ensures brand slugs remain unique per culture when editing a brand.
+    /// Ensures the (culture-invariant) Brand.Slug remains globally unique on edit.
     /// </summary>
     public sealed class BrandEditUniqueSlugValidator : AbstractValidator<BrandEditDto>
     {
@@ -40,15 +42,18 @@ namespace Darwin.Application.Catalog.Validators
         public BrandEditUniqueSlugValidator(IAppDbContext db)
         {
             _db = db;
-            RuleForEach(x => x.Translations)
-                .MustAsync(BeUniqueSlug).WithMessage("Slug must be unique per culture");
+
+            RuleFor(x => x.Slug)
+                .MaximumLength(256)
+                .MustAsync(BeUniqueSlug).WithMessage("Slug must be unique.")
+                .When(x => !string.IsNullOrWhiteSpace(x.Slug));
         }
 
-        private async Task<bool> BeUniqueSlug(BrandEditDto dto, BrandTranslationDto t, CancellationToken ct)
+        private async Task<bool> BeUniqueSlug(BrandEditDto dto, string? slug, CancellationToken ct)
         {
-            return !await _db.Set<BrandTranslation>()
-                .AsNoTracking()
-                .AnyAsync(x => x.Culture == t.Culture && x.Slug == t.Slug && x.BrandId != dto.Id, ct);
+            if (string.IsNullOrWhiteSpace(slug)) return true;
+            return !await _db.Set<Brand>().AsNoTracking()
+                .AnyAsync(b => b.Id != dto.Id && b.Slug == slug, ct);
         }
     }
 }
