@@ -2,7 +2,7 @@
 using Darwin.Domain.Common;
 
 
-namespace Darwin.Domain.Entities.Users
+namespace Darwin.Domain.Entities.Identity
 {
     /// <summary>
     /// Address book entry reusable across orders. Orders also snapshot addresses in JSON.

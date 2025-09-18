@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
@@ -10,61 +12,64 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.CartCheckout.Queries
 {
     /// <summary>
-    /// Resolves a cart by (UserId or AnonymousId) and computes line totals and cart totals in minor units.
+    /// Returns a computed summary of a cart by either UserId or AnonymousId.
+    /// Uses stored snapshots (unit net, VAT, add-on deltas) to produce totals.
     /// </summary>
     public sealed class GetCartSummaryHandler
     {
         private readonly IAppDbContext _db;
         public GetCartSummaryHandler(IAppDbContext db) => _db = db;
 
-        public async Task<CartSummaryDto?> HandleAsync(CartKeyDto key, CancellationToken ct = default)
+        public async Task<CartSummaryDto?> HandleAsync(Guid? userId, string? anonId, CancellationToken ct = default)
         {
-            // Resolve cart
-            var query = _db.Set<Cart>().AsNoTracking().Include(c => c.Items).AsQueryable();
+            var cart = await _db.Set<Cart>()
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c =>
+                    !c.IsDeleted &&
+                    ((userId != null && c.UserId == userId) ||
+                     (userId == null && c.AnonymousId == anonId)),
+                    ct);
 
-            if (key.UserId.HasValue)
-                query = query.Where(c => c.UserId == key.UserId);
-            else if (!string.IsNullOrWhiteSpace(key.AnonymousId))
-                query = query.Where(c => c.AnonymousId == key.AnonymousId);
-            else
-                return null;
+            if (cart == null) return null;
 
-            var cart = await query.FirstOrDefaultAsync(ct);
-            if (cart is null) return null;
-
+            var rows = new List<CartItemRowDto>();
             long subtotalNet = 0;
             long vatTotal = 0;
 
-            var items = cart.Items.Select(i =>
+            foreach (var i in cart.Items.Where(x => !x.IsDeleted))
             {
-                var lineNet = checked(i.UnitPriceNetMinor * i.Quantity);
-                // VAT = round(lineNet * rate) — integer rounding rule can be tuned later (banker's rounding, etc.)
+                var unitNetPlusAddOn = i.UnitPriceNetMinor + i.AddOnPriceDeltaMinor;
+                var lineNet = unitNetPlusAddOn * i.Quantity;
+
+                // VAT is computed from snapshot vat rate for simplicity:
                 var lineVat = (long)Math.Round(lineNet * (double)i.VatRate, MidpointRounding.AwayFromZero);
-                var lineGross = checked(lineNet + lineVat);
+                var lineGross = lineNet + lineVat;
 
-                subtotalNet += lineNet;
-                vatTotal += lineVat;
-
-                return new CartItemRowDto
+                rows.Add(new CartItemRowDto
                 {
                     VariantId = i.VariantId,
                     Quantity = i.Quantity,
                     UnitPriceNetMinor = i.UnitPriceNetMinor,
+                    AddOnPriceDeltaMinor = i.AddOnPriceDeltaMinor,
                     VatRate = i.VatRate,
                     LineNetMinor = lineNet,
                     LineVatMinor = lineVat,
-                    LineGrossMinor = lineGross
-                };
-            }).ToList();
+                    LineGrossMinor = lineGross,
+                    SelectedAddOnValueIdsJson = i.SelectedAddOnValueIdsJson
+                });
+
+                subtotalNet += lineNet;
+                vatTotal += lineVat;
+            }
 
             return new CartSummaryDto
             {
                 CartId = cart.Id,
                 Currency = cart.Currency,
-                Items = items,
+                Items = rows,
                 SubtotalNetMinor = subtotalNet,
                 VatTotalMinor = vatTotal,
-                GrandTotalGrossMinor = checked(subtotalNet + vatTotal),
+                GrandTotalGrossMinor = subtotalNet + vatTotal,
                 CouponCode = cart.CouponCode
             };
         }
