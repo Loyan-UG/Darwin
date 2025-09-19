@@ -14,6 +14,9 @@ namespace Darwin.Domain.Entities.Identity
         /// <summary>When true, record is system-protected (not deletable in Admin).</summary>
         public bool IsSystem { get; set; }
 
+        /// <summary>Whether the account is active (enabled). Admin grids often filter on this.</summary>
+        public bool IsActive { get; set; } = true;
+
         // Login identity
         /// <summary>Unique username (can be same as email for simple setups).</summary>
         public string UserName { get; set; } = string.Empty;
