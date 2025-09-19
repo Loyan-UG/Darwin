@@ -28,6 +28,7 @@ namespace Darwin.Application.Identity.Commands
                 _db.Set<UserRole>().Add(new UserRole { UserId = userId, RoleId = roleId });
                 await _db.SaveChangesAsync(ct);
             }
+
             return Result.Ok();
         }
     }
