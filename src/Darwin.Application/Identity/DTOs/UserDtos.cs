@@ -9,6 +9,7 @@ namespace Darwin.Application.Identity.DTOs
         public string Email { get; set; } = string.Empty;         // Unique login (normalized in Infra)
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; }
         public bool IsSystem { get; set; }
     }
@@ -23,6 +24,7 @@ namespace Darwin.Application.Identity.DTOs
         public string Locale { get; set; } = "de-DE";
         public string Timezone { get; set; } = "Europe/Berlin";
         public string Currency { get; set; } = "EUR";
+        public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsSystem { get; set; } = false;               // If true, protected from destructive ops
     }
@@ -37,6 +39,7 @@ namespace Darwin.Application.Identity.DTOs
         public string Locale { get; set; } = "de-DE";
         public string Timezone { get; set; } = "Europe/Berlin";
         public string Currency { get; set; } = "EUR";
+        public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; } = true;
     }
 

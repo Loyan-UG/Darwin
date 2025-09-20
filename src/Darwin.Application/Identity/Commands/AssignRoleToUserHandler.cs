@@ -16,16 +16,16 @@ namespace Darwin.Application.Identity.Commands
 
         public async Task<Result> HandleAsync(Guid userId, Guid roleId, CancellationToken ct = default)
         {
-            var user = await _db.Set<User>().FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted, ct);
-            if (user == null) return Result.Fail("User not found.");
+            var userExists = await _db.Set<User>().AnyAsync(x => x.Id == userId && !x.IsDeleted, ct);
+            if (!userExists) return Result.Fail("User not found.");
 
-            var role = await _db.Set<Role>().FirstOrDefaultAsync(x => x.Id == roleId && !x.IsDeleted, ct);
-            if (role == null) return Result.Fail("Role not found.");
+            var roleExists = await _db.Set<Role>().AnyAsync(x => x.Id == roleId && !x.IsDeleted, ct);
+            if (!roleExists) return Result.Fail("Role not found.");
 
-            var exists = await _db.Set<UserRole>().AnyAsync(x => x.UserId == userId && x.RoleId == roleId && !x.IsDeleted, ct);
-            if (!exists)
+            var already = await _db.Set<UserRole>().AnyAsync(x => x.UserId == userId && x.RoleId == roleId && !x.IsDeleted, ct);
+            if (!already)
             {
-                _db.Set<UserRole>().Add(new UserRole { UserId = userId, RoleId = roleId });
+                _db.Set<UserRole>().Add(new UserRole(userId, roleId));
                 await _db.SaveChangesAsync(ct);
             }
             return Result.Ok();

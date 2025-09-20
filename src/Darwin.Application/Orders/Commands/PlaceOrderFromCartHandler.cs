@@ -61,6 +61,7 @@ namespace Darwin.Application.Orders.Commands
 
                 order.Lines.Add(new OrderLine
                 {
+                    OrderId = order.Id,
                     VariantId = ci.VariantId,
                     Name = name,
                     Sku = v.Sku,
@@ -70,7 +71,9 @@ namespace Darwin.Application.Orders.Commands
                     UnitPriceGrossMinor = ci.UnitPriceNetMinor + (long)System.Math.Round(ci.UnitPriceNetMinor * (double)ci.VatRate),
                     LineTaxMinor = lineTax,
                     LineGrossMinor = lineGross,
-                    SelectedAddOnValueIdsJson = ci.SelectedAddOnValueIdsJson ?? "[]"
+
+                    AddOnValueIdsJson = ci.SelectedAddOnValueIdsJson ?? "[]",
+                    AddOnPriceDeltaMinor = ci.AddOnPriceDeltaMinor
                 });
 
                 subtotalNet += lineNet;

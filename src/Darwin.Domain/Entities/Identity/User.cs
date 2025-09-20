@@ -100,5 +100,22 @@ namespace Darwin.Domain.Entities.Identity
             var found = ((List<UserRole>)UserRoles).Find(ur => ur.RoleId == roleId);
             if (found != null) UserRoles.Remove(found);
         }
+
+        /// <summary>
+        /// Preferred constructor for Application: enforces minimal invariants.
+        /// Normalize email/username here to keep Infrastructure simpler.
+        /// </summary>
+        public User(string email, string passwordHash, string securityStamp)
+        {
+            Email = email.Trim();
+            NormalizedEmail = Email.ToUpperInvariant();
+            UserName = Email;
+            NormalizedUserName = UserName.ToUpperInvariant();
+
+            PasswordHash = passwordHash ?? throw new ArgumentNullException(nameof(passwordHash));
+            SecurityStamp = securityStamp ?? throw new ArgumentNullException(nameof(securityStamp));
+
+            IsActive = true;
+        }
     }
 }

@@ -13,8 +13,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Creates a new user with a hashed password and default security stamp.
-    /// Enforces unique Email. Avoids creating system users accidentally.
+    /// Creates a new user with a hashed password and security stamp.
+    /// Enforces unique Email (case-insensitive).
     /// </summary>
     public sealed class CreateUserHandler
     {
@@ -32,13 +32,12 @@ namespace Darwin.Application.Identity.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var exists = await _db.Set<User>().AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
+            var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
+            var exists = await _db.Set<User>().AnyAsync(u => u.NormalizedEmail == normalizedEmail && !u.IsDeleted, ct);
             if (exists) return Result<Guid>.Fail("Email already in use.");
 
-            var u = new User
+            var user = new User(dto.Email, _hasher.Hash(dto.Password), _stamps.NewStamp())
             {
-                Email = dto.Email,
-                PasswordHash = _hasher.Hash(dto.Password),
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 Locale = dto.Locale,
@@ -46,12 +45,12 @@ namespace Darwin.Application.Identity.Commands
                 Currency = dto.Currency,
                 IsActive = dto.IsActive,
                 IsSystem = dto.IsSystem,
-                SecurityStamp = _stamps.NewStamp()
+                PhoneE164 = dto.PhoneE164
             };
 
-            _db.Set<User>().Add(u);
+            _db.Set<User>().Add(user);
             await _db.SaveChangesAsync(ct);
-            return Result<Guid>.Ok(u.Id);
+            return Result<Guid>.Ok(user.Id);
         }
     }
 }

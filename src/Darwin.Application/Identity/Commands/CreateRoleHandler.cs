@@ -11,33 +11,32 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Identity.Commands
 {
-    /// <summary>Creates a role with unique Key.</summary>
+    /// <summary>Creates a role with unique Key (Name).</summary>
     public sealed class CreateRoleHandler
     {
         private readonly IAppDbContext _db;
         private readonly IValidator<RoleCreateDto> _validator;
-        public CreateRoleHandler(IAppDbContext db, IValidator<RoleCreateDto> validator) { _db = db; _validator = validator; }
+
+        public CreateRoleHandler(IAppDbContext db, IValidator<RoleCreateDto> validator)
+        {
+            _db = db;
+            _validator = validator;
+        }
 
         public async Task<Result<Guid>> HandleAsync(RoleCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var exists = await _db.Set<Role>().AnyAsync(r => r.Name == dto.Name && !r.IsDeleted, ct);
+            var normalized = dto.Name.Trim().ToUpperInvariant();
+            var exists = await _db.Set<Role>().AnyAsync(r => r.NormalizedName == normalized && !r.IsDeleted, ct);
             if (exists) return Result<Guid>.Fail("Role key already exists.");
 
-            var normalized = dto.Name.Trim().ToUpperInvariant();
+            var role = new Role(dto.Name, dto.DisplayName, dto.IsSystem, dto.Description);
+            // NOTE: Role ctor sets Name/NormalizedName/DisplayName/IsSystem/Description
 
-            var r = new Role
-            {
-                IsSystem = dto.IsSystem,
-                Name = dto.Name.Trim(),
-                NormalizedName = normalized,
-                DisplayName = dto.DisplayName,
-                Description = dto.Description
-            };
-            _db.Set<Role>().Add(r);
+            _db.Set<Role>().Add(role);
             await _db.SaveChangesAsync(ct);
-            return Result<Guid>.Ok(r.Id);
+            return Result<Guid>.Ok(role.Id);
         }
     }
 }

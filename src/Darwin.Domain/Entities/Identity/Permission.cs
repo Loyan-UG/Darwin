@@ -3,26 +3,30 @@
 namespace Darwin.Domain.Entities.Identity
 {
     /// <summary>
-    /// Fine-grained permission primitive. Roles aggregate permissions.
-    /// Examples: FullAdminAccess, ManageUsers, ManageRoles, RecycleBinAccess, AccessAdminPanel, AccessMemberArea.
+    /// Atomic permission switch (assigned to roles).
     /// </summary>
     public sealed class Permission : BaseEntity
     {
-        /// <summary>System-protected permissions cannot be deleted.</summary>
-        public bool IsSystem { get; set; }
+        /// <summary>Permission key (unique, kebab/snake), e.g., "admin.full-access".</summary>
+        public string Key { get; private set; } = string.Empty;
 
-        /// <summary>Stable unique key used in code/policies (e.g., "FullAdminAccess").</summary>
-        public string Key { get; set; } = string.Empty;
+        /// <summary>Human-friendly name.</summary>
+        public string DisplayName { get; private set; } = string.Empty;
 
-        /// <summary>Human-friendly name for Admin UI.</summary>
-        public string DisplayName { get; set; } = string.Empty;
+        /// <summary>Longer description for admin UIs.</summary>
+        public string? Description { get; private set; }
 
-        /// <summary>Optional long description for documentation.</summary>
-        public string? Description { get; set; }
+        /// <summary>System flag (non-deletable).</summary>
+        public bool IsSystem { get; private set; }
 
-        // Navigations
-        public ICollection<RolePermission> RolePermissions { get; private set; } = new List<RolePermission>();
+        private Permission() { } // EF
 
-        private Permission() { }
+        public Permission(string key, string displayName, bool isSystem, string? description)
+        {
+            Key = key.Trim();
+            DisplayName = displayName?.Trim() ?? string.Empty;
+            IsSystem = isSystem;
+            Description = description;
+        }
     }
 }
