@@ -7,7 +7,7 @@ namespace Darwin.Application.Identity.Validators
     {
         public RoleCreateValidator()
         {
-            RuleFor(x => x.Name).NotEmpty().MaximumLength(128);
+            RuleFor(x => x.Key).NotEmpty().MaximumLength(128);
             RuleFor(x => x.DisplayName).NotEmpty().MaximumLength(256);
             RuleFor(x => x.Description).MaximumLength(2000);
         }

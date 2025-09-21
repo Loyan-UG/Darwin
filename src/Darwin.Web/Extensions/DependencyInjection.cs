@@ -1,9 +1,9 @@
 ﻿using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
-using Darwin.Application.Cart.Commands;
-using Darwin.Application.Cart.DTOs;
-using Darwin.Application.Cart.Validators;
-using Darwin.Application.Cart.Queries;
+using Darwin.Application.CartCheckout.Commands;
+using Darwin.Application.CartCheckout.DTOs;
+using Darwin.Application.CartCheckout.Validators;
+using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
@@ -65,6 +65,7 @@ namespace Darwin.Web.Extensions
 
             // Persistence (DbContext + IAppDbContext + Seeder)
             services.AddPersistence(config);
+            services.AddIdentityInfrastructure();
 
             // Anti-forgery defaults for Admin forms
             services.AddAntiforgery();

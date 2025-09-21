@@ -28,13 +28,16 @@ namespace Darwin.Application.Identity.Commands
             _db = db; _hasher = hasher; _stamps = stamps; _validator = validator;
         }
 
-        public async Task<Result<Guid>> HandleAsync(UserCreateDto dto, CancellationToken ct = default)
+        public async Task<Result<Guid>> HandleAsync
+            (UserCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
             var normalizedEmail = dto.Email.Trim().ToUpperInvariant();
-            var exists = await _db.Set<User>().AnyAsync(u => u.NormalizedEmail == normalizedEmail && !u.IsDeleted, ct);
-            if (exists) return Result<Guid>.Fail("Email already in use.");
+            var exists = await _db.Set<User>().AnyAsync
+                (u => u.NormalizedEmail == normalizedEmail && !u.IsDeleted, ct);
+            if (exists) 
+                return Result<Guid>.Fail("Email already in use.");
 
             var user = new User(dto.Email, _hasher.Hash(dto.Password), _stamps.NewStamp())
             {

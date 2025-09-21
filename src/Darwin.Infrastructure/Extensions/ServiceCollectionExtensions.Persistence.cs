@@ -55,6 +55,10 @@ namespace Darwin.Infrastructure.Extensions
             // Seeder
             services.AddScoped<DataSeeder>();
 
+            // after AddDbContext & IAppDbContext mapping:
+            services.AddScoped<IdentitySeed>();
+
+
             return services;
         }
 
@@ -73,6 +77,10 @@ namespace Darwin.Infrastructure.Extensions
             logger.LogInformation("Seeding baseline data…");
             var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
             await seeder.SeedAsync(ct);
+
+            // Identity seed
+            var identitySeed = scope.ServiceProvider.GetRequiredService<Darwin.Infrastructure.Persistence.Seed.IdentitySeed>();
+            await identitySeed.SeedAsync(ct);
         }
     }
 }

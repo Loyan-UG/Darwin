@@ -12,7 +12,7 @@ namespace Darwin.Domain.Entities.Identity
         public bool IsSystem { get; set; }
 
         /// <summary>Technical key (unique), e.g., "admin".</summary>
-        public string Name { get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
 
         /// <summary>Normalized key (usually UPPER).</summary>
         public string NormalizedName { get; set; } = string.Empty;
@@ -34,8 +34,8 @@ namespace Darwin.Domain.Entities.Identity
         /// </summary>
         public Role(string key, string displayName, bool isSystem, string? description)
         {
-            Name = key.Trim();
-            NormalizedName = Name.ToUpperInvariant();
+            Key = key.Trim();
+            NormalizedName = Key.Trim().ToUpperInvariant();
             DisplayName = displayName?.Trim() ?? string.Empty;
             IsSystem = isSystem;
             Description = description;

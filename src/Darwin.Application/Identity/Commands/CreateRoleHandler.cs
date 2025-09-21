@@ -27,11 +27,16 @@ namespace Darwin.Application.Identity.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var normalized = dto.Name.Trim().ToUpperInvariant();
+            var normalized = dto.Key.Trim().ToUpperInvariant();
             var exists = await _db.Set<Role>().AnyAsync(r => r.NormalizedName == normalized && !r.IsDeleted, ct);
-            if (exists) return Result<Guid>.Fail("Role key already exists.");
+            
+            if (exists) 
+                return Result<Guid>.Fail("Role key already exists.");
 
-            var role = new Role(dto.Name, dto.DisplayName, dto.IsSystem, dto.Description);
+            // NOTE: Domain.Role has: Name, NormalizedName, IsSystem, Description.
+            // We also need DisplayName (admin-facing). If Domain already has it, map directly.
+            // If Domain does NOT have it yet, please add `public string DisplayName { get; set; } = string.Empty;` to Role.
+            var role = new Role(dto.Key, dto.DisplayName, dto.IsSystem, dto.Description);
             // NOTE: Role ctor sets Name/NormalizedName/DisplayName/IsSystem/Description
 
             _db.Set<Role>().Add(role);

@@ -14,17 +14,25 @@ namespace Darwin.Application.Identity.Commands
         private readonly IAppDbContext _db;
         public AssignRoleToUserHandler(IAppDbContext db) => _db = db;
 
-        public async Task<Result> HandleAsync(Guid userId, Guid roleId, CancellationToken ct = default)
+        public async Task<Result> HandleAsync
+            (Guid userId, Guid roleId, CancellationToken ct = default)
         {
-            var userExists = await _db.Set<User>().AnyAsync(x => x.Id == userId && !x.IsDeleted, ct);
+            var userExists = await _db.Set<User>().
+                AnyAsync(x => x.Id == userId && !x.IsDeleted, ct);
+
             if (!userExists) return Result.Fail("User not found.");
 
-            var roleExists = await _db.Set<Role>().AnyAsync(x => x.Id == roleId && !x.IsDeleted, ct);
+            var roleExists = await _db.Set<Role>().
+                AnyAsync(x => x.Id == roleId && !x.IsDeleted, ct);
+
             if (!roleExists) return Result.Fail("Role not found.");
 
-            var already = await _db.Set<UserRole>().AnyAsync(x => x.UserId == userId && x.RoleId == roleId && !x.IsDeleted, ct);
-            if (!already)
+            var exists = await _db.Set<UserRole>().
+                AnyAsync(x => x.UserId == userId && x.RoleId == roleId && !x.IsDeleted, ct);
+
+            if (!exists)
             {
+                // Use Domain ctor to avoid inaccessible setters
                 _db.Set<UserRole>().Add(new UserRole(userId, roleId));
                 await _db.SaveChangesAsync(ct);
             }
