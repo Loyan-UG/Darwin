@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Darwin.Infrastructure.Persistence.Configurations.Identity
 {
     /// <summary>
-    /// External logins (Google/Microsoft/etc). Unique per (Provider, ProviderKey).
+    /// EF Core configuration for <see cref="UserLogin"/>.
+    /// Maps external login bindings (e.g., Google, Microsoft) to the User aggregate.
+    /// Ensures uniqueness per (UserId, Provider) and (Provider, ProviderKey) to avoid duplicates.
     /// </summary>
     public sealed class UserLoginConfiguration : IEntityTypeConfiguration<UserLogin>
     {
@@ -13,21 +15,37 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
         {
             builder.ToTable("UserLogins");
 
-            builder.HasKey(l => l.Id);
-            builder.Property(l => l.RowVersion).IsRowVersion();
+            // Primary key (inherited from BaseEntity) is Id (GUID).
+            builder.HasKey(x => x.Id);
 
-            builder.Property(l => l.LoginProvider).HasMaxLength(64).IsRequired();
-            builder.Property(l => l.ProviderKey).HasMaxLength(256).IsRequired();
-            builder.Property(l => l.ProviderDisplayName).HasMaxLength(256);
+            // Required fields and reasonable max lengths
+            builder.Property(x => x.Provider)
+                   .IsRequired()
+                   .HasMaxLength(100);
 
-            builder.HasIndex(l => new { l.LoginProvider, l.ProviderKey })
-                   .IsUnique()
-                   .HasDatabaseName("UX_UserLogin_Provider_Key");
+            builder.Property(x => x.ProviderKey)
+                   .IsRequired()
+                   .HasMaxLength(256);
 
-            builder.HasOne<User>()
+            builder.Property(x => x.DisplayName)
+                   .HasMaxLength(256);
+
+            // Foreign key to User
+            builder.Property(x => x.UserId).IsRequired();
+
+            builder.HasOne(x => x.User)
                    .WithMany(u => u.Logins)
-                   .HasForeignKey(l => l.UserId)
+                   .HasForeignKey(x => x.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            // Uniqueness:
+            // A given provider should be linked once per user,
+            // and ProviderKey should be globally unique per provider.
+            builder.HasIndex(x => new { x.UserId, x.Provider }).IsUnique();
+            builder.HasIndex(x => new { x.Provider, x.ProviderKey }).IsUnique();
+
+            // Optional: quick lookup by User
+            builder.HasIndex(x => x.UserId);
         }
     }
 }

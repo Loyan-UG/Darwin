@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Darwin.Infrastructure.Persistence.Configurations.Identity
 {
     /// <summary>
-    /// Arbitrary tokens for password reset, email confirm, etc. (if you store them here).
+    /// EF Core configuration for <see cref="UserToken"/>.
+    /// Stores arbitrary tokens (email confirmation, recovery codes, etc.) with optional expiry and usage time.
+    /// Enforces uniqueness per (UserId, Purpose) if your flows keep one active token per purpose.
     /// </summary>
     public sealed class UserTokenConfiguration : IEntityTypeConfiguration<UserToken>
     {
@@ -13,21 +15,32 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
         {
             builder.ToTable("UserTokens");
 
-            builder.HasKey(t => t.Id);
-            builder.Property(t => t.RowVersion).IsRowVersion();
+            builder.HasKey(x => x.Id);
 
-            builder.Property(t => t.LoginProvider).HasMaxLength(64).IsRequired();
-            builder.Property(t => t.Name).HasMaxLength(128).IsRequired();
-            builder.Property(t => t.Value).HasMaxLength(2000);
+            builder.Property(x => x.UserId).IsRequired();
 
-            builder.HasIndex(t => new { t.UserId, t.LoginProvider, t.Name })
-                   .IsUnique()
-                   .HasDatabaseName("UX_UserToken_User_Provider_Name");
+            builder.Property(x => x.Purpose)
+                   .IsRequired()
+                   .HasMaxLength(100);
 
-            builder.HasOne<User>()
+            // The token Value can be long (hashed/opaque). Keep it required.
+            builder.Property(x => x.Value)
+                   .IsRequired()
+                   .HasMaxLength(4000);
+
+            builder.Property(x => x.ExpiresAtUtc);
+            builder.Property(x => x.UsedAtUtc);
+
+            builder.HasOne<Darwin.Domain.Entities.Identity.User>()
                    .WithMany(u => u.Tokens)
-                   .HasForeignKey(t => t.UserId)
+                   .HasForeignKey(x => x.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            // If you want only one active token per purpose per user, keep this unique index.
+            builder.HasIndex(x => new { x.UserId, x.Purpose }).IsUnique();
+
+            // Useful lookups
+            builder.HasIndex(x => x.ExpiresAtUtc);
         }
     }
 }

@@ -182,14 +182,14 @@ namespace Darwin.Web.Extensions
             // Composite validators for ShippingMethods (Create/Edit) combining base + unique name
             services.AddScoped<IValidator<ShippingMethodCreateDto>>(sp =>
             {
-                var baseValidator = new ShippingMethodCreateDtoValidator();
+                var baseValidator = new ShippingMethodCreateValidator();
                 var unique = new ShippingMethodCreateUniqueNameValidator(sp.GetRequiredService<IAppDbContext>());
                 return new InlineCompositeValidator<ShippingMethodCreateDto>(baseValidator, unique);
             });
 
             services.AddScoped<IValidator<ShippingMethodEditDto>>(sp =>
             {
-                var baseValidator = new ShippingMethodEditDtoValidator();
+                var baseValidator = new ShippingMethodEditValidator();
                 var unique = new ShippingMethodEditUniqueNameValidator(sp.GetRequiredService<IAppDbContext>());
                 return new InlineCompositeValidator<ShippingMethodEditDto>(baseValidator, unique);
             });
@@ -205,17 +205,19 @@ namespace Darwin.Web.Extensions
             // verifying orders).  We register the command/query handlers and explicit
             // validators for each DTO.  These validators enforce required fields and
             // concurrency tokens.  They are also discoverable via the assembly scan below.
-            services.AddScoped<AddCartItemHandler>();
-            services.AddScoped<UpdateCartItemHandler>();
+            services.AddScoped<AddItemToCartHandler>();
+            services.AddScoped<AddOrIncreaseCartItemHandler>();
             services.AddScoped<RemoveCartItemHandler>();
-            services.AddScoped<GetCartForEditHandler>();
+            services.AddScoped<ApplyCouponHandler>();
+            services.AddScoped<UpdateCartItemQuantityHandler>();
 
             // DTO validators for the cart module.  Explicit registration ensures that
             // validators are available to the handlers via dependency injection.
-            services.AddScoped<IValidator<CartCreateDto>, CartCreateDtoValidator>();
-            services.AddScoped<IValidator<AddCartItemDto>, AddCartItemDtoValidator>();
-            services.AddScoped<IValidator<UpdateCartItemDto>, UpdateCartItemDtoValidator>();
-            services.AddScoped<IValidator<RemoveCartItemDto>, RemoveCartItemDtoValidator>();
+            services.AddScoped<IValidator<CartKeyDto>, CartKeyValidator>();
+            services.AddScoped<IValidator<CartAddItemDto>, CartAddItemValidator>();
+            services.AddScoped<IValidator<CartUpdateQtyDto>, CartUpdateQtyValidator>();
+            services.AddScoped<IValidator<CartRemoveItemDto>, CartRemoveItemValidator>();
+            services.AddScoped<IValidator<CartApplyCouponDto>, CartApplyCouponValidator>();
 
             // Register all other validators from Application assembly
             services.AddValidatorsFromAssembly(Assembly.Load("Darwin.Application"), includeInternalTypes: true);

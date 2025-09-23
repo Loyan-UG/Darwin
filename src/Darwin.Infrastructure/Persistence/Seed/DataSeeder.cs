@@ -171,33 +171,68 @@ namespace Darwin.Infrastructure.Persistence.Seed
 
         #region Brands
 
+        /// <summary>
+        /// Seeds initial Brands with multilingual translations.
+        /// Returns a name->Id map based on the default culture ("de-DE") to help seed relations.
+        /// </summary>
         private async Task<Dictionary<string, Guid>> SeedBrandsAsync(CancellationToken ct)
         {
-            // Return a map BrandName -> BrandId for downstream relations
             var map = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 
             if (!await _db.Set<Brand>().AnyAsync(ct))
             {
-                var brands = new[]
+                var seed = new[]
                 {
-                    new Brand { Name = "Microsoft", CreatedByUserId = WellKnownIds.SystemUserId, ModifiedByUserId = WellKnownIds.SystemUserId },
-                    new Brand { Name = "Samsung",   CreatedByUserId = WellKnownIds.SystemUserId, ModifiedByUserId = WellKnownIds.SystemUserId },
-                    new Brand { Name = "Logitech",  CreatedByUserId = WellKnownIds.SystemUserId, ModifiedByUserId = WellKnownIds.SystemUserId },
-                    new Brand { Name = "Intel",     CreatedByUserId = WellKnownIds.SystemUserId, ModifiedByUserId = WellKnownIds.SystemUserId },
-                    new Brand { Name = "AMD",       CreatedByUserId = WellKnownIds.SystemUserId, ModifiedByUserId = WellKnownIds.SystemUserId },
-                    new Brand { Name = "NVIDIA",    CreatedByUserId = WellKnownIds.SystemUserId, ModifiedByUserId = WellKnownIds.SystemUserId }
+                    new { Slug = "microsoft", Names = new Dictionary<string,string> { ["de-DE"]="Microsoft", ["en-US"]="Microsoft" } },
+                    new { Slug = "samsung",   Names = new Dictionary<string,string> { ["de-DE"]="Samsung",   ["en-US"]="Samsung"   } },
+                    new { Slug = "logitech",  Names = new Dictionary<string,string> { ["de-DE"]="Logitech",  ["en-US"]="Logitech"  } },
+                    new { Slug = "intel",     Names = new Dictionary<string,string> { ["de-DE"]="Intel",     ["en-US"]="Intel"     } },
+                    new { Slug = "amd",       Names = new Dictionary<string,string> { ["de-DE"]="AMD",       ["en-US"]="AMD"       } },
+                    new { Slug = "nvidia",    Names = new Dictionary<string,string> { ["de-DE"]="NVIDIA",    ["en-US"]="NVIDIA"    } },
                 };
-                _db.AddRange(brands);
+
+                foreach (var b in seed)
+                {
+                    var brand = new Brand
+                    {
+                        Slug = b.Slug,
+                        CreatedByUserId = WellKnownIds.SystemUserId,
+                        ModifiedByUserId = WellKnownIds.SystemUserId
+                    };
+
+                    foreach (var kv in b.Names)
+                    {
+                        brand.Translations.Add(new BrandTranslation
+                        {
+                            Culture = kv.Key,
+                            Name = kv.Value,
+                            DescriptionHtml = null,
+                            CreatedByUserId = WellKnownIds.SystemUserId,
+                            ModifiedByUserId = WellKnownIds.SystemUserId
+                        });
+                    }
+
+                    _db.Add(brand);
+                }
+
                 await _db.SaveChangesAsync(ct);
             }
 
+            // Resolve map using default culture name (de-DE) for downstream seeding convenience
             var existing = await _db.Set<Brand>()
                 .AsNoTracking()
-                .Select(b => new { b.Id, b.Name })
+                .Select(b => new
+                {
+                    b.Id,
+                    NameDe = b.Translations.Where(t => t.Culture == "de-DE").Select(t => t.Name).FirstOrDefault()
+                })
                 .ToListAsync(ct);
 
-            foreach (var b in existing)
-                map[b.Name] = b.Id;
+            foreach (var row in existing)
+            {
+                if (!string.IsNullOrWhiteSpace(row.NameDe))
+                    map[row.NameDe] = row.Id;
+            }
 
             return map;
         }

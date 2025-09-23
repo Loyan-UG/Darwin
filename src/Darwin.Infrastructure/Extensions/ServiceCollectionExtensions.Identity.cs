@@ -1,22 +1,31 @@
 ﻿using Darwin.Application.Abstractions.Auth;
-using Darwin.Infrastructure.Security.Passwords;
-using Darwin.Infrastructure.Security.Stamps;
+using Darwin.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Darwin.Infrastructure.Extensions
 {
     /// <summary>
-    /// Registers Infrastructure services used by the Identity application layer:
-    /// - IUserPasswordHasher
-    /// - ISecurityStampService
+    /// Registers security/identity infrastructure services that Application depends on:
+    /// - IUserPasswordHasher: Argon2id implementation
+    /// - ISecurityStampService: generator + constant-time comparator
+    /// Add more identity-related infrastructure here (e.g., token services, email/SMS adapters) when needed.
     /// </summary>
     public static class ServiceCollectionExtensionsIdentity
     {
+        /// <summary>
+        /// Adds identity-related infrastructure into DI container.
+        /// Call from Darwin.Web startup composition.
+        /// </summary>
         public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services)
         {
-            // TODO: if you adopt BCrypt.Net-Next, configure work factor via options.
-            services.AddSingleton<IUserPasswordHasher>(new BcryptPasswordHasher(/*workFactor*/ 12));
+            // Password hashing (Argon2id)
+            services.AddSingleton<IUserPasswordHasher, Argon2PasswordHasher>();
+
+            // Security stamp service
             services.AddSingleton<ISecurityStampService, SecurityStampService>();
+
+            // TODO: Add IPasswordResetTokenService, ITotpService, ISmsSender, IEmailSender when implemented.
+
             return services;
         }
     }

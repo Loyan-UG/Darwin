@@ -26,8 +26,4 @@
     <ProjectReference Include="..\Darwin.Shared\Darwin.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Security\Stamps\" />
-  </ItemGroup>
-
 </Project>

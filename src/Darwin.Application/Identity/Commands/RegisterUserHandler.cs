@@ -53,7 +53,8 @@ namespace Darwin.Application.Identity.Commands
             if (defaultRoleId.HasValue)
             {
                 // TODO: Consider verifying that role exists and is not deleted; idempotent add.
-                _db.Set<UserRole>().Add(new UserRole { UserId = u.Id, RoleId = defaultRoleId.Value });
+                _db.Set<UserRole>().Add(
+                    new UserRole { UserId = u.Id, RoleId = defaultRoleId.Value });
             }
 
             await _db.SaveChangesAsync(ct);
