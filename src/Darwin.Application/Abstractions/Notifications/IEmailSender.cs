@@ -9,6 +9,6 @@ namespace Darwin.Application.Abstractions.Notifications
     /// </summary>
     public interface IEmailSender
     {
-        Task SendAsync(string to, string subject, string htmlBody, CancellationToken ct = default);
+        Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default);
     }
 }
