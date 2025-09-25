@@ -12,7 +12,12 @@ namespace Darwin.Application.Abstractions.Auth
         // Returns a salted hash string for the given plaintext password.
         string Hash(string password);
 
-        // Returns true if plaintext password matches the hashed password.
+        /// <summary>
+        /// Returns true if plaintext password matches the hashed password.
+        /// </summary>
+        /// <param name="hashedPassword"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         bool Verify(string hashedPassword, string password);
     }
 }
