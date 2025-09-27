@@ -24,8 +24,8 @@ namespace Darwin.Infrastructure.Extensions
             // Security stamp service
             services.AddSingleton<ISecurityStampService, SecurityStampService>();
 
-            // TODO: Add IPasswordResetTokenService, ITotpService, ISmsSender, IEmailSender when implemented.
-
+            // TODO: Add TOTP service + external login adapters when wiring Infrastructure is started
+            
             return services;
         }
     }

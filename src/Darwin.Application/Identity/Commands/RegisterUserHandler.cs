@@ -13,8 +13,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Self-service registration (or admin-create). This is similar to CreateUser but
-    /// exists in Auth namespace to reflect flows from UI. It can attach a default role.
+    /// Self-service registration (or admin-create). Attaches default role if provided.
     /// </summary>
     public sealed class RegisterUserHandler
     {
@@ -23,7 +22,11 @@ namespace Darwin.Application.Identity.Commands
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserCreateDto> _validator;
 
-        public RegisterUserHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserCreateDto> validator)
+        public RegisterUserHandler(
+            IAppDbContext db,
+            IUserPasswordHasher hasher,
+            ISecurityStampService stamps,
+            IValidator<UserCreateDto> validator)
         {
             _db = db; _hasher = hasher; _stamps = stamps; _validator = validator;
         }
@@ -35,30 +38,32 @@ namespace Darwin.Application.Identity.Commands
             var exists = await _db.Set<User>().AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
             if (exists) return Result<Guid>.Fail("Email already in use.");
 
-            var u = new User
+            var user = new User(
+                email: dto.Email,
+                passwordHash: _hasher.Hash(dto.Password),
+                securityStamp: _stamps.NewStamp()
+            )
             {
-                Email = dto.Email,
-                PasswordHash = _hasher.Hash(dto.Password),
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 Locale = dto.Locale,
                 Timezone = dto.Timezone,
                 Currency = dto.Currency,
                 IsActive = dto.IsActive,
-                IsSystem = dto.IsSystem,
-                SecurityStamp = _stamps.NewStamp()
+                IsSystem = dto.IsSystem
             };
-            _db.Set<User>().Add(u);
+
+            _db.Set<User>().Add(user);
 
             if (defaultRoleId.HasValue)
             {
-                // TODO: Consider verifying that role exists and is not deleted; idempotent add.
-                _db.Set<UserRole>().Add(
-                    new UserRole { UserId = u.Id, RoleId = defaultRoleId.Value });
+                // Ensure role exists & not deleted (idempotent add)
+                var roleExists = await _db.Set<Role>().AnyAsync(r => r.Id == defaultRoleId.Value && !r.IsDeleted, ct);
+                if (roleExists) user.AddRole(defaultRoleId.Value); // uses domain helper (no direct setters)
             }
 
             await _db.SaveChangesAsync(ct);
-            return Result<Guid>.Ok(u.Id);
+            return Result<Guid>.Ok(user.Id);
         }
     }
 }

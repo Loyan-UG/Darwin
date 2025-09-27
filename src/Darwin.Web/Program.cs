@@ -4,6 +4,7 @@ using Serilog;
 // - AddWebComposition(builder.Configuration) to register MVC, Application, and Persistence services.
 // - UseWebStartupAsync() to configure the request pipeline, localization, routing, and run DB migrations+seeding in Development.
 using Darwin.Web.Extensions;
+using Darwin.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,8 @@ builder.Host.UseSerilog(); // requires Serilog.AspNetCore
 // Keep Program.cs slim by pushing all registrations to an extension method.
 // ----------------------------------------------
 builder.Services.AddWebComposition(builder.Configuration);
+
+builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
