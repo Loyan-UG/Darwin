@@ -3,13 +3,14 @@
 namespace Darwin.Application.Abstractions.Auth
 {
     /// <summary>
-    /// Issues and validates a per-user security stamp that invalidates existing sessions
-    /// when critical changes happen (password change, 2FA toggled, permissions changed).
-    /// Application triggers new stamps; Infrastructure stores them on User entity.
+    /// Issues security stamps (random opaque strings) and offers constant-time comparison.
     /// </summary>
     public interface ISecurityStampService
     {
+        /// <summary>Generates a new random stamp (e.g., upon password change, 2FA change).</summary>
         string NewStamp();
-        bool Equals(string? currentStamp, string? presentedStamp);
+
+        /// <summary>Constant-time equals to prevent timing side-channels.</summary>
+        bool AreEqual(string? a, string? b);
     }
 }
