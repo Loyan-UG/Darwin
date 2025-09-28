@@ -68,5 +68,28 @@ namespace Darwin.Application.Settings.DTOs
 
         // Routing
         public string? HomeSlug { get; set; } = "home";
+
+        /// <summary>
+        /// WebAuthn relying party identifier (RP ID). Usually your registrable domain (e.g., "example.com").
+        /// Must match the effective domain of your site; on dev you may use "localhost".
+        /// </summary>
+        public string WebAuthnRelyingPartyId { get; set; } = "localhost";
+
+        /// <summary>
+        /// Human-friendly relying party name shown by authenticators (e.g., "Darwin Store").
+        /// </summary>
+        public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
+
+        /// <summary>
+        /// Comma-separated list of allowed origins for WebAuthn ceremonies (e.g., "https://shop.example.com,https://admin.example.com").
+        /// On development you may include "https://localhost:5001".
+        /// </summary>
+        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://localhost:5001";
+
+        /// <summary>
+        /// When true, requires user verification (e.g., biometric/PIN) during WebAuthn authentication.
+        /// If false, "preferred" verification is used to maximize compatibility.
+        /// </summary>
+        public bool WebAuthnRequireUserVerification { get; set; } = false;
     }
 }

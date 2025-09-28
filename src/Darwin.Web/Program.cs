@@ -25,7 +25,6 @@ builder.Host.UseSerilog(); // requires Serilog.AspNetCore
 // ----------------------------------------------
 builder.Services.AddWebComposition(builder.Configuration);
 
-builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 

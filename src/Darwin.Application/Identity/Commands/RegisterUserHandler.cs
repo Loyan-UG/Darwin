@@ -13,7 +13,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Self-service registration (or admin-create). Attaches default role if provided.
+    /// Self-service registration (or admin-create) with optional default role assignment.
+    /// Uses domain constructors to respect invariants (no object initializer on sealed entities).
     /// </summary>
     public sealed class RegisterUserHandler
     {
@@ -22,15 +23,17 @@ namespace Darwin.Application.Identity.Commands
         private readonly ISecurityStampService _stamps;
         private readonly IValidator<UserCreateDto> _validator;
 
-        public RegisterUserHandler(
-            IAppDbContext db,
-            IUserPasswordHasher hasher,
-            ISecurityStampService stamps,
-            IValidator<UserCreateDto> validator)
+        public RegisterUserHandler(IAppDbContext db, IUserPasswordHasher hasher, ISecurityStampService stamps, IValidator<UserCreateDto> validator)
         {
             _db = db; _hasher = hasher; _stamps = stamps; _validator = validator;
         }
 
+        /// <summary>
+        /// Registers a new user and (optionally) assigns a default role.
+        /// </summary>
+        /// <param name="dto">User creation payload (email, password, profile prefs).</param>
+        /// <param name="defaultRoleId">Optional role id to attach after creation.</param>
+        /// <param name="ct">Cancellation token.</param>
         public async Task<Result<Guid>> HandleAsync(UserCreateDto dto, Guid? defaultRoleId = null, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
@@ -38,11 +41,8 @@ namespace Darwin.Application.Identity.Commands
             var exists = await _db.Set<User>().AnyAsync(u => u.Email == dto.Email && !u.IsDeleted, ct);
             if (exists) return Result<Guid>.Fail("Email already in use.");
 
-            var user = new User(
-                email: dto.Email,
-                passwordHash: _hasher.Hash(dto.Password),
-                securityStamp: _stamps.NewStamp()
-            )
+            var passwordHash = _hasher.Hash(dto.Password);
+            var user = new User(dto.Email, passwordHash, _stamps.NewStamp())
             {
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
@@ -57,9 +57,11 @@ namespace Darwin.Application.Identity.Commands
 
             if (defaultRoleId.HasValue)
             {
-                // Ensure role exists & not deleted (idempotent add)
+                // idempotent check (optional): confirm role exists & not deleted
                 var roleExists = await _db.Set<Role>().AnyAsync(r => r.Id == defaultRoleId.Value && !r.IsDeleted, ct);
-                if (roleExists) user.AddRole(defaultRoleId.Value); // uses domain helper (no direct setters)
+                if (!roleExists) return Result<Guid>.Fail("Default role not found.");
+
+                _db.Set<UserRole>().Add(new UserRole(user.Id, defaultRoleId.Value));
             }
 
             await _db.SaveChangesAsync(ct);

@@ -127,6 +127,12 @@ namespace Darwin.Infrastructure.Persistence.Seed
                 WhatsAppFromPhoneE164 = null,
                 WhatsAppAdminRecipientsCsv = null,
 
+                //WebAuthn
+                WebAuthnRelyingPartyId = "localhost",
+                WebAuthnRelyingPartyName = "Darwin",
+                WebAuthnAllowedOriginsCsv = "https://localhost:5001",
+                WebAuthnRequireUserVerification = false,
+
                 // Auditing
                 CreatedByUserId = Darwin.Shared.Constants.WellKnownIds.SystemUserId,
                 ModifiedByUserId = Darwin.Shared.Constants.WellKnownIds.SystemUserId

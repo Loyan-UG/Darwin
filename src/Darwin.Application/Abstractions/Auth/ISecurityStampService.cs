@@ -3,14 +3,15 @@
 namespace Darwin.Application.Abstractions.Auth
 {
     /// <summary>
-    /// Issues security stamps (random opaque strings) and offers constant-time comparison.
+    /// Generates and compares security stamps. Security stamps must change when
+    /// credentials or sensitive factors change to invalidate existing sessions.
     /// </summary>
     public interface ISecurityStampService
     {
-        /// <summary>Generates a new random stamp (e.g., upon password change, 2FA change).</summary>
+        /// <summary>Returns a freshly generated random security stamp.</summary>
         string NewStamp();
 
-        /// <summary>Constant-time equals to prevent timing side-channels.</summary>
+        /// <summary>Constant-time comparison helper for security stamp strings.</summary>
         bool AreEqual(string? a, string? b);
     }
 }

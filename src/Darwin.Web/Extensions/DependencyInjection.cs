@@ -1,9 +1,10 @@
 ﻿using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.CartCheckout.Commands;
 using Darwin.Application.CartCheckout.DTOs;
-using Darwin.Application.CartCheckout.Validators;
 using Darwin.Application.CartCheckout.Queries;
+using Darwin.Application.CartCheckout.Validators;
 using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
@@ -23,6 +24,7 @@ using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
 using Darwin.Application.Shipping.Validators;
 using Darwin.Infrastructure.Extensions;
+using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Web.Auth;
 using Darwin.Web.Services.Seo;
 using Darwin.Web.Services.Settings;
@@ -69,6 +71,8 @@ namespace Darwin.Web.Extensions
 
             // Anti-forgery defaults for Admin forms
             services.AddAntiforgery();
+
+            services.AddScoped<IClock, SystemClock>();
 
             // Register handlers — Products
             services.AddScoped<CreateProductHandler>();
