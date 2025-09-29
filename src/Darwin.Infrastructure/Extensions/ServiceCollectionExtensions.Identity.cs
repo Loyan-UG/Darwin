@@ -1,4 +1,5 @@
 ﻿using Darwin.Application.Abstractions.Auth;
+using Darwin.Infrastructure.Auth.WebAuthn;
 using Darwin.Infrastructure.Security;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,7 +26,11 @@ namespace Darwin.Infrastructure.Extensions
             services.AddSingleton<ISecurityStampService, SecurityStampService>();
 
             // TODO: Add TOTP service + external login adapters when wiring Infrastructure is started
-            
+
+            // WebAuthn: RP provider + Fido2 adapter
+            services.AddScoped<IRelyingPartyFromSiteSettingsProvider, RelyingPartyFromSiteSettingsProvider>();
+            services.AddScoped<IWebAuthnService, Fido2WebAuthnService>();
+
             return services;
         }
 

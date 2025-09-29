@@ -79,5 +79,29 @@ namespace Darwin.Domain.Entities.Settings
         public string? WhatsAppFromPhoneE164 { get; set; }
         /// <summary>Comma-separated admin recipient phone numbers in E.164 format.</summary>
         public string? WhatsAppAdminRecipientsCsv { get; set; }
+
+
+        /// <summary>
+        /// WebAuthn relying party identifier (RP ID). Usually the registrable domain ("example.com") or "localhost" for dev.
+        /// Must match the effective host where WebAuthn ceremonies happen.
+        /// </summary>
+        public string WebAuthnRelyingPartyId { get; set; } = "localhost";
+
+        /// <summary>
+        /// Human-friendly RP name shown by authenticators (e.g., "Darwin").
+        /// </summary>
+        public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
+
+        /// <summary>
+        /// Comma-separated list of allowed origins (scheme + host [+ port]).
+        /// Examples: "https://shop.example.com,https://admin.example.com,https://localhost:5001".
+        /// </summary>
+        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://localhost:5001";
+
+        /// <summary>
+        /// If true, user verification is required during authentication (biometric/PIN).
+        /// If false, the server prefers UV but does not require it (broader compatibility).
+        /// </summary>
+        public bool WebAuthnRequireUserVerification { get; set; } = false;
     }
 }

@@ -39,7 +39,7 @@ namespace Darwin.Application.Settings.Validators
                 .EmailAddress()
                 .When(x => !string.IsNullOrWhiteSpace(x.ContactEmail));
 
-            // Localization settings
+            // Localization
             RuleFor(x => x.DefaultCulture)
                 .NotEmpty().MaximumLength(10)
                 .Must(IsCulture)
@@ -70,7 +70,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.TimeFormat));
 
-            // Measurement and unit settings
+            // Measurement
             RuleFor(x => x.MeasurementSystem)
                 .Must(v => v == "Metric" || v == "Imperial")
                 .WithMessage("MeasurementSystem must be 'Metric' or 'Imperial'.");
@@ -83,7 +83,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(10)
                 .When(x => !string.IsNullOrWhiteSpace(x.DisplayLengthUnit));
 
-            // SEO settings
+            // SEO
             RuleFor(x => x.SeoTitleTemplate)
                 .MaximumLength(150)
                 .When(x => !string.IsNullOrWhiteSpace(x.SeoTitleTemplate));
@@ -96,7 +96,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(2000)
                 .When(x => !string.IsNullOrWhiteSpace(x.OpenGraphDefaultsJson));
 
-            // Analytics settings
+            // Analytics
             RuleFor(x => x.GoogleAnalyticsId)
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.GoogleAnalyticsId));
@@ -109,12 +109,12 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.GoogleSearchConsoleVerification));
 
-            // Feature flags JSON (optional, but length-limited)
+            // Feature flags JSON
             RuleFor(x => x.FeatureFlagsJson)
                 .MaximumLength(2000)
                 .When(x => !string.IsNullOrWhiteSpace(x.FeatureFlagsJson));
 
-            // WhatsApp integration settings
+            // WhatsApp integration
             RuleFor(x => x.WhatsAppBusinessPhoneId)
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppBusinessPhoneId));
@@ -133,7 +133,7 @@ namespace Darwin.Application.Settings.Validators
                 .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppAdminRecipientsCsv))
                 .WithMessage("WhatsAppAdminRecipientsCsv must be comma-separated E.164 phone numbers.");
 
-            // Additional measurement & formatting overrides
+            // Additional formatting overrides
             RuleFor(x => x.MeasurementSettingsJson)
                 .MaximumLength(2000)
                 .When(x => !string.IsNullOrWhiteSpace(x.MeasurementSettingsJson));
@@ -142,10 +142,30 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(2000)
                 .When(x => !string.IsNullOrWhiteSpace(x.NumberFormattingOverridesJson));
 
-            // Routing (HomeSlug) length constraint
+            // Routing
             RuleFor(x => x.HomeSlug)
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.HomeSlug));
+
+            // ------------------------------
+            // WebAuthn (new) validations
+            // ------------------------------
+            RuleFor(x => x.WebAuthnRelyingPartyId)
+                .NotEmpty()
+                .MaximumLength(255)
+                .Must(IsRpId)
+                .WithMessage("WebAuthnRelyingPartyId must be a registrable domain (e.g., example.com) or 'localhost' for development.");
+
+            RuleFor(x => x.WebAuthnRelyingPartyName)
+                .NotEmpty()
+                .MaximumLength(100);
+
+            RuleFor(x => x.WebAuthnAllowedOriginsCsv)
+                .NotEmpty()
+                .Must(AllOriginsValid)
+                .WithMessage("WebAuthnAllowedOriginsCsv must be a comma-separated list of valid origins (e.g., https://example.com,https://localhost:5001).");
+
+            // WebAuthnRequireUserVerification is boolean; no rule needed beyond presence in DTO.
         }
 
         private static bool IsCulture(string c)
@@ -177,6 +197,35 @@ namespace Darwin.Application.Settings.Validators
             {
                 if (!Regex.IsMatch(phone, "^\\+\\d{4,15}$"))
                     return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Validates RP ID: either "localhost" or something like "example.com" (no scheme, no path).
+        /// </summary>
+        private static bool IsRpId(string rpId)
+        {
+            if (string.Equals(rpId, "localhost", StringComparison.OrdinalIgnoreCase))
+                return true;
+            // rudimentary domain label check; allows subdomains too
+            return Regex.IsMatch(rpId, @"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+        }
+
+        /// <summary>
+        /// Validates CSV of origins. Each must be an absolute URI with http/https scheme.
+        /// </summary>
+        private static bool AllOriginsValid(string csv)
+        {
+            var items = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (items.Length == 0) return false;
+
+            foreach (var origin in items)
+            {
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                    return false;
+                if (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp)
+                    return false; // allow http for local dev only
             }
             return true;
         }

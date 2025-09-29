@@ -19,7 +19,7 @@ namespace Darwin.Domain.Entities.Identity
         public byte[] PublicKey { get; set; } = Array.Empty<byte>();
 
         /// <summary>Authenticator's AAGUID, if provided.</summary>
-        public Guid? Aaguid { get; set; }
+        public Guid? AaGuid { get; set; }
 
         /// <summary>WebAuthn credential type, e.g., "public-key".</summary>
         public string CredentialType { get; set; } = "public-key";
@@ -28,7 +28,10 @@ namespace Darwin.Domain.Entities.Identity
         public string? AttestationFormat { get; set; }
 
         /// <summary>Signature counter for anti-replay.</summary>
-        public uint SignCount { get; set; }
+        public uint SignatureCounter { get; set; }
+
+        /// <summary>Optional user handle echoed by authenticator (if provided).</summary>
+        public byte[]? UserHandle { get; set; }
 
         /// <summary>When the credential was last used to sign-in.</summary>
         public DateTime? LastUsedAtUtc { get; set; }
