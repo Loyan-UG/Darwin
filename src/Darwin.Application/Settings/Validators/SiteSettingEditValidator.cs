@@ -166,6 +166,45 @@ namespace Darwin.Application.Settings.Validators
                 .WithMessage("WebAuthnAllowedOriginsCsv must be a comma-separated list of valid origins (e.g., https://example.com,https://localhost:5001).");
 
             // WebAuthnRequireUserVerification is boolean; no rule needed beyond presence in DTO.
+
+            // SMTP
+            RuleFor(x => x.SmtpHost)
+                .MaximumLength(200)
+                .When(x => x.SmtpEnabled && !string.IsNullOrWhiteSpace(x.SmtpHost));
+            RuleFor(x => x.SmtpPort)
+                .InclusiveBetween(1, 65535)
+                .When(x => x.SmtpEnabled && x.SmtpPort.HasValue);
+            RuleFor(x => x.SmtpFromAddress)
+                .EmailAddress()
+                .When(x => x.SmtpEnabled && !string.IsNullOrWhiteSpace(x.SmtpFromAddress));
+            RuleFor(x => x.SmtpFromDisplayName)
+                .MaximumLength(200)
+                .When(x => x.SmtpEnabled && !string.IsNullOrWhiteSpace(x.SmtpFromDisplayName));
+
+            // SMS
+            RuleFor(x => x.SmsProvider)
+                .MaximumLength(50)
+                .When(x => x.SmsEnabled && !string.IsNullOrWhiteSpace(x.SmsProvider));
+            RuleFor(x => x.SmsFromPhoneE164)
+                .Matches("^\\+\\d{4,15}$")
+                .When(x => x.SmsEnabled && !string.IsNullOrWhiteSpace(x.SmsFromPhoneE164))
+                .WithMessage("SmsFromPhoneE164 must be in E.164 format (e.g., +49123456789).");
+            RuleFor(x => x.SmsExtraSettingsJson)
+                .MaximumLength(4000)
+                .When(x => x.SmsEnabled && !string.IsNullOrWhiteSpace(x.SmsExtraSettingsJson));
+
+            // Admin routing
+            RuleFor(x => x.AdminAlertEmailsCsv)
+                .MaximumLength(1000)
+                .When(x => !string.IsNullOrWhiteSpace(x.AdminAlertEmailsCsv));
+            RuleFor(x => x.AdminAlertSmsRecipientsCsv)
+                .Must(csv => {
+                    if (string.IsNullOrWhiteSpace(csv)) return true;
+                    var items = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    return items.Length == 0 || items.All(p => System.Text.RegularExpressions.Regex.IsMatch(p, "^\\+\\d{4,15}$"));
+                })
+                .WithMessage("AdminAlertSmsRecipientsCsv must be comma-separated E.164 phone numbers.")
+                .When(x => !string.IsNullOrWhiteSpace(x.AdminAlertSmsRecipientsCsv));
         }
 
         private static bool IsCulture(string c)

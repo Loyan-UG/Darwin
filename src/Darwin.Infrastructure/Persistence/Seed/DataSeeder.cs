@@ -136,6 +136,27 @@ namespace Darwin.Infrastructure.Persistence.Seed
                 // Auditing
                 CreatedByUserId = Darwin.Shared.Constants.WellKnownIds.SystemUserId,
                 ModifiedByUserId = Darwin.Shared.Constants.WellKnownIds.SystemUserId
+
+                // Email
+                SmtpEnabled = false,
+                SmtpHost = null,
+                SmtpPort = null,
+                SmtpEnableSsl = true,
+                SmtpUsername = null,
+                SmtpPassword = null,
+                SmtpFromAddress = null,
+                SmtpFromDisplayName = null,
+
+                SmsEnabled = false,
+                SmsProvider = null,
+                SmsFromPhoneE164 = null,
+                SmsApiKey = null,
+                SmsApiSecret = null,
+                SmsExtraSettingsJson = null,
+
+                AdminAlertEmailsCsv = null,
+                AdminAlertSmsRecipientsCsv = null
+
             };
 
             _db.Add(s);

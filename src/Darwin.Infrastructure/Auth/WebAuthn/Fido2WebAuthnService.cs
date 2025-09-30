@@ -1,15 +1,17 @@
-﻿using System;
+﻿using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Persistence;
+using Darwin.Domain.Entities.Identity;
+using Fido2NetLib;
+using Fido2NetLib.Objects;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Darwin.Application.Abstractions.Auth;
-using Darwin.Application.Abstractions.Persistence;
-using Darwin.Domain.Entities.Identity;
-using Fido2NetLib;
-using Fido2NetLib.Objects;
-using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Infrastructure.Auth.WebAuthn
 {
@@ -186,7 +188,7 @@ namespace Darwin.Infrastructure.Auth.WebAuthn
             try
             {
                 // Base64Url decode credential id from client
-                var credentialId = Fido2NetLib.Decode(assertion.Id);
+                var credentialId = WebEncoders.Base64UrlDecode(assertion.Id);
 
                 var stored = await _db.Set<UserWebAuthnCredential>()
                     .FirstOrDefaultAsync(c => c.CredentialId == credentialId && !c.IsDeleted, ct);

@@ -1,57 +1,71 @@
-﻿using Darwin.Application.Abstractions.Auth;
+﻿using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Starts WebAuthn login by generating an assertion challenge for a user's registered credentials.
+    /// Begins a WebAuthn login by issuing assertion options and storing them in a temporary token.
+    /// Returns the token id and options JSON for the browser.
     /// </summary>
     public sealed class BeginLoginHandler
     {
+        private const string Purpose = "WebAuthnLoginOptions";
+
         private readonly IAppDbContext _db;
         private readonly IWebAuthnService _webauthn;
 
         public BeginLoginHandler(IAppDbContext db, IWebAuthnService webauthn)
         {
-            _db = db; _webauthn = webauthn;
+            _db = db;
+            _webauthn = webauthn;
         }
 
         /// <summary>
-        /// Collects allowed credential IDs for the user and returns a request options JSON + persisted challenge token.
+        /// Creates assertion options restricted to the user's known credentials (if any).
         /// </summary>
-        public async Task<Result<WebAuthnBeginLoginResult>> HandleAsync(WebAuthnBeginLoginDto dto, CancellationToken ct = default)
+        /// <param name="dto">User id.</param>
+        /// <param name="ct">Cancellation token.</param>
+        public async Task<Result<WebAuthnBeginLoginResult>> HandleAsync(
+            WebAuthnBeginLoginDto dto, CancellationToken ct = default)
         {
-            var creds = await _db.Set<UserWebAuthnCredential>()
+            var user = await _db.Set<User>().AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == dto.UserId && !u.IsDeleted, ct);
+            if (user is null)
+                return Result<WebAuthnBeginLoginResult>.Fail("User not found.");
+
+            var allowedIds = await _db.Set<UserWebAuthnCredential>()
                 .AsNoTracking()
                 .Where(c => c.UserId == dto.UserId && !c.IsDeleted)
                 .Select(c => c.CredentialId)
                 .ToListAsync(ct);
 
-            var (optionsJson, challenge) = await _webauthn.BeginLoginAsync(dto.UserId, creds, ct);
+            var (optionsJson, _) = await _webauthn.BeginLoginAsync(dto.UserId, allowedIds, ct);
 
-            var token = new UserToken(
-                userId: dto.UserId,
-                purpose: "WebAuthn:Login:Challenge",
-                value: Convert.ToBase64String(challenge),
-                expiresAtUtc: DateTime.UtcNow.AddMinutes(10)
-            );
+            // Remove previous unused tokens for this purpose
+            var oldTokens = await _db.Set<UserToken>()
+                .Where(t => t.UserId == dto.UserId && t.Purpose == Purpose && t.UsedAtUtc == null)
+                .ToListAsync(ct);
+            if (oldTokens.Count > 0)
+                _db.Set<UserToken>().RemoveRange(oldTokens);
 
+            var token = new UserToken(dto.UserId, Purpose, optionsJson, DateTime.UtcNow.AddMinutes(10));
             _db.Set<UserToken>().Add(token);
             await _db.SaveChangesAsync(ct);
 
-            return Result<WebAuthnBeginLoginResult>.Ok(new WebAuthnBeginLoginResult
+            var result = new WebAuthnBeginLoginResult
             {
                 ChallengeTokenId = token.Id,
                 OptionsJson = optionsJson
-            });
+            };
+            return Result<WebAuthnBeginLoginResult>.Ok(result);
         }
     }
 }

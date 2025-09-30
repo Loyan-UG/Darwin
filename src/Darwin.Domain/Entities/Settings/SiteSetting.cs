@@ -103,5 +103,47 @@ namespace Darwin.Domain.Entities.Settings
         /// If false, the server prefers UV but does not require it (broader compatibility).
         /// </summary>
         public bool WebAuthnRequireUserVerification { get; set; } = false;
+
+
+        // ---- Add to Darwin.Domain.Entities.Settings.SiteSetting (new fields) ----
+
+        // Email (SMTP)
+        /// <summary>Enable SMTP email delivery globally (disable to route emails to a sink/dev-null).</summary>
+        public bool SmtpEnabled { get; set; } = false;
+        /// <summary>SMTP server host name, e.g., "smtp.contoso.com".</summary>
+        public string? SmtpHost { get; set; }
+        /// <summary>SMTP server port (e.g., 587 for STARTTLS, 465 for implicit TLS).</summary>
+        public int? SmtpPort { get; set; }
+        /// <summary>Whether to use SSL/TLS on the SMTP connection.</summary>
+        public bool SmtpEnableSsl { get; set; } = true;
+        /// <summary>SMTP username; leave empty for anonymous relay.</summary>
+        public string? SmtpUsername { get; set; }
+        /// <summary>SMTP password/secret (consider at-rest protection).</summary>
+        public string? SmtpPassword { get; set; }
+        /// <summary>Default From address for outgoing emails.</summary>
+        public string? SmtpFromAddress { get; set; }
+        /// <summary>Default From display name for outgoing emails.</summary>
+        public string? SmtpFromDisplayName { get; set; }
+
+        // SMS (provider-agnostic)
+        /// <summary>Enable SMS notifications globally.</summary>
+        public bool SmsEnabled { get; set; } = false;
+        /// <summary>Provider key (e.g., "Twilio", "Vonage", "CustomHttp").</summary>
+        public string? SmsProvider { get; set; }
+        /// <summary>Sender phone number in E.164 format (if provider requires).</summary>
+        public string? SmsFromPhoneE164 { get; set; }
+        /// <summary>API key/client id for the SMS provider.</summary>
+        public string? SmsApiKey { get; set; }
+        /// <summary>API secret/token for the SMS provider.</summary>
+        public string? SmsApiSecret { get; set; }
+        /// <summary>Optional JSON for provider-specific extra settings (endpoints, templates).</summary>
+        public string? SmsExtraSettingsJson { get; set; }
+
+        // Notifications routing defaults (future-friendly)
+        /// <summary>Comma-separated default admin recipients for email alerts.</summary>
+        public string? AdminAlertEmailsCsv { get; set; }
+        /// <summary>Comma-separated default admin recipients for SMS alerts (E.164).</summary>
+        public string? AdminAlertSmsRecipientsCsv { get; set; }
+
     }
 }

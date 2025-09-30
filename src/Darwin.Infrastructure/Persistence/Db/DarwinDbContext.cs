@@ -10,7 +10,7 @@ using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.SEO;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Entities.Shipping;
-using Darwin.Domain.Entities.Users;
+using Darwin.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -101,9 +101,6 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
         public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
 
-        // Users
-        public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
-        public DbSet<Address> Addresses => Set<Address>();
 
         // Integration / SEO / Settings
         public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();

@@ -20,5 +20,6 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<UserToken> UserTokens => Set<UserToken>();
         public DbSet<UserTwoFactorSecret> UserTwoFactorSecrets => Set<UserTwoFactorSecret>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+        public DbSet<Address> Addresses => Set<Address>();
     }
 }

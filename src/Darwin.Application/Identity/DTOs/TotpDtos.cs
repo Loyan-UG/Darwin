@@ -2,27 +2,37 @@
 
 namespace Darwin.Application.Identity.DTOs
 {
-    public sealed class BeginTotpProvisioningDto
+    /// <summary>Starts provisioning: returns SecretBase32 and otpauth URI.</summary>
+    public sealed class TotpProvisionDto
     {
         public Guid UserId { get; set; }
-        public string Label { get; set; } = string.Empty; // often email
         public string Issuer { get; set; } = "Darwin";
+        public string? AccountLabelOverride { get; set; } // default: user email
     }
 
-    public sealed class TotpProvisioningResultDto
+    public sealed class TotpProvisionResult
     {
         public string SecretBase32 { get; set; } = string.Empty;
-        public string OtpAuthUri { get; set; } = string.Empty; // for QR
+        public string OtpAuthUri { get; set; } = string.Empty;
     }
 
-    public sealed class VerifyTotpDto
+    /// <summary>Enables TOTP after verifying the first code.</summary>
+    public sealed class TotpEnableDto
     {
         public Guid UserId { get; set; }
-        public string Code { get; set; } = string.Empty;
+        public int Code { get; set; }
     }
 
-    public sealed class DisableTotpDto
+    /// <summary>Disables TOTP for the user.</summary>
+    public sealed class TotpDisableDto
     {
         public Guid UserId { get; set; }
+    }
+
+    /// <summary>Verifies a TOTP code during login (server-side challenge).</summary>
+    public sealed class TotpVerifyDto
+    {
+        public Guid UserId { get; set; }
+        public int Code { get; set; }
     }
 }

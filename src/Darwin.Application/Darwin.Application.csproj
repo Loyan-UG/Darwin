@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Abstractions\Security\" />
     <Folder Include="x\Commands\" />
     <Folder Include="x\DTOs\" />
     <Folder Include="x\Validators\" />

@@ -25,11 +25,13 @@ namespace Darwin.Infrastructure.Extensions
             // Security stamp service
             services.AddSingleton<ISecurityStampService, SecurityStampService>();
 
-            // TODO: Add TOTP service + external login adapters when wiring Infrastructure is started
-
             // WebAuthn: RP provider + Fido2 adapter
             services.AddScoped<IRelyingPartyFromSiteSettingsProvider, RelyingPartyFromSiteSettingsProvider>();
             services.AddScoped<IWebAuthnService, Fido2WebAuthnService>();
+
+            // Adds TOTP service and other security helpers
+            services.AddSingleton<ITotpService, TotpService>();
+
 
             return services;
         }

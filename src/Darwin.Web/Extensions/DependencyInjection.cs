@@ -67,10 +67,14 @@ namespace Darwin.Web.Extensions
 
             // Persistence (DbContext + IAppDbContext + Seeder)
             services.AddPersistence(config);
+
+            //// Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
             services.AddIdentityInfrastructure();
 
             // Anti-forgery defaults for Admin forms
             services.AddAntiforgery();
+
+            services.AddNotificationsInfrastructure(config);
 
             services.AddScoped<IClock, SystemClock>();
 

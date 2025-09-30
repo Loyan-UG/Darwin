@@ -18,6 +18,9 @@ namespace Darwin.Application.Settings.DTOs
         public string? LogoUrl { get; set; }
         public string? ContactEmail { get; set; }
 
+        // Routing
+        public string? HomeSlug { get; set; } = "home";
+
         // Localization settings
         public string DefaultCulture { get; set; } = "de-DE";
         public string SupportedCulturesCsv { get; set; } = "de-DE,en-US";
@@ -31,6 +34,9 @@ namespace Darwin.Application.Settings.DTOs
         public string MeasurementSystem { get; set; } = "Metric";
         public string? DisplayWeightUnit { get; set; } = "kg";
         public string? DisplayLengthUnit { get; set; } = "cm";
+        // Additional measurement & formatting overrides
+        public string? MeasurementSettingsJson { get; set; }
+        public string? NumberFormattingOverridesJson { get; set; }
 
         // SEO settings
         public bool EnableCanonical { get; set; } = true;
@@ -62,12 +68,7 @@ namespace Darwin.Application.Settings.DTOs
         public string? WhatsAppFromPhoneE164 { get; set; }
         public string? WhatsAppAdminRecipientsCsv { get; set; }
 
-        // Additional measurement & formatting overrides
-        public string? MeasurementSettingsJson { get; set; }
-        public string? NumberFormattingOverridesJson { get; set; }
-
-        // Routing
-        public string? HomeSlug { get; set; } = "home";
+        // WebAuthn
 
         /// <summary>
         /// WebAuthn relying party identifier (RP ID). Usually your registrable domain (e.g., "example.com").
@@ -91,5 +92,28 @@ namespace Darwin.Application.Settings.DTOs
         /// If false, "preferred" verification is used to maximize compatibility.
         /// </summary>
         public bool WebAuthnRequireUserVerification { get; set; } = false;
+
+
+        // SMTP
+        public bool SmtpEnabled { get; set; } = false;
+        public string? SmtpHost { get; set; }
+        public int? SmtpPort { get; set; }
+        public bool SmtpEnableSsl { get; set; } = true;
+        public string? SmtpUsername { get; set; }
+        public string? SmtpPassword { get; set; }
+        public string? SmtpFromAddress { get; set; }
+        public string? SmtpFromDisplayName { get; set; }
+
+        // SMS
+        public bool SmsEnabled { get; set; } = false;
+        public string? SmsProvider { get; set; }
+        public string? SmsFromPhoneE164 { get; set; }
+        public string? SmsApiKey { get; set; }
+        public string? SmsApiSecret { get; set; }
+        public string? SmsExtraSettingsJson { get; set; }
+
+        // Admin alert routing
+        public string? AdminAlertEmailsCsv { get; set; }
+        public string? AdminAlertSmsRecipientsCsv { get; set; }
     }
 }
