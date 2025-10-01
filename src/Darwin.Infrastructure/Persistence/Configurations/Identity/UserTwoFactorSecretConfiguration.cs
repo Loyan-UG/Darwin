@@ -1,4 +1,5 @@
 ﻿using Darwin.Domain.Entities.Identity;
+using Darwin.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -6,40 +7,36 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
 {
     /// <summary>
     /// EF Core configuration for <see cref="UserTwoFactorSecret"/>.
-    /// Holds per-user TOTP secrets and metadata. Secrets should be encrypted at-rest at Infrastructure level.
+    /// Applies at-rest encryption for <see cref="UserTwoFactorSecret.SecretBase32"/>
+    /// via a ValueConverter provided by <see cref="SecretProtectionConverterFactory"/>.
     /// </summary>
     public sealed class UserTwoFactorSecretConfiguration : IEntityTypeConfiguration<UserTwoFactorSecret>
     {
-        public void Configure(EntityTypeBuilder<UserTwoFactorSecret> builder)
+        /// <summary>
+        /// Configures table name, keys, indexes, lengths, and the encryption converter.
+        /// </summary>
+        public void Configure(EntityTypeBuilder<UserTwoFactorSecret> b)
         {
-            builder.ToTable("UserTwoFactorSecrets");
+            b.ToTable("UserTwoFactorSecrets");
 
-            builder.HasKey(x => x.Id);
+            b.HasKey(x => x.Id);
 
-            builder.Property(x => x.UserId).IsRequired();
+            b.Property(x => x.UserId).IsRequired();
 
-            builder.Property(x => x.SecretBase32)
-                   .IsRequired()
-                   .HasMaxLength(256); // Base32-encoded; length depends on policy
+            // Encrypt/decrypt at-rest
+            b.Property(x => x.SecretBase32)
+             .HasConversion(SecretProtectionConverterFactory.CreateStringProtector())
+             .HasMaxLength(512) // ample for protected payload
+             .IsRequired();
 
-            builder.Property(x => x.Issuer)
-                   .IsRequired()
-                   .HasMaxLength(100);
+            b.Property(x => x.Issuer).HasMaxLength(200).IsRequired();
+            b.Property(x => x.Label).HasMaxLength(320).IsRequired(); // email-length safe
 
-            builder.Property(x => x.Label)
-                   .IsRequired()
-                   .HasMaxLength(256);
+            b.HasIndex(x => x.UserId);
+            b.HasIndex(x => new { x.UserId, x.ActivatedAtUtc });
 
-            builder.Property(x => x.ActivatedAtUtc);
-
-            builder.HasOne(x => x.User)
-                   .WithMany(u => u.TwoFactorSecrets)
-                   .HasForeignKey(x => x.UserId)
-                   .OnDelete(DeleteBehavior.Cascade);
-
-            // A user may rotate secrets; if you want at most one active secret per user,
-            // enforce it at application level or introduce an IsActive flag + unique filtered index.
-            builder.HasIndex(x => x.UserId);
+            // Optional: uncomment to enforce single secret per user
+            // b.HasIndex(x => x.UserId).IsUnique();
         }
     }
 }

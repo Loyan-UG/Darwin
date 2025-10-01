@@ -1,7 +1,10 @@
 ﻿using Darwin.Application.Abstractions.Auth;
 using Darwin.Infrastructure.Auth.WebAuthn;
+using Darwin.Infrastructure.Persistence.Converters;
 using Darwin.Infrastructure.Security;
+using Darwin.Infrastructure.Security.Secrets;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Darwin.Infrastructure.Extensions
 {
@@ -32,6 +35,17 @@ namespace Darwin.Infrastructure.Extensions
             // Adds TOTP service and other security helpers
             services.AddSingleton<ITotpService, TotpService>();
 
+
+            services.AddDataProtection(); // data protection keys (persist to folder/redis later if needed)
+            services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
+
+            // Initialize EF converter factory once (so configurations can use it)
+            services.AddSingleton(_ =>
+            {
+                var protector = _.GetRequiredService<ISecretProtector>();
+                SecretProtectionConverterFactory.Initialize(protector);
+                return protector; // keep DI happy
+            });
 
             return services;
         }
