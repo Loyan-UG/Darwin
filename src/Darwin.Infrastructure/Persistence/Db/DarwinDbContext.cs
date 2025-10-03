@@ -125,67 +125,57 @@ namespace Darwin.Infrastructure.Persistence.Db
         {
             base.OnModelCreating(modelBuilder);
 
-            // 1) Apply our shared conventions (if you keep a conventions container).
-            //    (Already existed; kept as-is.)
-            Conventions.Conventions.Apply(modelBuilder); :contentReference[oaicite: 0]{ index = 0}
-
-            // 2) Apply all configuration classes in this Infrastructure assembly.
+            // 1) Apply all IEntityTypeConfiguration<T> from Infrastructure assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DarwinDbContext).Assembly);
 
-            // 3) Global soft-delete filter for all entities deriving from BaseEntity.
+            // 2) Global soft-delete filter for entities that have a bool IsDeleted property
             ApplySoftDeleteQueryFilters(modelBuilder);
 
-            // 4) Map RowVersion as concurrency token for any byte[] property named "RowVersion".
-            ConfigureRowVersionConcurrency(modelBuilder);
+            // 3) Mark "RowVersion" (byte[]) as rowversion/concurrency token when present
+            ApplyRowVersionConcurrency(modelBuilder);
 
             // 5) Optional: register global value converters/protectors (only if class exists in project).
             //    If you are using the SecretProtectionConverterFactory we created earlier, uncomment:
-            SecretProtectionConverterFactory.Apply(modelBuilder);
+            //SecretProtectionConverterFactory.Apply(modelBuilder);
         }
 
         /// <summary>
-        /// Adds a global query filter to all entities derived from <see cref="BaseEntity"/>
-        /// so that only records with IsDeleted = false are returned.
+        /// Scans all entity types and applies a global query filter (IsDeleted == false)
+        /// when a boolean IsDeleted property exists.
         /// </summary>
         private static void ApplySoftDeleteQueryFilters(ModelBuilder modelBuilder)
         {
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                if (!typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
-                    continue;
+                var isDeleted = entityType.FindProperty("IsDeleted");
+                if (isDeleted is null || isDeleted.ClrType != typeof(bool)) continue;
 
-                // Build expression: (T e) => !e.IsDeleted
-                var param = Expression.Parameter(entityType.ClrType, "e");
-                var isDeletedProp = Expression.Property(param, nameof(BaseEntity.IsDeleted));
-                var filter = Expression.Lambda(Expression.Equal(isDeletedProp, Expression.Constant(false)), param);
+                // e => EF.Property<bool>(e, "IsDeleted") == false
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                var left = Expression.Call(
+                    typeof(EF), nameof(EF.Property), new[] { typeof(bool) },
+                    parameter, Expression.Constant("IsDeleted"));
+                var body = Expression.Equal(left, Expression.Constant(false));
+                var lambda = Expression.Lambda(body, parameter);
 
-                entityType.SetQueryFilter(filter);
+                entityType.SetQueryFilter(lambda);
             }
         }
 
         /// <summary>
-        /// Marks a byte[] property named "RowVersion" (if present) on any entity type
-        /// as a concurrency token and configures IsRowVersion for SQL Server.
+        /// Configures byte[] RowVersion properties to be proper rowversion concurrency tokens.
         /// </summary>
-        private static void ConfigureRowVersionConcurrency(ModelBuilder modelBuilder)
+        private static void ApplyRowVersionConcurrency(ModelBuilder modelBuilder)
         {
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                var rowVersionProp = entityType
-                    .GetProperties()
-                    .FirstOrDefault(p =>
-                        p.Name == "RowVersion" &&
-                        p.ClrType == typeof(byte[]));
+                var rv = entityType.FindProperty("RowVersion");
+                if (rv is null || rv.ClrType != typeof(byte[])) continue;
 
-                if (rowVersionProp is not null)
-                {
-                    rowVersionProp.IsConcurrencyToken = true;
-                    rowVersionProp.ValueGenerated = ValueGenerated.OnAddOrUpdate;
-
-                    // For SQL Server providers, IsRowVersion marks it as a rowversion/timestamp column
-                    // (no need to set column type explicitly)
-                    rowVersionProp.SetIsRowVersion(true);
-                }
+                // Use the non-generic builder to avoid reflection gymnastics
+                var builder = modelBuilder.Entity(entityType.ClrType);
+                builder.Property<byte[]>("RowVersion").IsRowVersion();
+                // (.IsRowVersion() sets concurrency token and value generation appropriately)
             }
         }
     }
