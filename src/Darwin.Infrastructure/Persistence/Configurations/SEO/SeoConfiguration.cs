@@ -8,7 +8,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.SEO
     {
         public void Configure(EntityTypeBuilder<RedirectRule> b)
         {
-            b.ToTable("RedirectRules");
+            b.ToTable("RedirectRules", schema: "SEO");
             b.Property(x => x.FromPath).IsRequired().HasMaxLength(400);
             b.Property(x => x.To).IsRequired().HasMaxLength(400);
 

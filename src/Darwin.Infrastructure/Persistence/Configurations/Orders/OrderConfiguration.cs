@@ -8,7 +8,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Orders
     {
         public void Configure(EntityTypeBuilder<Order> b)
         {
-            b.ToTable("Orders");
+            b.ToTable("Orders", schema: "Orders");
             b.Property(x => x.OrderNumber).IsRequired().HasMaxLength(50);
 
             b.HasIndex(x => x.OrderNumber).IsUnique().HasFilter("[IsDeleted] = 0");
@@ -23,7 +23,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Orders
     {
         public void Configure(EntityTypeBuilder<OrderLine> b)
         {
-            b.ToTable("OrderLines");
+            b.ToTable("OrderLines", schema: "Orders");
             b.Property(x => x.Sku).IsRequired().HasMaxLength(100);
         }
     }

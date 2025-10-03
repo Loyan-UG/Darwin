@@ -16,7 +16,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
         public void Configure(EntityTypeBuilder<Brand> builder)
         {
             // Table name aligns with existing naming conventions (no extra prefixes)
-            builder.ToTable("Brands");
+            builder.ToTable("Brands", schema: "Catalog");
 
             builder.HasKey(b => b.Id);
 
@@ -40,7 +40,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
         public void Configure(EntityTypeBuilder<BrandTranslation> builder)
         {
-            builder.ToTable("BrandTranslations");
+            builder.ToTable("BrandTranslations", schema: "Catalog");
 
             builder.HasKey(t => t.Id);
 

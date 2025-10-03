@@ -25,7 +25,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder.ToTable("Categories");
+            builder.ToTable("Categories", schema: "Catalog");
             builder.HasKey(x => x.Id);
 
             builder.HasMany(x => x.Translations)
@@ -36,7 +36,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
 
         public void Configure(EntityTypeBuilder<CategoryTranslation> builder)
         {
-            builder.ToTable("CategoryTranslations");
+            builder.ToTable("CategoryTranslations", schema: "Catalog");
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.Culture).HasMaxLength(10).IsRequired();

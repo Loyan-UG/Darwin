@@ -17,7 +17,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
         /// </summary>
         public void Configure(EntityTypeBuilder<UserTwoFactorSecret> b)
         {
-            b.ToTable("UserTwoFactorSecrets");
+            b.ToTable("UserTwoFactorSecrets", schema: "Identity");
 
             b.HasKey(x => x.Id);
 

@@ -9,7 +9,7 @@ namespace Darwin.Infrastructure.Extensions
     ///     Composition root for notifications infrastructure (SMTP).
     ///     Call <c>services.AddNotificationsInfrastructure(configuration)</c> once from Web composition.
     /// </summary>
-    public static class ServiceCollectionExtensions_Notifications
+    public static class ServiceCollectionExtensionsNotifications
     {
         /// <summary>
         ///     Registers SMTP email sender and binds options from configuration section "Email:Smtp".

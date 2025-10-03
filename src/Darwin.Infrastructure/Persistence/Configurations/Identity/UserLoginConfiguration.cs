@@ -13,7 +13,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
     {
         public void Configure(EntityTypeBuilder<UserLogin> builder)
         {
-            builder.ToTable("UserLogins");
+            builder.ToTable("UserLogins", schema: "Identity");
 
             // Primary key (inherited from BaseEntity) is Id (GUID).
             builder.HasKey(x => x.Id);

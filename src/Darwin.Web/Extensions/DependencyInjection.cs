@@ -76,6 +76,9 @@ namespace Darwin.Web.Extensions
 
             services.AddNotificationsInfrastructure(config);
 
+            services.AddSharedHostingDataProtection(config);
+
+
             services.AddScoped<IClock, SystemClock>();
 
             // Register handlers — Products

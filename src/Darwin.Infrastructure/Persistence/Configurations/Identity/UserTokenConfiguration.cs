@@ -13,7 +13,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
     {
         public void Configure(EntityTypeBuilder<UserToken> builder)
         {
-            builder.ToTable("UserTokens");
+            builder.ToTable("UserTokens", schema: "Identity");
 
             builder.HasKey(x => x.Id);
 

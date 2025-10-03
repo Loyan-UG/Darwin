@@ -24,7 +24,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CartCheckout
         /// <param name="builder">The type builder for Cart.</param>
         public void Configure(EntityTypeBuilder<Cart> builder)
         {
-            builder.ToTable("Carts");
+            builder.ToTable("Carts", schema: "CartCheckout");
 
             // Primary key
             builder.HasKey(c => c.Id);
@@ -46,6 +46,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CartCheckout
             builder.Property(c => c.RowVersion)
                    .IsRowVersion();
 
+            builder.HasIndex(x => x.UserId);
+            builder.HasIndex(x => x.AnonymousId);
+
             // Relationship: Cart has many CartItems. When a cart is deleted,
             // cascade delete its items.  The soft delete filter on CartItem
             // remains in effect for queries.
@@ -65,7 +68,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CartCheckout
         /// <param name="builder">The type builder for CartItem.</param>
         void IEntityTypeConfiguration<CartItem>.Configure(EntityTypeBuilder<CartItem> builder)
         {
-            builder.ToTable("CartItems");
+            builder.ToTable("CartItems", schema: "CartCheckout");
 
             builder.HasKey(ci => ci.Id);
 
@@ -85,6 +88,13 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CartCheckout
             builder.Property(ci => ci.VatRate)
                    .HasColumnType("decimal(5, 2)")
                    .IsRequired();
+
+            builder.Property(x => x.SelectedAddOnValueIdsJson)
+                .HasMaxLength(4000)
+                .IsRequired();
+
+            builder.Property(x => x.AddOnPriceDeltaMinor).HasDefaultValue(0);
+
 
             // Concurrency token
             builder.Property(ci => ci.RowVersion)

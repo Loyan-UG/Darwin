@@ -15,7 +15,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
     {
         public void Configure(EntityTypeBuilder<Menu> builder)
         {
-            builder.ToTable("Menus");
+            builder.ToTable("Menus", schema: "CMS");
             builder.HasKey(m => m.Id);
 
             builder.Property(m => m.Name)
@@ -32,7 +32,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
 
         public void Configure(EntityTypeBuilder<MenuItem> builder)
         {
-            builder.ToTable("MenuItems");
+            builder.ToTable("MenuItems", schema: "CMS");
             builder.HasKey(i => i.Id);
 
             builder.Property(i => i.Url)
@@ -62,7 +62,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
 
         public void Configure(EntityTypeBuilder<MenuItemTranslation> builder)
         {
-            builder.ToTable("MenuItemTranslations");
+            builder.ToTable("MenuItemTranslations", schema: "CMS");
             builder.HasKey(t => t.Id);
 
             builder.Property(t => t.Culture)

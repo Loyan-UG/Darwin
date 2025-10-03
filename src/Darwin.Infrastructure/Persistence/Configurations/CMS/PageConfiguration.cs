@@ -25,7 +25,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
     {
         public void Configure(EntityTypeBuilder<Page> builder)
         {
-            builder.ToTable("Pages");
+            builder.ToTable("Pages", schema: "CMS");
 
             builder.HasKey(x => x.Id);
 
@@ -48,7 +48,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CMS
 
         public void Configure(EntityTypeBuilder<PageTranslation> builder)
         {
-            builder.ToTable("PageTranslations");
+            builder.ToTable("PageTranslations", schema: "CMS");
 
             builder.HasKey(x => x.Id);
 

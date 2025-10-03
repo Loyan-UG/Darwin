@@ -25,7 +25,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
     {
         public void Configure(EntityTypeBuilder<Product> b)
         {
-            b.ToTable("Products");
+            b.ToTable("Products", schema: "Catalog");
 
             b.HasMany(p => p.Translations)
              .WithOne()
@@ -53,7 +53,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
     {
         public void Configure(EntityTypeBuilder<ProductTranslation> b)
         {
-            b.ToTable("ProductTranslations");
+            b.ToTable("ProductTranslations", schema: "Catalog");
             b.Property(x => x.Culture).IsRequired().HasMaxLength(10);
             b.Property(x => x.Slug).IsRequired().HasMaxLength(200);
 
@@ -67,7 +67,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
     {
         public void Configure(EntityTypeBuilder<CategoryTranslation> b)
         {
-            b.ToTable("CategoryTranslations");
+            b.ToTable("CategoryTranslations", schema: "Catalog");
             b.Property(x => x.Culture).IsRequired().HasMaxLength(10);
             b.Property(x => x.Slug).IsRequired().HasMaxLength(200);
 
@@ -81,7 +81,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
     {
         public void Configure(EntityTypeBuilder<ProductVariant> b)
         {
-            b.ToTable("ProductVariants");
+            b.ToTable("ProductVariants", schema: "Catalog");
             b.Property(x => x.Sku).IsRequired().HasMaxLength(100);
 
             // Unique SKU among non-deleted variants
@@ -100,7 +100,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
     {
         public void Configure(EntityTypeBuilder<ProductOption> b)
         {
-            b.ToTable("ProductOptions");
+            b.ToTable("ProductOptions", schema: "Catalog");
             b.HasMany(o => o.Values).WithOne().HasForeignKey(v => v.ProductOptionId).OnDelete(DeleteBehavior.Cascade);
         }
     }

@@ -14,7 +14,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.ToTable("Users");
+            builder.ToTable("Users", schema: "Identity");
 
             // Keys & concurrency
             builder.HasKey(u => u.Id);

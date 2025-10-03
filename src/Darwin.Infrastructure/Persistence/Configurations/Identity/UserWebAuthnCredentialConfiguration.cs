@@ -12,7 +12,7 @@ namespace Darwin.Infrastructure.Persistence.Configuration.Identity
     {
         public void Configure(EntityTypeBuilder<UserWebAuthnCredential> b)
         {
-            b.ToTable("UserWebAuthnCredentials");
+            b.ToTable("UserWebAuthnCredentials", schema: "Identity");
 
             b.HasKey(x => x.Id);
 

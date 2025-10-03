@@ -16,7 +16,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Shipping
         public void Configure(EntityTypeBuilder<ShippingMethod> builder)
         {
             // Table naming
-            builder.ToTable("ShippingMethods");
+            builder.ToTable("ShippingMethods", schema: "Shipping");
 
             // Keys and basic properties
             builder.HasKey(sm => sm.Id);

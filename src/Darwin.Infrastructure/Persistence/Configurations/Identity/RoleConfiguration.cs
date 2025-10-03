@@ -13,7 +13,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
     {
         public void Configure(EntityTypeBuilder<Role> builder)
         {
-            builder.ToTable("Roles");
+            builder.ToTable("Roles", schema: "Identity");
 
             builder.HasKey(r => r.Id);
             builder.Property(r => r.RowVersion).IsRowVersion();

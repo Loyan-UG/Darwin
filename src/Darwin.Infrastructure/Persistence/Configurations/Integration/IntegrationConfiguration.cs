@@ -8,7 +8,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
     {
         public void Configure(EntityTypeBuilder<WebhookSubscription> b)
         {
-            b.ToTable("WebhookSubscriptions");
+            b.ToTable("WebhookSubscriptions", schema: "Integration");
             b.Property(x => x.EventType).IsRequired().HasMaxLength(100);
             b.Property(x => x.CallbackUrl).IsRequired().HasMaxLength(400);
 
@@ -22,7 +22,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
     {
         public void Configure(EntityTypeBuilder<WebhookDelivery> b)
         {
-            b.ToTable("WebhookDeliveries");
+            b.ToTable("WebhookDeliveries", schema: "Integration");
             b.Property(x => x.Status).IsRequired().HasMaxLength(50);
             b.Property(x => x.IdempotencyKey).HasMaxLength(100);
         }
@@ -32,7 +32,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Integration
     {
         public void Configure(EntityTypeBuilder<EventLog> b)
         {
-            b.ToTable("EventLogs");
+            b.ToTable("EventLogs", schema: "Integration");
             b.Property(x => x.Type).IsRequired().HasMaxLength(100);
             b.Property(x => x.SessionId).HasMaxLength(100);
             b.Property(x => x.IdempotencyKey).HasMaxLength(100);

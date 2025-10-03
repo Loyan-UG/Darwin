@@ -11,7 +11,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
     {
         public void Configure(EntityTypeBuilder<PasswordResetToken> builder)
         {
-            builder.ToTable("PasswordResetTokens");
+            builder.ToTable("PasswordResetTokens", schema: "Identity");
 
             builder.HasKey(p => p.Id);
             builder.Property(p => p.RowVersion).IsRowVersion();

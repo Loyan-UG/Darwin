@@ -12,7 +12,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
     {
         public void Configure(EntityTypeBuilder<UserRole> builder)
         {
-            builder.ToTable("UserRoles");
+            builder.ToTable("UserRoles", schema: "Identity");
 
             builder.HasKey(ur => ur.Id);
             builder.Property(ur => ur.RowVersion).IsRowVersion();
