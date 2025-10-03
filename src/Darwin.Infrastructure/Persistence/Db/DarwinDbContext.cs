@@ -3,6 +3,7 @@ using Darwin.Domain.Common;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
+using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Orders;
@@ -10,8 +11,10 @@ using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.SEO;
 using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Entities.Shipping;
-using Darwin.Domain.Entities.Identity;
+using Darwin.Infrastructure.Persistence.Converters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -109,15 +112,81 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<RedirectRule> RedirectRules => Set<RedirectRule>();
         public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
 
+
+        /// <summary>
+        /// Configures EF Core model:
+        /// - Applies all IEntityTypeConfiguration<T> in this assembly.
+        /// - Enforces a global query filter for soft-delete (IsDeleted = false) on all BaseEntity types.
+        /// - Maps byte[] RowVersion properties as concurrency tokens wherever present.
+        /// - Hooks optional global converters (e.g., secret protection) if available.
+        /// </summary>
+        /// <param name="modelBuilder">Model builder provided by EF Core.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Apply global conventions and per-entity configurations
-            Conventions.Conventions.Apply(modelBuilder);
+            // 1) Apply our shared conventions (if you keep a conventions container).
+            //    (Already existed; kept as-is.)
+            Conventions.Conventions.Apply(modelBuilder); :contentReference[oaicite: 0]{ index = 0}
 
-            // Apply per-entity configurations where we need explicit indexes/relations
+            // 2) Apply all configuration classes in this Infrastructure assembly.
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DarwinDbContext).Assembly);
+
+            // 3) Global soft-delete filter for all entities deriving from BaseEntity.
+            ApplySoftDeleteQueryFilters(modelBuilder);
+
+            // 4) Map RowVersion as concurrency token for any byte[] property named "RowVersion".
+            ConfigureRowVersionConcurrency(modelBuilder);
+
+            // 5) Optional: register global value converters/protectors (only if class exists in project).
+            //    If you are using the SecretProtectionConverterFactory we created earlier, uncomment:
+            SecretProtectionConverterFactory.Apply(modelBuilder);
+        }
+
+        /// <summary>
+        /// Adds a global query filter to all entities derived from <see cref="BaseEntity"/>
+        /// so that only records with IsDeleted = false are returned.
+        /// </summary>
+        private static void ApplySoftDeleteQueryFilters(ModelBuilder modelBuilder)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (!typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                    continue;
+
+                // Build expression: (T e) => !e.IsDeleted
+                var param = Expression.Parameter(entityType.ClrType, "e");
+                var isDeletedProp = Expression.Property(param, nameof(BaseEntity.IsDeleted));
+                var filter = Expression.Lambda(Expression.Equal(isDeletedProp, Expression.Constant(false)), param);
+
+                entityType.SetQueryFilter(filter);
+            }
+        }
+
+        /// <summary>
+        /// Marks a byte[] property named "RowVersion" (if present) on any entity type
+        /// as a concurrency token and configures IsRowVersion for SQL Server.
+        /// </summary>
+        private static void ConfigureRowVersionConcurrency(ModelBuilder modelBuilder)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var rowVersionProp = entityType
+                    .GetProperties()
+                    .FirstOrDefault(p =>
+                        p.Name == "RowVersion" &&
+                        p.ClrType == typeof(byte[]));
+
+                if (rowVersionProp is not null)
+                {
+                    rowVersionProp.IsConcurrencyToken = true;
+                    rowVersionProp.ValueGenerated = ValueGenerated.OnAddOrUpdate;
+
+                    // For SQL Server providers, IsRowVersion marks it as a rowversion/timestamp column
+                    // (no need to set column type explicitly)
+                    rowVersionProp.SetIsRowVersion(true);
+                }
+            }
         }
     }
 }
