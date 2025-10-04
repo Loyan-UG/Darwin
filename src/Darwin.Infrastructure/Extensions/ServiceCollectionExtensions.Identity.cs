@@ -40,9 +40,9 @@ namespace Darwin.Infrastructure.Extensions
             services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
 
             // Initialize EF converter factory once (so configurations can use it)
-            services.AddSingleton(_ =>
+            services.AddSingleton(sp =>
             {
-                var protector = _.GetRequiredService<ISecretProtector>();
+                var protector = sp.GetRequiredService<IDataProtector>();
                 SecretProtectionConverterFactory.Initialize(protector);
                 return protector; // keep DI happy
             });

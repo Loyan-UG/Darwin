@@ -1,8 +1,6 @@
 ﻿using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
-using Darwin.Application.Catalog.Queries.GetProductForEdit;
-using Darwin.Application.Catalog.Queries.GetProductsPage;
 using Darwin.Application.Settings.Queries;
 using Darwin.Web.Areas.Admin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
