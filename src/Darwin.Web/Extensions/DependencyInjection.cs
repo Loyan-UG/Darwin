@@ -65,6 +65,8 @@ namespace Darwin.Web.Extensions
             // Application layer (includes AutoMapper + validators scanning)
             services.AddApplication();
 
+            services.AddSharedHostingDataProtection(config);
+
             // Persistence (DbContext + IAppDbContext + Seeder)
             services.AddPersistence(config);
 
@@ -76,7 +78,7 @@ namespace Darwin.Web.Extensions
 
             services.AddNotificationsInfrastructure(config);
 
-            services.AddSharedHostingDataProtection(config);
+
 
 
             services.AddScoped<IClock, SystemClock>();
