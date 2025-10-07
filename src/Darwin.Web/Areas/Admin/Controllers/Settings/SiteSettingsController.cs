@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Darwin.Application.Settings.Commands;
 using Darwin.Application.Settings.DTOs;
-using Darwin.Application.Settings.Queries;
 using Darwin.Web.Areas.Admin.ViewModels.Settings;
 using Darwin.Web.Services.Settings;
 using Microsoft.AspNetCore.Mvc;
@@ -11,51 +10,39 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Web.Areas.Admin.Controllers.Settings
 {
     /// <summary>
-    /// Admin controller for viewing and editing site-wide settings. Includes fields for
-    /// culture/currency, measurement units, SEO flags, analytics IDs, feature toggles and more.
-    /// Utilizes handlers from the Application layer to load and persist settings and a cache
-    /// service to refresh the settings across the application immediately after changes.
+    /// Admin controller for viewing and editing site-wide settings. Reads via cache,
+    /// saves via Application handlers, and invalidates cache on success.
     /// </summary>
     [Area("Admin")]
     public sealed class SiteSettingsController : Controller
     {
-        private readonly GetSiteSettingHandler _get;
         private readonly UpdateSiteSettingHandler _update;
         private readonly ISiteSettingCache _cache;
 
         /// <summary>
-        /// Constructs a new instance of <see cref="SiteSettingsController"/> with the necessary
-        /// handlers and caching service.
+        /// Initializes a new instance of <see cref="SiteSettingsController"/>.
         /// </summary>
-        public SiteSettingsController(GetSiteSettingHandler get, UpdateSiteSettingHandler update, ISiteSettingCache cache)
+        public SiteSettingsController(UpdateSiteSettingHandler update, ISiteSettingCache cache)
         {
-            _get = get;
             _update = update;
             _cache = cache;
         }
 
         /// <summary>
-        /// Displays the edit form with current site settings.
+        /// Shows the edit form with current settings (loaded from cache).
         /// </summary>
-        /// <param name="ct">Cancellation token.</param>
         [HttpGet]
         public async Task<IActionResult> Edit(CancellationToken ct)
         {
-            var dto = await _get.HandleAsync(ct);
-            if (dto == null)
-                return NotFound();
-
+            var dto = await _cache.GetAsync(ct);
             var vm = MapToVm(dto);
             return View(vm);
         }
 
         /// <summary>
-        /// Processes posted changes to site settings. Performs ModelState validation, attempts
-        /// to update via the handler, invalidates the settings cache on success, and handles
-        /// concurrency or validation errors gracefully.
+        /// Processes posted changes; on success redirects back to GET with a success alert.
+        /// Handles concurrency and validation errors and redisplays the form.
         /// </summary>
-        /// <param name="vm">The view model carrying user input.</param>
-        /// <param name="ct">Cancellation token.</param>
         [ValidateAntiForgeryToken]
         [HttpPost]
         public async Task<IActionResult> Edit(SiteSettingVm vm, CancellationToken ct)
@@ -69,7 +56,6 @@ namespace Darwin.Web.Areas.Admin.Controllers.Settings
             {
                 await _update.HandleAsync(dto, ct);
                 _cache.Invalidate();
-
                 TempData["Success"] = "Settings have been updated.";
                 return RedirectToAction(nameof(Edit));
             }
@@ -86,120 +72,170 @@ namespace Darwin.Web.Areas.Admin.Controllers.Settings
             }
         }
 
-        // Mapping functions between DTO and ViewModel. Keeping mappings here local to the controller
-        // avoids scattering mapping logic and ensures the form and handler remain in sync.
-        private static SiteSettingVm MapToVm(SiteSettingDto dto)
+        /// <summary>
+        /// Maps DTO → VM for the form.
+        /// </summary>
+        private static SiteSettingVm MapToVm(SiteSettingDto dto) => new()
         {
-            return new SiteSettingVm
-            {
-                Id = dto.Id,
-                RowVersion = dto.RowVersion,
+            Id = dto.Id,
+            RowVersion = dto.RowVersion,
 
-                // Basic
-                Title = dto.Title,
-                LogoUrl = dto.LogoUrl,
-                ContactEmail = dto.ContactEmail,
+            // Basics
+            Title = dto.Title,
+            LogoUrl = dto.LogoUrl,
+            ContactEmail = dto.ContactEmail,
 
-                // Localization
-                DefaultCulture = dto.DefaultCulture,
-                SupportedCulturesCsv = dto.SupportedCulturesCsv,
-                DefaultCountry = dto.DefaultCountry,
-                DefaultCurrency = dto.DefaultCurrency,
-                TimeZone = dto.TimeZone,
-                DateFormat = dto.DateFormat,
-                TimeFormat = dto.TimeFormat,
+            // Routing
+            HomeSlug = dto.HomeSlug,
 
-                // Measurement & units
-                MeasurementSystem = dto.MeasurementSystem,
-                DisplayWeightUnit = dto.DisplayWeightUnit,
-                DisplayLengthUnit = dto.DisplayLengthUnit,
+            // Localization
+            DefaultCulture = dto.DefaultCulture,
+            SupportedCulturesCsv = dto.SupportedCulturesCsv,
+            DefaultCountry = dto.DefaultCountry,
+            DefaultCurrency = dto.DefaultCurrency,
+            TimeZone = dto.TimeZone,
+            DateFormat = dto.DateFormat,
+            TimeFormat = dto.TimeFormat,
 
-                // SEO
-                EnableCanonical = dto.EnableCanonical,
-                HreflangEnabled = dto.HreflangEnabled,
-                SeoTitleTemplate = dto.SeoTitleTemplate,
-                SeoMetaDescriptionTemplate = dto.SeoMetaDescriptionTemplate,
-                OpenGraphDefaultsJson = dto.OpenGraphDefaultsJson,
+            // Units & formatting
+            MeasurementSystem = dto.MeasurementSystem,
+            DisplayWeightUnit = dto.DisplayWeightUnit,
+            DisplayLengthUnit = dto.DisplayLengthUnit,
+            MeasurementSettingsJson = dto.MeasurementSettingsJson,
+            NumberFormattingOverridesJson = dto.NumberFormattingOverridesJson,
 
-                // Analytics
-                GoogleAnalyticsId = dto.GoogleAnalyticsId,
-                GoogleTagManagerId = dto.GoogleTagManagerId,
-                GoogleSearchConsoleVerification = dto.GoogleSearchConsoleVerification,
+            // SEO
+            EnableCanonical = dto.EnableCanonical,
+            HreflangEnabled = dto.HreflangEnabled,
+            SeoTitleTemplate = dto.SeoTitleTemplate,
+            SeoMetaDescriptionTemplate = dto.SeoMetaDescriptionTemplate,
+            OpenGraphDefaultsJson = dto.OpenGraphDefaultsJson,
 
-                // Feature flags
-                FeatureFlagsJson = dto.FeatureFlagsJson,
+            // Analytics
+            GoogleAnalyticsId = dto.GoogleAnalyticsId,
+            GoogleTagManagerId = dto.GoogleTagManagerId,
+            GoogleSearchConsoleVerification = dto.GoogleSearchConsoleVerification,
 
-                // WhatsApp integration
-                WhatsAppEnabled = dto.WhatsAppEnabled,
-                WhatsAppBusinessPhoneId = dto.WhatsAppBusinessPhoneId,
-                WhatsAppAccessToken = dto.WhatsAppAccessToken,
-                WhatsAppFromPhoneE164 = dto.WhatsAppFromPhoneE164,
-                WhatsAppAdminRecipientsCsv = dto.WhatsAppAdminRecipientsCsv,
+            // Feature flags
+            FeatureFlagsJson = dto.FeatureFlagsJson,
 
-                // Additional measurement & formatting overrides
-                MeasurementSettingsJson = dto.MeasurementSettingsJson,
-                NumberFormattingOverridesJson = dto.NumberFormattingOverridesJson,
+            // WhatsApp
+            WhatsAppEnabled = dto.WhatsAppEnabled,
+            WhatsAppBusinessPhoneId = dto.WhatsAppBusinessPhoneId,
+            WhatsAppAccessToken = dto.WhatsAppAccessToken,
+            WhatsAppFromPhoneE164 = dto.WhatsAppFromPhoneE164,
+            WhatsAppAdminRecipientsCsv = dto.WhatsAppAdminRecipientsCsv,
 
-                // Routing
-                HomeSlug = dto.HomeSlug
-            };
-        }
+            // WebAuthn
+            WebAuthnRelyingPartyId = dto.WebAuthnRelyingPartyId,
+            WebAuthnRelyingPartyName = dto.WebAuthnRelyingPartyName,
+            WebAuthnAllowedOriginsCsv = dto.WebAuthnAllowedOriginsCsv,
+            WebAuthnRequireUserVerification = dto.WebAuthnRequireUserVerification,
 
-        private static SiteSettingDto MapToUpdateDto(SiteSettingVm vm)
+            // SMTP
+            SmtpEnabled = dto.SmtpEnabled,
+            SmtpHost = dto.SmtpHost,
+            SmtpPort = dto.SmtpPort,
+            SmtpEnableSsl = dto.SmtpEnableSsl,
+            SmtpUsername = dto.SmtpUsername,
+            SmtpPassword = dto.SmtpPassword,
+            SmtpFromAddress = dto.SmtpFromAddress,
+            SmtpFromDisplayName = dto.SmtpFromDisplayName,
+
+            // SMS
+            SmsEnabled = dto.SmsEnabled,
+            SmsProvider = dto.SmsProvider,
+            SmsFromPhoneE164 = dto.SmsFromPhoneE164,
+            SmsApiKey = dto.SmsApiKey,
+            SmsApiSecret = dto.SmsApiSecret,
+            SmsExtraSettingsJson = dto.SmsExtraSettingsJson,
+
+            // Admin routing
+            AdminAlertEmailsCsv = dto.AdminAlertEmailsCsv,
+            AdminAlertSmsRecipientsCsv = dto.AdminAlertSmsRecipientsCsv
+        };
+
+        /// <summary>
+        /// Maps VM → DTO for persistence.
+        /// </summary>
+        private static SiteSettingDto MapToUpdateDto(SiteSettingVm vm) => new()
         {
-            return new SiteSettingDto
-            {
-                Id = vm.Id,
-                RowVersion = vm.RowVersion,
+            Id = vm.Id,
+            RowVersion = vm.RowVersion,
 
-                // Basic
-                Title = vm.Title,
-                LogoUrl = vm.LogoUrl,
-                ContactEmail = vm.ContactEmail,
+            // Basics
+            Title = vm.Title,
+            LogoUrl = vm.LogoUrl,
+            ContactEmail = vm.ContactEmail,
 
-                // Localization
-                DefaultCulture = vm.DefaultCulture,
-                SupportedCulturesCsv = vm.SupportedCulturesCsv,
-                DefaultCountry = vm.DefaultCountry,
-                DefaultCurrency = vm.DefaultCurrency,
-                TimeZone = vm.TimeZone,
-                DateFormat = vm.DateFormat,
-                TimeFormat = vm.TimeFormat,
+            // Routing
+            HomeSlug = vm.HomeSlug,
 
-                // Measurement & units
-                MeasurementSystem = vm.MeasurementSystem,
-                DisplayWeightUnit = vm.DisplayWeightUnit,
-                DisplayLengthUnit = vm.DisplayLengthUnit,
+            // Localization
+            DefaultCulture = vm.DefaultCulture,
+            SupportedCulturesCsv = vm.SupportedCulturesCsv,
+            DefaultCountry = vm.DefaultCountry,
+            DefaultCurrency = vm.DefaultCurrency,
+            TimeZone = vm.TimeZone,
+            DateFormat = vm.DateFormat,
+            TimeFormat = vm.TimeFormat,
 
-                // SEO
-                EnableCanonical = vm.EnableCanonical,
-                HreflangEnabled = vm.HreflangEnabled,
-                SeoTitleTemplate = vm.SeoTitleTemplate,
-                SeoMetaDescriptionTemplate = vm.SeoMetaDescriptionTemplate,
-                OpenGraphDefaultsJson = vm.OpenGraphDefaultsJson,
+            // Units & formatting
+            MeasurementSystem = vm.MeasurementSystem,
+            DisplayWeightUnit = vm.DisplayWeightUnit,
+            DisplayLengthUnit = vm.DisplayLengthUnit,
+            MeasurementSettingsJson = vm.MeasurementSettingsJson,
+            NumberFormattingOverridesJson = vm.NumberFormattingOverridesJson,
 
-                // Analytics
-                GoogleAnalyticsId = vm.GoogleAnalyticsId,
-                GoogleTagManagerId = vm.GoogleTagManagerId,
-                GoogleSearchConsoleVerification = vm.GoogleSearchConsoleVerification,
+            // SEO
+            EnableCanonical = vm.EnableCanonical,
+            HreflangEnabled = vm.HreflangEnabled,
+            SeoTitleTemplate = vm.SeoTitleTemplate,
+            SeoMetaDescriptionTemplate = vm.SeoMetaDescriptionTemplate,
+            OpenGraphDefaultsJson = vm.OpenGraphDefaultsJson,
 
-                // Feature flags
-                FeatureFlagsJson = vm.FeatureFlagsJson,
+            // Analytics
+            GoogleAnalyticsId = vm.GoogleAnalyticsId,
+            GoogleTagManagerId = vm.GoogleTagManagerId,
+            GoogleSearchConsoleVerification = vm.GoogleSearchConsoleVerification,
 
-                // WhatsApp integration
-                WhatsAppEnabled = vm.WhatsAppEnabled,
-                WhatsAppBusinessPhoneId = vm.WhatsAppBusinessPhoneId,
-                WhatsAppAccessToken = vm.WhatsAppAccessToken,
-                WhatsAppFromPhoneE164 = vm.WhatsAppFromPhoneE164,
-                WhatsAppAdminRecipientsCsv = vm.WhatsAppAdminRecipientsCsv,
+            // Feature flags
+            FeatureFlagsJson = vm.FeatureFlagsJson,
 
-                // Additional measurement & formatting overrides
-                MeasurementSettingsJson = vm.MeasurementSettingsJson,
-                NumberFormattingOverridesJson = vm.NumberFormattingOverridesJson,
+            // WhatsApp
+            WhatsAppEnabled = vm.WhatsAppEnabled,
+            WhatsAppBusinessPhoneId = vm.WhatsAppBusinessPhoneId,
+            WhatsAppAccessToken = vm.WhatsAppAccessToken,
+            WhatsAppFromPhoneE164 = vm.WhatsAppFromPhoneE164,
+            WhatsAppAdminRecipientsCsv = vm.WhatsAppAdminRecipientsCsv,
 
-                // Routing
-                HomeSlug = vm.HomeSlug
-            };
-        }
+            // WebAuthn
+            WebAuthnRelyingPartyId = vm.WebAuthnRelyingPartyId,
+            WebAuthnRelyingPartyName = vm.WebAuthnRelyingPartyName,
+            WebAuthnAllowedOriginsCsv = vm.WebAuthnAllowedOriginsCsv,
+            WebAuthnRequireUserVerification = vm.WebAuthnRequireUserVerification,
+
+            // SMTP
+            SmtpEnabled = vm.SmtpEnabled,
+            SmtpHost = vm.SmtpHost,
+            SmtpPort = vm.SmtpPort,
+            SmtpEnableSsl = vm.SmtpEnableSsl,
+            SmtpUsername = vm.SmtpUsername,
+            SmtpPassword = vm.SmtpPassword,
+            SmtpFromAddress = vm.SmtpFromAddress,
+            SmtpFromDisplayName = vm.SmtpFromDisplayName,
+
+            // SMS
+            SmsEnabled = vm.SmsEnabled,
+            SmsProvider = vm.SmsProvider,
+            SmsFromPhoneE164 = vm.SmsFromPhoneE164,
+            SmsApiKey = vm.SmsApiKey,
+            SmsApiSecret = vm.SmsApiSecret,
+            SmsExtraSettingsJson = vm.SmsExtraSettingsJson,
+
+            // Admin routing
+            AdminAlertEmailsCsv = vm.AdminAlertEmailsCsv,
+            AdminAlertSmsRecipientsCsv = vm.AdminAlertSmsRecipientsCsv
+        };
     }
 }

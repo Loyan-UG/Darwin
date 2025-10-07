@@ -4,44 +4,45 @@ using System.ComponentModel.DataAnnotations;
 namespace Darwin.Web.Areas.Admin.ViewModels.Settings
 {
     /// <summary>
-    /// View model backing the SiteSettings edit form. Keeps separation between the
-    /// persisted DTOs and the Razor view. Data annotations define human-readable
-    /// labels and provide client-side validation hints (server-side validation is
-    /// handled by FluentValidation in the Application layer).
+    /// View model backing the Site Settings edit form. Mirrors <c>SiteSettingDto</c> fields
+    /// for a 1:1 mapping, but uses DataAnnotations for display names and client hints.
+    /// Server-side validation is enforced by FluentValidation in the Application layer.
     /// </summary>
     public sealed class SiteSettingVm
     {
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// RowVersion for optimistic concurrency. Required by the Application handler.
+        /// </summary>
+        [Required]
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
-        // Basic
-        [Display(Name = "Title")]
-        [Required, MaxLength(200)]
+        // ---------- Basics ----------
+        [Display(Name = "Title"), Required, MaxLength(200)]
         public string Title { get; set; } = string.Empty;
 
-        [Display(Name = "Logo URL")]
-        [MaxLength(500)]
+        [Display(Name = "Logo URL"), MaxLength(500)]
         public string? LogoUrl { get; set; }
 
-        [Display(Name = "Contact Email")]
-        [EmailAddress]
+        [Display(Name = "Contact Email"), EmailAddress]
         public string? ContactEmail { get; set; }
 
-        // Localization
-        [Display(Name = "Default Culture")]
-        [Required, MaxLength(10)]
+        // ---------- Routing ----------
+        [Display(Name = "Home Slug")]
+        public string? HomeSlug { get; set; } = "home";
+
+        // ---------- Localization ----------
+        [Display(Name = "Default Culture"), Required, MaxLength(10)]
         public string DefaultCulture { get; set; } = "de-DE";
 
-        [Display(Name = "Supported Cultures")]
-        [Required]
+        [Display(Name = "Supported Cultures"), Required]
         public string SupportedCulturesCsv { get; set; } = "de-DE,en-US";
 
-        [Display(Name = "Default Country")]
-        [MaxLength(2)]
+        [Display(Name = "Default Country"), MaxLength(2)]
         public string? DefaultCountry { get; set; } = "DE";
 
-        [Display(Name = "Default Currency")]
-        [Required, MaxLength(3)]
+        [Display(Name = "Default Currency"), Required, MaxLength(3)]
         public string DefaultCurrency { get; set; } = "EUR";
 
         [Display(Name = "Time Zone")]
@@ -53,7 +54,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Settings
         [Display(Name = "Time Format")]
         public string? TimeFormat { get; set; } = "HH:mm";
 
-        // Measurement & units
+        // ---------- Units & Formatting ----------
         [Display(Name = "Measurement System")]
         public string MeasurementSystem { get; set; } = "Metric";
 
@@ -63,26 +64,29 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Settings
         [Display(Name = "Display Length Unit")]
         public string? DisplayLengthUnit { get; set; } = "cm";
 
-        // SEO
+        [Display(Name = "Measurement Settings (JSON)")]
+        public string? MeasurementSettingsJson { get; set; }
+
+        [Display(Name = "Number Formatting Overrides (JSON)")]
+        public string? NumberFormattingOverridesJson { get; set; }
+
+        // ---------- SEO ----------
         [Display(Name = "Enable Canonical")]
         public bool EnableCanonical { get; set; } = true;
 
         [Display(Name = "Hreflang Enabled")]
         public bool HreflangEnabled { get; set; } = true;
 
-        [Display(Name = "SEO Title Template")]
-        [MaxLength(150)]
+        [Display(Name = "SEO Title Template"), MaxLength(150)]
         public string? SeoTitleTemplate { get; set; } = "{title} | {site}";
 
-        [Display(Name = "SEO Meta Description Template")]
-        [MaxLength(200)]
+        [Display(Name = "SEO Meta Description Template"), MaxLength(200)]
         public string? SeoMetaDescriptionTemplate { get; set; }
 
-        [Display(Name = "Open Graph Defaults (JSON)")]
-        [MaxLength(2000)]
+        [Display(Name = "OpenGraph Defaults (JSON)"), MaxLength(2000)]
         public string? OpenGraphDefaultsJson { get; set; }
 
-        // Analytics
+        // ---------- Analytics ----------
         [Display(Name = "Google Analytics ID")]
         public string? GoogleAnalyticsId { get; set; }
 
@@ -92,35 +96,88 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Settings
         [Display(Name = "Google Search Console Verification")]
         public string? GoogleSearchConsoleVerification { get; set; }
 
-        // Feature flags (JSON)
+        // ---------- Feature Flags ----------
         [Display(Name = "Feature Flags (JSON)")]
         public string? FeatureFlagsJson { get; set; }
 
-        // WhatsApp Integration
-        [Display(Name = "WhatsApp Enabled")]
+        // ---------- WhatsApp ----------
+        [Display(Name = "Enable WhatsApp")]
         public bool WhatsAppEnabled { get; set; }
 
-        [Display(Name = "WhatsApp Business Phone ID")]
+        [Display(Name = "Business Phone ID")]
         public string? WhatsAppBusinessPhoneId { get; set; }
 
-        [Display(Name = "WhatsApp Access Token")]
+        [Display(Name = "Access Token")]
         public string? WhatsAppAccessToken { get; set; }
 
-        [Display(Name = "WhatsApp From Phone (E.164)")]
+        [Display(Name = "From Phone (E.164)")]
         public string? WhatsAppFromPhoneE164 { get; set; }
 
-        [Display(Name = "WhatsApp Admin Recipients (CSV)")]
+        [Display(Name = "Admin Recipients (CSV)")]
         public string? WhatsAppAdminRecipientsCsv { get; set; }
 
-        // Additional measurement & formatting overrides
-        [Display(Name = "Measurement Settings (JSON)")]
-        public string? MeasurementSettingsJson { get; set; }
+        // ---------- WebAuthn ----------
+        [Display(Name = "WebAuthn RP ID")]
+        public string WebAuthnRelyingPartyId { get; set; } = "localhost";
 
-        [Display(Name = "Number Formatting Overrides (JSON)")]
-        public string? NumberFormattingOverridesJson { get; set; }
+        [Display(Name = "WebAuthn RP Name")]
+        public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
 
-        // Routing
-        [Display(Name = "Home Slug")]
-        public string? HomeSlug { get; set; } = "home";
+        [Display(Name = "WebAuthn Allowed Origins (CSV)")]
+        public string WebAuthnAllowedOriginsCsv { get; set; } = "https://localhost:5001";
+
+        [Display(Name = "Require User Verification")]
+        public bool WebAuthnRequireUserVerification { get; set; } = false;
+
+        // ---------- SMTP ----------
+        [Display(Name = "Enable SMTP")]
+        public bool SmtpEnabled { get; set; }
+
+        [Display(Name = "SMTP Host")]
+        public string? SmtpHost { get; set; }
+
+        [Display(Name = "SMTP Port")]
+        public int? SmtpPort { get; set; }
+
+        [Display(Name = "Enable SSL")]
+        public bool SmtpEnableSsl { get; set; } = true;
+
+        [Display(Name = "SMTP Username")]
+        public string? SmtpUsername { get; set; }
+
+        [Display(Name = "SMTP Password")]
+        public string? SmtpPassword { get; set; }
+
+        [Display(Name = "From Address")]
+        public string? SmtpFromAddress { get; set; }
+
+        [Display(Name = "From Display Name")]
+        public string? SmtpFromDisplayName { get; set; }
+
+        // ---------- SMS ----------
+        [Display(Name = "Enable SMS")]
+        public bool SmsEnabled { get; set; }
+
+        [Display(Name = "SMS Provider")]
+        public string? SmsProvider { get; set; }
+
+        [Display(Name = "From Phone (E.164)")]
+        public string? SmsFromPhoneE164 { get; set; }
+
+        [Display(Name = "API Key")]
+        public string? SmsApiKey { get; set; }
+
+        [Display(Name = "API Secret")]
+        public string? SmsApiSecret { get; set; }
+
+        [Display(Name = "Extra Settings (JSON)")]
+        public string? SmsExtraSettingsJson { get; set; }
+
+        // ---------- Admin Routing ----------
+        [Display(Name = "Admin Alert Emails (CSV)")]
+        public string? AdminAlertEmailsCsv { get; set; }
+
+        [Display(Name = "Admin Alert SMS Recipients (CSV, E.164)")]
+        public string? AdminAlertSmsRecipientsCsv { get; set; }
     }
 }
