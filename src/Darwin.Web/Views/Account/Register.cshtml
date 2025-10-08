@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Register";
+    var returnUrl = (string?)ViewData["ReturnUrl"] ?? "";
+}
+<h1>Create account</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="RegisterPost" asp-controller="Account" method="post">
+    <input type="hidden" name="returnUrl" value="@returnUrl" />
+    <div class="mb-3">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" class="form-control" required />
+        <field-help for="email" text="We’ll send receipts and updates to this address." />
+    </div>
+    <div class="mb-3">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" class="form-control" required />
+        <field-help for="password" text="Min 8 characters." />
+    </div>
+    <div class="row">
+        <div class="col">
+            <label for="locale">Locale</label>
+            <input id="locale" name="locale" type="text" class="form-control" value="de-DE" />
+        </div>
+        <div class="col">
+            <label for="timezone">Timezone</label>
+            <input id="timezone" name="timezone" type="text" class="form-control" value="Europe/Berlin" />
+        </div>
+        <div class="col">
+            <label for="currency">Currency</label>
+            <input id="currency" name="currency" type="text" class="form-control" value="EUR" />
+        </div>
+    </div>
+    <button class="btn btn-success mt-3" type="submit">Register</button>
+    @Html.AntiForgeryToken()
+</form>

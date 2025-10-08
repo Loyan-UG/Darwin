@@ -1,0 +1,22 @@
+﻿@{
+    ViewData["Title"] = "Two-Factor Authentication";
+    var returnUrl = (string?)ViewData["ReturnUrl"] ?? "";
+    var rememberMe = (bool)(ViewData["RememberMe"] ?? false);
+    var userId = (string?)ViewData["TwoFaUserId"] ?? "";
+}
+<h1>Verify code</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="LoginTwoFactorPost" asp-controller="Account" method="post">
+    <input type="hidden" name="userId" value="@userId" />
+    <input type="hidden" name="rememberMe" value="@rememberMe" />
+    <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+    <div class="mb-3">
+        <label for="code">Authenticator code</label>
+        <input id="code" name="code" type="text" class="form-control" inputmode="numeric" pattern="\\d*" required />
+        <field-help for="code" text="Enter the 6-digit code from your authenticator app." />
+    </div>
+    <button class="btn btn-primary" type="submit">Verify</button>
+    @Html.AntiForgeryToken()
+</form>

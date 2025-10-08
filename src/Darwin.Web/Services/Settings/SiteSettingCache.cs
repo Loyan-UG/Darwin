@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
@@ -9,7 +10,9 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Darwin.Web.Services.Settings
 {
     /// <summary>
-    /// Default in-memory implementation of <see cref="ISiteSettingCache"/>.
+    /// Default implementation of <see cref="ISiteSettingCache"/> backed by <see cref="IMemoryCache"/>.
+    /// Lazily loads the single SiteSetting record and caches it to avoid repeated database queries.
+    /// Thread-safe retrieval; explicit invalidation after Admin saves.
     /// </summary>
     public sealed class SiteSettingCache : ISiteSettingCache
     {
@@ -22,65 +25,76 @@ namespace Darwin.Web.Services.Settings
         /// </summary>
         public SiteSettingCache(IMemoryCache cache, IAppDbContext db)
         {
-            _cache = cache;
-            _db = db;
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _db = db ?? throw new ArgumentNullException(nameof(db));
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Gets the current site settings with caching semantics. If not cached, loads from DB and caches the DTO.
+        /// </summary>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>Mapped <see cref="SiteSettingDto"/>.</returns>
         public async Task<SiteSettingDto> GetAsync(CancellationToken ct = default)
         {
-            if (_cache.TryGetValue(CacheKey, out SiteSettingDto cached))
+            if (_cache.TryGetValue(CacheKey, out SiteSettingDto? cached) && cached is not null)
+            {
                 return cached;
+            }
 
-            // Single-row table - enforce via migration/seeder.
+            // Load the single SiteSetting entity. Database schema enforces single row.
             var entity = await _db.Set<SiteSetting>()
                                   .AsNoTracking()
-                                  .SingleAsync(ct);
+                                  .SingleAsync(ct)
+                                  .ConfigureAwait(false);
 
             var dto = Map(entity);
 
+            // Cache with sliding expiration. Adjust as needed.
             _cache.Set(CacheKey, dto, new MemoryCacheEntryOptions
             {
-                SlidingExpiration = System.TimeSpan.FromMinutes(10),
+                SlidingExpiration = TimeSpan.FromMinutes(10),
                 Priority = CacheItemPriority.Normal
             });
 
             return dto;
         }
 
-        /// <inheritdoc />
-        public void Invalidate() => _cache.Remove(CacheKey);
+        /// <summary>
+        /// Invalidates the in-memory cache so that the next read hits the database.
+        /// </summary>
+        public void Invalidate()
+        {
+            _cache.Remove(CacheKey);
+        }
 
         /// <summary>
-        /// Maps the persistence entity to a DTO. Keep this mapping in sync with
-        /// <see cref="SiteSettingDto"/> (Application layer). Update whenever fields change.
+        /// Maps the persistence entity to a DTO. Keep this mapping in sync with <see cref="SiteSettingDto"/>.
+        /// Update whenever new properties are introduced on either side.
         /// </summary>
         private static SiteSettingDto Map(SiteSetting s)
         {
+            // Defensive: handle nullables with coalescing to avoid null warnings.
             return new SiteSettingDto
             {
                 Id = s.Id,
-                RowVersion = s.RowVersion,
+                RowVersion = s.RowVersion ?? Array.Empty<byte>(),
 
                 // Basic
-                Title = s.Title,
+                Title = s.Title ?? string.Empty,
                 LogoUrl = s.LogoUrl,
                 ContactEmail = s.ContactEmail,
 
-                // Routing
-                HomeSlug = s.HomeSlug,
-
                 // Localization
-                DefaultCulture = s.DefaultCulture,
-                SupportedCulturesCsv = s.SupportedCulturesCsv,
-                DefaultCountry = s.DefaultCountry,
-                DefaultCurrency = s.DefaultCurrency,
-                TimeZone = s.TimeZone,
-                DateFormat = s.DateFormat,
-                TimeFormat = s.TimeFormat,
+                DefaultCulture = string.IsNullOrWhiteSpace(s.DefaultCulture) ? "de-DE" : s.DefaultCulture,
+                SupportedCulturesCsv = string.IsNullOrWhiteSpace(s.SupportedCulturesCsv) ? "de-DE,en-US" : s.SupportedCulturesCsv,
+                DefaultCountry = string.IsNullOrWhiteSpace(s.DefaultCountry) ? "DE" : s.DefaultCountry,
+                DefaultCurrency = string.IsNullOrWhiteSpace(s.DefaultCurrency) ? "EUR" : s.DefaultCurrency,
+                TimeZone = string.IsNullOrWhiteSpace(s.TimeZone) ? "Europe/Berlin" : s.TimeZone,
+                DateFormat = string.IsNullOrWhiteSpace(s.DateFormat) ? "yyyy-MM-dd" : s.DateFormat,
+                TimeFormat = string.IsNullOrWhiteSpace(s.TimeFormat) ? "HH:mm" : s.TimeFormat,
 
-                // Units / formatting
-                MeasurementSystem = s.MeasurementSystem,
+                // Units
+                MeasurementSystem = string.IsNullOrWhiteSpace(s.MeasurementSystem) ? "Metric" : s.MeasurementSystem,
                 DisplayWeightUnit = s.DisplayWeightUnit,
                 DisplayLengthUnit = s.DisplayLengthUnit,
                 MeasurementSettingsJson = s.MeasurementSettingsJson,
@@ -92,16 +106,12 @@ namespace Darwin.Web.Services.Settings
                 SeoTitleTemplate = s.SeoTitleTemplate,
                 SeoMetaDescriptionTemplate = s.SeoMetaDescriptionTemplate,
                 OpenGraphDefaultsJson = s.OpenGraphDefaultsJson,
-
-                // Analytics
                 GoogleAnalyticsId = s.GoogleAnalyticsId,
                 GoogleTagManagerId = s.GoogleTagManagerId,
                 GoogleSearchConsoleVerification = s.GoogleSearchConsoleVerification,
 
-                // Feature flags
+                // Feature flags & WhatsApp
                 FeatureFlagsJson = s.FeatureFlagsJson,
-
-                // WhatsApp
                 WhatsAppEnabled = s.WhatsAppEnabled,
                 WhatsAppBusinessPhoneId = s.WhatsAppBusinessPhoneId,
                 WhatsAppAccessToken = s.WhatsAppAccessToken,
@@ -109,9 +119,9 @@ namespace Darwin.Web.Services.Settings
                 WhatsAppAdminRecipientsCsv = s.WhatsAppAdminRecipientsCsv,
 
                 // WebAuthn
-                WebAuthnRelyingPartyId = s.WebAuthnRelyingPartyId,
-                WebAuthnRelyingPartyName = s.WebAuthnRelyingPartyName,
-                WebAuthnAllowedOriginsCsv = s.WebAuthnAllowedOriginsCsv,
+                WebAuthnRelyingPartyId = string.IsNullOrWhiteSpace(s.WebAuthnRelyingPartyId) ? "localhost" : s.WebAuthnRelyingPartyId,
+                WebAuthnRelyingPartyName = string.IsNullOrWhiteSpace(s.WebAuthnRelyingPartyName) ? "Darwin" : s.WebAuthnRelyingPartyName,
+                WebAuthnAllowedOriginsCsv = string.IsNullOrWhiteSpace(s.WebAuthnAllowedOriginsCsv) ? "https://localhost:5001" : s.WebAuthnAllowedOriginsCsv,
                 WebAuthnRequireUserVerification = s.WebAuthnRequireUserVerification,
 
                 // SMTP
@@ -132,9 +142,12 @@ namespace Darwin.Web.Services.Settings
                 SmsApiSecret = s.SmsApiSecret,
                 SmsExtraSettingsJson = s.SmsExtraSettingsJson,
 
-                // Admin notification defaults
+                // Admin routing
                 AdminAlertEmailsCsv = s.AdminAlertEmailsCsv,
-                AdminAlertSmsRecipientsCsv = s.AdminAlertSmsRecipientsCsv
+                AdminAlertSmsRecipientsCsv = s.AdminAlertSmsRecipientsCsv,
+
+                // Routing
+                HomeSlug = string.IsNullOrWhiteSpace(s.HomeSlug) ? "home" : s.HomeSlug
             };
         }
     }

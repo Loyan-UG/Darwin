@@ -23,11 +23,16 @@ using Darwin.Application.Shipping.Commands;
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
 using Darwin.Application.Shipping.Validators;
+using Darwin.Application.Identity.Commands;
+using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Web.Auth;
 using Darwin.Web.Services.Seo;
 using Darwin.Web.Services.Settings;
+using System;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,40 +53,32 @@ namespace Darwin.Web.Extensions
         /// </summary>
         public static IServiceCollection AddWebComposition(this IServiceCollection services, IConfiguration config)
         {
-            // MVC and localization. RuntimeCompilation is useful during development; remove in production.
-            services
-                .AddControllersWithViews(options =>
-                {
-                    // Avoid implicit [Required] for non-nullable reference types.
-                    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
-                })
-                .AddViewLocalization()
-                .AddDataAnnotationsLocalization()
-#if DEBUG
-                .AddRazorRuntimeCompilation()
-#endif
-                ;
+            services.AddScoped<IClock, SystemClock>();
 
-            // Application layer (includes AutoMapper + validators scanning)
-            services.AddApplication();
+            // Identity handlers required for Auth flows
+            services.AddScoped<SignInHandler>();
+            services.AddScoped<RegisterUserHandler>();
+            services.AddScoped<VerifyTotpForLoginHandler>();
+            services.AddScoped<BeginLoginHandler>();
+            services.AddScoped<FinishLoginHandler>();
+            services.AddScoped<BeginRegistrationHandler>();
+            services.AddScoped<FinishRegistrationHandler>();
 
-            services.AddSharedHostingDataProtection(config);
+            // Infrastructure: persistence, identity, notifications (SMTP)
+            // your extension that registers DbContext/IAppDbContext
+            services.AddPersistenceInfrastructure(config);
 
-            // Persistence (DbContext + IAppDbContext + Seeder)
-            services.AddPersistence(config);
-
-            //// Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
+            // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
+            // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
             services.AddIdentityInfrastructure();
 
-            // Anti-forgery defaults for Admin forms
-            services.AddAntiforgery();
-
+            // SMTP email sender. :contentReference[oaicite:3]{index=3}
             services.AddNotificationsInfrastructure(config);
 
+            // MVC
+            services.AddControllersWithViews();
 
 
-
-            services.AddScoped<IClock, SystemClock>();
 
             // Register handlers — Products
             services.AddScoped<CreateProductHandler>();
@@ -123,6 +120,38 @@ namespace Darwin.Web.Extensions
             // Settings cache
             services.AddMemoryCache();
             services.AddScoped<ISiteSettingCache, SiteSettingCache>();
+
+
+            // MVC and localization. RuntimeCompilation is useful during development; remove in production.
+            services
+                .AddControllersWithViews(options =>
+                {
+                    // Avoid implicit [Required] for non-nullable reference types.
+                    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+                })
+                .AddViewLocalization()
+                .AddDataAnnotationsLocalization()
+#if DEBUG
+                .AddRazorRuntimeCompilation()
+#endif
+                ;
+
+            // Application layer (includes AutoMapper + validators scanning)
+            services.AddApplication();
+
+            services.AddSharedHostingDataProtection(config);
+
+            // Persistence (DbContext + IAppDbContext + Seeder)
+            services.AddPersistence(config);
+
+
+
+            // Anti-forgery defaults for Admin forms
+            services.AddAntiforgery();
+
+            services.AddNotificationsInfrastructure(config);
+
+
 
             // HTML Sanitizer using our factory (singleton across the app)
             services.AddSingleton<IHtmlSanitizer>(_ => HtmlSanitizerFactory.Create());

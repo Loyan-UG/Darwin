@@ -83,7 +83,7 @@ namespace Darwin.Infrastructure.Persistence.Seed
             if (admin is null)
             {
                 var hash = _hasher.Hash("admin"); // TODO: rotate after first run
-                admin = new User(email: "admin@admin.com", passwordHash: hash, securityStamp: _stamps.NewStamp())
+                admin = new User(email: "admin@darwin.de", passwordHash: hash, securityStamp: _stamps.NewStamp())
                 {
                     IsSystem = true,
                     FirstName = "System",
