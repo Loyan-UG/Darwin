@@ -8,7 +8,7 @@
 
 <h1 class="mb-3">Site Settings</h1>
 
-<partial name="~/Views/Shared/_Alerts.cshtml" />
+@* <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" /> *@
 
 <form asp-action="Edit" method="post" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
@@ -22,22 +22,22 @@
         <div class="card-body">
             <div class="mb-3">
                 <label asp-for="Title" class="form-label"></label>
+                <field-help title="Title" content="Displayed in the browser title and UI headers. Max 200 characters." placement="right"></field-help>
                 <input asp-for="Title" class="form-control" />
-                <field-help for="Title" text="Displayed in the browser title and UI headers. Max 200 characters."></field-help>
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="LogoUrl" class="form-label"></label>
+                    <field-help title="Logo URL" content="Absolute or app-relative URL for logo (e.g., /img/logo.svg)." placement="right"></field-help>
                     <input asp-for="LogoUrl" class="form-control" />
-                    <field-help for="LogoUrl" text="Absolute or app-relative URL for logo (e.g., /img/logo.svg)."></field-help>
                     <span asp-validation-for="LogoUrl" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="ContactEmail" class="form-label"></label>
+                    <field-help title="Contact email" content="Primary contact email displayed publicly in footer/contact page." placement="right"></field-help>
                     <input asp-for="ContactEmail" class="form-control" />
-                    <field-help for="ContactEmail" text="Primary contact email displayed publicly in footer/contact page."></field-help>
                     <span asp-validation-for="ContactEmail" class="text-danger"></span>
                 </div>
             </div>
@@ -51,14 +51,17 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="DefaultCulture" class="form-label"></label>
-                    <input asp-for="DefaultCulture" class="form-control" />
-                    <field-help for="DefaultCulture" text="Format: ll-CC (e.g., de-DE). Used as fallback culture."></field-help>
+                    <field-help title="Default culture" content="Format: ll-CC (e.g., de-DE). Used as fallback culture." placement="right"></field-help>
+                    <select asp-for="DefaultCulture" class="form-select">
+                        <option value="de-DE">de-DE</option>
+                        <option value="en-US">en-US</option>
+                    </select>
                     <span asp-validation-for="DefaultCulture" class="text-danger"></span>
                 </div>
                 <div class="col-md-8 mb-3">
                     <label asp-for="SupportedCulturesCsv" class="form-label"></label>
-                    <input asp-for="SupportedCulturesCsv" class="form-control" />
-                    <field-help for="SupportedCulturesCsv" text="Comma-separated cultures (e.g., de-DE,en-US). Drives Admin dropdowns and hreflang."></field-help>
+                    <field-help title="Supported cultures" content="Comma-separated cultures (e.g., de-DE,en-US). Drives Admin dropdowns and hreflang." placement="right"></field-help>
+                    <input asp-for="SupportedCulturesCsv" class="form-control" value="@Model.SupportedCulturesCsv" />
                     <span asp-validation-for="SupportedCulturesCsv" class="text-danger"></span>
                 </div>
             </div>
@@ -66,18 +69,31 @@
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label asp-for="DefaultCountry" class="form-label"></label>
-                    <input asp-for="DefaultCountry" class="form-control" />
+                    <field-help title="Default country" content="ISO 3166-1 alpha-2 (e.g., DE)." placement="right"></field-help>
+                    <select asp-for="DefaultCountry" class="form-select">
+                        <option value="DE">DE</option>
+                        <option value="US">US</option>
+                    </select>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="DefaultCurrency" class="form-label"></label>
-                    <input asp-for="DefaultCurrency" class="form-control" />
+                    <field-help title="Currency" content="ISO 4217 currency code. Default EUR." placement="right"></field-help>
+                    <select asp-for="DefaultCurrency" class="form-select">
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                    </select>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="TimeZone" class="form-label"></label>
-                    <input asp-for="TimeZone" class="form-control" />
+                    <field-help title="Time zone" content="IANA name (e.g., Europe/Berlin)." placement="right"></field-help>
+                    <select asp-for="TimeZone" class="form-select">
+                        <option value="Europe/Berlin">Europe/Berlin</option>
+                        <option value="UTC">UTC</option>
+                    </select>
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="HomeSlug" class="form-label"></label>
+                    <field-help title="Home slug" content="Slug of the homepage when building localized routes." placement="right"></field-help>
                     <input asp-for="HomeSlug" class="form-control" />
                 </div>
             </div>
@@ -85,10 +101,12 @@
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label asp-for="DateFormat" class="form-label"></label>
+                    <field-help title="Date format" content="Default date format string (e.g., yyyy-MM-dd)." placement="right"></field-help>
                     <input asp-for="DateFormat" class="form-control" />
                 </div>
                 <div class="col-md-3 mb-3">
                     <label asp-for="TimeFormat" class="form-label"></label>
+                    <field-help title="Time format" content="Default time format string (e.g., HH:mm)." placement="right"></field-help>
                     <input asp-for="TimeFormat" class="form-control" />
                 </div>
             </div>
@@ -102,11 +120,11 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="MeasurementSystem" class="form-label"></label>
+                    <field-help title="Measurement system" content="Affects weight/length display units." placement="right"></field-help>
                     <select asp-for="MeasurementSystem" class="form-select">
                         <option value="Metric">Metric</option>
                         <option value="Imperial">Imperial</option>
                     </select>
-                    <field-help for="MeasurementSystem" text="Affects weight/length display units."></field-help>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="DisplayWeightUnit" class="form-label"></label>
@@ -190,7 +208,7 @@
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="WhatsAppEnabled" />
                 <label class="form-check-label" asp-for="WhatsAppEnabled"></label>
-                <field-help for="WhatsAppEnabled" text="Enable WhatsApp integration to send notifications via the WhatsApp Business Cloud API."></field-help>
+                <field-help title="WhatsApp" content="Enable WhatsApp integration to send notifications via the WhatsApp Business Cloud API." placement="right"></field-help>
             </div>
 
             <div class="row">
@@ -224,8 +242,8 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="WebAuthnRelyingPartyId" class="form-label"></label>
+                    <field-help title="RP ID" content="Registrable domain (e.g., example.com) or 'localhost' for dev." placement="right"></field-help>
                     <input asp-for="WebAuthnRelyingPartyId" class="form-control" />
-                    <field-help for="WebAuthnRelyingPartyId" text="Registrable domain (e.g., example.com) or 'localhost' for dev."></field-help>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label asp-for="WebAuthnRelyingPartyName" class="form-label"></label>
@@ -240,7 +258,7 @@
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" asp-for="WebAuthnRequireUserVerification" />
                 <label class="form-check-label" asp-for="WebAuthnRequireUserVerification"></label>
-                <field-help for="WebAuthnRequireUserVerification" text="When enabled, requires biometric/PIN verification on authenticators."></field-help>
+                <field-help title="User verification" content="When enabled, requires biometric/PIN verification on authenticators." placement="right"></field-help>
             </div>
         </div>
     </div>
@@ -339,8 +357,8 @@
             </div>
             <div class="mb-3">
                 <label asp-for="AdminAlertSmsRecipientsCsv" class="form-label"></label>
+                <field-help title="Admin SMS recipients" content="Comma-separated E.164 phone numbers (e.g., +49123456789)." placement="right"></field-help>
                 <input asp-for="AdminAlertSmsRecipientsCsv" class="form-control" />
-                <field-help for="AdminAlertSmsRecipientsCsv" text="Comma-separated E.164 phone numbers (e.g., +49123456789)."></field-help>
             </div>
         </div>
     </div>

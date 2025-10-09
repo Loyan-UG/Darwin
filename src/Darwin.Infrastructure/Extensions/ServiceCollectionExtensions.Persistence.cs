@@ -1,13 +1,14 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Darwin.Application.Abstractions.Persistence;
+﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Infrastructure.Persistence.Db;
 using Darwin.Infrastructure.Persistence.Seed;
+using Darwin.Infrastructure.Persistence.Seed.Sections;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Darwin.Infrastructure.Extensions
 {
@@ -52,12 +53,18 @@ namespace Darwin.Infrastructure.Extensions
             // Expose DbContext via IAppDbContext for Application layer
             services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<DarwinDbContext>());
 
-            // Seeder
+            // Seeder Orchestrator
             services.AddScoped<DataSeeder>();
 
-            // after AddDbContext & IAppDbContext mapping:
-            //services.AddScoped<IdentitySeed>(); //old IdentitySeed
-
+            // Seed sections (each section is a small service with its own SeedAsync)
+            services.AddScoped<IdentitySeedSection>();
+            services.AddScoped<SiteSettingsSeedSection>();
+            services.AddScoped<PricingSeedSection>();
+            services.AddScoped<CmsSeedSection>();
+            services.AddScoped<InventorySeedSection>();
+            services.AddScoped<IntegrationSeedSection>();
+            services.AddScoped<SeoSeedSection>();
+            services.AddScoped<CartSeedSection>();
 
             return services;
         }

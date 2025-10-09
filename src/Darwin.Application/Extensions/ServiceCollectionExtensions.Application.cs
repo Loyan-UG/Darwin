@@ -1,7 +1,8 @@
-﻿using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using AutoMapper;
+﻿using AutoMapper;
+using Darwin.Application.Catalog.Services;
 using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Darwin.Application.Extensions
 {
@@ -34,6 +35,8 @@ namespace Darwin.Application.Extensions
             // Register FluentValidation validators from the same assembly as the marker type.
             // (This extension method comes from FluentValidation.DependencyInjectionExtensions package.)
             services.AddValidatorsFromAssembly(markerType.Assembly);
+
+            
 
             return services;
         }

@@ -28,7 +28,7 @@ namespace Darwin.Web.Auth
                 if (Guid.TryParse(id, out var guid))
                     return guid;
             }
-            return WellKnownIds.SystemUserId;
+            return WellKnownIds.AdministratorUserId;
         }
     }
 }

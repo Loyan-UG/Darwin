@@ -66,7 +66,7 @@ namespace Darwin.Infrastructure.Persistence.Db
         private void ApplyAudit()
         {
             var now = DateTime.UtcNow;
-            var userId = _currentUser?.GetCurrentUserId() ?? Darwin.Shared.Constants.WellKnownIds.SystemUserId;
+            var userId = _currentUser?.GetCurrentUserId() ?? Darwin.Shared.Constants.WellKnownIds.AdministratorUserId;
 
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {

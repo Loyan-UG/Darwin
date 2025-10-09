@@ -8,6 +8,7 @@ using Darwin.Application.CartCheckout.Validators;
 using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
+using Darwin.Application.Catalog.Services;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Application.CMS.Commands;
 using Darwin.Application.CMS.DTOs;
@@ -15,6 +16,8 @@ using Darwin.Application.CMS.Queries;
 using Darwin.Application.CMS.Validators;
 using Darwin.Application.Common.Html;
 using Darwin.Application.Extensions;
+using Darwin.Application.Identity.Auth.Commands;
+using Darwin.Application.Identity.Commands;
 using Darwin.Application.Settings.Commands;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Application.Settings.Queries;
@@ -23,19 +26,17 @@ using Darwin.Application.Shipping.Commands;
 using Darwin.Application.Shipping.DTOs;
 using Darwin.Application.Shipping.Queries;
 using Darwin.Application.Shipping.Validators;
-using Darwin.Application.Identity.Commands;
-using Darwin.Application.Identity.Auth.Commands;
-using Darwin.Infrastructure.Extensions;
 using Darwin.Infrastructure.Adapters.Time;
+using Darwin.Infrastructure.Extensions;
 using Darwin.Web.Auth;
 using Darwin.Web.Services.Seo;
 using Darwin.Web.Services.Settings;
-using System;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Reflection;
 
 namespace Darwin.Web.Extensions
@@ -63,10 +64,6 @@ namespace Darwin.Web.Extensions
             services.AddScoped<FinishLoginHandler>();
             services.AddScoped<BeginRegistrationHandler>();
             services.AddScoped<FinishRegistrationHandler>();
-
-            // Infrastructure: persistence, identity, notifications (SMTP)
-            // your extension that registers DbContext/IAppDbContext
-            services.AddPersistenceInfrastructure(config);
 
             // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
             // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
@@ -138,6 +135,10 @@ namespace Darwin.Web.Extensions
 
             // Application layer (includes AutoMapper + validators scanning)
             services.AddApplication();
+
+            // Register Application services with concrete types
+            services.AddScoped<IAddOnPricingService, AddOnPricingService>();
+
 
             services.AddSharedHostingDataProtection(config);
 
