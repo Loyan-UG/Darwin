@@ -31,7 +31,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
     ///     </para>
     /// </remarks>
     [Area("Admin")]
-    public sealed class CategoriesController : Controller
+    public sealed class CategoriesController : AdminBaseController
     {
         private readonly CreateCategoryHandler _create;
         private readonly UpdateCategoryHandler _update;

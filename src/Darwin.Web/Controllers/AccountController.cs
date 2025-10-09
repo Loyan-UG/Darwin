@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
-using Darwin.Application.Identity.Queries; // For GetUserSecurityStampHandler
-using Darwin.Shared.Results;
+using Darwin.Application.Identity.Queries;
+using Darwin.Application.Identity.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -16,11 +15,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Darwin.Web.Controllers
 {
     /// <summary>
-    /// Handles user authentication flows: classic email/password sign-in,
-    /// two-factor verification (TOTP), and WebAuthn (passkey) login.
-    /// Also exposes self-service registration for regular customers.
-    /// Cookie issuance is performed here (Web layer) using the data returned
-    /// by Application handlers (UserId, SecurityStamp).
+    /// Handles authentication flows (email/password, TOTP 2FA, and WebAuthn) plus self-service registration.
+    /// Cookie issuance happens here. Post-login navigation is decided by effective permissions.
     /// </summary>
     [AllowAnonymous]
     public sealed class AccountController : Controller
@@ -30,10 +26,12 @@ namespace Darwin.Web.Controllers
         private readonly VerifyTotpForLoginHandler _verifyTotp;
         private readonly BeginLoginHandler _webauthnBegin;
         private readonly FinishLoginHandler _webauthnFinish;
-        private readonly GetUserSecurityStampHandler _getUserStamp;
+        private readonly GetSecurityStampHandler _getSecurityStamp;
+        private readonly GetRoleIdByKeyHandler _getRoleIdByKey;
+        private readonly IPermissionService _permissions;
 
         /// <summary>
-        /// Creates a new instance of the controller.
+        /// Initializes the controller with required Application services.
         /// </summary>
         public AccountController(
             SignInHandler signIn,
@@ -41,14 +39,18 @@ namespace Darwin.Web.Controllers
             VerifyTotpForLoginHandler verifyTotp,
             BeginLoginHandler webauthnBegin,
             FinishLoginHandler webauthnFinish,
-            GetUserSecurityStampHandler getUserStamp)
+            GetSecurityStampHandler getSecurityStamp,
+            GetRoleIdByKeyHandler getRoleIdByKey,
+            IPermissionService permissions)
         {
             _signIn = signIn;
             _register = register;
             _verifyTotp = verifyTotp;
             _webauthnBegin = webauthnBegin;
             _webauthnFinish = webauthnFinish;
-            _getUserStamp = getUserStamp;
+            _getSecurityStamp = getSecurityStamp;
+            _getRoleIdByKey = getRoleIdByKey;
+            _permissions = permissions;
         }
 
         /// <summary>Renders the login page.</summary>
@@ -60,8 +62,8 @@ namespace Darwin.Web.Controllers
         }
 
         /// <summary>
-        /// Processes email/password login. If user requires 2FA, redirects to TOTP verification screen.
-        /// Otherwise issues the auth cookie and redirects to returnUrl or home.
+        /// Processes email/password login. If 2FA is required, redirects to the TOTP step.
+        /// On success, issues the auth cookie and navigates based on effective permissions.
         /// </summary>
         [HttpPost("/account/login")]
         [ValidateAntiForgeryToken]
@@ -80,20 +82,22 @@ namespace Darwin.Web.Controllers
             }
 
             var dto = new SignInDto { Email = email.Trim(), Password = password, RememberMe = rememberMe };
-            var result = await _signIn.HandleAsync(dto, ct); // When 2FA is required, SecurityStamp is not returned. See SignInHandler.
+            var result = await _signIn.HandleAsync(dto, ct);
 
             if (!result.Succeeded)
             {
                 if (result.RequiresTwoFactor && result.UserId.HasValue)
                 {
-                    // Store minimal context for 2FA step (never store password).
                     TempData["2fa_user"] = result.UserId.Value.ToString();
                     TempData["remember"] = rememberMe ? "1" : "0";
                     TempData["return"] = returnUrl ?? string.Empty;
                     return RedirectToAction(nameof(LoginTwoFactor));
                 }
 
-                ModelState.AddModelError(string.Empty, result.FailureReason ?? "Invalid credentials.");
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.FailureReason)
+                    ? "Invalid credentials."
+                    : result.FailureReason!);
+
                 ViewData["ReturnUrl"] = returnUrl;
                 return View("Login");
             }
@@ -106,10 +110,11 @@ namespace Darwin.Web.Controllers
             }
 
             await IssueCookieAsync(result.UserId.Value, result.SecurityStamp!, rememberMe, ct);
-            return Redirect(SafeReturnUrl(returnUrl));
+            var dest = await DeterminePostLoginRedirectAsync(result.UserId.Value, returnUrl, ct);
+            return Redirect(dest);
         }
 
-        /// <summary>Renders the TOTP verification form during a 2FA-required login.</summary>
+        /// <summary>Renders the TOTP verification form during a 2FA login.</summary>
         [HttpGet("/account/login-2fa")]
         public IActionResult LoginTwoFactor()
         {
@@ -118,8 +123,6 @@ namespace Darwin.Web.Controllers
 
             ViewData["RememberMe"] = TempData.TryGetValue("remember", out var r) && (string?)r == "1";
             ViewData["ReturnUrl"] = (string?)TempData["return"] ?? string.Empty;
-
-            // Hold values again for POST (TempData is single-read).
             ViewData["TwoFaUserId"] = idObj.ToString();
             return View();
         }
@@ -131,7 +134,7 @@ namespace Darwin.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoginTwoFactorPost(
             [FromForm] string userId,
-            [FromForm] string code,
+            [FromForm] int code,
             [FromForm] bool rememberMe = false,
             [FromForm] string? returnUrl = null,
             CancellationToken ct = default)
@@ -142,45 +145,44 @@ namespace Darwin.Web.Controllers
                 return View("LoginTwoFactor");
             }
 
-            if (!int.TryParse(code, out var codeInt))
-            {
-                ModelState.AddModelError(string.Empty, "Invalid code format.");
-                return View("LoginTwoFactor");
-            }
-
-            var verify = await _verifyTotp.HandleAsync(new TotpVerifyDto { UserId = uid, Code = codeInt }, ct);
+            var verify = await _verifyTotp.HandleAsync(new TotpVerifyDto { UserId = uid, Code = code }, ct);
             if (!verify.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, verify.Error ?? "Invalid code.");
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(verify.Error) ? "Invalid code." : verify.Error!);
                 return View("LoginTwoFactor");
             }
 
-            // Fetch current security stamp for the user and issue the cookie.
-            var stampRes = await _getUserStamp.HandleAsync(uid, ct);
+            var stampRes = await _getSecurityStamp.HandleAsync(uid, ct);
             if (!stampRes.Succeeded || string.IsNullOrWhiteSpace(stampRes.Value))
             {
-                ModelState.AddModelError(string.Empty, "Sign-in failed after 2FA.");
+                ModelState.AddModelError(string.Empty, "Unable to complete sign-in.");
                 return View("LoginTwoFactor");
             }
 
             await IssueCookieAsync(uid, stampRes.Value!, rememberMe, ct);
-            return Redirect(SafeReturnUrl(returnUrl));
+            var dest = await DeterminePostLoginRedirectAsync(uid, returnUrl, ct);
+            return Redirect(dest);
         }
 
-        /// <summary>Starts a WebAuthn (passkey) login ceremony. Returns the browser options JSON.</summary>
+        /// <summary>Begins a WebAuthn (passkey) login ceremony.</summary>
         [HttpPost("/account/webauthn/begin-login")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WebAuthnBeginLogin([FromForm] Guid userId, CancellationToken ct = default)
         {
             var res = await _webauthnBegin.HandleAsync(new WebAuthnBeginLoginDto { UserId = userId }, ct);
-            if (!res.Succeeded) return BadRequest(new { error = res.Error ?? "Failed to begin passkey login." });
-            return Json(new { challengeTokenId = res.Value!.ChallengeTokenId, options = res.Value.OptionsJson });
+            if (!res.Succeeded || res.Value is null)
+                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? "Failed to begin passkey login." : res.Error });
+
+            return Json(new { challengeTokenId = res.Value.ChallengeTokenId, options = res.Value.OptionsJson });
         }
 
-        /// <summary>Finishes a WebAuthn (passkey) login. On success, issues auth cookie.</summary>
+        /// <summary>
+        /// Finishes WebAuthn login. On success, retrieves stamp and issues the auth cookie.
+        /// </summary>
         [HttpPost("/account/webauthn/finish-login")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WebAuthnFinishLogin(
+            [FromForm] Guid userId,
             [FromForm] Guid challengeTokenId,
             [FromForm] string clientResponseJson,
             [FromForm] bool rememberMe = false,
@@ -194,16 +196,19 @@ namespace Darwin.Web.Controllers
             }, ct);
 
             if (!res.Succeeded)
-                return BadRequest(new { error = res.Error ?? "Passkey login failed." });
+                return BadRequest(new { error = string.IsNullOrWhiteSpace(res.Error) ? "Passkey login failed." : res.Error });
 
-            if (!res.Value!.UserId.HasValue || string.IsNullOrWhiteSpace(res.Value.SecurityStamp))
-                return BadRequest(new { error = "Invalid login result." });
+            var stampRes = await _getSecurityStamp.HandleAsync(userId, ct);
+            if (!stampRes.Succeeded || string.IsNullOrWhiteSpace(stampRes.Value))
+                return BadRequest(new { error = "Unable to complete sign-in." });
 
-            await IssueCookieAsync(res.Value.UserId!.Value, res.Value.SecurityStamp!, rememberMe, ct);
-            return Json(new { redirect = SafeReturnUrl(returnUrl) });
+            await IssueCookieAsync(userId, stampRes.Value!, rememberMe, ct);
+
+            var dest = await DeterminePostLoginRedirectAsync(userId, returnUrl, ct);
+            return Json(new { redirect = dest });
         }
 
-        /// <summary>Renders the registration page for regular customers.</summary>
+        /// <summary>Renders the end-user registration page.</summary>
         [HttpGet("/account/register")]
         public IActionResult Register(string? returnUrl = null)
         {
@@ -212,14 +217,16 @@ namespace Darwin.Web.Controllers
         }
 
         /// <summary>
-        /// Creates a new user using RegisterUserHandler and signs them in on success.
-        /// Defaults are DE/EUR/Berlin; UI initially hides locale/currency/timezone controls.
+        /// Creates a new user, assigns default "Members" role if present, then signs the user in.
         /// </summary>
         [HttpPost("/account/register")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegisterPost(
             [FromForm] string email,
             [FromForm] string password,
+            [FromForm] string locale = "de-DE",
+            [FromForm] string timezone = "Europe/Berlin",
+            [FromForm] string currency = "EUR",
             [FromForm] string? returnUrl = null,
             CancellationToken ct = default)
         {
@@ -234,30 +241,37 @@ namespace Darwin.Web.Controllers
             {
                 Email = email.Trim(),
                 Password = password,
-                Locale = "de-DE",
-                Timezone = "Europe/Berlin",
-                Currency = "EUR"
+                Locale = string.IsNullOrWhiteSpace(locale) ? "de-DE" : locale,
+                Timezone = string.IsNullOrWhiteSpace(timezone) ? "Europe/Berlin" : timezone,
+                Currency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency
             };
 
-            var result = await _register.HandleAsync(create, defaultRoleId: null, ct);
+            // Resolve default role "Members" by key if present.
+            Guid? defaultRoleId = null;
+            var roleRes = await _getRoleIdByKey.HandleAsync("Members", ct);
+            if (roleRes.Succeeded) defaultRoleId = roleRes.Value;
+
+            var result = await _register.HandleAsync(create, defaultRoleId, ct);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError(string.Empty, result.Error ?? "Registration failed.");
+                ModelState.AddModelError(string.Empty, string.IsNullOrWhiteSpace(result.Error) ? "Registration failed." : result.Error!);
                 ViewData["ReturnUrl"] = returnUrl;
                 return View("Register");
             }
 
-            // Try to sign in immediately with the provided credentials.
+            // Sign-in after registration (best-effort).
             var sign = await _signIn.HandleAsync(new SignInDto { Email = email.Trim(), Password = password, RememberMe = true }, ct);
             if (sign.Succeeded && sign.UserId.HasValue && !string.IsNullOrWhiteSpace(sign.SecurityStamp))
             {
                 await IssueCookieAsync(sign.UserId.Value, sign.SecurityStamp!, true, ct);
+                var dest = await DeterminePostLoginRedirectAsync(sign.UserId.Value, returnUrl, ct);
+                return Redirect(dest);
             }
 
             return Redirect(SafeReturnUrl(returnUrl));
         }
 
-        /// <summary>Signs the current user out by removing the authentication cookie.</summary>
+        /// <summary>Signs the current user out and redirects to home.</summary>
         [Authorize]
         [HttpPost("/account/logout")]
         [ValidateAntiForgeryToken]
@@ -267,7 +281,9 @@ namespace Darwin.Web.Controllers
             return Redirect("~/");
         }
 
-        /// <summary>Helper to issue the authentication cookie with standard claims.</summary>
+        /// <summary>
+        /// Issues the authentication cookie with minimal stable claims.
+        /// </summary>
         private async Task IssueCookieAsync(Guid userId, string securityStamp, bool persistent, CancellationToken ct)
         {
             var claims = new[]
@@ -286,12 +302,41 @@ namespace Darwin.Web.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props);
         }
 
-        /// <summary>Normalizes a return URL to avoid open-redirects. Defaults to home.</summary>
+        /// <summary>
+        /// Computes the safest post-login destination. If the provided returnUrl is a safe relative URL, it wins.
+        /// Otherwise, use permission-based defaults: Admin area for "AccessAdminPanel",
+        /// Member area for "AccessMemberArea", or site root as the final fallback.
+        /// </summary>
+        private async Task<string> DeterminePostLoginRedirectAsync(Guid userId, string? returnUrl, CancellationToken ct)
+        {
+            if (!string.IsNullOrWhiteSpace(returnUrl) &&
+                Uri.TryCreate(returnUrl, UriKind.Relative, out _))
+            {
+                return returnUrl!;
+            }
+
+            if (await _permissions.HasAsync(userId, "AccessAdminPanel", ct))
+            {
+                var adminUrl = Url.Action("Index", "Home", new { area = "Admin" });
+                if (!string.IsNullOrWhiteSpace(adminUrl)) return adminUrl!;
+            }
+
+            if (await _permissions.HasAsync(userId, "AccessMemberArea", ct))
+            {
+                var memberUrl = Url.Action("Index", "Home", new { area = "Member" });
+                if (!string.IsNullOrWhiteSpace(memberUrl)) return memberUrl!;
+            }
+
+            return "~/";
+        }
+
+        /// <summary>
+        /// Normalizes an arbitrary return URL to a safe relative path. Used only in legacy flows.
+        /// </summary>
         private static string SafeReturnUrl(string? returnUrl)
         {
             if (string.IsNullOrWhiteSpace(returnUrl)) return "~/";
-            if (Uri.TryCreate(returnUrl, UriKind.Relative, out _)) return returnUrl;
-            return "~/";
+            return Uri.TryCreate(returnUrl, UriKind.Relative, out _) ? returnUrl : "~/";
         }
     }
 }

@@ -24,6 +24,7 @@ namespace Darwin.Infrastructure.Persistence.Seed
         private readonly SeoSeedSection _seo;
         private readonly CartSeedSection _cart;
         private readonly SiteSettingsSeedSection _siteSettings;
+        private readonly CatalogSeedSection _catalog;
 
         /// <summary>
         /// Initializes a new <see cref="DataSeeder"/> with all seed sections injected.
@@ -37,7 +38,8 @@ namespace Darwin.Infrastructure.Persistence.Seed
             IntegrationSeedSection integration,
             SeoSeedSection seo,
             CartSeedSection cart,
-            SiteSettingsSeedSection siteSettings)
+            SiteSettingsSeedSection siteSettings,
+            CatalogSeedSection catalog)
         {
             _db = db;
             _identity = identity;
@@ -48,6 +50,7 @@ namespace Darwin.Infrastructure.Persistence.Seed
             _seo = seo;
             _cart = cart;
             _siteSettings = siteSettings;
+            _catalog = catalog;
         }
 
         /// <summary>
@@ -62,10 +65,12 @@ namespace Darwin.Infrastructure.Persistence.Seed
             await _siteSettings.SeedAsync(_db, ct);
             await _pricing.SeedAsync(_db, ct);
             await _cms.SeedAsync(_db, ct);
+            await _catalog.SeedAsync(_db, ct);
             await _inventory.SeedAsync(_db, ct);
             await _integration.SeedAsync(_db, ct);
             await _seo.SeedAsync(_db, ct);
             await _cart.SeedAsync(_db, ct);
+            
         }
     }
 }

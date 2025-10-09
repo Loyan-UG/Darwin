@@ -36,7 +36,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
     ///     </para>
     /// </remarks>
     [Area("Admin")]
-    public sealed class ProductsController : Controller
+    public sealed class ProductsController : AdminBaseController
     {
         private readonly CreateProductHandler _createProduct;
         private readonly UpdateProductHandler _updateProduct;

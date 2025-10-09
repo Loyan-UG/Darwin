@@ -32,6 +32,7 @@ using Darwin.Web.Auth;
 using Darwin.Web.Services.Seo;
 using Darwin.Web.Services.Settings;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,10 +72,6 @@ namespace Darwin.Web.Extensions
 
             // SMTP email sender. :contentReference[oaicite:3]{index=3}
             services.AddNotificationsInfrastructure(config);
-
-            // MVC
-            services.AddControllersWithViews();
-
 
 
             // Register handlers — Products
@@ -152,6 +149,13 @@ namespace Darwin.Web.Extensions
 
             services.AddNotificationsInfrastructure(config);
 
+            // Permission-based authorization
+            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+
+            // MVC
+            services.AddControllersWithViews();
 
 
             // HTML Sanitizer using our factory (singleton across the app)

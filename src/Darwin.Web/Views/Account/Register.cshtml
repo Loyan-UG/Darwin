@@ -1,36 +1,61 @@
-﻿@{
-    ViewData["Title"] = "Register";
-    var returnUrl = (string?)ViewData["ReturnUrl"] ?? "";
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Registrieren";
 }
-<h1>Create account</h1>
-<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
 
-<form asp-action="RegisterPost" asp-controller="Account" method="post">
-    <input type="hidden" name="returnUrl" value="@returnUrl" />
-    <div class="mb-3">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" class="form-control" required />
-        <field-help for="email" text="We’ll send receipts and updates to this address." />
-    </div>
-    <div class="mb-3">
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" class="form-control" required />
-        <field-help for="password" text="Min 8 characters." />
-    </div>
-    <div class="row">
-        <div class="col">
-            <label for="locale">Locale</label>
-            <input id="locale" name="locale" type="text" class="form-control" value="de-DE" />
-        </div>
-        <div class="col">
-            <label for="timezone">Timezone</label>
-            <input id="timezone" name="timezone" type="text" class="form-control" value="Europe/Berlin" />
-        </div>
-        <div class="col">
-            <label for="currency">Currency</label>
-            <input id="currency" name="currency" type="text" class="form-control" value="EUR" />
-        </div>
-    </div>
-    <button class="btn btn-success mt-3" type="submit">Register</button>
+<h1 class="mb-3">Registrieren</h1>
+
+<form asp-action="RegisterPost" method="post" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label for="email" class="form-label">E-Mail</label>
+        <input id="email" name="email" type="email" class="form-control" required />
+        <span class="text-danger field-validation-valid" data-valmsg-for="email" data-valmsg-replace="true"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="password" class="form-label">Passwort</label>
+        <input id="password" name="password" type="password" class="form-control" required autocomplete="new-password" />
+        <span class="text-danger field-validation-valid" data-valmsg-for="password" data-valmsg-replace="true"></span>
+    </div>
+
+    <!-- Hidden localization defaults for Germany.
+         TODO: Unhide these fields when multi-lingual UX is enabled and allow users to choose. -->
+    <fieldset class="d-none">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="locale" class="form-label">Locale</label>
+                <select id="locale" name="locale" class="form-select">
+                    <option value="de-DE" selected>Deutsch (Deutschland)</option>
+                    <option value="en-US">English (United States)</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="currency" class="form-label">Währung</label>
+                <select id="currency" name="currency" class="form-select">
+                    <option value="EUR" selected>EUR (€)</option>
+                    <option value="USD">USD ($)</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="timezone" class="form-label">Zeitzone</label>
+                <select id="timezone" name="timezone" class="form-select">
+                    <option value="Europe/Berlin" selected>Europe/Berlin</option>
+                    <option value="UTC">UTC</option>
+                </select>
+            </div>
+        </div>
+        <input type="hidden" name="supportedCulturesCsv" value="de-DE,en-US" />
+    </fieldset>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary">Konto erstellen</button>
+    </div>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

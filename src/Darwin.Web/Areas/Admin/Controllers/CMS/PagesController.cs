@@ -31,7 +31,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
     ///     </para>
     /// </remarks>
     [Area("Admin")]
-    public sealed class PagesController : Controller
+    public sealed class PagesController : AdminBaseController
     {
         private readonly CreatePageHandler _create;
         private readonly UpdatePageHandler _update;

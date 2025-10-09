@@ -29,7 +29,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Media
     ///     </para>
     /// </remarks>
     [Area("Admin")]
-    public sealed class MediaController : Controller
+    public sealed class MediaController : AdminBaseController
     {
         private readonly IWebHostEnvironment _env;
 

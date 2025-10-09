@@ -1,22 +1,30 @@
-﻿@{
-    ViewData["Title"] = "Two-Factor Authentication";
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Zwei-Faktor-Authentifizierung";
     var returnUrl = (string?)ViewData["ReturnUrl"] ?? "";
     var rememberMe = (bool)(ViewData["RememberMe"] ?? false);
     var userId = (string?)ViewData["TwoFaUserId"] ?? "";
 }
-<h1>Verify code</h1>
-<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<h1 class="mb-3">Code bestätigen</h1>
 
 <form asp-action="LoginTwoFactorPost" asp-controller="Account" method="post">
+    @Html.AntiForgeryToken()
     <input type="hidden" name="userId" value="@userId" />
-    <input type="hidden" name="rememberMe" value="@rememberMe" />
+    <input type="hidden" name="rememberMe" value="@(rememberMe ? "true" : "false")" />
     <input type="hidden" name="returnUrl" value="@returnUrl" />
 
     <div class="mb-3">
-        <label for="code">Authenticator code</label>
-        <input id="code" name="code" type="text" class="form-control" inputmode="numeric" pattern="\\d*" required />
-        <field-help for="code" text="Enter the 6-digit code from your authenticator app." />
+        <label for="code" class="form-label">Code</label>
+        <input id="code" name="code" type="number" class="form-control" inputmode="numeric" required />
+        <span class="text-danger field-validation-valid" data-valmsg-for="code" data-valmsg-replace="true"></span>
     </div>
-    <button class="btn btn-primary" type="submit">Verify</button>
-    @Html.AntiForgeryToken()
+
+    <div class="text-end">
+        <button class="btn btn-primary" type="submit">Bestätigen</button>
+    </div>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

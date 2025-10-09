@@ -14,7 +14,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Settings
     /// saves via Application handlers, and invalidates cache on success.
     /// </summary>
     [Area("Admin")]
-    public sealed class SiteSettingsController : Controller
+    public sealed class SiteSettingsController : AdminBaseController
     {
         private readonly UpdateSiteSettingHandler _update;
         private readonly ISiteSettingCache _cache;
