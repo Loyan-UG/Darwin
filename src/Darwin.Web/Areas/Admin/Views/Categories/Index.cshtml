@@ -52,7 +52,27 @@
                                 </td>
                                 <td class="text-center">@c.SortOrder</td>
                                 <td class="text-end">
-                                    <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+@*                                     <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Delete this category?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@c.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                    </form> *@
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger ms-1"
+                                            data-delete="open-modal"
+                                            data-area="Admin"
+                                            data-controller="Categories"
+                                            data-action="Delete"
+                                            data-id="@c.Id"
+                                            data-name="@(string.IsNullOrWhiteSpace(c.Name) ? c.Id.ToString() : c.Name)">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+
                                 </td>
                             </tr>
                         }
@@ -74,5 +94,7 @@
                 </ul>
             </nav>
         }
+
+        <partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />
     </div>
 </div>

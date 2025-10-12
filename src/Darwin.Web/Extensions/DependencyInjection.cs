@@ -70,6 +70,14 @@ namespace Darwin.Web.Extensions
             // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
             services.AddIdentityInfrastructure();
 
+            // Authorization filter & dependencies
+            // (No custom policy provider is needed when using PermissionAuthorizeAttribute.)
+            services.AddScoped<Security.PermissionAuthorizeAttribute>();
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<Areas.Admin.Infrastructure.PermissionRazorHelper>();
+
+
             // SMTP email sender. :contentReference[oaicite:3]{index=3}
             services.AddNotificationsInfrastructure(config);
 

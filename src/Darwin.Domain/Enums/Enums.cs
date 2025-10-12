@@ -51,4 +51,13 @@
         /// <summary>One or more lines/quantities refunded but not the entire order.</summary>
         PartiallyRefunded = 8
     }
+
+    /// <summary>
+    /// Selection mode enum for an add-on group. Catalog/AddOnGroup
+    /// </summary>
+    public enum AddOnSelectionMode
+    {
+        Single = 0,
+        Multiple = 1
+    }
 }

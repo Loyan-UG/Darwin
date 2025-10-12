@@ -105,7 +105,7 @@ namespace Darwin.Application.Catalog.Services
             {
                 selectedCountPerGroup.TryGetValue(g.Id, out var count);
 
-                var effectiveMax = g.SelectionMode == AddOnSelectionMode.Single
+                var effectiveMax = g.SelectionMode == Domain.Enums.AddOnSelectionMode.Single
                     ? 1
                     : (g.MaxSelections ?? int.MaxValue);
 

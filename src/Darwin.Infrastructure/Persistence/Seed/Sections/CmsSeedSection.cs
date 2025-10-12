@@ -113,109 +113,108 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         private static async Task SeedMenusAsync(DarwinDbContext db, CancellationToken ct)
         {
             // MAIN
-            if (!await db.Menus.AnyAsync(m => m.Name == "Main" && !m.IsDeleted, ct))
+            var main = await db.Menus.FirstOrDefaultAsync(m => m.Name == "Main" && !m.IsDeleted, ct);
+            if (main == null)
             {
-                var main = new Menu
+                main = new Menu { Name = "Main" };
+
+                // Pre-allocate IDs so ParentId can reference before SaveChanges
+                var homeId = Guid.NewGuid();
+                var shopId = Guid.NewGuid();
+                var aboutId = Guid.NewGuid();
+
+                var items = new List<MenuItem>
                 {
-                    Name = "Main",
-                    Items = new()
+                    new MenuItem
                     {
-                        // Top-level
-                        CreateMenuItem("Startseite", "Home", "/", 0, null),
-                        CreateMenuItem("Shop", "Shop", "/shop", 1, null, children: new[]{
-                            CreateMenuItem("Smartphones", "Smartphones", "/c/smartphones", 0),
-                            CreateMenuItem("Laptops", "Laptops", "/c/laptops", 1),
-                            CreateMenuItem("Tablets", "Tablets", "/c/tablets", 2),
-                            CreateMenuItem("PC & Komponenten", "PC & Komponenten", "/c/pc-komponenten", 3)
-                        }),
-                        CreateMenuItem("Angebote", "Deals", "/deals", 2, null),
-                        CreateMenuItem("Kontakt", "Contact", "/kontakt", 3, null)
+                        Id = homeId,
+                        Url = "/de/home",
+                        SortOrder = 0,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Startseite" } }
+                    },
+                    new MenuItem
+                    {
+                        Id = shopId,
+                        Url = "/de/c",
+                        SortOrder = 1,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Shop" } }
+                    },
+                    new MenuItem
+                    {
+                        Id = aboutId,
+                        Url = "/de/ueber-uns",
+                        SortOrder = 2,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Über uns" } }
+                    },
+
+                    // Children under "Shop"
+                    new MenuItem
+                    {
+                        Url = "/de/c/iphones",
+                        ParentId = shopId,
+                        SortOrder = 0,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "iPhones" } }
+                    },
+                    new MenuItem
+                    {
+                        Url = "/de/c/android-phones",
+                        ParentId = shopId,
+                        SortOrder = 1,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Android" } }
+                    },
+                    new MenuItem
+                    {
+                        Url = "/de/c/ultrabooks",
+                        ParentId = shopId,
+                        SortOrder = 2,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Ultrabooks" } }
                     }
                 };
+
+                main.Items = items;
                 db.Menus.Add(main);
+                await db.SaveChangesAsync(ct);
             }
 
             // FOOTER
-            if (!await db.Menus.AnyAsync(m => m.Name == "Footer" && !m.IsDeleted, ct))
+            var footer = await db.Menus.FirstOrDefaultAsync(m => m.Name == "Footer" && !m.IsDeleted, ct);
+            if (footer == null)
             {
-                var footer = new Menu
+                footer = new Menu { Name = "Footer" };
+                footer.Items = new List<MenuItem>
                 {
-                    Name = "Footer",
-                    Items = new()
+                    new MenuItem
                     {
-                        CreateMenuItem("Über uns", "About", "/ueber-uns", 0, null),
-                        CreateMenuItem("Impressum", "Imprint", "/impressum", 1, null),
-                        CreateMenuItem("Datenschutz", "Privacy", "/datenschutz", 2, null),
-                        CreateMenuItem("AGB", "Terms", "/agb", 3, null),
-                        CreateMenuItem("Versand", "Shipping", "/versand", 4, null),
-                        CreateMenuItem("Rückgabe", "Returns", "/rueckgabe", 5, null),
-                        CreateMenuItem("FAQ", "FAQ", "/faq", 6, null)
+                        Url = "/de/impressum",
+                        SortOrder = 0,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Impressum" } }
+                    },
+                    new MenuItem
+                    {
+                        Url = "/de/datenschutz",
+                        SortOrder = 1,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "Datenschutz" } }
+                    },
+                    new MenuItem
+                    {
+                        Url = "/de/agb",
+                        SortOrder = 2,
+                        IsActive = true,
+                        Translations = { new MenuItemTranslation { Culture = "de-DE", Label = "AGB" } }
                     }
                 };
+
                 db.Menus.Add(footer);
+                await db.SaveChangesAsync(ct);
             }
-
-            // ACCOUNT
-            if (!await db.Menus.AnyAsync(m => m.Name == "Account" && !m.IsDeleted, ct))
-            {
-                var account = new Menu
-                {
-                    Name = "Account",
-                    Items = new()
-                    {
-                        CreateMenuItem("Mein Konto", "Account", "/konto", 0, null),
-                        CreateMenuItem("Bestellungen", "Orders", "/konto/bestellungen", 1, null),
-                        CreateMenuItem("Adressen", "Addresses", "/konto/adressen", 2, null),
-                        CreateMenuItem("Abmelden", "Sign out", "/logout", 3, null)
-                    }
-                };
-                db.Menus.Add(account);
-            }
-
-            await db.SaveChangesAsync(ct);
-        }
-
-        /// <summary>
-        /// Helper to create a MenuItem with a de-DE translation and optional children.
-        /// </summary>
-        private static MenuItem CreateMenuItem(
-            string titleDe,
-            string titleEnFallback,
-            string url,
-            int sortOrder,
-            Guid? parentId = null,
-            IEnumerable<MenuItem>? children = null)
-        {
-            var mi = new MenuItem
-            {
-                ParentId = parentId,
-                Url = url,
-                SortOrder = sortOrder,
-                Translations = new()
-                {
-                    new MenuItemTranslation
-                    {
-                        Culture = "de-DE",
-                        Title = titleDe
-                    }
-                }
-            };
-
-            if (children != null)
-                mi.Translations[0].Title = titleDe; // keep de-DE; children are attached below
-
-            if (children != null)
-            {
-                var order = 0;
-                mi = mi with { }; // ensure object init complete before adding children
-                foreach (var child in children)
-                {
-                    child.ParentId = mi.Id; // relationship by Guid; EF will assign Id at SaveChanges, but FK holds the value
-                    child.SortOrder = order++;
-                }
-            }
-
-            return mi;
         }
 
         #endregion

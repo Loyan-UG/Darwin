@@ -12,7 +12,7 @@ namespace Darwin.Application.Catalog.DTOs
         public string Name { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public bool IsGlobal { get; set; } = false;
-        public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;
+        public Domain.Enums.AddOnSelectionMode SelectionMode { get; set; } = Domain.Enums.AddOnSelectionMode.Single;
         public int MinSelections { get; set; } = 0;
         public int? MaxSelections { get; set; }
         public bool IsActive { get; set; } = true;
@@ -30,7 +30,7 @@ namespace Darwin.Application.Catalog.DTOs
         public string Name { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public bool IsGlobal { get; set; } = false;
-        public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;
+        public Domain.Enums.AddOnSelectionMode SelectionMode { get; set; } = Domain.Enums.AddOnSelectionMode.Single;
         public int MinSelections { get; set; } = 0;
         public int? MaxSelections { get; set; }
         public bool IsActive { get; set; } = true;

@@ -1,6 +1,6 @@
 ﻿using Darwin.Application.Catalog.Commands;
 using Darwin.Application.Catalog.DTOs;
-using Darwin.Application.Catalog.Queries; // <-- GetCatalogLookupsHandler
+using Darwin.Application.Catalog.Queries;
 using Darwin.Application.Settings.Queries;
 using Darwin.Web.Areas.Admin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +39,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         private readonly GetCategoryForEditHandler _getForEdit;
         private readonly GetCatalogLookupsHandler _getLookups;
         private readonly GetCulturesHandler _getCultures;
+        private readonly SoftDeleteCategoryHandler _softDelete;
+
 
         public CategoriesController(
             CreateCategoryHandler create,
@@ -46,7 +48,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             GetCategoriesPageHandler list,
             GetCategoryForEditHandler getForEdit,
             GetCatalogLookupsHandler getLookups,
-            GetCulturesHandler getCultures)
+            GetCulturesHandler getCultures,
+            SoftDeleteCategoryHandler softDelete)
         {
             _create = create;
             _update = update;
@@ -54,6 +57,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             _getForEdit = getForEdit;
             _getLookups = getLookups;
             _getCultures = getCultures;
+            _softDelete = softDelete;
         }
 
         [HttpGet]
@@ -196,6 +200,30 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                 return View(vm);
             }
         }
+
+        /// <summary>
+        /// Performs a soft delete of a category and redirects back to the list.
+        /// This action expects a confirmation via the shared modal and uses TempData
+        /// to display the outcome message. The underlying handler performs a soft
+        /// delete (IsDeleted=true) to preserve auditability and prevent hard data loss.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
+        {
+            try
+            {
+                await _softDelete.HandleAsync(id, ct);
+                TempData["Success"] = "Category deleted.";
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Failed to delete the category.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
 
         private async Task LoadLookupsAsync(CancellationToken ct)
         {

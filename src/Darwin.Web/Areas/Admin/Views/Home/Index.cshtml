@@ -1,13 +1,18 @@
-﻿@{
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Darwin.Web
+
+@{
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<h1 class="mb-3">Dashboard</h1>
+<h1 class="mb-3">Admin Dashboard</h1>
+
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
 
 <div class="card">
     <div class="card-body">
         <p class="mb-0">
-            This is a placeholder for the Admin dashboard. Quick links and KPIs will be added here.
+            This is a placeholder for the admin dashboard. Add KPIs, charts, and quick links here.
         </p>
     </div>
 </div>

@@ -21,7 +21,7 @@ namespace Darwin.Domain.Entities.Catalog
         public bool IsGlobal { get; set; } = false;
 
         /// <summary>Selection mode: single choice (radio) or multiple (checkbox).</summary>
-        public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;
+        public Enums.AddOnSelectionMode SelectionMode { get; set; } = Enums.AddOnSelectionMode.Single;
 
         /// <summary>Minimum number of values required to be selected (0 means optional).</summary>
         public int MinSelections { get; set; } = 0;
@@ -36,14 +36,7 @@ namespace Darwin.Domain.Entities.Catalog
         public List<AddOnOption> Options { get; set; } = new();
     }
 
-    /// <summary>
-    /// Selection mode enum for an add-on group.
-    /// </summary>
-    public enum AddOnSelectionMode
-    {
-        Single = 0,
-        Multiple = 1
-    }
+    
 
     /// <summary>
     /// A user-facing question or pick-list inside an add-on group (e.g., "Lens Type", "Gift Wrap").
