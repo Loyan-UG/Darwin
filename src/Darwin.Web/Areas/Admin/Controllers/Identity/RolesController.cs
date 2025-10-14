@@ -1,11 +1,12 @@
 ﻿using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
-using Darwin.Shared.Results;
-using Darwin.Web.Areas.Admin.Infrastructure;
+using Darwin.Web.Areas.Admin.Controllers;
 using Darwin.Web.Areas.Admin.ViewModels.Identity;
+using Darwin.Web.Auth;
 using Darwin.Web.Security;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,13 +14,12 @@ using System.Threading.Tasks;
 namespace Darwin.Web.Areas.Admin.Controllers.Identity
 {
     /// <summary>
-    /// CRUD for Role entities in the Admin area. The controller follows the same
-    /// pattern used by other Admin controllers: thin layer, delegates to Application
-    /// handlers, uses TempData for post-redirect alerts, and relies on permission-
-    /// based authorization.
+    /// Admin controller for managing roles. Provides listing with paging/search,
+    /// create/edit forms with concurrency handling, and soft delete with confirmation.
+    /// Access is limited to administrators with FullAdminAccess.
     /// </summary>
     [Area("Admin")]
-    [PermissionAuthorize("FullAdminAccess")] // require super-admin for role management
+    [PermissionAuthorize("FullAdminAccess")]
     public sealed class RolesController : AdminBaseController
     {
         private readonly GetRolesPageHandler _getPage;
@@ -29,7 +29,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         private readonly DeleteRoleHandler _delete;
 
         /// <summary>
-        /// Wires all required application handlers for the Role CRUD flows.
+        /// Wires the controller to Application-layer handlers. These handlers encapsulate
+        /// validation and persistence logic, keeping the Web layer thin and testable.
         /// </summary>
         public RolesController(
             GetRolesPageHandler getPage,
@@ -46,42 +47,65 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         }
 
         /// <summary>
-        /// Displays paginated list of roles with optional search.
+        /// Displays a paged list of roles. Supports simple text search.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int size = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
-            var res = await _getPage.HandleAsync(new RolePageQueryDto { Page = page, Size = size, Search = q }, ct);
-            if (!res.Succeeded) { TempData["Error"] = res.Error ?? "Failed to load roles."; return View("Index", RoleIndexVm.Empty()); }
-
-            var vm = RoleIndexVm.From(res.Value);
-            vm.Search = q;
-            return View("Index", vm);
+            var (items, total) = await _getPage.HandleAsync(page, pageSize, q, ct);
+            var vm = new RolesListItemVm
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = q ?? string.Empty,
+                PageSizeItems = new[]
+                {
+                    new SelectListItem("10",  "10",  pageSize == 10),
+                    new SelectListItem("20",  "20",  pageSize == 20),
+                    new SelectListItem("50",  "50",  pageSize == 50),
+                    new SelectListItem("100", "100", pageSize == 100),
+                }
+            };
+            return View(vm);
         }
 
         /// <summary>
-        /// Renders the empty create form.
+        /// Renders the create form.
         /// </summary>
         [HttpGet]
         public IActionResult Create()
         {
-            return View("Create", new RoleCreateVm());
+            // Default model is empty; business defaults are handled in the Application layer.
+            return View(new RoleCreateVm());
         }
 
         /// <summary>
-        /// Creates a new role.
+        /// Processes creation of a new role. On success, redirects to the list with a success message.
         /// </summary>
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(RoleCreateVm vm, CancellationToken ct = default)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(RoleCreateVm model, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View("Create", vm);
-
-            var dto = new RoleCreateDto { Name = vm.Name?.Trim() ?? string.Empty, Description = vm.Description?.Trim() };
-            var res = await _create.HandleAsync(dto, ct);
-            if (!res.Succeeded)
+            if (!ModelState.IsValid)
             {
-                TempData["Error"] = res.Error ?? "Failed to create role.";
-                return View("Create", vm);
+                TempData["Warning"] = "Please fix validation errors and try again.";
+                return View(model);
+            }
+
+            var dto = new RoleCreateDto
+            {
+                Key = model.Key?.Trim() ?? string.Empty,
+                DisplayName = model.DisplayName?.Trim() ?? string.Empty,
+                Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim()
+            };
+
+            var result = await _create.HandleAsync(dto, ct);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = result.Error ?? "Failed to create role.";
+                return View(model);
             }
 
             TempData["Success"] = "Role created successfully.";
@@ -89,48 +113,55 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         }
 
         /// <summary>
-        /// Renders the edit form with current role data.
+        /// Renders the edit form for the specified role.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
-            var res = await _getForEdit.HandleAsync(id, ct);
-            if (!res.Succeeded || res.Value is null)
+            var dto = await _getForEdit.HandleAsync(id, ct);
+            if (dto is null)
             {
-                TempData["Error"] = res.Error ?? "Role not found.";
+                TempData["Warning"] = "Role not found.";
                 return RedirectToAction(nameof(Index));
             }
 
             var vm = new RoleEditVm
             {
-                Id = res.Value.Id,
-                RowVersion = res.Value.RowVersion,
-                Name = res.Value.Name,
-                Description = res.Value.Description
+                Id = dto.Id,
+                RowVersion = dto.RowVersion,
+                DisplayName = dto.DisplayName,
+                Description = dto.Description
             };
-            return View("Edit", vm);
+            return View(vm);
         }
 
         /// <summary>
-        /// Saves the edited role.
+        /// Updates a role with optimistic concurrency. On conflict or validation failure,
+        /// returns to the edit view with a friendly message.
         /// </summary>
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(RoleEditVm vm, CancellationToken ct = default)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(RoleEditDto model, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View("Edit", vm);
+            if (!ModelState.IsValid)
+            {
+                TempData["Warning"] = "Please fix validation errors and try again.";
+                return View(model);
+            }
 
             var dto = new RoleEditDto
             {
-                Id = vm.Id,
-                RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
-                Name = vm.Name?.Trim() ?? string.Empty,
-                Description = vm.Description?.Trim()
+                Id = model.Id,
+                RowVersion = model.RowVersion,
+                DisplayName = model.DisplayName?.Trim() ?? string.Empty,
+                Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim()
             };
-            var res = await _update.HandleAsync(dto, ct);
-            if (!res.Succeeded)
+
+            var result = await _update.HandleAsync(dto, ct);
+            if (!result.Succeeded)
             {
-                TempData["Error"] = res.Error ?? "Failed to update role.";
-                return View("Edit", vm);
+                TempData["Error"] = result.Error ?? "Failed to update role.";
+                return View(model);
             }
 
             TempData["Success"] = "Role updated successfully.";
@@ -138,20 +169,30 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         }
 
         /// <summary>
-        /// Deletes a role (soft-delete).
+        /// Soft deletes a role. System roles are protected and fail with a warning.
+        /// This action is invoked via the shared confirmation modal.
         /// </summary>
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
         {
-            var res = await _delete.HandleAsync(id, ct);
-            if (!res.Succeeded)
+            try
             {
-                TempData["Error"] = res.Error ?? "Failed to delete role.";
-            }
-            else
-            {
+                await _delete.HandleAsync(id, ct);
                 TempData["Success"] = "Role deleted successfully.";
             }
+            catch (InvalidOperationException ex)
+            {
+                // System role or business rule violation.
+                TempData["Warning"] = string.IsNullOrWhiteSpace(ex.Message)
+                    ? "This role is system-protected and cannot be deleted."
+                    : ex.Message;
+            }
+            catch (Exception)
+            {
+                TempData["Error"] = "Failed to delete role.";
+            }
+
             return RedirectToAction(nameof(Index));
         }
     }

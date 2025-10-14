@@ -1,0 +1,70 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.RoleEditVm
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Darwin.Web
+
+@{
+    ViewData["Title"] = "Edit Role";
+}
+
+<h1 class="mb-3"><i class="fa fa-pen"></i> Edit Role</h1>
+
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="Edit" method="post" class="needs-validation" novalidate>
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <field-help title="Display Name" content="Human-friendly name shown in the Admin UI." placement="right"></field-help>
+                <input asp-for="DisplayName" class="form-control" />
+                <span asp-validation-for="DisplayName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <field-help title="Description" content="Optional context about this role's purpose." placement="right"></field-help>
+                <textarea asp-for="Description" rows="3" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            @* System flag is displayed read-only to explain deletion protection *@
+            <div class="form-check form-switch mb-3">
+                <label class="form-check-label">System role</label>
+                <field-help title="System role"
+                            content="System roles are protected and cannot be deleted."
+                            placement="right"></field-help>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <div>
+            <button type="button"
+                    class="btn btn-outline-danger"
+                    data-delete="open-modal"
+                    data-area="Admin"
+                    data-controller="Roles"
+                    data-action="Delete"
+                    data-id="@Model.Id"
+                    data-name="@Model.DisplayName">
+                <i class="fa fa-trash"></i> Delete
+            </button>
+        </div>
+        <div class="text-end">
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="fa fa-arrow-left"></i> Back</a>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+        </div>
+    </div>
+</form>
+
+<partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

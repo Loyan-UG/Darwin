@@ -1,63 +1,68 @@
-﻿@* 
-    Reusable Bootstrap 5 modal for delete confirmations.
-    - Mobile-friendly full-width modal on small screens.
-    - Posts a form with antiforgery token to the supplied action.
-    - Controller/action/area/route values come from data-* attributes set by the opener button.
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@* 
+    Generic confirmation modal for destructive actions (delete).
+    - Accessible: role=dialog, aria-* set.
+    - Mobile-friendly: Bootstrap modal, large touch targets.
+    - Posts to a dynamic form action with Anti-Forgery token.
 *@
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form id="confirmDeleteForm" method="post">
-                @Html.AntiForgeryToken()
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmDeleteTitle">Confirm delete</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <div class="modal-body">
-                    <p class="mb-1">This action cannot be undone.</p>
-                    <p class="mb-0 text-muted"><span id="confirmDeleteItemName"></span></p>
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteTitle">Confirm deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">This action cannot be undone.</p>
+                <p class="fw-semibold mb-0">
+                    Item:
+                    <span id="confirmDeleteName" class="text-danger"></span>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <form id="confirmDeleteForm" method="post">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" name="id" id="confirmDeleteId" />
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        (function() {
+        (function () {
           const modalEl = document.getElementById('confirmDeleteModal');
-          if (!modalEl) return;
-          const modal = new bootstrap.Modal(modalEl);
-          const form = document.getElementById('confirmDeleteForm');
+          const nameSpan = document.getElementById('confirmDeleteName');
           const idInput = document.getElementById('confirmDeleteId');
-          const itemSpan = document.getElementById('confirmDeleteItemName');
+          const form = document.getElementById('confirmDeleteForm');
+          let bsModal;
 
+          function ensureModal() {
+            if (!bsModal) { bsModal = new bootstrap.Modal(modalEl); }
+            return bsModal;
+          }
+
+          // Wire global handler for any "data-confirm-delete" button/link
           document.addEventListener('click', function (e) {
-            const btn = e.target.closest('[data-delete="open-modal"]');
+            const btn = e.target.closest('[data-confirm-delete]');
             if (!btn) return;
 
-            const area = btn.getAttribute('data-area') || '';
-            const controller = btn.getAttribute('data-controller');
-            const action = btn.getAttribute('data-action');
-            const id = btn.getAttribute('data-id');
-            const name = btn.getAttribute('data-name') || '';
+            e.preventDefault();
 
-            // Build form action with asp-* equivalent routing
-            const base = area ? `/${area}/${controller}/${action}` : `/${controller}/${action}`;
-            form.setAttribute('action', base);
+            const action = btn.getAttribute('data-action');    // form action url (POST)
+            const id = btn.getAttribute('data-id');            // entity id (Guid)
+            const name = btn.getAttribute('data-name') || '';  // user-friendly name
+
+            if (!action || !id) return;
+
+            nameSpan.textContent = name;
             idInput.value = id;
-            itemSpan.textContent = name ? `Item: ${name}` : '';
+            form.setAttribute('action', action);
 
-            modal.show();
+            ensureModal().show();
           });
         })();
     </script>

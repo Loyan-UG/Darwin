@@ -65,6 +65,7 @@ namespace Darwin.Infrastructure.Extensions
             services.AddScoped<IntegrationSeedSection>();
             services.AddScoped<SeoSeedSection>();
             services.AddScoped<CartSeedSection>();
+            services.AddScoped<CatalogSeedSection>();
 
             return services;
         }

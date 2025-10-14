@@ -18,6 +18,7 @@ using Darwin.Application.Common.Html;
 using Darwin.Application.Extensions;
 using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Application.Identity.Commands;
+using Darwin.Application.Identity.Queries;
 using Darwin.Application.Settings.Commands;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Application.Settings.Queries;
@@ -32,6 +33,7 @@ using Darwin.Web.Auth;
 using Darwin.Web.Services.Seo;
 using Darwin.Web.Services.Settings;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration;
@@ -65,17 +67,40 @@ namespace Darwin.Web.Extensions
             services.AddScoped<FinishLoginHandler>();
             services.AddScoped<BeginRegistrationHandler>();
             services.AddScoped<FinishRegistrationHandler>();
+            services.AddScoped<GetRoleIdByKeyHandler>();
+
+            // required by AccountController constructor
+            services.AddScoped<GetSecurityStampHandler>();
 
             // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
             // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
             services.AddIdentityInfrastructure();
 
-            // Authorization filter & dependencies
-            // (No custom policy provider is needed when using PermissionAuthorizeAttribute.)
-            services.AddScoped<Security.PermissionAuthorizeAttribute>();
+
 
             services.AddHttpContextAccessor();
             services.AddScoped<Areas.Admin.Infrastructure.PermissionRazorHelper>();
+
+            // Cookie authentication (default scheme for Challenge/SignIn/SignOut)
+            services
+                .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+                {
+                    // Login/Logout/AccessDenied endpoints
+                    options.LoginPath = "/account/login";
+                    options.LogoutPath = "/account/logout";
+                    options.AccessDeniedPath = "/account/login";
+
+                    // Cookie options
+                    options.Cookie.Name = "Darwin.Auth";
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SameSite = SameSiteMode.Lax;
+                    options.SlidingExpiration = true;
+                    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+
+                    // Optional: returnUrl parameter name (defaults to ReturnUrl)
+                    // options.ReturnUrlParameter = "returnUrl";
+                });
 
 
             // SMTP email sender. :contentReference[oaicite:3]{index=3}
@@ -156,10 +181,6 @@ namespace Darwin.Web.Extensions
             services.AddAntiforgery();
 
             services.AddNotificationsInfrastructure(config);
-
-            // Permission-based authorization
-            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-            services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 
             // MVC

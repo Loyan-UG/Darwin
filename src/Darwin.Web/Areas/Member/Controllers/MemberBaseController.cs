@@ -1,4 +1,5 @@
 ﻿using Darwin.Web.Auth;
+using Darwin.Web.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Darwin.Web.Areas.Member.Controllers
@@ -8,7 +9,7 @@ namespace Darwin.Web.Areas.Member.Controllers
     /// The permission model ensures that "FullAdminAccess" overrides and grants access everywhere.
     /// </summary>
     [Area("Member")]
-    [HasPermission("AccessMemberArea")]
+    [PermissionAuthorize("AccessMemberArea")]
     public abstract class MemberBaseController : Controller
     {
     }

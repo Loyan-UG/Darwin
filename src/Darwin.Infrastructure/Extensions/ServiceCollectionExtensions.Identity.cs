@@ -1,10 +1,13 @@
 ﻿using Darwin.Application.Abstractions.Auth;
 using Darwin.Infrastructure.Auth.WebAuthn;
 using Darwin.Infrastructure.Persistence.Converters;
+using Darwin.Application.Identity.Services;
+using Darwin.Infrastructure.Identity;
 using Darwin.Infrastructure.Security;
 using Darwin.Infrastructure.Security.Secrets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Configuration;
 
 namespace Darwin.Infrastructure.Extensions
 {
@@ -46,6 +49,10 @@ namespace Darwin.Infrastructure.Extensions
                 SecretProtectionConverterFactory.Initialize(protector);
                 return protector; // keep DI happy
             });
+
+            // Permissions — required by Darwin.Web.Auth.PermissionAuthorizationHandler
+            // IMPORTANT: Interface must be the Application-layer type to satisfy the Web handler's constructor.
+            services.AddScoped<IPermissionService, PermissionService>();
 
             return services;
         }

@@ -1,4 +1,5 @@
 ﻿using Darwin.Web.Auth;
+using Darwin.Web.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Darwin.Web.Areas.Admin.Controllers
@@ -9,7 +10,7 @@ namespace Darwin.Web.Areas.Admin.Controllers
     /// Additional controller-level requirements can be added on top of this base type if needed.
     /// </summary>
     [Area("Admin")]
-    [HasPermission("AccessAdminPanel")]
+    [PermissionAuthorize("AccessAdminPanel")]
     public abstract class AdminBaseController : Controller
     {
     }

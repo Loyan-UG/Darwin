@@ -44,6 +44,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         private readonly GetProductForEditHandler _getProductForEdit;
         private readonly GetCatalogLookupsHandler _getLookups;
         private readonly GetCulturesHandler _getCultures;
+        private readonly SoftDeleteProductHandler _softDeleteProduct;
 
         public ProductsController(
             CreateProductHandler createProduct,
@@ -51,7 +52,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             GetProductsPageHandler getProductsPage,
             GetProductForEditHandler getProductForEdit,
             GetCatalogLookupsHandler getLookups,
-            GetCulturesHandler getCultures)
+            GetCulturesHandler getCultures,
+            SoftDeleteProductHandler softDeleteProduct)
         {
             _createProduct = createProduct;
             _updateProduct = updateProduct;
@@ -59,6 +61,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             _getProductForEdit = getProductForEdit;
             _getLookups = getLookups;
             _getCultures = getCultures;
+            _softDeleteProduct = softDeleteProduct;
         }
 
         [HttpGet]
@@ -292,6 +295,15 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
+        {
+            try { await _softDeleteProduct.HandleAsync(id, ct); TempData["Success"] = "Product deleted."; }
+            catch { TempData["Error"] = "Failed to delete the product."; }
+            return RedirectToAction(nameof(Index));
+        }
+
         private async Task LoadLookupsAsync(CancellationToken ct)
         {
             var lookups = await _getLookups.HandleAsync("de-DE", ct);
@@ -302,7 +314,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             var (_, cultures) = await _getCultures.HandleAsync(ct);
             ViewBag.Cultures = cultures;
 
-            ViewBag.Currencies = new[] { "EUR", "USD", "GBP" }; // will move to SiteSetting/table later
+            ViewBag.Currencies = new[] { "EUR", "USD", "GBP" }; // TODO: will move to SiteSetting/table later
         }
     }
 }

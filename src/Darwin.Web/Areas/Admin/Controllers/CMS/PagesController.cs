@@ -38,19 +38,22 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
         private readonly GetPagesPageHandler _list;
         private readonly GetPageForEditHandler _get;
         private readonly GetCulturesHandler _getCultures;
+        private readonly SoftDeletePageHandler _softDeletePage;
 
         public PagesController(
             CreatePageHandler create,
             UpdatePageHandler update,
             GetPagesPageHandler list,
             GetPageForEditHandler get,
-            GetCulturesHandler getCultures)
+            GetCulturesHandler getCultures,
+            SoftDeletePageHandler softDeletePage)
         {
             _create = create;
             _update = update;
             _list = list;
             _get = get;
             _getCultures = getCultures;
+            _softDeletePage = softDeletePage;
         }
 
         [HttpGet]
@@ -203,6 +206,15 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
                 ViewBag.Cultures = cultures;
                 return View(vm);
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
+        {
+            try { await _softDeletePage.HandleAsync(id, ct); TempData["Success"] = "Page deleted."; }
+            catch { TempData["Error"] = "Failed to delete the page."; }
+            return RedirectToAction(nameof(Index));
         }
     }
 }

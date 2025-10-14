@@ -1,0 +1,121 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.RolesListItemVm
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Darwin.Web
+
+@{
+    ViewData["Title"] = "Roles";
+    var totalPages = (int)Math.Ceiling((double)Model.Total / (double)Model.PageSize);
+}
+
+<h1 class="mb-3"><i class="fa fa-user-shield"></i> Roles</h1>
+
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label" for="q">Search</label>
+                <field-help title="Search" content="Searches in display name and description." placement="right"></field-help>
+                <input type="text" id="q" name="q" value="@Model.Query" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="pageSize">Page size</label>
+                <select id="pageSize" name="pageSize" class="form-select" asp-items="Model.PageSizeItems"></select>
+            </div>
+            <div class="col-md-6 text-end">
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> New Role
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Display Name</th>
+                        <th>Description</th>
+                        <th style="width:120px;">System</th>
+                        <th class="text-end" style="width:200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted p-4">No roles found.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var r in Model.Items)
+                    {
+                        <tr>
+                            <td>@r.DisplayName</td>
+                            <td>@(string.IsNullOrWhiteSpace(r.Description) ? "-" : r.Description)</td>
+                            <td>
+                                @if (r.IsSystem)
+                                {
+                                    <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fa fa-pen"></i> Edit
+                                </a>
+
+                                @* Delete is disabled for system roles *@
+                                @if (!r.IsSystem)
+                                {
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-delete="open-modal"
+                                            data-area="Admin"
+                                            data-controller="Roles"
+                                            data-action="Delete"
+                                            data-id="@r.Id"
+                                            data-name="@r.DisplayName">
+                                        <i class="fa fa-trash"></i> Delete
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (totalPages > 1)
+{
+    <nav class="mt-3">
+        <ul class="pagination justify-content-end">
+            <li class="page-item @(Model.Page <= 1 ? "disabled" : null)">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-pageSize="@Model.PageSize" asp-route-q="@Model.Query">Previous</a>
+            </li>
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : null)">
+                    <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-pageSize="@Model.PageSize" asp-route-q="@Model.Query">@p</a>
+                </li>
+            }
+            <li class="page-item @(Model.Page >= totalPages ? "disabled" : null)">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-pageSize="@Model.PageSize" asp-route-q="@Model.Query">Next</a>
+            </li>
+        </ul>
+    </nav>
+}
+
+@* shared confirmation modal (already exists in project) *@
+<partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />

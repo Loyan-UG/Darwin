@@ -7,6 +7,7 @@ namespace Darwin.Application.Identity.DTOs
         public Guid Id { get; set; }
         public string Key { get; set; } = string.Empty;       // e.g., "admin"
         public string DisplayName { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
         public bool IsSystem { get; set; }
     }
 
