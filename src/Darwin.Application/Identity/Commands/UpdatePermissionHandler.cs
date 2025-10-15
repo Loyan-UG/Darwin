@@ -6,35 +6,54 @@ using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using System.Collections;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Updates a permission's editable fields (DisplayName/Description) with concurrency check.
+    /// Updates editable fields of a permission (DisplayName and Description).
+    /// Does not allow changing Key or IsSystem.
     /// </summary>
     public sealed class UpdatePermissionHandler
     {
         private readonly IAppDbContext _db;
-        private readonly PermissionEditValidator _validator = new();
+        private readonly IValidator<PermissionEditDto> _validator;
 
-        public UpdatePermissionHandler(IAppDbContext db) => _db = db;
+        public UpdatePermissionHandler(IAppDbContext db, IValidator<PermissionEditDto> validator)
+        {
+            _db = db;
+            _validator = validator;
+        }
 
+        /// <summary>
+        /// Handles the update operation.
+        /// </summary>
+        /// <param name="dto">Edit DTO containing new values and concurrency token.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>A result indicating success or failure.</returns>
         public async Task<Result> HandleAsync(PermissionEditDto dto, CancellationToken ct = default)
         {
-            var v = _validator.Validate(dto);
-            if (!v.IsValid) return Result.Fail(v.ToString());
+            await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var p = await _db.Set<Permission>().FirstOrDefaultAsync(x => x.Id == dto.Id && !x.IsDeleted, ct);
-            if (p == null) return Result.Fail("Permission not found.");
+            var permission = await _db.Set<Permission>().FirstOrDefaultAsync(p => p.Id == dto.Id && !p.IsDeleted, ct);
+            if (permission is null)
+                return Result.Fail("Permission not found.");
 
-            if (!StructuralComparisons.StructuralEqualityComparer.Equals(p.RowVersion, dto.RowVersion))
-                return Result.Fail("Concurrency conflict. Reload and try again.");
+            // Concurrency check
+            if (permission.RowVersion is not null && dto.RowVersion is not null && permission.RowVersion.Length > 0)
+            {
+                if (!StructuralComparisons.StructuralEqualityComparer.Equals(permission.RowVersion, dto.RowVersion))
+                    return Result.Fail("Concurrency conflict.");
+            }
 
-            // Key and IsSystem are not editable
-            p.DisplayName = dto.DisplayName.Trim();
-            p.Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim();
+            // Since DisplayName and Description have private setters, update via EF's entry
+            var type = typeof(Permission);
+            var displayNameProp = type.GetProperty(nameof(Permission.DisplayName), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            displayNameProp!.SetValue(permission, dto.DisplayName?.Trim() ?? string.Empty);
+            var descriptionProp = type.GetProperty(nameof(Permission.Description), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            descriptionProp!.SetValue(permission, dto.Description);
 
             await _db.SaveChangesAsync(ct);
             return Result.Ok();

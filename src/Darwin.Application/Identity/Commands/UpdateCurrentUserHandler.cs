@@ -44,7 +44,7 @@ namespace Darwin.Application.Identity.Commands
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            var userId = _currentUser.GetCurrentUserId;
+            var userId = _currentUser.GetCurrentUserId();
             if (userId == Guid.Empty || userId != dto.Id)
                 return Result.Fail("Unauthorized.");
 

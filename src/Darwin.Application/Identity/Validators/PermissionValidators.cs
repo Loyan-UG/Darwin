@@ -21,4 +21,17 @@ namespace Darwin.Application.Identity.Validators
             RuleFor(x => x.DisplayName).NotEmpty();
         }
     }
+
+    
+    /// <summary>
+    /// Validation rules for deleting a permission.
+    /// </summary>
+    public sealed class PermissionDeleteValidator : AbstractValidator<PermissionDeleteDto>
+    {
+        public PermissionDeleteValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotNull();
+        }
+    }
 }

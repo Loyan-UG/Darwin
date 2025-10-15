@@ -30,4 +30,17 @@ namespace Darwin.Application.Identity.DTOs
         public bool IsSystem { get; set; }
 
     }
+
+    /// <summary>
+    /// DTO used when requesting to soft‑delete a permission.
+    /// Contains the identifier and concurrency token.
+    /// </summary>
+    public sealed class PermissionDeleteDto
+    {
+        /// <summary>Identifier of the permission to delete.</summary>
+        public Guid Id { get; set; }
+
+        /// <summary>Concurrency token for optimistic concurrency checks.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
 }
