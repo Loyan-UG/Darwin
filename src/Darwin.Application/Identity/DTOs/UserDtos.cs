@@ -27,6 +27,7 @@ namespace Darwin.Application.Identity.DTOs
         public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsSystem { get; set; } = false;               // If true, protected from destructive ops
+
     }
 
     /// <summary>Edit user input model.</summary>
@@ -34,6 +35,7 @@ namespace Darwin.Application.Identity.DTOs
     {
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>(); // For optimistic concurrency
+        public string Email { get; set; } = string.Empty;
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string Locale { get; set; } = "de-DE";

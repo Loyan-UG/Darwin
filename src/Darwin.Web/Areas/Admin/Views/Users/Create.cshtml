@@ -1,0 +1,45 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserEditVm
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<h1 class="mb-3">Create User</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input name="password" id="password" type="password" class="form-control" autocomplete="new-password" />
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="IsActive" class="form-label"></label>
+            <select asp-for="IsActive" class="form-select">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- آلمان به‌صورت پیش‌فرض – پنهان -->
+    <input type="hidden" asp-for="Locale" />
+    <input type="hidden" asp-for="Timezone" />
+    <input type="hidden" asp-for="Currency" />
+
+    <div class="text-end">
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

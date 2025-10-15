@@ -22,8 +22,12 @@ namespace Darwin.Application.Identity.DTOs
     public sealed class PermissionEditDto
     {
         public Guid Id { get; set; }
+        public string Key { get; set; } = string.Empty;           // e.g., "Admin.FullAccess"
+
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string DisplayName { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public bool IsSystem { get; set; }
+
     }
 }

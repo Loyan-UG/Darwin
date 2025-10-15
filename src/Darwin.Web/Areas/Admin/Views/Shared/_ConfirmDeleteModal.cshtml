@@ -1,28 +1,36 @@
 ﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @* 
     Generic confirmation modal for destructive actions (delete).
-    - Accessible: role=dialog, aria-* set.
-    - Mobile-friendly: Bootstrap modal, large touch targets.
-    - Posts to a dynamic form action with Anti-Forgery token.
+    - Accessible & mobile-friendly (Bootstrap).
+    - Accepts:
+        data-action (absolute/relative POST url)  OR
+        data-area + data-controller + data-action (to compose url) 
+      and also:
+        data-id (Guid) 
+        data-rowversion (base64)
+        data-name (display text)
 *@
+
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header">
                 <h5 class="modal-title" id="confirmDeleteTitle">Confirm deletion</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body">
                 <p class="mb-2">This action cannot be undone.</p>
                 <p class="fw-semibold mb-0">
-                    Item:
-                    <span id="confirmDeleteName" class="text-danger"></span>
+                    Item: <span id="confirmDeleteName" class="text-danger"></span>
                 </p>
             </div>
+
             <div class="modal-footer">
                 <form id="confirmDeleteForm" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" id="confirmDeleteId" />
+                    <input type="hidden" name="rowVersion" id="confirmDeleteRowVersion" />
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
@@ -31,39 +39,43 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        (function () {
-          const modalEl = document.getElementById('confirmDeleteModal');
-          const nameSpan = document.getElementById('confirmDeleteName');
-          const idInput = document.getElementById('confirmDeleteId');
-          const form = document.getElementById('confirmDeleteForm');
-          let bsModal;
+<script>
+    (function () {
+      const modalEl = document.getElementById('confirmDeleteModal');
+      if (!modalEl) return;
 
-          function ensureModal() {
-            if (!bsModal) { bsModal = new bootstrap.Modal(modalEl); }
-            return bsModal;
+      const nameSpan = document.getElementById('confirmDeleteName');
+      const idInput  = document.getElementById('confirmDeleteId');
+      const rvInput  = document.getElementById('confirmDeleteRowVersion');
+      const form     = document.getElementById('confirmDeleteForm');
+
+      // Use Bootstrap's show.bs.modal to read the *trigger button* attributes
+      modalEl.addEventListener('show.bs.modal', function (ev) {
+        const btn = ev.relatedTarget;
+        if (!btn) return;
+
+        // Prefer explicit data-action (a ready-to-use URL)
+        let actionUrl = btn.getAttribute('data-action');
+
+        // If not provided, compose from area/controller/action
+        if (!actionUrl) {
+          const area = btn.getAttribute('data-area');
+          const ctrl = btn.getAttribute('data-controller');
+          const act  = btn.getAttribute('data-action') || 'Delete';
+          // Compose as /{area}/{controller}/{action}
+          if (ctrl) {
+            actionUrl = '/' + (area ? (area + '/') : '') + ctrl + '/' + act;
           }
+        }
 
-          // Wire global handler for any "data-confirm-delete" button/link
-          document.addEventListener('click', function (e) {
-            const btn = e.target.closest('[data-confirm-delete]');
-            if (!btn) return;
+        const id   = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name') || '';
+        const rv   = btn.getAttribute('data-rowversion') || '';
 
-            e.preventDefault();
-
-            const action = btn.getAttribute('data-action');    // form action url (POST)
-            const id = btn.getAttribute('data-id');            // entity id (Guid)
-            const name = btn.getAttribute('data-name') || '';  // user-friendly name
-
-            if (!action || !id) return;
-
-            nameSpan.textContent = name;
-            idInput.value = id;
-            form.setAttribute('action', action);
-
-            ensureModal().show();
-          });
-        })();
-    </script>
-}
+        if (nameSpan) nameSpan.textContent = name;
+        if (idInput)  idInput.value = id || '';
+        if (rvInput)  rvInput.value = rv || '';
+        if (actionUrl) form.setAttribute('action', actionUrl);
+      });
+    })();
+</script>

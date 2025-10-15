@@ -112,18 +112,42 @@ namespace Darwin.Web.Extensions
             services.AddScoped<UpdateProductHandler>();
             services.AddScoped<GetProductsPageHandler>();
             services.AddScoped<GetProductForEditHandler>();
+            services.AddScoped<SoftDeleteProductHandler>();
 
             // Register handlers — Categories
             services.AddScoped<CreateCategoryHandler>();
             services.AddScoped<UpdateCategoryHandler>();
             services.AddScoped<GetCategoriesPageHandler>();
             services.AddScoped<GetCategoryForEditHandler>();
+            services.AddScoped<SoftDeleteCategoryHandler>();
 
             // Register handlers — CMS pages
             services.AddScoped<CreatePageHandler>();
             services.AddScoped<UpdatePageHandler>();
             services.AddScoped<GetPagesPageHandler>();
             services.AddScoped<GetPageForEditHandler>();
+            services.AddScoped<SoftDeletePageHandler>();
+
+            // Roles (Identity)
+            services.AddScoped<GetRolesPageHandler>();
+            services.AddScoped<GetRoleForEditHandler>();
+            services.AddScoped<CreateRoleHandler>();
+            services.AddScoped<UpdateRoleHandler>();
+            services.AddScoped<DeleteRoleHandler>();
+
+            // --- Identity: Users (Admin) ---
+            services.AddScoped<GetUsersPageHandler>();
+            services.AddScoped<GetUserForEditHandler>();
+            services.AddScoped<UpdateUserHandler>();
+            services.AddScoped<CreateUserHandler>();
+
+            // --- Identity: Permissions (Admin) ---
+            services.AddScoped<GetPermissionsPageHandler>();
+            services.AddScoped<GetPermissionForEditHandler>();
+            services.AddScoped<CreatePermissionHandler>();
+            services.AddScoped<UpdatePermissionHandler>();
+            services.AddScoped<SoftDeletePermissionHandler>();
+
 
             // Register handlers — Shipping methods (admin)
             services.AddScoped<CreateShippingMethodHandler>();

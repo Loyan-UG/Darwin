@@ -1,42 +1,52 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+﻿// File: src/Darwin.Application/Identity/Commands/UpdateCurrentUserHandler.cs
+using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
-
 
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Updates editable fields of an existing user for the admin panel.
-    /// Does not permit changing email, username, or system flags.
-    /// Uses the RowVersion for optimistic concurrency.
+    /// Updates the profile information of the currently authenticated user.
+    /// Only profile fields such as name, locale, timezone, currency, and phone are modifiable.
+    /// Email and activation status are immutable in this context.
     /// </summary>
-    public sealed class UpdateUserHandler
+    public sealed class UpdateCurrentUserHandler
     {
         private readonly IAppDbContext _db;
-        private readonly IValidator<UserEditDto> _validator;
+        private readonly ICurrentUserService _currentUser;
+        private readonly IValidator<UserProfileEditDto> _validator;
 
         /// <summary>
-        /// Creates a new instance of the handler.
+        /// Initializes a new instance of the handler.
         /// </summary>
-        public UpdateUserHandler(IAppDbContext db, IValidator<UserEditDto> validator)
+        public UpdateCurrentUserHandler(IAppDbContext db, ICurrentUserService currentUser, IValidator<UserProfileEditDto> validator)
         {
             _db = db;
+            _currentUser = currentUser;
             _validator = validator;
         }
 
         /// <summary>
-        /// Handles the update operation for an existing user.
+        /// Handles the profile update for the current user.
         /// </summary>
-        /// <param name="dto">The edit request with updated values and concurrency token.</param>
+        /// <param name="dto">The profile edit request containing updated fields.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>A result indicating success or failure.</returns>
-        public async Task<Result> HandleAsync(UserEditDto dto, CancellationToken ct = default)
+        public async Task<Result> HandleAsync(UserProfileEditDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
+
+            var userId = _currentUser.GetCurrentUserId;
+            if (userId == Guid.Empty || userId != dto.Id)
+                return Result.Fail("Unauthorized.");
 
             var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.Id && !u.IsDeleted, ct);
             if (user is null)
@@ -49,14 +59,13 @@ namespace Darwin.Application.Identity.Commands
                     return Result.Fail("Concurrency conflict.");
             }
 
-            // Update allowed fields
+            // Update profile fields
             user.FirstName = dto.FirstName;
             user.LastName = dto.LastName;
             user.Locale = dto.Locale;
             user.Timezone = dto.Timezone;
             user.Currency = dto.Currency;
             user.PhoneE164 = dto.PhoneE164;
-            user.IsActive = dto.IsActive;
 
             await _db.SaveChangesAsync(ct);
 

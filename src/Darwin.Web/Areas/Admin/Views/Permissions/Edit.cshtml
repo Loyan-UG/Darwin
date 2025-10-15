@@ -1,0 +1,49 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.PermissionEditVm
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Darwin.Web
+
+@{
+    ViewData["Title"] = "Edit Permission";
+}
+
+<h1 class="mb-3">Edit Permission</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Key</label>
+            <div class="form-control-plaintext text-monospace">@Model.Key</div>
+            <field-help title="Key" content="Key is immutable and cannot be changed." placement="right"></field-help>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label class="form-label">System</label>
+            <div class="form-control-plaintext">@(Model.IsSystem ? "Yes" : "No")</div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DisplayName" class="form-label"></label>
+        <input asp-for="DisplayName" class="form-control" />
+        <span asp-validation-for="DisplayName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="text-end">
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

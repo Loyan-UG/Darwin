@@ -61,5 +61,10 @@ namespace Darwin.Application.CMS.DTOs
         public DateTime? PublishStartUtc { get; set; }
         public DateTime? PublishEndUtc { get; set; }
         public DateTime ModifiedAtUtc { get; set; }
+
+        /// <summary>
+        /// Concurrency token for optimistic concurrency control on inline operations
+        /// </summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }

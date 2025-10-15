@@ -1,0 +1,74 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.PermissionIndexVm
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Permissions";
+}
+
+<h1 class="mb-3">Permissions</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-6">
+        <label class="form-label" for="q">Search</label>
+        <input id="q" name="q" value="@Model.Q" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="pageSize">Page size</label>
+        <select id="pageSize" name="pageSize" class="form-select">
+            <option value="10" selected="@(Model.PageSize == 10)">10</option>
+            <option value="20" selected="@(Model.PageSize == 20)">20</option>
+            <option value="50" selected="@(Model.PageSize == 50)">50</option>
+            <option value="100" selected="@(Model.PageSize == 100)">100</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label d-block">&nbsp;</label>
+        <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> Search</button>
+    </div>
+    <div class="col-md-2 text-end">
+        <a asp-action="Create" class="btn btn-success"><i class="fa fa-plus"></i> New Permission</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Display name</th>
+                <th>System</th>
+                <th>Modified</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.Items)
+            {
+                <tr>
+                    <td class="text-monospace">@p.Key</td>
+                    <td>@p.DisplayName</td>
+                    <td>@(p.IsSystem ? "Yes" : "No")</td>
+                    <td>@(p.ModifiedAtUtc?.ToString("u") ?? "-")</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="fa fa-pen"></i> Edit
+                        </a>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmDeleteModal"
+                                data-action="@Url.Action("Delete", "Permissions", new { area = "Admin" })"
+                                data-id="@p.Id"
+                                data-name="@p.DisplayName"
+                                data-rowversion="@(p.RowVersion != null ? Convert.ToBase64String(p.RowVersion) : "")">
+                            <i class="fa fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />

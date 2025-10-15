@@ -210,10 +210,17 @@ namespace Darwin.Web.Areas.Admin.Controllers.CMS
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromForm] Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
-            try { await _softDeletePage.HandleAsync(id, ct); TempData["Success"] = "Page deleted."; }
-            catch { TempData["Error"] = "Failed to delete the page."; }
+            try
+            {
+                await _softDeletePage.HandleAsync(id, rowVersion, ct);
+                TempData["Success"] = "Page deleted.";
+            }
+            catch
+            {
+                TempData["Error"] = "Failed to delete the page.";
+            }
             return RedirectToAction(nameof(Index));
         }
     }

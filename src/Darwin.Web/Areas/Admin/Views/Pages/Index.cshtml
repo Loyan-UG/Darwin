@@ -33,17 +33,17 @@
                             <td>@p.ModifiedAtUtc.ToString("u")</td>
                             <td class="text-end">
                                 <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-edit"></i> Edit
+                                    <i class="fas fa-pen"></i> Edit
                                 </a>
                                 <button type="button"
-                                        class="btn btn-sm btn-outline-danger ms-1"
-                                        data-delete="open-modal"
-                                        data-area="Admin"
-                                        data-controller="Pages"
-                                        data-action="Delete"
+                                        class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#confirmDeleteModal"
+                                        data-action="@Url.Action("Delete", "Pages", new { area = "Admin" })"
                                         data-id="@p.Id"
-                                        data-name="@(p.Title ?? p.Id.ToString())">
-                                    <i class="fas fa-trash-alt"></i> Delete
+                                        data-name="@(p.Title ?? p.Id.ToString())"
+                                        data-rowversion="@Convert.ToBase64String(p.RowVersion)">
+                                    <i class="fa fa-trash"></i> Delete
                                 </button>
                             </td>
                         </tr>

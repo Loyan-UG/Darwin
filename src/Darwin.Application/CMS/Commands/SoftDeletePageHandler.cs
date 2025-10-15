@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Domain.Entities.CMS;
+using Darwin.Shared.Results;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Darwin.Application.Abstractions.Persistence;
-using Darwin.Domain.Entities.CMS;
-using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.CMS.Commands
 {
@@ -22,17 +23,33 @@ namespace Darwin.Application.CMS.Commands
         public SoftDeletePageHandler(IAppDbContext db) => _db = db;
 
         /// <summary>
-        /// Executes the soft delete for the given page <paramref name="id"/>.
+        /// Soft-deletes the specified page by Id. If the page is system-protected or not found,
+        /// a failure result is returned. When a row version is supplied, an optimistic
+        /// concurrency check is performed.
         /// </summary>
-        public async Task HandleAsync(Guid id, CancellationToken ct = default)
+        /// <param name="id">Page identifier.</param>
+        /// <param name="rowVersion">
+        /// Optional concurrency token; when provided, the current entity version must match.
+        /// </param>
+        /// <param name="ct">Cancellation token.</param>
+        public async Task<Result> HandleAsync(Guid id, byte[]? rowVersion, CancellationToken ct = default)
         {
-            var entity = await _db.Set<Page>()
-                                  .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
+            var page = await _db.Set<Page>().FirstOrDefaultAsync(p => p.Id == id, ct);
+            if (page is null)
+                return Result.Fail("Page not found.");
 
-            if (entity is null) return;
+            if (rowVersion is not null)
+            {
+                // Optimistic concurrency: ensure the incoming token matches the current one.
+                if (page.RowVersion is null || !page.RowVersion.SequenceEqual(rowVersion))
+                    return Result.Fail("The page was modified by another user. Please reload and try again.");
+            }
 
-            entity.IsDeleted = true;
+            page.IsDeleted = true;
+            page.ModifiedAtUtc = DateTime.UtcNow;
+
             await _db.SaveChangesAsync(ct);
+            return Result.Ok();
         }
     }
 }

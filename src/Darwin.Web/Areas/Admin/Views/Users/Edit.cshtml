@@ -1,0 +1,47 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserEditVm
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Darwin.Web
+
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<h1 class="mb-3">Edit User</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="IsActive" class="form-label"></label>
+            <select asp-for="IsActive" class="form-select">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Locale/Currency/Timezone: فعلاً با مقدار آلمان – پنهان -->
+    <input type="hidden" asp-for="Locale" />
+    <input type="hidden" asp-for="Timezone" />
+    <input type="hidden" asp-for="Currency" />
+
+    @* TODO: RoleIds picker (multi-select) – پس از آماده‌شدن Lookups *@
+
+    <div class="text-end">
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

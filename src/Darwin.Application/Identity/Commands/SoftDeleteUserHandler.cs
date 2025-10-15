@@ -1,40 +1,39 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+﻿// File: src/Darwin.Application/Identity/Commands/SoftDeleteUserHandler.cs
+using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using System.Collections;
-
 
 namespace Darwin.Application.Identity.Commands
 {
     /// <summary>
-    /// Updates editable fields of an existing user for the admin panel.
-    /// Does not permit changing email, username, or system flags.
-    /// Uses the RowVersion for optimistic concurrency.
+    /// Performs a soft delete of a user. Records flagged as system cannot be deleted.
     /// </summary>
-    public sealed class UpdateUserHandler
+    public sealed class SoftDeleteUserHandler
     {
         private readonly IAppDbContext _db;
-        private readonly IValidator<UserEditDto> _validator;
+        private readonly IValidator<UserDeleteDto> _validator;
 
-        /// <summary>
-        /// Creates a new instance of the handler.
-        /// </summary>
-        public UpdateUserHandler(IAppDbContext db, IValidator<UserEditDto> validator)
+        /// <summary>Creates a new handler instance.</summary>
+        public SoftDeleteUserHandler(IAppDbContext db, IValidator<UserDeleteDto> validator)
         {
             _db = db;
             _validator = validator;
         }
 
         /// <summary>
-        /// Handles the update operation for an existing user.
+        /// Marks the specified user as deleted. If the user is marked as system, the operation fails.
         /// </summary>
-        /// <param name="dto">The edit request with updated values and concurrency token.</param>
+        /// <param name="dto">The delete request containing id and concurrency token.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>A result indicating success or failure.</returns>
-        public async Task<Result> HandleAsync(UserEditDto dto, CancellationToken ct = default)
+        public async Task<Result> HandleAsync(UserDeleteDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
 
@@ -49,14 +48,12 @@ namespace Darwin.Application.Identity.Commands
                     return Result.Fail("Concurrency conflict.");
             }
 
-            // Update allowed fields
-            user.FirstName = dto.FirstName;
-            user.LastName = dto.LastName;
-            user.Locale = dto.Locale;
-            user.Timezone = dto.Timezone;
-            user.Currency = dto.Currency;
-            user.PhoneE164 = dto.PhoneE164;
-            user.IsActive = dto.IsActive;
+            if (user.IsSystem)
+                return Result.Fail("System users cannot be deleted.");
+
+            // TODO: If orders or other aggregates reference this user, prevent deletion and only deactivate.
+            user.IsDeleted = true;
+            user.IsActive = false;
 
             await _db.SaveChangesAsync(ct);
 

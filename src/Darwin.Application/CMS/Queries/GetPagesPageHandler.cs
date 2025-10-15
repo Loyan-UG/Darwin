@@ -43,7 +43,8 @@ namespace Darwin.Application.CMS.Queries
                     PublishStartUtc = p.PublishStartUtc,
                     PublishEndUtc = p.PublishEndUtc,
                     // If ModifiedAtUtc is nullable in BaseEntity, coalesce to CreatedAtUtc
-                    ModifiedAtUtc = (p.ModifiedAtUtc ?? p.CreatedAtUtc)
+                    ModifiedAtUtc = (p.ModifiedAtUtc ?? p.CreatedAtUtc),
+                    RowVersion = p.RowVersion
                 })
                 .ToListAsync(ct);
 
