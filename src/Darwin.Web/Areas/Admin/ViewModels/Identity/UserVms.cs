@@ -1,9 +1,24 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Darwin.Web.Areas.Admin.ViewModels.Identity
 {
+    /// <summary>
+    /// View model for the users listing page with paging and search.
+    /// </summary>
+    public sealed class UsersListVm
+    {
+        public List<UserListItemVm> Items { get; set; } = new();
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+    }
+
+
     /// <summary>
     /// View model used to display a single user entry in lists.
     /// </summary>

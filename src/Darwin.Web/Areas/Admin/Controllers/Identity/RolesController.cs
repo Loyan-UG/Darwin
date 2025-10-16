@@ -22,8 +22,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
     [PermissionAuthorize("FullAdminAccess")]
     public sealed class RolesController : AdminBaseController
     {
-        private readonly GetRolesPageHandler _getPage;
-        private readonly GetRoleForEditHandler _getForEdit;
+        private readonly GetRolesPageHandler _getRole;
+        private readonly GetRoleForEditHandler _getRoleForEdit;
         private readonly CreateRoleHandler _create;
         private readonly UpdateRoleHandler _update;
         private readonly DeleteRoleHandler _delete;
@@ -33,14 +33,14 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         /// validation and persistence logic, keeping the Web layer thin and testable.
         /// </summary>
         public RolesController(
-            GetRolesPageHandler getPage,
-            GetRoleForEditHandler getForEdit,
+            GetRolesPageHandler getRole,
+            GetRoleForEditHandler getRoleForEdit,
             CreateRoleHandler create,
             UpdateRoleHandler update,
             DeleteRoleHandler delete)
         {
-            _getPage = getPage;
-            _getForEdit = getForEdit;
+            _getRole = getRole;
+            _getRoleForEdit = getRoleForEdit;
             _create = create;
             _update = update;
             _delete = delete;
@@ -52,10 +52,21 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getPage.HandleAsync(page, pageSize, q, ct);
+            var (items, total) = await _getRole.HandleAsync(page, pageSize, q, ct);
+
+            // Map Application DTOs to lightweight view models for listing.
+            var listVms = items.Select(dto => new RoleListItemVm
+            {
+                Id = dto.Id,
+                Key = dto.Key,
+                DisplayName = dto.DisplayName,
+                Description = dto.Description,
+                IsSystem = dto.IsSystem
+            }).ToList();
+
             var vm = new RolesListItemVm
             {
-                Items = items,
+                Items = listVms,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -118,7 +129,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
-            var dto = await _getForEdit.HandleAsync(id, ct);
+            var dto = await _getRoleForEdit.HandleAsync(id, ct);
             if (dto is null)
             {
                 TempData["Warning"] = "Role not found.";
