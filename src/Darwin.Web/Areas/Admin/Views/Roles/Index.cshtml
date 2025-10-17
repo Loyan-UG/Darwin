@@ -45,52 +45,50 @@
                     </tr>
                 </thead>
                 <tbody>
-                @if (Model.Items.Count == 0)
-                {
-                    <tr>
-                        <td colspan="4" class="text-center text-muted p-4">No roles found.</td>
-                    </tr>
-                }
-                else
-                {
-                    foreach (var r in Model.Items)
+                    @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td>@r.DisplayName</td>
-                            <td>@(string.IsNullOrWhiteSpace(r.Description) ? "-" : r.Description)</td>
-                            <td>
-                                @if (r.IsSystem)
-                                {
-                                    <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No</span>
-                                }
-                            </td>
-                            <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary me-1">
-                                    <i class="fa fa-pen"></i> Edit
-                                </a>
-
-                                @* Delete is disabled for system roles *@
-                                @if (!r.IsSystem)
-                                {
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-danger"
-                                            data-delete="open-modal"
-                                            data-area="Admin"
-                                            data-controller="Roles"
-                                            data-action="Delete"
-                                            data-id="@r.Id"
-                                            data-name="@r.DisplayName">
-                                        <i class="fa fa-trash"></i> Delete
-                                    </button>
-                                }
-                            </td>
+                            <td colspan="4" class="text-center text-muted p-4">No roles found.</td>
                         </tr>
                     }
-                }
+                    else
+                    {
+                        foreach (var r in Model.Items)
+                        {
+                            <tr>
+                                <td>@r.DisplayName</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.Description) ? "-" : r.Description)</td>
+                                <td>
+                                    @if (r.IsSystem)
+                                    {
+                                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="fa fa-pen"></i> Edit
+                                    </a>
+
+                                    @* Delete is disabled for system roles *@
+                                    @if (!r.IsSystem)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-delete="modal"
+                                                data-action="@Url.Action("Delete", "Roles", new { area = "Admin" })"
+                                                data-id="@r.Id"
+                                                data-name="@r.DisplayName">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
                 </tbody>
             </table>
         </div>

@@ -1,4 +1,4 @@
-﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserIndexVm
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UsersListVm
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 @{
@@ -11,14 +11,14 @@
 <form method="get" class="row g-2 align-items-end mb-3">
     <div class="col-md-5">
         <label class="form-label" for="q">Search</label>
-        <input id="q" name="q" value="@Model.Q" class="form-control" />
+        <input id="q" name="q" value="@Model.Query" class="form-control" />
     </div>
     <div class="col-md-2">
         <label class="form-label" for="active">Active</label>
         <select id="active" name="active" class="form-select">
             <option value="">All</option>
-            <option value="true" selected="@(Model.Active == true)">Active</option>
-            <option value="false" selected="@(Model.Active == false)">Inactive</option>
+            <option value="true" selected="@(Model.IsActive == true)">Active</option>
+            <option value="false" selected="@(Model.IsActive == false)">Inactive</option>
         </select>
     </div>
     <div class="col-md-2">
