@@ -1,50 +1,185 @@
-﻿@inject Darwin.Web.Areas.Admin.Infrastructure.PermissionRazorHelper Perms
+﻿@using Microsoft.AspNetCore.Antiforgery
+@inject Darwin.Web.Areas.Admin.Infrastructure.PermissionRazorHelper Perms
+@inject IAntiforgery Antiforgery
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>@ViewData["Title"] - Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Darwin Admin</title>
 
-    <!-- Bootstrap + Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
-    <!-- Font Awesome Icons -->
+    <!-- Bootstrap 5.3.8 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-3I1H8n+..." crossorigin="anonymous" />
+    <!-- Font Awesome 7 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/9da8b79f46.js" crossorigin="anonymous"></script>
 
-    <!-- Quill v2: use FULL build + snow theme CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
-
-    <!-- My main CSS -->
+    <!-- Project Styles -->
     <link href="~/css/main.css" rel="stylesheet" />
+    <link href="~/css/admin.css" rel="stylesheet" />
 </head>
-<body class="container py-3">
-    <header class="mb-3">
-        <h1 class="h3">Darwin Admin</h1>
-        <nav class="nav nav-pills flex-column flex-sm-row">
-            <a asp-area="Admin" asp-controller="Home" asp-action="Index" class="flex-sm-fill text-sm-center nav-link">
-                <i class="bi bi-house-door"></i> Dashboard
-            </a> |
-            <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="flex-sm-fill text-sm-center nav-link">
-                <i class="bi bi-shop"></i> Products
-            </a> |
-            <a asp-area="Admin" asp-controller="Pages" asp-action="Index" class="flex-sm-fill text-sm-center nav-link">
-                <i class="bi bi-file-earmark"></i> Pages
-            </a> |
-            @if (await Perms.HasAsync("FullAdminAccess"))
-            {
-                <a asp-area="Admin" asp-controller="SiteSettings" asp-action="Edit" class="flex-sm-fill text-sm-center nav-link">
-                    <i class="bi bi-gear"></i> Settings
-                </a>
-            }
-        </nav>
+<body class="bg-light">
+    <header class="border-bottom bg-white">
+        <div class="container-fluid">
+            <div class="d-flex align-items-start justify-content-between py-2">
+                <!-- Left: Logo -->
+                <div class="order-1">
+                    <a asp-area="Admin" asp-controller="Home" asp-action="Index"
+                       class="d-inline-flex align-items-start">
+                        <img src="~/images/Logo.png" alt="Logo" class="img-fluid" style="max-height:40px;" />
+                    </a>
+                </div>
+
+                <!-- Center: Reserved (empty for now) -->
+                <div class="order-2 text-center flex-grow-1 d-none d-md-block">
+                    <!-- intentionally empty -->
+                </div>
+
+                <!-- Right: User actions (top-aligned) -->
+                <div class="order-3 d-flex align-items-start gap-3">
+                    <a class="text-decoration-none" asp-area="Member" asp-controller="Profile" asp-action="Index" title="My Profile">
+                        <i class="fa-regular fa-user"></i>
+                        <span class="ms-1">@(!string.IsNullOrWhiteSpace(User?.Identity?.Name) ? User.Identity!.Name : "My Profile")</span>
+                    </a>
+
+                    <form method="post" action="/account/logout" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-secondary btn-sm" title="Logout">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <main>
-        <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
-        @RenderBody()
-    </main>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-12 col-md-3 col-lg-2 bg-white border-end min-vh-100 p-0">
+                <div class="list-group list-group-flush py-2">
+                    <div class="px-3 pt-3 pb-2 text-uppercase small text-muted">Home</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Home" asp-action="Index">
+                        <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Catalog</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Products" asp-action="Index">
+                        <i class="fa-solid fa-box-open me-2"></i> Products
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Categories" asp-action="Index">
+                        <i class="fa-solid fa-sitemap me-2"></i> Categories
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Brands" asp-action="Index">
+                        <i class="fa-solid fa-tags me-2"></i> Brands
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="AddOnGroups" asp-action="Index">
+                        <i class="fa-solid fa-puzzle-piece me-2"></i> Add-on Groups
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Inventory" asp-action="Index">
+                        <i class="fa-solid fa-warehouse me-2"></i> Inventory
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">CMS</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Pages" asp-action="Index">
+                        <i class="fa-regular fa-file-lines me-2"></i> Pages
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Menus" asp-action="Index">
+                        <i class="fa-solid fa-bars me-2"></i> Menus
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="MenuItems" asp-action="Index">
+                        <i class="fa-regular fa-square-plus me-2"></i> Menu Items
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Media" asp-action="Index">
+                        <i class="fa-regular fa-images me-2"></i> Media
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Pricing</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="TaxCategories" asp-action="Index">
+                        <i class="fa-solid fa-percent me-2"></i> Tax Categories
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Promotions" asp-action="Index">
+                        <i class="fa-solid fa-bullhorn me-2"></i> Promotions
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Shipping</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="ShippingMethods" asp-action="Index">
+                        <i class="fa-solid fa-truck-fast me-2"></i> Methods
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="ShippingRates" asp-action="Index">
+                        <i class="fa-solid fa-layer-group me-2"></i> Rates
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Cart & Checkout</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Carts" asp-action="Index">
+                        <i class="fa-solid fa-cart-shopping me-2"></i> Carts
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="CartItems" asp-action="Index">
+                        <i class="fa-regular fa-square-check me-2"></i> Cart Items
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Orders</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Orders" asp-action="Index">
+                        <i class="fa-solid fa-receipt me-2"></i> Orders
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Payments" asp-action="Index">
+                        <i class="fa-regular fa-credit-card me-2"></i> Payments
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Shipments" asp-action="Index">
+                        <i class="fa-solid fa-boxes-packing me-2"></i> Shipments
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">SEO</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="RedirectRules" asp-action="Index">
+                        <i class="fa-solid fa-link-slash me-2"></i> Redirect Rules
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Sitemap" asp-action="Index">
+                        <i class="fa-regular fa-map me-2"></i> Sitemap
+                    </active-nav>
+
+                    @* Protected sections (FullAdminAccess) *@
+                    @if (await Perms.HasAsync("FullAdminAccess"))
+                    {
+                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Identity</div>
+                        <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Users" asp-action="Index">
+                            <i class="fa-solid fa-user-group me-2"></i> Users
+                        </active-nav>
+                        <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Roles" asp-action="Index">
+                            <i class="fa-regular fa-id-badge me-2"></i> Roles
+                        </active-nav>
+                        <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="Permissions" asp-action="Index">
+                            <i class="fa-solid fa-key me-2"></i> Permissions
+                        </active-nav>
+
+                        <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">System</div>
+                        <active-nav class="list-group-item list-group-item-action" asp-area="Admin" asp-controller="SiteSettings" asp-action="Edit">
+                            <i class="fa-solid fa-gear me-2"></i> Settings
+                        </active-nav>
+                    }
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-12 col-md-9 col-lg-10 p-3">
+                <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        @RenderBody()
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-top bg-white mt-4">
+        <div class="container-fluid py-3 text-center text-muted">
+            © @DateTime.UtcNow.Year Darwin — Admin Panel
+        </div>
+    </footer>
+
 
     <!-- jQuery (optional), Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
@@ -54,11 +189,15 @@
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
     <script>
+        // Bootstrap tooltip/popover init (for FieldHelpTagHelper and any future help icons)
         document.addEventListener('DOMContentLoaded', function () {
-          // Enable all Bootstrap popovers on the page (for <field-help>)
-          document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
+            // Enable all Bootstrap popovers on the page (for <field-help>)
+            document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
             new bootstrap.Popover(el);
-          });
+            });
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+                new bootstrap.Tooltip(el);
+            });
         });
     </script>
 

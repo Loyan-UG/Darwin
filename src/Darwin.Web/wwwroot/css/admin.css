@@ -1,2 +1,8 @@
 ﻿body {
 }
+
+/* Active nav item highlighting for Admin sidebar */
+.list-group-item.active {
+    font-weight: 600;
+    border-left: 3px solid currentColor;
+}
