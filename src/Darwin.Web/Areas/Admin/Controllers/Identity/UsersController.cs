@@ -319,20 +319,26 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         {
             try
             {
-                await _softDelete.HandleAsync(id, ct);
-                TempData["Success"] = "User deleted.";
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["Warning"] = string.IsNullOrWhiteSpace(ex.Message)
-                    ? "This user is system-protected and cannot be deleted."
-                    : ex.Message;
+                var dto = new UserDeleteDto
+                {
+                    Id = id,
+                    RowVersion = Array.Empty<byte>() // Now: For simplicity, no concurrency on delete here
+                    // TODO: Implement RowVersion
+                };
+                var result = await _softDelete.HandleAsync(dto, ct);
+                if (!result.Succeeded)
+                {
+                    TempData["Warning"] = result.Error ?? "Failed to delete user.";
+                }
+                else
+                {
+                    TempData["Success"] = "User deleted.";
+                }
             }
             catch
             {
                 TempData["Error"] = "Failed to delete the user.";
             }
-
             return RedirectToAction(nameof(Index));
         }
     }

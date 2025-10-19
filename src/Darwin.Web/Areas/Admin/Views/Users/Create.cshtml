@@ -6,8 +6,6 @@
 
 <h1 class="mb-3"><i class="fa fa-user-plus"></i> Create User</h1>
 
-<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
-
 <form asp-action="Create" method="post" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -42,19 +40,22 @@
                 <div class="col-md-4">
                     <label asp-for="Locale" class="form-label"></label>
                     <field-help title="Locale" content="Preferred language/locale." placement="right"></field-help>
-                    <select asp-for="Locale" class="form-select" asp-items="Model.LocaleItems"></select>
+                    <setting-select asp-for="Locale" setting="SupportedCulturesCsv"></setting-select>
                     <span asp-validation-for="Locale" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Currency" class="form-label"></label>
-                    <select asp-for="Currency" class="form-select" asp-items="Model.CurrencyItems"></select>
+                    <field-help title="Currency" content="Preferred currency (three‑letter code)." placement="right"></field-help>
+                    <setting-select asp-for="Currency" setting="DefaultCurrency"></setting-select>
                     <span asp-validation-for="Currency" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Timezone" class="form-label"></label>
-                    <select asp-for="Timezone" class="form-select" asp-items="Model.TimezoneItems"></select>
+                    <field-help title="Timezone" content="Preferred time zone." placement="right"></field-help>
+                    <setting-select asp-for="Timezone" setting="TimeZone"></setting-select>
                     <span asp-validation-for="Timezone" class="text-danger"></span>
                 </div>
+
 
                 <div class="col-md-6">
                     <label asp-for="PhoneE164" class="form-label"></label>

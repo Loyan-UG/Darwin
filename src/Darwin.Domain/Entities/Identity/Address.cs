@@ -29,8 +29,6 @@ namespace Darwin.Domain.Entities.Identity
         public string CountryCode { get; set; } = "DE";
         /// <summary>Phone number in E.164 format.</summary>
         public string? PhoneE164 { get; set; }
-        /// <summary>VAT id used for B2B billing, if any.</summary>
-        public string? VatId { get; set; }
         /// <summary>Whether this address is the default billing address for the user.</summary>
         public bool IsDefaultBilling { get; set; }
         /// <summary>Whether this address is the default shipping address for the user.</summary>

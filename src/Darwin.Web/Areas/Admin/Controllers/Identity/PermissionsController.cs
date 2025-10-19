@@ -2,21 +2,25 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
-using Darwin.Application.Identity.Commands;
-using Darwin.Web.Security;
+using Darwin.Shared.Results;
 using Darwin.Web.Areas.Admin.ViewModels.Identity;
+using Darwin.Web.Security;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.Web.Areas.Admin.Controllers.Identity
 {
     /// <summary>
-    /// Admin CRUD for permissions. 
+    /// Admin controller for managing permissions.
+    /// Provides list with paging/search, create/edit forms and soft delete.
+    /// Key and IsSystem values are immutable once created.
     /// </summary>
     [Area("Admin")]
     [Route("Admin/[controller]/[action]")]
-    [PermissionAuthorize("AccessAdminPanel")]
+    [PermissionAuthorize("FullAdminAccess")]
     public sealed class PermissionsController : Controller
     {
         private readonly GetPermissionsPageHandler _getPage;
@@ -39,51 +43,76 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             _softDelete = softDelete;
         }
 
+        /// <summary>
+        /// Displays a paged list of permissions. Supports search by key/display name.
+        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index([FromQuery] string? q, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getPage.HandleAsync(q, page, pageSize, ct);
-
-            var vm = new PermissionIndexVm
+            var result = await _getPage.HandleAsync(page, pageSize, q, ct);
+            if (!result.Succeeded || result.Value == null)
             {
-                Q = q,
+                TempData["Error"] = result.Error ?? "Failed to load permissions.";
+                return View(new PermissionsListVm());
+            }
+
+            var pageData = result.Value;
+            var listItems = pageData.Items
+                .Select(d => new PermissionListItemVm
+                {
+                    Id = d.Id,
+                    Key = d.Key,
+                    DisplayName = d.DisplayName,
+                    Description = d.Description,
+                    IsSystem = d.IsSystem
+                }).ToList();
+
+            var vm = new PermissionsListVm
+            {
+                Items = listItems,
                 Page = page,
                 PageSize = pageSize,
-                Total = total,
-                Items = items.Select(p => new PermissionRowVm
+                Total = pageData.TotalCount,
+                Query = q ?? string.Empty,
+                PageSizeItems = new[]
                 {
-                    Id = p.Id,
-                    Key = p.Key,
-                    DisplayName = p.DisplayName,
-                    IsSystem = p.IsSystem,
-                    ModifiedAtUtc = p.ModifiedAtUtc,
-                    RowVersion = p.RowVersion
-                }).ToList()
+                    new SelectListItem("10",  "10",  pageSize == 10),
+                    new SelectListItem("20",  "20",  pageSize == 20),
+                    new SelectListItem("50",  "50",  pageSize == 50),
+                    new SelectListItem("100", "100", pageSize == 100),
+                }
             };
-
             return View(vm);
         }
 
+        /// <summary>Shows the create permission form.</summary>
         [HttpGet]
-        public IActionResult Create() => View(new PermissionCreateVm());
+        public IActionResult Create()
+        {
+            return View(new PermissionCreateVm());
+        }
 
+        /// <summary>
+        /// Processes creation of a new permission.
+        /// On success, redirects to the index with a success message.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PermissionCreateVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View(vm);
-
-            var dto = new PermissionCreateDto
+            if (!ModelState.IsValid)
             {
-                Key = vm.Key.Trim(),
-                DisplayName = vm.DisplayName.Trim(),
-                Description = vm.Description?.Trim()
-            };
+                TempData["Warning"] = "Please fix validation errors and try again.";
+                return View(vm);
+            }
 
-            var res = await _create.HandleAsync(dto, ct);
-            if (!res.Succeeded)
+            var result = await _create.HandleAsync(vm.Key?.Trim() ?? string.Empty, 
+                vm.DisplayName?.Trim() ?? string.Empty, 
+                string.IsNullOrWhiteSpace(vm.Description) ? null : vm.Description.Trim(), 
+                false, ct);
+            if (!result.Succeeded)
             {
-                TempData["Error"] = res.Error ?? "Failed to create permission.";
+                TempData["Error"] = result.Error ?? "Failed to create permission.";
                 return View(vm);
             }
 
@@ -91,66 +120,88 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>
+        /// Loads an existing permission for editing DisplayName and Description.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
-            var dto = await _getForEdit.HandleAsync(id, ct);
-            if (dto == null)
+            var result = await _getForEdit.HandleAsync(id, ct);
+            if (!result.Succeeded || result.Value is null)
             {
-                TempData["Error"] = "Permission not found.";
+                TempData["Warning"] = result.Error ?? "Permission not found.";
                 return RedirectToAction(nameof(Index));
             }
 
+            var dto = result.Value;
             var vm = new PermissionEditVm
             {
                 Id = dto.Id,
                 RowVersion = dto.RowVersion,
                 DisplayName = dto.DisplayName ?? string.Empty,
-                Description = dto.Description,
-                Key = dto.Key,
-                IsSystem = dto.IsSystem
+                Description = dto.Description
             };
+
+            // Key/IsSystem are not editable, but we can pass them via ViewBag to display
+            ViewBag.Key = dto.Key;
+            ViewBag.IsSystem = dto.IsSystem;
             return View(vm);
         }
 
+        /// <summary>
+        /// Updates the editable fields of a permission using optimistic concurrency.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(PermissionEditVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid)
+            {
+                TempData["Warning"] = "Please fix validation errors and try again.";
+                return View(vm);
+            }
 
             var dto = new PermissionEditDto
             {
                 Id = vm.Id,
                 RowVersion = vm.RowVersion,
-                DisplayName = vm.DisplayName.Trim(),
-                Description = vm.Description?.Trim()
+                DisplayName = vm.DisplayName?.Trim() ?? string.Empty,
+                Description = string.IsNullOrWhiteSpace(vm.Description) ? null : vm.Description.Trim()
             };
 
-            var res = await _update.HandleAsync(dto, ct);
-            if (!res.Succeeded)
+            var result = await _update.HandleAsync(dto, ct);
+            if (!result.Succeeded)
             {
-                TempData["Error"] = res.Error ?? "Failed to update permission.";
+                TempData["Error"] = result.Error ?? "Failed to update permission.";
                 return View(vm);
             }
 
-            TempData["Success"] = "Permission updated.";
+            TempData["Success"] = "Permission updated successfully.";
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>
+        /// Soft deletes the specified permission. System permissions are protected by the Application layer.
+        /// Invoked via a confirmation modal in the index/edit views.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
             try
             {
-                await _softDelete.HandleAsync(id, rowVersion, ct);
-                TempData["Success"] = "Permission deleted.";
+                var dto = new PermissionDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
+                var result = await _softDelete.HandleAsync(dto, ct);
+                if (!result.Succeeded)
+                    TempData["Warning"] = result.Error ?? "Failed to delete permission.";
+                else
+                    TempData["Success"] = "Permission deleted successfully.";
             }
             catch (Exception)
             {
-                TempData["Error"] = "Failed to delete the permission.";
+                TempData["Error"] = "Failed to delete permission.";
             }
+
             return RedirectToAction(nameof(Index));
         }
     }
