@@ -29,6 +29,12 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         private readonly ChangePasswordHandler _changePassword;
         private readonly SoftDeleteUserHandler _softDelete;
 
+        private readonly GetUserWithAddressesForEditHandler _getUserWithAddresses;
+        private readonly CreateUserAddressHandler _createAddress;
+        private readonly UpdateUserAddressHandler _updateAddress;
+        private readonly SoftDeleteUserAddressHandler _softDeleteAddress;
+        private readonly SetDefaultUserAddressHandler _setDefaultAddress;
+
         /// <summary>
         /// Initializes the UsersController with required Application handlers.
         /// </summary>
@@ -39,7 +45,12 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             CreateUserHandler create,
             ChangeUserEmailHandler changeEmail,
             ChangePasswordHandler changePassword,
-            SoftDeleteUserHandler softDelete)
+            SoftDeleteUserHandler softDelete,
+            GetUserWithAddressesForEditHandler getUserWithAddresses,
+            CreateUserAddressHandler createAddress,
+            UpdateUserAddressHandler updateAddress,
+            SoftDeleteUserAddressHandler softDeleteAddress,
+            SetDefaultUserAddressHandler setDefaultAddress)
         {
             _getUsersPage = getUsersPage;
             _getForEdit = getForEdit;
@@ -48,6 +59,11 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             _changeEmail = changeEmail;
             _changePassword = changePassword;
             _softDelete = softDelete;
+            _getUserWithAddresses = getUserWithAddresses;
+            _createAddress = createAddress;
+            _updateAddress = updateAddress;
+            _softDeleteAddress = softDeleteAddress;
+            _setDefaultAddress = setDefaultAddress;
         }
 
         /// <summary>
@@ -341,5 +357,40 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             }
             return RedirectToAction(nameof(Index));
         }
+
+
+
+        /// <summary>
+        /// Returns the address grid partial for the specified user.
+        /// Use this to initially load the grid and to refresh it after CRUD operations.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> AddressesGrid(Guid userId, CancellationToken ct)
+        {
+            var r = await _getUserWithAddresses.HandleAsync(userId, ct);
+            if (!r.Succeeded|| r.Value is null) return PartialView("~/Areas/Admin/Views/Users/_UserAddressesGrid.cshtml", Array.Empty<UserAddressListItemViewModel>());
+
+            // Map DTO -> VM (only properties needed by the grid).
+            var list = r.Value.Addresses.Select(a => new UserAddressListItemVm
+            {
+                Id = a.Id,
+                UserId = userId,
+                FullName = a.FullName,
+                Company = a.Company,
+                Street1 = a.Street1,
+                Street2 = a.Street2,
+                City = a.City,
+                State = a.State,
+                PostalCode = a.PostalCode,
+                CountryCode = a.CountryCode,
+                PhoneE164 = a.PhoneE164,
+                IsDefaultBilling = a.IsDefaultBilling,
+                IsDefaultShipping = a.IsDefaultShipping,
+                RowVersion = a.RowVersion
+            }).ToList();
+
+            return PartialView("~/Areas/Admin/Views/Users/_UserAddressesGrid.cshtml", list);
+        }
+
     }
 }
