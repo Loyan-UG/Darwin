@@ -41,6 +41,9 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
 
         /// <summary>Whether this user is system‑protected and cannot be deleted.</summary>
         public bool IsSystem { get; set; }
+
+        /// <summary>Concurrency token to detect conflicting updates.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>
@@ -85,6 +88,8 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
 
         /// <summary>Marks the user as system‑protected; use sparingly.</summary>
         public bool IsSystem { get; set; } = false;
+
+        /// <summary>Concurrency token to detect conflicting updates.</summary>
     }
 
     /// <summary>
@@ -117,6 +122,8 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
 
         /// <summary>Active flag; deactivating disables login.</summary>
         public bool IsActive { get; set; } = true;
+
+        /// <summary>Concurrency token to detect conflicting updates.</summary>
     }
 
     /// <summary>

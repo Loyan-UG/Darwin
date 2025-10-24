@@ -1,126 +1,113 @@
 ﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UsersListVm
-
 @{
     ViewData["Title"] = "Users";
-    var totalPages = (int)Math.Ceiling((double)Model.Total / (double)Model.PageSize);
 }
 
-<h1 class="mb-3"><i class="fa fa-users"></i> Users</h1>
-
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label for="q" class="form-label">Email</label>
-                <field-help title="Email filter" content="Filters by email (contains match)." placement="right"></field-help>
-                <input id="q" name="q" value="@Model.Query" class="form-control" />
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="pageSize">Page size</label>
-                <select id="pageSize" name="pageSize" class="form-select" asp-items="Model.PageSizeItems"></select>
-            </div>
-            <div class="col-md-6 text-end">
-                <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> New User</a>
-            </div>
-        </form>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Users</h2>
+    <a asp-area="Admin" asp-controller="Users" asp-action="Create" class="btn btn-primary">
+        <i class="fa fa-plus"></i> Create
+    </a>
 </div>
 
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Email</th>
-                        <th>Name</th>
-                        <th style="width:120px;">Active</th>
-                        <th style="width:120px;">System</th>
-                        <th class="text-end" style="width:260px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Items.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center text-muted p-4">No users found.</td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var u in Model.Items)
-                        {
-                            <tr>
-                                <td class="text-monospace">@u.Email</td>
-                                <td>@(string.Join(' ', new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s))))</td>
-                                <td>
-                                    @if (u.IsActive)
-                                    {
-                                        <span class="badge bg-success">Yes</span>
-                                    }
-                                    else
-                                    {
-
-                                        <span class="text-muted">No</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (u.IsSystem)
-                                    {
-                                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
-                                    }
-                                    else
-                                    {
-
-                                        <span class="text-muted">No</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary me-1">
-                                        <i class="fa fa-pen"></i> Edit
-                                    </a>
-                                    <a asp-action="ChangeEmail" asp-route-id="@u.Id" asp-route-currentEmail="@u.Email" class="btn btn-sm btn-outline-secondary me-1">
-                                        <i class="fa fa-envelope"></i> Email
-                                    </a>
-                                    <a asp-action="ChangePassword" asp-route-id="@u.Id" class="btn btn-sm btn-outline-warning me-1">
-                                        <i class="fa fa-key"></i> Password
-                                    </a>
-
-                                    @* Delete is hidden for system users *@
-                                    @if (!u.IsSystem)
-                                    {
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#confirmDeleteModal"
-                                                data-action="@Url.Action("Delete", "Users", new { area = "Admin" })"
-                                                data-id="@u.Id"
-                                                data-name="@u.Email">
-                                            <i class="fa fa-trash"></i> Delete
-                                        </button>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search by email/name">
     </div>
-</div>
-
-@if (totalPages > 1)
-{
-    <nav class="mt-3">
-        <ul class="pagination justify-content-end">
-            @for (int i = 1; i <= totalPages; i++)
+    <div class="col-auto">
+        <select name="pageSize" class="form-select">
+            @foreach (var s in Model.PageSizeItems)
             {
-                <li class="page-item @(Model.Page == i ? "active" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-pageSize="@Model.PageSize" asp-route-q="@Model.Query">@i</a>
-                </li>
+                <option value="@s.Value" selected="@s.Selected">@s.Text</option>
             }
-        </ul>
-    </nav>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th class="text-center">Active</th>
+                <th class="text-end" style="width:340px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model.Items)
+            {
+                <tr>
+                    <td>@u.Email</td>
+                    <td>@($"{u.FirstName} {u.LastName}".Trim())</td>
+                    <td class="text-center">
+                        @if (u.IsActive)
+                        {
+                            <span class="badge text-bg-success">Yes</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge text-bg-secondary">No</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-area="Admin" asp-controller="Users" asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-pen"></i> Edit
+                        </a>
+
+                        <a asp-area="Admin"
+                           asp-controller="Users"
+                           asp-action="ChangeEmail"
+                           asp-route-id="@u.Id"
+                           asp-route-currentEmail="@u.Email"
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fa fa-envelope"></i> Email
+                        </a>
+
+                        <a asp-area="Admin" asp-controller="Users" asp-action="ChangePassword" asp-route-id="@u.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa fa-key"></i> Password
+                        </a>
+
+                        @if (!u.IsSystem)
+                        {
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("Delete", "Users", new { area = "Admin" })"
+                                    data-id="@u.Id"
+                                    data-name="@u.Email"
+                                    data-rowversion="@Convert.ToBase64String(u.RowVersion)">
+                                <i class="fa fa-trash"></i> Delete
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@{
+    // Simple pager (optional): render if needed based on Total/PageSize
+    var totalPages = (int)Math.Ceiling((decimal)Model.Total / Model.PageSize);
+    if (totalPages > 1)
+    {
+        <nav>
+            <ul class="pagination pagination-sm">
+                @for (var p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = p, pageSize = Model.PageSize, q = Model.Query })">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
 }
 
 <partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />

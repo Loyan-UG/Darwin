@@ -1,14 +1,10 @@
 ﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserChangeEmailVm
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-@addTagHelper *, Darwin.Web
-
 @{
     ViewData["Title"] = "Change Email";
+    var currentEmail = ViewBag.CurrentEmail as string ?? string.Empty;
 }
 
 <h1 class="mb-3"><i class="fa fa-envelope"></i> Change Email</h1>
-
-<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
 
 <div class="alert alert-warning">
     Changing the email requires confirmation. The user cannot sign in until the new email is confirmed.
@@ -21,22 +17,29 @@
 
     <div class="card mb-3">
         <div class="card-body">
+
+            <!-- Current email is shown read-only. It is passed via query string to avoid an extra fetch. -->
             <div class="mb-3">
                 <label class="form-label">Current Email</label>
-                <input class="form-control" value="@Model.NewEmail" readonly />
+                <field-help for="NewEmail" text="This is the current login email. It is read-only."></field-help>
+                <input class="form-control" value="@currentEmail" readonly />
             </div>
 
             <div class="mb-3">
                 <label asp-for="NewEmail" class="form-label"></label>
-                <field-help title="New Email" content="The new login email address for this user." placement="right"></field-help>
+                <field-help for="NewEmail" text="The new login email address for this user." placement="right"></field-help>
                 <input asp-for="NewEmail" class="form-control" />
                 <span asp-validation-for="NewEmail" class="text-danger"></span>
             </div>
         </div>
 
-        <div class="card-footer text-end">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary"><i class="fa fa-arrow-left"></i> Back</a>
-            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+        <div class="card-footer d-flex justify-content-between">
+            <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-check"></i> Save
+            </button>
         </div>
     </div>
 </form>

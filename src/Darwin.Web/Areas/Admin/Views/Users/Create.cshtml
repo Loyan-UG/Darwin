@@ -1,78 +1,67 @@
 ﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserCreateVm
-
 @{
     ViewData["Title"] = "Create User";
 }
 
-<h1 class="mb-3"><i class="fa fa-user-plus"></i> Create User</h1>
+<h2>Create User</h2>
 
-<form asp-action="Create" method="post" class="needs-validation" novalidate>
+<form asp-area="Admin" asp-controller="Users" asp-action="Create" method="post" class="row g-3">
     @Html.AntiForgeryToken()
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label asp-for="Email" class="form-label"></label>
-                    <field-help title="Email" content="User's login email address; will require confirmation." placement="right"></field-help>
-                    <input asp-for="Email" class="form-control" />
-                    <span asp-validation-for="Email" class="text-danger"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Password" class="form-label"></label>
-                    <field-help title="Initial password" content="Must meet configured password policy." placement="right"></field-help>
-                    <input asp-for="Password" class="form-control" type="password" />
-                    <span asp-validation-for="Password" class="text-danger"></span>
-                </div>
+    <div class="col-md-6">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
 
-                <div class="col-md-6">
-                    <label asp-for="FirstName" class="form-label"></label>
-                    <input asp-for="FirstName" class="form-control" />
-                    <span asp-validation-for="FirstName" class="text-danger"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="LastName" class="form-label"></label>
-                    <input asp-for="LastName" class="form-control" />
-                    <span asp-validation-for="LastName" class="text-danger"></span>
-                </div>
+    <div class="col-md-6">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" type="password" class="form-control" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
 
-                <div class="col-md-4">
-                    <label asp-for="Locale" class="form-label"></label>
-                    <field-help title="Locale" content="Preferred language/locale." placement="right"></field-help>
-                    <setting-select asp-for="Locale" setting="SupportedCulturesCsv"></setting-select>
-                    <span asp-validation-for="Locale" class="text-danger"></span>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Currency" class="form-label"></label>
-                    <field-help title="Currency" content="Preferred currency (three‑letter code)." placement="right"></field-help>
-                    <setting-select asp-for="Currency" setting="DefaultCurrency"></setting-select>
-                    <span asp-validation-for="Currency" class="text-danger"></span>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Timezone" class="form-label"></label>
-                    <field-help title="Timezone" content="Preferred time zone." placement="right"></field-help>
-                    <setting-select asp-for="Timezone" setting="TimeZone"></setting-select>
-                    <span asp-validation-for="Timezone" class="text-danger"></span>
-                </div>
+    <div class="col-md-6">
+        <label asp-for="FirstName" class="form-label"></label>
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
 
+    <div class="col-md-6">
+        <label asp-for="LastName" class="form-label"></label>
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
 
-                <div class="col-md-6">
-                    <label asp-for="PhoneE164" class="form-label"></label>
-                    <input asp-for="PhoneE164" class="form-control" />
-                    <span asp-validation-for="PhoneE164" class="text-danger"></span>
-                </div>
+    <div class="col-md-4">
+        <label asp-for="Locale" class="form-label"></label>
+        <field-help for="Locale" text="Select UI language/culture"></field-help>
+        <setting-select asp-for="Locale" key="SupportedLocalesCsv"></setting-select>
+        <span asp-validation-for="Locale" class="text-danger"></span>
+    </div>
 
-                <div class="col-md-6 form-check mt-4">
-                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
-                    <label class="form-check-label" asp-for="IsActive"></label>
-                </div>
-            </div>
-        </div>
-        <div class="card-footer text-end">
-            <a asp-action="Index" class="btn btn-outline-secondary"><i class="fa fa-arrow-left"></i> Back</a>
-            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Create</button>
-        </div>
+    <div class="col-md-4">
+        <label asp-for="Currency" class="form-label"></label>
+        <field-help for="Currency" text="Select default currency"></field-help>
+        <setting-select asp-for="Currency" key="SupportedCurrenciesCsv"></setting-select>
+        <span asp-validation-for="Currency" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Timezone" class="form-label"></label>
+        <field-help for="Timezone" text="Select default timezone"></field-help>
+        <setting-select asp-for="Timezone" key="SupportedTimezonesCsv"></setting-select>
+        <span asp-validation-for="Timezone" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="PhoneE164" class="form-label"></label>
+        <input asp-for="PhoneE164" class="form-control" />
+        <span asp-validation-for="PhoneE164" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Create</button>
+        <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
     </div>
 </form>
 

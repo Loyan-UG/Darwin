@@ -46,6 +46,7 @@ namespace Darwin.Application.Identity.Commands
             {
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
+                PhoneE164 = dto.PhoneE164,
                 Locale = dto.Locale,
                 Timezone = dto.Timezone,
                 Currency = dto.Currency,

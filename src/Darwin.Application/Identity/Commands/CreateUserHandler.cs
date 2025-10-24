@@ -48,7 +48,8 @@ namespace Darwin.Application.Identity.Commands
                 Currency = dto.Currency,
                 IsActive = dto.IsActive,
                 IsSystem = dto.IsSystem,
-                PhoneE164 = dto.PhoneE164
+                PhoneE164 = dto.PhoneE164,
+                RowVersion = dto.RowVersion
             };
 
             _db.Set<User>().Add(user);

@@ -25,8 +25,7 @@ namespace Darwin.Application.Catalog.Queries
                 .Select(x => new AddOnGroupEditDto
                 {
                     Id = x.Id,
-                    // RowVersion cannot be read via projection; will be set by controller from entity if needed.
-                    RowVersion = Array.Empty<byte>(),
+                    RowVersion = x.RowVersion,
                     Name = x.Name,
                     Currency = x.Currency,
                     IsGlobal = x.IsGlobal,

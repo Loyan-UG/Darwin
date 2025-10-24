@@ -12,6 +12,7 @@ namespace Darwin.Application.Identity.DTOs
         public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; }
         public bool IsSystem { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>Create user input model.</summary>
@@ -27,7 +28,7 @@ namespace Darwin.Application.Identity.DTOs
         public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsSystem { get; set; } = false;               // If true, protected from destructive ops
-
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>Edit user input model.</summary>

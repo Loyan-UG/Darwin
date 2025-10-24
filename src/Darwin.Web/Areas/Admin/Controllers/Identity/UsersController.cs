@@ -85,7 +85,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
                     FirstName = x.FirstName,
                     LastName = x.LastName,
                     IsActive = x.IsActive,
-                    IsSystem = x.IsSystem
+                    IsSystem = x.IsSystem,
+                    RowVersion = x.RowVersion
                 }).ToList(),
                 PageSizeItems =
                 [
@@ -151,7 +152,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             }
 
             // Map user -> edit VM
-            var u = result.Value.User;
+            var u = result.Value;
             var vm = new UserEditVm
             {
                 Id = u.Id,
@@ -225,28 +226,69 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             return RedirectToAction(nameof(Edit), new { id = vm.Id });
         }
 
+
+
+
         /// <summary>
-        /// Changes email through a dedicated form. Only admins can do this.
+        /// GET form for changing a user's email (admin-only).
+        /// The current email is displayed read-only (supplied via query string to avoid extra round-trip).
+        /// </summary>
+        [HttpGet]
+        public IActionResult ChangeEmail([FromRoute] Guid id, [FromQuery] string? currentEmail = null)
+        {
+            // Prepare view model with the user id. NewEmail is intentionally left blank to force admin input.
+            var vm = new UserChangeEmailVm
+            {
+                Id = id,
+                NewEmail = string.Empty
+            };
+
+            // Current email is shown read-only in the UI; not part of the VM by design.
+            ViewBag.CurrentEmail = currentEmail ?? string.Empty;
+            return View(vm);
+        }
+
+        /// <summary>
+        /// POST: Changes user's email using the Application handler.
+        /// Shows a warning that the new email requires confirmation; upon success returns to the users list.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeEmail(UserChangeEmailVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return RedirectToAction(nameof(Edit), new { id = vm.Id });
+            // Validate input on the same page to preserve validation messages and user input.
+            if (!ModelState.IsValid)
+                return View(vm);
 
-            var dto = new ChangeUserEmailDto
+            var dto = new UserChangeEmailDto
             {
                 Id = vm.Id,
-                NewEmail = vm.NewEmail
+                NewEmail = vm.NewEmail?.Trim() ?? string.Empty
             };
 
             var result = await _changeUserEmail.HandleAsync(dto, ct);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Email change requested. The new email must be confirmed."
-                : (result.Error ?? "Failed to change email.");
+            if (!result.Succeeded)
+            {
+                // Application layer provides a meaningful error message when available.
+                if (!string.IsNullOrWhiteSpace(result.Error))
+                    ModelState.AddModelError(string.Empty, result.Error);
 
-            return RedirectToAction(nameof(Edit), new { id = vm.Id });
+                TempData["Error"] = "Failed to change email.";
+                return View(vm);
+            }
+
+            TempData["Success"] = "Email change requested. The user must confirm the new email before signing in.";
+            // After successful operations (email/password), we go back to Index as requested.
+            return RedirectToAction(nameof(Index));
         }
+
+
+
+
+
+        [HttpGet]
+        public IActionResult ChangePassword() => View(new UserChangePasswordVm());
+
 
         /// <summary>
         /// Changes password via Application handler. Proper error messages are surfaced via Result.
@@ -257,7 +299,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         {
             if (!ModelState.IsValid) return RedirectToAction(nameof(Edit), new { id = vm.Id });
 
-            var dto = new ChangePasswordDto
+            var dto = new UserChangePasswordDto
             {
                 Id = vm.Id,
                 NewPassword = vm.NewPassword
@@ -270,6 +312,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
 
             return RedirectToAction(nameof(Edit), new { id = vm.Id });
         }
+
+
+
 
         /// <summary>
         /// Soft-deletes a user. Requires the DTO (Id + RowVersion).

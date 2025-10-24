@@ -36,7 +36,8 @@ namespace Darwin.Application.Identity.Queries
                     FirstName = u.FirstName,
                     LastName = u.LastName,
                     IsActive = u.IsActive,
-                    IsSystem = u.IsSystem
+                    IsSystem = u.IsSystem,
+                    RowVersion = u.RowVersion
                 })
                 .ToListAsync(ct);
 

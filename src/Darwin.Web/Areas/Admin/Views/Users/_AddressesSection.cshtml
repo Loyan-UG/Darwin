@@ -1,0 +1,85 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserAddressesSectionVm
+@{
+    // Model.UserId is required; Model.Items may be empty.
+}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">User Addresses</h5>
+    <!-- Add Address could open a dedicated form or an inline modal. For now, navigate to a dedicated form section (if exists) or you can wire a modal similarly to Roles pattern. -->
+    <a asp-area="Admin" asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-sm btn-outline-primary">
+        <i class="fa fa-plus"></i> Add Address
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Company</th>
+                <th>Street</th>
+                <th>Postal</th>
+                <th>City</th>
+                <th>Country</th>
+                <th class="text-center">Default</th>
+                <th class="text-end" style="width:320px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items?.Count > 0)
+            {
+                foreach (var a in Model.Items)
+                {
+                    <tr>
+                        <td>@a.FullName</td>
+                        <td>@a.Company</td>
+                        <td>@($"{a.Street1} {a.Street2}".Trim())</td>
+                        <td>@a.PostalCode</td>
+                        <td>@a.City</td>
+                        <td>@a.CountryCode</td>
+                        <td class="text-center">
+                            <span class="badge @(a.IsDefaultBilling ? "text-bg-primary" : "text-bg-light")">B</span>
+                            <span class="badge @(a.IsDefaultShipping ? "text-bg-success" : "text-bg-light")">S</span>
+                        </td>
+                        <td class="text-end">
+                            <form asp-area="Admin" asp-controller="Users" asp-action="SetDefaultAddress" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@a.Id" />
+                                <input type="hidden" name="userId" value="@Model.UserId" />
+                                <input type="hidden" name="kind" value="Billing" />
+                                <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa fa-credit-card"></i> Set Billing</button>
+                            </form>
+
+                            <form asp-area="Admin" asp-controller="Users" asp-action="SetDefaultAddress" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@a.Id" />
+                                <input type="hidden" name="userId" value="@Model.UserId" />
+                                <input type="hidden" name="kind" value="Shipping" />
+                                <button class="btn btn-sm btn-outline-success" type="submit"><i class="fa fa-truck"></i> Set Shipping</button>
+                            </form>
+
+                            <a asp-area="Admin" asp-controller="Users" asp-action="EditAddress" asp-route-id="@a.Id" asp-route-userId="@Model.UserId" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa fa-pen"></i> Edit
+                            </a>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("DeleteAddress", "Users", new { area = "Admin" })"
+                                    data-id="@a.Id"
+                                    data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
+                                    data-name="@($"{a.FullName} / {a.City}")">
+                                <i class="fa fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="8" class="text-center text-muted">No addresses.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
