@@ -8,8 +8,6 @@
 
 <h1 class="mb-3"><i class="fa fa-pen"></i> Edit Role</h1>
 
-<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
-
 <form asp-action="Edit" method="post" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>

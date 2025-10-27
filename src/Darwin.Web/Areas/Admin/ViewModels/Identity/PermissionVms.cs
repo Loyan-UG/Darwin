@@ -14,6 +14,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
         public string DisplayName { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsSystem { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>

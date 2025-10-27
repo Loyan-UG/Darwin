@@ -6,8 +6,6 @@
 
 <h1 class="mb-3"><i class="fa fa-key"></i> Permissions</h1>
 
-<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
-
 <div class="card mb-3">
     <div class="card-body">
         <form method="get" class="row g-2 align-items-end">
@@ -65,10 +63,12 @@
                                 {
                                     <button type="button"
                                             class="btn btn-sm btn-outline-danger"
-                                            data-delete="modal"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmDeleteModal"
                                             data-action="@Url.Action("Delete", "Permissions", new { area = "Admin" })"
                                             data-id="@p.Id"
-                                            data-name="@p.DisplayName">
+                                            data-name="@p.DisplayName"
+                                            data-rowversion="@Convert.ToBase64String(p.RowVersion)">
                                         <i class="fa fa-trash"></i> Delete
                                     </button>
                                 }
