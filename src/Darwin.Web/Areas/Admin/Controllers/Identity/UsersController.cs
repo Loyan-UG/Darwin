@@ -24,7 +24,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         private readonly GetUserWithAddressesForEditHandler _getUserWithAddresses;
         private readonly UpdateUserHandler _updateUser;
         private readonly ChangeUserEmailHandler _changeUserEmail;
-        private readonly ChangePasswordHandler _changePassword;
+        private readonly SetUserPasswordByAdminHandler _setUserPasswordByAdmin;
         private readonly SoftDeleteUserHandler _softDeleteUser;
 
         // Address handlers
@@ -43,6 +43,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             UpdateUserHandler updateUser,
             ChangeUserEmailHandler changeUserEmail,
             ChangePasswordHandler changePassword,
+            SetUserPasswordByAdminHandler setUserPasswordByAdmin,
             SoftDeleteUserHandler softDeleteUser,
             CreateUserAddressHandler createAddress,
             UpdateUserAddressHandler updateAddress,
@@ -54,7 +55,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             _getUserWithAddresses = getUserWithAddresses;
             _updateUser = updateUser;
             _changeUserEmail = changeUserEmail;
-            _changePassword = changePassword;
+            _setUserPasswordByAdmin = setUserPasswordByAdmin;
             _softDeleteUser = softDeleteUser;
             _createAddress = createAddress;
             _updateAddress = updateAddress;
@@ -153,6 +154,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
 
             // Map user -> edit VM
             var u = result.Value;
+
             var vm = new UserEditVm
             {
                 Id = u.Id,
@@ -167,27 +169,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
                 // NOTE: IsSystem is intentionally NOT part of UserEditVm per model.
             };
 
-            // Prepare addresses section VM for partial rendering
-            ViewBag.AddressesSection = new UserAddressesSectionVm
-            {
-                UserId = u.Id,
-                Items = result.Value.Addresses.Select(a => new UserAddressListItemVm
-                {
-                    Id = a.Id,
-                    FullName = a.FullName,
-                    Company = a.Company,
-                    Street1 = a.Street1,
-                    Street2 = a.Street2,
-                    PostalCode = a.PostalCode,
-                    City = a.City,
-                    State = a.State,
-                    CountryCode = a.CountryCode,
-                    PhoneE164 = a.PhoneE164,
-                    IsDefaultBilling = a.IsDefaultBilling,
-                    IsDefaultShipping = a.IsDefaultShipping,
-                    RowVersion = a.RowVersion
-                }).ToList()
-            };
+            // Always provide a non-null addresses section
+            ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(u.Id, ct);
 
             return View(vm);
         }
@@ -199,7 +182,12 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UserEditVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid)
+            {
+                // Rebuild the addresses section so the partial has a non-null model
+                ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
+                return View(vm);
+            }
 
             var dto = new UserEditDto
             {
@@ -219,6 +207,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             {
                 // Could be validation or concurrency; Application layer provides message.
                 ModelState.AddModelError(string.Empty, result.Error ?? "Failed to update user.");
+                ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
                 return View(vm);
             }
 
@@ -286,31 +275,57 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
 
 
 
+        // <summary>
+        /// Renders the Change Password page for admins.
+        /// Admin can set a new password for a user without knowing the current one.
+        /// The email is provided via query string for display only.
+        /// </summary>
+        /// <param name="id">Target user id.</param>
+        /// <param name="email">Optional email to display; provided by the caller to avoid extra round-trips.</param>
         [HttpGet]
-        public IActionResult ChangePassword() => View(new UserChangePasswordVm());
-
+        public IActionResult ChangePassword(Guid id, string? email = null)
+        {
+            var vm = new UserChangePasswordVm
+            {
+                Id = id,
+                Email = email ?? string.Empty
+            };
+            return View(vm);
+        }
 
         /// <summary>
-        /// Changes password via Application handler. Proper error messages are surfaced via Result.
+        /// Sets a new password for the user (admin flow).
+        /// Uses Application-level handler that does NOT require the current password.
+        /// On success, SecurityStamp gets rotated at Application layer so active sessions are invalidated.
         /// </summary>
+        /// <param name="vm">View model containing the user id and the new password + confirmation.</param>
+        /// <param name="ct">Cancellation token.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(UserChangePasswordVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return RedirectToAction(nameof(Edit), new { id = vm.Id });
+            // Server-side safety: ensure confirmation matches before calling Application
+            if (!ModelState.IsValid || vm.NewPassword != vm.ConfirmNewPassword)
+            {
+                if (vm.NewPassword != vm.ConfirmNewPassword)
+                    ModelState.AddModelError(nameof(vm.ConfirmNewPassword), "Passwords do not match.");
+                return View(vm);
+            }
 
-            var dto = new UserChangePasswordDto
+            // Build DTO for the admin-set password operation
+            var dto = new UserAdminSetPasswordDto
             {
                 Id = vm.Id,
                 NewPassword = vm.NewPassword
             };
 
-            var result = await _changePassword.HandleAsync(dto, ct);
+            var result = await _setUserPasswordByAdmin.HandleAsync(dto, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "Password changed."
+                ? "Password changed successfully."
                 : (result.Error ?? "Failed to change password.");
 
-            return RedirectToAction(nameof(Edit), new { id = vm.Id });
+            // Return to the listing screen after the operation
+            return RedirectToAction(nameof(Index));
         }
 
 
@@ -329,6 +344,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             return RedirectToAction(nameof(Index));
         }
 
+
+
+
         // -------------------- Addresses (Partial Grid + AJAX refresh) --------------------
 
         /// <summary>
@@ -338,41 +356,20 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         [HttpGet]
         public async Task<IActionResult> AddressesSection(Guid userId, CancellationToken ct = default)
         {
-            var result = await _getUserWithAddresses.HandleAsync(userId, ct);
-            if (!result.Succeeded || result.Value is null)
-                return PartialView("~/Areas/Admin/Views/Users/_AddressesSection.cshtml",
-                    new UserAddressesSectionVm { UserId = userId, Items = [] });
+            var section = await BuildAddressesSectionVmAsync(userId, ct);
 
-            var section = new UserAddressesSectionVm
-            {
-                UserId = userId,
-                Items = result.Value.Addresses.Select(a => new UserAddressListItemVm
-                {
-                    Id = a.Id,
-                    FullName = a.FullName,
-                    Company = a.Company,
-                    Street1 = a.Street1,
-                    Street2 = a.Street2,
-                    PostalCode = a.PostalCode,
-                    City = a.City,
-                    State = a.State,
-                    CountryCode = a.CountryCode,
-                    PhoneE164 = a.PhoneE164,
-                    IsDefaultBilling = a.IsDefaultBilling,
-                    IsDefaultShipping = a.IsDefaultShipping,
-                    RowVersion = a.RowVersion
-                }).ToList()
-            };
             return PartialView("~/Areas/Admin/Views/Users/_AddressesSection.cshtml", section);
         }
 
         /// <summary>
-        /// Creates a new address. On success returns the refreshed addresses section partial.
+        /// Creates a new address for the specified user. Returns the refreshed addresses section partial on success.
+        /// Uses <see cref="UserAddressCreateVm"/> to avoid binding an Id for creation scenarios.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAddress(UserAddressEditVm vm, CancellationToken ct = default)
+        public async Task<IActionResult> CreateAddress(UserAddressCreateVm vm, CancellationToken ct = default)
         {
+            // Server-side validation is enforced in the Application layer; Web layer keeps basic shape checks.
             if (!ModelState.IsValid) return BadRequest("Invalid address.");
 
             var dto = new AddressCreateDto
@@ -393,11 +390,16 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
 
             var result = await _createAddress.HandleAsync(dto, ct);
             if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to create address.");
+
+            // Success message for alerts
+            TempData["Success"] = "Address created successfully.";
+
+            // Return refreshed addresses section (partial)
             return await AddressesSection(vm.UserId, ct);
         }
 
         /// <summary>
-        /// Updates an address (with optimistic concurrency). On success returns refreshed section.
+        /// Updates an existing address (optimistic concurrency via RowVersion). Returns refreshed addresses section on success.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -424,8 +426,12 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
 
             var result = await _updateAddress.HandleAsync(dto, ct);
             if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to update address.");
+
+            TempData["Success"] = "Address updated successfully.";
+
             return await AddressesSection(vm.UserId, ct);
         }
+
 
         /// <summary>
         /// Soft-deletes an address via confirmation modal. Returns refreshed section.
@@ -437,8 +443,11 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             var dto = new AddressDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             var result = await _softDeleteAddress.HandleAsync(dto, ct);
             if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to delete address.");
+
+            TempData["Success"] = "Address deleted successfully.";
             return await AddressesSection(userId, ct);
         }
+
 
         /// <summary>
         /// Sets an address as default billing or shipping. Returns refreshed section.
@@ -454,7 +463,68 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             var result = await _setDefaultAddress.HandleAsync(userId, id, asBilling, asShipping, ct);
             if (!result.Succeeded) return BadRequest(result.Error ?? "Failed to set default.");
 
+            TempData["Success"] = asBilling
+                ? "Default billing address set."
+                : "Default shipping address set.";
+
             return await AddressesSection(userId, ct);
         }
+
+
+
+        /// <summary>
+        /// Builds a non-null UserAddressesSectionVm for the specified user.
+        /// Guarantees Items is an instantiated list to avoid null refs in the partial.
+        /// </summary>
+        private async Task<UserAddressesSectionVm> BuildAddressesSectionVmAsync(Guid userId, CancellationToken ct)
+        {
+            var section = new UserAddressesSectionVm
+            {
+                UserId = userId,
+                Items = new List<UserAddressListItemVm>()
+            };
+
+            var result = await _getUserWithAddresses.HandleAsync(userId, ct);
+            if (!result.Succeeded || result.Value is null)
+                return section; // Return empty section on failure to avoid null refs
+
+            // Map addresses
+            foreach (var a in result.Value.Addresses)
+            {
+                section.Items.Add(new UserAddressListItemVm
+                {
+                    Id = a.Id,
+                    RowVersion = a.RowVersion ?? Array.Empty<byte>(),
+                    FullName = a.FullName,
+                    Company = a.Company,
+                    Street1 = a.Street1,
+                    Street2 = a.Street2,
+                    PostalCode = a.PostalCode,
+                    City = a.City,
+                    State = a.State,
+                    CountryCode = a.CountryCode,
+                    PhoneE164 = a.PhoneE164,
+                    IsDefaultBilling = a.IsDefaultBilling,
+                    IsDefaultShipping = a.IsDefaultShipping
+                });
+            }
+
+            return section;
+        }
+
+
+        /// <summary>
+        /// Returns the alerts partial so that AJAX flows can refresh the alerts area
+        /// after setting TempData in a previous request.
+        /// </summary>
+        [HttpGet]
+        public IActionResult AlertsFragment()
+        {
+            // NOTE:
+            // TempData values set in a previous POST will be consumed here and cleared.
+            return PartialView("~/Areas/Admin/Views/Shared/_Alerts.cshtml");
+        }
+
+
     }
 }

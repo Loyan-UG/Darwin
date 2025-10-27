@@ -142,6 +142,7 @@ namespace Darwin.Web.Extensions
             services.AddScoped<CreateUserHandler>();
             services.AddScoped<ChangeUserEmailHandler>();
             services.AddScoped<ChangePasswordHandler>();
+            services.AddScoped<SetUserPasswordByAdminHandler>();
             services.AddScoped<SoftDeleteUserHandler>();
 
             services.AddScoped<GetUserWithAddressesForEditHandler>();

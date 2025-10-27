@@ -1,0 +1,106 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserAddressEditVm
+
+<!--
+  Modal used for both CREATE and EDIT of a user address.
+  The form action is set dynamically via JS based on the clicked button (CreateAddress or EditAddress).
+  For EDIT, fields + RowVersion (base64) are populated from trigger button data-* attributes.
+-->
+
+<div class="modal fade" id="addressEditModal" tabindex="-1" aria-labelledby="addressEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="addressEditModalLabel"><i class="fa fa-map-marker-alt"></i> Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="addressEditForm" method="post">
+                @Html.AntiForgeryToken()
+
+                <!--
+                  Hidden identifiers:
+                  - Id / RowVersion: ONLY for EDIT (JS will assign name/value when mode=edit)
+                  - UserId: always present (create/edit)
+                -->
+                <input type="hidden" id="addrId" value="" />
+                <input type="hidden" id="addrRowVersion" value="" />
+                <input type="hidden" id="addrUserId" name="UserId" value="" />
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="addrFullName" class="form-label">Full Name</label>
+                            <input id="addrFullName" name="FullName" class="form-control" />
+                            <div class="form-text">Required. Max length 200.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addrCompany" class="form-label">Company</label>
+                            <input id="addrCompany" name="Company" class="form-control" />
+                            <div class="form-text">Optional. Max length 200.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="addrStreet1" class="form-label">Street 1</label>
+                            <input id="addrStreet1" name="Street1" class="form-control" />
+                            <div class="form-text">Required. Max length 300.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addrStreet2" class="form-label">Street 2</label>
+                            <input id="addrStreet2" name="Street2" class="form-control" />
+                            <div class="form-text">Optional. Max length 300.</div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="addrPostalCode" class="form-label">Postal Code</label>
+                            <input id="addrPostalCode" name="PostalCode" class="form-control" />
+                            <div class="form-text">Required. Max length 32.</div>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="addrCity" class="form-label">City</label>
+                            <input id="addrCity" name="City" class="form-control" />
+                            <div class="form-text">Required. Max length 150.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="addrState" class="form-label">State/Province</label>
+                            <input id="addrState" name="State" class="form-control" />
+                            <div class="form-text">Optional. Max length 150.</div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="addrCountryCode" class="form-label">Country</label>
+                            <input id="addrCountryCode" name="CountryCode" class="form-control" maxlength="2" />
+                            <div class="form-text">Required. ISO 3166-1 alpha-2 (e.g., DE).</div>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="addrPhone" class="form-label">Phone (E.164)</label>
+                            <input id="addrPhone" name="PhoneE164" class="form-control" />
+                            <div class="form-text">Optional. Max length 20.</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-check mt-4 pt-2">
+                                <input id="addrDefaultBilling" class="form-check-input" type="checkbox" name="IsDefaultBilling" value="true" />
+                                <label class="form-check-label" for="addrDefaultBilling">Default Billing</label>
+                            </div>
+                            <div class="form-check mt-2 pt-0">
+                                <input id="addrDefaultShipping" class="form-check-input" type="checkbox" name="IsDefaultShipping" value="true" />
+                                <label class="form-check-label" for="addrDefaultShipping">Default Shipping</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> Save
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>

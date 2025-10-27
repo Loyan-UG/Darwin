@@ -36,27 +36,14 @@ namespace Darwin.Application.Identity.DTOs
         public string? PhoneE164 { get; set; }
     }
 
-    /// <summary>
-    /// Request model for changing a user's email address (Admin only).
-    /// </summary>
-    public sealed class UserChangeEmailDto
+    
+
+
+    /// <summary>Change password input.</summary>
+    public sealed class UserChangePasswordDto
     {
-        /// <summary>The identifier of the user whose email will be changed.</summary>
         public Guid Id { get; set; }
-
-        /// <summary>The new email address. Must be unique and valid.</summary>
-        public string NewEmail { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Request model for soft‑deleting a user. Includes a concurrency token.
-    /// </summary>
-    public sealed class UserDeleteDto
-    {
-        /// <summary>The identifier of the user to delete.</summary>
-        public Guid Id { get; set; }
-
-        /// <summary>Concurrency token to detect conflicting deletions.</summary>
-        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string CurrentPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
     }
 }

@@ -46,11 +46,43 @@ namespace Darwin.Application.Identity.DTOs
         public bool IsActive { get; set; } = true;
     }
 
-    /// <summary>Change password input.</summary>
-    public sealed class UserChangePasswordDto
+    /// <summary>
+    /// Request model for soft‑deleting a user. Includes a concurrency token.
+    /// </summary>
+    public sealed class UserDeleteDto
     {
+        /// <summary>The identifier of the user to delete.</summary>
         public Guid Id { get; set; }
-        public string CurrentPassword { get; set; } = string.Empty;
+
+        /// <summary>Concurrency token to detect conflicting deletions.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    /// <summary>
+    /// Request model for changing a user's email address (Admin only).
+    /// </summary>
+    public sealed class UserChangeEmailDto
+    {
+        /// <summary>The identifier of the user whose email will be changed.</summary>
+        public Guid Id { get; set; }
+
+        /// <summary>The new email address. Must be unique and valid.</summary>
+        public string NewEmail { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Admin-only request to set a user's password without requiring the current password.
+    /// This is intended for helpdesk/admin flows in the Admin area.
+    /// </summary>
+    public sealed class UserAdminSetPasswordDto
+    {
+        /// <summary>Target user's identifier.</summary>
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// New plain-text password to be hashed and stored.
+        /// Must comply with password policy (validated in the validator).
+        /// </summary>
         public string NewPassword { get; set; } = string.Empty;
     }
 }

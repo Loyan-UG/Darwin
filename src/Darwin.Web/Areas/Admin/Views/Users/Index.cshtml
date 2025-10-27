@@ -68,9 +68,15 @@
                             <i class="fa fa-envelope"></i> Email
                         </a>
 
-                        <a asp-area="Admin" asp-controller="Users" asp-action="ChangePassword" asp-route-id="@u.Id" class="btn btn-sm btn-outline-secondary">
+                        <a asp-area="Admin"
+                           asp-controller="Users"
+                           asp-action="ChangePassword"
+                           asp-route-id="@u.Id"
+                           asp-route-email="@u.Email"
+                           class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-key"></i> Password
                         </a>
+
 
                         @if (!u.IsSystem)
                         {

@@ -177,17 +177,42 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
     }
 
     /// <summary>
-    /// View model for changing a user's password (admin or member).
+    /// View model used by the Admin "Change Password" flow.
+    /// Admins can set a new password for a user without knowing the current password.
     /// </summary>
     public sealed class UserChangePasswordVm
     {
+        /// <summary>
+        /// Target user id whose password is being set by an administrator.
+        /// </summary>
+        [Required]
         public Guid Id { get; set; }
 
-        [Required]
-        public string CurrentPassword { get; set; } = string.Empty;
+        /// <summary>
+        /// Email is shown on the page for visual verification (to avoid changing the wrong user's password).
+        /// Not posted back as an authoritative value; it's display-only.
+        /// </summary>
+        [Display(Name = "Email")]
+        public string? Email { get; set; }
 
+        /// <summary>
+        /// New password to be set for the user.
+        /// UI should enforce minimum length of 8 characters; server-side validation is performed in Application layer.
+        /// </summary>
         [Required]
-        [StringLength(100, MinimumLength = 8)]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+        [Display(Name = "New password")]
         public string NewPassword { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Confirmation of the new password. Must match <see cref="NewPassword"/>.
+        /// </summary>
+        [Required]
+        [MinLength(8)]
+        [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
+        [Display(Name = "Confirm new password")]
+        public string ConfirmNewPassword { get; set; } = string.Empty;
     }
+
+
 }

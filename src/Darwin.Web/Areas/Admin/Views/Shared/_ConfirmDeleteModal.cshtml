@@ -31,6 +31,8 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" id="confirmDeleteId" />
                     <input type="hidden" name="rowVersion" id="confirmDeleteRowVersion" />
+                    <!-- NEW: the userId required by DeleteAddress(id,userId,rowVersion) -->
+                    <input type="hidden" name="userId" />
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>

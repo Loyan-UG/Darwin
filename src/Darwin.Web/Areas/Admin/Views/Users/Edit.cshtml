@@ -67,45 +67,267 @@
 
 <h3 class="mt-4">Addresses</h3>
 
+<!-- Addresses Section (grid) -->
 <div id="addresses-section">
     @await Html.PartialAsync("~/Areas/Admin/Views/Users/_AddressesSection.cshtml", addressesSection)
 </div>
 
+<!-- Address Create/Edit Modal -->
+@await Html.PartialAsync(
+"~/Areas/Admin/Views/Users/_AddressEditModal.cshtml",
+    new Darwin.Web.Areas.Admin.ViewModels.Identity.UserAddressEditVm()
+)
+
+
 <partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />
+
+
+
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
     <script>
-        // Refresh addresses section helper
+        /**
+         * Refresh the alerts container by fetching the server-side alerts partial.
+         * TempData messages set on the previous POST will be consumed and displayed.
+         */
+        async function refreshAlerts() {
+            try {
+                const url = '@Url.Action("AlertsFragment", "Users", new { area = "Admin" })';
+                const resp = await fetch(url, { method: 'GET' });
+                if (!resp.ok) return;
+                const html = await resp.text();
+                const container = document.getElementById('alerts-container');
+                if (container) container.innerHTML = html;
+            } catch { /* swallow */ }
+        }
+
+        /**
+         * Refresh the addresses grid for the given user without leaving the page.
+         */
         async function refreshAddresses(userId) {
-            const resp = await fetch('@Url.Action("AddressesSection", "Users", new { area = "Admin" })' + `?userId=${userId}`, { method: 'GET' });
+            const url = '@Url.Action("AddressesSection", "Users", new { area = "Admin" })' + `?userId=${userId}`;
+            const resp = await fetch(url, { method: 'GET' });
             const html = await resp.text();
             document.getElementById('addresses-section').innerHTML = html;
         }
 
-        // Hook delete modal confirm submit to include rowVersion if present in the row's data attributes.
+        /**
+         * Get anti-forgery token rendered inside the addresses section.
+         * The token is rendered through: <form id="addresses-af"> @Html.AntiForgeryToken() </form>
+         */
+        function getAddressesAntiForgeryToken() {
+            const tokenInput = document.querySelector('#addresses-section #addresses-af input[name="__RequestVerificationToken"]');
+            return tokenInput ? tokenInput.value : '';
+        }
+
+        // --- Delete modal wiring (already in your page, kept as-is) ---
         const confirmModal = document.getElementById('confirmDeleteModal');
         if (confirmModal) {
             confirmModal.addEventListener('show.bs.modal', function (event) {
                 const btn = event.relatedTarget;
                 if (!btn) return;
-
-                // These data-* come from the row button.
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
                 const name = btn.getAttribute('data-name') || '';
                 const rowVersion = btn.getAttribute('data-rowversion') || '';
+                const userId = btn.getAttribute('data-userid') || '';
 
-                // Fill hidden fields in modal form
                 const form = confirmModal.querySelector('form');
                 form.setAttribute('action', action);
                 form.querySelector('input[name="id"]').value = id;
                 const rv = form.querySelector('input[name="rowVersion"]');
                 if (rv) rv.value = rowVersion;
-
+                const uid = form.querySelector('input[name="userId"]');
+                if (uid) uid.value = userId;
                 const lbl = confirmModal.querySelector('[data-confirm-name]');
                 if (lbl) lbl.textContent = name;
             });
+
+            // When submitting the form: AJAX instead of navigation
+            const deleteForm = confirmModal.querySelector('form');
+            if (deleteForm) {
+                deleteForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    const form = e.currentTarget;
+                    const action = form.getAttribute('action');
+                    const formData = new FormData(form);
+
+                    // If the anti-counterfeiting token is not in the modal form, get it from the addresses section (defensive)
+                    if (!formData.has('__RequestVerificationToken')) {
+                        const token = getAddressesAntiForgeryToken();
+                        if (token) formData.set('__RequestVerificationToken', token);
+                    }
+
+                    // Send AJAX
+                    const resp = await fetch(action, { method: 'POST', body: formData });
+                    if (resp.ok) {
+                        // 1) refresh grid
+                        const html = await resp.text();
+                        document.getElementById('addresses-section').innerHTML = html;
+
+                        // 2) refresh alerts (TempData consumed & displayed)
+                        await refreshAlerts();
+
+                        // 3) close modal
+                        const modal = bootstrap.Modal.getInstance(confirmModal) || new bootstrap.Modal(confirmModal);
+                        modal.hide();
+                    } else {
+                        const msg = await resp.text();
+                        alert(msg || 'Failed to delete address.');
+                    }
+                });
+            }
         }
+
+        // --- Address Edit/Create modal wiring ---
+        const addrModalEl = document.getElementById('addressEditModal');
+        let addrModal = addrModalEl ? bootstrap.Modal.getOrCreateInstance(addrModalEl) : null;
+
+        if (addrModalEl) {
+            addrModalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+
+                const mode = btn.getAttribute('data-mode') || 'create';
+                const form = document.getElementById('addressEditForm');
+
+                // Inputs
+                const idInput   = document.getElementById('addrId');
+                const rvInput   = document.getElementById('addrRowVersion');
+                const userInput = document.getElementById('addrUserId');
+
+                // Action based on mode (CreateAddress / EditAddress)
+                const action = btn.getAttribute('data-action');
+                form.setAttribute('action', action);
+
+                // Always set UserId
+                const userId = btn.getAttribute('data-userid') || '';
+                userInput.value = userId;
+
+                // Helpers to control name attribute (decides what gets posted)
+                const removeName = (el) => { if (el) el.removeAttribute('name'); };
+                const setName    = (el, n) => { if (el) el.setAttribute('name', n); };
+
+                if (mode === 'create') {
+                    // Ensure Id/RowVersion are NOT submitted at all
+                    if (idInput) { idInput.value = ''; removeName(idInput); }
+                    if (rvInput) { rvInput.value = ''; removeName(rvInput); }
+
+                    // Clear fields
+                    form.querySelector('input[name="FullName"]').value = '';
+                    form.querySelector('input[name="Company"]').value = '';
+                    form.querySelector('input[name="Street1"]').value = '';
+                    form.querySelector('input[name="Street2"]').value = '';
+                    form.querySelector('input[name="PostalCode"]').value = '';
+                    form.querySelector('input[name="City"]').value = '';
+                    form.querySelector('input[name="State"]').value = '';
+                    form.querySelector('input[name="CountryCode"]').value = 'DE';
+                    form.querySelector('input[name="PhoneE164"]').value = '';
+                    form.querySelector('input[name="IsDefaultBilling"]').checked = false;
+                    form.querySelector('input[name="IsDefaultShipping"]').checked = false;
+
+                    const title = addrModalEl.querySelector('#addressEditModalLabel');
+                    if (title) title.textContent = 'Add Address';
+                } else {
+                    // EDIT mode: include Id & RowVersion in POST
+                    const id = btn.getAttribute('data-id') || '';
+                    const rv = btn.getAttribute('data-rowversion') || '';
+                    if (idInput) { idInput.value = id; setName(idInput, 'Id'); }
+                    if (rvInput) { rvInput.value = rv; setName(rvInput, 'RowVersion'); }
+
+                    form.querySelector('input[name="FullName"]').value = btn.getAttribute('data-fullname') || '';
+                    form.querySelector('input[name="Company"]').value = btn.getAttribute('data-company') || '';
+                    form.querySelector('input[name="Street1"]').value = btn.getAttribute('data-street1') || '';
+                    form.querySelector('input[name="Street2"]').value = btn.getAttribute('data-street2') || '';
+                    form.querySelector('input[name="PostalCode"]').value = btn.getAttribute('data-postalcode') || '';
+                    form.querySelector('input[name="City"]').value = btn.getAttribute('data-city') || '';
+                    form.querySelector('input[name="State"]').value = btn.getAttribute('data-state') || '';
+                    form.querySelector('input[name="CountryCode"]').value = btn.getAttribute('data-countrycode') || 'DE';
+                    form.querySelector('input[name="PhoneE164"]').value = btn.getAttribute('data-phonee164') || '';
+                    form.querySelector('input[name="IsDefaultBilling"]').checked  = (btn.getAttribute('data-defaultbilling') === 'true');
+                    form.querySelector('input[name="IsDefaultShipping"]').checked = (btn.getAttribute('data-defaultshipping') === 'true');
+
+                    const title = addrModalEl.querySelector('#addressEditModalLabel');
+                    if (title) title.textContent = 'Edit Address';
+                }
+
+                // Normalize CountryCode to upper-case in UI
+                const cc = document.getElementById('addrCountryCode');
+                if (cc) {
+                    cc.addEventListener('input', function () { this.value = this.value.toUpperCase(); });
+                }
+            });
+
+            // AJAX submit (Create/Edit)
+            const addrForm = document.getElementById('addressEditForm');
+            if (addrForm) {
+                addrForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const form = e.currentTarget;
+                    const action = form.getAttribute('action');
+                    const formData = new FormData(form);
+
+                    // Ensure we never send empty Id/RowVersion keys
+                    if (formData.has('Id') && !formData.get('Id')) formData.delete('Id');
+                    if (formData.has('RowVersion') && !formData.get('RowVersion')) formData.delete('RowVersion');
+
+                    // Ensure unchecked checkboxes submit false
+                    if (!form.querySelector('input[name="IsDefaultBilling"]').checked)  formData.set('IsDefaultBilling', 'false');
+                    if (!form.querySelector('input[name="IsDefaultShipping"]').checked) formData.set('IsDefaultShipping', 'false');
+
+                    const resp = await fetch(action, { method: 'POST', body: formData });
+                    if (resp.ok) {
+                        const html = await resp.text();
+                        document.getElementById('addresses-section').innerHTML = html;
+
+                        // Show success alert via alerts partial refresh
+                        await refreshAlerts();
+
+                        if (addrModal) addrModal.hide();
+                    } else {
+                        const msg = await resp.text();
+                        alert(msg || 'Failed to submit address.');
+                    }
+                });
+            }
+        }
+
+        // --- Set Billing / Set Shipping via AJAX (stay on page + show alerts) ---
+        (function wireSetDefaultButtons() {
+            const container = document.getElementById('addresses-section');
+            container?.addEventListener('click', async function (e) {
+                const btn = e.target.closest('[data-setdefault]');
+                if (!btn) return;
+
+                const action = btn.getAttribute('data-action');
+                const userId = btn.getAttribute('data-userid');
+                const id     = btn.getAttribute('data-id');
+                const kind   = btn.getAttribute('data-kind');
+
+                // Anti-forgery token located inside addresses section
+                const token = getAddressesAntiForgeryToken();
+
+                const formData = new FormData();
+                if (token) formData.set('__RequestVerificationToken', token);
+                formData.set('id', id);
+                formData.set('userId', userId);
+                formData.set('kind', kind);
+
+                const resp = await fetch(action, { method: 'POST', body: formData });
+                if (resp.ok) {
+                    const html = await resp.text();
+                    document.getElementById('addresses-section').innerHTML = html;
+
+                    // Display TempData message through alerts partial
+                    await refreshAlerts();
+                } else {
+                    const msg = await resp.text();
+                    alert(msg || 'Failed to set default address.');
+                }
+            });
+        })();
     </script>
 }

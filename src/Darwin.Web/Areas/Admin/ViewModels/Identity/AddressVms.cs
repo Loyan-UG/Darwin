@@ -20,6 +20,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
         public List<UserAddressListItemVm> Items { get; set; } = new();
     }
 
+
     /// <summary>
     /// Lightweight row shown in the addresses table embedded in the User edit page.
     /// All field names mirror the Domain entity to avoid drift.
@@ -66,6 +67,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
         /// <summary>Whether this row is the default shipping address for the user.</summary>
         public bool IsDefaultShipping { get; set; }
     }
+
 
     /// <summary>
     /// Form model for creating a new address for the user from the User edit page.

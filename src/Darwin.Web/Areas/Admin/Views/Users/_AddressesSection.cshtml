@@ -1,14 +1,27 @@
 ﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserAddressesSectionVm
 @{
-    // Model.UserId is required; Model.Items may be empty.
+    // Defensive: ensure we have a model instance even if the controller returns null for Items.
+    var items = Model?.Items ?? new List<Darwin.Web.Areas.Admin.ViewModels.Identity.UserAddressListItemVm>();
 }
+
+<!-- Hidden anti-forgery container for AJAX posts in this section -->
+<form id="addresses-af" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0">User Addresses</h5>
-    <!-- Add Address could open a dedicated form or an inline modal. For now, navigate to a dedicated form section (if exists) or you can wire a modal similarly to Roles pattern. -->
-    <a asp-area="Admin" asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-sm btn-outline-primary">
+
+    <!-- Add Address: opens the modal in CREATE mode -->
+    <button type="button"
+            class="btn btn-sm btn-outline-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addressEditModal"
+            data-mode="create"
+            data-action="@Url.Action("CreateAddress", "Users", new { area = "Admin" })"
+            data-userid="@Model?.UserId">
         <i class="fa fa-plus"></i> Add Address
-    </a>
+    </button>
 </div>
 
 <div class="table-responsive">
@@ -22,13 +35,13 @@
                 <th>City</th>
                 <th>Country</th>
                 <th class="text-center">Default</th>
-                <th class="text-end" style="width:320px">Actions</th>
+                <th class="text-end" style="width:380px">Actions</th>
             </tr>
         </thead>
         <tbody>
-            @if (Model.Items?.Count > 0)
+            @if (items.Count > 0)
             {
-                foreach (var a in Model.Items)
+                foreach (var a in items)
                 {
                     <tr>
                         <td>@a.FullName</td>
@@ -42,26 +55,54 @@
                             <span class="badge @(a.IsDefaultShipping ? "text-bg-success" : "text-bg-light")">S</span>
                         </td>
                         <td class="text-end">
-                            <form asp-area="Admin" asp-controller="Users" asp-action="SetDefaultAddress" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@a.Id" />
-                                <input type="hidden" name="userId" value="@Model.UserId" />
-                                <input type="hidden" name="kind" value="Billing" />
-                                <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa fa-credit-card"></i> Set Billing</button>
-                            </form>
 
-                            <form asp-area="Admin" asp-controller="Users" asp-action="SetDefaultAddress" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@a.Id" />
-                                <input type="hidden" name="userId" value="@Model.UserId" />
-                                <input type="hidden" name="kind" value="Shipping" />
-                                <button class="btn btn-sm btn-outline-success" type="submit"><i class="fa fa-truck"></i> Set Shipping</button>
-                            </form>
+                            <!-- Set default Billing -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    data-setdefault
+                                    data-kind="Billing"
+                                    data-userid="@Model.UserId"
+                                    data-id="@a.Id"
+                                    data-action="@Url.Action("SetDefaultAddress", "Users", new { area = "Admin" })">
+                                <i class="fa fa-credit-card"></i> Set Billing
+                            </button>
 
-                            <a asp-area="Admin" asp-controller="Users" asp-action="EditAddress" asp-route-id="@a.Id" asp-route-userId="@Model.UserId" class="btn btn-sm btn-outline-secondary">
+                            <!-- Set default Shipping -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-success"
+                                    data-setdefault
+                                    data-kind="Shipping"
+                                    data-userid="@Model.UserId"
+                                    data-id="@a.Id"
+                                    data-action="@Url.Action("SetDefaultAddress", "Users", new { area = "Admin" })">
+                                <i class="fa fa-truck"></i> Set Shipping
+                            </button>
+
+                            <!-- Edit (opens modal with populated data) -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#addressEditModal"
+                                    data-mode="edit"
+                                    data-action="@Url.Action("EditAddress", "Users", new { area = "Admin" })"
+                                    data-id="@a.Id"
+                                    data-userid="@Model.UserId"
+                                    data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
+                                    data-fullname="@a.FullName"
+                                    data-company="@a.Company"
+                                    data-street1="@a.Street1"
+                                    data-street2="@a.Street2"
+                                    data-postalcode="@a.PostalCode"
+                                    data-city="@a.City"
+                                    data-state="@a.State"
+                                    data-countrycode="@a.CountryCode"
+                                    data-phonee164="@a.PhoneE164"
+                                    data-defaultbilling="@(a.IsDefaultBilling ? "true" : "false")"
+                                    data-defaultshipping="@(a.IsDefaultShipping ? "true" : "false")">
                                 <i class="fa fa-pen"></i> Edit
-                            </a>
+                            </button>
 
+                            <!-- Delete (shared confirm modal) -->
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger"
                                     data-bs-toggle="modal"
@@ -69,7 +110,8 @@
                                     data-action="@Url.Action("DeleteAddress", "Users", new { area = "Admin" })"
                                     data-id="@a.Id"
                                     data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
-                                    data-name="@($"{a.FullName} / {a.City}")">
+                                    data-userid="@Model.UserId"
+                                    data-name="@($"{a.FullName} / {a.City} / {a.Street1}")">
                                 <i class="fa fa-trash"></i> Delete
                             </button>
                         </td>
