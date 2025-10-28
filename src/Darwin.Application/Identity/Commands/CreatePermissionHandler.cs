@@ -14,7 +14,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly IAppDbContext _db;
         public CreatePermissionHandler(IAppDbContext db) => _db = db;
 
-        public async Task<Result<Guid>> HandleAsync(string key, string displayName, string? description, bool isSystem, CancellationToken ct = default)
+        public async Task<Result<Guid>> HandleAsync(string key, string displayName, string? description, bool isSystem = false, CancellationToken ct = default)
         {
             var normalized = key.Trim().ToUpperInvariant();
             var exists = await _db.Set<Permission>().AnyAsync(p => p.Key.ToUpper() == normalized && !p.IsDeleted, ct);

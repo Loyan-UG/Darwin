@@ -8,6 +8,7 @@ namespace Darwin.Application.Identity.DTOs
         public string Key { get; set; } = string.Empty;       // e.g., "admin"
         public string DisplayName { get; set; } = string.Empty;
         public string? Description { get; set; } = string.Empty;
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public bool IsSystem { get; set; }
     }
 

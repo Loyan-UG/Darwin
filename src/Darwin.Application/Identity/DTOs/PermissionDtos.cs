@@ -9,6 +9,7 @@ namespace Darwin.Application.Identity.DTOs
         public string DisplayName { get; set; } = string.Empty;   // Human-friendly
         public string? Description { get; set; }
         public bool IsSystem { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     public sealed class PermissionCreateDto

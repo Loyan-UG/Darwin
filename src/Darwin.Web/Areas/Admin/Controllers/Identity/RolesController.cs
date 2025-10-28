@@ -61,6 +61,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
                 Key = dto.Key,
                 DisplayName = dto.DisplayName,
                 Description = dto.Description,
+                RowVersion = dto.RowVersion,
                 IsSystem = dto.IsSystem
             }).ToList();
 

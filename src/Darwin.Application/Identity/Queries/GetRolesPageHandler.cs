@@ -62,7 +62,8 @@ namespace Darwin.Application.Identity.Queries
                     Id = r.Id,
                     DisplayName = r.DisplayName ?? string.Empty,
                     Description = r.Description,
-                    IsSystem = r.IsSystem
+                    IsSystem = r.IsSystem,
+                    RowVersion = r.RowVersion
                 })
                 .ToListAsync(ct);
 

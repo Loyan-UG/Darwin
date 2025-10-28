@@ -64,7 +64,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
                     Key = d.Key,
                     DisplayName = d.DisplayName,
                     Description = d.Description,
-                    IsSystem = d.IsSystem
+                    IsSystem = d.IsSystem,
+                    RowVersion = d.RowVersion
                 }).ToList();
 
             var vm = new PermissionsListVm

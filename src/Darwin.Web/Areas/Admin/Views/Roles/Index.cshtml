@@ -84,7 +84,7 @@
                                                 data-action="@Url.Action("Delete", "Roles", new { area = "Admin" })"
                                                 data-id="@r.Id"
                                                 data-name="@r.DisplayName"
-                                                data-rowversion="@Convert.ToBase64String(Array.Empty<byte>())">
+                                                data-rowversion="@Convert.ToBase64String(r.RowVersion)">
                                             <i class="fa fa-trash"></i> Delete
                                         </button>
                                     }

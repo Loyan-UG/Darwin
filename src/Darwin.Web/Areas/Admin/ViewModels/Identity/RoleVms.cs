@@ -14,7 +14,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
         public string DisplayName { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsSystem { get; set; }
-        public byte[]? RowVersion { get; set; } = Array.Empty<byte>();
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>
@@ -26,7 +26,6 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
         /// Current page items projected as lightweight view models suitable for listing.
         /// </summary>
         public List<RoleListItemVm> Items { get; set; } = new();
-
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }

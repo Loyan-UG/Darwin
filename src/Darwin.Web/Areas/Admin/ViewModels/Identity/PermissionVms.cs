@@ -36,7 +36,6 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
         public string Key { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public bool IsSystem { get; set; } = false;
     }
 
     /// <summary>View model used to edit an existing permission.</summary>
