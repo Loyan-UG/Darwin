@@ -159,6 +159,14 @@ namespace Darwin.Web.Extensions
             services.AddScoped<UpdatePermissionHandler>();
             services.AddScoped<SoftDeletePermissionHandler>();
 
+            // --- Identity: Roles & Permissions (edit screens) ---
+            services.AddScoped<GetRoleWithPermissionsForEditHandler>();
+            services.AddScoped<UpdateRolePermissionsHandler>();
+
+            // --- Identity: User ↔ Roles (edit screens) ---
+            services.AddScoped<GetUserWithRolesForEditHandler>();
+            services.AddScoped<UpdateUserRolesHandler>();
+
 
             // Register handlers — Shipping methods (admin)
             services.AddScoped<CreateShippingMethodHandler>();

@@ -1,0 +1,58 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.UserRolesEditVm
+@{
+    ViewData["Title"] = "Edit User Roles";
+}
+
+<h1 class="mb-3"><i class="fa fa-users-cog"></i> Roles — @Model.UserEmail</h1>
+
+<div id="alerts-container">
+    <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+</div>
+
+<form asp-action="Roles" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="UserId" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">Assign roles to user</div>
+            <div class="card-body">
+                @if (Model.AllRoles?.Count > 0)
+                {
+                    <div class="row row-cols-1 row-cols-md-2 g-2">
+                        @foreach (var r in Model.AllRoles)
+                        {
+                            var isChecked = Model.SelectedRoleIds?.Contains(r.Id) == true;
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="SelectedRoleIds"
+                                           value="@r.Id"
+                                           @(isChecked ? "checked" : "") />
+                                    <label class="form-check-label">
+                                        <strong>@r.DisplayName</strong>
+                                        <small class="text-muted d-block">@r.Key — @r.Description</small>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">No roles found.</div>
+                }
+            </div>
+            <div class="card-footer text-end">
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fa fa-arrow-left"></i> Back
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-check"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</form>

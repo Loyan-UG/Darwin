@@ -22,6 +22,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Identity
         public List<PermissionItemVm> AllPermissions { get; set; } = new();
     }
 
+
     /// <summary>
     /// Lightweight VM item to render a single permission checkbox row.
     /// </summary>

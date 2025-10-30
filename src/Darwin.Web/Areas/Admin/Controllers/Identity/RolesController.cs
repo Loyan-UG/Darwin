@@ -27,6 +27,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         private readonly CreateRoleHandler _create;
         private readonly UpdateRoleHandler _update;
         private readonly DeleteRoleHandler _delete;
+        private readonly GetRoleWithPermissionsForEditHandler _getRolePerms;
+        private readonly UpdateRolePermissionsHandler _updateRolePerms;
 
         /// <summary>
         /// Wires the controller to Application-layer handlers. These handlers encapsulate
@@ -37,13 +39,17 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             GetRoleForEditHandler getRoleForEdit,
             CreateRoleHandler create,
             UpdateRoleHandler update,
-            DeleteRoleHandler delete)
+            DeleteRoleHandler delete,
+            GetRoleWithPermissionsForEditHandler getRolePerms,
+            UpdateRolePermissionsHandler updateRolePerms)
         {
             _getRole = getRole;
             _getRoleForEdit = getRoleForEdit;
             _create = create;
             _update = update;
             _delete = delete;
+            _getRolePerms = getRolePerms;
+            _updateRolePerms = updateRolePerms;
         }
 
         /// <summary>
@@ -205,6 +211,70 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
                 TempData["Error"] = "Failed to delete role.";
             }
 
+            return RedirectToAction(nameof(Index));
+        }
+
+
+
+        /// <summary>
+        /// Shows a checklist of all permissions for a specific role and marks selected ones.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Permissions(Guid id, CancellationToken ct = default)
+        {
+            var result = await _getRolePerms.HandleAsync(id, ct);
+            if (!result.Succeeded || result.Value is null)
+            {
+                TempData["Error"] = result.Error ?? "Failed to load role permissions.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var dto = result.Value; // DTO shape from Application
+            var vm = new RolePermissionsEditVm
+            {
+                RoleId = dto.RoleId,
+                RoleDisplayName = dto.RoleDisplayName,
+                RowVersion = dto.RowVersion,
+                AllPermissions = dto.AllPermissions.Select(p => new PermissionItemVm
+                {
+                    Id = p.Id,
+                    Key = p.Key,
+                    DisplayName = p.DisplayName,
+                    Description = p.Description,
+                    IsSystem = p.IsSystem,
+                    RowVersion = p.RowVersion
+                }).ToList(),
+                SelectedPermissionIds = dto.PermissionIds.ToList()
+            };
+
+            return View(vm);
+        }
+
+        /// <summary>
+        /// Saves the role-permission assignment changes and redirects back to Roles/Index.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Permissions(RolePermissionsEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            var dto = new RolePermissionsUpdateDto
+            {
+                RoleId = vm.RoleId,
+                RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                PermissionIds = vm.SelectedPermissionIds?.ToList() ?? new List<Guid>()
+            };
+
+            var result = await _updateRolePerms.HandleAsync(dto, ct);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = result.Error ?? "Failed to update role permissions.";
+                return View(vm);
+            }
+
+            TempData["Success"] = "Permissions updated.";
             return RedirectToAction(nameof(Index));
         }
     }

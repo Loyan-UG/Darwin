@@ -33,6 +33,11 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         private readonly SoftDeleteUserAddressHandler _softDeleteAddress;
         private readonly SetDefaultUserAddressHandler _setDefaultAddress;
 
+        // Users Roles Handler
+        private readonly GetUserWithRolesForEditHandler _getUserRoles;
+        private readonly UpdateUserRolesHandler _updateUserRoles;
+
+
         /// <summary>
         /// Wires Application-layer handlers. These encapsulate validation and persistence.
         /// </summary>
@@ -48,7 +53,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             CreateUserAddressHandler createAddress,
             UpdateUserAddressHandler updateAddress,
             SoftDeleteUserAddressHandler softDeleteAddress,
-            SetDefaultUserAddressHandler setDefaultAddress)
+            SetDefaultUserAddressHandler setDefaultAddress,
+            GetUserWithRolesForEditHandler getUserRoles,
+            UpdateUserRolesHandler updateUserRoles)
         {
             _registerUser = registerUser;
             _getUsersPage = getUsersPage;
@@ -61,6 +68,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
             _updateAddress = updateAddress;
             _softDeleteAddress = softDeleteAddress;
             _setDefaultAddress = setDefaultAddress;
+            _getUserRoles = getUserRoles;
+            _updateUserRoles = updateUserRoles;
         }
 
         /// <summary>
@@ -526,5 +535,67 @@ namespace Darwin.Web.Areas.Admin.Controllers.Identity
         }
 
 
+
+
+        /// <summary>
+        /// Shows all roles and the selection for the specified user.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Roles(Guid id, CancellationToken ct = default)
+        {
+            var result = await _getUserRoles.HandleAsync(id, ct);
+            if (!result.Succeeded || result.Value is null)
+            {
+                TempData["Error"] = result.Error ?? "Failed to load user roles.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var dto = result.Value;
+            var vm = new UserRolesEditVm
+            {
+                UserId = dto.UserId,
+                UserEmail = dto.UserEmail,
+                RowVersion = dto.RowVersion,
+                AllRoles = dto.AllRoles.Select(x => new RoleItemVm
+                {
+                    Id = x.Id,
+                    Key = x.Key,
+                    DisplayName = x.DisplayName,
+                    Description = x.Description,
+                    IsSystem = x.IsSystem,
+                    RowVersion = x.RowVersion
+                }).ToList(),
+                SelectedRoleIds = dto.RoleIds.ToList()
+            };
+            return View(vm);
+        }
+
+        /// <summary>
+        /// Saves the role selection for the user and redirects to Users/Index.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Roles(UserRolesEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            var dto = new UserRolesUpdateDto
+            {
+                UserId = vm.UserId,
+                RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                RoleIds = vm.SelectedRoleIds?.ToList() ?? new List<Guid>()
+            };
+
+            var result = await _updateUserRoles.HandleAsync(dto, ct);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = result.Error ?? "Failed to update user roles.";
+                return View(vm);
+            }
+
+            TempData["Success"] = "User roles updated.";
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

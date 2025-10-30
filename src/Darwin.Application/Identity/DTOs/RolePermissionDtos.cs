@@ -12,6 +12,8 @@ namespace Darwin.Application.Identity.DTOs
     {
         public Guid RoleId { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        /// <summary>Human-friendly role name for the header (optional; controller can fill from RoleEditDto).</summary>
+        public string RoleDisplayName { get; set; } = string.Empty;
 
         /// <summary>Currently assigned permission ids to the role (non-deleted links only).</summary>
         public List<Guid> PermissionIds { get; set; } = new();

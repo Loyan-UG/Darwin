@@ -59,6 +59,7 @@ namespace Darwin.Application.Identity.Queries
             {
                 RoleId = role.Id,
                 RowVersion = role.RowVersion,
+                RoleDisplayName = role.DisplayName,
                 PermissionIds = currentPermIds,
                 AllPermissions = allPerms
             };

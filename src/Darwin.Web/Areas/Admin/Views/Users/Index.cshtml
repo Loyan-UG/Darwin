@@ -34,7 +34,7 @@
                 <th>Email</th>
                 <th>Name</th>
                 <th class="text-center">Active</th>
-                <th class="text-end" style="width:340px">Actions</th>
+                <th class="text-end" style="width:410px">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -77,6 +77,10 @@
                             <i class="fa fa-key"></i> Password
                         </a>
 
+                        <a asp-area="Admin" asp-controller="Users" asp-action="Roles" asp-route-id="@u.Id"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-users-cog"></i> Roles
+                        </a>
 
                         @if (!u.IsSystem)
                         {

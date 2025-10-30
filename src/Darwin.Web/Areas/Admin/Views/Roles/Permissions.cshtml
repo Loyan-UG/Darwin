@@ -1,0 +1,60 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Identity.RolePermissionsEditVm
+@{
+    ViewData["Title"] = "Edit Role Permissions";
+}
+
+<h1 class="mb-3">
+    <i class="fa fa-lock"></i> Permissions for Role — @Model.RoleDisplayName
+</h1>
+
+<div id="alerts-container">
+    <partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+</div>
+
+<form asp-action="Permissions" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="RoleId" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">Permissions</div>
+            <div class="card-body">
+                @if (Model.AllPermissions?.Count > 0)
+                {
+                    <div class="row row-cols-1 row-cols-md-2 g-2">
+                        @foreach (var p in Model.AllPermissions)
+                        {
+                            var isChecked = Model.SelectedPermissionIds?.Contains(p.Id) == true;
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="SelectedPermissionIds"
+                                           value="@p.Id"
+                                           @(isChecked ? "checked" : "") />
+                                    <label class="form-check-label">
+                                        <strong>@p.DisplayName</strong>
+                                        <small class="text-muted d-block">@p.Key — @p.Description</small>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">No permissions found.</div>
+                }
+            </div>
+            <div class="card-footer text-end">
+                <a asp-area="Admin" asp-controller="Roles" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fa fa-arrow-left"></i> Back
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-check"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</form>

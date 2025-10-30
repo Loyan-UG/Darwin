@@ -42,7 +42,7 @@
                         <th>Display Name</th>
                         <th>Description</th>
                         <th style="width:120px;">System</th>
-                        <th class="text-end" style="width:200px;">Actions</th>
+                        <th class="text-end" style="width:290px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,6 +72,11 @@
                                 <td class="text-end">
                                     <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary me-1">
                                         <i class="fa fa-pen"></i> Edit
+                                    </a>
+
+                                    <a asp-area="Admin" asp-controller="Roles" asp-action="Permissions" asp-route-id="@r.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-shield-alt"></i> Permissions
                                     </a>
 
                                     @* Delete is disabled for system roles *@

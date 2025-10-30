@@ -55,6 +55,7 @@ namespace Darwin.Application.Identity.Queries
                 UserId = user.Id,
                 RowVersion = user.RowVersion,
                 RoleIds = currentRoleIds,
+                UserEmail = user.Email,
                 AllRoles = allRoles
             });
         }

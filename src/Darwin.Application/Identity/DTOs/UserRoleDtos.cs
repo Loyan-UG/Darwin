@@ -11,10 +11,11 @@ namespace Darwin.Application.Identity.DTOs
     {
         public Guid UserId { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
-
+        public string UserEmail { get; set; } = string.Empty;
         public List<Guid> RoleIds { get; set; } = new();
         public List<RoleListItemDto> AllRoles { get; set; } = new();
     }
+
 
     /// <summary>
     /// Command payload to update a user's role assignments in one shot.
