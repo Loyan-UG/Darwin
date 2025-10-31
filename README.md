@@ -12,6 +12,7 @@ It combines **content management (CMS)** and **full e-commerce features** such a
 
 ---
 
+
 ## ✨ Features
 
 - 📝 **CMS**: Pages, rich text editor (Quill), SEO meta, menus, media library.
