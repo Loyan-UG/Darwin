@@ -41,17 +41,11 @@ It combines **content management (CMS)** and **full e-commerce features** such a
 Darwin follows a **clean architecture** with clear separation of concerns:
 
 src/
-
 ├─ Darwin.Domain → Entities, ValueObjects, Enums, BaseEntity
-
 ├─ Darwin.Application → Use cases, DTOs, Handlers, Validators
-
 ├─ Darwin.Infrastructure→ EF Core, DbContext, Migrations, DataSeeder
-
 ├─ Darwin.Web → MVC + Razor (Admin + Public), DI, Middleware
-
 ├─ Darwin.WebApi → Reserved for REST API (future v1)
-
 └─ Darwin.Shared → Result wrappers, constants, helpers
 
 
