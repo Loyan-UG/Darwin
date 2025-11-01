@@ -9,9 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Inventory.Commands
 {
-    /// <summary>
-    /// Releases reserved quantity (e.g., cart removal, timeout, or order cancellation) and writes a transaction.
-    /// </summary>
     public sealed class ReleaseInventoryReservationHandler
     {
         private readonly IAppDbContext _db;
@@ -24,15 +21,17 @@ namespace Darwin.Application.Inventory.Commands
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new FluentValidation.ValidationException(v.Errors);
 
-            var variant = await _db.Set<Darwin.Domain.Entities.Catalog.ProductVariant>()
-                .FirstOrDefaultAsync(vr => vr.Id == dto.VariantId, ct);
+            // Atomic decrement guarded to avoid going negative
+            var affected = await _db.Set<ProductVariant>()
+                .Where(vr => vr.Id == dto.VariantId && vr.StockReserved >= dto.Quantity)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(vr => vr.StockReserved, vr => vr.StockReserved - dto.Quantity),
+                    ct);
 
-            if (variant is null) throw new InvalidOperationException("Variant not found.");
-            if (dto.Quantity > variant.StockReserved)
-                throw new FluentValidation.ValidationException("Release quantity exceeds reserved quantity.");
+            if (affected == 0)
+                throw new DbUpdateConcurrencyException("Release failed due to concurrent change or insufficient reserved.");
 
-            variant.StockReserved = checked(variant.StockReserved - dto.Quantity);
-
+            // Ledger: release does not change on-hand; zero-delta for traceability.
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
                 VariantId = dto.VariantId,

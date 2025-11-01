@@ -8,7 +8,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Catalog
     /// View model representing a single row in the brands list/grid.
     /// Kept minimal for fast rendering and paging.
     /// </summary>
-    public sealed class BrandListRowVm
+    public sealed class BrandListItemVm
     {
         /// <summary>Primary key.</summary>
         public Guid Id { get; set; }
@@ -31,7 +31,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Catalog
 
     /// <summary>
     /// View model for the brands listing page, including paging metadata and current search/filter state.
-    /// Items are projected to <see cref="BrandListRowVm"/> (not DTO) to keep Web layer decoupled.
+    /// Items are projected to <see cref="BrandListItemVm"/> (not DTO) to keep Web layer decoupled.
     /// </summary>
     public sealed class BrandsListVm
     {
@@ -48,7 +48,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Catalog
         public string Query { get; set; } = string.Empty;
 
         /// <summary>Current page items.</summary>
-        public List<BrandListRowVm> Items { get; set; } = new();
+        public List<BrandListItemVm> Items { get; set; } = new();
 
         /// <summary>Prebuilt items for a page-size dropdown in the Index view.</summary>
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();

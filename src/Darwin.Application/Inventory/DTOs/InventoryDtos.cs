@@ -42,4 +42,47 @@ namespace Darwin.Application.Inventory.DTOs
         public Guid? ReferenceId { get; set; }
         public DateTime CreatedAtUtc { get; set; }
     }
+
+    /// <summary>
+    /// Request to allocate inventory for a placed order.
+    /// This operation reduces on-hand stock and releases an equal reserved amount per line.
+    /// One ledger row (negative QuantityDelta) is appended per affected variant.
+    /// </summary>
+    public sealed class InventoryAllocateForOrderDto
+    {
+        /// <summary>Order identifier used for correlation and idempotency.</summary>
+        public Guid OrderId { get; set; }
+
+        /// <summary>Lines to allocate; each entry references a variant and a quantity to allocate.</summary>
+        public List<InventoryAllocateForOrderLineDto> Lines { get; set; } = new();
+    }
+
+    /// <summary>Single allocation line for a specific variant.</summary>
+    public sealed class InventoryAllocateForOrderLineDto
+    {
+        /// <summary>Target variant id.</summary>
+        public Guid VariantId { get; set; }
+
+        /// <summary>Quantity to allocate (must be positive).</summary>
+        public int Quantity { get; set; }
+    }
+
+    /// <summary>
+    /// Request to process a customer return (goods received back to stock).
+    /// This operation increases on-hand stock and appends a positive ledger row.
+    /// </summary>
+    public sealed class InventoryReturnReceiptDto
+    {
+        /// <summary>Returned variant id.</summary>
+        public Guid VariantId { get; set; }
+
+        /// <summary>Positive quantity to receive back.</summary>
+        public int Quantity { get; set; }
+
+        /// <summary>Optional return/case identifier (used for correlation/idempotency).</summary>
+        public Guid? ReferenceId { get; set; }
+
+        /// <summary>Reason tag recorded in the ledger; default is 'ReturnReceipt'.</summary>
+        public string Reason { get; set; } = "ReturnReceipt";
+    }
 }

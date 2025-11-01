@@ -1,0 +1,66 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.BrandEditVm
+@{
+    ViewData["Title"] = "Create Brand";
+}
+
+<h1 class="mb-3">Create Brand</h1>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="Slug" class="form-label"></label>
+        <input asp-for="Slug" class="form-control" />
+        <span class="form-text">Optional unique, culture-invariant slug (<=256).</span>
+        <span asp-validation-for="Slug" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="LogoMediaId" class="form-label"></label>
+        <input asp-for="LogoMediaId" class="form-control" />
+        <span class="form-text">Optional media id for logo.</span>
+        <span asp-validation-for="LogoMediaId" class="text-danger"></span>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><strong>Translations</strong></div>
+        <div class="card-body">
+            <div class="row g-3">
+                @for (int i = 0; i < Model.Translations.Count; i++)
+                {
+                    <div class="col-12 border-bottom pb-3 mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-2">
+                                <label asp-for="Translations[i].Culture" class="form-label"></label>
+                                <input asp-for="Translations[i].Culture" class="form-control" />
+                                <span class="form-text">e.g. de-DE</span>
+                                <span asp-validation-for="Translations[i].Culture" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Translations[i].Name" class="form-label"></label>
+                                <input asp-for="Translations[i].Name" class="form-control" />
+                                <span asp-validation-for="Translations[i].Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Translations[i].DescriptionHtml" class="form-label"></label>
+                                <textarea asp-for="Translations[i].DescriptionHtml" class="form-control" rows="3"></textarea>
+                                <span class="form-text">HTML will be sanitized on save.</span>
+                                <span asp-validation-for="Translations[i].DescriptionHtml" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <!-- Simple button to add more translation rows via client-side templating can be added later -->
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

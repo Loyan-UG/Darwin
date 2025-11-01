@@ -1,0 +1,75 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.BrandsListVm
+@{
+    ViewData["Title"] = "Brands";
+}
+
+<h1 class="mb-3">Brands</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="Index" method="get" class="d-flex gap-2">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search...">
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+    </form>
+
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fa fa-plus"></i> New Brand
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Modified</th>
+                <th class="text-end" style="width:220px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items?.Count > 0)
+            {
+                foreach (var b in Model.Items)
+                {
+                    <tr>
+                        <td>@b.Name</td>
+                        <td>@b.Slug</td>
+                        <td>@b.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa fa-pen"></i> Edit
+                            </a>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("Delete", "Brands", new { area = "Admin" })"
+                                    data-id="@b.Id"
+                                    data-name="@b.Name"
+                                    data-rowversion="@Convert.ToBase64String(b.RowVersion)">
+                                <i class="fa fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="4" class="text-center text-muted">No brands.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-area="Admin"
+       asp-controller="Brands"
+       asp-action="Index"
+       asp-route-query="@Model.Query">
+</pager>
+
+
+<partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />

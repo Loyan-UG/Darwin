@@ -9,9 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Inventory.Commands
 {
-    /// <summary>
-    /// Reserves quantity for a variant (e.g., on cart add or order placement) and writes a transaction.
-    /// </summary>
     public sealed class ReserveInventoryHandler
     {
         private readonly IAppDbContext _db;
@@ -24,20 +21,35 @@ namespace Darwin.Application.Inventory.Commands
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new FluentValidation.ValidationException(v.Errors);
 
-            var variant = await _db.Set<ProductVariant>().FirstOrDefaultAsync(vr => vr.Id == dto.VariantId, ct);
-            if (variant is null) throw new InvalidOperationException("Variant not found.");
+            // Load a snapshot for validation (available = on-hand - reserved)
+            var snap = await _db.Set<ProductVariant>()
+                .AsNoTracking()
+                .Where(vr => vr.Id == dto.VariantId)
+                .Select(vr => new { vr.Id, vr.StockOnHand, vr.StockReserved })
+                .FirstOrDefaultAsync(ct);
 
-            // business rule: available = OnHand - Reserved
-            var available = variant.StockOnHand - variant.StockReserved;
-            if (dto.Quantity > available)
-                throw new FluentValidation.ValidationException("Insufficient available stock to reserve.");
+            if (snap is null) throw new InvalidOperationException("Variant not found.");
 
-            variant.StockReserved = checked(variant.StockReserved + dto.Quantity);
+            var available = snap.StockOnHand - snap.StockReserved;
+            if (available < dto.Quantity)
+                throw new FluentValidation.ValidationException("Insufficient available stock for reservation.");
 
+            // Atomic increment guarded by availability condition to avoid race
+            var affected = await _db.Set<ProductVariant>()
+                .Where(vr => vr.Id == dto.VariantId
+                             && (vr.StockOnHand - vr.StockReserved) >= dto.Quantity)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(vr => vr.StockReserved, vr => vr.StockReserved + dto.Quantity),
+                    ct);
+
+            if (affected == 0)
+                throw new DbUpdateConcurrencyException("Reservation failed due to concurrent change. Retry the operation.");
+
+            // Ledger: reservation itself does not change on-hand; write a zero-delta row for traceability (optional).
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
                 VariantId = dto.VariantId,
-                QuantityDelta = 0, // reservation does not change on-hand
+                QuantityDelta = 0,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId
             });

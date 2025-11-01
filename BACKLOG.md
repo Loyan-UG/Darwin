@@ -151,5 +151,36 @@ the next milestone is to **finalize Darwin.Web** by implementing:
 Once Admin is stable, proceed to the **public storefront UI** (customer-facing).
 
 ---
+---
+---
+
+## Admin (Web)
+- [ ] Orders: Add **Inventory Allocation** action on order details:
+  - Button **Allocate Now** calls `AllocateInventoryForOrderHandler` with all lines.
+  - Show TempData alert on success/failure using `Alerts.cshtml`.
+  - Disable the button if already allocated (idempotent check is handled in Application; still reflect state in UI by reading ledger).
+- [ ] Variants: Add **Inventory Ledger** tab:
+  - Use `GetInventoryLedgerHandler` with paging.
+  - Columns: CreatedAtUtc, Reason, QuantityDelta, ReferenceId.
+- [ ] Returns: Add **Return Receipt** form in Admin:
+  - Per-line return input (VariantId, Quantity).
+  - Optional ReferenceId for idempotency.
+  - Calls `ProcessReturnReceiptHandler`.
+- [ ] Carts/Orders: Call **Reserve** on cart add / order submit; **Release** on removal/timeout/cancel.
+
+## Member (Web – to do after Admin)
+- [ ] Order placement path must:
+  - Reserve during cart/checkout.
+  - Allocate right after order confirmation (or at pick/pack stage, depending on policy).
+- [ ] Returns portal:
+  - Allow initiating a return request; after approval in Admin, Admin triggers `ProcessReturnReceiptHandler`.
+  - Show user-friendly messages and reflect stock changes indirectly (e.g., not blocking reorders).
+
+## Application – Future Enhancements
+- [ ] Optional **soft ceiling** configuration: allow negative `available = onHand - reserved` for backorders with a feature flag.
+- [ ] Batch allocation: a single command that validates all lines and rolls back if any fail (transaction scope).
+- [ ] Enrich ledger reasons and standardize to enum + localized labels at Web layer.
+- [ ] Reporting endpoints for stock valuation snapshots (out of scope for now).
+
 
 © 2025 Darwin Commerce Platform — Internal Development Roadmap

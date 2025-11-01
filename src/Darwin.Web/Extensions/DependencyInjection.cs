@@ -191,6 +191,14 @@ namespace Darwin.Web.Extensions
             services.AddMemoryCache();
             services.AddScoped<ISiteSettingCache, SiteSettingCache>();
 
+            // Brands
+            services.AddScoped<GetBrandsPageHandler>();
+            services.AddScoped<GetBrandForEditHandler>();
+            services.AddScoped<CreateBrandHandler>();
+            services.AddScoped<UpdateBrandHandler>();
+            services.AddScoped<SoftDeleteBrandHandler>();
+
+
 
             // MVC and localization. RuntimeCompilation is useful during development; remove in production.
             services
