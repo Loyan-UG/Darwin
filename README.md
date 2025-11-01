@@ -41,6 +41,7 @@ It combines **content management (CMS)** and **full e-commerce features** such a
 Darwin follows a **clean architecture** with clear separation of concerns:
 
 src/
+
 ├─ Darwin.Domain → Entities, ValueObjects, Enums, BaseEntity
 
 ├─ Darwin.Application → Use cases, DTOs, Handlers, Validators
