@@ -41,7 +41,8 @@ namespace Darwin.Application.Catalog.Queries
                            ?? b.Translations.Select(t => t.Name).FirstOrDefault()
                            ?? "?",
                     Slug = b.Slug,
-                    ModifiedAtUtc = b.ModifiedAtUtc
+                    ModifiedAtUtc = b.ModifiedAtUtc,
+                    RowVersion = b.RowVersion
                 })
                 .ToListAsync(ct);
 

@@ -47,5 +47,26 @@ namespace Darwin.Application.Catalog.DTOs
         public string Name { get; set; } = "?";
         public string? Slug { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
+
+        /// <summary>
+        /// Concurrency token required by delete operations initiated from the list view.
+        /// </summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    /// <summary>
+    /// Data transfer object used when performing a soft delete of a Brand.
+    /// The RowVersion enables optimistic concurrency control from the Admin grid.
+    /// </summary>
+    public sealed class BrandDeleteDto
+    {
+        /// <summary>Identifier of the brand to delete.</summary>
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// Concurrency token from the current row. Must match the database state
+        /// to avoid unintentionally deleting a concurrently modified record.
+        /// </summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }

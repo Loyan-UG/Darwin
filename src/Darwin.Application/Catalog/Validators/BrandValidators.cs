@@ -49,4 +49,17 @@ namespace Darwin.Application.Catalog.Validators
             RuleFor(x => x.Slug).MaximumLength(256);
         }
     }
+
+
+    /// <summary>
+    /// Validation rules for deleting a brand (soft delete).
+    /// </summary>
+    public sealed class BrandDeleteValidator : AbstractValidator<BrandDeleteDto>
+    {
+        public BrandDeleteValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotNull();
+        }
+    }
 }
