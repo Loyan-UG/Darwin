@@ -35,8 +35,10 @@ namespace Darwin.Application.Orders.Queries
                     Currency = o.Currency,
                     GrandTotalGrossMinor = o.GrandTotalGrossMinor,
                     Status = o.Status,
-                    CreatedAtUtc = o.CreatedAtUtc
-                }).ToListAsync(ct);
+                    CreatedAtUtc = o.CreatedAtUtc,
+                    RowVersion = o.RowVersion
+                })
+                .ToListAsync(ct);
 
             return (items, total);
         }

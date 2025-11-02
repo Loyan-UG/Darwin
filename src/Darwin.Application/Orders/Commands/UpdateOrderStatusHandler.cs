@@ -1,16 +1,21 @@
-﻿using System;
+﻿// File: src/Darwin.Application/Orders/Commands/UpdateOrderStatusHandler.cs
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.StateMachine;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Commands
 {
     /// <summary>
-    /// Transitions an order to a new status after checking policy and guard conditions (payments/shipments).
+    /// Updates an order status using the central state policy and applies basic guards.
+    /// Inventory side-effects are coordinated here to ensure consistency (see TODO notes).
     /// </summary>
     public sealed class UpdateOrderStatusHandler
     {
@@ -19,45 +24,62 @@ namespace Darwin.Application.Orders.Commands
 
         public UpdateOrderStatusHandler(IAppDbContext db) => _db = db;
 
-        public async Task HandleAsync(Guid orderId, OrderStatus target, CancellationToken ct = default)
+        /// <summary>
+        /// Updates <see cref="Order.Status"/> when the transition is allowed.
+        /// Performs optimistic concurrency check using <paramref name="dto.RowVersion"/>.
+        /// </summary>
+        /// <exception cref="DbUpdateConcurrencyException">When row version mismatch is detected.</exception>
+        /// <exception cref="ValidationException">When transition is not allowed or guards fail.</exception>
+        public async Task HandleAsync(UpdateOrderStatusDto dto, CancellationToken ct = default)
         {
             var order = await _db.Set<Order>()
+                .Include(o => o.Lines)
                 .Include(o => o.Payments)
                 .Include(o => o.Shipments)
-                .FirstOrDefaultAsync(o => o.Id == orderId && !o.IsDeleted, ct)
-                ?? throw new InvalidOperationException("Order not found.");
+                .FirstOrDefaultAsync(o => o.Id == dto.OrderId && !o.IsDeleted, ct);
 
-            var current = order.Status;
-            if (current == target) return;
+            if (order is null) throw new InvalidOperationException("Order not found.");
 
-            if (!_policy.IsAllowed(current, target))
-                throw new InvalidOperationException($"Transition {current} → {target} is not allowed.");
+            if (!order.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
 
-            // Guards (phase 1 minimal):
-            switch (target)
+            var from = order.Status;
+            var to = dto.NewStatus;
+
+            if (!_policy.IsAllowed(from, to))
+                throw new ValidationException($"Transition {from} → {to} is not allowed.");
+
+            // Basic guards (phase 1):
+            // - Cannot cancel after items fully shipped.
+            if (to == OrderStatus.Cancelled &&
+                (order.Status == OrderStatus.Shipped || order.Status == OrderStatus.Delivered))
             {
-                case OrderStatus.Paid:
-                    var hasCapture = order.Payments.Exists(p => p.Status == PaymentStatus.Captured);
-                    if (!hasCapture) throw new InvalidOperationException("Cannot mark Paid without a captured payment.");
-                    break;
-
-                case OrderStatus.Shipped:
-                    var hasShipment = order.Shipments.Exists(s => s.TrackingNumber != null);
-                    if (!hasShipment) throw new InvalidOperationException("Cannot mark Shipped without a shipment.");
-                    break;
-
-                case OrderStatus.Delivered:
-                    var hasShipped = order.Shipments.Exists(s => s.ShippedAtUtc != null);
-                    if (!hasShipped) throw new InvalidOperationException("Cannot mark Delivered before Shipped.");
-                    break;
-
-                case OrderStatus.Refunded:
-                    var hasAnyPayment = order.Payments.Count > 0;
-                    if (!hasAnyPayment) throw new InvalidOperationException("Cannot refund without a payment.");
-                    break;
+                throw new ValidationException("Cannot cancel an order that has already shipped.");
             }
 
-            order.Status = target;
+            // - To move to Shipped/Delivered, require at least one shipment, etc. (simplified in phase 1)
+            if ((to == OrderStatus.Shipped || to == OrderStatus.Delivered) && order.Shipments.Count == 0)
+                throw new ValidationException("No shipments found for the order.");
+
+            // Apply transition
+            order.Status = to;
+
+            // Inventory side-effects (centralized here for clarity):
+            // NOTE: We intentionally do not directly mutate stock counters here in phase 1.
+            // Instead, we emit inventory transactions via dedicated handlers or inline creation (simple approach).
+            
+            // TODO: Reserve on Paid; Release on Cancelled; Finalize allocation on Shipped.
+            // This will integrate with InventoryTransaction and, if applicable, variant-level counters.
+            // See InventoryTransaction configuration for fields available. 
+            // (VariantId, QuantityDelta, Reason, ReferenceId). 
+            // Reason examples: "OrderPaid-Reserve", "OrderCancelled-Release", "OrderShipped-Finalize".
+            // Infra mapping reference: InventoryTransactionConfiguration. 
+            // These calls can be implemented here or delegated to small dedicated handlers.
+            //
+            // Example (pseudo-implementation for future step):
+            // await _inventorySync.ApplyAsync(order, from, to, ct);
+            // For now we keep it as a TODO to land incrementally with tested logic.
+
             await _db.SaveChangesAsync(ct);
         }
     }

@@ -153,6 +153,7 @@ Once Admin is stable, proceed to the **public storefront UI** (customer-facing).
 ---
 ---
 ---
+# Darwin Backlog – Inventory & Order Fulfillment
 
 ## Admin (Web)
 - [ ] Orders: Add **Inventory Allocation** action on order details:
@@ -181,6 +182,34 @@ Once Admin is stable, proceed to the **public storefront UI** (customer-facing).
 - [ ] Batch allocation: a single command that validates all lines and rolls back if any fail (transaction scope).
 - [ ] Enrich ledger reasons and standardize to enum + localized labels at Web layer.
 - [ ] Reporting endpoints for stock valuation snapshots (out of scope for now).
+
+---
+---
+
+# Darwin – Backlog (Orders & Inventory integration)
+
+## Orders
+- [ ] Admin: Add Payment form uses `AddPaymentHandler`. On success show TempData["Success"].
+- [ ] Admin: Change Status action uses `UpdateOrderStatusHandler` with RowVersion.
+- [ ] Admin: Orders Index consumes `OrderListItemDto` (now includes RowVersion) for concurrency-safe operations.
+
+## Inventory Side-Effects (Next Increment)
+- [ ] Implement inventory side-effects in `UpdateOrderStatusHandler`:
+  - [ ] On transition to **Paid**: create `InventoryTransaction` records with reason `"OrderPaid-Reserve"`; optionally update variant-level reserved counters if present.
+  - [ ] On transition to **Cancelled** (before any shipment): create `InventoryTransaction` with reason `"OrderCancelled-Release"` to undo reservations.
+  - [ ] On transition to **Shipped**: create `InventoryTransaction` with reason `"OrderShipped-Finalize"` representing stock leaving warehouse.
+- [ ] Ensure single-shot queries and bulk operations to avoid N+1 when touching multiple lines.
+
+## Web (Admin)
+- [ ] Wire up Alerts via `Alerts.cshtml` for all operations (Success/Error/Warning/Info).
+- [ ] Orders Index: add actions for Add Payment, Change Status (with RowVersion in hidden field).
+- [ ] Order Details page: render Lines/Payments/Shipments using `GetOrderForViewHandler`.
+
+## Testing
+- [ ] Unit tests for `AddPaymentHandler` (currency/amount validation, captured flow).
+- [ ] Unit tests for `UpdateOrderStatusHandler` transitions and guards (cancel after shipped, etc.).
+- [ ] Integration tests for optimistic concurrency conflicts using `RowVersion`.
+
 
 
 © 2025 Darwin Commerce Platform — Internal Development Roadmap

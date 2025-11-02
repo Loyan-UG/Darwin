@@ -41,6 +41,15 @@ namespace Darwin.Application.Orders.Validators
             RuleFor(x => x.ProviderReference).NotEmpty().MaximumLength(256);
             RuleFor(x => x.AmountMinor).GreaterThan(0);
             RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.Status).IsInEnum();
+
+            // FailureReason is required only when the payment failed.
+            When(x => x.Status == PaymentStatus.Failed, () =>
+            {
+                RuleFor(x => x.FailureReason)
+                    .NotEmpty()
+                    .MaximumLength(512);
+            });
         }
     }
 

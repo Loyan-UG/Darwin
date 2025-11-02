@@ -36,16 +36,34 @@ namespace Darwin.Application.Orders.DTOs
     }
 
     /// <summary>
-    /// Summary for admin listing.
+    /// Lightweight list item used by Admin orders grid.
+    /// Includes RowVersion for concurrency-sensitive actions (e.g., Delete/Cancel).
     /// </summary>
     public sealed class OrderListItemDto
     {
+        /// <summary>Order id (primary key).</summary>
         public Guid Id { get; set; }
+
+        /// <summary>Human-friendly order number (unique among non-deleted rows).</summary>
         public string OrderNumber { get; set; } = string.Empty;
-        public string Currency { get; set; } = "EUR";
+
+        /// <summary>3-letter ISO currency code.</summary>
+        public string Currency { get; set; } = string.Empty;
+
+        /// <summary>Grand total gross (minor units, e.g., cents).</summary>
         public long GrandTotalGrossMinor { get; set; }
+
+        /// <summary>Current status in the order state machine.</summary>
         public OrderStatus Status { get; set; }
+
+        /// <summary>Creation timestamp (UTC) for display/sorting.</summary>
         public DateTime CreatedAtUtc { get; set; }
+
+        /// <summary>
+        /// Concurrency token to enable optimistic concurrency in Admin actions.
+        /// Typical usage: pass into hidden field and verify on command execution.
+        /// </summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>
@@ -89,13 +107,46 @@ namespace Darwin.Application.Orders.DTOs
         public long LineGrossMinor { get; set; }
     }
 
+    /// <summary>
+    /// Input DTO for recording a payment attempt or result against an order.
+    /// The status is captured from the payment provider callback/flow.
+    /// </summary>
     public sealed class PaymentCreateDto
     {
+        /// <summary>
+        /// Target order identifier the payment belongs to.
+        /// </summary>
         public Guid OrderId { get; set; }
+
+        /// <summary>
+        /// Payment provider key (e.g., "Stripe", "PayPal", "Adyen").
+        /// </summary>
         public string Provider { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Provider-side reference/identifier to correlate with webhooks/callbacks.
+        /// </summary>
         public string ProviderReference { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Amount in minor currency units (e.g., cents).
+        /// </summary>
         public long AmountMinor { get; set; }
+
+        /// <summary>
+        /// ISO 4217 currency (e.g., "EUR").
+        /// </summary>
         public string Currency { get; set; } = "EUR";
+
+        /// <summary>
+        /// Resulting status of the payment, as persisted in the domain.
+        /// </summary>
+        public PaymentStatus Status { get; set; }
+
+        /// <summary>
+        /// Optional machine- or human-readable failure reason when Status == Failed.
+        /// </summary>
+        public string? FailureReason { get; set; }
     }
 
     public sealed class PaymentDetailDto
