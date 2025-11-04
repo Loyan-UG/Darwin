@@ -19,6 +19,9 @@ using Darwin.Application.Extensions;
 using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.Queries;
+using Darwin.Application.Inventory.Commands;
+using Darwin.Application.Orders.Commands;
+using Darwin.Application.Orders.Queries;
 using Darwin.Application.Settings.Commands;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Application.Settings.Queries;
@@ -198,8 +201,25 @@ namespace Darwin.Web.Extensions
             services.AddScoped<UpdateBrandHandler>();
             services.AddScoped<SoftDeleteBrandHandler>();
 
+            // Orders – queries
+            services.AddScoped<GetOrdersPageHandler>();
+            services.AddScoped<GetOrderForViewHandler>();
+            services.AddScoped<GetOrderPaymentsPageHandler>();
+            services.AddScoped<GetOrderShipmentsPageHandler>();
 
+            // Orders – commands
+            services.AddScoped<AddPaymentHandler>();
+            services.AddScoped<UpdateOrderStatusHandler>();
 
+            // Inventory – commands
+            services.AddScoped<ReserveInventoryHandler>();
+            services.AddScoped<ReleaseInventoryReservationHandler>();
+            services.AddScoped<AllocateInventoryForOrderHandler>();
+
+            
+            
+            
+            
             // MVC and localization. RuntimeCompilation is useful during development; remove in production.
             services
                 .AddControllersWithViews(options =>

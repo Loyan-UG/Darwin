@@ -1,0 +1,41 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Orders.OrderShipmentsPageVm
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Carrier</th>
+                <th>Tracking</th>
+                <th>Status</th>
+                <th>Created (UTC)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="4" class="text-center text-muted">No shipments.</td></tr>
+            }
+            else
+            {
+                foreach (var s in Model.Items)
+                {
+                    <tr>
+                        <td>@s.Carrier</td>
+                        <td>@s.TrackingNumber</td>
+                        <td>@s.Status</td>
+                        <td>@s.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-area="Admin"
+       asp-controller="Orders"
+       asp-action="Shipments"
+       asp-route-orderId="@Model.OrderId">
+</pager>

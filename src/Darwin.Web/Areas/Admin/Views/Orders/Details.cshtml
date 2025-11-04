@@ -1,0 +1,120 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Orders.OrderDetailVm
+@{
+    ViewData["Title"] = "Order " + Model.OrderNumber;
+}
+
+<h1 class="mb-2"><i class="fa fa-receipt"></i> Order @Model.OrderNumber</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3"><strong>Status:</strong> @Model.Status</div>
+            <div class="col-md-3"><strong>Total:</strong> @Model.Currency @((Model.GrandTotalGrossMinor / 100.0M).ToString("0.00"))</div>
+            <div class="col-md-6 text-end">
+                <form asp-area="Admin" asp-controller="Orders" asp-action="ChangeStatus" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="OrderId" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <select name="NewStatus" class="form-select form-select-sm d-inline w-auto me-2">
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Cancelled">Cancelled</option>
+                        <option value="Shipped">Shipped</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa fa-sync"></i> Change Status</button>
+                </form>
+                <a asp-area="Admin" asp-controller="Orders" asp-action="AddPayment" asp-route-orderId="@Model.Id" class="btn btn-sm btn-success">
+                    <i class="fa fa-credit-card"></i> Add Payment
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Inventory Allocation</strong>
+        <small class="text-muted">Allocate reserved stock & finalize picking</small>
+    </div>
+    <div class="card-body">
+        <p class="mb-3">
+            When allocation succeeds, the order transitions to <code>Shipped</code> (idempotent).
+        </p>
+
+        <form asp-area="Admin" asp-controller="Orders" asp-action="ChangeStatus" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="OrderId" value="@Model.Id" />
+            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+            <input type="hidden" name="NewStatus" value="Shipped" />
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="fa fa-dolly"></i> Allocate Now
+            </button>
+        </form>
+
+    @* Note: If we want to display a condition (for example, only when Status = Paid), we can activate the following condition:
+    @if (Model.Status != OrderStatus.Paid) {
+       <div class="alert alert-info mt-3 mb-0">Allocation is available once the order is Paid.</div>
+    }
+    *@
+    </div>
+</div>
+
+<h5>Lines</h5>
+<div class="table-responsive mb-3">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Name</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Unit</th>
+                <th class="text-end">Line</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var l in Model.Lines)
+            {
+                <tr>
+                    <td>@l.Sku</td>
+                    <td>@l.Name</td>
+                    <td class="text-end">@l.Quantity</td>
+                    <td class="text-end">@((l.UnitPriceGrossMinor / 100.0M).ToString("0.00"))</td>
+                    <td class="text-end">@((l.LineGrossMinor / 100.0M).ToString("0.00"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<ul class="nav nav-tabs" id="orderTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">Payments</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="shipments-tab" data-bs-toggle="tab" data-bs-target="#shipments" type="button" role="tab">Shipments</button>
+    </li>
+</ul>
+<div class="tab-content border border-top-0 p-3">
+    <div class="tab-pane fade show active" id="payments" role="tabpanel">
+        <div id="payments-grid" data-url="@Url.Action("Payments", "Orders", new { area = "Admin", orderId = Model.Id })"></div>
+    </div>
+    <div class="tab-pane fade" id="shipments" role="tabpanel">
+        <div id="shipments-grid" data-url="@Url.Action("Shipments", "Orders", new { area = "Admin", orderId = Model.Id })"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Loads a partial into a target element
+        async function loadPartial(el) {
+          const url = el.getAttribute('data-url');
+          const resp = await fetch(url, { method: 'GET' });
+          el.innerHTML = await resp.text();
+        }
+        // initial load
+        loadPartial(document.getElementById('payments-grid'));
+        loadPartial(document.getElementById('shipments-grid'));
+    </script>
+}

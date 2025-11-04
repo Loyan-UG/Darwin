@@ -91,6 +91,7 @@ namespace Darwin.Application.Orders.DTOs
         public List<OrderLineDetailDto> Lines { get; set; } = new();
         public List<PaymentDetailDto> Payments { get; set; } = new();
         public List<ShipmentDetailDto> Shipments { get; set; } = new();
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     public sealed class OrderLineDetailDto
@@ -194,5 +195,76 @@ namespace Darwin.Application.Orders.DTOs
         public Guid OrderId { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public OrderStatus NewStatus { get; set; }
+    }
+
+    /// <summary>
+    /// Lightweight list item used by Admin queries to render a paged grid of payments for a single order.
+    /// Includes RowVersion to support inline soft-delete or future concurrency-aware updates.
+    /// </summary>
+    public sealed class PaymentListItemDto
+    {
+        /// <summary>Primary key of the payment row.</summary>
+        public Guid Id { get; set; }
+
+        /// <summary>Owning order identifier.</summary>
+        public Guid OrderId { get; set; }
+
+        /// <summary>Logical provider name (e.g., "PayPal", "Stripe").</summary>
+        public string Provider { get; set; } = string.Empty;
+
+        /// <summary>External reference or transaction id provided by the PSP.</summary>
+        public string? ProviderReference { get; set; }
+
+        /// <summary>Payment currency (ISO 4217), typically same as the order's currency.</summary>
+        public string Currency { get; set; } = "EUR";
+
+        /// <summary>Amount in minor units (e.g., cents).</summary>
+        public long AmountMinor { get; set; }
+
+        /// <summary>Current processing state.</summary>
+        public Darwin.Domain.Enums.PaymentStatus Status { get; set; }
+
+        /// <summary>Optional failure reason provided by the gateway.</summary>
+        public string? FailureReason { get; set; }
+
+        /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
+        public DateTime CreatedAtUtc { get; set; }
+
+        /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    /// <summary>
+    /// Lightweight list item used by Admin queries to render a paged grid of shipments for a single order.
+    /// Includes RowVersion to support inline soft-delete or future concurrency-aware updates.
+    /// </summary>
+    public sealed class ShipmentListItemDto
+    {
+        /// <summary>Primary key of the shipment row.</summary>
+        public Guid Id { get; set; }
+
+        /// <summary>Owning order identifier.</summary>
+        public Guid OrderId { get; set; }
+
+        /// <summary>Carrier code/name (e.g., "DHL").</summary>
+        public string Carrier { get; set; } = string.Empty;
+
+        /// <summary>Service level (e.g., "Standard", "Express").</summary>
+        public string Service { get; set; } = string.Empty;
+
+        /// <summary>Optional tracking number provided by the carrier.</summary>
+        public string? TrackingNumber { get; set; }
+
+        /// <summary>Total weight of the shipment, unit decided by SiteSetting/UI.</summary>
+        public int TotalWeight { get; set; }
+
+        /// <summary>Current shipment lifecycle state.</summary>
+        public Darwin.Domain.Enums.ShipmentStatus Status { get; set; }
+
+        /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
+        public DateTime CreatedAtUtc { get; set; }
+
+        /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }

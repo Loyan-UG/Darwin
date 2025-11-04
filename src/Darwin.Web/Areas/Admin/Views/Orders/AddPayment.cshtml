@@ -1,0 +1,65 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Orders.PaymentCreateVm
+@{
+    ViewData["Title"] = "Add Payment";
+    var header = ViewBag.OrderHeader as Darwin.Web.Areas.Admin.ViewModels.Orders.OrderHeaderVm;
+}
+
+<h1 class="mb-3"><i class="fa fa-credit-card"></i> Add Payment</h1>
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+@if (header is not null)
+{
+    <div class="alert alert-info">
+        <strong>Order:</strong> @header.OrderNumber — <strong>Total:</strong> @header.Currency @((header.GrandTotalGrossMinor / 100.0M).ToString("0.00"))
+    </div>
+}
+
+<form asp-area="Admin" asp-controller="Orders" asp-action="AddPayment" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="OrderId" />
+    <div class="col-md-4">
+        <label asp-for="Provider" class="form-label"></label>
+        <input asp-for="Provider" class="form-control" />
+        <span asp-validation-for="Provider" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ProviderReference" class="form-label"></label>
+        <input asp-for="ProviderReference" class="form-control" />
+        <span asp-validation-for="ProviderReference" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="AmountMinor" class="form-label"></label>
+        <input asp-for="AmountMinor" class="form-control" />
+        <span asp-validation-for="AmountMinor" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Currency" class="form-label"></label>
+        <input asp-for="Currency" class="form-control" />
+        <span asp-validation-for="Currency" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select">
+            <option value="Captured">Captured</option>
+            <option value="Authorized">Authorized</option>
+            <option value="Failed">Failed</option>
+        </select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+    <div class="col-md-8">
+        <label asp-for="FailureReason" class="form-label"></label>
+        <input asp-for="FailureReason" class="form-control" />
+        <span asp-validation-for="FailureReason" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary">
+            <i class="fa fa-arrow-left"></i> Back
+        </a>
+        <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i> Save</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

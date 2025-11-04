@@ -54,4 +54,19 @@ namespace Darwin.Application.Catalog.Validators
             RuleFor(x => x.Hint).MaximumLength(256).When(x => x.Hint != null);
         }
     }
+
+    /// <summary>
+    /// Validates requests to attach an add-on group to products.
+    /// </summary>
+    public sealed class AddOnGroupAttachToProductsValidator : AbstractValidator<AddOnGroupAttachToProductsDto>
+    {
+        public AddOnGroupAttachToProductsValidator()
+        {
+            RuleFor(x => x.AddOnGroupId).NotEmpty();
+            RuleFor(x => x.ProductIds).NotNull();
+            // Replacing the full set is allowed to be empty.
+            RuleFor(x => x.RowVersion).NotNull().Must(rv => rv.Length > 0)
+                .WithMessage("RowVersion is required.");
+        }
+    }
 }

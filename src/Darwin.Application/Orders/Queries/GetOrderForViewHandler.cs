@@ -37,6 +37,7 @@ namespace Darwin.Application.Orders.Queries
                     Status = x.Status,
                     BillingAddressJson = x.BillingAddressJson,
                     ShippingAddressJson = x.ShippingAddressJson,
+                    RowVersion = x.RowVersion,
                     Lines = x.Lines.Select(l => new OrderLineDetailDto
                     {
                         Id = l.Id,

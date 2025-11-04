@@ -71,6 +71,12 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
+
+        /// <summary>
+        /// Concurrency token from <see cref="Darwin.Domain.Common.BaseEntity.RowVersion"/>.
+        /// Required by the Web layer to safely perform inline updates/deletes.
+        /// </summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>
@@ -80,5 +86,22 @@ namespace Darwin.Application.Catalog.DTOs
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+    }
+
+
+    /// <summary>
+    /// Request to attach an add-on group to a set of products, replacing any existing assignments.
+    /// The operation is performed with optimistic concurrency using the group's RowVersion.
+    /// </summary>
+    public sealed class AddOnGroupAttachToProductsDto
+    {
+        /// <summary>Target add-on group identifier.</summary>
+        public Guid AddOnGroupId { get; set; }
+
+        /// <summary>Selected product identifiers to be attached to the group.</summary>
+        public Guid[] ProductIds { get; set; } = Array.Empty<Guid>();
+
+        /// <summary>Concurrency token of the add-on group to protect from lost updates.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }

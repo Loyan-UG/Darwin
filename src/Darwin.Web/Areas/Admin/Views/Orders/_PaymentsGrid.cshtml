@@ -1,0 +1,45 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Orders.OrderPaymentsPageVm
+@{
+    // Server renders pager via TagHelper; actions stay on Details page and reload this partial via JS when needed.
+}
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Provider</th>
+                <th>Reference</th>
+                <th class="text-end">Amount</th>
+                <th>Status</th>
+                <th>Captured (UTC)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted">No payments.</td></tr>
+            }
+            else
+            {
+                foreach (var p in Model.Items)
+                {
+                    <tr>
+                        <td>@p.Provider</td>
+                        <td>@p.ProviderReference</td>
+                        <td class="text-end">@p.Currency @((p.AmountMinor / 100.0M).ToString("0.00"))</td>
+                        <td>@p.Status</td>
+                        <td>@(p.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-area="Admin"
+       asp-controller="Orders"
+       asp-action="Payments"
+       asp-route-orderId="@Model.OrderId">
+</pager>

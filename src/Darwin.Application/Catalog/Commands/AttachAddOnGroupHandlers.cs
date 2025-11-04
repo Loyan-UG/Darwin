@@ -1,43 +1,111 @@
-﻿using System;
+﻿using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Catalog.DTOs;
+using Darwin.Domain.Entities.Catalog;
+using Darwin.Shared.Results;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Darwin.Application.Abstractions.Persistence;
-using Darwin.Domain.Entities.Catalog;
-using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
-    /// Attaches an add-on group to products.
+    /// Replaces the set of products attached to an add-on group (upsert semantics).
+    /// This handler enforces:
+    /// - Group existence and concurrency (RowVersion).
+    /// - ProductIds validity (existing, not soft-deleted).
+    /// - Efficient set-diff to add new links and soft-delete removed ones.
     /// </summary>
     public sealed class AttachAddOnGroupToProductsHandler
     {
         private readonly IAppDbContext _db;
-        public AttachAddOnGroupToProductsHandler(IAppDbContext db) => _db = db;
+        private readonly IValidator<AddOnGroupAttachToProductsDto> _validator;
 
-        public async Task HandleAsync(Guid groupId, IEnumerable<Guid> productIds, CancellationToken ct = default)
+        public AttachAddOnGroupToProductsHandler(IAppDbContext db, IValidator<AddOnGroupAttachToProductsDto> validator)
         {
-            var groupExists = await _db.Set<AddOnGroup>().AnyAsync(g => g.Id == groupId && !g.IsDeleted, ct);
-            if (!groupExists) throw new InvalidOperationException("Add-on group not found.");
+            _db = db;
+            _validator = validator;
+        }
 
-            var existing = await _db.Set<AddOnGroupProduct>()
-                .Where(x => x.AddOnGroupId == groupId)
+        /// <summary>
+        /// Performs a replace operation:
+        /// Existing active links for the group are compared to the requested set.
+        /// New ones are inserted; missing ones are soft-deleted.
+        /// </summary>
+        public async Task<Result> HandleAsync(AddOnGroupAttachToProductsDto dto, CancellationToken ct = default)
+        {
+            await _validator.ValidateAndThrowAsync(dto, ct);
+
+            // Load the group with RowVersion for optimistic concurrency check.
+            var group = await _db.Set<AddOnGroup>()
+                .Where(g => g.Id == dto.AddOnGroupId && !g.IsDeleted)
+                .Select(g => new { g.Id, g.RowVersion })
+                .FirstOrDefaultAsync(ct);
+
+            if (group is null)
+                return Result.Fail("Add-on group not found.");
+
+            // Manual RowVersion check, because IAppDbContext does not expose Entry(..).
+            if (!dto.RowVersion.SequenceEqual(group.RowVersion))
+                return Result.Fail("The add-on group was modified by another operation. Please reload and retry.");
+
+            // Validate product ids exist and are not soft-deleted.
+            var validProductIds = await _db.Set<Product>()
+                .AsNoTracking()
+                .Where(p => dto.ProductIds.Contains(p.Id) && !p.IsDeleted)
+                .Select(p => p.Id)
                 .ToListAsync(ct);
 
-            _db.Set<AddOnGroupProduct>().RemoveRange(existing);
+            if (validProductIds.Count != dto.ProductIds.Distinct().Count())
+                return Result.Fail("One or more products were not found or are deleted.");
 
-            var toAdd = productIds.Distinct().Select(pid => new AddOnGroupProduct
+            // Current active links for the group.
+            var existing = await _db.Set<AddOnGroupProduct>()
+                .Where(x => x.AddOnGroupId == group.Id && !x.IsDeleted)
+                .Select(x => new { x.Id, x.ProductId })
+                .ToListAsync(ct);
+
+            var existingSet = existing.Select(e => e.ProductId).ToHashSet();
+            var requestedSet = validProductIds.ToHashSet();
+
+            // To add: requested - existing
+            var toAdd = requestedSet.Except(existingSet).ToList();
+
+            // To remove (soft delete): existing - requested
+            var toRemove = existing.Where(e => !requestedSet.Contains(e.ProductId)).Select(e => e.Id).ToList();
+
+            if (toAdd.Count > 0)
             {
-                AddOnGroupId = groupId,
-                ProductId = pid
-            });
+                foreach (var pid in toAdd)
+                {
+                    // Join entity has public setters per Domain dump; soft delete handled globally.
+                    _db.Set<AddOnGroupProduct>().Add(new AddOnGroupProduct
+                    {
+                        AddOnGroupId = group.Id,
+                        ProductId = pid
+                    });
+                }
+            }
 
-            _db.Set<AddOnGroupProduct>().AddRange(toAdd);
+            if (toRemove.Count > 0)
+            {
+                var removeRows = await _db.Set<AddOnGroupProduct>()
+                    .Where(x => toRemove.Contains(x.Id))
+                    .ToListAsync(ct);
+
+                // Soft delete (IsDeleted) is mapped by BaseEntity; auditing occurs in DbContext.
+                foreach (var r in removeRows)
+                    r.IsDeleted = true;
+            }
+
             await _db.SaveChangesAsync(ct);
+            return Result.Ok();
         }
     }
+
 
     /// <summary>
     /// Attaches an add-on group to categories.

@@ -1,0 +1,53 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Orders.OrdersListVm
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<h1 class="mb-3"><i class="fa fa-receipt"></i> Orders</h1>
+
+<partial name="~/Areas/Admin/Views/Shared/_Alerts.cshtml" />
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Created (UTC)</th>
+                <th class="text-end" style="width:160px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted">No orders.</td></tr>
+            }
+            else
+            {
+                foreach (var o in Model.Items)
+                {
+                    <tr>
+                        <td>@o.OrderNumber</td>
+                        <td>@o.Status</td>
+                        <td>@o.Currency @((o.GrandTotalGrossMinor / 100.0M).ToString("0.00"))</td>
+                        <td>@o.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td class="text-end">
+                            <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-area="Admin"
+       asp-controller="Orders"
+       asp-action="Index">
+</pager>
