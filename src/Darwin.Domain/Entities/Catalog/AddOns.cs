@@ -104,4 +104,18 @@ namespace Darwin.Domain.Entities.Catalog
         public Guid AddOnGroupId { get; set; }
         public Guid BrandId { get; set; }
     }
+
+    /// <summary>
+    /// Assignment: attaches an add-on group to a specific product variant.
+    /// Precedence for applicable add-ons becomes:
+    /// Variant → Product → Category → Brand → Global
+    /// </summary>
+    public sealed class AddOnGroupVariant : BaseEntity
+    {
+        /// <summary>Identifier of the add-on group.</summary>
+        public Guid AddOnGroupId { get; set; }
+
+        /// <summary>Identifier of the product variant.</summary>
+        public Guid VariantId { get; set; }
+    }
 }

@@ -1,5 +1,4 @@
-﻿// File: src/Darwin.Application/Identity/Commands/UpdateCurrentUserHandler.cs
-using System.Collections;
+﻿using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Auth;

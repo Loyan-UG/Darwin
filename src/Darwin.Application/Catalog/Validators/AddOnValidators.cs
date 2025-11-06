@@ -69,4 +69,18 @@ namespace Darwin.Application.Catalog.Validators
                 .WithMessage("RowVersion is required.");
         }
     }
+
+    /// <summary>
+    /// Validation rules for <see cref="AddOnGroupAttachToVariantsDto"/>.
+    /// </summary>
+    public sealed class AddOnGroupAttachToVariantsValidator : AbstractValidator<AddOnGroupAttachToVariantsDto>
+    {
+        public AddOnGroupAttachToVariantsValidator()
+        {
+            RuleFor(x => x.AddOnGroupId).NotEmpty();
+            RuleFor(x => x.RowVersion).NotNull();
+            RuleFor(x => x.VariantIds).NotNull();
+            RuleForEach(x => x.VariantIds).NotEmpty();
+        }
+    }
 }

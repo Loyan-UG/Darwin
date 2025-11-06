@@ -45,7 +45,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         /// Paged list of brands with a simple query (by name/slug if supported at query side).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, 
+            string? query = null, CancellationToken ct = default)
         {
             var (items, total) = await _getPage.HandleAsync(page, pageSize, "de-DE", ct);
 

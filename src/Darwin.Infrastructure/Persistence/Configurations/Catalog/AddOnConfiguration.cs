@@ -113,4 +113,21 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Catalog
             builder.HasIndex(x => new { x.AddOnGroupId, x.BrandId }).IsUnique();
         }
     }
+
+    /// <summary>
+    /// Join entity configuration for <see cref="AddOnGroupVariant"/>.
+    /// Enforces uniqueness per (Group, Variant).
+    /// </summary>
+    public sealed class AddOnGroupVariantConfiguration : IEntityTypeConfiguration<AddOnGroupVariant>
+    {
+        public void Configure(EntityTypeBuilder<AddOnGroupVariant> builder)
+        {
+            builder.ToTable("AddOnGroupVariants", schema: "Catalog");
+
+            builder.HasKey(x => x.Id);
+
+            // Ensure no duplicate active link exists for a (Group, Variant) pair.
+            builder.HasIndex(x => new { x.AddOnGroupId, x.VariantId }).IsUnique();
+        }
+    }
 }

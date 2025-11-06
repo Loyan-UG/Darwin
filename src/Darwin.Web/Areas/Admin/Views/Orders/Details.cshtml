@@ -17,7 +17,8 @@
                     <input type="hidden" name="OrderId" value="@Model.Id" />
                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
                     <select name="NewStatus" class="form-select form-select-sm d-inline w-auto me-2">
-                        <option value="Pending">Pending</option>
+                        <!-- Use only valid statuses or only allowed transitions -->
+                        @* <option value="Pending">Pending</option> *@
                         <option value="Paid">Paid</option>
                         <option value="Cancelled">Cancelled</option>
                         <option value="Shipped">Shipped</option>

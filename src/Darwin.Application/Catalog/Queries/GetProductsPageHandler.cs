@@ -47,6 +47,7 @@ namespace Darwin.Application.Catalog.Queries
                         .FirstOrDefault() ?? p.Translations.Select(t => t.Name).FirstOrDefault(),
                     IsActive = p.IsActive,
                     IsVisible = p.IsVisible,
+                    RowVersion = p.RowVersion,
                     VariantCount = p.Variants.Count
                 });
 

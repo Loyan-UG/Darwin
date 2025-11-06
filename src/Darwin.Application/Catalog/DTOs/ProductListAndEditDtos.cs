@@ -10,6 +10,7 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsActive { get; set; }
         public bool IsVisible { get; set; }
         public int VariantCount { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>

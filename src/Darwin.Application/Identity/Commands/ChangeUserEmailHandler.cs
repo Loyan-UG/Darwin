@@ -1,5 +1,4 @@
-﻿// File: src/Darwin.Application/Identity/Commands/ChangeUserEmailHandler.cs
-using Darwin.Application.Abstractions.Auth;
+﻿using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;

@@ -50,5 +50,6 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsActive { get; set; }
         public int SortOrder { get; set; }
         public Guid? ParentId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }

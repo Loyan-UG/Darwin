@@ -35,6 +35,7 @@ namespace Darwin.Application.Catalog.Queries
                         ?? c.Translations.Select(t => t.Name).FirstOrDefault(),
                     IsActive = c.IsActive,
                     SortOrder = c.SortOrder,
+                    RowVersion = c.RowVersion,
                     ParentId = c.ParentId
                 })
                 .OrderBy(x => x.SortOrder)
