@@ -1,0 +1,172 @@
+﻿@* Works with both CreateVm and EditVm since they share the same properties for options/values *@
+@model dynamic
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong><i class="fa fa-list-ul"></i> Options & Values</strong>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddOption">
+            <i class="fa fa-plus"></i> Add Option
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="optionsContainer">
+            @for (var i = 0; i < (Model.Options?.Count ?? 0); i++)
+            {
+                <div class="option-block border rounded p-3 mb-3" data-index="@i">
+                    <div class="d-flex justify-content-between">
+                        <div class="me-2 flex-grow-1">
+                            <label class="form-label">Option Label</label>
+                            <input class="form-control" name="Options[@i].Label" value="@Model.Options[i].Label" />
+                        </div>
+                        <div style="width:140px">
+                            <label class="form-label">Sort Order</label>
+                            <input class="form-control" name="Options[@i].SortOrder" value="@Model.Options[i].SortOrder" />
+                        </div>
+                        <div class="align-self-end ms-2">
+                            <button type="button" class="btn btn-outline-danger btnRemoveOption"><i class="fa fa-trash"></i></button>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <div class="values-container">
+                        @for (var j = 0; j < (Model.Options[i].Values?.Count ?? 0); j++)
+                        {
+                            <div class="row g-2 align-items-end value-row mb-2" data-vindex="@j">
+                                <div class="col-md-3">
+                                    <label class="form-label">Value Label</label>
+                                    <input class="form-control" name="Options[@i].Values[@j].Label" value="@Model.Options[i].Values[j].Label" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Price Δ (minor)</label>
+                                    <input class="form-control" name="Options[@i].Values[@j].PriceDeltaMinor" value="@Model.Options[i].Values[j].PriceDeltaMinor" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Hint</label>
+                                    <input class="form-control" name="Options[@i].Values[@j].Hint" value="@Model.Options[i].Values[j].Hint" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Sort</label>
+                                    <input class="form-control" name="Options[@i].Values[@j].SortOrder" value="@Model.Options[i].Values[j].SortOrder" />
+                                </div>
+                                <div class="col-md-1 text-center">
+                                    <label class="form-label">Active</label>
+                                    <input class="form-check-input mt-2" type="checkbox" name="Options[@i].Values[@j].IsActive"
+                                           @(Model.Options[i].Values[j].IsActive ? "checked" : "") />
+                                </div>
+                                <div class="col-md-12 text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-danger btnRemoveValue"><i class="fa fa-times"></i> Remove</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btnAddValue"><i class="fa fa-plus"></i> Add Value</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Templates -->
+<script type="text/template" id="tplOption">
+    <div class="option-block border rounded p-3 mb-3" data-index="{{i}}">
+      <div class="d-flex justify-content-between">
+        <div class="me-2 flex-grow-1">
+          <label class="form-label">Option Label</label>
+          <input class="form-control" name="Options[{{i}}].Label" />
+        </div>
+        <div style="width:140px">
+          <label class="form-label">Sort Order</label>
+          <input class="form-control" name="Options[{{i}}].SortOrder" value="0" />
+        </div>
+        <div class="align-self-end ms-2">
+          <button type="button" class="btn btn-outline-danger btnRemoveOption"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>
+      <hr />
+      <div class="values-container"></div>
+      <button type="button" class="btn btn-sm btn-outline-secondary btnAddValue"><i class="fa fa-plus"></i> Add Value</button>
+    </div>
+</script>
+
+<script type="text/template" id="tplValue">
+    <div class="row g-2 align-items-end value-row mb-2" data-vindex="{{j}}">
+      <div class="col-md-3">
+        <label class="form-label">Value Label</label>
+        <input class="form-control" name="Options[{{i}}].Values[{{j}}].Label" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Price Δ (minor)</label>
+        <input class="form-control" name="Options[{{i}}].Values[{{j}}].PriceDeltaMinor" value="0" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Hint</label>
+        <input class="form-control" name="Options[{{i}}].Values[{{j}}].Hint" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Sort</label>
+        <input class="form-control" name="Options[{{i}}].Values[{{j}}].SortOrder" value="0" />
+      </div>
+      <div class="col-md-1 text-center">
+        <label class="form-label">Active</label>
+        <input class="form-check-input mt-2" type="checkbox" name="Options[{{i}}].Values[{{j}}].IsActive" checked />
+      </div>
+      <div class="col-md-12 text-end">
+        <button type="button" class="btn btn-sm btn-outline-danger btnRemoveValue"><i class="fa fa-times"></i> Remove</button>
+      </div>
+    </div>
+</script>
+
+@section Scripts {
+    <script>
+        (function(){
+          const container = document.getElementById('optionsContainer');
+          const tplOpt = document.getElementById('tplOption').innerHTML;
+          const tplVal = document.getElementById('tplValue').innerHTML;
+          const btnAddOption = document.getElementById('btnAddOption');
+
+          function render(template, data) {
+            return template.replace(/{{(\w+)}}/g, (_, k) => data[k]);
+          }
+
+          function nextOptionIndex() {
+            const blocks = container.querySelectorAll('.option-block');
+            let max = -1;
+            blocks.forEach(b => { max = Math.max(max, parseInt(b.getAttribute('data-index')) || 0); });
+            return max + 1;
+          }
+
+          function nextValueIndex(optBlock) {
+            const rows = optBlock.querySelectorAll('.value-row');
+            return rows.length;
+          }
+
+          container.addEventListener('click', function(e){
+            if (e.target.closest('.btnRemoveOption')) {
+              e.preventDefault();
+              e.target.closest('.option-block').remove();
+            }
+            if (e.target.closest('.btnAddValue')) {
+              e.preventDefault();
+              const opt = e.target.closest('.option-block');
+              const i = opt.getAttribute('data-index');
+              const j = nextValueIndex(opt);
+              const html = render(tplVal, { i, j });
+              opt.querySelector('.values-container').insertAdjacentHTML('beforeend', html);
+            }
+            if (e.target.closest('.btnRemoveValue')) {
+              e.preventDefault();
+              e.target.closest('.value-row').remove();
+            }
+          });
+
+          if (btnAddOption) {
+            btnAddOption.addEventListener('click', function(e){
+              e.preventDefault();
+              const i = nextOptionIndex();
+              const html = render(tplOpt, { i });
+              container.insertAdjacentHTML('beforeend', html);
+            });
+          }
+        })();
+    </script>
+}

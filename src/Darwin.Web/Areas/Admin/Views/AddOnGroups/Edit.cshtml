@@ -1,13 +1,15 @@
-﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.AddOnGroupCreateVm
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.AddOnGroupEditVm
 
 @{
-    ViewData["Title"] = "Create Add-on Group";
+    ViewData["Title"] = "Edit Add-on Group";
 }
 
-<h1 class="mb-3"><i class="fa fa-plus-circle"></i> New Add-on Group</h1>
+<h1 class="mb-3"><i class="fa fa-pen"></i> Edit: @Model.Name</h1>
 
-<form asp-area="Admin" asp-controller="AddOnGroups" asp-action="Create" method="post" class="needs-validation" novalidate>
+<form asp-area="Admin" asp-controller="AddOnGroups" asp-action="Edit" method="post" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
 
     <div class="card mb-3">
         <div class="card-body row g-3">
@@ -69,7 +71,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Uppercase currency input
         const c = document.getElementById('Currency');
         if (c) c.addEventListener('input', function () { this.value = this.value.toUpperCase(); });
     </script>
