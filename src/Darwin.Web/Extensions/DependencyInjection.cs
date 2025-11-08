@@ -216,10 +216,18 @@ namespace Darwin.Web.Extensions
             services.AddScoped<ReleaseInventoryReservationHandler>();
             services.AddScoped<AllocateInventoryForOrderHandler>();
 
-            
-            
-            
-            
+
+            // inside AddWebComposition(...) or your DI extension where other handlers are registered
+            services.AddScoped<GetAddOnGroupsPageHandler>();
+            services.AddScoped<GetAddOnGroupForEditHandler>();
+            services.AddScoped<CreateAddOnGroupHandler>();
+            services.AddScoped<UpdateAddOnGroupHandler>();
+            services.AddScoped<SoftDeleteAddOnGroupHandler>();
+
+            services.AddScoped<AttachAddOnGroupToProductsHandler>();
+            services.AddScoped<GetApplicableAddOnGroupsForProductHandler>();
+
+
             // MVC and localization. RuntimeCompilation is useful during development; remove in production.
             services
                 .AddControllersWithViews(options =>

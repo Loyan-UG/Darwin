@@ -12,13 +12,13 @@ namespace Darwin.Application.Catalog.Queries
 {
     /// <summary>
     /// Resolves the set of add-on groups applicable to a given product (and optionally a specific variant),
-    /// following the precedence documented in the Domain/Application:
-    /// Variant → Product -> Category (PrimaryCategoryId) -> Brand -> Global (IsGlobal = true).
+    /// following the precedence:
+    ///   Variant → Product → Category (PrimaryCategoryId) → Brand → Global (IsGlobal = true).
     /// Only active groups and active values are returned.
     /// </summary>
     /// <remarks>
     /// This query is designed for Admin UI and Storefront composition:
-    /// - Admin: preview which groups will be shown for a product.
+    /// - Admin: preview which groups will be shown for a product/variant.
     /// - Storefront: build the configuration UI for add-on selections.
     /// To keep reads efficient, the query projects directly into DTOs using EF-friendly Select().
     /// </remarks>

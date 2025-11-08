@@ -83,4 +83,26 @@ namespace Darwin.Application.Catalog.Validators
             RuleForEach(x => x.VariantIds).NotEmpty();
         }
     }
+
+
+    /// <summary>
+    /// Validates delete requests for add-on groups coming from the Admin list page.
+    /// </summary>
+    public sealed class AddOnGroupDeleteValidator : AbstractValidator<AddOnGroupDeleteDto>
+    {
+        /// <summary>
+        /// Creates a new validator instance with basic non-null and format rules.
+        /// </summary>
+        public AddOnGroupDeleteValidator()
+        {
+            RuleFor(x => x.Id)
+                .NotEmpty()
+                .WithMessage("Id is required.");
+
+            RuleFor(x => x.RowVersion)
+                .NotNull()
+                .Must(rv => rv!.Length > 0)
+                .WithMessage("RowVersion is required.");
+        }
+    }
 }

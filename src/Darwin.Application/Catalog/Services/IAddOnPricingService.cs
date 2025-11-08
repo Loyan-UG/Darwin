@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Darwin.Application.Catalog.Services
+﻿namespace Darwin.Application.Catalog.Services
 {
     /// <summary>
     /// Abstraction for validating add-on selections and computing the total price delta
     /// contributed by those selections for a given variant.
-    /// Implementations may use database lookups or in-memory catalogs as needed.
+    /// Resolution precedence for applicable groups:
+    ///   Variant → Product → Category → Brand → Global.
+    /// Implementations should enforce group constraints (selection mode, min/max, active states).
     /// </summary>
     public interface IAddOnPricingService
     {

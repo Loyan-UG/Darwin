@@ -71,7 +71,7 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsGlobal { get; set; }
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
-        public DateTime? ModifiedAtUtc { get; set; }
+        public DateTime ModifiedAtUtc { get; set; }
 
         /// <summary>
         /// Concurrency token from <see cref="Darwin.Domain.Common.BaseEntity.RowVersion"/>.
@@ -194,5 +194,22 @@ namespace Darwin.Application.Catalog.DTOs
 
         /// <summary>Concurrency token of the group to guard against races.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+
+    /// <summary>
+    /// Carries the data required to soft-delete an AddOnGroup from grid actions.
+    /// Includes the concurrency token to guard against stale row edits.
+    /// </summary>
+    public sealed class AddOnGroupDeleteDto
+    {
+        /// <summary>Identifier of the add-on group to delete.</summary>
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// Optimistic concurrency token captured at list time and echoed back by the UI.
+        /// Must match the current RowVersion in the database for the delete to succeed.
+        /// </summary>
+        public byte[]? RowVersion { get; set; }
     }
 }

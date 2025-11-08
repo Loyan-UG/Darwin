@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Darwin.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace Darwin.Web.Areas.Admin.ViewModels.Catalog
@@ -37,7 +38,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Catalog
         public string Currency { get; set; } = "EUR";
 
         /// <summary>Selection mode representation (e.g., "Single", "Multiple"). Bind to the enum in the view.</summary>
-        public string SelectionMode { get; set; } = "Single";
+        public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;
 
         /// <summary>Minimum required selections.</summary>
         public int MinSelections { get; set; }

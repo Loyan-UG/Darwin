@@ -1,0 +1,136 @@
+﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.AddOnGroupsListVm
+@{
+    ViewData["Title"] = "Add-on Groups";
+}
+
+<h1 class="mb-3"><i class="fa fa-layer-group"></i> Add-on Groups</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search name/currency..." />
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-outline-primary"><i class="fa fa-search"></i> Search</button>
+        <a asp-area="Admin" asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </div>
+    <div class="col-auto ms-auto">
+        <a asp-area="Admin" asp-controller="AddOnGroups" asp-action="Create" class="btn btn-primary">
+            <i class="fa fa-plus"></i> New Group
+        </a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Currency</th>
+                <th class="text-center">Global</th>
+                <th class="text-center">Active</th>
+                <th class="text-center">Options</th>
+                <th>Modified</th>
+                <th class="text-end" style="width:420px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted">No groups.</td></tr>
+            }
+            else
+            {
+                foreach (var g in Model.Items)
+                {
+                    <tr>
+                        <td>@g.Name</td>
+                        <td>@g.Currency</td>
+                        <td class="text-center">
+                            <i class="fa @(g.IsGlobal ? "fa-check text-success" : "fa-minus text-muted")"></i>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge @(g.IsActive ? "text-bg-success" : "text-bg-secondary")">@(g.IsActive ? "Yes" : "No")</span>
+                        </td>
+                        <td class="text-center">@g.OptionsCount</td>
+                        <td>@g.ModifiedAtUtc.ToLocalTime()</td>
+                        <td class="text-end">
+                            <a asp-area="Admin" asp-controller="AddOnGroups" asp-action="Edit" asp-route-id="@g.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa fa-pen"></i> Edit
+                            </a>
+
+                            <!-- Attach routes -->
+                            <div class="btn-group">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachVariants" asp-route-id="@g.Id">
+                                    <i class="fa fa-sitemap"></i> Variants
+                                </a>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachProducts" asp-route-id="@g.Id">
+                                    <i class="fa fa-box"></i> Products
+                                </a>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachCategories" asp-route-id="@g.Id">
+                                    <i class="fa fa-tags"></i> Categories
+                                </a>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachBrands" asp-route-id="@g.Id">
+                                    <i class="fa fa-industry"></i> Brands
+                                </a>
+                            </div>
+
+                            <!-- Delete via confirm modal (include RowVersion) -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("Delete", "AddOnGroups", new { area = "Admin" })"
+                                    data-id="@g.Id"
+                                    data-name="@g.Name"
+                                    data-rowversion="@Convert.ToBase64String(g.RowVersion)">
+                                <i class="fa fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-area="Admin"
+       asp-controller="AddOnGroups"
+       asp-action="Index"
+       asp-route-query="@Model.Query">
+</pager>
+
+<partial name="~/Areas/Admin/Views/Shared/_ConfirmDeleteModal.cshtml" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Bind confirm delete modal (same pattern used across Admin)
+        const confirmModal = document.getElementById('confirmDeleteModal');
+        if (confirmModal) {
+            confirmModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                const action = btn.getAttribute('data-action');
+                const id = btn.getAttribute('data-id');
+                const name = btn.getAttribute('data-name') || '';
+                const rowVersion = btn.getAttribute('data-rowversion') || '';
+
+                const form = confirmModal.querySelector('form');
+                form.setAttribute('action', action);
+                form.querySelector('input[name="id"]').value = id;
+                const rv = form.querySelector('input[name="rowVersion"]');
+                if (rv) rv.value = rowVersion;
+
+                const lbl = confirmModal.querySelector('[data-confirm-name]');
+                if (lbl) lbl.textContent = name;
+            });
+        }
+    </script>
+}

@@ -63,15 +63,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                     Slug = b.Slug,
                     ModifiedAtUtc = b.ModifiedAtUtc,
                     RowVersion = b.RowVersion
-                }).ToList(),
-                // Standard page-size choices for the pager
-                PageSizeItems =
-                    [
-                        new SelectListItem("10",  "10",  pageSize == 10),
-                        new SelectListItem("20",  "20",  pageSize == 20),
-                        new SelectListItem("50",  "50",  pageSize == 50),
-                        new SelectListItem("100", "100", pageSize == 100),
-                    ]
+                }).ToList()
             };
 
             return View(vm);
