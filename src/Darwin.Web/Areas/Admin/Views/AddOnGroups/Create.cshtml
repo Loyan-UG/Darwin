@@ -8,6 +8,7 @@
 
 <form asp-area="Admin" asp-controller="AddOnGroups" asp-action="Create" method="post" class="needs-validation" novalidate>
     @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <div class="card mb-3">
         <div class="card-body row g-3">

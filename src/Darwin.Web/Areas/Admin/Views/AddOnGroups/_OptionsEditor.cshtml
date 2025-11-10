@@ -1,172 +1,289 @@
 ﻿@* Works with both CreateVm and EditVm since they share the same properties for options/values *@
 @model dynamic
 
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <strong><i class="fa fa-list-ul"></i> Options & Values</strong>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddOption">
-            <i class="fa fa-plus"></i> Add Option
-        </button>
+@* @model Darwin.Web.Areas.Admin.ViewModels.Catalog.AddOnGroupEditVm *@
+@* 
+  Inline options editor for Add-on Group aggregate (Options + Values).
+  IMPORTANT:
+  - Do NOT use @section inside a partial. Scripts are included inline below.
+  - Input name patterns MUST remain consistent with MVC binder:
+      Options[i].Label
+      Options[i].SortOrder
+      Options[i].Values[j].Label
+      Options[i].Values[j].PriceDeltaMinor
+      Options[i].Values[j].Hint
+      Options[i].Values[j].SortOrder
+      Options[i].Values[j].IsActive
+*@
+
+<div class="card mb-3">
+    <div class="card-header">
+        Options & Values
     </div>
     <div class="card-body">
-        <div id="optionsContainer">
-            @for (var i = 0; i < (Model.Options?.Count ?? 0); i++)
-            {
-                <div class="option-block border rounded p-3 mb-3" data-index="@i">
-                    <div class="d-flex justify-content-between">
-                        <div class="me-2 flex-grow-1">
-                            <label class="form-label">Option Label</label>
-                            <input class="form-control" name="Options[@i].Label" value="@Model.Options[i].Label" />
-                        </div>
-                        <div style="width:140px">
-                            <label class="form-label">Sort Order</label>
-                            <input class="form-control" name="Options[@i].SortOrder" value="@Model.Options[i].SortOrder" />
-                        </div>
-                        <div class="align-self-end ms-2">
-                            <button type="button" class="btn btn-outline-danger btnRemoveOption"><i class="fa fa-trash"></i></button>
-                        </div>
-                    </div>
 
-                    <hr />
-                    <div class="values-container">
-                        @for (var j = 0; j < (Model.Options[i].Values?.Count ?? 0); j++)
-                        {
-                            <div class="row g-2 align-items-end value-row mb-2" data-vindex="@j">
-                                <div class="col-md-3">
-                                    <label class="form-label">Value Label</label>
-                                    <input class="form-control" name="Options[@i].Values[@j].Label" value="@Model.Options[i].Values[j].Label" />
+        <div class="alert alert-info mb-3">
+            Use options (e.g., <em>Size</em>, <em>Sauce</em>) and values (e.g., <em>Large</em>, <em>Extra spicy</em>).
+            Values may add/subtract price via <strong>Price Delta (minor units)</strong>.
+        </div>
+
+        <div id="options-editor" data-options-prefix="Options">
+            <div id="options-container">
+                @if (Model.Options != null && Model.Options.Count > 0)
+                {
+                    for (var i = 0; i < Model.Options.Count; i++)
+                    {
+                        var opt = Model.Options[i];
+                        <div class="option-item border rounded p-2 mb-2" data-index="@i">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        Option Label <span class="text-danger">*</span>
+                                    </label>
+                                    <field-help title="Option label"
+                                                content="Displayed heading for this option (e.g., Size, Toppings)."
+                                                placement="right"></field-help>
+                                    <input class="form-control"
+                                           name="Options[@i].Label"
+                                           value="@opt.Label" required />
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Price Δ (minor)</label>
-                                    <input class="form-control" name="Options[@i].Values[@j].PriceDeltaMinor" value="@Model.Options[i].Values[j].PriceDeltaMinor" />
+                                    <label class="form-label">
+                                        Sort Order
+                                    </label>
+                                    <field-help title="Sort order"
+                                                content="Lower numbers appear first among options."
+                                                placement="right"></field-help>
+                                    <input type="number" class="form-control"
+                                           name="Options[@i].SortOrder" value="@opt.SortOrder" />
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Hint</label>
-                                    <input class="form-control" name="Options[@i].Values[@j].Hint" value="@Model.Options[i].Values[j].Hint" />
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Sort</label>
-                                    <input class="form-control" name="Options[@i].Values[@j].SortOrder" value="@Model.Options[i].Values[j].SortOrder" />
-                                </div>
-                                <div class="col-md-1 text-center">
-                                    <label class="form-label">Active</label>
-                                    <input class="form-check-input mt-2" type="checkbox" name="Options[@i].Values[@j].IsActive"
-                                           @(Model.Options[i].Values[j].IsActive ? "checked" : "") />
-                                </div>
-                                <div class="col-md-12 text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-danger btnRemoveValue"><i class="fa fa-times"></i> Remove</button>
+                                <div class="col-md-3 text-end">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-remove-option>
+                                        <i class="fa fa-trash"></i> Remove Option
+                                    </button>
                                 </div>
                             </div>
-                        }
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary btnAddValue"><i class="fa fa-plus"></i> Add Value</button>
-                </div>
-            }
+
+                            <div class="mt-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong>Values</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-add-value>
+                                        <i class="fa fa-plus"></i> Add Value
+                                    </button>
+                                </div>
+
+                                <div class="values-container">
+                                    @if (opt.Values != null && opt.Values.Count > 0)
+                                    {
+                                        for (var j = 0; j < opt.Values.Count; j++)
+                                        {
+                                            var val = opt.Values[j];
+                                            <div class="value-item border rounded p-2 mb-2" data-vindex="@j">
+                                                <div class="row g-2">
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">
+                                                            Value Label <span class="text-danger">*</span>
+                                                        </label>
+                                                        <field-help title="Value label"
+                                                                    content="Selectable item shown to the user (e.g., Large, Extra Cheese)."
+                                                                    placement="right"></field-help>
+                                                        <input class="form-control"
+                                                               name="Options[@i].Values[@j].Label"
+                                                               value="@val.Label" required />
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Price Delta (minor) <span class="text-danger">*</span></label>
+                                                        <field-help title="Price delta"
+                                                                    content="Minor currency units (e.g., cents). Can be negative."
+                                                                    placement="right"></field-help>
+                                                        <input type="number" class="form-control"
+                                                               name="Options[@i].Values[@j].PriceDeltaMinor"
+                                                               value="@val.PriceDeltaMinor" required />
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Sort Order</label>
+                                                        <field-help title="Sort order"
+                                                                    content="Lower numbers appear first among values."
+                                                                    placement="right"></field-help>
+                                                        <input type="number" class="form-control"
+                                                               name="Options[@i].Values[@j].SortOrder"
+                                                               value="@val.SortOrder" />
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <label class="form-label d-block">Active</label>
+                                                        <div class="form-check mt-2">
+                                                            <!-- Required for ASP.NET Core checkbox binding (false+true pair) -->
+                                                            <input type="hidden" name="Options[@i].Values[@j].IsActive" value="false" />
+                                                            <input class="form-check-input" type="checkbox"
+                                                                   name="Options[@i].Values[@j].IsActive"
+                                                                   value="true" @(val.IsActive ? "checked" : "") />
+                                                            <label class="form-check-label">Yes</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label">Hint</label>
+                                                        <field-help title="Optional hint"
+                                                                    content="Extra info like color hex (#000000) or a short note."
+                                                                    placement="right"></field-help>
+                                                        <input class="form-control"
+                                                               name="Options[@i].Values[@j].Hint"
+                                                               value="@val.Hint" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-end mt-2">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm" data-remove-value>
+                                                        <i class="fa fa-trash"></i> Remove Value
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="mt-2">
+                <button type="button" class="btn btn-outline-primary" id="btnAddOption">
+                    <i class="fa fa-plus"></i> Add Option
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Templates -->
-<script type="text/template" id="tplOption">
-    <div class="option-block border rounded p-3 mb-3" data-index="{{i}}">
-      <div class="d-flex justify-content-between">
-        <div class="me-2 flex-grow-1">
-          <label class="form-label">Option Label</label>
-          <input class="form-control" name="Options[{{i}}].Label" />
-        </div>
-        <div style="width:140px">
-          <label class="form-label">Sort Order</label>
-          <input class="form-control" name="Options[{{i}}].SortOrder" value="0" />
-        </div>
-        <div class="align-self-end ms-2">
-          <button type="button" class="btn btn-outline-danger btnRemoveOption"><i class="fa fa-trash"></i></button>
-        </div>
-      </div>
-      <hr />
-      <div class="values-container"></div>
-      <button type="button" class="btn btn-sm btn-outline-secondary btnAddValue"><i class="fa fa-plus"></i> Add Value</button>
-    </div>
+<!-- Inline script inside partial (no section) -->
+<script>
+    (function () {
+      // Root container and constants
+      const root = document.getElementById('options-editor');
+      if (!root) return;
+
+      const optionsContainer = root.querySelector('#options-container');
+      const addOptionBtn = root.querySelector('#btnAddOption');
+      const prefix = root.getAttribute('data-options-prefix') || 'Options';
+
+      // Utility: next option index
+      const nextOptionIndex = () => {
+        const items = optionsContainer.querySelectorAll('.option-item');
+        let max = -1;
+        items.forEach(it => {
+          const idx = parseInt(it.getAttribute('data-index') || '-1', 10);
+          if (!Number.isNaN(idx) && idx > max) max = idx;
+        });
+        return max + 1;
+      };
+
+      // Utility: build an empty value row html for a given (i, j)
+      const renderValue = (i, j) => `
+        <div class="value-item border rounded p-2 mb-2" data-vindex="${j}">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label">Value Label <span class="text-danger">*</span></label>
+              <input class="form-control" name="${prefix}[${i}].Values[${j}].Label" value="" required />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Price Delta (minor) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="${prefix}[${i}].Values[${j}].PriceDeltaMinor" value="0" required />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Sort Order</label>
+              <input type="number" class="form-control" name="${prefix}[${i}].Values[${j}].SortOrder" value="0" />
+            </div>
+            <div class="col-md-2">
+              <label class="form-label d-block">Active</label>
+              <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" name="${prefix}[${i}].Values[${j}].IsActive" checked />
+                <label class="form-check-label">Yes</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Hint</label>
+              <input class="form-control" name="${prefix}[${i}].Values[${j}].Hint" value="" />
+            </div>
+          </div>
+          <div class="text-end mt-2">
+            <button type="button" class="btn btn-outline-danger btn-sm" data-remove-value>
+              <i class="fa fa-trash"></i> Remove Value
+            </button>
+          </div>
+        </div>`;
+
+      // Utility: build an empty option block html for index i (starts with one value)
+      const renderOption = (i) => `
+        <div class="option-item border rounded p-2 mb-2" data-index="${i}">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label">Option Label <span class="text-danger">*</span></label>
+              <input class="form-control" name="${prefix}[${i}].Label" value="" required />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Sort Order</label>
+              <input type="number" class="form-control" name="${prefix}[${i}].SortOrder" value="0" />
+            </div>
+            <div class="col-md-3 text-end">
+              <button type="button" class="btn btn-outline-danger btn-sm" data-remove-option>
+                <i class="fa fa-trash"></i> Remove Option
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <strong>Values</strong>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-add-value>
+                <i class="fa fa-plus"></i> Add Value
+              </button>
+            </div>
+            <div class="values-container">
+              ${renderValue(i, 0)}
+            </div>
+          </div>
+        </div>`;
+
+      // Add new option
+      if (addOptionBtn) {
+        addOptionBtn.addEventListener('click', function () {
+          const i = nextOptionIndex();
+          optionsContainer.insertAdjacentHTML('beforeend', renderOption(i));
+        });
+      }
+
+      // Delegate clicks for add/remove value & remove option
+      optionsContainer.addEventListener('click', function (e) {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        // Remove option
+        if (target.hasAttribute('data-remove-option')) {
+          const option = target.closest('.option-item');
+          if (option) option.remove();
+          return;
+        }
+
+        // Add value
+        if (target.hasAttribute('data-add-value')) {
+          const option = target.closest('.option-item');
+          if (!option) return;
+          const i = parseInt(option.getAttribute('data-index') || '-1', 10);
+          if (Number.isNaN(i)) return;
+
+          const values = option.querySelector('.values-container');
+          const current = values.querySelectorAll('.value-item');
+          const j = current.length;
+          values.insertAdjacentHTML('beforeend', renderValue(i, j));
+          return;
+        }
+
+        // Remove value
+        if (target.hasAttribute('data-remove-value')) {
+          const value = target.closest('.value-item');
+          if (value) value.remove();
+          return;
+        }
+      });
+    })();
 </script>
-
-<script type="text/template" id="tplValue">
-    <div class="row g-2 align-items-end value-row mb-2" data-vindex="{{j}}">
-      <div class="col-md-3">
-        <label class="form-label">Value Label</label>
-        <input class="form-control" name="Options[{{i}}].Values[{{j}}].Label" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Price Δ (minor)</label>
-        <input class="form-control" name="Options[{{i}}].Values[{{j}}].PriceDeltaMinor" value="0" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Hint</label>
-        <input class="form-control" name="Options[{{i}}].Values[{{j}}].Hint" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Sort</label>
-        <input class="form-control" name="Options[{{i}}].Values[{{j}}].SortOrder" value="0" />
-      </div>
-      <div class="col-md-1 text-center">
-        <label class="form-label">Active</label>
-        <input class="form-check-input mt-2" type="checkbox" name="Options[{{i}}].Values[{{j}}].IsActive" checked />
-      </div>
-      <div class="col-md-12 text-end">
-        <button type="button" class="btn btn-sm btn-outline-danger btnRemoveValue"><i class="fa fa-times"></i> Remove</button>
-      </div>
-    </div>
-</script>
-
-@section Scripts {
-    <script>
-        (function(){
-          const container = document.getElementById('optionsContainer');
-          const tplOpt = document.getElementById('tplOption').innerHTML;
-          const tplVal = document.getElementById('tplValue').innerHTML;
-          const btnAddOption = document.getElementById('btnAddOption');
-
-          function render(template, data) {
-            return template.replace(/{{(\w+)}}/g, (_, k) => data[k]);
-          }
-
-          function nextOptionIndex() {
-            const blocks = container.querySelectorAll('.option-block');
-            let max = -1;
-            blocks.forEach(b => { max = Math.max(max, parseInt(b.getAttribute('data-index')) || 0); });
-            return max + 1;
-          }
-
-          function nextValueIndex(optBlock) {
-            const rows = optBlock.querySelectorAll('.value-row');
-            return rows.length;
-          }
-
-          container.addEventListener('click', function(e){
-            if (e.target.closest('.btnRemoveOption')) {
-              e.preventDefault();
-              e.target.closest('.option-block').remove();
-            }
-            if (e.target.closest('.btnAddValue')) {
-              e.preventDefault();
-              const opt = e.target.closest('.option-block');
-              const i = opt.getAttribute('data-index');
-              const j = nextValueIndex(opt);
-              const html = render(tplVal, { i, j });
-              opt.querySelector('.values-container').insertAdjacentHTML('beforeend', html);
-            }
-            if (e.target.closest('.btnRemoveValue')) {
-              e.preventDefault();
-              e.target.closest('.value-row').remove();
-            }
-          });
-
-          if (btnAddOption) {
-            btnAddOption.addEventListener('click', function(e){
-              e.preventDefault();
-              const i = nextOptionIndex();
-              const html = render(tplOpt, { i });
-              container.insertAdjacentHTML('beforeend', html);
-            });
-          }
-        })();
-    </script>
-}

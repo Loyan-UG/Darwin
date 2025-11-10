@@ -71,7 +71,7 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsGlobal { get; set; }
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
-        public DateTime ModifiedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
 
         /// <summary>
         /// Concurrency token from <see cref="Darwin.Domain.Common.BaseEntity.RowVersion"/>.

@@ -223,8 +223,10 @@ namespace Darwin.Web.Extensions
             services.AddScoped<CreateAddOnGroupHandler>();
             services.AddScoped<UpdateAddOnGroupHandler>();
             services.AddScoped<SoftDeleteAddOnGroupHandler>();
-
+            services.AddScoped<AttachAddOnGroupToVariantsHandler>();
             services.AddScoped<AttachAddOnGroupToProductsHandler>();
+            services.AddScoped<AttachAddOnGroupToCategoriesHandler>();
+            services.AddScoped<AttachAddOnGroupToBrandsHandler>();
             services.AddScoped<GetApplicableAddOnGroupsForProductHandler>();
 
 

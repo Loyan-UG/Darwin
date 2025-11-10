@@ -130,6 +130,26 @@ namespace Darwin.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AddOnGroupVariants",
+                schema: "Catalog",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AddOnGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    VariantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AddOnGroupVariants", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Brands",
                 schema: "Catalog",
                 columns: table => new
@@ -1630,6 +1650,13 @@ namespace Darwin.Infrastructure.Migrations
                 column: "IsGlobal");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AddOnGroupVariants_AddOnGroupId_VariantId",
+                schema: "Catalog",
+                table: "AddOnGroupVariants",
+                columns: new[] { "AddOnGroupId", "VariantId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AddOnOptions_AddOnGroupId_SortOrder",
                 schema: "Catalog",
                 table: "AddOnOptions",
@@ -2139,6 +2166,10 @@ namespace Darwin.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AddOnGroupProducts",
+                schema: "Catalog");
+
+            migrationBuilder.DropTable(
+                name: "AddOnGroupVariants",
                 schema: "Catalog");
 
             migrationBuilder.DropTable(

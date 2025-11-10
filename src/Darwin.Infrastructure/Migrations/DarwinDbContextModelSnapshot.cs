@@ -649,6 +649,47 @@ namespace Darwin.Infrastructure.Migrations
                     b.ToTable("AddOnGroupProducts", "Catalog");
                 });
 
+            modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnGroupVariant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AddOnGroupId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("VariantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddOnGroupId", "VariantId")
+                        .IsUnique();
+
+                    b.ToTable("AddOnGroupVariants", "Catalog");
+                });
+
             modelBuilder.Entity("Darwin.Domain.Entities.Catalog.AddOnOption", b =>
                 {
                     b.Property<Guid>("Id")

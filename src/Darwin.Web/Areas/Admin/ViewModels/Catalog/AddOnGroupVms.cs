@@ -32,7 +32,7 @@ namespace Darwin.Web.Areas.Admin.ViewModels.Catalog
         public bool IsGlobal { get; set; }
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
-        public DateTime ModifiedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

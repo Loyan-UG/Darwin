@@ -52,7 +52,7 @@
                             <span class="badge @(g.IsActive ? "text-bg-success" : "text-bg-secondary")">@(g.IsActive ? "Yes" : "No")</span>
                         </td>
                         <td class="text-center">@g.OptionsCount</td>
-                        <td>@g.ModifiedAtUtc.ToLocalTime()</td>
+                        <td>@g.ModifiedAtUtc?.ToLocalTime()</td>
                         <td class="text-end">
                             <a asp-area="Admin" asp-controller="AddOnGroups" asp-action="Edit" asp-route-id="@g.Id" class="btn btn-sm btn-outline-secondary">
                                 <i class="fa fa-pen"></i> Edit
@@ -61,19 +61,19 @@
                             <!-- Attach routes -->
                             <div class="btn-group">
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachVariants" asp-route-id="@g.Id">
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachToVariants" asp-route-id="@g.Id">
                                     <i class="fa fa-sitemap"></i> Variants
                                 </a>
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachProducts" asp-route-id="@g.Id">
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachToProducts" asp-route-id="@g.Id">
                                     <i class="fa fa-box"></i> Products
                                 </a>
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachCategories" asp-route-id="@g.Id">
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachToCategories" asp-route-id="@g.Id">
                                     <i class="fa fa-tags"></i> Categories
                                 </a>
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachBrands" asp-route-id="@g.Id">
+                                   asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@g.Id">
                                     <i class="fa fa-industry"></i> Brands
                                 </a>
                             </div>
