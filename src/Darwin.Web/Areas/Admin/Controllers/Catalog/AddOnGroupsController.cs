@@ -1,18 +1,17 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
-using Darwin.Web.Areas.Admin.Controllers;
-using Darwin.Web.Areas.Admin.ViewModels.Catalog;
-
+﻿using Darwin.Application.Catalog.Commands;
 // Application layer
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
-using Darwin.Application.Catalog.Commands;
+using Darwin.Web.Areas.Admin.Controllers;
+using Darwin.Web.Areas.Admin.ViewModels.Catalog;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Darwin.Web.Areas.Admin.Controllers.Catalog
 {
@@ -41,6 +40,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         private readonly GetCategoriesPageHandler _getCategoriesPage;
         private readonly GetBrandsPageHandler _getBrandsPage;
 
+        private readonly GetVariantsPageHandler _getVariantsPage;
+
         public AddOnGroupsController(
             GetAddOnGroupsPageHandler getPage,
             GetAddOnGroupForEditHandler getForEdit,
@@ -53,7 +54,8 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             AttachAddOnGroupToBrandsHandler attachBrands,
             GetProductsPageHandler getProductsPage,
             GetCategoriesPageHandler getCategoriesPage,
-            GetBrandsPageHandler getBrandsPage)
+            GetBrandsPageHandler getBrandsPage,
+            GetVariantsPageHandler getVariantsPage)
         {
             _getPage = getPage;
             _getForEdit = getForEdit;
@@ -69,6 +71,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             _getProductsPage = getProductsPage;
             _getCategoriesPage = getCategoriesPage;
             _getBrandsPage = getBrandsPage;
+            _getVariantsPage = getVariantsPage;
         }
 
         // ---------------- List ----------------
@@ -419,18 +422,39 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         /// This action only gives the group information for the header + concurrency.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> AttachToVariants(Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> AttachToVariants(
+            Guid id,
+            string? q,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken ct = default)
         {
-            var group = await _getForEdit.HandleAsync(id, ct);
+            var dto = await _getForEdit.HandleAsync(id, ct);
+            if (dto is null) return NotFound();
+
+            // Determine culture (fallback to "de-DE" if not resolved from site/user)
+            var culture = CultureInfo.CurrentUICulture?.Name ?? "de-DE";
+
+            var (items, total) = await _getVariantsPage.HandleAsync(page, pageSize, q, culture, ct);
+
             var vm = new AddOnGroupAttachToVariantsVm
             {
-                AddOnGroupId = group.Id,
-                AddOnGroupName = group.Name,
-                RowVersion = group.RowVersion ?? Array.Empty<byte>(),
-                Page = 1,
-                PageSize = 20,
-                Total = 0
+                AddOnGroupId = dto.Id,
+                RowVersion = dto.RowVersion,
+                AddOnGroupName = dto.Name,
+                Query = q,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items
+                    .Select(v => new SelectableItemVm
+                    {
+                        Id = v.Id,
+                        Display = $"{v.Sku} — {v.ProductName ?? "(no name)"}",
+                        Selected = false /* isSelected: handled client-side via hidden inputs to persist across pages */
+                    }).ToList()
             };
+
             return View(vm);
         }
 

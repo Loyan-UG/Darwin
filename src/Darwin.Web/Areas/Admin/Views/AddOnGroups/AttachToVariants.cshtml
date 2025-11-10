@@ -1,51 +1,96 @@
 ﻿@model Darwin.Web.Areas.Admin.ViewModels.Catalog.AddOnGroupAttachToVariantsVm
-
 @{
-    ViewData["Title"] = $"Attach Variants to '{Model.AddOnGroupName}'";
+    ViewData["Title"] = "Attach add-on group to variants";
 }
 
-<h1 class="mb-2"><i class="fa fa-list"></i> Attach Variants <small class="text-muted">(@Model.AddOnGroupName)</small></h1>
+<h1 class="mb-4">Attach “@Model.AddOnGroupName” to Variants</h1>
 
-<div class="alert alert-info">
-    This screen is minimal: paste one or more Variant IDs (GUIDs), separated by commas or new lines.
-    In product/variant pages you can provide richer pickers later.
-</div>
-
-<form asp-area="Admin" asp-controller="AddOnGroups" asp-action="AttachToVariants" method="post" id="variantsForm">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="AddOnGroupId" value="@Model.AddOnGroupId" />
-    <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? "" : Convert.ToBase64String(Model.RowVersion))" />
-
-    <div class="mb-3">
-        <label for="variantIds" class="form-label">Variant IDs</label>
-        <textarea id="variantIds" class="form-control" rows="6" placeholder="11111111-1111-1111-1111-111111111111"></textarea>
-        <small class="text-muted">Comma- or newline-separated GUIDs. Invalid tokens will be ignored.</small>
-    </div>
-
-    <div class="mt-2">
-        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Attachments</button>
-        <a asp-area="Admin" asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+<form method="get" class="mb-3">
+    <input type="hidden" name="id" value="@Model.AddOnGroupId" />
+    <div class="input-group">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search by SKU or Product name..." />
+        <button type="submit" class="btn btn-primary">Search</button>
     </div>
 </form>
 
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="AddOnGroupId" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <!-- Persist selected IDs across pages -->
+    <div id="selected-container">
+        @if (Model.SelectedVariantIds != null)
+        {
+            foreach (var id in Model.SelectedVariantIds)
+            {
+                <input type="hidden" name="SelectedVariantIds" value="@id" />
+            }
+        }
+    </div>
+
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th style="width:40px;"></th>
+                <th>SKU</th>
+                <th>Product</th>
+                <th>Price (net)</th>
+                <th>Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var it in Model.Items)
+            {
+                var id = it.Id;
+                var parts = (it.Display ?? string.Empty).Split(" — ");
+                var sku = parts.Length > 0 ? parts[0] : "";
+                var name = parts.Length > 1 ? parts[1] : "";
+
+                <tr>
+                    <td>
+                        <input type="checkbox"
+                               class="sel"
+                               data-id="@id"
+                               @(Model.SelectedVariantIds?.Contains(id) == true ? "checked" : "") />
+                    </td>
+                    <td>@sku</td>
+                    <td>@name</td>
+                    <td><!-- optional: render from a richer DTO in future --></td>
+                    <td><!-- optional: render from a richer DTO in future --></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-success">Save</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<div class="pt-3">
+    <pager page="@Model.Page" page-size="@Model.PageSize" total="@Model.Total"></pager>
+</div>
+
 @section Scripts {
     <script>
-        document.getElementById('variantsForm').addEventListener('submit', function (e) {
-            const txt = document.getElementById('variantIds').value || '';
-            const tokens = txt.split(/[\s,;]+/).map(t => t.trim()).filter(t => t.length > 0);
-            const form = e.currentTarget;
-
-            // remove old
-            form.querySelectorAll('input[name="SelectedVariantIds"]').forEach(el => el.remove());
-
-            // add hidden inputs for model binding
-            tokens.forEach(g => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'SelectedVariantIds';
-                input.value = g;
-                form.appendChild(input);
-            });
+        document.querySelectorAll('input.sel').forEach(cb => {
+          cb.addEventListener('change', function() {
+            const container = document.getElementById('selected-container');
+            const id = this.getAttribute('data-id');
+            if (this.checked) {
+              const hid = document.createElement('input');
+              hid.type = 'hidden';
+              hid.name = 'SelectedVariantIds';
+              hid.value = id;
+              hid.dataset.bindId = id;
+              container.appendChild(hid);
+            } else {
+              const existing = container.querySelector(`input[type="hidden"][name="SelectedVariantIds"][value="${id}"]`);
+              if (existing) existing.remove();
+            }
+          });
         });
     </script>
 }

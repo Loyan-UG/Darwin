@@ -51,6 +51,13 @@
         </table>
     </div>
 
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Attachments</button>
+        <a asp-area="Admin" asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>
+
+<div class="pt-3">
     <pager page="Model.Page"
            page-size="Model.PageSize"
            total="Model.Total"
@@ -60,12 +67,7 @@
            asp-route-id="@Model.AddOnGroupId"
            asp-route-query="@Model.Query">
     </pager>
-
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Attachments</button>
-        <a asp-area="Admin" asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+</div>
 
 @section Scripts {
     <script>
