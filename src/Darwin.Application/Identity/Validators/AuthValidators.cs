@@ -29,4 +29,32 @@ namespace Darwin.Application.Identity.Validators
             RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
         }
     }
+
+
+
+    public sealed class PasswordLoginRequestValidator : AbstractValidator<PasswordLoginRequestDto>
+    {
+        public PasswordLoginRequestValidator()
+        {
+            RuleFor(x => x.Email).NotEmpty().EmailAddress();
+            RuleFor(x => x.PasswordPlain).NotEmpty().MinimumLength(6);
+        }
+    }
+
+    public sealed class RefreshRequestValidator : AbstractValidator<RefreshRequestDto>
+    {
+        public RefreshRequestValidator()
+        {
+            RuleFor(x => x.RefreshToken).NotEmpty();
+        }
+    }
+
+    public sealed class RevokeRefreshRequestValidator : AbstractValidator<RevokeRefreshRequestDto>
+    {
+        public RevokeRefreshRequestValidator()
+        {
+            RuleFor(x => x).Must(x => x.UserId.HasValue || !string.IsNullOrWhiteSpace(x.RefreshToken))
+                           .WithMessage("Either UserId or RefreshToken must be provided.");
+        }
+    }
 }

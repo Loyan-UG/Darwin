@@ -53,6 +53,18 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 DateFormat = "dd.MM.yyyy",
                 TimeFormat = "HH:mm",
 
+                // JWT / Access-Refresh tokens
+                JwtEnabled = true,
+                JwtIssuer = "Darwin",
+                JwtAudience = "Darwin.PublicApi",
+                JwtAccessTokenMinutes = 15,
+                JwtRefreshTokenDays = 30,
+                // NOTE: For dev, a random key is fine; in prod must be long random.
+                JwtSigningKey = "ChangeThisDevKey_UseLongRandomInProd",
+                JwtPreviousSigningKey = null,
+                JwtEmitScopes = false,
+
+
                 // Measurement & Units
                 MeasurementSystem = "Metric",
                 DisplayWeightUnit = "kg",

@@ -31,6 +31,34 @@ namespace Darwin.Domain.Entities.Settings
         public string TimeFormat { get; set; } = "HH:mm";
 
 
+
+        // JWT / Access-Refresh tokens
+        public bool JwtEnabled { get; set; } = true;
+        public string? JwtIssuer { get; set; } = "Darwin";
+        public string? JwtAudience { get; set; } = "Darwin.PublicApi";
+        public int JwtAccessTokenMinutes { get; set; } = 15;
+        public int JwtRefreshTokenDays { get; set; } = 30;
+
+        /// <summary>
+        /// Current HMAC symmetric signing key material (Base64 or raw text).
+        /// Rotation strategy: move current key here; previous key to JwtPreviousSigningKey.
+        /// </summary>
+        public string? JwtSigningKey { get; set; }
+
+        /// <summary>
+        /// Previous signing key to allow rolling rotation during a grace period.
+        /// </summary>
+        public string? JwtPreviousSigningKey { get; set; }
+
+        /// <summary>
+        /// If true, embeds "scope" claim from a short CSV (e.g., "api.read").
+        /// Prefer not to embed roles/permissions fully in the token.
+        /// </summary>
+        public bool JwtEmitScopes { get; set; } = false;
+
+
+
+
         // Display & Units
         /// <summary>Measurement system for display (e.g., "Metric" or "Imperial").</summary>
         public string MeasurementSystem { get; set; } = "Metric";

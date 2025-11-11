@@ -35,4 +35,52 @@ namespace Darwin.Application.Identity.DTOs
         public string Token { get; set; } = string.Empty;  // Opaque token previously emailed
         public string NewPassword { get; set; } = string.Empty;
     }
+
+
+
+    /// <summary>
+    /// Request for username/password login. Username is email in current Domain model.
+    /// </summary>
+    public sealed class PasswordLoginRequestDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string PasswordPlain { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Optional device identifier (e.g., mobile installation id) for device-bound refresh tokens.
+        /// </summary>
+        public string? DeviceId { get; set; }
+    }
+
+    /// <summary>
+    /// Response carrying short-lived JWT access token and opaque refresh token.
+    /// </summary>
+    public sealed class AuthResultDto
+    {
+        public string AccessToken { get; set; } = string.Empty;
+        public DateTime AccessTokenExpiresAtUtc { get; set; }
+        public string RefreshToken { get; set; } = string.Empty;
+        public DateTime RefreshTokenExpiresAtUtc { get; set; }
+        public Guid UserId { get; set; }
+        public string Email { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Request to exchange a refresh token for a new access token.
+    /// </summary>
+    public sealed class RefreshRequestDto
+    {
+        public string RefreshToken { get; set; } = string.Empty;
+        public string? DeviceId { get; set; }
+    }
+
+    /// <summary>
+    /// Request to revoke refresh tokens.
+    /// </summary>
+    public sealed class RevokeRefreshRequestDto
+    {
+        public string? RefreshToken { get; set; }
+        public Guid? UserId { get; set; }
+        public string? DeviceId { get; set; }
+    }
 }
