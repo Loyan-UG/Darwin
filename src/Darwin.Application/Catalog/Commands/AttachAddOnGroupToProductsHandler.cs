@@ -12,37 +12,38 @@ using System.Threading.Tasks;
 namespace Darwin.Application.Catalog.Commands
 {
     /// <summary>
-    /// Performs a hard-replace of variant links for an add-on group.
-    /// Mirrors the Brand attach behavior to keep consistency across Admin attach pages:
-    /// - Validates group + concurrency (RowVersion)
-    /// - Validates Variant IDs
-    /// - Physically deletes all existing links (including soft-deleted) and inserts the requested set.
+    /// Performs a hard-replace of product links for an add-on group.
+    /// This implementation aligns with the Brand attach behavior:
+    /// - Validates group existence and optimistic concurrency (RowVersion).
+    /// - Validates all requested Product IDs exist (and are not soft-deleted).
+    /// - Physically deletes all existing links for the group (including soft-deleted rows)
+    ///   and then inserts the requested set, preventing unique index collisions.
     /// </summary>
-    public sealed class AttachAddOnGroupToVariantsHandler
+    public sealed class AttachAddOnGroupToProductsHandler
     {
         private readonly IAppDbContext _db;
-        private readonly IValidator<AddOnGroupAttachToVariantsDto> _validator;
+        private readonly IValidator<AddOnGroupAttachToProductsDto> _validator;
 
         /// <summary>
-        /// Creates a new handler instance.
+        /// Initializes a new instance of the handler.
         /// </summary>
-        public AttachAddOnGroupToVariantsHandler(
+        public AttachAddOnGroupToProductsHandler(
             IAppDbContext db,
-            IValidator<AddOnGroupAttachToVariantsDto> validator)
+            IValidator<AddOnGroupAttachToProductsDto> validator)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
         /// <summary>
-        /// Replaces the set of attached variants for the specified add-on group (hard delete + insert).
+        /// Replaces the set of attached products for the specified add-on group (hard delete + insert).
         /// </summary>
-        public async Task<Result> HandleAsync(AddOnGroupAttachToVariantsDto dto, CancellationToken ct = default)
+        public async Task<Result> HandleAsync(AddOnGroupAttachToProductsDto dto, CancellationToken ct = default)
         {
-            // 1) Validate input
+            // 1) Basic validation
             await _validator.ValidateAndThrowAsync(dto, ct);
 
-            // 2) Load group (existence + concurrency)
+            // 2) Load group (existence + concurrency check)
             var group = await _db.Set<AddOnGroup>()
                 .Where(g => g.Id == dto.AddOnGroupId && !g.IsDeleted)
                 .Select(g => new { g.Id, g.RowVersion })
@@ -54,53 +55,54 @@ namespace Darwin.Application.Catalog.Commands
             if (dto.RowVersion is null || !dto.RowVersion.SequenceEqual(group.RowVersion))
                 return Result.Fail("The add-on group was modified by another operation. Please reload and retry.");
 
-            // 3) Normalize and validate requested variants
-            var requested = (dto.VariantIds ?? Array.Empty<Guid>())
+            // 3) Normalize and validate requested products
+            var requested = (dto.ProductIds ?? Array.Empty<Guid>())
                 .Where(id => id != Guid.Empty)
                 .Distinct()
                 .ToArray();
 
             if (requested.Length == 0)
             {
-                var existingNone = await _db.Set<AddOnGroupVariant>()
+                // Hard-replace to empty set: just remove all existing links.
+                var existingNone = await _db.Set<AddOnGroupProduct>()
                     .IgnoreQueryFilters()
                     .Where(x => x.AddOnGroupId == group.Id)
                     .ToListAsync(ct);
 
                 if (existingNone.Count > 0)
                 {
-                    _db.Set<AddOnGroupVariant>().RemoveRange(existingNone);
+                    _db.Set<AddOnGroupProduct>().RemoveRange(existingNone);
                     await _db.SaveChangesAsync(ct);
                 }
                 return Result.Ok();
             }
 
-            var validVariantIds = await _db.Set<ProductVariant>()
+            var validProductIds = await _db.Set<Product>()
                 .AsNoTracking()
-                .Where(v => requested.Contains(v.Id) && !v.IsDeleted)
-                .Select(v => v.Id)
+                .Where(p => requested.Contains(p.Id) && !p.IsDeleted)
+                .Select(p => p.Id)
                 .ToListAsync(ct);
 
-            if (validVariantIds.Count != requested.Length)
-                return Result.Fail("One or more variants were not found or are deleted.");
+            if (validProductIds.Count != requested.Length)
+                return Result.Fail("One or more products were not found or are deleted.");
 
-            // 4) Hard delete ALL existing links (active + soft-deleted)
-            var existing = await _db.Set<AddOnGroupVariant>()
+            // 4) Hard delete ALL existing links for this group (active + soft-deleted)
+            var existing = await _db.Set<AddOnGroupProduct>()
                 .IgnoreQueryFilters()
                 .Where(x => x.AddOnGroupId == group.Id)
                 .ToListAsync(ct);
 
             if (existing.Count > 0)
-                _db.Set<AddOnGroupVariant>().RemoveRange(existing);
+                _db.Set<AddOnGroupProduct>().RemoveRange(existing);
 
             // 5) Insert the requested set
-            var toAdd = validVariantIds.Select(vid => new AddOnGroupVariant
+            var toAdd = validProductIds.Select(pid => new AddOnGroupProduct
             {
                 AddOnGroupId = group.Id,
-                VariantId = vid
+                ProductId = pid
             });
 
-            _db.Set<AddOnGroupVariant>().AddRange(toAdd);
+            _db.Set<AddOnGroupProduct>().AddRange(toAdd);
 
             // 6) Commit
             await _db.SaveChangesAsync(ct);

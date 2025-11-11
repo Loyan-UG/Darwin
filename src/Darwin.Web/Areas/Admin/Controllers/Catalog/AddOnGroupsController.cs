@@ -42,6 +42,11 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
 
         private readonly GetVariantsPageHandler _getVariantsPage;
 
+        private readonly GetAddOnGroupAttachedProductIdsHandler _getAttachedProducts;
+        private readonly GetAddOnGroupAttachedVariantIdsHandler _getAttachedVariants;
+        private readonly GetAddOnGroupAttachedCategoryIdsHandler _getAttachedCategories;
+        private readonly GetAddOnGroupAttachedBrandIdsHandler _getAttachedBrands;
+
         public AddOnGroupsController(
             GetAddOnGroupsPageHandler getPage,
             GetAddOnGroupForEditHandler getForEdit,
@@ -55,7 +60,12 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             GetProductsPageHandler getProductsPage,
             GetCategoriesPageHandler getCategoriesPage,
             GetBrandsPageHandler getBrandsPage,
-            GetVariantsPageHandler getVariantsPage)
+            GetVariantsPageHandler getVariantsPage,
+            GetAddOnGroupAttachedProductIdsHandler getAttachedProducts,
+            GetAddOnGroupAttachedVariantIdsHandler getAttachedVariants,
+            GetAddOnGroupAttachedCategoryIdsHandler getAttachedCategories,
+            GetAddOnGroupAttachedBrandIdsHandler getAttachedBrands
+            )
         {
             _getPage = getPage;
             _getForEdit = getForEdit;
@@ -72,6 +82,11 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
             _getCategoriesPage = getCategoriesPage;
             _getBrandsPage = getBrandsPage;
             _getVariantsPage = getVariantsPage;
+
+            _getAttachedProducts = getAttachedProducts;
+            _getAttachedVariants = getAttachedVariants;
+            _getAttachedCategories = getAttachedCategories;
+            _getAttachedBrands = getAttachedBrands;
         }
 
         // ---------------- List ----------------
@@ -278,11 +293,22 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
 
         // ---------------- Attach: Products ----------------
 
+        /// <summary>
+        /// GET: show selectable products with pre-checked items that are already attached to the add-on group.
+        /// Mirrors the paging/filtering UI but marks Selected based on current attachments.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> AttachToProducts(Guid id, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var group = await _getForEdit.HandleAsync(id, ct);
+            if (group == null)
+                return NotFound();
+
             var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", ct); // culture-based list
+
+            // Load attached ids
+            var attached = await _getAttachedProducts.HandleAsync(id, ct);
+            var attachedSet = attached.ToHashSet();
 
             var vm = new AddOnGroupAttachToProductsVm
             {
@@ -296,7 +322,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                 {
                     Id = p.Id,
                     Display = p.DefaultName ?? p.Id.ToString(),
-                    Selected = false // UI will post selected ids
+                    Selected = attachedSet.Contains(p.Id)
                 }).ToList()
             };
             return View(vm);
@@ -329,7 +355,13 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         public async Task<IActionResult> AttachToCategories(Guid id, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var group = await _getForEdit.HandleAsync(id, ct);
+            if (group == null)
+                return NotFound();
+
             var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", ct);
+
+            var attached = await _getAttachedCategories.HandleAsync(id, ct);
+            var attachedSet = attached.ToHashSet();
 
             var vm = new AddOnGroupAttachToCategoriesVm
             {
@@ -343,7 +375,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                 {
                     Id = c.Id,
                     Display = string.IsNullOrWhiteSpace(c.Name) ? c.Id.ToString() : c.Name,
-                    Selected = false
+                    Selected = attachedSet.Contains(c.Id)
                 }).ToList()
             };
             return View(vm);
@@ -375,7 +407,13 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         public async Task<IActionResult> AttachToBrands(Guid id, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var group = await _getForEdit.HandleAsync(id, ct);
+            if (group == null)
+                return NotFound();
+
             var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, "de-DE", ct);
+
+            var attached = await _getAttachedBrands.HandleAsync(id, ct);
+            var attachedSet = attached.ToHashSet();
 
             var vm = new AddOnGroupAttachToBrandsVm
             {
@@ -389,7 +427,7 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                 {
                     Id = b.Id,
                     Display = string.IsNullOrWhiteSpace(b.Name) ? b.Id.ToString() : b.Name,
-                    Selected = false
+                    Selected = attachedSet.Contains(b.Id)
                 }).ToList()
             };
             return View(vm);
@@ -431,11 +469,15 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
         {
             var dto = await _getForEdit.HandleAsync(id, ct);
             if (dto is null) return NotFound();
-
+            
             // Determine culture (fallback to "de-DE" if not resolved from site/user)
             var culture = CultureInfo.CurrentUICulture?.Name ?? "de-DE";
 
             var (items, total) = await _getVariantsPage.HandleAsync(page, pageSize, q, culture, ct);
+
+            // Load currently attached variant ids (non-deleted links)
+            var attached = await _getAttachedVariants.HandleAsync(id, ct);
+            var attachedSet = attached.ToHashSet();
 
             var vm = new AddOnGroupAttachToVariantsVm
             {
@@ -451,8 +493,9 @@ namespace Darwin.Web.Areas.Admin.Controllers.Catalog
                     {
                         Id = v.Id,
                         Display = $"{v.Sku} — {v.ProductName ?? "(no name)"}",
-                        Selected = false /* isSelected: handled client-side via hidden inputs to persist across pages */
-                    }).ToList()
+                        Selected = attachedSet.Contains(v.Id) /* isSelected: handled client-side via hidden inputs to persist across pages */
+                    }).ToList(),
+                SelectedVariantIds = attached.ToList()
             };
 
             return View(vm);

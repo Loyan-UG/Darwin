@@ -229,6 +229,10 @@ namespace Darwin.Web.Extensions
             services.AddScoped<AttachAddOnGroupToBrandsHandler>();
             services.AddScoped<GetApplicableAddOnGroupsForProductHandler>();
             services.AddScoped<GetVariantsPageHandler>();
+            services.AddScoped<GetAddOnGroupAttachedProductIdsHandler>();
+            services.AddScoped<GetAddOnGroupAttachedVariantIdsHandler>();
+            services.AddScoped<GetAddOnGroupAttachedCategoryIdsHandler>();
+            services.AddScoped<GetAddOnGroupAttachedBrandIdsHandler>();
 
 
             // MVC and localization. RuntimeCompilation is useful during development; remove in production.
