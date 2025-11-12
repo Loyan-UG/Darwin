@@ -1,10 +1,11 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Darwin.Domain.Entities.Settings;
+﻿using Darwin.Domain.Entities.Settings;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Buffers.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Darwin.Infrastructure.Persistence.Seed.Sections
 {
@@ -60,7 +61,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 JwtAccessTokenMinutes = 15,
                 JwtRefreshTokenDays = 30,
                 // NOTE: For dev, a random key is fine; in prod must be long random.
-                JwtSigningKey = "ChangeThisDevKey_UseLongRandomInProd",
+                JwtSigningKey = "uKq9v8x7Gk1v++e2tqV0E7r3a9kYh3m1v2x5b8c5e7h9j2kL1m3o5q7s9u0w2y4z6A8B+DxFhJkMnPq",
+
                 JwtPreviousSigningKey = null,
                 JwtEmitScopes = false,
 
