@@ -93,6 +93,12 @@ namespace Darwin.Web.Services.Settings
                 DateFormat = string.IsNullOrWhiteSpace(s.DateFormat) ? "yyyy-MM-dd" : s.DateFormat,
                 TimeFormat = string.IsNullOrWhiteSpace(s.TimeFormat) ? "HH:mm" : s.TimeFormat,
 
+                // JWT (additional)
+                JwtSingleDeviceOnly = s.JwtSingleDeviceOnly,
+                JwtRequireDeviceBinding = s.JwtRequireDeviceBinding,
+                JwtClockSkewSeconds = s.JwtClockSkewSeconds,
+
+
                 // Units
                 MeasurementSystem = string.IsNullOrWhiteSpace(s.MeasurementSystem) ? "Metric" : s.MeasurementSystem,
                 DisplayWeightUnit = s.DisplayWeightUnit,

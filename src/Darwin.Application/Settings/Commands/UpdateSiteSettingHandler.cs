@@ -1,12 +1,13 @@
-﻿using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using AngleSharp.Dom;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Application.Settings.Validators;
 using Darwin.Domain.Entities.Settings;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Darwin.Application.Settings.Commands
 {
@@ -58,6 +59,16 @@ namespace Darwin.Application.Settings.Commands
             s.TimeZone = dto.TimeZone;
             s.DateFormat = dto.DateFormat;
             s.TimeFormat = dto.TimeFormat;
+
+            // -------- Security / JWT --------
+            s.JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly;
+            s.JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding;
+            s.JwtClockSkewSeconds = dto.JwtClockSkewSeconds;
+
+            // JWT - device/session policy and validation skew
+            s.JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly;
+            s.JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding;
+            s.JwtClockSkewSeconds = dto.JwtClockSkewSeconds;
 
             // -------- Units & Formatting --------
             s.MeasurementSystem = dto.MeasurementSystem;

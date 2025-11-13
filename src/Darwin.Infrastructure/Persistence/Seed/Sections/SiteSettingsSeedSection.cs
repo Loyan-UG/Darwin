@@ -61,10 +61,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 JwtAccessTokenMinutes = 15,
                 JwtRefreshTokenDays = 30,
                 // NOTE: For dev, a random key is fine; in prod must be long random.
-                JwtSigningKey = "uKq9v8x7Gk1v++e2tqV0E7r3a9kYh3m1v2x5b8c5e7h9j2kL1m3o5q7s9u0w2y4z6A8B+DxFhJkMnPq",
+                JwtSigningKey = "3WvY3E2y3oX7k7Vg2y7r9kJr1Z0F1+f2tP6o3Q2i4G9z6L5k8N1q3R6u8W2x5Z7C9m1T3V6Y8c2D4F6H8J0L2N4Q6S8U0W2Y4",
 
-                JwtPreviousSigningKey = null,
+                JwtPreviousSigningKey = "uKq9v8x7Gk1v++e2tqV0E7r3a9kYh3m1v2x5b8c5e7h9j2kL1m3o5q7s9u0w2y4z6A8B+DxFhJkMnPq",
                 JwtEmitScopes = false,
+
+                JwtSingleDeviceOnly = false,
+                JwtRequireDeviceBinding = true,
+                JwtClockSkewSeconds = 120,
 
 
                 // Measurement & Units

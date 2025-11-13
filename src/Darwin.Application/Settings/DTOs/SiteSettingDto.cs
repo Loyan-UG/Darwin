@@ -30,6 +30,23 @@ namespace Darwin.Application.Settings.DTOs
         public string? DateFormat { get; set; } = "yyyy-MM-dd";
         public string? TimeFormat { get; set; } = "HH:mm";
 
+        // JWT / Access-Refresh token settings
+        /// <summary>
+        /// When true, only a single active device/session is allowed per user.
+        /// </summary>
+        public bool JwtSingleDeviceOnly { get; set; } = false;
+
+        /// <summary>
+        /// When true, refresh tokens are bound to a device identifier.
+        /// </summary>
+        public bool JwtRequireDeviceBinding { get; set; } = true;
+
+        /// <summary>
+        /// Allowed clock skew in seconds for JWT validation.
+        /// </summary>
+        public int JwtClockSkewSeconds { get; set; } = 120;
+
+
         // Measurement and unit settings
         public string MeasurementSystem { get; set; } = "Metric";
         public string? DisplayWeightUnit { get; set; } = "kg";

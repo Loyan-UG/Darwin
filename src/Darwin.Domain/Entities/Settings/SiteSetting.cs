@@ -56,6 +56,22 @@ namespace Darwin.Domain.Entities.Settings
         /// </summary>
         public bool JwtEmitScopes { get; set; } = false;
 
+        /// <summary>
+        /// When true, only a single active device/session is allowed per user.
+        /// New logins will revoke previously issued refresh tokens for that user.
+        /// </summary>
+        public bool JwtSingleDeviceOnly { get; set; } = false;
+
+        /// <summary>
+        /// When true, refresh tokens are bound to a device identifier (e.g., mobile installation id).
+        /// The token purpose will be persisted as "JwtRefresh:{deviceId}" and validation requires matching device.
+        /// </summary>
+        public bool JwtRequireDeviceBinding { get; set; } = true;
+
+        /// <summary>
+        /// Allowed clock skew in seconds for token validation (used by API during JWT validation).
+        /// </summary>
+        public int JwtClockSkewSeconds { get; set; } = 120;
 
 
 

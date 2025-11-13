@@ -10,4 +10,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Darwin.Application\Darwin.Application.csproj" />
+    <ProjectReference Include="..\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
+    <ProjectReference Include="..\Darwin.Shared\Darwin.Shared.csproj" />
+  </ItemGroup>
 </Project>
