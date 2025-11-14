@@ -71,6 +71,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 JwtClockSkewSeconds = 120,
 
 
+
+                // Soft delete / data retention
+                SoftDeleteCleanupEnabled = true,
+                SoftDeleteRetentionDays = 90,
+                SoftDeleteCleanupBatchSize = 500,
+
+
+
                 // Measurement & Units
                 MeasurementSystem = "Metric",
                 DisplayWeightUnit = "kg",

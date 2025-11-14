@@ -19,6 +19,7 @@
     /// <summary>Product kind; Phase 1 uses Simple/Variant.</summary>
     public enum ProductKind { Simple = 0, Variant = 1, Bundle = 2, Digital = 3, Service = 4 }
 
+
     /// <summary>
     /// Order lifecycle. Designed to cover common e-commerce flows and partial operations.
     /// </summary>
@@ -52,6 +53,7 @@
         PartiallyRefunded = 8
     }
 
+
     /// <summary>
     /// Selection mode enum for an add-on group. Catalog/AddOnGroup
     /// </summary>
@@ -59,5 +61,33 @@
     {
         Single = 0,
         Multiple = 1
+    }
+
+
+    /// <summary>
+    /// Role of a user within a business workspace.
+    /// Determines operational capabilities in Business app.
+    /// </summary>
+    public enum BusinessMemberRole : short
+    {
+        Owner = 1,     // Full control, billing, program settings
+        Manager = 2,   // Operational control, reward/points management
+        Staff = 3      // Day-to-day scanning, order capture, minimal settings
+    }
+
+    /// <summary>
+    /// High-level category of a business for discovery, filtering, and analytics.
+    /// </summary>
+    public enum BusinessCategoryKind : short
+    {
+        Unknown = 0,
+        Cafe = 10,
+        Restaurant = 11,
+        Bakery = 12,
+        Supermarket = 20,
+        SalonSpa = 30,
+        Fitness = 40,
+        OtherRetail = 50,
+        Services = 60
     }
 }

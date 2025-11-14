@@ -39,6 +39,20 @@ namespace Darwin.Application.Settings.Validators
                 .EmailAddress()
                 .When(x => !string.IsNullOrWhiteSpace(x.ContactEmail));
 
+
+            // Soft delete / data retention
+            RuleFor(x => x.SoftDeleteRetentionDays)
+                .GreaterThanOrEqualTo(1)
+                .LessThanOrEqualTo(3650)
+                .WithMessage("SoftDeleteRetentionDays must be between 1 and 3650 days.");
+
+            RuleFor(x => x.SoftDeleteCleanupBatchSize)
+                .GreaterThanOrEqualTo(1)
+                .LessThanOrEqualTo(100_000)
+                .WithMessage("SoftDeleteCleanupBatchSize must be between 1 and 100000.");
+
+
+
             // Localization
             RuleFor(x => x.DefaultCulture)
                 .NotEmpty().MaximumLength(10)

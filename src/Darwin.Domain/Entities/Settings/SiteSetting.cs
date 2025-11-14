@@ -1,4 +1,5 @@
 ﻿using Darwin.Domain.Common;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace Darwin.Domain.Entities.Settings
@@ -75,6 +76,32 @@ namespace Darwin.Domain.Entities.Settings
 
 
 
+        // Data retention / soft-delete cleanup
+
+        /// <summary>
+        /// Enables periodic hard-deletion of entities that have been soft-deleted for longer
+        /// than the configured retention window. When disabled, soft-deleted rows are never
+        /// hard-deleted automatically by background jobs.
+        /// </summary>
+        public bool SoftDeleteCleanupEnabled { get; set; } = true;
+
+        /// <summary>
+        /// Number of days a soft-deleted entity should be retained before it becomes eligible
+        /// for hard deletion. The cleanup worker will typically compare this value against
+        /// the ModifiedAtUtc timestamp of entities where IsDeleted == true.
+        /// </summary>
+        public int SoftDeleteRetentionDays { get; set; } = 90;
+
+        /// <summary>
+        /// Maximum number of entities to hard-delete in a single cleanup run. This protects
+        /// the database from excessively large delete batches and spreads the work across
+        /// multiple executions of the background worker.
+        /// </summary>
+        public int SoftDeleteCleanupBatchSize { get; set; } = 500;
+
+
+
+
         // Display & Units
         /// <summary>Measurement system for display (e.g., "Metric" or "Imperial").</summary>
         public string MeasurementSystem { get; set; } = "Metric";
@@ -110,6 +137,7 @@ namespace Darwin.Domain.Entities.Settings
         // Feature Flags
         /// <summary>Feature flags serialized as JSON key-value pairs (toggled at runtime).</summary>
         public string? FeatureFlagsJson { get; set; }
+
 
 
         // WhatsApp

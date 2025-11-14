@@ -70,6 +70,13 @@ namespace Darwin.Application.Settings.Commands
             s.JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding;
             s.JwtClockSkewSeconds = dto.JwtClockSkewSeconds;
 
+
+            // -------- Soft delete / data retention --------
+            s.SoftDeleteCleanupEnabled = dto.SoftDeleteCleanupEnabled;
+            s.SoftDeleteRetentionDays = dto.SoftDeleteRetentionDays;
+            s.SoftDeleteCleanupBatchSize = dto.SoftDeleteCleanupBatchSize;
+
+
             // -------- Units & Formatting --------
             s.MeasurementSystem = dto.MeasurementSystem;
             s.DisplayWeightUnit = dto.DisplayWeightUnit;

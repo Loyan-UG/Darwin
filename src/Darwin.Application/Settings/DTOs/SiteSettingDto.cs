@@ -47,6 +47,25 @@ namespace Darwin.Application.Settings.DTOs
         public int JwtClockSkewSeconds { get; set; } = 120;
 
 
+        // Soft delete / data retention
+        /// <summary>
+        /// Enables periodic hard-deletion of entities that have been soft-deleted beyond
+        /// the configured retention window.
+        /// </summary>
+        public bool SoftDeleteCleanupEnabled { get; set; } = true;
+
+        /// <summary>
+        /// Number of days to keep soft-deleted entities before they are eligible
+        /// for hard deletion.
+        /// </summary>
+        public int SoftDeleteRetentionDays { get; set; } = 90;
+
+        /// <summary>
+        /// Maximum number of soft-deleted entities to hard-delete in a single cleanup run.
+        /// </summary>
+        public int SoftDeleteCleanupBatchSize { get; set; } = 500;
+
+
         // Measurement and unit settings
         public string MeasurementSystem { get; set; } = "Metric";
         public string? DisplayWeightUnit { get; set; } = "kg";

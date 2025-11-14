@@ -99,6 +99,12 @@ namespace Darwin.Web.Services.Settings
                 JwtClockSkewSeconds = s.JwtClockSkewSeconds,
 
 
+                // Soft delete / data retention
+                SoftDeleteCleanupEnabled = s.SoftDeleteCleanupEnabled,
+                SoftDeleteRetentionDays = s.SoftDeleteRetentionDays,
+                SoftDeleteCleanupBatchSize = s.SoftDeleteCleanupBatchSize,
+
+
                 // Units
                 MeasurementSystem = string.IsNullOrWhiteSpace(s.MeasurementSystem) ? "Metric" : s.MeasurementSystem,
                 DisplayWeightUnit = s.DisplayWeightUnit,
