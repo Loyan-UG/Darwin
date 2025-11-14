@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "Darwin.sln",
+    "projects": [
+      "src/Darwin.Domain/Darwin.Domain.csproj",
+      "src/Darwin.Shared/Darwin.Shared.csproj",
+      "src/Darwin.Web/Darwin.Contracts.csproj",
+      "src/Darwin.WebApi/Darwin.Mobile.Shared.csproj",
+      "src/Darwin.WebApi/Darwin.Mobile.Business.csproj",
+      "src/Darwin.Contracts/Darwin.Mobile.Consumer,.csproj"
+    ]
+  }
+}

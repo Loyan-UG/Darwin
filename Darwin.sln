@@ -46,6 +46,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		Darwin.MobileOnly.slnf = Darwin.MobileOnly.slnf
+		Darwin.WebOnly.slnf = Darwin.WebOnly.slnf
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mobile", "Mobile", "{19DD8962-0A65-48C1-90EF-DA11158FCFAC}"
@@ -53,6 +55,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Mobile.Consumer", "src\Darwin.Mobile.Consumer\Darwin.Mobile.Consumer.csproj", "{CBC7984F-F19B-40F8-B0B5-21F0B32F359A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Mobile.Business", "src\Darwin.Mobile.Business\Darwin.Mobile.Business.csproj", "{006A6DE2-EE9C-4829-BDA9-D8201D82D009}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Contracts", "src\Darwin.Contracts\Darwin.Contracts.csproj", "{8890EDE9-8377-465D-BCBC-380B38E890B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -104,6 +108,10 @@ Global
 		{006A6DE2-EE9C-4829-BDA9-D8201D82D009}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{006A6DE2-EE9C-4829-BDA9-D8201D82D009}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{006A6DE2-EE9C-4829-BDA9-D8201D82D009}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8890EDE9-8377-465D-BCBC-380B38E890B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8890EDE9-8377-465D-BCBC-380B38E890B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8890EDE9-8377-465D-BCBC-380B38E890B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8890EDE9-8377-465D-BCBC-380B38E890B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -120,6 +128,7 @@ Global
 		{7CF95E9D-E349-4019-97AA-DBBFD491BF0D} = {853F1075-33A3-47FF-BC9E-BFB259D4C494}
 		{CBC7984F-F19B-40F8-B0B5-21F0B32F359A} = {19DD8962-0A65-48C1-90EF-DA11158FCFAC}
 		{006A6DE2-EE9C-4829-BDA9-D8201D82D009} = {19DD8962-0A65-48C1-90EF-DA11158FCFAC}
+		{8890EDE9-8377-465D-BCBC-380B38E890B9} = {50217339-B357-4D58-924F-35C677FF57AF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {14EF492C-6C72-429B-A2BE-3FC3BB81356B}
