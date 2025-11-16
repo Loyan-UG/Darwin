@@ -5,6 +5,7 @@
         public AppShell()
         {
             InitializeComponent();
+            // TODO: Routing.RegisterRoute("redeem", typeof(Pages.SessionPage));
         }
     }
 }

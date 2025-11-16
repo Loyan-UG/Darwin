@@ -6,9 +6,19 @@
     xmlns:local="clr-namespace:Darwin.Mobile.Consumer"
     Title="Darwin.Mobile.Consumer">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent Title="QR" 
+                      ContentTemplate="{DataTemplate pages:QrPage}" 
+                      Route="qr" />
+        <ShellContent Title="Discover" 
+                      ContentTemplate="{DataTemplate pages:DiscoverPage}" 
+                      Route="discover" />
+        <ShellContent Title="Rewards" 
+                      ContentTemplate="{DataTemplate pages:RewardsPage}" 
+                      Route="rewards" />
+    </TabBar>
 
+    <ShellContent Title="Login" 
+                  ContentTemplate="{DataTemplate pages:LoginPage}" 
+                  Route="login" />
 </Shell>

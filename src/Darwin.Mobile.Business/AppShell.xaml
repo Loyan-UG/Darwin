@@ -6,9 +6,18 @@
     xmlns:local="clr-namespace:Darwin.Mobile.Business"
     Title="Darwin.Mobile.Business">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <!-- TODO: routes & tabs -->
+    <TabBar>
+        <ShellContent Title="Scan" 
+                      ContentTemplate="{DataTemplate pages:ScannerPage}" 
+                      Route="scan" />
+        <ShellContent Title="Session" 
+                      ContentTemplate="{DataTemplate pages:SessionPage}" 
+                      Route="session" />
+    </TabBar>
 
+    <!-- Additional routes -->
+    <ShellContent Title="Login" 
+                  ContentTemplate="{DataTemplate pages:LoginPage}" 
+                  Route="login" />
 </Shell>
