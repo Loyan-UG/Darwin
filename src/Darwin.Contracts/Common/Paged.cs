@@ -25,4 +25,7 @@ public class PagedResponse<T>
 
     /// <summary>Items for the current page.</summary>
     public IReadOnlyList<T> Items { get; init; } = Array.Empty<T>();
+
+    /// <summary>Echoed paging request for client reconciliation.</summary>
+    public PagedRequest Request { get; init; } = new();
 }

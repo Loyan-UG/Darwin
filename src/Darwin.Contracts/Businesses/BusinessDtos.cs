@@ -6,22 +6,49 @@ namespace Darwin.Contracts.Businesses;
 /// <summary>Business list item for discovery pages.</summary>
 public sealed class BusinessSummaryDto
 {
-    public Guid BusinessId { get; init; }
+    /// <summary>Business id.</summary>
+    public Guid Id { get; init; }
+
+    /// <summary>Business name.</summary>
     public string Name { get; init; } = default!;
     public string? ShortDescription { get; init; }
     public string? LogoUrl { get; init; }
+
+    /// <summary>Primary category (e.g., "Cafe", "Restaurant").</summary>
     public string Category { get; init; } = "Unknown";
-    public decimal? Rating { get; init; }
+
+    /// <summary>Optional rating average 0..5.</summary>
+    public double? Rating { get; init; }
     public int? RatingCount { get; init; }
+
+    /// <summary>Coordinates for map pin.</summary>
+    public GeoCoordinateDto? Location { get; init; }
+
+    /// <summary>City or locality for quick display.</summary>
+    public string? City { get; init; }
+
+    /// <summary>True if open at the time of the query snapshot.</summary>
+    public bool? IsOpenNow { get; init; }
+
+    /// <summary>True if the business is currently active.</summary>
     public bool IsActive { get; init; }
 }
 
 /// <summary>Detailed business profile including locations and loyalty overview.</summary>
 public sealed class BusinessDetailDto
 {
-    public Guid BusinessId { get; init; }
+    public Guid Id { get; init; }
     public string Name { get; init; } = default!;
-    public string? ShortDescription { get; init; }
+    public string Category { get; init; } = default!;
+    public string? Description { get; init; }
+    /// <summary>Multiple photos or branding images.</summary>
+    public IReadOnlyList<string> ImageUrls { get; init; } = Array.Empty<string>();
+
+    /// <summary>Structured opening hours string (client may parse).</summary>
+    public string? OpeningHours { get; init; }
+
+    /// <summary>Phone number in E.164 if present.</summary>
+    public string? PhoneE164 { get; init; }
     public string DefaultCurrency { get; init; } = "EUR";
     public string DefaultCulture { get; init; } = "de-DE";
     public string? WebsiteUrl { get; init; }
@@ -50,6 +77,9 @@ public sealed class BusinessLocationDto
 /// <summary>Simple lat/lng for maps and proximity.</summary>
 public sealed class GeoCoordinateDto
 {
+    /// <summary>Latitude in decimal degrees.</summary>
     public double Latitude { get; init; }
+
+    /// <summary>Longitude in decimal degrees.</summary>
     public double Longitude { get; init; }
 }

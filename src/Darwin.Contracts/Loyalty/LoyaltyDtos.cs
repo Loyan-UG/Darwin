@@ -41,6 +41,9 @@ public sealed class StartScanResponse
 
     /// <summary>Next reward preview (if any).</summary>
     public string? NextRewardTitle { get; init; }
+
+    /// <summary>Recent visits short summary (optional for UI hints).</summary>
+    public string? LastVisitInfo { get; init; }
 }
 
 /// <summary>Adds points for the ongoing scan session.</summary>
