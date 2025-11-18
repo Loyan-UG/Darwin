@@ -73,13 +73,3 @@ public sealed class BusinessLocationDto
     public bool IsPrimary { get; init; }
     public string? OpeningHoursJson { get; init; }
 }
-
-/// <summary>Simple lat/lng for maps and proximity.</summary>
-public sealed class GeoCoordinateDto
-{
-    /// <summary>Latitude in decimal degrees.</summary>
-    public double Latitude { get; init; }
-
-    /// <summary>Longitude in decimal degrees.</summary>
-    public double Longitude { get; init; }
-}

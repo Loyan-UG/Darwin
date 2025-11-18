@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Darwin.Contracts.Auth;
+using Darwin.Contracts.Identity;
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Common;
@@ -32,7 +32,7 @@ public sealed class AuthService : IAuthService
 
     public async Task<AppBootstrapResponse> LoginAsync(string email, string password, string? deviceId, CancellationToken ct)
     {
-        var token = await _api.PostAsync<LoginRequest, TokenResponse>("auth/login", new LoginRequest
+        var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>("auth/login", new PasswordLoginRequest
         {
             Email = email,
             Password = password,
