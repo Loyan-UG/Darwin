@@ -33,6 +33,9 @@ It combines **content management (CMS)** and **full e-commerce features** such a
   - **Data Protection** key ring persisted for shared hosting
 - 📊 **Analytics**: Google Analytics, Tag Manager, Search Console (via settings).
 - 🧪 **Testing**: Unit + Integration tests, GitHub Actions CI.
+- 📱 **Mobile (MAUI)**: Two apps — **Consumer** (rotating QR for loyalty, map-based discovery, rewards dashboard) and **Business** (camera QR scan, add points, redeem). Shared library (**Darwin.Mobile.Shared**) provides HTTP + retry, auth helpers, and scanner/location abstractions. DTOs come from **Darwin.Contracts**.
+- 🔗 **API & Contracts**: Public **Darwin.WebApi** (JWT, Swagger) using **Darwin.Contracts** as the single source of request/response models for both Web and Mobile.
+
 
 ---
 
@@ -45,8 +48,12 @@ src/
 ├─ Darwin.Application → Use cases, DTOs, Handlers, Validators
 ├─ Darwin.Infrastructure→ EF Core, DbContext, Migrations, DataSeeder
 ├─ Darwin.Web → MVC + Razor (Admin + Public), DI, Middleware
-├─ Darwin.WebApi → Reserved for REST API (future v1)
+├─ Darwin.WebApi → REST API
 └─ Darwin.Shared → Result wrappers, constants, helpers
+├─ Darwin.Contracts → Shared DTOs for WebApi + Mobile (request/response contracts)
+├─ Darwin.Mobile.Shared → Mobile shared services (HTTP client, retry, auth, scanner/location abstractions)
+├─ Darwin.Mobile.Consumer → .NET MAUI consumer app (QR, discover, rewards, profile)
+└─ Darwin.Mobile.Business → .NET MAUI business app (scan, accrue, redeem)
 
 
 ### Key Principles
@@ -66,6 +73,33 @@ src/
     - `AddPersistence(configuration)`
     - `AddIdentityInfrastructure()`
     - `AddNotificationsInfrastructure(configuration)`
+
+
+---
+
+
+## 📱 Mobile Overview
+
+The mobile suite consists of two .NET MAUI apps:
+
+- **Darwin.Mobile.Consumer**: end-user app with authentication, a **rotating short-lived QR token** for in-store scans, discover/map, rewards dashboard, and profile.
+- **Darwin.Mobile.Business**: tablet app for partners to **scan the consumer QR**, start a secure scan session, **accrue points**, and **redeem rewards**.
+
+Shared libraries and contracts:
+
+- **Darwin.Mobile.Shared**: typed HTTP client (System.Text.Json), **retry policy**, token storage helpers, and abstractions for camera scanning (`IScanner`) and geolocation (`ILocation`). Registered via `AddDarwinMobileShared(ApiOptions)` which requires `Microsoft.Extensions.Http` for `AddHttpClient`.
+- **Darwin.Contracts**: single source of **request/response DTOs** used by both WebApi and the mobile apps (identity tokens, loyalty scan flows, discovery, paging/sorting, problem details).
+
+Security highlights:
+
+- **No internal user IDs in QR**; the QR is an **opaque, short-lived token** exchanged server-side for an ephemeral scan session. Rotation limits replay risk.
+- **JWT + refresh tokens** for app authentication; server uses Data Protection and Argon2/WebAuthn/TOTP per platform defaults.
+
+WebApi provides the endpoints consumed by both apps and composes Infrastructure modules (Persistence, Identity/JWT, Notifications, Data Protection).
+
+
+---
+
 
 ## 🔐 Security Overview
 
@@ -135,11 +169,14 @@ Note: For production, set a persistent DataProtection:KeysPath on disk or use a 
 # run migrations & seed
 dotnet ef database update --project src/Darwin.Infrastructure
 
+
 # start the app
 dotnet run --project src/Darwin.Web
 
+
 Then open https://localhost:7170/admin
 (default admin user is seeded — change password on first login).
+
 
 ## 🗺️ Roadmap
 
@@ -170,6 +207,16 @@ High-level milestones:
 
  Minimal CRM (user profiles, consents)
 
+ Mobile suite: Darwin.Mobile.Shared, Darwin.Mobile.Consumer, Darwin.Mobile.Business
+
+ Loyalty QR flow: rotating consumer QR, secure scan session, accrue/redeem endpoints
+
+ Discovery on mobile: map + directory + business details
+
+ Contracts-first WebApi: expand Darwin.Contracts without breaking existing clients
+
+
+
 ## 📚 Documentation
 
 Setup Guide
@@ -179,6 +226,7 @@ Architecture Decisions
 Styleguide & Conventions
 
 Backlog & Roadmap
+
 
 ## 🤝 Contributing
 
@@ -194,10 +242,11 @@ Push to the branch (git push origin feature/myfeature)
 
 Open a Pull Request
 
+
 ## 📜 License
 
-This project is licensed under the MIT License
-.
+This project is licensed under the MIT License.
+
 
 ## 🏢 About
 
