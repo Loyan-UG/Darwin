@@ -11,7 +11,7 @@ Darwin’s mobile suite consists of two .NET MAUI apps:
 - **Darwin.Mobile.Consumer** – end-user app: login, personal rotating QR code, discover businesses on a map, view/earn/redeem rewards, profile.
 - **Darwin.Mobile.Business** – business tablet app: scan consumer QR, confirm identity, add points, redeem rewards, view customer snapshots.
 
-Both apps talk to **Darwin.WebApi** via a thin **Darwin.Mobile.Shared** library (HTTP client, retry, auth helpers, abstractions for camera/location) and a stable **Darwin.Contracts** package (DTOs used by WebApi + both apps). The back end (Web/Infrastructure) already exposes composition modules for DB, identity, JWT, SMTP, and data-protection; WebApi will compose those and implement endpoints that match the Contracts. 
+Both apps talk to **Darwin.WebApi** via a thin **Darwin.Mobile.Shared** library (HTTP client, retry, auth helpers, abstractions for camera/location) and a stable **Darwin.Contracts** package (Contracts used by WebApi + both apps). The back end (Web/Infrastructure) already exposes composition modules for DB, identity, JWT, SMTP, and data-protection; WebApi will compose those and implement endpoints that match the Contracts. 
 
 ---
 
@@ -64,13 +64,13 @@ Web/WebApi will consume Infrastructure composition modules:
 
 ---
 
-## 4) Contracts (DTOs) Overview
+## 4) Contracts  Overview
 
-> These DTOs are designed for **System.Text.Json** with default web naming, compatible with our Shared ApiClient. They avoid exposing internal IDs where not needed.
+> These Contracts are designed for **System.Text.Json** with default web naming, compatible with our Shared ApiClient. They avoid exposing internal IDs where not needed.
 
 ### 4.1 Common
 - `PagingRequest`, `PagedResponse<T>` – uniform paging across discovery lists.  
-- `GeoCoordinateDto` – decimal degrees for pins/proximity.  
+- `GeoCoordinate` – decimal degrees for pins/proximity.  
 - `ApiProblem` – RFC 7807-like minimal error envelope.  
 - `SortOption` – **already exists** and is reused by discovery.
 
@@ -79,20 +79,20 @@ Web/WebApi will consume Infrastructure composition modules:
   Access is short-lived (JWT); Refresh is opaque and longer-lived per server policy. JWT plumbing is provided in Infrastructure.
 
 ### 4.3 Loyalty
-- `QrCodePayloadDto` (already present) – **rotating** short-lived QR token payload rendered by Consumer.  
+- `QrCodePayload` (already present) – **rotating** short-lived QR token payload rendered by Consumer.  
 - Business flow:
   - `StartScanRequest` (token) → `StartScanResponse` (scan session, customer display name, current points, next reward).  
   - `AccruePointsRequest` → `AccruePointsResponse`.  
   - `RedeemRewardRequest` → `RedeemRewardResponse`.  
 - Reward programming:
-  - `RewardProgramDto` with `RewardTierDto`.  
-  - `LoyaltyAccountDto` (consumer’s per-business status).  
+  - `RewardProgram` with `RewardTier`.  
+  - `LoyaltyAccount` (consumer’s per-business status).  
   These complete the Phase-1/2 surface while remaining stable for future extensions.
 
 ### 4.4 Businesses (Discovery)
 - `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, sort, paging.  
-- `BusinessSummaryDto` – id, name, category, rating, approximate location, open-now.  
-- `BusinessDetailDto` – description, opening hours, phones/links, address line, images, reward program preview.  
+- `BusinessSummary` – id, name, category, rating, approximate location, open-now.  
+- `BusinessDetail` – description, opening hours, phones/links, address line, images, reward program preview.  
 These are sufficient for a map + directory + profile page.
 
 ---
@@ -117,7 +117,7 @@ These are sufficient for a map + directory + profile page.
 
 **Consumer app**
 1. User logs in → receives `TokenResponse` (access/refresh). Access is stored via `ITokenStore`; ApiClient bearer is set.  
-2. Consumer requests `GET /loyalty/qr` → server returns **short-lived** `QrCodePayloadDto`.  
+2. Consumer requests `GET /loyalty/qr` → server returns **short-lived** `QrCodePayload`.  
 3. Consumer displays QR and optionally starts `QrTokenRefresher` to rotate the token periodically (e.g., 60s).
 
 **Business app**
@@ -185,10 +185,10 @@ services.AddDarwinMobileShared(new ApiOptions
 ### Consumer
 - **Login**: `POST /identity/login` → `TokenResponse`; store via `ITokenStore`.
 - **QR**: show rotating token (subscribe to `QrTokenRefresher.TokenRefreshed`).
-- **Rewards**: list per-business points with `LoyaltyAccountDto`.
-- **Discover**: call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummaryDto`.
-- **Details**: fetch `BusinessDetailDto` including public reward preview.
-- **Profile**: fetch/edit using `CustomerProfileDto` / `CustomerProfileEditDto`.
+- **Rewards**: list per-business points with `LoyaltyAccount`.
+- **Discover**: call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummary`.
+- **Details**: fetch `BusinessDetail` including public reward preview.
+- **Profile**: fetch/edit using `CustomerProfile` / `CustomerProfileEdit`.
 
 ### Business
 - **Scan**: `IScanner.ScanAsync` → `StartScanRequest` → `StartScanResponse`.
@@ -236,7 +236,7 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ## 16) Testing Considerations
 
-- For pure DTO/serialization tests, reference **Darwin.Contracts** directly.  
+- For pure contract/serialization tests, reference **Darwin.Contracts** directly.  
 - For handler/UI integration, use mock `IApiClient` or a test server.  
 - Note: Application/test infra currently uses EF InMemory helpers; prefer SQLite-in-memory when relational behavior matters. 
 
@@ -267,10 +267,10 @@ services.AddDarwinMobileShared(new ApiOptions
 
 > The following modules are present/added in `Darwin.Contracts`:
 
-- **Common**: `PagedRequest`, `PagedResponse<T>`, `GeoCoordinateDto`, `ProblemDetails`, `SortOption`.
+- **Common**: `PagedRequest`, `PagedResponse<T>`, `GeoCoordinate`, `ProblemDetails`, `SortOption`.
 - **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.  
-- **Loyalty**: `QrCodePayloadDto`, `StartScan*`, `Accrue*`, `Redeem*`, `RewardProgramDto`, `RewardTierDto`, `LoyaltyAccountDto`.  
-- **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummaryDto`, `BusinessDetailDto`.
+- **Loyalty**: `QrCodePayload`, `StartScan*`, `Accrue*`, `Redeem*`, `RewardProgram`, `RewardTier`, `LoyaltyAccount`.  
+- **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
 
 > Rationale: Keep WebApi and both mobile apps in lock-step on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 

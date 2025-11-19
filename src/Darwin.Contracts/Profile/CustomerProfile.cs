@@ -3,7 +3,7 @@
 /// <summary>
 /// Minimal editable customer profile.
 /// </summary>
-public sealed class CustomerProfileDto
+public sealed class CustomerProfile
 {
     /// <summary>Server authoritative id of the current user.</summary>
     public Guid Id { get; init; }

@@ -16,8 +16,8 @@ public interface ILoyaltyService
     Task<StartScanResponse> StartScanAsync(StartScanRequest req, CancellationToken ct);
     Task<AddPointsResponse> AddPointsAsync(AddPointsRequest req, CancellationToken ct);
     Task<RedeemRewardResponse> RedeemAsync(RedeemRewardRequest req, CancellationToken ct);
-    Task<IReadOnlyList<LoyaltyAccountSummaryDto>> MyAccountsAsync(CancellationToken ct);
-    Task<IReadOnlyList<PointsTransactionDto>> HistoryAsync(Guid businessId, int take, CancellationToken ct);
+    Task<IReadOnlyList<LoyaltyAccountSummary>> MyAccountsAsync(CancellationToken ct);
+    Task<IReadOnlyList<PointsTransaction>> HistoryAsync(Guid businessId, int take, CancellationToken ct);
 }
 
 public sealed class LoyaltyService : ILoyaltyService
@@ -37,9 +37,9 @@ public sealed class LoyaltyService : ILoyaltyService
     public Task<RedeemRewardResponse> RedeemAsync(RedeemRewardRequest req, CancellationToken ct)
         => _api.PostAsync<RedeemRewardRequest, RedeemRewardResponse>("loyalty/scan/redeem", req, ct)!;
 
-    public Task<IReadOnlyList<LoyaltyAccountSummaryDto>> MyAccountsAsync(CancellationToken ct)
-        => _api.GetAsync<IReadOnlyList<LoyaltyAccountSummaryDto>>("loyalty/me/accounts", ct)!;
+    public Task<IReadOnlyList<LoyaltyAccountSummary>> MyAccountsAsync(CancellationToken ct)
+        => _api.GetAsync<IReadOnlyList<LoyaltyAccountSummary>>("loyalty/me/accounts", ct)!;
 
-    public Task<IReadOnlyList<PointsTransactionDto>> HistoryAsync(Guid businessId, int take, CancellationToken ct)
-        => _api.GetAsync<IReadOnlyList<PointsTransactionDto>>($"loyalty/me/{businessId:D}/history?take={take}", ct)!;
+    public Task<IReadOnlyList<PointsTransaction>> HistoryAsync(Guid businessId, int take, CancellationToken ct)
+        => _api.GetAsync<IReadOnlyList<PointsTransaction>>($"loyalty/me/{businessId:D}/history?take={take}", ct)!;
 }
