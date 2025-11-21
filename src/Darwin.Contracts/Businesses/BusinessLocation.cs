@@ -20,7 +20,7 @@ namespace Darwin.Contracts.Businesses
         public string? Region { get; init; }
         public string? CountryCode { get; init; }
         public string? PostalCode { get; init; }
-        public GeoCoordinate? Coordinate { get; init; }
+        public GeoCoordinateModel? Coordinate { get; init; }
         public bool IsPrimary { get; init; }
         public string? OpeningHoursJson { get; init; }
     }

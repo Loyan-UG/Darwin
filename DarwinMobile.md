@@ -70,7 +70,7 @@ Web/WebApi will consume Infrastructure composition modules:
 
 ### 4.1 Common
 - `PagingRequest`, `PagedResponse<T>` – uniform paging across discovery lists.  
-- `GeoCoordinate` – decimal degrees for pins/proximity.  
+- `GeoCoordinateModel` – decimal degrees for pins/proximity.  
 - `ApiProblem` – RFC 7807-like minimal error envelope.  
 - `SortOption` – **already exists** and is reused by discovery.
 
@@ -267,7 +267,7 @@ services.AddDarwinMobileShared(new ApiOptions
 
 > The following modules are present/added in `Darwin.Contracts`:
 
-- **Common**: `PagedRequest`, `PagedResponse<T>`, `GeoCoordinate`, `ProblemDetails`, `SortOption`.
+- **Common**: `PagedRequest`, `PagedResponse<T>`, `GeoCoordinateModel`, `ProblemDetails`, `SortOption`.
 - **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.  
 - **Loyalty**: `QrCodePayload`, `StartScan*`, `Accrue*`, `Redeem*`, `RewardProgram`, `RewardTier`, `LoyaltyAccount`.  
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.

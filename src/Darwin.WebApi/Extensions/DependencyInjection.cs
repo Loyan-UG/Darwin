@@ -81,6 +81,7 @@ namespace Darwin.WebApi.Extensions
             // JWT bearer authentication.
             ConfigureJwtBearerAuthentication(services, configuration);
 
+
             // Basic authorization setup. Fine-grained permission policies can be wired later
             // (reusing the PermissionPolicyProvider/PermissionAuthorizationHandler from Darwin.Web.Auth).
             services.AddAuthorization();

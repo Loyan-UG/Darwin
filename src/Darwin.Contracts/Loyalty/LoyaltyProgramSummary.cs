@@ -12,6 +12,6 @@ namespace Darwin.Contracts.Loyalty
         public Guid LoyaltyProgramId { get; init; }
         public string Name { get; init; } = default!;
         public string AccrualMode { get; init; } = "PerVisit";
-        public IReadOnlyList<LoyaltyRewardTier> RewardTiers { get; init; } = Array.Empty<LoyaltyRewardTierDto>();
+        public IReadOnlyList<LoyaltyRewardTier> RewardTiers { get; init; } = Array.Empty<LoyaltyRewardTier>();
     }
 }

@@ -20,7 +20,7 @@ public sealed class BusinessListRequest : PagedRequest
     /// <summary>
     /// Optional proximity filter.
     /// </summary>
-    public GeoCoordinate? Near { get; init; }
+    public GeoCoordinateModel? Near { get; init; }
 
     /// <summary>
     /// Optional radius in meters when Near is set (default 3000).

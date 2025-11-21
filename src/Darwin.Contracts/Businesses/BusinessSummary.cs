@@ -22,7 +22,7 @@ public sealed class BusinessSummary
     public int? RatingCount { get; init; }
 
     /// <summary>Coordinates for map pin.</summary>
-    public GeoCoordinate? Location { get; init; }
+    public GeoCoordinateModel? Location { get; init; }
 
     /// <summary>City or locality for quick display.</summary>
     public string? City { get; init; }

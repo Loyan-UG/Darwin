@@ -1,4 +1,5 @@
 using Darwin.WebApi.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,3 +12,5 @@ var app = builder.Build();
 app.UseWebApiStartup();
 
 await app.RunAsync();
+
+

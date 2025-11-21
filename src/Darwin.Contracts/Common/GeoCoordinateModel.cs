@@ -5,7 +5,7 @@
 /// Mirrors the GeoCoordinate value object in the domain and can be reused
 /// by multiple feature areas (business discovery, delivery radius, etc.).
 /// </summary>
-public sealed class GeoCoordinate
+public sealed class GeoCoordinateModel
 {
     /// <summary>
     /// Gets the latitude in decimal degrees. Valid range: -90..+90.
