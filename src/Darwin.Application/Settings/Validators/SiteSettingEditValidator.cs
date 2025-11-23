@@ -1,32 +1,23 @@
-﻿using Darwin.Application.Settings.DTOs;
+﻿using System;
+using System.Globalization;
+using System.Linq;
+using Darwin.Application.Settings.DTOs;
 using FluentValidation;
-using System;
-using System.Text.RegularExpressions;
 
 namespace Darwin.Application.Settings.Validators
 {
     /// <summary>
-    /// FluentValidation validator for <see cref="SiteSettingDto"/>. Enforces
-    /// business rules and ensures data integrity before persisting or displaying
-    /// site-wide settings. This validator combines the rules for reading and
-    /// updating settings; when saving, a concurrency token (<see cref="SiteSettingDto.RowVersion"/>)
-    /// must be provided.
+    /// FluentValidation rules for editing the singleton <see cref="SiteSettingDto"/>.
+    /// This validator is used both in Admin and in API-level configuration updates.
     /// </summary>
     public sealed class SiteSettingEditValidator : AbstractValidator<SiteSettingDto>
     {
-        /// <summary>
-        /// Initializes validation rules. See inline comments for rule descriptions.
-        /// </summary>
         public SiteSettingEditValidator()
         {
-            // Concurrency token must be present for updates. We require RowVersion
-            // always, since the same DTO is used for both display and update.
-            RuleFor(x => x.RowVersion)
-                .NotNull()
-                .Must(x => x.Length > 0)
-                .WithMessage("RowVersion is required for concurrency control.");
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotNull();
 
-            // Basic site information
+            // -------- Basic site information --------
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Title is required.")
                 .MaximumLength(200);
@@ -39,8 +30,42 @@ namespace Darwin.Application.Settings.Validators
                 .EmailAddress()
                 .When(x => !string.IsNullOrWhiteSpace(x.ContactEmail));
 
+            // -------- JWT --------
+            RuleFor(x => x.JwtIssuer)
+                .NotEmpty()
+                .MaximumLength(200);
 
-            // Soft delete / data retention
+            RuleFor(x => x.JwtAudience)
+                .NotEmpty()
+                .MaximumLength(200);
+
+            RuleFor(x => x.JwtAccessTokenMinutes)
+                .GreaterThanOrEqualTo(1)
+                .LessThanOrEqualTo(1440)
+                .WithMessage("JwtAccessTokenMinutes must be between 1 and 1440 minutes.");
+
+            RuleFor(x => x.JwtRefreshTokenDays)
+                .GreaterThanOrEqualTo(1)
+                .LessThanOrEqualTo(3650)
+                .WithMessage("JwtRefreshTokenDays must be between 1 and 3650 days.");
+
+            RuleFor(x => x.JwtSigningKey)
+                .NotEmpty()
+                .MinimumLength(32)
+                .MaximumLength(2048)
+                .WithMessage("JwtSigningKey must be a non-empty high-entropy secret.");
+
+            RuleFor(x => x.JwtPreviousSigningKey)
+                .MinimumLength(32)
+                .MaximumLength(2048)
+                .When(x => !string.IsNullOrWhiteSpace(x.JwtPreviousSigningKey));
+
+            RuleFor(x => x.JwtClockSkewSeconds)
+                .GreaterThanOrEqualTo(0)
+                .LessThanOrEqualTo(3600)
+                .WithMessage("JwtClockSkewSeconds must be between 0 and 3600 seconds.");
+
+            // -------- Soft delete / data retention --------
             RuleFor(x => x.SoftDeleteRetentionDays)
                 .GreaterThanOrEqualTo(1)
                 .LessThanOrEqualTo(3650)
@@ -51,9 +76,7 @@ namespace Darwin.Application.Settings.Validators
                 .LessThanOrEqualTo(100_000)
                 .WithMessage("SoftDeleteCleanupBatchSize must be between 1 and 100000.");
 
-
-
-            // Localization
+            // -------- Localization --------
             RuleFor(x => x.DefaultCulture)
                 .NotEmpty().MaximumLength(10)
                 .Must(IsCulture)
@@ -84,7 +107,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.TimeFormat));
 
-            // Measurement
+            // -------- Measurement --------
             RuleFor(x => x.MeasurementSystem)
                 .Must(v => v == "Metric" || v == "Imperial")
                 .WithMessage("MeasurementSystem must be 'Metric' or 'Imperial'.");
@@ -97,7 +120,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(10)
                 .When(x => !string.IsNullOrWhiteSpace(x.DisplayLengthUnit));
 
-            // SEO
+            // -------- SEO --------
             RuleFor(x => x.SeoTitleTemplate)
                 .MaximumLength(150)
                 .When(x => !string.IsNullOrWhiteSpace(x.SeoTitleTemplate));
@@ -110,7 +133,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(2000)
                 .When(x => !string.IsNullOrWhiteSpace(x.OpenGraphDefaultsJson));
 
-            // Analytics
+            // -------- Analytics --------
             RuleFor(x => x.GoogleAnalyticsId)
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.GoogleAnalyticsId));
@@ -123,12 +146,7 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.GoogleSearchConsoleVerification));
 
-            // Feature flags JSON
-            RuleFor(x => x.FeatureFlagsJson)
-                .MaximumLength(2000)
-                .When(x => !string.IsNullOrWhiteSpace(x.FeatureFlagsJson));
-
-            // WhatsApp integration
+            // -------- WhatsApp --------
             RuleFor(x => x.WhatsAppBusinessPhoneId)
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppBusinessPhoneId));
@@ -138,149 +156,96 @@ namespace Darwin.Application.Settings.Validators
                 .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppAccessToken));
 
             RuleFor(x => x.WhatsAppFromPhoneE164)
-                .Matches("^\\+\\d{4,15}$")
-                .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppFromPhoneE164))
-                .WithMessage("WhatsAppFromPhoneE164 must be in E.164 format (e.g., +49123456789)");
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppFromPhoneE164));
 
             RuleFor(x => x.WhatsAppAdminRecipientsCsv)
-                .Must(AllPhonesValid)
-                .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppAdminRecipientsCsv))
-                .WithMessage("WhatsAppAdminRecipientsCsv must be comma-separated E.164 phone numbers.");
+                .MaximumLength(1000)
+                .When(x => !string.IsNullOrWhiteSpace(x.WhatsAppAdminRecipientsCsv));
 
-            // Additional formatting overrides
-            RuleFor(x => x.MeasurementSettingsJson)
-                .MaximumLength(2000)
-                .When(x => !string.IsNullOrWhiteSpace(x.MeasurementSettingsJson));
-
-            RuleFor(x => x.NumberFormattingOverridesJson)
-                .MaximumLength(2000)
-                .When(x => !string.IsNullOrWhiteSpace(x.NumberFormattingOverridesJson));
-
-            // Routing
-            RuleFor(x => x.HomeSlug)
-                .MaximumLength(200)
-                .When(x => !string.IsNullOrWhiteSpace(x.HomeSlug));
-
-            // ------------------------------
-            // WebAuthn (new) validations
-            // ------------------------------
+            // -------- WebAuthn --------
             RuleFor(x => x.WebAuthnRelyingPartyId)
                 .NotEmpty()
-                .MaximumLength(255)
-                .Must(IsRpId)
-                .WithMessage("WebAuthnRelyingPartyId must be a registrable domain (e.g., example.com) or 'localhost' for development.");
+                .MaximumLength(255);
 
             RuleFor(x => x.WebAuthnRelyingPartyName)
                 .NotEmpty()
-                .MaximumLength(100);
+                .MaximumLength(255);
 
             RuleFor(x => x.WebAuthnAllowedOriginsCsv)
                 .NotEmpty()
-                .Must(AllOriginsValid)
-                .WithMessage("WebAuthnAllowedOriginsCsv must be a comma-separated list of valid origins (e.g., https://example.com,https://localhost:5001).");
+                .MaximumLength(2000);
 
-            // WebAuthnRequireUserVerification is boolean; no rule needed beyond presence in DTO.
-
-            // SMTP
+            // -------- SMTP --------
             RuleFor(x => x.SmtpHost)
-                .MaximumLength(200)
-                .When(x => x.SmtpEnabled && !string.IsNullOrWhiteSpace(x.SmtpHost));
+                .MaximumLength(255)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmtpHost));
+
             RuleFor(x => x.SmtpPort)
-                .InclusiveBetween(1, 65535)
-                .When(x => x.SmtpEnabled && x.SmtpPort.HasValue);
+                .GreaterThan(0)
+                .LessThanOrEqualTo(65535)
+                .When(x => x.SmtpPort.HasValue);
+
+            RuleFor(x => x.SmtpUsername)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmtpUsername));
+
+            RuleFor(x => x.SmtpPassword)
+                .MaximumLength(512)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmtpPassword));
+
             RuleFor(x => x.SmtpFromAddress)
                 .EmailAddress()
-                .When(x => x.SmtpEnabled && !string.IsNullOrWhiteSpace(x.SmtpFromAddress));
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmtpFromAddress));
+
             RuleFor(x => x.SmtpFromDisplayName)
                 .MaximumLength(200)
-                .When(x => x.SmtpEnabled && !string.IsNullOrWhiteSpace(x.SmtpFromDisplayName));
+                .When(x => !string.IsNullOrWhiteSpace(x.SmtpFromDisplayName));
 
-            // SMS
+            // -------- SMS --------
             RuleFor(x => x.SmsProvider)
-                .MaximumLength(50)
-                .When(x => x.SmsEnabled && !string.IsNullOrWhiteSpace(x.SmsProvider));
-            RuleFor(x => x.SmsFromPhoneE164)
-                .Matches("^\\+\\d{4,15}$")
-                .When(x => x.SmsEnabled && !string.IsNullOrWhiteSpace(x.SmsFromPhoneE164))
-                .WithMessage("SmsFromPhoneE164 must be in E.164 format (e.g., +49123456789).");
-            RuleFor(x => x.SmsExtraSettingsJson)
-                .MaximumLength(4000)
-                .When(x => x.SmsEnabled && !string.IsNullOrWhiteSpace(x.SmsExtraSettingsJson));
+                .MaximumLength(100)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmsProvider));
 
-            // Admin routing
+            RuleFor(x => x.SmsFromPhoneE164)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmsFromPhoneE164));
+
+            RuleFor(x => x.SmsApiKey)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmsApiKey));
+
+            RuleFor(x => x.SmsApiSecret)
+                .MaximumLength(512)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmsApiSecret));
+
+            RuleFor(x => x.SmsExtraSettingsJson)
+                .MaximumLength(2000)
+                .When(x => !string.IsNullOrWhiteSpace(x.SmsExtraSettingsJson));
+
+            // -------- Admin routing --------
             RuleFor(x => x.AdminAlertEmailsCsv)
-                .MaximumLength(1000)
+                .MaximumLength(2000)
                 .When(x => !string.IsNullOrWhiteSpace(x.AdminAlertEmailsCsv));
+
             RuleFor(x => x.AdminAlertSmsRecipientsCsv)
-                .Must(csv => {
-                    if (string.IsNullOrWhiteSpace(csv)) return true;
-                    var items = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    return items.Length == 0 || items.All(p => System.Text.RegularExpressions.Regex.IsMatch(p, "^\\+\\d{4,15}$"));
-                })
-                .WithMessage("AdminAlertSmsRecipientsCsv must be comma-separated E.164 phone numbers.")
+                .MaximumLength(1000)
                 .When(x => !string.IsNullOrWhiteSpace(x.AdminAlertSmsRecipientsCsv));
         }
 
-        private static bool IsCulture(string c)
+        private static bool IsCulture(string culture)
         {
-            return Regex.IsMatch(c, "^[a-z]{2}-[A-Z]{2}$");
+            return CultureInfo
+                .GetCultures(CultureTypes.AllCultures)
+                .Any(c => string.Equals(c.Name, culture, StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool AllCulturesValid(string csv)
         {
-            var items = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (items.Length == 0) return false;
-            foreach (var c in items)
-            {
-                if (!IsCulture(c)) return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Validates that a comma-separated list of phone numbers are all in E.164 format.
-        /// Allows optional whitespace around the commas. Each number must start with '+' and
-        /// contain 4-15 digits.
-        /// </summary>
-        private static bool AllPhonesValid(string csv)
-        {
-            var items = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (items.Length == 0) return false;
-            foreach (var phone in items)
-            {
-                if (!Regex.IsMatch(phone, "^\\+\\d{4,15}$"))
-                    return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Validates RP ID: either "localhost" or something like "example.com" (no scheme, no path).
-        /// </summary>
-        private static bool IsRpId(string rpId)
-        {
-            if (string.Equals(rpId, "localhost", StringComparison.OrdinalIgnoreCase))
-                return true;
-            // rudimentary domain label check; allows subdomains too
-            return Regex.IsMatch(rpId, @"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-        }
-
-        /// <summary>
-        /// Validates CSV of origins. Each must be an absolute URI with http/https scheme.
-        /// </summary>
-        private static bool AllOriginsValid(string csv)
-        {
-            var items = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (items.Length == 0) return false;
-
-            foreach (var origin in items)
-            {
-                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                    return false;
-                if (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp)
-                    return false; // allow http for local dev only
-            }
-            return true;
+            var parts = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length == 0) return false;
+            return parts.All(IsCulture);
         }
     }
 }

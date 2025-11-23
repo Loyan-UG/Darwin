@@ -1,13 +1,16 @@
-﻿using System;
-using System.Text;
-using System.Text.Json;
-using Darwin.Application.Extensions;
+﻿using Darwin.Application.Extensions;
 using Darwin.Infrastructure.Extensions;
+using Darwin.WebApi.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
+using System.Text;
+using System.Text.Json;
 
 namespace Darwin.WebApi.Extensions
 {
@@ -36,7 +39,8 @@ namespace Darwin.WebApi.Extensions
         /// <param name="services">The DI container.</param>
         /// <param name="configuration">Application configuration (appsettings + environment).</param>
         /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
-        public static IServiceCollection AddWebApiComposition(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddWebApiComposition(
+            this IServiceCollection services, IConfiguration configuration)
         {
             if (services is null) throw new ArgumentNullException(nameof(services));
             if (configuration is null) throw new ArgumentNullException(nameof(configuration));
@@ -78,8 +82,18 @@ namespace Darwin.WebApi.Extensions
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
-            // JWT bearer authentication.
-            ConfigureJwtBearerAuthentication(services, configuration);
+            // --- JWT Bearer validation sourced from SiteSetting ---
+            services.TryAddSingleton<JwtSigningParametersProvider>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IConfigureOptions<JwtBearerOptions>, JwtBearerOptionsSetup>());
+
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(); // Options are configured via JwtBearerOptionsSetup
+
 
 
             // Basic authorization setup. Fine-grained permission policies can be wired later

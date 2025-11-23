@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Persistence\Db\DarwinDbContext.Loyalty.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Fido2" Version="4.0.0" />
     <PackageReference Include="Fido2.AspNet" Version="4.0.0" />
     <PackageReference Include="Fido2.Models" Version="4.0.0" />
@@ -35,6 +39,10 @@
 
   <ItemGroup>
     <Folder Include="Migrations\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Persistence\Db\DarwinDbContext.Loyalty.cs" />
   </ItemGroup>
 
 </Project>

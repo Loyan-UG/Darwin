@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
@@ -8,28 +9,35 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Settings.Queries
 {
     /// <summary>
-    /// Returns the singleton SiteSetting as a <see cref="SiteSettingDto"/> including all fields.
+    /// Returns the singleton <see cref="SiteSetting"/> as a <see cref="SiteSettingDto"/> including all fields.
     /// </summary>
     public sealed class GetSiteSettingHandler
     {
         private readonly IAppDbContext _db;
-        public GetSiteSettingHandler(IAppDbContext db) => _db = db;
+
+        public GetSiteSettingHandler(IAppDbContext db)
+        {
+            _db = db;
+        }
 
         /// <summary>
         /// Loads the single settings row (read-only) or returns null if missing.
         /// </summary>
         public async Task<SiteSettingDto?> HandleAsync(CancellationToken ct = default)
         {
-            var s = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
-            if (s == null) return null;
+            var s = await _db.Set<SiteSetting>()
+                .AsNoTracking()
+                .SingleOrDefaultAsync(ct);
+
+            if (s is null) return null;
 
             return new SiteSettingDto
             {
                 Id = s.Id,
-                RowVersion = s.RowVersion,
+                RowVersion = s.RowVersion ?? System.Array.Empty<byte>(),
 
                 // Basics
-                Title = s.Title,
+                Title = s.Title ?? string.Empty,
                 LogoUrl = s.LogoUrl,
                 ContactEmail = s.ContactEmail,
 
@@ -37,16 +45,34 @@ namespace Darwin.Application.Settings.Queries
                 HomeSlug = s.HomeSlug,
 
                 // Localization
-                DefaultCulture = s.DefaultCulture,
-                SupportedCulturesCsv = s.SupportedCulturesCsv,
+                DefaultCulture = s.DefaultCulture ?? "de-DE",
+                SupportedCulturesCsv = s.SupportedCulturesCsv ?? "de-DE,en-US",
                 DefaultCountry = s.DefaultCountry,
-                DefaultCurrency = s.DefaultCurrency,
+                DefaultCurrency = s.DefaultCurrency ?? "EUR",
                 TimeZone = s.TimeZone,
                 DateFormat = s.DateFormat,
                 TimeFormat = s.TimeFormat,
 
-                // Units & formatting
-                MeasurementSystem = s.MeasurementSystem,
+                // JWT
+                JwtEnabled = s.JwtEnabled,
+                JwtIssuer = s.JwtIssuer ?? "Darwin",
+                JwtAudience = s.JwtAudience ?? "Darwin.PublicApi",
+                JwtAccessTokenMinutes = s.JwtAccessTokenMinutes,
+                JwtRefreshTokenDays = s.JwtRefreshTokenDays,
+                JwtSigningKey = s.JwtSigningKey ?? string.Empty,
+                JwtPreviousSigningKey = s.JwtPreviousSigningKey,
+                JwtEmitScopes = s.JwtEmitScopes,
+                JwtSingleDeviceOnly = s.JwtSingleDeviceOnly,
+                JwtRequireDeviceBinding = s.JwtRequireDeviceBinding,
+                JwtClockSkewSeconds = s.JwtClockSkewSeconds,
+
+                // Soft delete
+                SoftDeleteCleanupEnabled = s.SoftDeleteCleanupEnabled,
+                SoftDeleteRetentionDays = s.SoftDeleteRetentionDays,
+                SoftDeleteCleanupBatchSize = s.SoftDeleteCleanupBatchSize,
+
+                // Measurement
+                MeasurementSystem = s.MeasurementSystem ?? "Metric",
                 DisplayWeightUnit = s.DisplayWeightUnit,
                 DisplayLengthUnit = s.DisplayLengthUnit,
                 MeasurementSettingsJson = s.MeasurementSettingsJson,
@@ -64,10 +90,8 @@ namespace Darwin.Application.Settings.Queries
                 GoogleTagManagerId = s.GoogleTagManagerId,
                 GoogleSearchConsoleVerification = s.GoogleSearchConsoleVerification,
 
-                // Feature flags
+                // Feature flags & WhatsApp
                 FeatureFlagsJson = s.FeatureFlagsJson,
-
-                // WhatsApp
                 WhatsAppEnabled = s.WhatsAppEnabled,
                 WhatsAppBusinessPhoneId = s.WhatsAppBusinessPhoneId,
                 WhatsAppAccessToken = s.WhatsAppAccessToken,
@@ -75,9 +99,9 @@ namespace Darwin.Application.Settings.Queries
                 WhatsAppAdminRecipientsCsv = s.WhatsAppAdminRecipientsCsv,
 
                 // WebAuthn
-                WebAuthnRelyingPartyId = s.WebAuthnRelyingPartyId,
-                WebAuthnRelyingPartyName = s.WebAuthnRelyingPartyName,
-                WebAuthnAllowedOriginsCsv = s.WebAuthnAllowedOriginsCsv,
+                WebAuthnRelyingPartyId = s.WebAuthnRelyingPartyId ?? "localhost",
+                WebAuthnRelyingPartyName = s.WebAuthnRelyingPartyName ?? "Darwin",
+                WebAuthnAllowedOriginsCsv = s.WebAuthnAllowedOriginsCsv ?? "https://localhost:5001",
                 WebAuthnRequireUserVerification = s.WebAuthnRequireUserVerification,
 
                 // SMTP

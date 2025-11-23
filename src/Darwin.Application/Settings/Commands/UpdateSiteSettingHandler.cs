@@ -1,10 +1,9 @@
-﻿using AngleSharp.Dom;
-using Darwin.Application.Abstractions.Persistence;
+﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
-using Darwin.Application.Settings.Validators;
 using Darwin.Domain.Entities.Settings;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,8 +21,8 @@ namespace Darwin.Application.Settings.Commands
 
         public UpdateSiteSettingHandler(IAppDbContext db, IValidator<SiteSettingDto> validator)
         {
-            _db = db;
-            _validator = validator;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
         /// <summary>
@@ -52,7 +51,7 @@ namespace Darwin.Application.Settings.Commands
             s.DefaultCulture = dto.DefaultCulture.Trim();
             s.SupportedCulturesCsv = string.Join(",",
                 (dto.SupportedCulturesCsv ?? string.Empty)
-                .Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Distinct());
             s.DefaultCountry = dto.DefaultCountry;
             s.DefaultCurrency = dto.DefaultCurrency;
@@ -61,21 +60,23 @@ namespace Darwin.Application.Settings.Commands
             s.TimeFormat = dto.TimeFormat;
 
             // -------- Security / JWT --------
+            s.JwtEnabled = dto.JwtEnabled;
+            s.JwtIssuer = dto.JwtIssuer.Trim();
+            s.JwtAudience = dto.JwtAudience.Trim();
+            s.JwtAccessTokenMinutes = dto.JwtAccessTokenMinutes;
+            s.JwtRefreshTokenDays = dto.JwtRefreshTokenDays;
+            s.JwtSigningKey = dto.JwtSigningKey;
+            s.JwtPreviousSigningKey = dto.JwtPreviousSigningKey;
+            s.JwtEmitScopes = dto.JwtEmitScopes;
+
             s.JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly;
             s.JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding;
             s.JwtClockSkewSeconds = dto.JwtClockSkewSeconds;
-
-            // JWT - device/session policy and validation skew
-            s.JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly;
-            s.JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding;
-            s.JwtClockSkewSeconds = dto.JwtClockSkewSeconds;
-
 
             // -------- Soft delete / data retention --------
             s.SoftDeleteCleanupEnabled = dto.SoftDeleteCleanupEnabled;
             s.SoftDeleteRetentionDays = dto.SoftDeleteRetentionDays;
             s.SoftDeleteCleanupBatchSize = dto.SoftDeleteCleanupBatchSize;
-
 
             // -------- Units & Formatting --------
             s.MeasurementSystem = dto.MeasurementSystem;
@@ -96,10 +97,8 @@ namespace Darwin.Application.Settings.Commands
             s.GoogleTagManagerId = dto.GoogleTagManagerId;
             s.GoogleSearchConsoleVerification = dto.GoogleSearchConsoleVerification;
 
-            // -------- Feature flags --------
+            // -------- Feature flags & WhatsApp --------
             s.FeatureFlagsJson = dto.FeatureFlagsJson;
-
-            // -------- WhatsApp --------
             s.WhatsAppEnabled = dto.WhatsAppEnabled;
             s.WhatsAppBusinessPhoneId = dto.WhatsAppBusinessPhoneId;
             s.WhatsAppAccessToken = dto.WhatsAppAccessToken;
@@ -107,12 +106,15 @@ namespace Darwin.Application.Settings.Commands
             s.WhatsAppAdminRecipientsCsv = dto.WhatsAppAdminRecipientsCsv;
 
             // -------- WebAuthn --------
-            s.WebAuthnRelyingPartyId = dto.WebAuthnRelyingPartyId;
-            s.WebAuthnRelyingPartyName = dto.WebAuthnRelyingPartyName;
-            s.WebAuthnAllowedOriginsCsv = dto.WebAuthnAllowedOriginsCsv;
+            s.WebAuthnRelyingPartyId = dto.WebAuthnRelyingPartyId.Trim();
+            s.WebAuthnRelyingPartyName = dto.WebAuthnRelyingPartyName.Trim();
+            s.WebAuthnAllowedOriginsCsv = string.Join(",",
+                (dto.WebAuthnAllowedOriginsCsv ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct());
             s.WebAuthnRequireUserVerification = dto.WebAuthnRequireUserVerification;
 
-            // -------- SMTP --------
+            // -------- Email (SMTP) --------
             s.SmtpEnabled = dto.SmtpEnabled;
             s.SmtpHost = dto.SmtpHost;
             s.SmtpPort = dto.SmtpPort;

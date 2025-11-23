@@ -1,5 +1,6 @@
 ﻿using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Common;
+using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
@@ -103,6 +104,27 @@ namespace Darwin.Infrastructure.Persistence.Db
         // Shipping
         public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
         public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
+
+        // Businesses
+        /// <summary>
+        /// Businesses aggregate roots.
+        /// </summary>
+        public DbSet<Business> Businesses => Set<Business>();
+
+        /// <summary>
+        /// Business locations.
+        /// </summary>
+        public DbSet<BusinessLocation> BusinessLocations => Set<BusinessLocation>();
+
+        /// <summary>
+        /// Business media items.
+        /// </summary>
+        public DbSet<BusinessMedia> BusinessMedia => Set<BusinessMedia>();
+
+        /// <summary>
+        /// Business membership links.
+        /// </summary>
+        public DbSet<BusinessMember> BusinessMembers => Set<BusinessMember>();
 
 
         // Integration / SEO / Settings

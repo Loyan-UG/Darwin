@@ -13,15 +13,15 @@ namespace Darwin.Application.Settings.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
-        // Basic site information
+        // -------- Basic site information --------
         public string Title { get; set; } = string.Empty;
         public string? LogoUrl { get; set; }
         public string? ContactEmail { get; set; }
 
-        // Routing
+        // -------- Routing --------
         public string? HomeSlug { get; set; } = "home";
 
-        // Localization settings
+        // -------- Localization settings --------
         public string DefaultCulture { get; set; } = "de-DE";
         public string SupportedCulturesCsv { get; set; } = "de-DE,en-US";
         public string? DefaultCountry { get; set; } = "DE";
@@ -30,7 +30,51 @@ namespace Darwin.Application.Settings.DTOs
         public string? DateFormat { get; set; } = "yyyy-MM-dd";
         public string? TimeFormat { get; set; } = "HH:mm";
 
-        // JWT / Access-Refresh token settings
+        // -------- JWT / Access-Refresh token settings --------
+
+        /// <summary>
+        /// Enables issuing and accepting JWT access/refresh tokens for APIs/mobile apps.
+        /// When disabled, the issuing side should refuse token issuance.
+        /// </summary>
+        public bool JwtEnabled { get; set; } = true;
+
+        /// <summary>
+        /// JWT issuer (iss claim). Must match validation configuration.
+        /// </summary>
+        public string JwtIssuer { get; set; } = "Darwin";
+
+        /// <summary>
+        /// JWT audience (aud claim). Must match validation configuration.
+        /// </summary>
+        public string JwtAudience { get; set; } = "Darwin.PublicApi";
+
+        /// <summary>
+        /// Access token lifetime in minutes.
+        /// </summary>
+        public int JwtAccessTokenMinutes { get; set; } = 15;
+
+        /// <summary>
+        /// Refresh token lifetime in days.
+        /// </summary>
+        public int JwtRefreshTokenDays { get; set; } = 30;
+
+        /// <summary>
+        /// Current symmetric signing key used to sign access tokens.
+        /// Must be high-entropy in production.
+        /// </summary>
+        public string JwtSigningKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Previous signing key used for key rotation. Optional.
+        /// When set, validators should accept tokens signed with either key.
+        /// </summary>
+        public string? JwtPreviousSigningKey { get; set; }
+
+        /// <summary>
+        /// When true, access tokens emit user scopes/permissions claims.
+        /// </summary>
+        public bool JwtEmitScopes { get; set; } = false;
+
         /// <summary>
         /// When true, only a single active device/session is allowed per user.
         /// </summary>
@@ -44,93 +88,47 @@ namespace Darwin.Application.Settings.DTOs
         /// <summary>
         /// Allowed clock skew in seconds for JWT validation.
         /// </summary>
-        public int JwtClockSkewSeconds { get; set; } = 120;
+        public int JwtClockSkewSeconds { get; set; } = 60;
 
-
-        // Soft delete / data retention
-        /// <summary>
-        /// Enables periodic hard-deletion of entities that have been soft-deleted beyond
-        /// the configured retention window.
-        /// </summary>
+        // -------- Soft delete / data retention --------
         public bool SoftDeleteCleanupEnabled { get; set; } = true;
-
-        /// <summary>
-        /// Number of days to keep soft-deleted entities before they are eligible
-        /// for hard deletion.
-        /// </summary>
         public int SoftDeleteRetentionDays { get; set; } = 90;
-
-        /// <summary>
-        /// Maximum number of soft-deleted entities to hard-delete in a single cleanup run.
-        /// </summary>
         public int SoftDeleteCleanupBatchSize { get; set; } = 500;
 
-
-        // Measurement and unit settings
+        // -------- Measurement & Units --------
         public string MeasurementSystem { get; set; } = "Metric";
         public string? DisplayWeightUnit { get; set; } = "kg";
         public string? DisplayLengthUnit { get; set; } = "cm";
-        // Additional measurement & formatting overrides
         public string? MeasurementSettingsJson { get; set; }
         public string? NumberFormattingOverridesJson { get; set; }
 
-        // SEO settings
+        // -------- SEO / URLs --------
         public bool EnableCanonical { get; set; } = true;
         public bool HreflangEnabled { get; set; } = true;
-        public string? SeoTitleTemplate { get; set; } = "{title} | {site}";
-        /// <summary>
-        /// Default meta description template used when pages lack custom metadata.
-        /// Corresponds to <see cref="Darwin.Domain.Entities.Settings.SiteSetting.SeoMetaDescriptionTemplate"/>.
-        /// </summary>
+        public string? SeoTitleTemplate { get; set; }
         public string? SeoMetaDescriptionTemplate { get; set; }
-        /// <summary>
-        /// Default OpenGraph values serialized as JSON (e.g., site_name, image). See
-        /// <see cref="Darwin.Domain.Entities.Settings.SiteSetting.OpenGraphDefaultsJson"/>.
-        /// </summary>
         public string? OpenGraphDefaultsJson { get; set; }
 
-        // Analytics settings
+        // -------- Analytics --------
         public string? GoogleAnalyticsId { get; set; }
         public string? GoogleTagManagerId { get; set; }
         public string? GoogleSearchConsoleVerification { get; set; }
 
-        // Feature flags (serialized as JSON)
+        // -------- Feature flags & WhatsApp --------
         public string? FeatureFlagsJson { get; set; }
-
-        // WhatsApp integration settings
-        public bool WhatsAppEnabled { get; set; }
+        public bool WhatsAppEnabled { get; set; } = false;
         public string? WhatsAppBusinessPhoneId { get; set; }
         public string? WhatsAppAccessToken { get; set; }
         public string? WhatsAppFromPhoneE164 { get; set; }
         public string? WhatsAppAdminRecipientsCsv { get; set; }
 
-        // WebAuthn
-
-        /// <summary>
-        /// WebAuthn relying party identifier (RP ID). Usually your registrable domain (e.g., "example.com").
-        /// Must match the effective domain of your site; on dev you may use "localhost".
-        /// </summary>
+        // -------- WebAuthn (Passkeys) --------
         public string WebAuthnRelyingPartyId { get; set; } = "localhost";
-
-        /// <summary>
-        /// Human-friendly relying party name shown by authenticators (e.g., "Darwin Store").
-        /// </summary>
         public string WebAuthnRelyingPartyName { get; set; } = "Darwin";
-
-        /// <summary>
-        /// Comma-separated list of allowed origins for WebAuthn ceremonies (e.g., "https://shop.example.com,https://admin.example.com").
-        /// On development you may include "https://localhost:5001".
-        /// </summary>
         public string WebAuthnAllowedOriginsCsv { get; set; } = "https://localhost:5001";
-
-        /// <summary>
-        /// When true, requires user verification (e.g., biometric/PIN) during WebAuthn authentication.
-        /// If false, "preferred" verification is used to maximize compatibility.
-        /// </summary>
         public bool WebAuthnRequireUserVerification { get; set; } = false;
 
-
-        // SMTP
+        // -------- Email (SMTP) --------
         public bool SmtpEnabled { get; set; } = false;
         public string? SmtpHost { get; set; }
         public int? SmtpPort { get; set; }
@@ -140,7 +138,7 @@ namespace Darwin.Application.Settings.DTOs
         public string? SmtpFromAddress { get; set; }
         public string? SmtpFromDisplayName { get; set; }
 
-        // SMS
+        // -------- SMS --------
         public bool SmsEnabled { get; set; } = false;
         public string? SmsProvider { get; set; }
         public string? SmsFromPhoneE164 { get; set; }
@@ -148,7 +146,7 @@ namespace Darwin.Application.Settings.DTOs
         public string? SmsApiSecret { get; set; }
         public string? SmsExtraSettingsJson { get; set; }
 
-        // Admin alert routing
+        // -------- Admin routing --------
         public string? AdminAlertEmailsCsv { get; set; }
         public string? AdminAlertSmsRecipientsCsv { get; set; }
     }

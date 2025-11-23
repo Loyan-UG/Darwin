@@ -24,7 +24,15 @@ namespace Darwin.Application.Abstractions.Persistence
     /// </remarks>
     public interface IAppDbContext
     {
+        /// <summary>
+        /// Returns a DbSet for the given entity type.
+        /// This allows handlers to access new aggregates without expanding the interface with DbSet properties.
+        /// </summary>
         DbSet<T> Set<T>() where T : class;
+
+        /// <summary>
+        /// Persists changes to the underlying store.
+        /// </summary>
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

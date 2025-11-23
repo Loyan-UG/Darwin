@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Businesses\Commands\" />
+    <Folder Include="Businesses\Queries\" />
+    <Folder Include="Businesses\Validators\" />
+    <Folder Include="Loyalty\Queries\" />
     <Folder Include="x\Commands\" />
     <Folder Include="x\DTOs\" />
     <Folder Include="x\Validators\" />
