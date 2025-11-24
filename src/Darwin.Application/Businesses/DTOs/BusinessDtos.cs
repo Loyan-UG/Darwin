@@ -1,26 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Businesses.DTOs
 {
     /// <summary>
-    /// Lightweight list row for admin grids and lookups.
-    /// </summary>
-    public sealed class BusinessListItemDto
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = default!;
-        public string? LegalName { get; set; }
-        public BusinessCategoryKind Category { get; set; }
-        public bool IsActive { get; set; }
-        public string DefaultCurrency { get; set; } = default!;
-        public string DefaultCulture { get; set; } = default!;
-        public DateTime? ModifiedAtUtc { get; set; }
-        public byte[]? RowVersion { get; set; }
-    }
-
-    /// <summary>
-    /// DTO used to create a new business.
+    /// DTO for creating a new business (merchant tenant).
     /// </summary>
     public sealed class BusinessCreateDto
     {
@@ -38,7 +23,8 @@ namespace Darwin.Application.Businesses.DTOs
     }
 
     /// <summary>
-    /// DTO used to edit an existing business.
+    /// DTO for editing an existing business.
+    /// Includes concurrency token (RowVersion).
     /// </summary>
     public sealed class BusinessEditDto
     {
@@ -54,25 +40,31 @@ namespace Darwin.Application.Businesses.DTOs
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
         public bool IsActive { get; set; } = true;
-
-        /// <summary>
-        /// Optimistic concurrency token from the UI grid or edit form.
-        /// Required for safe updates.
-        /// </summary>
-        public byte[] RowVersion { get; set; } = default!;
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     /// <summary>
-    /// Delete request DTO for soft-deletable entities.
+    /// DTO for soft deleting a business.
     /// </summary>
     public sealed class BusinessDeleteDto
     {
         public Guid Id { get; set; }
-
-        /// <summary>
-        /// Optional concurrency token from the UI grid.
-        /// When provided, must match current RowVersion.
-        /// </summary>
-        public byte[]? RowVersion { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
+
+    /// <summary>
+    /// Lightweight list row for paged business grids.
+    /// </summary>
+    public sealed class BusinessListItemDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = default!;
+        public string? LegalName { get; set; }
+        public BusinessCategoryKind Category { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime? CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+    
 }

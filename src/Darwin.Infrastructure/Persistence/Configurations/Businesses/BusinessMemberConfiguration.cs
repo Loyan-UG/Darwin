@@ -9,20 +9,24 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
     /// </summary>
     public sealed class BusinessMemberConfiguration : IEntityTypeConfiguration<BusinessMember>
     {
-        public void Configure(EntityTypeBuilder<BusinessMember> b)
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<BusinessMember> builder)
         {
-            b.ToTable("BusinessMembers", schema: "Businesses");
+            builder.ToTable("BusinessMembers", schema: "Businesses");
 
-            b.HasKey(x => x.Id);
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.RowVersion).IsRowVersion();
 
-            b.Property(x => x.BusinessId).IsRequired();
-            b.Property(x => x.UserId).IsRequired();
-            b.Property(x => x.Role).IsRequired();
-            b.Property(x => x.IsActive).IsRequired();
+            builder.Property(x => x.BusinessId).IsRequired();
+            builder.Property(x => x.UserId).IsRequired();
+            builder.Property(x => x.Role).IsRequired();
+            builder.Property(x => x.IsActive).IsRequired();
 
-            b.HasIndex(x => x.BusinessId);
-            b.HasIndex(x => x.UserId);
-            b.HasIndex(x => new { x.BusinessId, x.UserId }).IsUnique();
+            // A user should not have multiple memberships for the same business.
+            builder.HasIndex(x => new { x.BusinessId, x.UserId }).IsUnique();
+
+            builder.HasIndex(x => x.UserId);
         }
+
     }
 }

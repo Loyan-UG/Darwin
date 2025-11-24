@@ -5,31 +5,83 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
 {
     /// <summary>
-    /// EF Core configurations for Loyalty module entities.
-    /// Uses schema "Loyalty" and enforces key constraints, indexes, and relationships.
-    /// Global soft-delete filter and RowVersion mapping are applied via Conventions.
+    /// EF Core configuration for Loyalty module entities.
+    /// Keeps constraints, indexes, and relations aligned with domain invariants.
     /// </summary>
-    public sealed class LoyaltyProgramConfiguration :
-        IEntityTypeConfiguration<LoyaltyProgram>,
-        IEntityTypeConfiguration<LoyaltyRewardTier>,
+    public sealed class LoyaltyConfiguration :
         IEntityTypeConfiguration<LoyaltyAccount>,
         IEntityTypeConfiguration<LoyaltyPointsTransaction>,
+        IEntityTypeConfiguration<LoyaltyProgram>,
+        IEntityTypeConfiguration<LoyaltyRewardTier>,
+        IEntityTypeConfiguration<LoyaltyRewardRedemption>,
         IEntityTypeConfiguration<QrCodeToken>,
         IEntityTypeConfiguration<ScanSession>
     {
+        public void Configure(EntityTypeBuilder<LoyaltyAccount> builder)
+        {
+            builder.ToTable("LoyaltyAccounts", schema: "Loyalty");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Status).IsRequired();
+            builder.Property(x => x.PointsBalance).IsRequired().HasDefaultValue(0);
+            builder.Property(x => x.LifetimePoints).IsRequired().HasDefaultValue(0);
+
+            builder.HasIndex(x => new { x.BusinessId, x.UserId })
+                   .IsUnique()
+                   .HasDatabaseName("UX_LoyaltyAccounts_Business_User");
+
+            builder.HasMany(x => x.Transactions)
+                   .WithOne()
+                   .HasForeignKey(t => t.LoyaltyAccountId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.Redemptions)
+                   .WithOne()
+                   .HasForeignKey(r => r.LoyaltyAccountId)
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        public void Configure(EntityTypeBuilder<LoyaltyPointsTransaction> builder)
+        {
+            builder.ToTable("LoyaltyPointsTransactions", schema: "Loyalty");
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Type).IsRequired();
+            builder.Property(x => x.PointsDelta).IsRequired();
+
+            builder.Property(x => x.Reference).HasMaxLength(200);
+            builder.Property(x => x.Notes).HasMaxLength(1000);
+
+            builder.HasIndex(x => x.LoyaltyAccountId);
+            builder.HasIndex(x => x.BusinessId);
+            builder.HasIndex(x => x.BusinessLocationId);
+            builder.HasIndex(x => x.RewardRedemptionId);
+        }
+
         public void Configure(EntityTypeBuilder<LoyaltyProgram> builder)
         {
             builder.ToTable("LoyaltyPrograms", schema: "Loyalty");
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.BusinessUserId).IsRequired();
-            builder.Property(x => x.Title).IsRequired().HasMaxLength(200);
-            builder.Property(x => x.Description).HasMaxLength(2000);
-            builder.Property(x => x.IsActive).IsRequired();
-            builder.Property(x => x.StartsAtUtc);
-            builder.Property(x => x.EndsAtUtc);
+            builder.Property(x => x.Name)
+                   .IsRequired()
+                   .HasMaxLength(200);
 
-            builder.HasIndex(x => new { x.BusinessUserId, x.IsActive });
+            builder.Property(x => x.AccrualMode).IsRequired();
+            builder.Property(x => x.PointsPerCurrencyUnit).HasPrecision(18, 4);
+
+            builder.Property(x => x.RulesJson).HasMaxLength(4000);
+
+            builder.HasIndex(x => x.BusinessId)
+                   .IsUnique()
+                   .HasDatabaseName("UX_LoyaltyPrograms_Business");
+
+            builder.HasIndex(x => x.IsActive);
+
+            builder.HasMany(x => x.RewardTiers)
+                   .WithOne()
+                   .HasForeignKey(t => t.LoyaltyProgramId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
 
         public void Configure(EntityTypeBuilder<LoyaltyRewardTier> builder)
@@ -37,60 +89,30 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
             builder.ToTable("LoyaltyRewardTiers", schema: "Loyalty");
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.ProgramId).IsRequired();
-            builder.Property(x => x.BusinessUserId).IsRequired();
-            builder.Property(x => x.Title).IsRequired().HasMaxLength(200);
-            builder.Property(x => x.Description).HasMaxLength(1000);
-            builder.Property(x => x.RequiredPoints).IsRequired();
-            builder.Property(x => x.SortOrder).IsRequired();
-            builder.Property(x => x.IsActive).IsRequired();
+            builder.Property(x => x.PointsRequired).IsRequired();
+            builder.Property(x => x.RewardType).IsRequired();
+            builder.Property(x => x.RewardValue).HasPrecision(18, 4);
+            builder.Property(x => x.Description).HasMaxLength(500);
+            builder.Property(x => x.MetadataJson).HasMaxLength(4000);
 
-            builder.HasIndex(x => new { x.ProgramId, x.SortOrder }).IsUnique();
-            builder.HasIndex(x => x.BusinessUserId);
-
-            builder.HasOne<LoyaltyProgram>()
-                .WithMany()
-                .HasForeignKey(x => x.ProgramId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.HasIndex(x => new { x.LoyaltyProgramId, x.PointsRequired })
+                   .IsUnique()
+                   .HasDatabaseName("UX_LoyaltyRewardTiers_Program_Points");
         }
 
-        public void Configure(EntityTypeBuilder<LoyaltyAccount> builder)
+        public void Configure(EntityTypeBuilder<LoyaltyRewardRedemption> builder)
         {
-            builder.ToTable("LoyaltyAccounts", schema: "Loyalty");
+            builder.ToTable("LoyaltyRewardRedemptions", schema: "Loyalty");
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.BusinessUserId).IsRequired();
-            builder.Property(x => x.ConsumerUserId).IsRequired();
-            builder.Property(x => x.PointsBalance).IsRequired();
-            builder.Property(x => x.TotalPointsEarned).IsRequired();
-            builder.Property(x => x.TotalPointsRedeemed).IsRequired();
-            builder.Property(x => x.LastActivityAtUtc).IsRequired();
+            builder.Property(x => x.PointsSpent).IsRequired();
+            builder.Property(x => x.Status).IsRequired();
+            builder.Property(x => x.MetadataJson).HasMaxLength(4000);
 
-            builder.HasIndex(x => new { x.BusinessUserId, x.ConsumerUserId })
-                .IsUnique();
-        }
-
-        public void Configure(EntityTypeBuilder<LoyaltyPointsTransaction> builder)
-        {
-            builder.ToTable("LoyaltyPointTransactions", schema: "Loyalty");
-            builder.HasKey(x => x.Id);
-
-            builder.Property(x => x.LoyaltyAccountId).IsRequired();
-            builder.Property(x => x.BusinessUserId).IsRequired();
-            builder.Property(x => x.ConsumerUserId).IsRequired();
-            builder.Property(x => x.PointsDelta).IsRequired();
-            builder.Property(x => x.Type).IsRequired();
-            builder.Property(x => x.Note).HasMaxLength(500);
-            builder.Property(x => x.OccurredAtUtc).IsRequired();
-            builder.Property(x => x.ScanSessionId);
-            builder.Property(x => x.RewardTierId);
-
-            builder.HasIndex(x => new { x.LoyaltyAccountId, x.OccurredAtUtc });
-
-            builder.HasOne<LoyaltyAccount>()
-                .WithMany()
-                .HasForeignKey(x => x.LoyaltyAccountId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.HasIndex(x => x.LoyaltyAccountId);
+            builder.HasIndex(x => x.BusinessId);
+            builder.HasIndex(x => x.LoyaltyRewardTierId);
+            builder.HasIndex(x => x.BusinessLocationId);
         }
 
         public void Configure(EntityTypeBuilder<QrCodeToken> builder)
@@ -98,16 +120,19 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
             builder.ToTable("QrCodeTokens", schema: "Loyalty");
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.UserId).IsRequired();
-            builder.Property(x => x.TokenHash).IsRequired().HasMaxLength(128);
-            builder.Property(x => x.IssuedAtUtc).IsRequired();
-            builder.Property(x => x.ExpiresAtUtc).IsRequired();
-            builder.Property(x => x.IsConsumed).IsRequired();
-            builder.Property(x => x.ConsumedAtUtc);
-            builder.Property(x => x.Nonce).IsRequired().HasMaxLength(64);
+            builder.Property(x => x.Token)
+                   .IsRequired()
+                   .HasMaxLength(512);
 
-            builder.HasIndex(x => x.TokenHash).IsUnique();
-            builder.HasIndex(x => new { x.UserId, x.ExpiresAtUtc });
+            builder.Property(x => x.Purpose).IsRequired();
+
+            builder.HasIndex(x => x.Token)
+                   .IsUnique()
+                   .HasDatabaseName("UX_QrCodeTokens_Token");
+
+            builder.HasIndex(x => x.UserId);
+            builder.HasIndex(x => x.LoyaltyAccountId);
+            builder.HasIndex(x => x.ExpiresAtUtc);
         }
 
         public void Configure(EntityTypeBuilder<ScanSession> builder)
@@ -115,14 +140,16 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
             builder.ToTable("ScanSessions", schema: "Loyalty");
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.BusinessUserId).IsRequired();
-            builder.Property(x => x.ConsumerUserId).IsRequired();
-            builder.Property(x => x.StartedAtUtc).IsRequired();
-            builder.Property(x => x.ExpiresAtUtc).IsRequired();
-            builder.Property(x => x.IsClosed).IsRequired();
-            builder.Property(x => x.ClosedAtUtc);
+            builder.Property(x => x.Outcome)
+                   .IsRequired()
+                   .HasMaxLength(50);
 
-            builder.HasIndex(x => new { x.BusinessUserId, x.ExpiresAtUtc });
+            builder.Property(x => x.FailureReason).HasMaxLength(500);
+
+            builder.HasIndex(x => x.QrCodeTokenId);
+            builder.HasIndex(x => x.BusinessId);
+            builder.HasIndex(x => x.BusinessLocationId);
+            builder.HasIndex(x => x.ResultingTransactionId);
         }
     }
 }

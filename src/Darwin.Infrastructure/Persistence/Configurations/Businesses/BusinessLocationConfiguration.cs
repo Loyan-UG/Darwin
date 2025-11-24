@@ -7,33 +7,66 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
     /// <summary>
     /// EF Core configuration for <see cref="BusinessLocation"/>.
     /// </summary>
-    public sealed class BusinessLocationConfiguration : IEntityTypeConfiguration<BusinessLocation>
+    public sealed class BusinessLocationConfiguration :
+        IEntityTypeConfiguration<BusinessLocation>
     {
-        public void Configure(EntityTypeBuilder<BusinessLocation> b)
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<BusinessLocation> builder)
         {
-            b.ToTable("BusinessLocations", schema: "Businesses");
+            builder.ToTable("BusinessLocations", schema: "Businesses");
 
-            b.HasKey(x => x.Id);
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.RowVersion).IsRowVersion();
 
-            b.Property(x => x.BusinessId).IsRequired();
+            builder.Property(x => x.BusinessId).IsRequired();
 
-            b.Property(x => x.Name)
+            builder.Property(x => x.Name)
                 .IsRequired()
                 .HasMaxLength(200);
 
-            b.Property(x => x.AddressLine1).HasMaxLength(200);
-            b.Property(x => x.AddressLine2).HasMaxLength(200);
-            b.Property(x => x.City).HasMaxLength(100);
-            b.Property(x => x.Region).HasMaxLength(100);
-            b.Property(x => x.CountryCode).HasMaxLength(2);
-            b.Property(x => x.PostalCode).HasMaxLength(20);
-            b.Property(x => x.OpeningHoursJson).HasMaxLength(4000);
-            b.Property(x => x.InternalNote).HasMaxLength(2000);
+            builder.Property(x => x.AddressLine1)
+                .HasMaxLength(250);
 
-            b.HasIndex(x => x.BusinessId);
-            b.HasIndex(x => new { x.BusinessId, x.IsPrimary });
+            builder.Property(x => x.AddressLine2)
+                .HasMaxLength(250);
 
-            // Coordinate is a value object. Converters/configs are handled by global conventions if present.
+            builder.Property(x => x.City)
+                .HasMaxLength(120);
+
+            builder.Property(x => x.Region)
+                .HasMaxLength(120);
+
+            builder.Property(x => x.CountryCode)
+                .HasMaxLength(2);
+
+            builder.Property(x => x.PostalCode)
+                .HasMaxLength(20);
+
+            builder.Property(x => x.OpeningHoursJson)
+                .HasMaxLength(4000);
+
+            builder.Property(x => x.InternalNote)
+                .HasMaxLength(2000);
+
+            builder.Property(x => x.IsPrimary)
+                .IsRequired();
+
+            // GeoCoordinate value object as owned type.
+            builder.OwnsOne(x => x.Coordinate, owned =>
+            {
+                owned.Property(c => c.Latitude)
+                    .HasColumnName("Latitude");
+
+                owned.Property(c => c.Longitude)
+                    .HasColumnName("Longitude");
+
+                owned.Property(c => c.AltitudeMeters)
+                    .HasColumnName("AltitudeMeters");
+            });
+
+            // Indexes
+            builder.HasIndex(x => x.BusinessId);
+            builder.HasIndex(x => new { x.BusinessId, x.IsPrimary });
         }
     }
 }

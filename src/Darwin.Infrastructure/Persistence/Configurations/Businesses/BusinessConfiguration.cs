@@ -1,58 +1,76 @@
-﻿using Darwin.Domain.Entities.Businesses;
+﻿using Darwin.Domain.Common;
+using Darwin.Domain.Entities.Businesses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
 {
     /// <summary>
-    /// EF Core configuration for <see cref="Business"/>.
+    /// EF Core configuration for Businesses module entities.
+    /// Uses Darwin global conventions for audit, soft-delete, and rowversion.
+    /// Entity-specific rules (table names, lengths, relations, indexes) are defined here.
     /// </summary>
-    public sealed class BusinessConfiguration : IEntityTypeConfiguration<Business>
+    public sealed class BusinessConfiguration :
+        IEntityTypeConfiguration<Business>
     {
-        public void Configure(EntityTypeBuilder<Business> b)
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<Business> builder)
         {
-            b.ToTable("Businesses", schema: "Businesses");
+            builder.ToTable("Businesses", schema: "Businesses");
 
-            b.HasKey(x => x.Id);
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.RowVersion).IsRowVersion();
 
-            b.Property(x => x.Name)
+            builder.Property(x => x.Name)
                 .IsRequired()
                 .HasMaxLength(200);
 
-            b.Property(x => x.LegalName).HasMaxLength(200);
-            b.Property(x => x.TaxId).HasMaxLength(100);
-            b.Property(x => x.ShortDescription).HasMaxLength(1000);
-            b.Property(x => x.WebsiteUrl).HasMaxLength(500);
-            b.Property(x => x.ContactEmail).HasMaxLength(200);
-            b.Property(x => x.ContactPhoneE164).HasMaxLength(30);
+            builder.Property(x => x.LegalName)
+                .HasMaxLength(250);
 
-            b.Property(x => x.DefaultCurrency)
+            builder.Property(x => x.TaxId)
+                .HasMaxLength(64);
+
+            builder.Property(x => x.ShortDescription)
+                .HasMaxLength(1000);
+
+            builder.Property(x => x.WebsiteUrl)
+                .HasMaxLength(500);
+
+            builder.Property(x => x.ContactEmail)
+                .HasMaxLength(256);
+
+            builder.Property(x => x.ContactPhoneE164)
+                .HasMaxLength(32);
+
+            builder.Property(x => x.DefaultCurrency)
                 .IsRequired()
                 .HasMaxLength(3);
 
-            b.Property(x => x.DefaultCulture)
+            builder.Property(x => x.DefaultCulture)
                 .IsRequired()
-                .HasMaxLength(20);
+                .HasMaxLength(16);
 
-            b.Property(x => x.Category)
+            builder.Property(x => x.Category)
                 .IsRequired();
 
-            b.Property(x => x.IsActive)
+            builder.Property(x => x.IsActive)
                 .IsRequired();
 
-            b.HasIndex(x => x.Name);
-            b.HasIndex(x => x.Category);
-            b.HasIndex(x => x.IsActive);
+            // Helpful lookups
+            builder.HasIndex(x => x.Name);
+            builder.HasIndex(x => x.Category);
+            builder.HasIndex(x => x.IsActive);
 
             // Relationships
-            b.HasMany(x => x.Locations)
+            builder.HasMany(x => x.Members)
                 .WithOne()
-                .HasForeignKey(x => x.BusinessId)
+                .HasForeignKey(m => m.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            b.HasMany(x => x.Members)
+            builder.HasMany(x => x.Locations)
                 .WithOne()
-                .HasForeignKey(x => x.BusinessId)
+                .HasForeignKey(l => l.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

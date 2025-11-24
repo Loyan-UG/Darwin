@@ -29,7 +29,7 @@ namespace Darwin.Domain.Entities.Loyalty
         /// <summary>
         /// Purpose of the token such as "Accrual", "Redemption", or "IdentityOnly".
         /// </summary>
-        public QrTokenPurpose Purpose { get; set; } = QrTokenPurpose.Accrual;
+        public QrTokenPurpose Purpose { get; set; } = QrTokenPurpose.IdentityOnly;
 
         /// <summary>
         /// UTC instant when the token was issued.

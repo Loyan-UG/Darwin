@@ -7,27 +7,33 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
     /// <summary>
     /// EF Core configuration for <see cref="BusinessMedia"/>.
     /// </summary>
-    public sealed class BusinessMediaConfiguration : IEntityTypeConfiguration<BusinessMedia>
+    public sealed class BusinessMediaConfiguration : 
+        IEntityTypeConfiguration<BusinessMedia>
     {
-        public void Configure(EntityTypeBuilder<BusinessMedia> b)
+        /// <inheritdoc />
+        public void Configure(EntityTypeBuilder<BusinessMedia> builder)
         {
-            b.ToTable("BusinessMedia", schema: "Businesses");
+            builder.ToTable("BusinessMedias", schema: "Businesses");
 
-            b.HasKey(x => x.Id);
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.RowVersion).IsRowVersion();
 
-            b.Property(x => x.BusinessId).IsRequired();
-            b.Property(x => x.BusinessLocationId);
+            builder.Property(x => x.BusinessId).IsRequired();
+            builder.Property(x => x.BusinessLocationId);
 
-            b.Property(x => x.Url)
+            builder.Property(x => x.Url)
                 .IsRequired()
                 .HasMaxLength(1000);
 
-            b.Property(x => x.Caption).HasMaxLength(400);
-            b.Property(x => x.SortOrder).IsRequired();
-            b.Property(x => x.IsPrimary).IsRequired();
+            builder.Property(x => x.Caption)
+                .HasMaxLength(500);
 
-            b.HasIndex(x => x.BusinessId);
-            b.HasIndex(x => new { x.BusinessId, x.IsPrimary });
+            builder.Property(x => x.SortOrder).IsRequired();
+            builder.Property(x => x.IsPrimary).IsRequired();
+
+            builder.HasIndex(x => x.BusinessId);
+            builder.HasIndex(x => x.BusinessLocationId);
+            builder.HasIndex(x => new { x.BusinessId, x.SortOrder });
         }
     }
 }
