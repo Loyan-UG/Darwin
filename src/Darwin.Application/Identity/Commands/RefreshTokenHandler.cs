@@ -36,9 +36,13 @@ namespace Darwin.Application.Identity.Commands
             if (user is null)
                 return Result<AuthResultDto>.Fail("User not found or inactive.");
 
-            // Rotation: revoke old, issue new
+            // Rotation: revoke the used refresh token and issue a new one for the same device.
+            // DeviceId is forwarded so that device-bound refresh tokens remain consistent with SiteSetting.
             _jwt.RevokeRefreshToken(dto.RefreshToken, dto.DeviceId);
-            var (access, accessExp, refresh, refreshExp) = _jwt.IssueTokens(user.Id, user.Email, scopes: null);
+
+            var (access, accessExp, refresh, refreshExp) =
+                _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null);
+
 
             var result = new AuthResultDto
             {

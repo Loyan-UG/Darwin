@@ -58,8 +58,11 @@ namespace Darwin.Application.Identity.Commands
                 return Result<AuthResultDto>.Fail("Invalid credentials.");
             }
 
-            // 4) Issue tokens (scopes optional, keep minimal)
-            var (access, accessExp, refresh, refreshExp) = _jwt.IssueTokens(user.Id, user.Email, scopes: null);
+            // 4) Issue access and refresh tokens. DeviceId is forwarded so that the JwtTokenService
+            // can enforce SiteSetting.JwtRequireDeviceBinding and SiteSetting.JwtSingleDeviceOnly.
+            var (access, accessExp, refresh, refreshExp) =
+                _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null);
+
 
             var result = new AuthResultDto
             {
