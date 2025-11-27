@@ -135,21 +135,44 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Loyalty
             builder.HasIndex(x => x.ExpiresAtUtc);
         }
 
+
+        /// <inheritdoc />
         public void Configure(EntityTypeBuilder<ScanSession> builder)
         {
             builder.ToTable("ScanSessions", schema: "Loyalty");
+
             builder.HasKey(x => x.Id);
+
+            // Mode and Status are required enums.
+            builder.Property(x => x.Mode)
+                   .IsRequired();
+
+            builder.Property(x => x.Status)
+                   .IsRequired();
+
+            // Selected rewards are stored as a small JSON blob.
+            builder.Property(x => x.SelectedRewardsJson)
+                   .HasMaxLength(4000);
+
+            builder.Property(x => x.ExpiresAtUtc)
+                   .IsRequired();
+
+            builder.Property(x => x.CreatedByDeviceId)
+                   .HasMaxLength(200);
 
             builder.Property(x => x.Outcome)
                    .IsRequired()
                    .HasMaxLength(50);
 
-            builder.Property(x => x.FailureReason).HasMaxLength(500);
+            builder.Property(x => x.FailureReason)
+                   .HasMaxLength(500);
 
             builder.HasIndex(x => x.QrCodeTokenId);
+            builder.HasIndex(x => x.LoyaltyAccountId);
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => x.BusinessLocationId);
             builder.HasIndex(x => x.ResultingTransactionId);
+            builder.HasIndex(x => x.ExpiresAtUtc);
         }
     }
 }

@@ -46,4 +46,46 @@
         Redemption = 1,
         IdentityOnly = 2
     }
+
+    /// <summary>
+    /// Represents the high-level mode of a loyalty scan session.
+    /// </summary>
+    public enum LoyaltyScanMode
+    {
+        /// <summary>
+        /// The scan session is used to accrue points (earn).
+        /// </summary>
+        Accrual = 0,
+
+        /// <summary>
+        /// The scan session is used to redeem one or more rewards (spend).
+        /// </summary>
+        Redemption = 1
+    }
+
+    /// <summary>
+    /// Represents the lifecycle status of a scan session.
+    /// </summary>
+    public enum LoyaltyScanStatus
+    {
+        /// <summary>
+        /// Session has been created and is waiting to be processed by a business device.
+        /// </summary>
+        Pending = 0,
+
+        /// <summary>
+        /// Session has been successfully processed (either accrual or redemption).
+        /// </summary>
+        Completed = 1,
+
+        /// <summary>
+        /// Session has been explicitly cancelled by either party.
+        /// </summary>
+        Cancelled = 2,
+
+        /// <summary>
+        /// Session has expired and can no longer be used.
+        /// </summary>
+        Expired = 3
+    }
 }
