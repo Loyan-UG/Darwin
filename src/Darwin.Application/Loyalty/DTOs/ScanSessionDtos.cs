@@ -164,4 +164,65 @@ namespace Darwin.Application.Loyalty.DTOs
         /// </summary>
         public string? Note { get; set; }
     }
+
+
+    /// <summary>
+    /// Represents the outcome of confirming an accrual based on a scan session.
+    /// </summary>
+    public sealed class ConfirmAccrualResultDto
+    {
+        /// <summary>
+        /// Gets or sets the identifier of the loyalty account whose balance was updated.
+        /// </summary>
+        public Guid LoyaltyAccountId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the new points balance after the accrual.
+        /// </summary>
+        public int NewPointsBalance { get; set; }
+
+        /// <summary>
+        /// Gets or sets the new lifetime points value after the accrual.
+        /// </summary>
+        public int NewLifetimePoints { get; set; }
+
+        /// <summary>
+        /// Gets or sets the identifier of the created points transaction.
+        /// </summary>
+        public Guid PointsTransactionId { get; set; }
+    }
+
+    /// <summary>
+    /// Represents the outcome of confirming a redemption based on a scan session.
+    /// </summary>
+    public sealed class ConfirmRedemptionResultDto
+    {
+        /// <summary>
+        /// Gets or sets the identifier of the loyalty account whose balance was updated.
+        /// </summary>
+        public Guid LoyaltyAccountId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of points that were consumed by the redemption.
+        /// </summary>
+        public int PointsSpent { get; set; }
+
+        /// <summary>
+        /// Gets or sets the new points balance after the redemption.
+        /// </summary>
+        public int NewPointsBalance { get; set; }
+
+        /// <summary>
+        /// Gets or sets the identifier of the loyalty reward redemption record.
+        /// When multiple reward tiers were redeemed in one session, the first tier
+        /// is used as the primary identifier and the full selection is stored
+        /// in the redemption metadata.
+        /// </summary>
+        public Guid RewardRedemptionId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the identifier of the created points transaction.
+        /// </summary>
+        public Guid PointsTransactionId { get; set; }
+    }
 }
