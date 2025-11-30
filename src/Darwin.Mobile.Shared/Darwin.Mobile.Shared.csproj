@@ -30,6 +30,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Darwin.Contracts\Darwin.Contracts.csproj" />
+	  <ProjectReference Include="..\Darwin.Shared\Darwin.Shared.csproj" />
 	</ItemGroup>
 
 </Project>

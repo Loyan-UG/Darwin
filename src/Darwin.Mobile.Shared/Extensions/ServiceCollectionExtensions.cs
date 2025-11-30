@@ -1,11 +1,12 @@
-﻿using System;
-using System.Net.Http;
-using Darwin.Mobile.Shared.Api;
+﻿using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Common;
+using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Resilience;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Net.Http;
 
 namespace Darwin.Mobile.Shared.Extensions
 {
@@ -42,6 +43,10 @@ namespace Darwin.Mobile.Shared.Extensions
 
             // Token storage (SecureStorage under the hood in platform-specific implementation).
             services.AddSingleton<ITokenStore, TokenStore>();
+
+            // inside AddDarwinMobileShared(ApiOptions options)
+            services.AddSingleton<INavigationService, ShellNavigationService>();
+
 
             // Feature services
             services.AddSingleton<IAuthService, AuthService>();
