@@ -33,7 +33,11 @@ It combines **content management (CMS)** and **full e-commerce features** such a
   - **Data Protection** key ring persisted for shared hosting
 - 📊 **Analytics**: Google Analytics, Tag Manager, Search Console (via settings).
 - 🧪 **Testing**: Unit + Integration tests, GitHub Actions CI.
-- 📱 **Mobile (MAUI)**: Two apps — **Consumer** (rotating QR for loyalty, map-based discovery, rewards dashboard) and **Business** (camera QR scan, add points, redeem). Shared library (**Darwin.Mobile.Shared**) provides HTTP + retry, auth helpers, and scanner/location abstractions. DTOs come from **Darwin.Contracts**.
+- 📱 **Mobile (MAUI)**: Two apps 
+  - **Consumer** (session-based QR loyalty, map-based discovery, rewards dashboard) and 
+  - **Business** (camera QR scan, process scan sessions to accrue points or confirm redemptions). 
+  - Shared library (**Darwin.Mobile.Shared**) provides HTTP + retry, auth helpers, and scanner/location abstractions. 
+  - DTOs come from **Darwin.Contracts**.
 - 🔗 **API & Contracts**: Public **Darwin.WebApi** (JWT, Swagger) using **Darwin.Contracts** as the single source of request/response models for both Web and Mobile.
 
 
@@ -82,8 +86,8 @@ src/
 
 The mobile suite consists of two .NET MAUI apps:
 
-- **Darwin.Mobile.Consumer**: end-user app with authentication, a **rotating short-lived QR token** for in-store scans, discover/map, rewards dashboard, and profile.
-- **Darwin.Mobile.Business**: tablet app for partners to **scan the consumer QR**, start a secure scan session, **accrue points**, and **redeem rewards**.
+- **Darwin.Mobile.Consumer**: end-user app with authentication, a **short-lived scan session QR** for in-store scans (Accrual/Redemption), discover/map, rewards dashboard, and profile.
+- **Darwin.Mobile.Business**: tablet app for partners to **scan the consumer QR**, load the server-side scan session, and then **accrue points** or **confirm reward redemptions**.
 
 Shared libraries and contracts:
 
@@ -92,7 +96,7 @@ Shared libraries and contracts:
 
 Security highlights:
 
-- **No internal user IDs in QR**; the QR is an **opaque, short-lived token** exchanged server-side for an ephemeral scan session. Rotation limits replay risk.
+- **No internal user IDs in QR**; the QR is an **opaque, short-lived scan session token** exchanged server-side for an ephemeral session. Short expiry and one-time semantics limit replay risk.
 - **JWT + refresh tokens** for app authentication; server uses Data Protection and Argon2/WebAuthn/TOTP per platform defaults.
 
 WebApi provides the endpoints consumed by both apps and composes Infrastructure modules (Persistence, Identity/JWT, Notifications, Data Protection).
@@ -209,7 +213,7 @@ High-level milestones:
 
  Mobile suite: Darwin.Mobile.Shared, Darwin.Mobile.Consumer, Darwin.Mobile.Business
 
- Loyalty QR flow: rotating consumer QR, secure scan session, accrue/redeem endpoints
+ Loyalty QR flow: session-based consumer QR (ScanSessionToken), secure scan session endpoints (prepare/process/confirm accrual & redemption)
 
  Discovery on mobile: map + directory + business details
 

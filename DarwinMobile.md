@@ -1,4 +1,4 @@
-﻿# Darwin Mobile Suite & Contracts — Technical Guide (Part 1/2)
+﻿# Darwin Mobile Suite & Contracts — Technical Guide
 
 > Scope: **Mobile** projects and the **Darwin.Contracts** package only. This guide enables a new contributor to continue the mobile work without needing any prior chat context.
 
@@ -6,272 +6,394 @@
 
 ## 0) Executive Summary
 
-Darwin’s mobile suite consists of two .NET MAUI apps:
+Darwin’s mobile suite consists of two .NET MAUI apps that sit on top of the existing Darwin platform:
 
-- **Darwin.Mobile.Consumer** – end-user app: login, personal rotating QR code, discover businesses on a map, view/earn/redeem rewards, profile.
-- **Darwin.Mobile.Business** – business tablet app: scan consumer QR, confirm identity, add points, redeem rewards, view customer snapshots.
+- **Darwin.Mobile.Consumer** – end-user app: login, personal **QR based on a server-side scan session**, discover businesses on a map, view/earn/redeem rewards, profile.
+- **Darwin.Mobile.Business** – business tablet app: **scan the customer’s QR**, load the current **scan session** from the server, then **accrue points** or **confirm a redemption**.
 
-Both apps talk to **Darwin.WebApi** via a thin **Darwin.Mobile.Shared** library (HTTP client, retry, auth helpers, abstractions for camera/location) and a stable **Darwin.Contracts** package (Contracts used by WebApi + both apps). The back end (Web/Infrastructure) already exposes composition modules for DB, identity, JWT, SMTP, and data-protection; WebApi will compose those and implement endpoints that match the Contracts. 
+Key principles for the loyalty flow:
+
+- The QR code **only contains an opaque ScanSessionToken** (string).
+- All sensitive data (customer identity, rewards, balances, business rules) lives on the server.
+- The **Consumer app** calls `PrepareScanSession` to create a short-lived scan session (Mode = Accrual or Redemption) and renders the returned `ScanSessionToken` as QR.
+- The **Business app** scans the QR and calls `ProcessScanSessionForBusiness` to load the session (Mode + summary + selected rewards), then calls `ConfirmAccrual` or `ConfirmRedemption` to finalize.
+- The same Contracts (`Darwin.Contracts`) are used by WebApi and both apps.
 
 ---
 
 ## 1) Projects & Roles
 
 ### 1.1 Darwin.Mobile.Consumer (MAUI)
+
 - Targets iOS/Android (optionally Windows/MacCatalyst for debugging).
-- Core features: Auth, QR (rotating token bound to the current user), Discover (map + directory), Rewards dashboard, Profile.
-- UI binds to **Shared** services (Auth/Loyalty/Business) and uses platform services (camera, location). Initial view models and placeholder views exist and are meant to be wired to Shared soon.
+- Core features:
+  - Authentication (JWT access + refresh tokens).
+  - **Loyalty QR page**: shows a QR built from a server-issued `ScanSessionToken`.
+  - Rewards dashboard per business.
+  - Business discovery (map + directory) and business detail.
+  - Profile (basic account data, favourites, reviews in later phases).
+- UI binds to **Shared** services (`ILoyaltyService`, `IIdentityService`, `IBusinessDiscoveryService`) and uses platform services (camera, location) via abstractions in `Darwin.Mobile.Shared`.
 
 ### 1.2 Darwin.Mobile.Business (MAUI)
-- Targets tablet-class devices.
-- Core features (Phase 1): scan QR → show customer snapshot → +1 point (configurable) → redeem reward.
+
+- Targets tablet-class devices (Android/iPad; Windows/Mac for debugging if needed).
+- Phase-1 core features:
+  - **Scan** customer QR with the device camera.
+  - Call `ProcessScanSessionForBusiness` to load the session:
+    - Mode = Accrual → show account summary and allow point accrual.
+    - Mode = Redemption → show selected rewards for confirmation.
+  - Call `ConfirmAccrual` / `ConfirmRedemption` to complete the operation.
 - Uses the same Shared services; provides the scanner implementation for the device.
 
 ### 1.3 Darwin.Mobile.Shared (Class Library)
-- **ApiClient** with JSON (System.Text.Json), bearer handling, and **retry** via an `IRetryPolicy` abstraction (exponential backoff with jitter). Registering via `AddHttpClient<IApiClient, ApiClient>` is already wired in DI. 
+
+- **ApiClient** with JSON (System.Text.Json), bearer handling, and **retry** via an `IRetryPolicy` abstraction (exponential backoff with jitter).
 - **Abstractions** for camera scanning and geolocation (`IScanner`, `ILocation`) to keep UI projects platform-specific.
-- **Auth & Loyalty helpers** (TokenStore, QrTokenRefresher, service registrations). QrTokenRefresher raises an event when a new token is fetched; apps can subscribe and update the bound QR immediately. 
-- **DI composition** entry: `AddDarwinMobileShared(ApiOptions)` registers ApiClient, retry policy, TokenStore, and service facades. Requires **Microsoft.Extensions.Http** for `AddHttpClient`.
+- **Auth & Loyalty facades**:
+  - `IIdentityService` for login/refresh/logout.
+  - `ILoyaltyService` for session-based scan flows and loyalty accounts.
+  - `IBusinessDiscoveryService` for map/directory.
+  - `ITokenStore` abstraction over secure storage.
+- **DI composition** entry:
+  - `AddDarwinMobileShared(ApiOptions)` registers ApiClient, retry policy, TokenStore, and service facades. Requires **Microsoft.Extensions.Http** for `AddHttpClient`.
 
 ### 1.4 Darwin.Contracts (Class Library)
-- **Single source of truth** for WebApi request/response models used by both mobile apps. It purposely contains **no** EF types or server concerns.
+
+- **Single source of truth** for WebApi request/response models used by both mobile apps and Web.
+- Contains **no** EF types or server implementation details.
 - Current/added areas:
-  - **Identity**: login, token pair, refresh. 
-  - **Loyalty**: start scan, accrue, redeem; reward programs; customer account snapshot.
+  - **Identity**: login, token pair, refresh.
+  - **Loyalty** (session-based scan model; see §4.3).
   - **Businesses**: discovery filters, map summaries, business details.
-  - **Common**: paged, geo coordinate, problem details, sort options (reuses the existing `SortOption`).
+  - **Common**: paging, geo coordinates, problem details, sort options.
 
 ---
 
 ## 2) Solution Structure & Solution Filters
 
 - Keep mobile and web in **one repo**, but use two **Solution Filters**:
-  - `Darwin.WebOnly.slnf`: includes Darwin.Web, Darwin.WebApi, Darwin.Infrastructure, Darwin.Application, Darwin.Domain, Darwin.Contracts.
-  - `Darwin.MobileOnly.slnf`: includes Darwin.Mobile.Consumer, Darwin.Mobile.Business, Darwin.Mobile.Shared, Darwin.Contracts.
-- Rationale: faster IDE load, focused builds; still a single codebase and PR/CI surface.
+  - `Darwin.WebOnly.slnf`: Darwin.Web, Darwin.WebApi, Darwin.Infrastructure, Darwin.Application, Darwin.Domain, Darwin.Contracts.
+  - `Darwin.MobileOnly.slnf`: Darwin.Mobile.Consumer, Darwin.Mobile.Business, Darwin.Mobile.Shared, Darwin.Contracts.
+- Rationale: faster IDE load and focused builds while preserving a single codebase and shared Contracts.
 
 ---
 
 ## 3) Back-end Composition (for reference)
 
-Web/WebApi will consume Infrastructure composition modules:
+Web/WebApi compose Infrastructure modules:
 
-- `AddPersistence(configuration)` for EF Core + migrations + seeding. 
-- `AddIdentityInfrastructure()` for Argon2, WebAuthn, TOTP, secret-protection; `AddJwtAuthCore()` for JWT issuing + login rate limiting. 
-- `AddSharedHostingDataProtection(configuration)` for key rings (token/encryption) and `AddNotificationsInfrastructure(configuration)` for SMTP. 
+- `AddPersistence(configuration)` for EF Core + migrations + seeding.
+- `AddIdentityInfrastructure()` for Argon2, WebAuthn, TOTP, secret-protection; `AddJwtAuthCore()` for JWT issuing + login rate limiting.
+- `AddSharedHostingDataProtection(configuration)` for key rings (token/encryption) and `AddNotificationsInfrastructure(configuration)` for SMTP.
 
-> Why this matters to mobile? Token issuance/refresh, short-lived QR token endpoints, and secure storage assumptions derive from this composition.
+> Why this matters to mobile? Token issuance/refresh, **session-based loyalty endpoints**, and secure storage assumptions derive from this composition.
 
 ---
 
-## 4) Contracts  Overview
+## 4) Contracts Overview
 
-> These Contracts are designed for **System.Text.Json** with default web naming, compatible with our Shared ApiClient. They avoid exposing internal IDs where not needed.
+> Contracts are designed for **System.Text.Json** with default web naming, compatible with the Shared ApiClient. They avoid exposing internal IDs where not needed and keep the QR payload opaque.
 
 ### 4.1 Common
-- `PagingRequest`, `PagedResponse<T>` – uniform paging across discovery lists.  
-- `GeoCoordinateModel` – decimal degrees for pins/proximity.  
-- `ApiProblem` – RFC 7807-like minimal error envelope.  
-- `SortOption` – **already exists** and is reused by discovery.
+
+- `PagingRequest`, `PagedResponse<T>` – uniform paging across discovery lists.
+- `GeoCoordinateModel` – decimal degrees for pins/proximity.
+- `ApiProblem` – RFC 7807-like minimal error envelope.
+- `SortOption` – already exists and is reused by discovery.
 
 ### 4.2 Identity
-- `PasswordLoginRequest` → `TokenResponse` (Access/Refresh pair), `RefreshTokenRequest`.  
-  Access is short-lived (JWT); Refresh is opaque and longer-lived per server policy. JWT plumbing is provided in Infrastructure.
 
-### 4.3 Loyalty
-- `QrCodePayload` (already present) – **rotating** short-lived QR token payload rendered by Consumer.  
-- Business flow:
-  - `StartScanRequest` (token) → `StartScanResponse` (scan session, customer display name, current points, next reward).  
-  - `AccruePointsRequest` → `AccruePointsResponse`.  
-  - `RedeemRewardRequest` → `RedeemRewardResponse`.  
-- Reward programming:
-  - `RewardProgram` with `RewardTier`.  
-  - `LoyaltyAccount` (consumer’s per-business status).  
-  These complete the Phase-1/2 surface while remaining stable for future extensions.
+- `PasswordLoginRequest` → `TokenResponse` (Access/Refresh pair), `RefreshTokenRequest`.
+  - Access is short-lived (JWT); Refresh is opaque and longer-lived per server policy.
+
+### 4.3 Loyalty (Session-based Scan Model)
+
+Located under `Darwin.Contracts.Loyalty`:
+
+- **Enums / flags**
+  - `LoyaltyScanMode` – `Accrual` or `Redemption`.
+  - `LoyaltyScanAllowedActions` – flags for what the Business app is allowed to do (e.g. `CanConfirmRedemption`, `CanAccruePoints`).
+
+- **Read models**
+  - `LoyaltyRewardSummary` – compact reward model for both apps:
+    - `Id`, `BusinessId`, `Name`, `Description`, `RequiredPoints`, `IsActive`, `IsSelectable`.
+  - `LoyaltyAccountSummary` – snapshot for the current consumer at a business:
+    - Non-personal alias (not real name/email), `CurrentPoints`, `NextReward`, etc.
+
+- **Scan session creation (Consumer app)**
+  - `PrepareScanSessionRequest`:
+    - `BusinessId` – where the user is visiting.
+    - `Mode` – `LoyaltyScanMode.Accrual` or `Redemption`.
+    - `SelectedRewardIds` – optional list of reward IDs (for Redemption).
+  - `PrepareScanSessionResponse`:
+    - `ScanSessionToken` – opaque string encoded into the QR.
+    - `Mode` – confirmed mode.
+    - `ExpireAtUtc` – server-side expiry of the scan session.
+    - `SelectedRewards` – optional list of `LoyaltyRewardSummary` for confirmation on the Consumer side.
+
+- **Scan session processing (Business app)**
+  - `ProcessScanSessionForBusinessRequest`:
+    - `ScanSessionToken` – scanned from the consumer’s QR.
+  - `ProcessScanSessionForBusinessResponse`:
+    - `Mode` – `Accrual` / `Redemption`.
+    - `BusinessId` – must match the logged-in business (validated server-side).
+    - `AccountSummary` – optional `LoyaltyAccountSummary`.
+    - `SelectedRewards` – optional list of `LoyaltyRewardSummary`.
+    - `AllowedActions` – `LoyaltyScanAllowedActions` flags.
+
+- **Accrual confirmation (Business app)**
+  - `ConfirmAccrualRequest`:
+    - `ScanSessionToken`.
+    - `Points` or `Amount` depending on current business rules.
+  - `ConfirmAccrualResponse`:
+    - `Success`, `NewBalance`, `ErrorCode`, `ErrorMessage` (optional).
+
+- **Redemption confirmation (Business app)**
+  - `ConfirmRedemptionRequest`:
+    - `ScanSessionToken` (in Phase 1 we confirm the rewards already stored in the session).
+  - `ConfirmRedemptionResponse`:
+    - `Success`, `NewBalance`, `ErrorCode`, `ErrorMessage` (optional).
+
+These Contracts support Phase-1/2 of the mobile roadmap while being extendable (e.g. extra modes, more summary data) without breaking existing clients.
 
 ### 4.4 Businesses (Discovery)
-- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, sort, paging.  
-- `BusinessSummary` – id, name, category, rating, approximate location, open-now.  
-- `BusinessDetail` – description, opening hours, phones/links, address line, images, reward program preview.  
-These are sufficient for a map + directory + profile page.
+
+- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, sort, paging.
+- `BusinessSummary` – id, name, category, rating, approximate location, open-now.
+- `BusinessDetail` – description, opening hours, phones/links, address, images, loyalty program preview.
+
+These are sufficient for the map, directory and profile pages on Consumer.
 
 ---
 
 ## 5) Mobile Shared Library Details
 
 ### 5.1 HTTP + Retry
-- `ApiClient` sets `HttpClient.BaseAddress` from `ApiOptions.BaseUrl`, serializes with `JsonSerializerDefaults.Web`, and **wraps all calls in `IRetryPolicy`**. Default policy is exponential backoff with jitter; retries `HttpRequestException` and timeouts only. Keep attempts **small** to protect UX/battery. 
-- DI registration (`AddDarwinMobileShared`) wires `AddHttpClient<IApiClient, ApiClient>()` and default timeout (15s). Install **Microsoft.Extensions.Http** in projects that host the DI container.
 
-### 5.2 Auth Storage & QR Refresh
-- `ITokenStore` – abstraction over secure storage; mobile apps provide concrete platform implementation or use Essentials’ SecureStorage.  
-- `QrTokenRefresher` – background loop that pulls a fresh QR token at intervals (from `ApiOptions.QrRefreshSeconds` or a server “bootstrap”). Emits `TokenRefreshed` event so the UI can update the QR immediately.
+- `ApiClient` sets `HttpClient.BaseAddress` from `ApiOptions.BaseUrl`, serializes with `JsonSerializerDefaults.Web`, and wraps calls in `IRetryPolicy`.
+- Default policy: exponential backoff with jitter; retries `HttpRequestException` and timeouts only. Keep attempts small to protect UX/battery.
+- DI registration (`AddDarwinMobileShared`) wires `AddHttpClient<IApiClient, ApiClient>()` and default timeout (e.g. 15s). `Microsoft.Extensions.Http` must be referenced in the host project.
+
+### 5.2 Auth Storage
+
+- `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
+- `IIdentityService` – wraps Contracts for login/refresh/logout and integrates `ITokenStore` with `IApiClient` (Bearer handling).
+- There is **no client-side QR rotation loop**; sessions are short-lived and recreated explicitly via `PrepareScanSession`.
 
 ### 5.3 Integration Abstractions
-- `IScanner` – camera barcode reader; implement per app (Business tablet, optionally Consumer for demos).  
-- `ILocation` – geo provider; used to implement “Near me” filters. 
+
+- `IScanner` – camera barcode/QR reader; implemented per app (Business tablet, optionally Consumer for demos).
+- `ILocation` – geo provider; used to implement “near me” filters.
 
 ---
 
 ## 6) End-to-End QR/Scan Flow (Security-aware)
 
-**Consumer app**
-1. User logs in → receives `TokenResponse` (access/refresh). Access is stored via `ITokenStore`; ApiClient bearer is set.  
-2. Consumer requests `GET /loyalty/qr` → server returns **short-lived** `QrCodePayload`.  
-3. Consumer displays QR and optionally starts `QrTokenRefresher` to rotate the token periodically (e.g., 60s).
+### Consumer app
 
-**Business app**
-1. Cashier taps “Scan” → `IScanner.ScanAsync` yields the QR token string. 
-2. App calls `POST /loyalty/start-scan` with the token → gets `StartScanResponse` (includes an **ephemeral** `ScanSessionId`).  
-3. Cashier confirms the customer and:
-   - Accrues points: `POST /loyalty/accrue` with `ScanSessionId` (+optional amount).  
-   - Or redeems a reward: `POST /loyalty/redeem` with `ScanSessionId` and `RewardTierId`.  
-4. Server updates balances and returns confirmations; Consumer app will see updated points after next pull (or via signal/polling later).
+1. User logs in → `POST /identity/login` → `TokenResponse`.  
+   Access token is stored through `ITokenStore`; ApiClient bearer is set.
 
-**Security notes**
-- The QR payload **must not** embed internal user IDs; it’s a short-lived opaque token bound to the authenticated user, validated server-side, and exchanges for a time-boxed `ScanSessionId`.  
-- Short lifetimes reduce replay risk; rotation via QrTokenRefresher cuts the attack window. Rate limiting and IP/device telemetry may be added server-side (login limiter already exists). 
+2. To show QR in **Accrual** mode:
+   - Consumer calls `POST /loyalty/prepare-scan-session` with `PrepareScanSessionRequest { BusinessId, Mode = Accrual }`.
+   - Server returns `PrepareScanSessionResponse` with `ScanSessionToken` and `ExpireAtUtc`.
+   - Consumer renders the QR using `ScanSessionToken`.
+
+3. To show QR in **Redemption** mode:
+   - Consumer queries available rewards for the business and current balance.
+   - User selects one or more rewards.
+   - Consumer calls `PrepareScanSession` with `Mode = Redemption` and `SelectedRewardIds`.
+   - Server validates that points are sufficient and returns `ScanSessionToken` + `SelectedRewards`.
+   - Consumer refreshes the QR with the new token.
+
+4. If the session expires before being scanned, WebApi returns an error; the app should call `PrepareScanSession` again and show a new QR.
+
+### Business app
+
+1. Cashier taps “Scan” → `IScanner.ScanAsync()` yields the token string.
+2. App calls `POST /loyalty/process-scan-session-for-business` with `ProcessScanSessionForBusinessRequest { ScanSessionToken }`.
+3. WebApi:
+   - Validates the token and business, loads mode and account summary.
+   - Returns `ProcessScanSessionForBusinessResponse`:
+     - Mode, `AccountSummary`, `SelectedRewards`, `AllowedActions`.
+
+4. UI logic:
+   - If `Mode = Accrual` and `AllowedActions` contains `CanAccruePoints`:
+     - Show current balance, optionally ask for amount.
+     - Call `POST /loyalty/confirm-accrual` with `ConfirmAccrualRequest { ScanSessionToken, Points }`.
+   - If `Mode = Redemption` and `AllowedActions` contains `CanConfirmRedemption`:
+     - Show list of `SelectedRewards`.
+     - Cashier confirms usage → call `POST /loyalty/confirm-redemption` with `ConfirmRedemptionRequest { ScanSessionToken }`.
+
+5. Server updates balances and returns confirmations; Consumer app will see updated points on next refresh (or via push/polling in later phases).
+
+### Security notes
+
+- QR payload contains **only `ScanSessionToken`**, not internal IDs.
+- Tokens are **short-lived** and bound to both customer and business.
+- Processing always goes through a server-side scan session, not directly against the loyalty account.
+- Replay risk is limited by short expiry, single-use semantics, server-side validation and potential rate limiting.
 
 ---
 
 ## 7) Configuration & Environments
 
 ### 7.1 Mobile
-- `ApiOptions` in each app at composition time:
-  - `BaseUrl`: WebApi root (e.g., `https://api.example.com/`).  
-  - `JwtAudience`: as expected by WebApi JWT validation.  
-  - `QrRefreshSeconds`: recommended rotation interval. 
-- Provide environment-specific `ApiOptions` via platform config (e.g., MAUI `appsettings.mobile.json` + build transforms) or compile-time constants; pass them into `AddDarwinMobileShared()` during startup.
+
+`ApiOptions` is provided in each app at composition time:
+
+- `BaseUrl`: WebApi root (e.g. `https://api.example.com/`).
+- `JwtAudience`: as expected by WebApi JWT validation.
+- Other tuning knobs (retry, timeouts, etc.) can be added as the Shared layer evolves.
+
+Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config class per build configuration) or compile-time constants; pass them into `AddDarwinMobileShared()` during startup.
 
 ### 7.2 Server
-- DataProtection key ring path, SMTP, and WebAuthn data live in appsettings; Infrastructure exposes composition helpers already listed. See the repo README for current examples. 
+
+- DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
+- Infrastructure exposes composition helpers (`AddSharedHostingDataProtection`, `AddPersistence`, `AddIdentityInfrastructure`, `AddNotificationsInfrastructure`, `AddJwtAuthCore`).
 
 ---
 
 ## 8) Error Handling
 
-- WebApi should standardize on `ApiProblem` responses with field errors for validation.  
-- The Shared ApiClient currently surfaces non-2xx as exceptions (via `EnsureSuccessStatusCode`); in UI, catch and map to friendly messages using `ApiProblem` if the body is present. 
+- WebApi should standardize on `ApiProblem` responses with field errors for validation.
+- Shared `ApiClient` surfaces non-2xx as exceptions; in UI, catch and map to friendly messages using `ApiProblem` if available.
 
 ---
 
 ## 9) Versioning & Compatibility
 
-- **Contracts** should be versioned semantically (e.g., `v1`). Breaking changes require either new fields with defaults, new endpoints, or a `v2` namespace/route.  
-- Mobile apps pin to a Contracts package version; CI should run e2e contract tests to prevent accidental breaks.
+- Contracts should be versioned semantically (e.g. v1).  
+- Breaking changes require new fields with defaults, new endpoints, or a `v2` namespace/route.
+- Mobile apps pin to a specific Contracts package version; CI should run contract tests to detect breaking changes early.
 
 ---
 
 ## 10) Minimal App Startup (Sketch)
 
-Each mobile app’s DI should call:
+Each mobile app’s DI should call something like:
 
 ```csharp
 // in <App>.Composition/DependencyInjection.cs
 services.AddDarwinMobileShared(new ApiOptions
 {
     BaseUrl = "https://api.example.com/",
-    JwtAudience = "Darwin.PublicApi",
-    QrRefreshSeconds = 60
+    JwtAudience = "Darwin.PublicApi"
 });
+
 ```
 
-
-
-# Darwin Mobile Suite & Contracts — Technical Guide (Part 2/2)
+---
 
 ## 11) Mobile App Responsibilities
 
 ### Consumer
-- **Login**: `POST /identity/login` → `TokenResponse`; store via `ITokenStore`.
-- **QR**: show rotating token (subscribe to `QrTokenRefresher.TokenRefreshed`).
-- **Rewards**: list per-business points with `LoyaltyAccount`.
-- **Discover**: call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummary`.
-- **Details**: fetch `BusinessDetail` including public reward preview.
-- **Profile**: fetch/edit using `CustomerProfile` / `CustomerProfileEdit`.
+
+- **Login**: `PasswordLoginRequest` → `TokenResponse`; store via `ITokenStore` and configure `ApiClient`.
+- **QR/Scan session**:
+  - Call `PrepareScanSession` (Accrual or Redemption) via `ILoyaltyService.PrepareScanSessionAsync`.
+  - Render the returned `ScanSessionToken` as QR.
+- **Rewards**:
+  - Fetch loyalty account + available rewards per business.
+  - Enable selection of rewards for Redemption mode.
+- **Discover**:
+  - Call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummary`.
+  - Navigate to `BusinessDetail` for full info.
+- **Profile**:
+  - Fetch/edit using identity/profile Contracts as they evolve.
 
 ### Business
-- **Scan**: `IScanner.ScanAsync` → `StartScanRequest` → `StartScanResponse`.
-- **Accrue**: `AccruePointsRequest` → `AccruePointsResponse`.
-- **Redeem**: `RedeemRewardRequest` → `RedeemRewardResponse`.
-- **Customer Snapshot**: use response fields to verbally confirm identity before accrual/redeem.
+
+- **Scan**:
+  - Use `IScanner.ScanAsync` to obtain the scanned token.
+  - Call `ILoyaltyService.ProcessScanSessionForBusinessAsync` with that token.
+- **Accrue**:
+  - If Mode = Accrual and allowed, call `ILoyaltyService.ConfirmAccrualAsync`.
+- **Redeem**:
+  - If Mode = Redemption and allowed, call `ILoyaltyService.ConfirmRedemptionAsync`.
+- **Customer Snapshot**:
+  - Use `LoyaltyAccountSummary` and `SelectedRewards` to verbally confirm with the customer when needed.
 
 ---
 
 ## 12) Offline & Resilience Notes
 
-- Current Shared client includes **retry** for transient network faults; keep attempts small. For heavier offline needs (future phases), introduce a local outbox with `ApiOptions.MaxOutbox` as a tuning knob; reconcile on connectivity restore. 
-- Avoid long-running loops; `QrTokenRefresher` is already cooperative via cancellation. 
+- Shared client includes retry for transient network faults; keep attempts small.
+- For heavier offline needs, introduce a local outbox in the apps and replay stored operations when connectivity is restored (future work).
+- Avoid long-running loops; prefer one-shot operations with explicit user actions.
 
 ---
 
 ## 13) Security Posture (Mobile Perspective)
 
-- **No internal IDs in QR**; only short-lived opaque token → exchange for server `ScanSessionId`.  
-- **JWT & refresh**: short TTL access token; refresh via secure storage (`ITokenStore`).  
-- **Rate limiting**: server login rate limiter is present; extend per endpoint as needed. 
-- **Data Protection**: server key ring persists across restarts; required for stable token protection. 
+- **No internal IDs in QR**; only a short-lived opaque `ScanSessionToken` exchanged for a server-side scan session.
+- **JWT & refresh**: short TTL access token; refresh via secure storage (`ITokenStore`).
+- **Rate limiting**: login rate limiter already exists; per-endpoint throttling can be added on WebApi.
+- **Data Protection**: server key ring persists across restarts; required for stable token and secret protection.
 
 ---
 
 ## 14) Current Code Pointers
 
-- **Shared HTTP & Retry**: `Api/ApiClient.cs`, `Resilience/IRetryPolicy.cs`, `Resilience/ExponentialBackoffRetryPolicy.cs`.   
-- **Shared DI**: `Extensions/ServiceCollectionExtensions.cs` (requires `Microsoft.Extensions.Http`). 
-- **Scanner & Location Abstractions**: `Integration/IScanner.cs`, `Integration/ILocation.cs`. 
-- **QR Rotation Helper**: `Security/QrTokenRefresher.cs`. 
-- **Consumer placeholders**: `ViewModels/QrViewModel.cs` (+ TODO), `Views/QrView.xaml.cs`. 
-- **Server composition**: Infrastructure `ServiceCollectionExtensions.*` (persistence, identity/JWT, notifications, data-protection).   
-- **Repo README (config examples)**: connection strings, DataProtection, SMTP, WebAuthn. 
+- **Shared HTTP & Retry**: `Darwin.Mobile.Shared/Api/ApiClient.cs`, `Resilience/IRetryPolicy.cs`, `Resilience/ExponentialBackoffRetryPolicy.cs`.
+- **Shared DI**: `Darwin.Mobile.Shared/Extensions/ServiceCollectionExtensions.cs` (requires `Microsoft.Extensions.Http`).
+- **Scanner & Location Abstractions**: `Darwin.Mobile.Shared/Integration/IScanner.cs`, `Integration/ILocation.cs`.
+- **Loyalty Service**: `Darwin.Mobile.Shared/Services/Loyalty/LoyaltyService.cs` (session-based APIs).
+- **Consumer ViewModels**: `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs`, `RewardsViewModel.cs`.
+- **Business ViewModels**: `Darwin.Mobile.Business/ViewModels/ScannerViewModel.cs`.
+- **Server composition**: Infrastructure `ServiceCollectionExtensions.*` (persistence, identity/JWT, notifications, data-protection, JWT).
+- **Repo README**: configuration examples for DataProtection, SMTP, WebAuthn, etc.
 
 ---
 
 ## 15) Build & Tooling
 
-- **Target SDK**: .NET 9.  
-- **Packages (apps)**: `Microsoft.Extensions.Http` (for DI `AddHttpClient`), camera/QR packages per platform (to be selected in each MAUI app), Essentials for secure storage.  
+- **Target SDK**: .NET 9.
+- **Packages (apps)**:
+  - `Microsoft.Extensions.Http` for `AddHttpClient`.
+  - Camera/QR packages per platform (to be selected in each MAUI app).
+  - Essentials for secure storage.
 - **Migrations**: run under Infrastructure project; Web/WebApi composes Db + seeders.
 
 ---
 
 ## 16) Testing Considerations
 
-- For pure contract/serialization tests, reference **Darwin.Contracts** directly.  
-- For handler/UI integration, use mock `IApiClient` or a test server.  
-- Note: Application/test infra currently uses EF InMemory helpers; prefer SQLite-in-memory when relational behavior matters. 
+- For contract/serialization tests, reference `Darwin.Contracts` directly.
+- For handler/UI integration, use a mock `IApiClient` or a test WebApi host.
+- For relational tests, prefer SQLite in-memory over EF InMemory when behaviour matters.
 
 ---
 
 ## 17) Roadmap Coupling (Phases 1–3)
 
-- **Phase 1**: Endpoints needed are present in Contracts: login, QR fetch, start-scan, accrue, redeem, reward program/read models, discovery basics, profile.  
-- **Phase 2**: Map discovery with filters & details (Contracts covered).  
-- **Phase 3**: Subscriptions/analytics/notifications—additive endpoints; do **not** break v1 Contracts.
+- **Phase 1**: Endpoints: login, session-based loyalty scan (prepare/process/confirm), basic rewards read models, discovery basics, profile.
+- **Phase 2**: Map discovery with filters & details, richer reward dashboard, feed/promo endpoints.
+- **Phase 3**: Subscriptions/analytics/notifications; additive endpoints on top of existing Contracts.
 
 ---
 
 ## 18) Contributor Checklist
 
-1. Install SDKs (MAUI workloads for target platforms).  
-2. Create/update **Solution Filters** as above.  
+1. Install SDKs (MAUI workloads for target platforms).
+2. Use the appropriate Solution Filter (`Darwin.MobileOnly.slnf`).
 3. Add `Microsoft.Extensions.Http` to mobile host projects to satisfy `AddHttpClient`.
-4. Wire `AddDarwinMobileShared(ApiOptions)` in each app’s composition.  
-5. Implement platform services: `IScanner`, `ILocation`, `ITokenStore`.  
-6. Bind QR page to `QrTokenRefresher` and render the current token string as a QR image.  
-7. Implement discovery screens using Contracts filters and paged responses.  
-8. Handle `ApiProblem` uniformly; surface friendly UX.
+4. Wire `AddDarwinMobileShared(ApiOptions)` in each app’s composition.
+5. Implement platform services: `IScanner`, `ILocation`, `ITokenStore`.
+6. Bind Consumer QR page to `ILoyaltyService.PrepareScanSessionAsync` and render the returned `ScanSessionToken` as a QR image.
+7. Implement scan/confirm flows in Business app using `ProcessScanSessionForBusinessAsync`, `ConfirmAccrualAsync`, `ConfirmRedemptionAsync`.
+8. Handle `ApiProblem` uniformly and map server errors to friendly UX.
 
 ---
 
 ## 19) Appendix — Contracts (Snapshot)
 
-> The following modules are present/added in `Darwin.Contracts`:
+> Modules present/added in `Darwin.Contracts`:
 
-- **Common**: `PagedRequest`, `PagedResponse<T>`, `GeoCoordinateModel`, `ProblemDetails`, `SortOption`.
-- **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.  
-- **Loyalty**: `QrCodePayload`, `StartScan*`, `Accrue*`, `Redeem*`, `RewardProgram`, `RewardTier`, `LoyaltyAccount`.  
+- **Common**: `PagedRequest`, `PagedResponse<T>`, `GeoCoordinateModel`, `ApiProblem`, `SortOption`.
+- **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.
+- **Loyalty**: `LoyaltyScanMode`, `LoyaltyScanAllowedActions`, `LoyaltyRewardSummary`, `LoyaltyAccountSummary`, `PrepareScanSessionRequest/Response`, `ProcessScanSessionForBusinessRequest/Response`, `ConfirmAccrualRequest/Response`, `ConfirmRedemptionRequest/Response`.
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
 
-> Rationale: Keep WebApi and both mobile apps in lock-step on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
-
----
+> Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
