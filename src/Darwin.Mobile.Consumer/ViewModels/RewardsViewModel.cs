@@ -1,93 +1,94 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Shared.Commands;
+using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
-using Darwin.Mobile.Shared.Services;
+using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Consumer.ViewModels
 {
     /// <summary>
-    /// View model responsible for showing the consumer's loyalty status for
-    /// a specific business, including current points and the list of
-    /// available rewards that can be selected for redemption.
+    /// View model for the rewards dashboard in the consumer app.
+    /// Responsible for loading the current balance and available rewards
+    /// for a specific business.
     /// </summary>
     public sealed class RewardsViewModel : BaseViewModel
     {
         private readonly ILoyaltyService _loyaltyService;
 
         private Guid _businessId;
-        private LoyaltyAccountSummary? _accountSummary;
-        private ObservableCollection<LoyaltyRewardSummary> _availableRewards;
-        private ObservableCollection<LoyaltyRewardSummary> _selectedRewards;
+        private int _currentPoints;
+        private bool _hasLoaded;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RewardsViewModel"/> class.
         /// </summary>
-        /// <param name="loyaltyService">Service used to load loyalty account and rewards.</param>
+        /// <param name="loyaltyService">The loyalty service abstraction.</param>
         public RewardsViewModel(ILoyaltyService loyaltyService)
         {
             _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
 
-            _availableRewards = new ObservableCollection<LoyaltyRewardSummary>();
-            _selectedRewards = new ObservableCollection<LoyaltyRewardSummary>();
-
-            LoadAsyncCommand = new AsyncCommand(LoadAsync);
-            ToggleSelectionCommand = new AsyncCommand<LoyaltyRewardSummary>(ToggleSelectionAsync);
+            Rewards = new ObservableCollection<LoyaltyRewardSummary>();
+            RefreshCommand = new AsyncCommand(RefreshAsync);
         }
 
         /// <summary>
-        /// Gets or sets the business identifier for which rewards are displayed.
+        /// Gets the business identifier for which this rewards dashboard applies.
         /// </summary>
         public Guid BusinessId
         {
             get => _businessId;
-            set => SetProperty(ref _businessId, value);
+            private set => SetProperty(ref _businessId, value);
         }
 
         /// <summary>
-        /// Gets the summary of the consumer's loyalty account at the current business,
-        /// including balance and next reward thresholds.
+        /// Gets the current points balance for the consumer at this business.
         /// </summary>
-        public LoyaltyAccountSummary? AccountSummary
+        public int CurrentPoints
         {
-            get => _accountSummary;
-            private set => SetProperty(ref _accountSummary, value);
+            get => _currentPoints;
+            private set => SetProperty(ref _currentPoints, value);
         }
 
         /// <summary>
-        /// Gets the list of rewards available for this consumer at the current business.
+        /// Gets the collection of rewards that are available for this business.
         /// </summary>
-        public ObservableCollection<LoyaltyRewardSummary> AvailableRewards
+        public ObservableCollection<LoyaltyRewardSummary> Rewards { get; }
+
+        /// <summary>
+        /// Command that triggers a refresh of the account summary and rewards list.
+        /// </summary>
+        public AsyncCommand RefreshCommand { get; }
+
+        /// <summary>
+        /// Sets the business context for this view model.
+        /// </summary>
+        /// <param name="businessId">The business identifier.</param>
+        public void SetBusiness(Guid businessId)
         {
-            get => _availableRewards;
-            private set => SetProperty(ref _availableRewards, value);
+            if (businessId == Guid.Empty)
+            {
+                throw new ArgumentException("Business id must not be empty.", nameof(businessId));
+            }
+
+            BusinessId = businessId;
         }
 
-        /// <summary>
-        /// Gets the list of rewards currently selected by the consumer for redemption.
-        /// </summary>
-        public ObservableCollection<LoyaltyRewardSummary> SelectedRewards
+        /// <inheritdoc />
+        public override async Task OnAppearingAsync()
         {
-            get => _selectedRewards;
-            private set => SetProperty(ref _selectedRewards, value);
+            if (!_hasLoaded && BusinessId != Guid.Empty)
+            {
+                await RefreshAsync().ConfigureAwait(false);
+                _hasLoaded = true;
+            }
         }
 
-        /// <summary>
-        /// Command that loads the account summary and available rewards from the server.
-        /// </summary>
-        public AsyncCommand LoadAsyncCommand { get; }
-
-        /// <summary>
-        /// Command that toggles selection of a reward for redemption.
-        /// </summary>
-        public AsyncCommand<LoyaltyRewardSummary> ToggleSelectionCommand { get; }
-
-        /// <summary>
-        /// Asynchronously loads the account summary and available rewards for the
-        /// current business and updates bound collections.
-        /// </summary>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task LoadAsync()
+        private async Task RefreshAsync()
         {
             if (BusinessId == Guid.Empty)
             {
@@ -95,82 +96,49 @@ namespace Darwin.Mobile.Consumer.ViewModels
                 return;
             }
 
+            if (IsBusy)
+            {
+                return;
+            }
+
+            IsBusy = true;
+            ErrorMessage = null;
+
             try
             {
-                IsBusy = true;
-                ErrorMessage = null;
-
-                var accountResult = await _loyaltyService.GetAccountSummaryAsync(BusinessId, CancellationToken.None)
+                var accountResult = await _loyaltyService
+                    .GetAccountSummaryAsync(BusinessId, CancellationToken.None)
                     .ConfigureAwait(false);
 
-                if (!accountResult.Succeeded)
+                if (!accountResult.Succeeded || accountResult.Value is null)
                 {
                     ErrorMessage = accountResult.Error ?? "Failed to load loyalty account.";
                     return;
                 }
 
-                AccountSummary = accountResult.Value;
+                var account = accountResult.Value;
+                CurrentPoints = account.PointsBalance;
 
-                var rewardsResult = await _loyaltyService.GetAvailableRewardsAsync(BusinessId, CancellationToken.None)
+                var rewardsResult = await _loyaltyService
+                    .GetAvailableRewardsAsync(BusinessId, CancellationToken.None)
                     .ConfigureAwait(false);
 
-                if (!rewardsResult.Succeeded)
+                if (!rewardsResult.Succeeded || rewardsResult.Value is null)
                 {
                     ErrorMessage = rewardsResult.Error ?? "Failed to load rewards.";
                     return;
                 }
 
-                AvailableRewards.Clear();
-                SelectedRewards.Clear();
-
-                foreach (var reward in rewardsResult.Value)
+                Rewards.Clear();
+                foreach (var reward in rewardsResult.Value.OrderBy(r => r.RequiredPoints))
                 {
-                    AvailableRewards.Add(reward);
+                    Rewards.Add(reward);
                 }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = "An unexpected error occurred while loading rewards.";
-                System.Diagnostics.Debug.WriteLine(ex);
             }
             finally
             {
                 IsBusy = false;
             }
-        }
-
-        private Task ToggleSelectionAsync(LoyaltyRewardSummary? reward)
-        {
-            if (reward is null)
-            {
-                return Task.CompletedTask;
-            }
-
-            // NOTE:
-            // The property name RewardTierId is used here because the Contracts
-            // model is expected to identify reward tiers by an explicit identifier.
-            // If your LoyaltyRewardSummary type uses a different name, adjust this code.
-            var existing = SelectedRewards.FirstOrDefault(r => r.LoyaltyRewardTierId == reward.LoyaltyRewardTierId);
-
-            if (existing is not null)
-            {
-                SelectedRewards.Remove(existing);
-            }
-            else
-            {
-                // Ensure the consumer has enough points before selecting.
-                if (AccountSummary is not null && AccountSummary.PointsBalance>= reward.RequiredPoints)
-                {
-                    SelectedRewards.Add(reward);
-                }
-                else
-                {
-                    // In a real app, you might surface a UI toast instead of a static message.
-                    ErrorMessage = "Not enough points for this reward.";
-                }
-            }
-
-            return Task.CompletedTask;
         }
     }
 }

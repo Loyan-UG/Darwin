@@ -1,10 +1,12 @@
-﻿using System.Windows.Input;
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace Darwin.Mobile.Shared.Commands
 {
     /// <summary>
-    /// Represents an asynchronous command that can be bound from XAML and
-    /// encapsulates an asynchronous operation without a parameter.
+    /// Simple async command implementation for use with MAUI bindings.
+    /// It prevents concurrent executions by default and exposes execution state.
     /// </summary>
     public sealed class AsyncCommand : ICommand
     {
@@ -15,8 +17,10 @@ namespace Darwin.Mobile.Shared.Commands
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncCommand"/> class.
         /// </summary>
-        /// <param name="execute">Asynchronous operation to execute.</param>
-        /// <param name="canExecute">Optional predicate controlling whether the command can run.</param>
+        /// <param name="execute">The asynchronous operation to execute.</param>
+        /// <param name="canExecute">
+        /// Optional predicate that indicates whether the command can execute.
+        /// </param>
         public AsyncCommand(Func<Task> execute, Func<bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
@@ -25,6 +29,11 @@ namespace Darwin.Mobile.Shared.Commands
 
         /// <inheritdoc />
         public event EventHandler? CanExecuteChanged;
+
+        /// <summary>
+        /// Gets a value indicating whether the command is currently executing.
+        /// </summary>
+        public bool IsExecuting => _isExecuting;
 
         /// <inheritdoc />
         public bool CanExecute(object? parameter)
@@ -49,6 +58,7 @@ namespace Darwin.Mobile.Shared.Commands
             {
                 _isExecuting = true;
                 RaiseCanExecuteChanged();
+
                 await _execute().ConfigureAwait(false);
             }
             finally
@@ -59,22 +69,18 @@ namespace Darwin.Mobile.Shared.Commands
         }
 
         /// <summary>
-        /// Notifies bound controls that the executability of this command may have changed.
+        /// Forces WPF/XAML binding engine to reevaluate CanExecute.
         /// </summary>
         public void RaiseCanExecuteChanged()
         {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-            });
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     /// <summary>
-    /// Represents an asynchronous command that can be bound from XAML and
-    /// encapsulates an asynchronous operation with a strongly-typed parameter.
+    /// Generic async command that passes a strongly-typed parameter to the delegate.
     /// </summary>
-    /// <typeparam name="T">Type of the command parameter.</typeparam>
+    /// <typeparam name="T">The parameter type.</typeparam>
     public sealed class AsyncCommand<T> : ICommand
     {
         private readonly Func<T?, Task> _execute;
@@ -84,8 +90,10 @@ namespace Darwin.Mobile.Shared.Commands
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncCommand{T}"/> class.
         /// </summary>
-        /// <param name="execute">Asynchronous operation to execute.</param>
-        /// <param name="canExecute">Optional predicate controlling whether the command can run.</param>
+        /// <param name="execute">The asynchronous operation to execute.</param>
+        /// <param name="canExecute">
+        /// Optional predicate that indicates whether the command can execute.
+        /// </param>
         public AsyncCommand(Func<T?, Task> execute, Func<T?, bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
@@ -94,6 +102,11 @@ namespace Darwin.Mobile.Shared.Commands
 
         /// <inheritdoc />
         public event EventHandler? CanExecuteChanged;
+
+        /// <summary>
+        /// Gets a value indicating whether the command is currently executing.
+        /// </summary>
+        public bool IsExecuting => _isExecuting;
 
         /// <inheritdoc />
         public bool CanExecute(object? parameter)
@@ -108,7 +121,17 @@ namespace Darwin.Mobile.Shared.Commands
                 return true;
             }
 
-            return _canExecute((T?)parameter);
+            if (parameter is null && typeof(T).IsValueType)
+            {
+                return _canExecute(default);
+            }
+
+            if (parameter is T typed)
+            {
+                return _canExecute(typed);
+            }
+
+            return false;
         }
 
         /// <inheritdoc />
@@ -119,11 +142,18 @@ namespace Darwin.Mobile.Shared.Commands
                 return;
             }
 
+            T? typed = default;
+            if (parameter is T value)
+            {
+                typed = value;
+            }
+
             try
             {
                 _isExecuting = true;
                 RaiseCanExecuteChanged();
-                await _execute((T?)parameter).ConfigureAwait(false);
+
+                await _execute(typed).ConfigureAwait(false);
             }
             finally
             {
@@ -133,14 +163,11 @@ namespace Darwin.Mobile.Shared.Commands
         }
 
         /// <summary>
-        /// Notifies bound controls that the executability of this command may have changed.
+        /// Forces WPF/XAML binding engine to reevaluate CanExecute.
         /// </summary>
         public void RaiseCanExecuteChanged()
         {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-            });
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

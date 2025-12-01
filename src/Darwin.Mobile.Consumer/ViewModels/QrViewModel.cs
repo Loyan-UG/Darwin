@@ -1,70 +1,52 @@
-﻿using System.Collections.ObjectModel;
-using System.Windows.Input;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Shared.Commands;
-using Darwin.Mobile.Shared.Navigation;
+using Darwin.Mobile.Shared.Models.Loyalty;
+using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
-using Darwin.Mobile.Shared.Services;
+using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Consumer.ViewModels
 {
     /// <summary>
-    /// View model responsible for rendering the consumer QR code for loyalty scans
-    /// and managing the current scan session mode (accrual vs. redemption) together
-    /// with the list of selected rewards for redemption.
+    /// View model for the consumer QR screen.
+    /// Responsible for preparing scan sessions and exposing the
+    /// current QR token and related state to the UI.
     /// </summary>
     public sealed class QrViewModel : BaseViewModel
     {
         private readonly ILoyaltyService _loyaltyService;
-        private readonly INavigationService _navigationService;
 
-        private Guid _businessId;
-        private string? _currentToken;
+        private string _qrToken = string.Empty;
         private DateTimeOffset? _expiresAtUtc;
-        private bool _isRedemptionMode;
-        private ObservableCollection<LoyaltyRewardSummary> _selectedRewards;
+        private LoyaltyScanMode _mode = LoyaltyScanMode.Accrual;
+        private Guid _currentBusinessId;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QrViewModel"/> class.
         /// </summary>
-        /// <param name="loyaltyService">Service used to prepare loyalty scan sessions.</param>
-        /// <param name="navigationService">Navigation abstraction for routing from the QR screen.</param>
-        public QrViewModel(
-            ILoyaltyService loyaltyService,
-            INavigationService navigationService)
+        /// <param name="loyaltyService">The loyalty service used to prepare sessions.</param>
+        public QrViewModel(ILoyaltyService loyaltyService)
         {
             _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
-            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
-            _selectedRewards = new ObservableCollection<LoyaltyRewardSummary>();
-
-            RefreshQrCommand = new AsyncCommand(RefreshQrAsync);
-            SwitchToAccrualModeCommand = new AsyncCommand(SwitchToAccrualModeAsync);
-            SwitchToRedemptionModeCommand = new AsyncCommand(SwitchToRedemptionModeAsync);
+            RefreshAccrualSessionCommand = new AsyncCommand(RefreshAccrualSessionAsync);
+            RefreshRedemptionSessionCommand = new AsyncCommand(RefreshRedemptionSessionAsync);
         }
 
         /// <summary>
-        /// Gets or sets the current business identifier for which the QR is being generated.
-        /// The consumer app will typically bind this to the currently selected business context.
+        /// Gets the current QR token string that should be rendered as a QR code.
         /// </summary>
-        public Guid BusinessId
+        public string QrToken
         {
-            get => _businessId;
-            set => SetProperty(ref _businessId, value);
+            get => _qrToken;
+            private set => SetProperty(ref _qrToken, value);
         }
 
         /// <summary>
-        /// Gets the opaque token string that should be rendered as a QR code.
-        /// </summary>
-        public string? CurrentToken
-        {
-            get => _currentToken;
-            private set => SetProperty(ref _currentToken, value);
-        }
-
-        /// <summary>
-        /// Gets the UTC expiry timestamp of the current scan session token, if available.
-        /// UI can use this to display a countdown or trigger a refresh.
+        /// Gets the UTC expiry of the current scan session, if provided.
         /// </summary>
         public DateTimeOffset? ExpiresAtUtc
         {
@@ -73,107 +55,78 @@ namespace Darwin.Mobile.Consumer.ViewModels
         }
 
         /// <summary>
-        /// Gets a value indicating whether the current scan session represents
-        /// a redemption of rewards instead of a simple accrual of points.
+        /// Gets the current scan mode (accrual or redemption).
         /// </summary>
-        public bool IsRedemptionMode
+        public LoyaltyScanMode Mode
         {
-            get => _isRedemptionMode;
-            private set => SetProperty(ref _isRedemptionMode, value);
+            get => _mode;
+            private set => SetProperty(ref _mode, value);
         }
 
         /// <summary>
-        /// Gets the collection of rewards that the consumer has selected
-        /// for redemption in the current scan session.
+        /// Command that prepares a new accrual session for the current business
+        /// and updates the QR token accordingly.
         /// </summary>
-        public ObservableCollection<LoyaltyRewardSummary> SelectedRewards
+        public AsyncCommand RefreshAccrualSessionCommand { get; }
+
+        /// <summary>
+        /// Command that prepares a new redemption session based on the consumer's
+        /// selected rewards and updates the QR token accordingly.
+        /// </summary>
+        public AsyncCommand RefreshRedemptionSessionCommand { get; }
+
+        /// <summary>
+        /// Sets the business context for this QR view model.
+        /// This must be called by the parent screen before refreshing sessions.
+        /// </summary>
+        /// <param name="businessId">The active business identifier.</param>
+        public void SetBusiness(Guid businessId)
         {
-            get => _selectedRewards;
-            private set => SetProperty(ref _selectedRewards, value);
+            if (businessId == Guid.Empty)
+            {
+                throw new ArgumentException("Business id must not be empty.", nameof(businessId));
+            }
+
+            _currentBusinessId = businessId;
         }
 
-        /// <summary>
-        /// Command to force-refresh the QR token by preparing a new scan session
-        /// in the current mode (accrual or redemption).
-        /// </summary>
-        public AsyncCommand RefreshQrCommand { get; }
-
-        /// <summary>
-        /// Command to switch the current QR into accrual mode (no reward selection).
-        /// </summary>
-        public AsyncCommand SwitchToAccrualModeCommand { get; }
-
-        /// <summary>
-        /// Command to switch the current QR into redemption mode using the
-        /// currently selected rewards from the rewards screen.
-        /// </summary>
-        public AsyncCommand SwitchToRedemptionModeCommand { get; }
-
-        /// <summary>
-        /// Initializes the QR state for a given business. This method should be
-        /// called by the hosting page when the business context becomes available.
-        /// </summary>
-        /// <param name="businessId">Identifier of the business for which to prepare scan sessions.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task InitializeAsync(Guid businessId)
+        /// <inheritdoc />
+        public override async Task OnAppearingAsync()
         {
-            BusinessId = businessId;
-
-            // Default to accrual mode on first load.
-            IsRedemptionMode = false;
-            SelectedRewards.Clear();
-
-            await RefreshQrAsync().ConfigureAwait(false);
+            // When the page appears, ensure we have a QR for accrual by default.
+            if (_currentBusinessId != Guid.Empty && string.IsNullOrWhiteSpace(QrToken))
+            {
+                await RefreshAccrualSessionAsync().ConfigureAwait(false);
+            }
         }
 
-        private async Task RefreshQrAsync()
+        private async Task RefreshAccrualSessionAsync()
         {
-            if (BusinessId == Guid.Empty)
+            if (_currentBusinessId == Guid.Empty)
             {
                 ErrorMessage = "Business context is not set.";
                 return;
             }
 
+            if (IsBusy)
+            {
+                return;
+            }
+
+            IsBusy = true;
+            ErrorMessage = null;
+
             try
             {
-                IsBusy = true;
-                ErrorMessage = null;
-
-                var mode = IsRedemptionMode ? LoyaltyScanMode.Redemption : LoyaltyScanMode.Accrual;
-
-                var request = new PrepareScanSessionRequest
-                {
-                    BusinessId = BusinessId,
-                    Mode = mode,
-                    // IMPORTANT:
-                    // In Darwin.Contracts the property name may be RewardTierIds or similar.
-                    // If PrepareScanSessionRequest uses a different name, adjust this assignment.
-                    SelectedRewardTierIds = IsRedemptionMode
-                        ? SelectedRewards.Select(r => r.LoyaltyRewardTierId).ToArray()
-                        : Array.Empty<Guid>()
-                };
-
-                var response = await _loyaltyService.PrepareScanSessionAsync(request, CancellationToken.None)
+                var result = await _loyaltyService
+                    .PrepareScanSessionAsync(
+                        _currentBusinessId,
+                        LoyaltyScanMode.Accrual,
+                        selectedRewardIds: null,
+                        cancellationToken: CancellationToken.None)
                     .ConfigureAwait(false);
 
-                if (!response.Succeeded)
-                {
-                    ErrorMessage = response.Error ?? "Failed to prepare scan session.";
-                    return;
-                }
-
-                var payload = response.Value;
-
-                // NOTE: Property names Token / ExpiresAtUtc are chosen to align with
-                // the existing QrCodePayload pattern in DarwinMobile.md.
-                CurrentToken = payload.Token;
-                ExpiresAtUtc = payload.ExpiresAtUtc;
-            }
-            catch (Exception ex)
-            {
-                // Map to a simple user-facing message; diagnostics should be logged in the app host.
-                ErrorMessage = "An unexpected error occurred while preparing the QR.";
-                System.Diagnostics.Debug.WriteLine(ex);
+                ApplyScanSessionResult(result);
             }
             finally
             {
@@ -181,24 +134,61 @@ namespace Darwin.Mobile.Consumer.ViewModels
             }
         }
 
-        private async Task SwitchToAccrualModeAsync()
+        private async Task RefreshRedemptionSessionAsync()
         {
-            if (IsRedemptionMode)
+            if (_currentBusinessId == Guid.Empty)
             {
-                IsRedemptionMode = false;
-                SelectedRewards.Clear();
-                await RefreshQrAsync().ConfigureAwait(false);
+                ErrorMessage = "Business context is not set.";
+                return;
+            }
+
+            if (IsBusy)
+            {
+                return;
+            }
+
+            IsBusy = true;
+            ErrorMessage = null;
+
+            try
+            {
+                // In a later step this should receive the selected reward ids from
+                // a dedicated rewards-selection view model. For now, pass null.
+                var result = await _loyaltyService
+                    .PrepareScanSessionAsync(
+                        _currentBusinessId,
+                        LoyaltyScanMode.Redemption,
+                        selectedRewardIds: null,
+                        cancellationToken: CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                ApplyScanSessionResult(result);
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
-        private async Task SwitchToRedemptionModeAsync()
+        /// <summary>
+        /// Applies the scan session preparation result to the QR-related properties.
+        /// </summary>
+        /// <param name="result">The result to apply.</param>
+        private void ApplyScanSessionResult(Result<ScanSessionClientModel> result)
         {
-            if (!IsRedemptionMode)
+            if (!result.Succeeded || result.Value is null)
             {
-                IsRedemptionMode = true;
-                // SelectedRewards should already be filled by RewardsViewModel via navigation/context.
-                await RefreshQrAsync().ConfigureAwait(false);
+                ErrorMessage = result.Error ?? "Failed to prepare scan session.";
+                QrToken = string.Empty;
+                ExpiresAtUtc = null;
+                return;
             }
+
+            var session = result.Value;
+
+            QrToken = session.Token;
+            ExpiresAtUtc = session.ExpiresAtUtc;
+            Mode = session.Mode;
         }
     }
 }

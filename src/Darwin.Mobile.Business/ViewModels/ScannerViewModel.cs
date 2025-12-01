@@ -1,35 +1,38 @@
-﻿using System.Collections.ObjectModel;
-using Darwin.Contracts.Loyalty;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Mobile.Business.Services;
 using Darwin.Mobile.Shared.Commands;
-using Darwin.Mobile.Shared.Integration;
-using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Models.Loyalty;
+using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Mobile.Shared.Integration;
+using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Business.ViewModels
 {
     /// <summary>
-    /// View model responsible for the QR scan flow in the business app.
-    /// It drives the scanner, calls the loyalty service to process the
-    /// scan session, and exposes commands to confirm accrual and redemption.
+    /// View model for the business scanner screen.
+    /// Orchestrates scanning a consumer QR code and calling the loyalty service
+    /// to resolve, accrue points, or redeem rewards.
     /// </summary>
     public sealed class ScannerViewModel : BaseViewModel
     {
         private readonly ILoyaltyService _loyaltyService;
         private readonly IScanner _scanner;
 
-        private Guid _currentBusinessId;
-        private Guid? _currentScanSessionId;
-        private LoyaltyScanMode? _currentMode;
-        private ObservableCollection<LoyaltyRewardSummary> _selectedRewards;
-        private bool _canAccrue;
-        private bool _canRedeem;
-        private int _pointsToAccrue;
+        private string _lastScannedToken = string.Empty;
+        private BusinessScanSessionClientModel? _currentSession;
+
+        private bool _canConfirmAccrual;
+        private bool _canConfirmRedemption;
+        private int _pointsToAccrue = 1;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScannerViewModel"/> class.
         /// </summary>
-        /// <param name="loyaltyService">Service used to process scan sessions and confirm actions.</param>
-        /// <param name="scanner">Scanner abstraction used to read QR codes from the device camera.</param>
+        /// <param name="loyaltyService">The loyalty service abstraction.</param>
+        /// <param name="scanner">The scanner implementation used to read QR codes.</param>
         public ScannerViewModel(
             ILoyaltyService loyaltyService,
             IScanner scanner)
@@ -37,86 +40,23 @@ namespace Darwin.Mobile.Business.ViewModels
             _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
             _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
 
-            _selectedRewards = new ObservableCollection<LoyaltyRewardSummary>();
-
             ScanCommand = new AsyncCommand(ScanAsync);
-            ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanAccrue);
-            ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanRedeem);
+            ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual);
+            ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanConfirmRedemption);
         }
 
         /// <summary>
-        /// Gets or sets the identifier of the current business associated with this device.
-        /// This will normally be configured at login/onboarding.
+        /// Gets the last scanned QR token, mainly for debugging or display only.
         /// </summary>
-        public Guid CurrentBusinessId
+        public string LastScannedToken
         {
-            get => _currentBusinessId;
-            set => SetProperty(ref _currentBusinessId, value);
+            get => _lastScannedToken;
+            private set => SetProperty(ref _lastScannedToken, value);
         }
 
         /// <summary>
-        /// Gets the current scan session identifier returned by the server after
-        /// processing the scanned QR token. This value is required for accrual
-        /// and redemption confirmation calls.
-        /// </summary>
-        public Guid? CurrentScanSessionId
-        {
-            get => _currentScanSessionId;
-            private set => SetProperty(ref _currentScanSessionId, value);
-        }
-
-        /// <summary>
-        /// Gets the current mode of the scan session (accrual or redemption).
-        /// </summary>
-        public LoyaltyScanMode? CurrentMode
-        {
-            get => _currentMode;
-            private set => SetProperty(ref _currentMode, value);
-        }
-
-        /// <summary>
-        /// Gets the list of rewards selected by the consumer for redemption
-        /// in the current scan session, as returned by the server.
-        /// </summary>
-        public ObservableCollection<LoyaltyRewardSummary> SelectedRewards
-        {
-            get => _selectedRewards;
-            private set => SetProperty(ref _selectedRewards, value);
-        }
-
-        /// <summary>
-        /// Gets or sets a flag indicating whether the accrual action is currently allowed.
-        /// </summary>
-        public bool CanAccrue
-        {
-            get => _canAccrue;
-            private set
-            {
-                if (SetProperty(ref _canAccrue, value))
-                {
-                    ConfirmAccrualCommand.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a flag indicating whether the redemption action is currently allowed.
-        /// </summary>
-        public bool CanRedeem
-        {
-            get => _canRedeem;
-            private set
-            {
-                if (SetProperty(ref _canRedeem, value))
-                {
-                    ConfirmRedemptionCommand.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the number of points to accrue for the current transaction.
-        /// This may be derived from order value or a simple "+1 per visit" rule.
+        /// Gets or sets the number of points to accrue when confirming.
+        /// This may represent a fixed per-visit value or be set by the cashier.
         /// </summary>
         public int PointsToAccrue
         {
@@ -125,90 +65,90 @@ namespace Darwin.Mobile.Business.ViewModels
         }
 
         /// <summary>
-        /// Command that starts the scanner, reads the QR token, and processes
-        /// the scan session with the backend.
+        /// Gets a value indicating whether the current session allows confirming accrual.
+        /// </summary>
+        public bool CanConfirmAccrual
+        {
+            get => _canConfirmAccrual;
+            private set
+            {
+                if (SetProperty(ref _canConfirmAccrual, value))
+                {
+                    ConfirmAccrualCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the current session allows confirming redemption.
+        /// </summary>
+        public bool CanConfirmRedemption
+        {
+            get => _canConfirmRedemption;
+            private set
+            {
+                if (SetProperty(ref _canConfirmRedemption, value))
+                {
+                    ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Command that triggers scanning a QR code and resolving it via WebApi.
         /// </summary>
         public AsyncCommand ScanCommand { get; }
 
         /// <summary>
-        /// Command that confirms accrual of points for the current scan session.
+        /// Command that confirms point accrual for the current scan session.
         /// </summary>
         public AsyncCommand ConfirmAccrualCommand { get; }
 
         /// <summary>
-        /// Command that confirms redemption of rewards for the current scan session.
+        /// Command that confirms reward redemption for the current scan session.
         /// </summary>
         public AsyncCommand ConfirmRedemptionCommand { get; }
 
         private async Task ScanAsync()
         {
-            if (CurrentBusinessId == Guid.Empty)
+            if (IsBusy)
             {
-                ErrorMessage = "Business context is not set.";
                 return;
             }
 
+            IsBusy = true;
+            ErrorMessage = null;
+            _currentSession = null;
+            CanConfirmAccrual = false;
+            CanConfirmRedemption = false;
+
             try
             {
-                IsBusy = true;
-                ErrorMessage = null;
-                CanAccrue = false;
-                CanRedeem = false;
-                SelectedRewards.Clear();
-                CurrentScanSessionId = null;
-                CurrentMode = null;
-
                 var token = await _scanner.ScanAsync(CancellationToken.None).ConfigureAwait(false);
 
                 if (string.IsNullOrWhiteSpace(token))
                 {
                     ErrorMessage = "No QR code detected.";
+                    LastScannedToken = string.Empty;
                     return;
                 }
 
-                if (!Guid.TryParse(token, out var scanSessionId))
-                {
-                    ErrorMessage = "Invalid QR code.";
-                    return;
-                }
+                LastScannedToken = token;
 
-                var request = new ProcessScanSessionForBusinessRequest
-                {
-                    ScanSessionId = scanSessionId
-                };
-
-                var result = await _loyaltyService.ProcessScanSessionForBusinessAsync(request, CancellationToken.None)
+                var result = await _loyaltyService
+                    .ProcessScanSessionForBusinessAsync(token, CancellationToken.None)
                     .ConfigureAwait(false);
 
-                if (!result.Succeeded)
+                if (!result.Succeeded || result.Value is null)
                 {
-                    ErrorMessage = result.Error ?? "Failed to process scan session.";
+                    ErrorMessage = result.Error ?? "Failed to process scan.";
                     return;
                 }
 
-                var response = result.Value;
+                _currentSession = result.Value;
 
-                CurrentMode = response.Mode;
-                CurrentScanSessionId = response.ScanSessionId;
-
-                SelectedRewards.Clear();
-
-                if (response.SelectedRewards is { Count: > 0 })
-                {
-                    foreach (var reward in response.SelectedRewards)
-                    {
-                        SelectedRewards.Add(reward);
-                    }
-                }
-
-                // AllowedActions is expected to be a flag enum or structured permissions.
-                CanAccrue = response.AllowedActions.HasFlag(LoyaltyAllowedActions.CanConfirmAccrual);
-                CanRedeem = response.AllowedActions.HasFlag(LoyaltyAllowedActions.CanConfirmRedemption);
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = "An unexpected error occurred while scanning QR.";
-                System.Diagnostics.Debug.WriteLine(ex);
+                CanConfirmAccrual = _currentSession.CanConfirmAccrual;
+                CanConfirmRedemption = _currentSession.CanConfirmRedemption;
             }
             finally
             {
@@ -218,41 +158,46 @@ namespace Darwin.Mobile.Business.ViewModels
 
         private async Task ConfirmAccrualAsync()
         {
-            if (!CanAccrue || CurrentScanSessionId is null)
+            if (_currentSession is null)
+            {
+                ErrorMessage = "No active scan session.";
+                return;
+            }
+
+            if (!CanConfirmAccrual)
+            {
+                ErrorMessage = "Accrual is not allowed for this session.";
+                return;
+            }
+
+            if (PointsToAccrue <= 0)
+            {
+                ErrorMessage = "Points must be greater than zero.";
+                return;
+            }
+
+            if (IsBusy)
             {
                 return;
             }
 
+            IsBusy = true;
+            ErrorMessage = null;
+
             try
             {
-                IsBusy = true;
-                ErrorMessage = null;
-
-                var request = new ConfirmAccrualRequest
-                {
-                    // NOTE:
-                    // Property name ScanSessionId is chosen to match the standard
-                    // flow (start-scan returns ScanSessionId, accrue/redeem use it).
-                    ScanSessionId = CurrentScanSessionId.Value,
-                    Points = PointsToAccrue > 0 ? PointsToAccrue : 1
-                };
-
-                var result = await _loyaltyService.ConfirmAccrualAsync(request, CancellationToken.None)
+                var result = await _loyaltyService
+                    .ConfirmAccrualAsync(_currentSession.Token, PointsToAccrue, CancellationToken.None)
                     .ConfigureAwait(false);
 
-                if (!result.Succeeded)
+                if (!result.Succeeded || result.Value is null)
                 {
                     ErrorMessage = result.Error ?? "Failed to confirm accrual.";
                     return;
                 }
 
-                // Optionally, you may update the UI with result.Value.NewBalance here.
-                CanAccrue = false;
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = "An unexpected error occurred while confirming accrual.";
-                System.Diagnostics.Debug.WriteLine(ex);
+                // After a successful accrual, disable further accrual on this session.
+                CanConfirmAccrual = false;
             }
             finally
             {
@@ -262,36 +207,41 @@ namespace Darwin.Mobile.Business.ViewModels
 
         private async Task ConfirmRedemptionAsync()
         {
-            if (!CanRedeem || CurrentScanSessionId is null)
+            if (_currentSession is null)
+            {
+                ErrorMessage = "No active scan session.";
+                return;
+            }
+
+            if (!CanConfirmRedemption)
+            {
+                ErrorMessage = "Redemption is not allowed for this session.";
+                return;
+            }
+
+            if (IsBusy)
             {
                 return;
             }
 
+            IsBusy = true;
+            ErrorMessage = null;
+
             try
             {
-                IsBusy = true;
-                ErrorMessage = null;
-
-                var request = new ConfirmRedemptionRequest
-                {
-                    ScanSessionId = CurrentScanSessionId.Value
-                };
-
-                var result = await _loyaltyService.ConfirmRedemptionAsync(request, CancellationToken.None)
+                var result = await _loyaltyService
+                    .ConfirmRedemptionAsync(_currentSession.Token, CancellationToken.None)
                     .ConfigureAwait(false);
 
-                if (!result.Succeeded)
+                if (!result.Succeeded || result.Value is null)
                 {
                     ErrorMessage = result.Error ?? "Failed to confirm redemption.";
                     return;
                 }
 
-                CanRedeem = false;
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = "An unexpected error occurred while confirming redemption.";
-                System.Diagnostics.Debug.WriteLine(ex);
+                // After redemption, prevent repeat actions on the same session.
+                CanConfirmRedemption = false;
+                CanConfirmAccrual = false;
             }
             finally
             {
