@@ -21,6 +21,15 @@ namespace Darwin.Contracts.Loyalty
         public int? NewBalance { get; init; }
 
         /// <summary>
+        /// Gets an optional updated snapshot of the loyalty account after
+        /// the redemption has been processed. New clients should prefer this
+        /// property over <see cref="NewBalance"/> because it exposes richer
+        /// context (for example, the remaining points and next reward).
+        /// When <c>null</c>, clients can fall back to <see cref="NewBalance"/>.
+        /// </summary>
+        public LoyaltyAccountSummary? UpdatedAccount { get; init; }
+
+        /// <summary>
         /// Gets a machine-readable error code in case the operation
         /// failed (for example, "SESSION_EXPIRED" or "INSUFFICIENT_POINTS").
         /// </summary>

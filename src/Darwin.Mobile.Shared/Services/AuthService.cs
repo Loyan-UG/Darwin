@@ -55,7 +55,7 @@ public sealed class AuthService : IAuthService
         var (rt, rtex) = await _store.GetRefreshAsync();
         if (string.IsNullOrWhiteSpace(rt) || rtex is null || rtex <= DateTime.UtcNow) return false;
 
-        var res = await _api.PostAsync<RefreshRequest, TokenResponse>("auth/refresh", new RefreshRequest { RefreshToken = rt! }, ct);
+        var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>("auth/refresh", new RefreshTokenRequest { RefreshToken = rt! }, ct);
         if (res is null) return false;
 
         await _store.SaveAsync(res.AccessToken, res.AccessTokenExpiresAtUtc, res.RefreshToken, res.RefreshTokenExpiresAtUtc);

@@ -4,6 +4,7 @@ using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Resilience;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Loyalty;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;

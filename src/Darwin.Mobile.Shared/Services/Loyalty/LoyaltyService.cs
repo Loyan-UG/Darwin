@@ -12,7 +12,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 {
     /// <summary>
     /// Default implementation of <see cref="ILoyaltyService"/> that talks to
-    /// Darwin.WebApi using the shared <see cref="IApiClient"/> abstraction.
+    /// the Darwin WebApi using the shared <see cref="IApiClient"/> abstraction.
+    /// All network and serialization concerns are handled by the API client;
+    /// this class focuses on mapping Contracts to mobile-friendly client models.
     /// </summary>
     public sealed class LoyaltyService : ILoyaltyService
     {
@@ -24,6 +26,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         /// <param name="apiClient">
         /// Typed HTTP client configured with base URL, JSON options and retry policy.
         /// </param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="apiClient"/> is <c>null</c>.
+        /// </exception>
         public LoyaltyService(IApiClient apiClient)
         {
             _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
@@ -45,7 +50,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 BusinessId = businessId,
                 Mode = mode,
-                // Contract property is SelectedRewardIds (IReadOnlyList<Guid>).
+                // Contract property is SelectedRewardTierIds (IReadOnlyList<Guid>).
                 // Map null to an empty array to keep things non-nullable and predictable.
                 SelectedRewardTierIds = selectedRewardIds is null
                     ? Array.Empty<Guid>()
@@ -66,9 +71,10 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     return Result<ScanSessionClientModel>.Fail("Empty response from server.");
                 }
 
-                // PrepareScanSessionResponse now exposes ScanSessionId (Guid) instead of a string token.
-                // The mobile client still expects a string Token for QR rendering, so we convert the Guid
-                // to a canonical string representation. Using "D" keeps hyphens and is easy to parse back.
+                // PrepareScanSessionResponse exposes ScanSessionId (Guid). The mobile client
+                // still works with a string token for QR rendering, so we convert the Guid
+                // to a canonical string representation. Using "D" keeps hyphens and is easy
+                // to parse back on the server.
                 var token = response.ScanSessionId == Guid.Empty
                     ? string.Empty
                     : response.ScanSessionId.ToString("D");
@@ -77,8 +83,8 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 {
                     Token = token,
                     // Contract uses DateTime (UTC); client model uses DateTimeOffset?.
-                    // We normalize to UTC offset (zero). If the server later uses DateTimeOffset,
-                    // this mapping can be simplified.
+                    // We normalize to UTC offset (zero). If the server later uses
+                    // DateTimeOffset, this mapping can be simplified.
                     ExpiresAtUtc = new DateTimeOffset(response.ExpiresAtUtc, TimeSpan.Zero),
                     Mode = response.Mode,
                     SelectedRewards = response.SelectedRewards ?? Array.Empty<LoyaltyRewardSummary>()
@@ -126,7 +132,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             catch (HttpRequestException ex)
             {
                 return Result<LoyaltyAccountSummary>.Fail(
-                    $"Network error while loading account summary: {ex.Message}");
+                    $"Network error while retrieving account summary: {ex.Message}");
             }
         }
 
@@ -142,21 +148,22 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
             try
             {
+                // For now we assume the WebApi exposes a simple listing endpoint per business.
+                // If business-specific filters are added later, this call can be extended
+                // without breaking the ILoyaltyService abstraction.
                 var response = await _apiClient
-                    .GetAsync<LoyaltyRewardSummary[]>(
+                    .GetAsync<IReadOnlyList<LoyaltyRewardSummary>>(
                         $"/api/loyalty/rewards/{businessId}",
                         cancellationToken)
                     .ConfigureAwait(false);
 
-                var rewards = (IReadOnlyList<LoyaltyRewardSummary>?)response
-                              ?? Array.Empty<LoyaltyRewardSummary>();
-
+                var rewards = response ?? Array.Empty<LoyaltyRewardSummary>();
                 return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(rewards);
             }
             catch (HttpRequestException ex)
             {
                 return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail(
-                    $"Network error while loading rewards: {ex.Message}");
+                    $"Network error while retrieving rewards: {ex.Message}");
             }
         }
 
@@ -178,6 +185,9 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 return Result<BusinessScanSessionClientModel>.Fail("QR token is invalid.");
             }
 
+            // The QR token is the opaque representation of the scan session identifier.
+            // The contract expects the same token in the request; the server will
+            // resolve it to the underlying scan session entity.
             var request = new ProcessScanSessionForBusinessRequest
             {
                 ScanSessionId = scanSessionId
@@ -187,7 +197,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 var response = await _apiClient
                     .PostAsync<ProcessScanSessionForBusinessRequest, ProcessScanSessionForBusinessResponse>(
-                        "/api/loyalty/scan/process",
+                        "/api/loyalty/scan/process-business",
                         request,
                         cancellationToken)
                     .ConfigureAwait(false);
@@ -203,7 +213,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     Token = qrToken,
                     Mode = response.Mode,
                     BusinessId = response.BusinessId,
-                    // Contract now exposes LoyaltyAccount; map it directly.
+                    // Contract exposes LoyaltyAccount; map it directly.
                     AccountSummary = response.LoyaltyAccount,
                     SelectedRewards = response.SelectedRewards ?? Array.Empty<LoyaltyRewardSummary>(),
                     CanConfirmAccrual = response.AllowedActions.HasFlag(LoyaltyScanAllowedActions.CanConfirmAccrual),
@@ -236,7 +246,7 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             }
 
             // The session token is the same representation used for the QR code:
-            // a Guid serialized as string. The contract now expects ScanSessionId (Guid),
+            // a Guid serialized as string. The contract expects ScanSessionId (Guid),
             // so we must parse it.
             if (!Guid.TryParse(sessionToken, out var scanSessionId))
             {
@@ -280,27 +290,28 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     return Result<LoyaltyAccountSummary>.Fail(message);
                 }
 
-                // IMPORTANT:
-                // ConfirmAccrualResponse no longer returns a full LoyaltyAccountSummary,
-                // only the new balance. ILoyaltyService, however, still returns
-                // LoyaltyAccountSummary for backward compatibility with existing view models.
-                //
-                // To avoid breaking the interface right now, we synthesize a minimal
-                // LoyaltyAccountSummary carrying the new balance and placeholder values
-                // for BusinessId / BusinessName. View models that only care about
-                // the new points balance will still work.
-                //
-                // In a future refactoring, it would be cleaner to:
-                // - Change ILoyaltyService to return Result<ConfirmAccrualResponse>, or
-                // - Pass businessId so we can call GetAccountSummaryAsync here.
-                var summary = new LoyaltyAccountSummary
+                // Prefer the richer UpdatedAccount snapshot when provided by the server.
+                LoyaltyAccountSummary summary;
+
+                if (response.UpdatedAccount is not null)
                 {
-                    BusinessId = Guid.Empty,
-                    BusinessName = string.Empty,
-                    PointsBalance = response.NewBalance ?? 0,
-                    LastAccrualAtUtc = DateTime.UtcNow,
-                    NextRewardTitle = null
-                };
+                    summary = response.UpdatedAccount;
+                }
+                else
+                {
+                    // For backwards compatibility with servers that only populate NewBalance,
+                    // synthesize a minimal summary. BusinessId and BusinessName are unknown
+                    // at this point, so we keep them neutral. View models that only care
+                    // about the numeric balance will still work correctly.
+                    summary = new LoyaltyAccountSummary
+                    {
+                        BusinessId = Guid.Empty,
+                        BusinessName = string.Empty,
+                        PointsBalance = response.NewBalance ?? 0,
+                        LastAccrualAtUtc = DateTime.UtcNow,
+                        NextRewardTitle = null
+                    };
+                }
 
                 return Result<LoyaltyAccountSummary>.Ok(summary);
             }
@@ -359,17 +370,24 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     return Result<LoyaltyAccountSummary>.Fail(message);
                 }
 
-                // Same compromise as in ConfirmAccrualAsync: contract only gives us
-                // the new balance. We synthesize a minimal summary so that existing
-                // callers expecting LoyaltyAccountSummary keep working.
-                var summary = new LoyaltyAccountSummary
+                // Again, prefer the full UpdatedAccount snapshot when available.
+                LoyaltyAccountSummary summary;
+
+                if (response.UpdatedAccount is not null)
                 {
-                    BusinessId = Guid.Empty,
-                    BusinessName = string.Empty,
-                    PointsBalance = response.NewBalance ?? 0,
-                    LastAccrualAtUtc = DateTime.UtcNow,
-                    NextRewardTitle = null
-                };
+                    summary = response.UpdatedAccount;
+                }
+                else
+                {
+                    summary = new LoyaltyAccountSummary
+                    {
+                        BusinessId = Guid.Empty,
+                        BusinessName = string.Empty,
+                        PointsBalance = response.NewBalance ?? 0,
+                        LastAccrualAtUtc = DateTime.UtcNow,
+                        NextRewardTitle = null
+                    };
+                }
 
                 return Result<LoyaltyAccountSummary>.Ok(summary);
             }

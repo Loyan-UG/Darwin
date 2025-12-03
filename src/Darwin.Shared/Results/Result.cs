@@ -1,5 +1,4 @@
-﻿
-namespace Darwin.Shared.Results
+﻿namespace Darwin.Shared.Results
 {
     /// <summary>
     /// Lightweight functional-style result wrapper for use-case handlers.
@@ -18,16 +17,6 @@ namespace Darwin.Shared.Results
 
         public static Result Ok() => new Result(true, null);
         public static Result Fail(string error) => new Result(false, error);
-
-        public static implicit operator Result(Result<Darwin.Contracts.Loyalty.LoyaltyAccountSummary> v)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static implicit operator Result(Result<Darwin.Contracts.Loyalty.LoyaltyAccountSummary> v)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     /// <summary>
