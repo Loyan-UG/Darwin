@@ -8,7 +8,11 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System;
+using Darwin.WebApi.Auth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using System.Text;
 using System.Text.Json;
 
@@ -60,6 +64,16 @@ namespace Darwin.WebApi.Extensions
             // JWT issuing + login rate limiter as described in the architecture notes.
             services.AddJwtAuthCore();
 
+            // Permission-based authorization aligned with the admin Web layer.
+            // Policies are generated dynamically for names starting with "perm:".
+            services.AddAuthorization();
+
+            // Register the dynamic policy provider and the handler that talks to IPermissionService.
+            services.TryAddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IAuthorizationHandler, PermissionAuthorizationHandler>());
+
+
             // SMTP notifications (password reset emails, etc.).
             services.AddNotificationsInfrastructure(configuration);
 
@@ -93,6 +107,62 @@ namespace Darwin.WebApi.Extensions
                     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 })
                 .AddJwtBearer(); // Options are configured via JwtBearerOptionsSetup
+
+
+            // ASP.NET Core rate limiting for critical auth endpoints (login / refresh).
+            // This works in addition to the application-level ILoginRateLimiter, which
+            // applies per email/device keys. Here we apply a coarse IP-based throttle
+            // to protect the API surface as a whole.
+            services.AddRateLimiter(options =>
+            {
+                // Return 429 for rejected requests.
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                options.AddPolicy("auth-login", httpContext =>
+                {
+                    if (httpContext is null)
+                    {
+                        throw new ArgumentNullException(nameof(httpContext));
+                    }
+
+                    var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var partitionKey = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            // Up to 5 login attempts per 30 seconds per IP.
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromSeconds(30),
+                            QueueLimit = 0,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        });
+                });
+
+                options.AddPolicy("auth-refresh", httpContext =>
+                {
+                    if (httpContext is null)
+                    {
+                        throw new ArgumentNullException(nameof(httpContext));
+                    }
+
+                    var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+                    var partitionKey = string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            // Refresh is less sensitive than login, but still protected.
+                            // Here: 20 refreshes per 60 seconds per IP.
+                            PermitLimit = 20,
+                            Window = TimeSpan.FromSeconds(60),
+                            QueueLimit = 0,
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        });
+                });
+            });
 
 
 

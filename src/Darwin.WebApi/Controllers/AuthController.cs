@@ -8,6 +8,9 @@ using Darwin.Contracts.Identity;
 using Darwin.Shared.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Logging;
+
 
 namespace Darwin.WebApi.Controllers
 {
@@ -23,6 +26,7 @@ namespace Darwin.WebApi.Controllers
         private readonly LoginWithPasswordHandler _loginWithPassword;
         private readonly RefreshTokenHandler _refresh;
         private readonly RevokeRefreshTokensHandler _revoke;
+        private readonly ILogger<AuthController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the authentication controller.
@@ -30,15 +34,19 @@ namespace Darwin.WebApi.Controllers
         /// <param name="loginWithPassword">Handler that performs email/password authentication.</param>
         /// <param name="refresh">Handler that exchanges a refresh token for a new token pair.</param>
         /// <param name="revoke">Handler that revokes refresh tokens.</param>
+        /// <param name="logger">Logger used to audit authentication-related events.</param>
         public AuthController(
             LoginWithPasswordHandler loginWithPassword,
             RefreshTokenHandler refresh,
-            RevokeRefreshTokensHandler revoke)
+            RevokeRefreshTokensHandler revoke,
+            ILogger<AuthController> logger)
         {
             _loginWithPassword = loginWithPassword ?? throw new ArgumentNullException(nameof(loginWithPassword));
             _refresh = refresh ?? throw new ArgumentNullException(nameof(refresh));
             _revoke = revoke ?? throw new ArgumentNullException(nameof(revoke));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
 
         /// <summary>
         /// Authenticates a user with email and password, returning a JWT access token and refresh token.
@@ -47,6 +55,7 @@ namespace Darwin.WebApi.Controllers
         /// <param name="ct">Cancellation token.</param>
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-login")]
         public async Task<IActionResult> LoginAsync(
             [FromBody] PasswordLoginRequest request,
             CancellationToken ct)
@@ -70,12 +79,28 @@ namespace Darwin.WebApi.Controllers
 
             if (result.Succeeded && result.Value is not null)
             {
-                var tokenResponse = MapToTokenResponse(result.Value);
+                var authResult = result.Value;
+
+                _logger.LogInformation(
+                    "Login succeeded for user. UserId={UserId}, Email={Email}, Ip={Ip}",
+                    authResult.UserId,
+                    authResult.Email,
+                    GetClientIp());
+
+                var tokenResponse = MapToTokenResponse(authResult);
                 return Ok(tokenResponse);
             }
 
+            _logger.LogWarning(
+                "Login failed. Email={Email}, Ip={Ip}, Error={Error}",
+                dto.Email,
+                GetClientIp(),
+                result.Error ?? "Unknown error");
+
             return ProblemFromResult(result);
         }
+
+
 
         /// <summary>
         /// Issues a new token pair using a valid refresh token.
@@ -84,6 +109,7 @@ namespace Darwin.WebApi.Controllers
         /// <param name="ct">Cancellation token.</param>
         [HttpPost("refresh")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth-refresh")]
         public async Task<IActionResult> RefreshAsync(
             [FromBody] RefreshTokenRequest request,
             CancellationToken ct)
@@ -100,15 +126,32 @@ namespace Darwin.WebApi.Controllers
             };
 
             var result = await _refresh.HandleAsync(dto, ct);
+            var tokenSuffix = GetRefreshTokenSuffix(dto.RefreshToken);
 
             if (result.Succeeded && result.Value is not null)
             {
-                var tokenResponse = MapToTokenResponse(result.Value);
+                var authResult = result.Value;
+
+                _logger.LogInformation(
+                    "Token refresh succeeded. UserId={UserId}, Email={Email}, Ip={Ip}, TokenSuffix={TokenSuffix}",
+                    authResult.UserId,
+                    authResult.Email,
+                    GetClientIp(),
+                    tokenSuffix);
+
+                var tokenResponse = MapToTokenResponse(authResult);
                 return Ok(tokenResponse);
             }
 
+            _logger.LogWarning(
+                "Token refresh failed. Ip={Ip}, TokenSuffix={TokenSuffix}, Error={Error}",
+                GetClientIp(),
+                tokenSuffix,
+                result.Error ?? "Unknown error");
+
             return ProblemFromResult(result);
         }
+
 
         /// <summary>
         /// Revokes the provided refresh token (logout for this device).
@@ -135,13 +178,30 @@ namespace Darwin.WebApi.Controllers
 
             var result = await _revoke.HandleAsync(dto, ct);
 
+            var userId = GetUserIdFromClaims(HttpContext.User);
+            var tokenSuffix = GetRefreshTokenSuffix(dto.RefreshToken);
+
             if (result.Succeeded)
             {
+                _logger.LogInformation(
+                    "Logout succeeded. UserId={UserId}, Ip={Ip}, TokenSuffix={TokenSuffix}",
+                    FormatUserId(userId),
+                    GetClientIp(),
+                    tokenSuffix);
+
                 return Ok();
             }
 
+            _logger.LogWarning(
+                "Logout failed. UserId={UserId}, Ip={Ip}, TokenSuffix={TokenSuffix}, Error={Error}",
+                FormatUserId(userId),
+                GetClientIp(),
+                tokenSuffix,
+                result.Error ?? "Unknown error");
+
             return ProblemFromResult(result);
         }
+
 
         /// <summary>
         /// Revokes all refresh tokens for the current user (global logout).
@@ -154,7 +214,6 @@ namespace Darwin.WebApi.Controllers
             var userId = GetUserIdFromClaims(HttpContext.User);
             if (userId is null)
             {
-                // Access token is invalid or missing required claims.
                 var problem = new Darwin.Contracts.Common.ProblemDetails
                 {
                     Status = 401,
@@ -162,6 +221,10 @@ namespace Darwin.WebApi.Controllers
                     Detail = "User identifier could not be resolved from the access token.",
                     Instance = HttpContext.Request?.Path.Value
                 };
+
+                _logger.LogWarning(
+                    "Logout-all rejected because user id could not be resolved. Ip={Ip}",
+                    GetClientIp());
 
                 return StatusCode(problem.Status, problem);
             }
@@ -177,24 +240,25 @@ namespace Darwin.WebApi.Controllers
 
             if (result.Succeeded)
             {
+                _logger.LogInformation(
+                    "Logout-all succeeded. UserId={UserId}, Ip={Ip}",
+                    FormatUserId(userId),
+                    GetClientIp());
+
                 return Ok();
             }
+
+            _logger.LogWarning(
+                "Logout-all failed. UserId={UserId}, Ip={Ip}, Error={Error}",
+                FormatUserId(userId),
+                GetClientIp(),
+                result.Error ?? "Unknown error");
 
             return ProblemFromResult(result);
         }
 
-        /// <summary>
-        /// Builds a simple rate limit key from email and remote IP address.
-        /// This mirrors the logic inside the login handler expectations.
-        /// </summary>
-        /// <param name="email">User email address.</param>
-        /// <returns>Composite rate key.</returns>
-        private string BuildRateKey(string? email)
-        {
-            var normalizedEmail = (email ?? string.Empty).Trim().ToUpperInvariant();
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            return $"{normalizedEmail}|{ip}";
-        }
+
+
 
         /// <summary>
         /// Maps an authentication result DTO (Application layer) into the public TokenResponse contract.
@@ -259,5 +323,63 @@ namespace Darwin.WebApi.Controllers
 
             return StatusCode(problem.Status, problem);
         }
+
+
+            /// <summary>
+        /// Builds a simple rate limit key from email and remote IP address.
+        /// This mirrors the logic inside the login handler expectations.
+        /// </summary>
+        /// <param name="email">User email address.</param>
+        /// <returns>Composite rate key.</returns>
+        private string BuildRateKey(string? email)
+        {
+            var normalizedEmail = (email ?? string.Empty).Trim().ToUpperInvariant();
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return $"{normalizedEmail}|{ip}";
+        }
+
+        /// <summary>
+        /// Resolves the remote IP address of the current HTTP request in a null-safe way.
+        /// </summary>
+        /// <returns>Remote IP address string, or "unknown" when not available.</returns>
+        private string GetClientIp()
+        {
+            var context = HttpContext;
+            var remoteIp = context?.Connection.RemoteIpAddress?.ToString();
+            return string.IsNullOrWhiteSpace(remoteIp) ? "unknown" : remoteIp;
+        }
+
+        /// <summary>
+        /// Formats the given user identifier as a string for logging purposes.
+        /// </summary>
+        /// <param name="userId">User identifier value.</param>
+        /// <returns>String representation or "unknown" when not set.</returns>
+        private static string FormatUserId(Guid? userId)
+        {
+            return userId.HasValue ? userId.Value.ToString() : "unknown";
+        }
+
+        /// <summary>
+        /// Produces a safe suffix representation of a refresh token for logging and correlation.
+        /// The full token is never written to logs.
+        /// </summary>
+        /// <param name="token">Original refresh token value.</param>
+        /// <returns>Suffix of the token or "null" when the input is not provided.</returns>
+        private static string GetRefreshTokenSuffix(string? token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return "null";
+            }
+
+            var trimmed = token.Trim();
+            if (trimmed.Length <= 6)
+            {
+                return trimmed;
+            }
+
+            return trimmed[^6..];
+        }
+
     }
 }

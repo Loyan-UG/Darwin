@@ -45,6 +45,10 @@ namespace Darwin.WebApi.Extensions
 
             app.UseRouting();
 
+            // Apply ASP.NET Core rate limiting policies before authentication,
+            // so rejected requests are short-circuited early.
+            app.UseRateLimiter();
+
             app.UseAuthentication();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();

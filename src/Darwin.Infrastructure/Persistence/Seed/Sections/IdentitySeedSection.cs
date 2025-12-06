@@ -52,7 +52,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 ("ManagePermissions", "Manage Permissions", "Add/remove permissions and bindings"),
                 ("AccessAdminPanel", "Access Admin Panel", "Can sign in to the admin UI"),
                 ("RecycleBinAccess", "Recycle Bin Access", "View and restore soft-deleted items"),
-                ("AccessMemberArea", "Access Member Area", "Signed-in members area access")
+                ("AccessMemberArea", "Access Member Area", "Signed-in members area access"),
+                // Loyalty + WebApi
+                ("AccessLoyaltyBusiness", "Access Loyalty Business Features",
+                    "Can process loyalty scan sessions and related business operations via Web and WebApi.")
             };
 
             foreach (var (key, display, desc) in permissionDefs)
