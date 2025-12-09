@@ -67,6 +67,7 @@ namespace Darwin.Application.Loyalty.Queries
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
         }
 
+
         /// <summary>
         /// Returns a summary of the loyalty account for the current user
         /// and the specified business, if such an account exists.
