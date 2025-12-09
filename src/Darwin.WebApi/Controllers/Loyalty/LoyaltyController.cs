@@ -44,7 +44,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly ConfirmRedemptionFromSessionHandler _confirmRedemptionFromSessionHandler;
         private readonly GetMyLoyaltyAccountsHandler _getMyLoyaltyAccountsHandler;
         private readonly GetMyLoyaltyHistoryHandler _getMyLoyaltyHistoryHandler;
-        private readonly GetLoyaltyAccountByBusinessAndUserHandler _getLoyaltyAccountByBusinessAndUserHandler;
+        private readonly GetMyLoyaltyAccountForBusinessHandler _getMyLoyaltyAccountForBusinessHandler;
         private readonly GetAvailableLoyaltyRewardsForBusinessHandler _getAvailableLoyaltyRewardsForBusinessHandler;
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// <param name="getMyLoyaltyHistoryHandler">
         /// Query handler that returns loyalty history for the current user.
         /// </param>
-        /// <param name="getLoyaltyAccountByBusinessAndUserHandler">
+        /// <param name="getMyLoyaltyAccountForBusinessHandler ">
         /// Query handler that returns the account for a given business/user pair.
         /// </param>
         /// <param name="getAvailableLoyaltyRewardsForBusinessHandler">
@@ -81,26 +81,27 @@ namespace Darwin.WebApi.Controllers.Loyalty
             ConfirmRedemptionFromSessionHandler confirmRedemptionFromSessionHandler,
             GetMyLoyaltyAccountsHandler getMyLoyaltyAccountsHandler,
             GetMyLoyaltyHistoryHandler getMyLoyaltyHistoryHandler,
-            GetLoyaltyAccountByBusinessAndUserHandler getLoyaltyAccountByBusinessAndUserHandler,
+            GetMyLoyaltyAccountForBusinessHandler getMyLoyaltyAccountForBusinessHandler,
             GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler)
         {
-            _prepareScanSessionHandler = prepareScanSessionHandler
+            _prepareScanSessionHandler = prepareScanSessionHandler 
                 ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
-            _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler
+            _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler 
                 ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
-            _confirmAccrualFromSessionHandler = confirmAccrualFromSessionHandler
+            _confirmAccrualFromSessionHandler = confirmAccrualFromSessionHandler 
                 ?? throw new ArgumentNullException(nameof(confirmAccrualFromSessionHandler));
-            _confirmRedemptionFromSessionHandler = confirmRedemptionFromSessionHandler
+            _confirmRedemptionFromSessionHandler = confirmRedemptionFromSessionHandler 
                 ?? throw new ArgumentNullException(nameof(confirmRedemptionFromSessionHandler));
-            _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler
+            _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler 
                 ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountsHandler));
-            _getMyLoyaltyHistoryHandler = getMyLoyaltyHistoryHandler
+            _getMyLoyaltyHistoryHandler = getMyLoyaltyHistoryHandler 
                 ?? throw new ArgumentNullException(nameof(getMyLoyaltyHistoryHandler));
-            _getLoyaltyAccountByBusinessAndUserHandler = getLoyaltyAccountByBusinessAndUserHandler
-                ?? throw new ArgumentNullException(nameof(getLoyaltyAccountByBusinessAndUserHandler));
-            _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler
+            _getMyLoyaltyAccountForBusinessHandler = getMyLoyaltyAccountForBusinessHandler 
+                ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountForBusinessHandler));
+            _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler 
                 ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
         }
+
 
         #region Scan preparation (consumer)
 
@@ -734,27 +735,28 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
 
         /// <summary>
-        /// Returns the loyalty account of the current authenticated consumer
-        /// for the specified business.
+        /// Gets a loyalty account summary for the current consumer user within the
+        /// specified business context.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The consumer application uses this endpoint to display the user's
-        /// balance and account information when entering a business's loyalty page.
+        /// This endpoint is designed for the consumer mobile application. It relies on
+        /// JWT authentication and the application-layer
+        /// <see cref="GetMyLoyaltyAccountForBusinessHandler"/> to resolve the current
+        /// user from <c>ICurrentUserService</c>.
         /// </para>
         /// <para>
-        /// The current user identifier is resolved from the authenticated principal,
-        /// and then passed to the application handler which looks up the
-        /// <see cref="LoyaltyAccountDto"/> for the (business, user) pair.
+        /// When no loyalty account exists yet for the current consumer at the given
+        /// business, the API returns HTTP 404. Validation or business rule failures
+        /// are translated into RFC 7807 problem responses via the shared
+        /// <c>Result&lt;T&gt;</c> pattern.
         /// </para>
         /// </remarks>
-        /// <param name="businessId">
-        /// The identifier of the business whose loyalty account should be retrieved.
-        /// </param>
+        /// <param name="businessId">The business identifier.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>
-        /// A <see cref="LoyaltyAccountSummary"/> describing the user's account
-        /// at the specified business, or a 404 response when the account does not exist.
+        /// HTTP 200 with a <see cref="LoyaltyAccountSummary"/> payload, HTTP 404 when
+        /// no account exists, or HTTP 400 with a problem response for validation errors.
         /// </returns>
         [HttpGet("account/{businessId:guid}")]
         [Authorize(Policy = "perm:AccessMemberArea")]
@@ -770,38 +772,40 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequest("BusinessId is required.");
             }
 
-            if (!TryGetCurrentUserId(out var userId, out var errorResult))
-            {
-                // User not authenticated or claim invalid.
-                return errorResult!;
-            }
-
-            var dto = await _getLoyaltyAccountByBusinessAndUserHandler
-                .HandleAsync(businessId, userId, ct)
+            // Application handler resolves the current user via ICurrentUserService
+            // and returns a Result<LoyaltyAccountSummaryDto?> that captures both
+            // validation errors and the not-found case.
+            var result = await _getMyLoyaltyAccountForBusinessHandler
+                .HandleAsync(businessId, ct)
                 .ConfigureAwait(false);
 
+            if (!result.Succeeded)
+            {
+                // Convert validation/business errors into a problem details response.
+                return ProblemFromResult(result);
+            }
+
+            var dto = result.Value;
             if (dto is null)
             {
-                // Handler returns null when no account exists for (business, user).
+                // No loyalty account exists yet for this (business, user) pair.
                 return NotFound("Loyalty account not found for the specified business and user.");
             }
 
-            // LoyaltyAccountDto does not expose a business name; the client is expected
-            // to know which business it is currently viewing. We therefore return an
-            // empty string for BusinessName to satisfy the non-null contract property.
             var response = new LoyaltyAccountSummary
             {
                 BusinessId = dto.BusinessId,
-                BusinessName = string.Empty,
+                BusinessName = dto.BusinessName ?? string.Empty,
                 PointsBalance = dto.PointsBalance,
                 LastAccrualAtUtc = dto.LastAccrualAtUtc,
-                // The next reward title is not computed here; clients can derive it from
-                // separate reward-tier APIs if needed.
+                // LoyaltyAccountSummaryDto currently does not compute the next reward
+                // title; the client can derive this using reward-tier APIs if needed.
                 NextRewardTitle = null
             };
 
             return Ok(response);
         }
+
 
 
 
@@ -879,48 +883,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
             return Ok(rewards);
         }
 
-
-        /// <summary>
-        /// Attempts to resolve the current authenticated user identifier from the
-        /// HTTP context claims. Returns <c>false</c> and an appropriate HTTP result
-        /// when the user is not authenticated or the claim is missing/invalid.
-        /// </summary>
-        /// <param name="userId">
-        /// When the method returns <c>true</c>, contains the parsed user identifier.
-        /// Otherwise, set to <see cref="Guid.Empty"/>.
-        /// </param>
-        /// <param name="errorResult">
-        /// When the method returns <c>false</c>, contains the HTTP result that should
-        /// be returned to the caller. Otherwise, <c>null</c>.
-        /// </param>
-        /// <returns>
-        /// <c>true</c> when a valid user identifier was resolved; otherwise <c>false</c>.
-        /// </returns>
-        private bool TryGetCurrentUserId(out Guid userId, out IActionResult? errorResult)
-        {
-            userId = Guid.Empty;
-            errorResult = null;
-
-            var principal = User;
-            if (principal?.Identity is null || !principal.Identity.IsAuthenticated)
-            {
-                errorResult = Unauthorized("User is not authenticated.");
-                return false;
-            }
-
-            // Prefer the standard NameIdentifier / 'sub' claim pattern used for user ids.
-            var userIdClaim =
-                principal.FindFirst(ClaimTypes.NameIdentifier) ??
-                principal.FindFirst("sub");
-
-            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out userId))
-            {
-                errorResult = Unauthorized("User identifier claim is missing or invalid.");
-                return false;
-            }
-
-            return true;
-        }
 
     }
 }

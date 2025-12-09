@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using System.Text;
 using System.Text.Json;
+using Darwin.Application.Abstractions.Auth;
+
 
 namespace Darwin.WebApi.Extensions
 {
@@ -52,6 +54,12 @@ namespace Darwin.WebApi.Extensions
             // Application-layer services (AutoMapper profiles, validators, etc.)
             services.AddApplication();
 
+
+            // Access to HttpContext and current user information for application handlers.
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+
             // Persistence: DbContext + IAppDbContext abstraction + migrations/seeding helper.
             services.AddPersistence(configuration);
 
@@ -77,8 +85,6 @@ namespace Darwin.WebApi.Extensions
             // SMTP notifications (password reset emails, etc.).
             services.AddNotificationsInfrastructure(configuration);
 
-            // Access to HttpContext for handlers/controllers that need it.
-            services.AddHttpContextAccessor();
 
             // Controllers + System.Text.Json options.
             services
