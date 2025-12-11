@@ -90,6 +90,27 @@ namespace Darwin.Application.Loyalty.DTOs
         /// This is useful for the consumer UI to show feedback.
         /// </summary>
         public int CurrentPointsBalance { get; set; }
+
+        /// <summary>
+        /// Gets or sets the identifiers of reward tiers that were actually
+        /// accepted for redemption when the scan session was created.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// For accrual-mode sessions this collection is empty. For redemption
+        /// sessions, it contains the distinct identifiers of reward tiers that
+        /// passed all validation checks and were persisted in the scan
+        /// session's <c>SelectedRewardsJson</c> snapshot.
+        /// </para>
+        /// <para>
+        /// The WebApi layer can use this list in combination with read-side
+        /// queries (such as the available rewards query) to enrich the
+        /// confirmation response sent back to the consumer app without
+        /// re-parsing JSON in the application layer.
+        /// </para>
+        /// </remarks>
+        public IReadOnlyList<Guid> SelectedRewardTierIds { get; init; }
+            = Array.Empty<Guid>();
     }
 
     /// <summary>

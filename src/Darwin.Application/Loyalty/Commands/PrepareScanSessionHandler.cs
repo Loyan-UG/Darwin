@@ -28,7 +28,8 @@ namespace Darwin.Application.Loyalty.Commands
     /// For redemption mode, the handler validates that the selected rewards
     /// exist and that the account has enough points. It stores a JSON snapshot
     /// of the selected rewards in the session to support replay-safe validation
-    /// on the business device.
+    /// on the business device and exposes the accepted reward tier identifiers
+    /// as part of the result DTO for UI confirmation on the consumer device.
     /// </para>
     /// <para>
     /// The returned <see cref="ScanSessionPreparedDto.ScanSessionId"/> is the
@@ -46,6 +47,38 @@ namespace Darwin.Application.Loyalty.Commands
         /// reduces the replay window while keeping UX acceptable.
         /// </summary>
         private const int DefaultSessionLifetimeMinutes = 2;
+
+        /// <summary>
+        /// Internal helper payload used when building the selected rewards
+        /// snapshot for a redemption scan session.
+        /// </summary>
+        private sealed class SelectedRewardsPayload
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="SelectedRewardsPayload"/> class.
+            /// </summary>
+            /// <param name="json">The JSON payload representing the selected rewards.</param>
+            /// <param name="tierIds">The list of reward tier identifiers that were accepted.</param>
+            /// <exception cref="ArgumentNullException">
+            /// Thrown when <paramref name="json"/> or <paramref name="tierIds"/> is <c>null</c>.
+            /// </exception>
+            public SelectedRewardsPayload(string json, IReadOnlyList<Guid> tierIds)
+            {
+                Json = json ?? throw new ArgumentNullException(nameof(json));
+                TierIds = tierIds ?? throw new ArgumentNullException(nameof(tierIds));
+            }
+
+            /// <summary>
+            /// Gets the JSON payload that will be stored on the scan session entity.
+            /// </summary>
+            public string Json { get; }
+
+            /// <summary>
+            /// Gets the identifiers of the reward tiers that were actually accepted
+            /// for redemption and serialized into <see cref="Json"/>.
+            /// </summary>
+            public IReadOnlyList<Guid> TierIds { get; }
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrepareScanSessionHandler"/> class.
@@ -79,9 +112,9 @@ namespace Darwin.Application.Loyalty.Commands
             var account = await _db.Set<LoyaltyAccount>()
                 .AsQueryable()
                 .SingleOrDefaultAsync(a =>
-                    a.BusinessId == dto.BusinessId &&
-                    a.UserId == userId &&
-                    !a.IsDeleted,
+                        a.BusinessId == dto.BusinessId &&
+                        a.UserId == userId &&
+                        !a.IsDeleted,
                     ct)
                 .ConfigureAwait(false);
 
@@ -97,19 +130,24 @@ namespace Darwin.Application.Loyalty.Commands
 
             // If redemption mode, validate reward selections and ensure points are sufficient.
             string? selectedRewardsJson = null;
+            IReadOnlyList<Guid> selectedRewardTierIds = Array.Empty<Guid>();
 
             if (dto.Mode == LoyaltyScanMode.Redemption &&
                 dto.SelectedRewardTierIds.Count > 0)
             {
-                selectedRewardsJson = await BuildAndValidateSelectedRewardsJsonAsync(
-                    dto.SelectedRewardTierIds,
-                    account,
-                    ct).ConfigureAwait(false);
+                var payload = await BuildAndValidateSelectedRewardsPayloadAsync(
+                        dto.SelectedRewardTierIds,
+                        account,
+                        ct)
+                    .ConfigureAwait(false);
 
-                if (selectedRewardsJson is null)
+                if (payload is null)
                 {
                     return Result<ScanSessionPreparedDto>.Fail("Insufficient points for selected rewards.");
                 }
+
+                selectedRewardsJson = payload.Json;
+                selectedRewardTierIds = payload.TierIds;
             }
 
             var now = _clock.UtcNow;
@@ -139,7 +177,8 @@ namespace Darwin.Application.Loyalty.Commands
                 ScanSessionId = session.Id,
                 Mode = session.Mode,
                 ExpiresAtUtc = session.ExpiresAtUtc,
-                CurrentPointsBalance = account.PointsBalance
+                CurrentPointsBalance = account.PointsBalance,
+                SelectedRewardTierIds = selectedRewardTierIds
             };
 
             return Result<ScanSessionPreparedDto>.Ok(resultDto);
@@ -147,16 +186,18 @@ namespace Darwin.Application.Loyalty.Commands
 
         /// <summary>
         /// Validates the selected reward tiers against the loyalty account and
-        /// returns a JSON payload describing the selections if valid.
+        /// returns a payload describing the selections if valid.
         /// </summary>
         /// <param name="rewardTierIds">The reward tiers selected for redemption.</param>
         /// <param name="account">The loyalty account of the current user.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>
-        /// A JSON string representing the selected rewards, or <c>null</c> when
-        /// the account does not have enough points.
+        /// A <see cref="SelectedRewardsPayload"/> containing both the JSON string
+        /// representing the selected rewards and the list of accepted reward tier
+        /// identifiers, or <c>null</c> when the account does not have enough points
+        /// or no valid rewards could be built.
         /// </returns>
-        private async Task<string?> BuildAndValidateSelectedRewardsJsonAsync(
+        private async Task<SelectedRewardsPayload?> BuildAndValidateSelectedRewardsPayloadAsync(
             IReadOnlyCollection<Guid> rewardTierIds,
             LoyaltyAccount account,
             CancellationToken ct)
@@ -207,8 +248,22 @@ namespace Darwin.Application.Loyalty.Commands
                 return null;
             }
 
+            if (items.Count == 0)
+            {
+                return null;
+            }
+
             // Serialize with System.Text.Json; Application layer is allowed to depend on BCL.
-            return JsonSerializer.Serialize(items);
+            var json = JsonSerializer.Serialize(items);
+
+            // Expose the accepted tier ids so that the caller can enrich the response
+            // using read-side queries without having to parse JSON again.
+            var tierIds = items
+                .Select(i => i.LoyaltyRewardTierId)
+                .Distinct()
+                .ToArray();
+
+            return new SelectedRewardsPayload(json, tierIds);
         }
     }
 }

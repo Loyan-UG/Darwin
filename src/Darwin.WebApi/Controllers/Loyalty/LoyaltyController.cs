@@ -317,9 +317,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequest("Request body is required.");
             }
 
-            if (request.ScanSessionId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequest("ScanSessionId is required.");
+                return BadRequest("ScanSessionToken is required.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
@@ -330,7 +330,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             }
 
             var result = await _processScanSessionForBusinessHandler
-                .HandleAsync(request.ScanSessionId, businessId, ct)
+                .HandleAsync(request.ScanSessionToken, businessId, ct)
                 .ConfigureAwait(false);
 
             if (!result.Succeeded || result.Value is null)
@@ -352,7 +352,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 // clients rely on the minimal snapshot. They can always call dedicated
                 // account endpoints to obtain richer data.
                 BusinessLocationId = null,
-                LoyaltyAccount = null,
+                AccountSummary = new BusinessLoyaltyAccountSummary
+                {
+                    LoyaltyAccountId = value.LoyaltyAccountId,
+                    PointsBalance = value.CurrentPointsBalance,
+                    CustomerDisplayName = value.CustomerDisplayName
+                },
                 CustomerDisplayName = value.CustomerDisplayName,
                 // SelectedRewards is left at its default (empty list). The Application
                 // handler currently exposes only technical details (tier id, quantity,

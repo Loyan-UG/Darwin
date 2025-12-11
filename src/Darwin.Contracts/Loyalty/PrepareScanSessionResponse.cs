@@ -9,7 +9,7 @@ namespace Darwin.Contracts.Loyalty
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The <see cref="ScanSessionId"/> value is encoded into the QR code
+    /// The <see cref="ScanSessionToken"/> value is encoded into the QR code
     /// and represents the only information that needs to be present in the
     /// QR payload displayed by the consumer app.
     /// </para>
@@ -17,10 +17,11 @@ namespace Darwin.Contracts.Loyalty
     public sealed class PrepareScanSessionResponse
     {
         /// <summary>
-        /// Gets the identifier of the newly created scan session.
-        /// This identifier is encoded into the QR code.
+        /// Gets or sets the opaque scan session token that should be encoded
+        /// into the QR code. This must be treated as a short-lived secret and
+        /// never logged in plaintext.
         /// </summary>
-        public Guid ScanSessionId { get; init; }
+        public string ScanSessionToken { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets the mode of the scan session (accrual or redemption) as

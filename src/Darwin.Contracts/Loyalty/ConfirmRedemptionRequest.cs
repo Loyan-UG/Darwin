@@ -11,6 +11,6 @@ namespace Darwin.Contracts.Loyalty
         /// <summary>
         /// Gets the identifier of the scan session to confirm.
         /// </summary>
-        public Guid ScanSessionId { get; init; }
+        public string ScanSessionToken { get; set; } = string.Empty;
     }
 }

@@ -10,11 +10,6 @@ namespace Darwin.Contracts.Loyalty
     public sealed class ProcessScanSessionForBusinessResponse
     {
         /// <summary>
-        /// Gets the identifier of the scan session.
-        /// </summary>
-        public Guid ScanSessionId { get; init; }
-
-        /// <summary>
         /// Gets the mode of the scan session (accrual or redemption).
         /// </summary>
         public LoyaltyScanMode Mode { get; init; }
@@ -31,11 +26,10 @@ namespace Darwin.Contracts.Loyalty
         public Guid? BusinessLocationId { get; init; }
 
         /// <summary>
-        /// Gets a non-sensitive summary of the loyalty account associated
-        /// with this scan session. The summary does not contain any direct
-        /// personal identifiers such as email or phone number.
+        /// Gets or sets the loyalty account snapshot for this session.
         /// </summary>
-        public LoyaltyAccountSummary? LoyaltyAccount { get; init; }
+        public BusinessLoyaltyAccountSummary AccountSummary { get; set; }
+            = new BusinessLoyaltyAccountSummary();
 
         /// <summary>
         /// Gets an optional human-friendly alias or display name that can be

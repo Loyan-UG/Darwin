@@ -11,7 +11,8 @@ namespace Darwin.Contracts.Loyalty
         /// <summary>
         /// Gets the identifier of the scan session to confirm.
         /// </summary>
-        public Guid ScanSessionId { get; init; }
+        public string ScanSessionToken { get; set; } = string.Empty;
+
 
         /// <summary>
         /// Gets the number of points to add to the loyalty account
