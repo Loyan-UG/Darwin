@@ -49,4 +49,5 @@ namespace Darwin.Contracts.Loyalty
         public IReadOnlyList<LoyaltyRewardSummary> SelectedRewards { get; init; }
             = Array.Empty<LoyaltyRewardSummary>();
     }
+
 }
