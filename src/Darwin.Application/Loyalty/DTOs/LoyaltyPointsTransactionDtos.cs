@@ -18,7 +18,7 @@ namespace Darwin.Application.Loyalty.DTOs
 
         public DateTime OccurredAtUtc { get; set; }
 
-        public Guid? ScanSessionId { get; set; }
+        //public Guid? ScanSessionId { get; set; }
         public Guid? RewardTierId { get; set; }
     }
 

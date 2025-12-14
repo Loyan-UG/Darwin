@@ -1,4 +1,11 @@
-﻿using Darwin.Application.Abstractions.Auth;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Loyalty.DTOs;
@@ -6,12 +13,6 @@ using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Darwin.Application.Loyalty.Commands
 {
@@ -20,20 +21,12 @@ namespace Darwin.Application.Loyalty.Commands
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The handler resolves the loyalty account for the current user and the
-    /// specified business. It then creates a short-lived <see cref="ScanSession"/>
-    /// with the requested mode (accrual or redemption).
+    /// This handler is the ONLY place where a QR payload token is minted.
+    /// External layers must never use internal identifiers such as <see cref="ScanSession.Id"/>.
     /// </para>
     /// <para>
-    /// For redemption mode, the handler validates that the selected rewards
-    /// exist and that the account has enough points. It stores a JSON snapshot
-    /// of the selected rewards in the session to support replay-safe validation
-    /// on the business device and exposes the accepted reward tier identifiers
-    /// as part of the result DTO for UI confirmation on the consumer device.
-    /// </para>
-    /// <para>
-    /// The returned <see cref="ScanSessionPreparedDto.ScanSessionId"/> is the
-    /// only data that needs to appear in the QR code.
+    /// The QR payload contains only a short-lived, opaque <see cref="QrCodeToken.Token"/> string.
+    /// The token is linked to a <see cref="ScanSession"/> through <see cref="ScanSession.QrCodeTokenId"/>.
     /// </para>
     /// </remarks>
     public sealed class PrepareScanSessionHandler
@@ -43,42 +36,9 @@ namespace Darwin.Application.Loyalty.Commands
         private readonly IClock _clock;
 
         /// <summary>
-        /// Default scan session lifetime in minutes. Keeping it short significantly
-        /// reduces the replay window while keeping UX acceptable.
+        /// Default scan session lifetime in minutes.
         /// </summary>
         private const int DefaultSessionLifetimeMinutes = 2;
-
-        /// <summary>
-        /// Internal helper payload used when building the selected rewards
-        /// snapshot for a redemption scan session.
-        /// </summary>
-        private sealed class SelectedRewardsPayload
-        {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="SelectedRewardsPayload"/> class.
-            /// </summary>
-            /// <param name="json">The JSON payload representing the selected rewards.</param>
-            /// <param name="tierIds">The list of reward tier identifiers that were accepted.</param>
-            /// <exception cref="ArgumentNullException">
-            /// Thrown when <paramref name="json"/> or <paramref name="tierIds"/> is <c>null</c>.
-            /// </exception>
-            public SelectedRewardsPayload(string json, IReadOnlyList<Guid> tierIds)
-            {
-                Json = json ?? throw new ArgumentNullException(nameof(json));
-                TierIds = tierIds ?? throw new ArgumentNullException(nameof(tierIds));
-            }
-
-            /// <summary>
-            /// Gets the JSON payload that will be stored on the scan session entity.
-            /// </summary>
-            public string Json { get; }
-
-            /// <summary>
-            /// Gets the identifiers of the reward tiers that were actually accepted
-            /// for redemption and serialized into <see cref="Json"/>.
-            /// </summary>
-            public IReadOnlyList<Guid> TierIds { get; }
-        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrepareScanSessionHandler"/> class.
@@ -95,20 +55,28 @@ namespace Darwin.Application.Loyalty.Commands
 
         /// <summary>
         /// Creates a new scan session for the current user and returns the data
-        /// required to render the QR code.
+        /// required to render the QR code (opaque token + basic context).
         /// </summary>
         public async Task<Result<ScanSessionPreparedDto>> HandleAsync(
             PrepareScanSessionDto dto,
             CancellationToken ct = default)
         {
+            if (dto is null)
+            {
+                return Result<ScanSessionPreparedDto>.Fail("Request is required.");
+            }
+
             if (dto.BusinessId == Guid.Empty)
             {
                 return Result<ScanSessionPreparedDto>.Fail("BusinessId is required.");
             }
 
             var userId = _currentUserService.GetCurrentUserId();
+            if (userId == Guid.Empty)
+            {
+                return Result<ScanSessionPreparedDto>.Fail("User is not authenticated.");
+            }
 
-            // Resolve existing loyalty account for this user and business.
             var account = await _db.Set<LoyaltyAccount>()
                 .AsQueryable()
                 .SingleOrDefaultAsync(a =>
@@ -128,17 +96,12 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ScanSessionPreparedDto>.Fail("Loyalty account is not active.");
             }
 
-            // If redemption mode, validate reward selections and ensure points are sufficient.
             string? selectedRewardsJson = null;
             IReadOnlyList<Guid> selectedRewardTierIds = Array.Empty<Guid>();
 
-            if (dto.Mode == LoyaltyScanMode.Redemption &&
-                dto.SelectedRewardTierIds.Count > 0)
+            if (dto.Mode == LoyaltyScanMode.Redemption && dto.SelectedRewardTierIds.Count > 0)
             {
-                var payload = await BuildAndValidateSelectedRewardsPayloadAsync(
-                        dto.SelectedRewardTierIds,
-                        account,
-                        ct)
+                var payload = await BuildAndValidateSelectedRewardsPayloadAsync(dto.SelectedRewardTierIds, account, ct)
                     .ConfigureAwait(false);
 
                 if (payload is null)
@@ -153,11 +116,22 @@ namespace Darwin.Application.Loyalty.Commands
             var now = _clock.UtcNow;
             var expiresAt = now.AddMinutes(DefaultSessionLifetimeMinutes);
 
+            var qrToken = new QrCodeToken
+            {
+                UserId = userId,
+                LoyaltyAccountId = account.Id,
+                Token = GenerateOpaqueToken(),
+                Purpose = dto.Mode == LoyaltyScanMode.Redemption ? QrTokenPurpose.Redemption : QrTokenPurpose.Accrual,
+                IssuedAtUtc = now,
+                ExpiresAtUtc = expiresAt,
+                IssuedDeviceId = dto.DeviceId
+            };
+
+            _db.Set<QrCodeToken>().Add(qrToken);
+
             var session = new ScanSession
             {
-                // QrCodeTokenId can be left as Guid.Empty when we use ScanSessionId directly
-                // as QR payload. It remains available for future correlation if needed.
-                QrCodeTokenId = Guid.Empty,
+                QrCodeTokenId = qrToken.Id,
                 LoyaltyAccountId = account.Id,
                 BusinessId = dto.BusinessId,
                 BusinessLocationId = dto.BusinessLocationId,
@@ -170,11 +144,12 @@ namespace Darwin.Application.Loyalty.Commands
             };
 
             _db.Set<ScanSession>().Add(session);
+
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
             var resultDto = new ScanSessionPreparedDto
             {
-                ScanSessionId = session.Id,
+                ScanSessionToken = qrToken.Token,
                 Mode = session.Mode,
                 ExpiresAtUtc = session.ExpiresAtUtc,
                 CurrentPointsBalance = account.PointsBalance,
@@ -185,28 +160,28 @@ namespace Darwin.Application.Loyalty.Commands
         }
 
         /// <summary>
-        /// Validates the selected reward tiers against the loyalty account and
-        /// returns a payload describing the selections if valid.
+        /// Validates the selected reward tiers against the loyalty account and returns a payload
+        /// describing the selections if valid.
         /// </summary>
-        /// <param name="rewardTierIds">The reward tiers selected for redemption.</param>
-        /// <param name="account">The loyalty account of the current user.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A <see cref="SelectedRewardsPayload"/> containing both the JSON string
-        /// representing the selected rewards and the list of accepted reward tier
-        /// identifiers, or <c>null</c> when the account does not have enough points
-        /// or no valid rewards could be built.
-        /// </returns>
         private async Task<SelectedRewardsPayload?> BuildAndValidateSelectedRewardsPayloadAsync(
             IReadOnlyCollection<Guid> rewardTierIds,
             LoyaltyAccount account,
             CancellationToken ct)
         {
+            if (rewardTierIds is null || rewardTierIds.Count == 0)
+            {
+                return null;
+            }
+
+            var distinctIds = rewardTierIds.Where(x => x != Guid.Empty).Distinct().ToArray();
+            if (distinctIds.Length == 0)
+            {
+                return null;
+            }
+
             var tiers = await _db.Set<LoyaltyRewardTier>()
                 .AsQueryable()
-                .Where(t =>
-                    rewardTierIds.Contains(t.Id) &&
-                    !t.IsDeleted)
+                .Where(t => distinctIds.Contains(t.Id) && !t.IsDeleted)
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
@@ -220,25 +195,26 @@ namespace Darwin.Application.Loyalty.Commands
 
             foreach (var tier in tiers)
             {
-                // PointsRequired is the threshold for a single redemption.
                 var requiredPerUnit = tier.PointsRequired;
                 if (requiredPerUnit <= 0)
                 {
                     continue;
                 }
 
-                var item = new SelectedRewardItemDto
+                items.Add(new SelectedRewardItemDto
                 {
                     LoyaltyRewardTierId = tier.Id,
                     Quantity = 1,
                     RequiredPointsPerUnit = requiredPerUnit
-                };
+                });
 
-                items.Add(item);
-                totalRequiredPoints += requiredPerUnit;
+                checked
+                {
+                    totalRequiredPoints += requiredPerUnit;
+                }
             }
 
-            if (totalRequiredPoints <= 0)
+            if (items.Count == 0 || totalRequiredPoints <= 0)
             {
                 return null;
             }
@@ -248,22 +224,49 @@ namespace Darwin.Application.Loyalty.Commands
                 return null;
             }
 
-            if (items.Count == 0)
+            var json = JsonSerializer.Serialize(items);
+            var acceptedTierIds = items.Select(x => x.LoyaltyRewardTierId).Distinct().ToArray();
+
+            return new SelectedRewardsPayload(json, acceptedTierIds);
+        }
+
+        /// <summary>
+        /// Creates a random opaque token suitable for QR payload usage.
+        /// </summary>
+        /// <remarks>
+        /// Uses a cryptographically secure random source and encodes as Base64Url without padding.
+        /// </remarks>
+        private static string GenerateOpaqueToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(32);
+            return Base64UrlEncode(bytes);
+        }
+
+        /// <summary>
+        /// Encodes bytes using Base64Url (RFC 4648) without padding.
+        /// </summary>
+        private static string Base64UrlEncode(byte[] bytes)
+        {
+            var base64 = Convert.ToBase64String(bytes);
+            return base64
+                .Replace("+", "-", StringComparison.Ordinal)
+                .Replace("/", "_", StringComparison.Ordinal)
+                .TrimEnd('=');
+        }
+
+        /// <summary>
+        /// Internal payload used by the handler to return both JSON snapshot and accepted tier identifiers.
+        /// </summary>
+        private sealed class SelectedRewardsPayload
+        {
+            public SelectedRewardsPayload(string json, IReadOnlyList<Guid> tierIds)
             {
-                return null;
+                Json = json ?? throw new ArgumentNullException(nameof(json));
+                TierIds = tierIds ?? throw new ArgumentNullException(nameof(tierIds));
             }
 
-            // Serialize with System.Text.Json; Application layer is allowed to depend on BCL.
-            var json = JsonSerializer.Serialize(items);
-
-            // Expose the accepted tier ids so that the caller can enrich the response
-            // using read-side queries without having to parse JSON again.
-            var tierIds = items
-                .Select(i => i.LoyaltyRewardTierId)
-                .Distinct()
-                .ToArray();
-
-            return new SelectedRewardsPayload(json, tierIds);
+            public string Json { get; }
+            public IReadOnlyList<Guid> TierIds { get; }
         }
     }
 }

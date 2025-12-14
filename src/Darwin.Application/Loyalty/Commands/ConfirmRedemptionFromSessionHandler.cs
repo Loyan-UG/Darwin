@@ -1,42 +1,36 @@
-﻿using Darwin.Application.Abstractions.Auth;
-using Darwin.Application.Abstractions.Persistence;
-using Darwin.Application.Abstractions.Services;
-using Darwin.Application.Loyalty.DTOs;
-using Darwin.Domain.Entities.Loyalty;
-using Darwin.Domain.Enums;
-using Darwin.Shared.Results;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Loyalty.DTOs;
+using Darwin.Application.Loyalty.Services;
+using Darwin.Domain.Entities.Loyalty;
+using Darwin.Domain.Enums;
+using Darwin.Shared.Results;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Loyalty.Commands
 {
     /// <summary>
-    /// Confirms a redemption operation for a previously prepared scan session.
+    /// Confirms a redemption operation for a previously prepared scan session identified by an opaque token.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This handler is invoked by the business app after scanning the consumer's QR
-    /// and reviewing the pre-selected rewards. It re-validates the loyalty account
-    /// points balance to guard against race conditions and then creates a
-    /// <see cref="LoyaltyRewardRedemption"/> and a corresponding
-    /// <see cref="LoyaltyPointsTransaction"/> entry.
+    /// The business app scans a QR code containing only <c>ScanSessionToken</c>.
+    /// The token is resolved to a session and validated (expiry, pending state, business ownership)
+    /// by <see cref="ScanSessionTokenResolver"/>.
     /// </para>
     /// <para>
-    /// The session is one-time use. After a successful redemption the session
-    /// status becomes <see cref="LoyaltyScanStatus.Completed"/> and any subsequent
-    /// attempt to use it is rejected.
+    /// The scan session contains a JSON snapshot (<see cref="ScanSession.SelectedRewardsJson"/>) of the
+    /// selected reward tiers (as <see cref="SelectedRewardItemDto"/> items). This snapshot ensures that
+    /// redemption confirmation is replay-safe and independent from any client-provided reward list.
     /// </para>
     /// <para>
-    /// The <see cref="ScanSession.SelectedRewardsJson"/> payload stores the full
-    /// list of selected rewards as an array of <see cref="SelectedRewardItemDto"/>.
-    /// The handler aggregates the total points required. Because the domain model
-    /// stores only a single <see cref="LoyaltyRewardRedemption.LoyaltyRewardTierId"/>,
-    /// the first selected tier is used as the primary identifier and the full list
-    /// is preserved in <see cref="LoyaltyRewardRedemption.MetadataJson"/>.
+    /// One-time use is enforced by consuming the token and marking the session as completed.
     /// </para>
     /// </remarks>
     public sealed class ConfirmRedemptionFromSessionHandler
@@ -44,47 +38,39 @@ namespace Darwin.Application.Loyalty.Commands
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUserService;
         private readonly IClock _clock;
+        private readonly ScanSessionTokenResolver _tokenResolver;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfirmRedemptionFromSessionHandler"/> class.
         /// </summary>
-        /// <param name="db">Application database context abstraction.</param>
-        /// <param name="currentUserService">Provides the user id of the business staff member.</param>
-        /// <param name="clock">Time abstraction used to obtain UTC timestamps.</param>
         public ConfirmRedemptionFromSessionHandler(
             IAppDbContext db,
             ICurrentUserService currentUserService,
-            IClock clock)
+            IClock clock,
+            ScanSessionTokenResolver tokenResolver)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _tokenResolver = tokenResolver ?? throw new ArgumentNullException(nameof(tokenResolver));
         }
 
         /// <summary>
-        /// Confirms a redemption based on the specified scan session.
+        /// Confirms a redemption based on the specified scan session token within the given business context.
         /// </summary>
-        /// <param name="dto">
-        /// Data describing the scan session to confirm.
-        /// </param>
-        /// <param name="businessId">
-        /// Identifier of the business from the authenticated context of the
-        /// business app. The handler verifies that the scan session belongs
-        /// to this business.
-        /// </param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A <see cref="Result{T}"/> containing <see cref="ConfirmRedemptionResultDto"/>
-        /// on success or an error message on failure.
-        /// </returns>
         public async Task<Result<ConfirmRedemptionResultDto>> HandleAsync(
             ConfirmRedemptionFromSessionDto dto,
             Guid businessId,
             CancellationToken ct = default)
         {
-            if (dto.ScanSessionId == Guid.Empty)
+            if (dto is null)
             {
-                return Result<ConfirmRedemptionResultDto>.Fail("ScanSessionId is required.");
+                return Result<ConfirmRedemptionResultDto>.Fail("Request is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.ScanSessionToken))
+            {
+                return Result<ConfirmRedemptionResultDto>.Fail("ScanSessionToken is required.");
             }
 
             if (businessId == Guid.Empty)
@@ -92,64 +78,73 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ConfirmRedemptionResultDto>.Fail("BusinessId is required.");
             }
 
-            var session = await _db.Set<ScanSession>()
-                .AsQueryable()
-                .SingleOrDefaultAsync(
-                    s => s.Id == dto.ScanSessionId && !s.IsDeleted,
-                    ct)
+            var resolvedResult = await _tokenResolver
+                .ResolveForBusinessAsync(dto.ScanSessionToken, businessId, ct)
                 .ConfigureAwait(false);
 
-            if (session is null)
+            if (!resolvedResult.Succeeded || resolvedResult.Value is null)
             {
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session not found.");
+                return Result<ConfirmRedemptionResultDto>.Fail(resolvedResult.Error ?? "Invalid scan session token.");
             }
 
-            if (session.BusinessId != businessId)
-            {
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session does not belong to this business.");
-            }
+            var token = resolvedResult.Value.Token;
+            var session = resolvedResult.Value.Session;
 
             if (session.Mode != LoyaltyScanMode.Redemption)
             {
                 return Result<ConfirmRedemptionResultDto>.Fail("Scan session is not in redemption mode.");
             }
 
+            // Consume token early to reduce replay risk. In later failures we cancel the session.
+            await _tokenResolver
+                .ConsumeAsync(token, businessId, session.BusinessLocationId, ct)
+                .ConfigureAwait(false);
+
             var now = _clock.UtcNow;
+
             if (session.ExpiresAtUtc <= now)
             {
                 session.Status = LoyaltyScanStatus.Expired;
                 session.Outcome = "Expired";
                 session.FailureReason = "Session expired before redemption confirmation.";
-
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session has expired.");
-            }
 
-            if (session.Status != LoyaltyScanStatus.Pending)
-            {
-                return Result<ConfirmRedemptionResultDto>.Fail("Scan session is not in a pending state.");
+                return Result<ConfirmRedemptionResultDto>.Fail("Scan session has expired.");
             }
 
             var account = await _db.Set<LoyaltyAccount>()
                 .AsQueryable()
-                .SingleOrDefaultAsync(
-                    a => a.Id == session.LoyaltyAccountId && !a.IsDeleted,
-                    ct)
+                .SingleOrDefaultAsync(a => a.Id == session.LoyaltyAccountId && !a.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (account is null)
             {
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "AccountNotFound";
+                session.FailureReason = "Loyalty account for scan session not found.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
                 return Result<ConfirmRedemptionResultDto>.Fail("Loyalty account for scan session not found.");
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)
             {
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "AccountNotActive";
+                session.FailureReason = "Loyalty account is not active.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
                 return Result<ConfirmRedemptionResultDto>.Fail("Loyalty account is not active.");
             }
 
             var selections = ParseSelectedRewards(session.SelectedRewardsJson);
             if (selections.Count == 0)
             {
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "NoSelections";
+                session.FailureReason = "Scan session does not contain any selected rewards.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
                 return Result<ConfirmRedemptionResultDto>.Fail("Scan session does not contain any selected rewards.");
             }
 
@@ -169,24 +164,30 @@ namespace Darwin.Application.Loyalty.Commands
 
             if (totalRequiredPoints <= 0)
             {
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "InvalidSelections";
+                session.FailureReason = "Selected rewards do not require any points.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
                 return Result<ConfirmRedemptionResultDto>.Fail("Selected rewards do not require any points.");
             }
 
-            // Re-check points balance at confirmation time to guard against race conditions.
             if (account.PointsBalance < totalRequiredPoints)
             {
                 session.Status = LoyaltyScanStatus.Cancelled;
                 session.Outcome = "InsufficientPoints";
                 session.FailureReason = "Account does not have enough points at confirmation time.";
-
                 await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
                 return Result<ConfirmRedemptionResultDto>.Fail("Insufficient points for selected rewards.");
             }
 
             var staffUserId = _currentUserService.GetCurrentUserId();
+            if (staffUserId == Guid.Empty)
+            {
+                return Result<ConfirmRedemptionResultDto>.Fail("User is not authenticated.");
+            }
 
-            // Use the first selected tier as the primary identifier, while keeping the
-            // full selection payload in MetadataJson.
             var primaryTierId = selections[0].LoyaltyRewardTierId;
 
             var redemption = new LoyaltyRewardRedemption
@@ -217,11 +218,8 @@ namespace Darwin.Application.Loyalty.Commands
 
             _db.Set<LoyaltyPointsTransaction>().Add(transaction);
 
-            // Update the account balance. LifetimePoints is not changed because it
-            // tracks total points ever earned, not the current spendable balance.
             account.PointsBalance -= totalRequiredPoints;
 
-            // Mark the session as completed and link the resulting transaction.
             session.Status = LoyaltyScanStatus.Completed;
             session.Outcome = "Redeemed";
             session.FailureReason = null;
@@ -242,7 +240,8 @@ namespace Darwin.Application.Loyalty.Commands
         }
 
         /// <summary>
-        /// Parses the JSON payload of selected rewards (if any) into DTOs.
+        /// Parses the stored JSON payload of selected rewards into DTO items.
+        /// Malformed or missing JSON is treated as "no selections".
         /// </summary>
         private static List<SelectedRewardItemDto> ParseSelectedRewards(string? selectedRewardsJson)
         {
@@ -258,7 +257,6 @@ namespace Darwin.Application.Loyalty.Commands
             }
             catch
             {
-                // If we cannot parse the stored payload, treat it as no selection.
                 return new List<SelectedRewardItemDto>();
             }
         }

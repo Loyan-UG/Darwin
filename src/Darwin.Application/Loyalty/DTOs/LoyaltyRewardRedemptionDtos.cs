@@ -16,7 +16,7 @@ namespace Darwin.Application.Loyalty.DTOs
 
         public DateTime RedeemedAtUtc { get; set; }
 
-        public Guid? ScanSessionId { get; set; }
+        //public Guid? ScanSessionId { get; set; }
         public string? Note { get; set; }
     }
 

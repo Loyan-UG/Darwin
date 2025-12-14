@@ -70,10 +70,10 @@ namespace Darwin.Application.Loyalty.DTOs
     public sealed class ScanSessionPreparedDto
     {
         /// <summary>
-        /// Gets or sets the identifier of the newly created scan session.
-        /// This value is encoded into the QR code.
+        /// Gets or sets the opaque scan session token that must be encoded in the QR payload.
+        /// This is the ONLY identifier that is allowed to leave the Application boundary.
         /// </summary>
-        public Guid ScanSessionId { get; set; }
+        public string ScanSessionToken { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the scan mode of the session.
@@ -119,9 +119,9 @@ namespace Darwin.Application.Loyalty.DTOs
     public sealed class ScanSessionBusinessViewDto
     {
         /// <summary>
-        /// Gets or sets the identifier of the scan session.
+        /// Gets or sets the opaque scan session token that was scanned.
         /// </summary>
-        public Guid ScanSessionId { get; set; }
+        public string ScanSessionToken { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the mode of the session (accrual or redemption).
@@ -159,9 +159,9 @@ namespace Darwin.Application.Loyalty.DTOs
     public sealed class ConfirmRedemptionFromSessionDto
     {
         /// <summary>
-        /// Gets or sets the identifier of the scan session to confirm.
+        /// Gets or sets the opaque scan session token that was scanned.
         /// </summary>
-        public Guid ScanSessionId { get; set; }
+        public string ScanSessionToken { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -170,9 +170,9 @@ namespace Darwin.Application.Loyalty.DTOs
     public sealed class ConfirmAccrualFromSessionDto
     {
         /// <summary>
-        /// Gets or sets the identifier of the scan session to confirm.
+        /// Gets or sets the opaque scan session token that was scanned.
         /// </summary>
-        public Guid ScanSessionId { get; set; }
+        public string ScanSessionToken { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the number of points to add for this accrual.

@@ -103,6 +103,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         }
 
 
+
         #region Scan preparation (consumer)
 
         /// <summary>
@@ -111,19 +112,20 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// <remarks>
         /// <para>
         /// The consumer app calls this endpoint with a target business and an optional
-        /// list of rewards to redeem. The backend resolves or creates the corresponding
-        /// loyalty account, creates a short-lived <c>ScanSession</c> and returns its
-        /// identifier and basic context.
+        /// list of rewards to redeem. The backend resolves the corresponding loyalty
+        /// account, creates a short-lived <c>ScanSession</c> and returns the opaque
+        /// <c>ScanSessionToken</c> plus basic context.
         /// </para>
         /// <para>
-        /// The returned <see cref="PrepareScanSessionResponse.ScanSessionId"/> value is
-        /// the only data that needs to be encoded into the QR code shown on the device.
+        /// The returned <see cref="PrepareScanSessionResponse.ScanSessionToken"/> value is
+        /// the only data that must be encoded into the QR code shown on the device.
+        /// No internal identifiers are allowed to cross the API boundary.
         /// </para>
         /// <para>
         /// For redemption-mode sessions, the response also includes a list of
         /// <see cref="LoyaltyRewardSummary"/> instances describing the rewards that
         /// were actually accepted for redemption. This list is derived from the
-        /// tier identifiers returned by the application handler and a separate
+        /// reward tier identifiers returned by the application handler and a separate
         /// read-side query that lists the available rewards for the business.
         /// </para>
         /// </remarks>
@@ -185,68 +187,36 @@ namespace Darwin.WebApi.Controllers.Loyalty
             {
                 // Query the available rewards for this business and current user so we
                 // can materialize full reward summaries for the selected tiers.
-                var rewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
+                var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
                     .HandleAsync(request.BusinessId, ct)
                     .ConfigureAwait(false);
 
-                if (!rewardsResult.Succeeded || rewardsResult.Value is null)
+                if (availableRewardsResult.Succeeded && availableRewardsResult.Value is not null)
                 {
-                    return ProblemFromResult(rewardsResult);
+                    var acceptedTierIds = value.SelectedRewardTierIds
+                        .Where(x => x != Guid.Empty)
+                        .Distinct()
+                        .ToHashSet();
+
+                    selectedRewards = availableRewardsResult.Value
+                        .Where(r => acceptedTierIds.Contains(r.Id))
+                        .Select(r => new LoyaltyRewardSummary
+                        {
+                            Id = r.Id,
+                            BusinessId = r.BusinessId,
+                            Title = r.Title,
+                            Description = r.Description,
+                            RequiredPoints = r.RequiredPoints,
+                            IsActive = r.IsActive,
+                            IsSelectable = r.IsSelectable
+                        })
+                        .ToList();
                 }
-
-                var availableRewards = rewardsResult.Value;
-
-                if (availableRewards.Count == 0)
-                {
-                    // At this point the application layer has already validated the
-                    // selected tiers against the current account state. An empty reward
-                    // list here indicates an inconsistent configuration (for example,
-                    // the loyalty program was removed between calls).
-                    return ProblemFromResult(Result.Fail(
-                        "No loyalty rewards are configured for the selected business."));
-                }
-
-                var rewardsByTierId = availableRewards.ToDictionary(
-                    r => r.LoyaltyRewardTierId);
-
-                var selectedRewardList = new List<LoyaltyRewardSummary>(
-                    value.SelectedRewardTierIds.Count);
-
-                foreach (var tierId in value.SelectedRewardTierIds)
-                {
-                    if (!rewardsByTierId.TryGetValue(tierId, out var rewardDto))
-                    {
-                        // Fail fast when a previously accepted tier is no longer present
-                        // in the available rewards list to avoid showing a misleading
-                        // confirmation screen to the consumer.
-                        return ProblemFromResult(Result.Fail(
-                            $"Selected reward tier '{tierId}' is no longer available for this business."));
-                    }
-
-                    var summary = new LoyaltyRewardSummary
-                    {
-                        LoyaltyRewardTierId = rewardDto.LoyaltyRewardTierId,
-                        BusinessId = rewardDto.BusinessId,
-                        Name = rewardDto.Name,
-                        Description = rewardDto.Description,
-                        RequiredPoints = rewardDto.RequiredPoints,
-                        IsActive = rewardDto.IsActive,
-                        IsSelectable = rewardDto.IsSelectable
-                        // NOTE: The application DTO exposes a RequiresConfirmation flag,
-                        // but the public contract type does not currently include this
-                        // property. If the mobile client needs it, the contract should
-                        // be extended in a dedicated change.
-                    };
-
-                    selectedRewardList.Add(summary);
-                }
-
-                selectedRewards = selectedRewardList;
             }
 
             var response = new PrepareScanSessionResponse
             {
-                ScanSessionId = value.ScanSessionId,
+                ScanSessionToken = value.ScanSessionToken,
                 Mode = MapScanMode(value.Mode),
                 ExpiresAtUtc = value.ExpiresAtUtc,
                 CurrentPointsBalance = value.CurrentPointsBalance,
@@ -257,6 +227,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
         }
 
         #endregion
+
+
+
 
         #region Result helpers
 

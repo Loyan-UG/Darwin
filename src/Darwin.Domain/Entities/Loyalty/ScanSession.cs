@@ -6,28 +6,30 @@ namespace Darwin.Domain.Entities.Loyalty
 {
     /// <summary>
     /// Represents a single scan session between a consumer device and a business device.
-    /// The session is identified by its <see cref="BaseEntity.Id"/> and this identifier
-    /// is the only value that needs to appear in the QR payload (ScanSessionToken).
+    /// This entity is an internal record and MUST NOT be identified or referenced by its
+    /// <see cref="BaseEntity.Id"/> outside the Application/Infrastructure boundary.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The consumer app prepares a scan session for a given business and mode
-    /// (accrual or redemption). Optional reward selections are serialized into
-    /// <see cref="SelectedRewardsJson"/> as a small JSON array.
+    /// The consumer app prepares a scan session for a given business and mode (accrual or redemption).
+    /// The only value that is allowed to appear in the QR payload is the opaque <see cref="QrCodeToken.Token"/>
+    /// (also referred to as the scan session token in contracts).
     /// </para>
     /// <para>
-    /// The business app scans the QR, resolves the session by <see cref="Id"/>,
-    /// validates expiry and ownership, and then completes either an accrual or a
-    /// redemption. After a successful completion the session becomes one-time
-    /// use and cannot be reused to avoid replay attacks.
+    /// The business app scans the QR token and the Application layer resolves that token to the underlying
+    /// <see cref="QrCodeToken"/> and <see cref="ScanSession"/> records. The resolution validates expiry,
+    /// one-time use consumption, business binding, and scan session state.
+    /// </para>
+    /// <para>
+    /// After a successful completion the session becomes one-time use and cannot be reused to reduce replay risk.
     /// </para>
     /// </remarks>
     public sealed class ScanSession : BaseEntity
     {
         /// <summary>
-        /// The QR token that was presented by the consumer.
-        /// Kept for audit linking to the ephemeral <see cref="QrCodeToken"/> entity,
-        /// but does not need to be part of the public QR payload.
+        /// Foreign key linking this session to the ephemeral <see cref="QrCodeToken"/> record.
+        /// The QR payload contains ONLY <see cref="QrCodeToken.Token"/>; this identifier is internal
+        /// and exists for correlation, auditing and server-side resolution.
         /// </summary>
         public Guid QrCodeTokenId { get; set; }
 

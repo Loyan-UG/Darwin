@@ -1,5 +1,4 @@
-﻿using System;
-using Darwin.Application.Loyalty.DTOs;
+﻿using Darwin.Application.Loyalty.DTOs;
 using FluentValidation;
 
 namespace Darwin.Application.Loyalty.Validators
@@ -9,14 +8,12 @@ namespace Darwin.Application.Loyalty.Validators
     /// </summary>
     public sealed class ConfirmRedemptionFromSessionDtoValidator : AbstractValidator<ConfirmRedemptionFromSessionDto>
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ConfirmRedemptionFromSessionDtoValidator"/> class.
-        /// </summary>
         public ConfirmRedemptionFromSessionDtoValidator()
         {
-            RuleFor(x => x.ScanSessionId)
-                .NotEqual(Guid.Empty)
-                .WithMessage("ScanSessionId is required.");
+            RuleFor(x => x.ScanSessionToken)
+                .NotEmpty()
+                .WithMessage("ScanSessionToken is required.")
+                .MaximumLength(4000);
         }
     }
 }

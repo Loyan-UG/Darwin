@@ -1,35 +1,35 @@
-﻿using Darwin.Application.Abstractions.Auth;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Loyalty.DTOs;
+using Darwin.Application.Loyalty.Services;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Darwin.Application.Loyalty.Commands
 {
     /// <summary>
-    /// Confirms an accrual operation for a previously prepared scan session.
+    /// Confirms an accrual operation for a previously prepared scan session identified by an opaque token.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This handler is invoked by the business app after scanning the consumer's QR
-    /// and collecting the accrual amount (for example, one point per visit or an
-    /// amount-based point calculation performed in the UI).
+    /// This handler is invoked by the business app after scanning the consumer's QR code.
+    /// The QR payload contains only an opaque <c>ScanSessionToken</c> (string) which is resolved
+    /// to an internal <see cref="ScanSession"/> through <see cref="ScanSessionTokenResolver"/>.
     /// </para>
     /// <para>
-    /// The handler validates that the scan session belongs to the specified business,
-    /// is in accrual mode, has not expired and is still pending. It then creates a
-    /// <see cref="LoyaltyPointsTransaction"/> entry, updates the loyalty account
-    /// balance and lifetime points, and marks the scan session as completed.
+    /// The handler enforces one-time use semantics by consuming the underlying QR token and by
+    /// transitioning the scan session from <see cref="LoyaltyScanStatus.Pending"/> to
+    /// <see cref="LoyaltyScanStatus.Completed"/> on success.
     /// </para>
     /// <para>
-    /// The session is one-time use. Any subsequent attempt to confirm the same
-    /// session will fail because the status is no longer <see cref="LoyaltyScanStatus.Pending"/>.
+    /// All semantic validation (expiry, ownership, status machine) lives in the handler / resolver.
+    /// Input validators must remain persistence-free and check only basic invariants (non-empty token, etc.).
     /// </para>
     /// </remarks>
     public sealed class ConfirmAccrualFromSessionHandler
@@ -37,47 +37,42 @@ namespace Darwin.Application.Loyalty.Commands
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUserService;
         private readonly IClock _clock;
+        private readonly ScanSessionTokenResolver _tokenResolver;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfirmAccrualFromSessionHandler"/> class.
         /// </summary>
-        /// <param name="db">Application database context abstraction.</param>
-        /// <param name="currentUserService">Provides the user id of the business staff member.</param>
-        /// <param name="clock">Time abstraction used to obtain UTC timestamps.</param>
         public ConfirmAccrualFromSessionHandler(
             IAppDbContext db,
             ICurrentUserService currentUserService,
-            IClock clock)
+            IClock clock,
+            ScanSessionTokenResolver tokenResolver)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _tokenResolver = tokenResolver ?? throw new ArgumentNullException(nameof(tokenResolver));
         }
 
         /// <summary>
-        /// Confirms an accrual operation for the specified scan session.
+        /// Confirms an accrual operation for the specified scan session token within the given business context.
         /// </summary>
-        /// <param name="dto">
-        /// Data describing the scan session and the number of points to accrue.
-        /// </param>
-        /// <param name="businessId">
-        /// Identifier of the business from the authenticated context of the
-        /// business app. The handler verifies that the scan session belongs
-        /// to this business.
-        /// </param>
+        /// <param name="dto">Request payload containing the token and the number of points to add.</param>
+        /// <param name="businessId">Business identifier resolved by WebApi from the authenticated business context.</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A <see cref="Result{T}"/> containing <see cref="ConfirmAccrualResultDto"/>
-        /// on success or an error message on failure.
-        /// </returns>
         public async Task<Result<ConfirmAccrualResultDto>> HandleAsync(
             ConfirmAccrualFromSessionDto dto,
             Guid businessId,
             CancellationToken ct = default)
         {
-            if (dto.ScanSessionId == Guid.Empty)
+            if (dto is null)
             {
-                return Result<ConfirmAccrualResultDto>.Fail("ScanSessionId is required.");
+                return Result<ConfirmAccrualResultDto>.Fail("Request is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.ScanSessionToken))
+            {
+                return Result<ConfirmAccrualResultDto>.Fail("ScanSessionToken is required.");
             }
 
             if (businessId == Guid.Empty)
@@ -90,64 +85,74 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ConfirmAccrualResultDto>.Fail("Points must be a positive integer.");
             }
 
-            var session = await _db.Set<ScanSession>()
-                .AsQueryable()
-                .SingleOrDefaultAsync(
-                    s => s.Id == dto.ScanSessionId && !s.IsDeleted,
-                    ct)
+            // Resolve token -> (QrCodeToken, ScanSession) and validate business ownership, expiry and pending status.
+            var resolvedResult = await _tokenResolver
+                .ResolveForBusinessAsync(dto.ScanSessionToken, businessId, ct)
                 .ConfigureAwait(false);
 
-            if (session is null)
+            if (!resolvedResult.Succeeded || resolvedResult.Value is null)
             {
-                return Result<ConfirmAccrualResultDto>.Fail("Scan session not found.");
+                return Result<ConfirmAccrualResultDto>.Fail(resolvedResult.Error ?? "Invalid scan session token.");
             }
 
-            if (session.BusinessId != businessId)
-            {
-                return Result<ConfirmAccrualResultDto>.Fail("Scan session does not belong to this business.");
-            }
+            var token = resolvedResult.Value.Token;
+            var session = resolvedResult.Value.Session;
 
             if (session.Mode != LoyaltyScanMode.Accrual)
             {
                 return Result<ConfirmAccrualResultDto>.Fail("Scan session is not in accrual mode.");
             }
 
-            var now = _clock.UtcNow;
-            if (session.ExpiresAtUtc <= now)
-            {
-                session.Status = LoyaltyScanStatus.Expired;
-                session.Outcome = "Expired";
-                session.FailureReason = "Session expired before accrual confirmation.";
-
-                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
-                return Result<ConfirmAccrualResultDto>.Fail("Scan session has expired.");
-            }
-
-            if (session.Status != LoyaltyScanStatus.Pending)
-            {
-                return Result<ConfirmAccrualResultDto>.Fail("Scan session is not in a pending state.");
-            }
+            // Consume token early to reduce replay window.
+            // If any later failure occurs, we will cancel the session with a failure reason.
+            await _tokenResolver
+                .ConsumeAsync(token, businessId, session.BusinessLocationId, ct)
+                .ConfigureAwait(false);
 
             var account = await _db.Set<LoyaltyAccount>()
                 .AsQueryable()
-                .SingleOrDefaultAsync(
-                    a => a.Id == session.LoyaltyAccountId && !a.IsDeleted,
-                    ct)
+                .SingleOrDefaultAsync(a => a.Id == session.LoyaltyAccountId && !a.IsDeleted, ct)
                 .ConfigureAwait(false);
 
             if (account is null)
             {
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "AccountNotFound";
+                session.FailureReason = "Loyalty account for scan session not found.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
                 return Result<ConfirmAccrualResultDto>.Fail("Loyalty account for scan session not found.");
             }
 
             if (account.Status != LoyaltyAccountStatus.Active)
             {
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "AccountNotActive";
+                session.FailureReason = "Loyalty account is not active.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
                 return Result<ConfirmAccrualResultDto>.Fail("Loyalty account is not active.");
             }
 
-            var staffUserId = _currentUserService.GetCurrentUserId();
+            var now = _clock.UtcNow;
 
-            // Create the ledger entry for the accrual.
+            // Extra safety: If the session expired between resolve and now, treat as expired.
+            if (session.ExpiresAtUtc <= now)
+            {
+                session.Status = LoyaltyScanStatus.Expired;
+                session.Outcome = "Expired";
+                session.FailureReason = "Session expired before accrual confirmation.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+                return Result<ConfirmAccrualResultDto>.Fail("Scan session has expired.");
+            }
+
+            var staffUserId = _currentUserService.GetCurrentUserId();
+            if (staffUserId == Guid.Empty)
+            {
+                return Result<ConfirmAccrualResultDto>.Fail("User is not authenticated.");
+            }
+
             var transaction = new LoyaltyPointsTransaction
             {
                 LoyaltyAccountId = account.Id,
@@ -163,12 +168,10 @@ namespace Darwin.Application.Loyalty.Commands
 
             _db.Set<LoyaltyPointsTransaction>().Add(transaction);
 
-            // Update the account balance and lifetime points.
             account.PointsBalance += dto.Points;
             account.LifetimePoints += dto.Points;
             account.LastAccrualAtUtc = now;
 
-            // Mark the session as completed and link the resulting transaction.
             session.Status = LoyaltyScanStatus.Completed;
             session.Outcome = "Accrued";
             session.FailureReason = null;
