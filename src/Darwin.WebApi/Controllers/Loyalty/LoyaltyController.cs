@@ -124,18 +124,16 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// <para>
         /// For redemption-mode sessions, the response also includes a list of
         /// <see cref="LoyaltyRewardSummary"/> instances describing the rewards that
-        /// were actually accepted for redemption. This list is derived from the
-        /// reward tier identifiers returned by the application handler and a separate
-        /// read-side query that lists the available rewards for the business.
+        /// were actually accepted for redemption. This list is derived by joining:
+        /// (1) the accepted reward tier ids returned by the Application handler, and
+        /// (2) the available rewards query for the business.
         /// </para>
         /// </remarks>
-        /// <param name="request">
-        /// The scan preparation request payload sent by the consumer device.
-        /// </param>
+        /// <param name="request">The scan preparation request payload sent by the consumer device.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>
-        /// <see cref="PrepareScanSessionResponse"/> on success; HTTP 400 with an error
-        /// payload when validation or business rules fail.
+        /// <see cref="PrepareScanSessionResponse"/> on success; HTTP 400 with an error payload
+        /// when validation or business rules fail.
         /// </returns>
         [HttpPost("scan/prepare")]
         [ProducesResponseType(typeof(PrepareScanSessionResponse), StatusCodes.Status200OK)]
@@ -154,14 +152,13 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequest("BusinessId is required.");
             }
 
-            // Contract enum has only Accrual/Redemption; no separate "Unknown" value.
-            // Any future unexpected value is mapped to a safe default in MapScanMode.
             var dto = new PrepareScanSessionDto
             {
                 BusinessId = request.BusinessId,
                 BusinessLocationId = request.BusinessLocationId,
                 Mode = MapScanMode(request.Mode),
-                SelectedRewardTierIds = request.SelectedRewardTierIds?.ToList() ?? new List<Guid>(),
+                SelectedRewardTierIds = request.SelectedRewardTierIds?.Where(x => x != Guid.Empty).Distinct().ToList()
+                    ?? new List<Guid>(),
                 DeviceId = request.DeviceId
             };
 
@@ -171,22 +168,17 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             if (!result.Succeeded || result.Value is null)
             {
-                // Translate the Result into a consistent HTTP 400 problem response.
                 return ProblemFromResult(result);
             }
 
             var value = result.Value;
 
-            // Default to an empty list; only redemption-mode sessions with accepted
-            // reward tiers will populate this collection.
+            // Default to an empty list; only redemption-mode sessions with accepted reward tiers populate this.
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            // Only redemption-mode sessions can have selected rewards.
             if (value.Mode == DomainLoyaltyScanMode.Redemption &&
                 value.SelectedRewardTierIds is { Count: > 0 })
             {
-                // Query the available rewards for this business and current user so we
-                // can materialize full reward summaries for the selected tiers.
                 var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
                     .HandleAsync(request.BusinessId, ct)
                     .ConfigureAwait(false);
@@ -199,12 +191,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
                         .ToHashSet();
 
                     selectedRewards = availableRewardsResult.Value
-                        .Where(r => acceptedTierIds.Contains(r.Id))
+                        .Where(r => acceptedTierIds.Contains(r.LoyaltyRewardTierId))
                         .Select(r => new LoyaltyRewardSummary
                         {
-                            Id = r.Id,
+                            LoyaltyRewardTierId = r.LoyaltyRewardTierId,
                             BusinessId = r.BusinessId,
-                            Title = r.Title,
+                            Name = r.Name ?? string.Empty,
                             Description = r.Description,
                             RequiredPoints = r.RequiredPoints,
                             IsActive = r.IsActive,
@@ -227,6 +219,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         }
 
         #endregion
+
 
 
 
@@ -323,38 +316,25 @@ namespace Darwin.WebApi.Controllers.Loyalty
         #endregion
 
 
+        #region Scan processing (business)
+
         /// <summary>
-        /// Processes a loyalty scan session on the business device after scanning
-        /// the QR code shown by the consumer app.
+        /// Processes a scanned QR token for the current business and returns a business-facing
+        /// view of the scan session.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The business app calls this endpoint with the <see cref="ProcessScanSessionForBusinessRequest"/>
-        /// payload that contains the <see cref="ProcessScanSessionForBusinessRequest.ScanSessionId"/>
-        /// obtained from the scanned QR code.
-        /// </para>
-        /// <para>
-        /// The business identifier is not taken from the request body. Instead, it is
-        /// resolved from the authenticated user principal (for example from a
-        /// <c>"business_id"</c> claim). This prevents a client from forging a different
-        /// business identifier.
+        /// The business app scans a QR code that contains only an opaque <c>ScanSessionToken</c>.
+        /// The backend resolves the token to internal records, validates expiry/state/ownership,
+        /// and returns the session view.
         /// </para>
         /// </remarks>
-        /// <param name="request">
-        /// The request payload sent by the business app, containing the scan session id.
-        /// </param>
+        /// <param name="request">Request payload containing <c>ScanSessionToken</c>.</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// On success, returns a <see cref="ProcessScanSessionForBusinessResponse"/> that
-        /// contains a business-facing snapshot of the scan session. On failure, returns
-        /// <c>400 Bad Request</c> for validation or business rule violations, or
-        /// <c>403 Forbidden</c> when the current principal is not bound to a business.
-        /// </returns>
         [HttpPost("scan/process")]
         [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
         [ProducesResponseType(typeof(ProcessScanSessionForBusinessResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> ProcessScanSessionForBusinessAsync(
             [FromBody] ProcessScanSessionForBusinessRequest? request,
             CancellationToken ct = default)
@@ -364,52 +344,90 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequest("Request body is required.");
             }
 
-            if (request.ScanSessionId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequest("ScanSessionId is required.");
+                return BadRequest("ScanSessionToken is required.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
             {
-                // If the principal is authenticated but not correctly bound to a
-                // business, we return a 403 (forbid) rather than a 401.
                 return errorResult ?? Forbid();
             }
 
             var result = await _processScanSessionForBusinessHandler
-                .HandleAsync(request.ScanSessionId, businessId, ct)
+                .HandleAsync(request.ScanSessionToken, businessId, ct)
                 .ConfigureAwait(false);
 
             if (!result.Succeeded || result.Value is null)
             {
-                // Translate the application-level Result into a consistent HTTP 400
-                // response with a simple { error = "..."} payload.
                 return ProblemFromResult(result);
             }
 
             var value = result.Value;
 
+            // Default to empty list; only redemption-mode sessions may carry selected rewards.
+            IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
+
+            if (value.Mode == DomainLoyaltyScanMode.Redemption &&
+                value.SelectedRewards is { Count: > 0 })
+            {
+                var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
+                    .HandleAsync(businessId, ct)
+                    .ConfigureAwait(false);
+
+                if (availableRewardsResult.Succeeded && availableRewardsResult.Value is not null)
+                {
+                    var selectedTierIds = value.SelectedRewards
+                        .Select(x => x.LoyaltyRewardTierId)
+                        .Where(x => x != Guid.Empty)
+                        .Distinct()
+                        .ToHashSet();
+
+                    selectedRewards = availableRewardsResult.Value
+                        .Where(r => selectedTierIds.Contains(r.LoyaltyRewardTierId))
+                        .Select(r => new LoyaltyRewardSummary
+                        {
+                            LoyaltyRewardTierId = r.LoyaltyRewardTierId,
+                            BusinessId = r.BusinessId,
+                            Name = r.Name ?? string.Empty,
+                            Description = r.Description,
+                            RequiredPoints = r.RequiredPoints,
+                            IsActive = r.IsActive,
+                            IsSelectable = r.IsSelectable
+                        })
+                        .ToList();
+                }
+            }
+
+            var allowedActions =
+                value.Mode == DomainLoyaltyScanMode.Accrual
+                    ? LoyaltyScanAllowedActions.CanConfirmAccrual
+                    : LoyaltyScanAllowedActions.CanConfirmRedemption;
+
             var response = new ProcessScanSessionForBusinessResponse
             {
-                ScanSessionId = value.ScanSessionId,
                 Mode = MapScanMode(value.Mode),
                 BusinessId = businessId,
-                // The current handler does not project a business location identifier
-                // or a full loyalty account summary. We keep these nullable and let
-                // clients rely on the minimal snapshot. They can always call dedicated
-                // account endpoints to obtain richer data.
-                BusinessLocationId = null,
-                LoyaltyAccount = null,
-                CustomerDisplayName = value.CustomerDisplayName,
-                // SelectedRewards is left at its default (empty list). The Application
-                // handler currently exposes only technical details (tier id, quantity,
-                // required points per unit) via SelectedRewardItemDto and does not
-                // join with reward definitions. Mapping to LoyaltyRewardSummary here
-                // would therefore be lossy and potentially misleading.
+                AccountSummary = new BusinessLoyaltyAccountSummary
+                {
+                    LoyaltyAccountId = value.LoyaltyAccountId,
+                    PointsBalance = value.CurrentPointsBalance,
+                    CustomerDisplayName = value.CustomerDisplayName
+                },
+                SelectedRewards = selectedRewards,
+                AllowedActions = allowedActions
             };
 
             return Ok(response);
         }
+
+        #endregion
+
+
+
+
+
+
 
         /// <summary>
         /// Attempts to resolve the current business identifier from the
@@ -499,9 +517,15 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequest("Request body is required.");
             }
 
-            if (request.ScanSessionId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequest("ScanSessionId is required.");
+                return BadRequest("ScanSessionToken is required.");
+            }
+
+            // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
+            if (request.ScanSessionToken.Length > 4000)
+            {
+                return BadRequest("ScanSessionToken is too long.");
             }
 
             if (request.Points <= 0)
@@ -511,16 +535,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
             {
-                // The caller is authenticated but not correctly bound to a business
-                // context (for example, missing or invalid "business_id" claim).
-                // This is treated as a forbidden operation rather than an
-                // authentication failure.
                 return errorResult ?? Forbid();
             }
 
             var dto = new ConfirmAccrualFromSessionDto
             {
-                ScanSessionId = request.ScanSessionId,
+                ScanSessionToken = request.ScanSessionToken,
                 Points = request.Points,
                 Note = request.Note
             };
@@ -531,11 +551,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             if (!result.Succeeded || result.Value is null)
             {
-                // For now we surface application-level failures as 400 responses
-                // with a simple { error = "..." } payload. If we later introduce
-                // structured error codes at the Application layer, this mapping
-                // can be extended to populate ConfirmAccrualResponse.ErrorCode
-                // and ErrorMessage while still using HTTP 200.
                 return ProblemFromResult(result);
             }
 
@@ -545,10 +560,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
             {
                 Success = true,
                 NewBalance = value.NewPointsBalance,
-                // The Application layer currently does not project a full loyalty
-                // account snapshot as part of ConfirmAccrualResultDto. We keep
-                // UpdatedAccount null for now; a future enhancement could call a
-                // dedicated query to load and map LoyaltyAccountSummary here.
                 UpdatedAccount = null,
                 ErrorCode = null,
                 ErrorMessage = null
@@ -556,6 +567,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
+
 
 
 
@@ -598,23 +610,25 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequest("Request body is required.");
             }
 
-            if (request.ScanSessionId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequest("ScanSessionId is required.");
+                return BadRequest("ScanSessionToken is required.");
+            }
+
+            // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
+            if (request.ScanSessionToken.Length > 4000)
+            {
+                return BadRequest("ScanSessionToken is too long.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
             {
-                // The caller is authenticated but not correctly bound to a business
-                // context (for example, missing or invalid "business_id" claim).
-                // This is treated as a forbidden operation rather than an
-                // authentication failure.
                 return errorResult ?? Forbid();
             }
 
             var dto = new ConfirmRedemptionFromSessionDto
             {
-                ScanSessionId = request.ScanSessionId
+                ScanSessionToken = request.ScanSessionToken
             };
 
             var result = await _confirmRedemptionFromSessionHandler
@@ -623,17 +637,11 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             if (!result.Succeeded || result.Value is null)
             {
-                // Application-level failures are surfaced as HTTP 400 responses with
-                // a simple { error = "..." } payload, consistent with the Result<T>
-                // pattern used across the solution.
                 return ProblemFromResult(result);
             }
 
             var value = result.Value;
 
-            // For now we return a minimal response: success flag and the new balance.
-            // The Application layer does not yet provide a rich account snapshot here,
-            // so UpdatedAccount is left null to avoid partially populated data.
             var response = new ConfirmRedemptionResponse
             {
                 Success = true,
@@ -645,6 +653,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
+
+
+
+
 
 
         /// <summary>

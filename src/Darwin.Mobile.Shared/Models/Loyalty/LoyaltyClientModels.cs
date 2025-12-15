@@ -12,7 +12,8 @@ namespace Darwin.Mobile.Shared.Models.Loyalty
     {
         /// <summary>
         /// Gets the opaque token that should be rendered as a QR code.
-        /// This value must not be an internal user identifier.
+        /// This value must not be an internal user identifier and must be treated
+        /// as a short-lived secret.
         /// </summary>
         public string Token { get; init; } = string.Empty;
 
@@ -24,7 +25,6 @@ namespace Darwin.Mobile.Shared.Models.Loyalty
 
         /// <summary>
         /// Gets the scan mode for this session (e.g. accrual or redemption).
-        /// This is typically mapped from a server-side enum.
         /// </summary>
         public LoyaltyScanMode Mode { get; init; }
 
@@ -60,10 +60,22 @@ namespace Darwin.Mobile.Shared.Models.Loyalty
         public Guid BusinessId { get; init; }
 
         /// <summary>
-        /// Gets a lightweight account summary (points balance, etc.).
-        /// It must not contain PII; only loyalty-related data is exposed.
+        /// Gets the optional business location identifier (branch), if projected by the server.
         /// </summary>
-        public LoyaltyAccountSummary? AccountSummary { get; init; }
+        public Guid? BusinessLocationId { get; init; }
+
+        /// <summary>
+        /// Gets a lightweight account summary tailored for the business app.
+        /// This must not contain PII; only loyalty-related data is exposed.
+        /// </summary>
+        public BusinessLoyaltyAccountSummary AccountSummary { get; init; } =
+            new BusinessLoyaltyAccountSummary();
+
+        /// <summary>
+        /// Gets an optional human-friendly alias the cashier may use to confirm
+        /// the customer's identity verbally. This should not contain sensitive PII.
+        /// </summary>
+        public string? CustomerDisplayName { get; init; }
 
         /// <summary>
         /// Gets the rewards that the consumer pre-selected for redemption

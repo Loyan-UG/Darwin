@@ -3,56 +3,60 @@
 namespace Darwin.Contracts.Loyalty
 {
     /// <summary>
-    /// Lightweight reward summary used by mobile apps when listing
-    /// rewards that can be redeemed for a specific business.
+    /// Lightweight reward summary used by mobile apps when listing rewards
+    /// that can be redeemed for a specific business.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This model is intentionally independent from the full loyalty
-    /// reward tier entity used on the server. It exposes only the
-    /// information required by the mobile UI.
+    /// This model is intentionally independent from server-side entities and exposes
+    /// only the information required by the mobile UI.
+    /// </para>
+    /// <para>
+    /// All string properties are configured to be non-null by default to avoid
+    /// null-handling overhead in clients.
     /// </para>
     /// </remarks>
     public sealed class LoyaltyRewardSummary
     {
         /// <summary>
-        /// Gets the identifier of the reward tier that can be redeemed.
+        /// Gets the reward tier identifier.
         /// </summary>
         public Guid LoyaltyRewardTierId { get; init; }
 
         /// <summary>
-        /// Gets the identifier of the business that owns this reward.
+        /// Gets the business identifier to which this reward belongs.
         /// </summary>
         public Guid BusinessId { get; init; }
 
         /// <summary>
-        /// Gets the human-readable reward name shown to the consumer
-        /// (for example, "Free Coffee" or "20% Off").
+        /// Gets the reward name/title. Never null.
         /// </summary>
-        public string Name { get; init; } = default!;
+        public string Name { get; init; } = string.Empty;
 
         /// <summary>
-        /// Gets an optional longer description that explains the reward
-        /// in more detail (terms and conditions, limitations, etc.).
+        /// Gets an optional reward description.
         /// </summary>
         public string? Description { get; init; }
 
         /// <summary>
-        /// Gets the number of points required to redeem a single unit
-        /// of this reward.
+        /// Gets the amount of points required to redeem this reward.
         /// </summary>
         public int RequiredPoints { get; init; }
 
         /// <summary>
-        /// Gets a value indicating whether this reward is currently active
-        /// and visible in the loyalty program of the business.
+        /// Gets whether the underlying loyalty program/tier is active.
         /// </summary>
         public bool IsActive { get; init; }
 
         /// <summary>
-        /// Gets a value indicating whether this reward is selectable in the
-        /// consumer app for the current context (for example, the consumer
-        /// already has enough points and the reward is not blocked).
+        /// Gets whether redeeming this reward requires explicit confirmation
+        /// (for example by cashier approval).
+        /// </summary>
+        public bool RequiresConfirmation { get; init; }
+
+        /// <summary>
+        /// Gets whether this reward is currently selectable for the requesting user
+        /// (based on balance/account status, as computed by the server).
         /// </summary>
         public bool IsSelectable { get; init; }
     }
