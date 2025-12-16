@@ -25,7 +25,7 @@ namespace Darwin.WebApi.Controllers
         /// <param name="title">Short summary of the problem.</param>
         /// <param name="detail">Optional detail message.</param>
         /// <returns>HTTP 400 response with <see cref="ContractProblemDetails"/> body.</returns>
-        protected IActionResult BadRequestError(string title, string? detail = null)
+        protected IActionResult BadRequestProblem(string title, string? detail = null)
         {
             if (string.IsNullOrWhiteSpace(title))
                 throw new ArgumentException("Title is required.", nameof(title));

@@ -131,6 +131,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// when validation or business rules fail.
         /// </returns>
         [HttpPost("scan/prepare")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
         [ProducesResponseType(typeof(PrepareScanSessionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PrepareScanSessionAsync(
@@ -139,12 +140,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequestError("Request body is required.");
+                return BadRequestProblem("Request body is required.");
             }
 
             if (request.BusinessId == Guid.Empty)
             {
-                return BadRequestError("BusinessId is required.");
+                return BadRequestProblem("BusinessId is required.");
             }
 
             var dto = new PrepareScanSessionDto
@@ -277,12 +278,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequestError("Request body is required.");
+                return BadRequestProblem("Request body is required.");
             }
 
             if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequestError("ScanSessionToken is required.");
+                return BadRequestProblem("ScanSessionToken is required.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
@@ -450,23 +451,23 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequestError("Request body is required.");
+                return BadRequestProblem("Request body is required.");
             }
 
             if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequestError("ScanSessionToken is required.");
+                return BadRequestProblem("ScanSessionToken is required.");
             }
 
             // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
             if (request.ScanSessionToken.Length > 4000)
             {
-                return BadRequestError("ScanSessionToken is too long.");
+                return BadRequestProblem("ScanSessionToken is too long.");
             }
 
             if (request.Points <= 0)
             {
-                return BadRequestError("Points must be greater than zero.");
+                return BadRequestProblem("Points must be greater than zero.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
@@ -543,18 +544,18 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequestError("Request body is required.");
+                return BadRequestProblem("Request body is required.");
             }
 
             if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequestError("ScanSessionToken is required.");
+                return BadRequestProblem("ScanSessionToken is required.");
             }
 
             // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
             if (request.ScanSessionToken.Length > 4000)
             {
-                return BadRequestError("ScanSessionToken is too long.");
+                return BadRequestProblem("ScanSessionToken is too long.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
@@ -692,7 +693,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (businessId == Guid.Empty)
             {
-                return BadRequestError("BusinessId is required.");
+                return BadRequestProblem("BusinessId is required.");
             }
 
             var result = await _getMyLoyaltyHistoryHandler
@@ -764,7 +765,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (businessId == Guid.Empty)
             {
-                return BadRequestError("BusinessId is required.");
+                return BadRequestProblem("BusinessId is required.");
             }
 
             // Application handler resolves the current user via ICurrentUserService
@@ -784,7 +785,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             if (dto is null)
             {
                 // No loyalty account exists yet for this (business, user) pair.
-                return NotFound("Loyalty account not found for the specified business and user.");
+                return NotFoundProblem("Loyalty account not found for the specified business and user.");
             }
 
             var response = new LoyaltyAccountSummary
@@ -832,7 +833,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// in the client UI.
         /// </returns>
         [HttpGet("business/{businessId:guid}/rewards")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
         [ProducesResponseType(typeof(IReadOnlyList<LoyaltyRewardSummary>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetRewardsForBusinessAsync(
@@ -841,7 +842,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (businessId == Guid.Empty)
             {
-                return BadRequestError("BusinessId is required.");
+                return BadRequestProblem("BusinessId is required.");
             }
 
             var result = await _getAvailableLoyaltyRewardsForBusinessHandler
