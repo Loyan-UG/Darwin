@@ -31,7 +31,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
     [Route("api/v1/loyalty")]
 
     [Authorize]
-    public sealed class LoyaltyController : ControllerBase
+    public sealed class LoyaltyController : ApiControllerBase
     {
         private readonly PrepareScanSessionHandler _prepareScanSessionHandler;
         private readonly ProcessScanSessionForBusinessHandler _processScanSessionForBusinessHandler;
