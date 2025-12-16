@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Darwin.Application.Loyalty.Commands;
+﻿using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
 using Darwin.Contracts.Loyalty;
 using Darwin.Shared.Results;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+
 // Use explicit aliases to avoid ambiguity between domain and contract enums.
 using DomainLoyaltyScanMode = Darwin.Domain.Enums.LoyaltyScanMode;
 using ContractLoyaltyScanMode = Darwin.Contracts.Loyalty.LoyaltyScanMode;
@@ -34,7 +28,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
     /// </para>
     /// </remarks>
     [ApiController]
-    [Route("api/loyalty")]
+    [Route("api/v1/loyalty")]
+
     [Authorize]
     public sealed class LoyaltyController : ControllerBase
     {
@@ -144,12 +139,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequest("Request body is required.");
+                return BadRequestError("Request body is required.");
             }
 
             if (request.BusinessId == Guid.Empty)
             {
-                return BadRequest("BusinessId is required.");
+                return BadRequestError("BusinessId is required.");
             }
 
             var dto = new PrepareScanSessionDto
@@ -222,65 +217,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
 
 
-
-
-        #region Result helpers
-
-        /// <summary>
-        /// Translates a non-generic <see cref="Result"/> into a problem response.
-        /// </summary>
-        /// <param name="result">The operation result.</param>
-        /// <returns>HTTP 400 problem response.</returns>
-        private static IActionResult ProblemFromResult(Result result)
-        {
-            if (result is null)
-            {
-                throw new ArgumentNullException(nameof(result));
-            }
-
-            if (result.Succeeded)
-            {
-                // This should never be called with a successful result; treat it as a bug.
-                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-            }
-
-            var error = result.Error ?? "Unknown error.";
-
-            return new ObjectResult(new { error })
-            {
-                StatusCode = StatusCodes.Status400BadRequest
-            };
-        }
-
-        /// <summary>
-        /// Translates a generic <see cref="Result{T}"/> into a problem response.
-        /// </summary>
-        /// <typeparam name="T">Result payload type.</typeparam>
-        /// <param name="result">The operation result.</param>
-        /// <returns>HTTP 400 problem response.</returns>
-        private static IActionResult ProblemFromResult<T>(Result<T> result)
-        {
-            if (result is null)
-            {
-                throw new ArgumentNullException(nameof(result));
-            }
-
-            if (result.Succeeded)
-            {
-                // This should never be called with a successful result; treat it as a bug.
-                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
-            }
-
-            var error = result.Error ?? "Unknown error.";
-
-            return new ObjectResult(new { error })
-            {
-                StatusCode = StatusCodes.Status400BadRequest
-            };
-        }
-
-        #endregion
-
         #region Enum mapping helpers
 
         /// <summary>
@@ -341,12 +277,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequest("Request body is required.");
+                return BadRequestError("Request body is required.");
             }
 
             if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequest("ScanSessionToken is required.");
+                return BadRequestError("ScanSessionToken is required.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
@@ -514,23 +450,23 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequest("Request body is required.");
+                return BadRequestError("Request body is required.");
             }
 
             if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequest("ScanSessionToken is required.");
+                return BadRequestError("ScanSessionToken is required.");
             }
 
             // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
             if (request.ScanSessionToken.Length > 4000)
             {
-                return BadRequest("ScanSessionToken is too long.");
+                return BadRequestError("ScanSessionToken is too long.");
             }
 
             if (request.Points <= 0)
             {
-                return BadRequest("Points must be greater than zero.");
+                return BadRequestError("Points must be greater than zero.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
@@ -607,18 +543,18 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (request is null)
             {
-                return BadRequest("Request body is required.");
+                return BadRequestError("Request body is required.");
             }
 
             if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
             {
-                return BadRequest("ScanSessionToken is required.");
+                return BadRequestError("ScanSessionToken is required.");
             }
 
             // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
             if (request.ScanSessionToken.Length > 4000)
             {
-                return BadRequest("ScanSessionToken is too long.");
+                return BadRequestError("ScanSessionToken is too long.");
             }
 
             if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
@@ -756,7 +692,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (businessId == Guid.Empty)
             {
-                return BadRequest("BusinessId is required.");
+                return BadRequestError("BusinessId is required.");
             }
 
             var result = await _getMyLoyaltyHistoryHandler
@@ -828,7 +764,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (businessId == Guid.Empty)
             {
-                return BadRequest("BusinessId is required.");
+                return BadRequestError("BusinessId is required.");
             }
 
             // Application handler resolves the current user via ICurrentUserService
@@ -905,7 +841,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         {
             if (businessId == Guid.Empty)
             {
-                return BadRequest("BusinessId is required.");
+                return BadRequestError("BusinessId is required.");
             }
 
             var result = await _getAvailableLoyaltyRewardsForBusinessHandler
@@ -941,6 +877,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(rewards);
         }
+
 
 
     }
