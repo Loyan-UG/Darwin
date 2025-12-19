@@ -32,6 +32,19 @@ namespace Darwin.Application.Businesses.DTOs
         public string? City { get; set; }
 
         /// <summary>
+        /// Optional address-related query used to match against location fields such as
+        /// street lines, postal code, region, country code and location name.
+        /// This enables "partial address" search in mobile discovery.
+        /// </summary>
+        public string? AddressQuery { get; set; }
+
+        /// <summary>
+        /// Optional ISO 3166-1 alpha-2 country code (e.g., "DE").
+        /// When provided, discovery is constrained to locations in this country.
+        /// </summary>
+        public string? CountryCode { get; set; }
+
+        /// <summary>
         /// Optional business category filter.
         /// </summary>
         public BusinessCategoryKind? Category { get; set; }

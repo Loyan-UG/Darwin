@@ -11,9 +11,13 @@ using Microsoft.EntityFrameworkCore;
 namespace Darwin.Application.Loyalty.Queries
 {
     /// <summary>
-    /// Query handler that returns the most recent loyalty points transactions
-    /// for a given loyalty account. This is primarily used by mobile/consumer
-    /// apps to display the points ledger history for the currently active account.
+    /// Query handler that returns the most recent loyalty points transactions for a given loyalty account.
+    /// This handler is primarily used by consumer/mobile apps to display the points ledger history.
+    ///
+    /// IMPORTANT (Token-First Rule):
+    /// This handler must never expose internal scan-session identifiers (e.g., ScanSessionId).
+    /// External clients must only deal with opaque ScanSessionToken values, which are resolved internally
+    /// by dedicated token resolver services in QR-based flows.
     /// </summary>
     public sealed class GetLoyaltyAccountTransactionsHandler
     {
@@ -94,8 +98,10 @@ namespace Darwin.Application.Loyalty.Queries
                     // Use creation timestamp as the logical occurrence timestamp.
                     OccurredAtUtc = tx.CreatedAtUtc,
 
+                    // Deprecated!
                     // When the transaction originated from a scan, expose the scan session id.
-                    ScanSessionId = scan != null ? scan.Id : (Guid?)null,
+                    //ScanSessionId = scan != null ? scan.Id : (Guid?)null,
+
                     // In the domain the link is RewardRedemptionId; the DTO uses RewardTierId.
                     // This maps the redemption foreign key so the client can resolve tier details if needed.
                     RewardTierId = tx.RewardRedemptionId

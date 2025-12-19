@@ -13,11 +13,16 @@ namespace Darwin.Application.Businesses.Queries
 {
     /// <summary>
     /// Provides a public business discovery list for consumer/mobile scenarios.
-    /// Supports filtering by query text, city, category and optional proximity.
+    /// Supports filtering by query text, address/city, category and optional proximity.
     /// </summary>
     /// <remarks>
     /// This handler intentionally avoids any dependency on Contracts types.
     /// The WebApi layer may map its request/response contracts to these DTOs.
+    ///
+    /// Geo strategy:
+    /// - Apply a database-agnostic bounding box filter in SQL for proximity queries.
+    /// - Compute the precise distance using Haversine in memory for sorting and client display.
+    /// This avoids hard-coupling to a specific DB vendor's spatial extensions.
     /// </remarks>
     public sealed class GetBusinessesForDiscoveryHandler
     {
@@ -59,8 +64,7 @@ namespace Darwin.Application.Businesses.Queries
                     (x.ShortDescription != null && x.ShortDescription.Contains(q)));
             }
 
-            // We use the primary location as a "display" location for discovery cards.
-            // If a business does not have a primary location, we still allow it to show up.
+            // Primary location acts as display location for discovery cards.
             var primaryLocationQuery = _db.Set<BusinessLocation>()
                 .AsNoTracking()
                 .Where(l => l.IsPrimary);
@@ -70,6 +74,35 @@ namespace Darwin.Application.Businesses.Queries
                 var city = request.City.Trim();
                 primaryLocationQuery = primaryLocationQuery.Where(l =>
                     l.City != null && l.City.Contains(city));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CountryCode))
+            {
+                var cc = request.CountryCode.Trim();
+                primaryLocationQuery = primaryLocationQuery.Where(l =>
+                    l.CountryCode != null && l.CountryCode == cc);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.AddressQuery))
+            {
+                var aq = request.AddressQuery.Trim();
+
+                // Match against common address fields and location name to support partial address search.
+                primaryLocationQuery = primaryLocationQuery.Where(l =>
+                    (l.Name != null && l.Name.Contains(aq)) ||
+                    (l.AddressLine1 != null && l.AddressLine1.Contains(aq)) ||
+                    (l.AddressLine2 != null && l.AddressLine2.Contains(aq)) ||
+                    (l.City != null && l.City.Contains(aq)) ||
+                    (l.Region != null && l.Region.Contains(aq)) ||
+                    (l.PostalCode != null && l.PostalCode.Contains(aq)) ||
+                    (l.CountryCode != null && l.CountryCode.Contains(aq)));
+            }
+
+            // Optional proximity: apply a DB-agnostic bounding box filter in SQL.
+            // This reduces result set size before paging and keeps us portable across DB engines.
+            if (request.Coordinate != null && request.RadiusKm.HasValue && request.RadiusKm.Value > 0)
+            {
+                ApplyBoundingBoxFilter(primaryLocationQuery, request.Coordinate, request.RadiusKm.Value, out primaryLocationQuery);
             }
 
             // Compose final projection.
@@ -104,8 +137,7 @@ namespace Darwin.Application.Businesses.Queries
 
             var total = await composed.CountAsync(ct).ConfigureAwait(false);
 
-            // For proximity search we load a bounded page and compute distance in-memory.
-            // This keeps EF queries predictable without requiring spatial DB dependencies.
+            // Page in SQL first; distance calc is done on the page results.
             var pageItems = await composed
                 .OrderBy(x => x.Name)
                 .Skip((page - 1) * pageSize)
@@ -113,6 +145,7 @@ namespace Darwin.Application.Businesses.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
+            // Compute distance for the page if requested.
             if (request.Coordinate != null && request.RadiusKm.HasValue && request.RadiusKm.Value > 0)
             {
                 var origin = request.Coordinate;
@@ -126,10 +159,10 @@ namespace Darwin.Application.Businesses.Queries
                         continue;
                     }
 
-                    var d = HaversineKm(origin, item.Coordinate);
-                    item.DistanceKm = d;
+                    item.DistanceKm = HaversineKm(origin, item.Coordinate);
                 }
 
+                // Keep only items inside the radius and order them by distance.
                 pageItems = pageItems
                     .Where(x => x.DistanceKm.HasValue && x.DistanceKm.Value <= radiusKm)
                     .OrderBy(x => x.DistanceKm)
@@ -138,6 +171,45 @@ namespace Darwin.Application.Businesses.Queries
             }
 
             return (pageItems, total);
+        }
+
+        /// <summary>
+        /// Applies a bounding box filter (lat/lon ranges) on the location query.
+        /// This is a database-agnostic approach that works without spatial extensions.
+        /// </summary>
+        private static void ApplyBoundingBoxFilter(
+            IQueryable<BusinessLocation> source,
+            GeoCoordinateDto origin,
+            double radiusKm,
+            out IQueryable<BusinessLocation> filtered)
+        {
+            // Rough conversions:
+            // - 1 degree latitude is ~111 km.
+            // - 1 degree longitude varies with latitude (~111 km * cos(lat)).
+            const double kmPerDegreeLat = 111.0;
+
+            var lat = origin.Latitude;
+            var lon = origin.Longitude;
+
+            var latDelta = radiusKm / kmPerDegreeLat;
+
+            // Prevent division by near-zero cos(lat) close to the poles.
+            var cosLat = Math.Cos(lat * (Math.PI / 180.0));
+            if (Math.Abs(cosLat) < 0.000001)
+                cosLat = 0.000001;
+
+            var lonDelta = radiusKm / (kmPerDegreeLat * cosLat);
+
+            var minLat = lat - latDelta;
+            var maxLat = lat + latDelta;
+            var minLon = lon - lonDelta;
+            var maxLon = lon + lonDelta;
+
+            // Important: coordinate is optional.
+            filtered = source.Where(l =>
+                l.Coordinate != null &&
+                l.Coordinate.Latitude >= minLat && l.Coordinate.Latitude <= maxLat &&
+                l.Coordinate.Longitude >= minLon && l.Coordinate.Longitude <= maxLon);
         }
 
         /// <summary>

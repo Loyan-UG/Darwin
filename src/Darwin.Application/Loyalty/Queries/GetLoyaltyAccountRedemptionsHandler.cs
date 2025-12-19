@@ -91,8 +91,9 @@ namespace Darwin.Application.Loyalty.Queries
                     // Use entity creation time as the redemption timestamp.
                     RedeemedAtUtc = redemption.CreatedAtUtc,
 
+                    // Deprecated!
                     // When a scan session produced this redemption, surface its id.
-                    ScanSessionId = scan != null ? scan.Id : (Guid?)null,
+                    //ScanSessionId = scan != null ? scan.Id : (Guid?)null,
 
                     // Domain stores notes on the associated points transaction (if any),
                     // so we expose that as the "note" for the redemption row.

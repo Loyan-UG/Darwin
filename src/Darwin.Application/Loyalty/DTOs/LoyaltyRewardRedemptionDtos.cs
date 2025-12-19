@@ -7,36 +7,84 @@ namespace Darwin.Application.Loyalty.DTOs
     /// </summary>
     public sealed class LoyaltyRewardRedemptionCreateDto
     {
+        /// <summary>
+        /// Gets or sets the loyalty account identifier.
+        /// </summary>
         public Guid LoyaltyAccountId { get; set; }
         public Guid BusinessId { get; set; }
         public Guid ConsumerUserId { get; set; }
 
+        /// <summary>
+        /// Gets or sets the reward tier identifier that is being redeemed.
+        /// </summary>
         public Guid RewardTierId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of points to spend for this redemption.
+        /// </summary>
         public int PointsSpent { get; set; }
 
         public DateTime RedeemedAtUtc { get; set; }
 
+        // Deprecated!
         //public Guid? ScanSessionId { get; set; }
+
+        /// <summary>
+        /// Gets or sets an optional note associated with the redemption.
+        /// </summary>
         public string? Note { get; set; }
     }
 
     /// <summary>
     /// Lightweight list item for grids.
+    /// 
+    /// IMPORTANT (Token-First Rule):
+    /// This DTO must never expose internal scan session identifiers.
     /// </summary>
     public sealed class LoyaltyRewardRedemptionListItemDto
     {
+        /// <summary>
+        /// Gets or sets the redemption identifier.
+        /// </summary>
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the loyalty account identifier.
+        /// </summary>
         public Guid LoyaltyAccountId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the business identifier (resolved via account join).
+        /// </summary>
         public Guid BusinessId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the consumer user identifier (resolved via account join).
+        /// </summary>
         public Guid ConsumerUserId { get; set; }
 
+        /// <summary>
+        /// Gets or sets the reward tier identifier that was redeemed.
+        /// </summary>
         public Guid RewardTierId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of points spent for this redemption.
+        /// </summary>
         public int PointsSpent { get; set; }
 
+        /// <summary>
+        /// Gets or sets the UTC timestamp at which the redemption occurred.
+        /// </summary>
         public DateTime RedeemedAtUtc { get; set; }
 
-        public Guid? ScanSessionId { get; set; }
+        /// <summary>
+        /// Gets or sets an optional note associated with the redemption.
+        /// </summary>
         public string? Note { get; set; }
+
+        // Deprecated!
+        //public Guid? ScanSessionId { get; set; }
     }
 
 
