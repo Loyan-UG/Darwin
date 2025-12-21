@@ -32,6 +32,9 @@ namespace Darwin.Application.Identity.DTOs
         /// <summary>The preferred currency code (ISO 4217), e.g. "EUR".</summary>
         public string Currency { get; set; } = "EUR";
 
+        /// <summary>The user's email address.</summary>
+        public string Email { get; set; } = string.Empty;
+
         /// <summary>The user's phone number in E.164 format; may be null.</summary>
         public string? PhoneE164 { get; set; }
     }

@@ -1,7 +1,8 @@
 ﻿namespace Darwin.Contracts.Profile;
 
 /// <summary>
-/// Minimal editable customer profile.
+/// Represents the current customer's profile data returned by the public API.
+/// This contract is used by mobile apps for profile screens and must remain stable.
 /// </summary>
 public sealed class CustomerProfile
 {
@@ -13,5 +14,11 @@ public sealed class CustomerProfile
     public string? Locale { get; init; }
     public string? Timezone { get; init; }
     public string? PhoneE164 { get; init; }
+
+    /// <summary>
+    /// Concurrency token used for optimistic concurrency control.
+    /// Serialized as Base64 in JSON by System.Text.Json.
+    /// </summary>
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }
 

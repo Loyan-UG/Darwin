@@ -20,8 +20,4 @@
     <ProjectReference Include="..\Darwin.Infrastructure\Darwin.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\Businesses\" />
-  </ItemGroup>
-
 </Project>

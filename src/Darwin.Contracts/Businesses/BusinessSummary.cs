@@ -32,4 +32,10 @@ public sealed class BusinessSummary
 
     /// <summary>True if the business is currently active.</summary>
     public bool IsActive { get; init; }
+
+    /// <summary>
+    /// Gets or sets the distance from the query coordinate in meters (when proximity search is used).
+    /// This is derived from Application's DistanceKm.
+    /// </summary>
+    public int? DistanceMeters { get; set; }
 }

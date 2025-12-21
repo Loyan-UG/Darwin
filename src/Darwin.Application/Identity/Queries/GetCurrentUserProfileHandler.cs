@@ -63,6 +63,7 @@ namespace Darwin.Application.Identity.Queries
                     FirstName = u.FirstName,
                     LastName = u.LastName,
                     PhoneE164 = u.PhoneE164,
+                    Email = u.Email,
 
                     // Preferences (kept simple; validation and normalization happens in UpdateCurrentUserHandler)
                     Locale = u.Locale,
