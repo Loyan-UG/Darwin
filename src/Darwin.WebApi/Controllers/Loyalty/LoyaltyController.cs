@@ -1,14 +1,14 @@
 ﻿using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
+using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
 using Darwin.Shared.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using ContractLoyaltyScanMode = Darwin.Contracts.Loyalty.LoyaltyScanMode;
 // Use explicit aliases to avoid ambiguity between domain and contract enums.
 using DomainLoyaltyScanMode = Darwin.Domain.Enums.LoyaltyScanMode;
-using ContractLoyaltyScanMode = Darwin.Contracts.Loyalty.LoyaltyScanMode;
 
 namespace Darwin.WebApi.Controllers.Loyalty
 {
@@ -41,6 +41,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly GetMyLoyaltyHistoryHandler _getMyLoyaltyHistoryHandler;
         private readonly GetMyLoyaltyAccountForBusinessHandler _getMyLoyaltyAccountForBusinessHandler;
         private readonly GetAvailableLoyaltyRewardsForBusinessHandler _getAvailableLoyaltyRewardsForBusinessHandler;
+        private readonly GetMyLoyaltyBusinessesHandler _getMyLoyaltyBusinessesHandler;
+        private readonly GetMyLoyaltyTimelinePageHandler _getMyLoyaltyTimelinePageHandler;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LoyaltyController"/> class.
@@ -77,24 +80,20 @@ namespace Darwin.WebApi.Controllers.Loyalty
             GetMyLoyaltyAccountsHandler getMyLoyaltyAccountsHandler,
             GetMyLoyaltyHistoryHandler getMyLoyaltyHistoryHandler,
             GetMyLoyaltyAccountForBusinessHandler getMyLoyaltyAccountForBusinessHandler,
-            GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler)
+            GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
+            GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
+            GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler)
         {
-            _prepareScanSessionHandler = prepareScanSessionHandler 
-                ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
-            _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler 
-                ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
-            _confirmAccrualFromSessionHandler = confirmAccrualFromSessionHandler 
-                ?? throw new ArgumentNullException(nameof(confirmAccrualFromSessionHandler));
-            _confirmRedemptionFromSessionHandler = confirmRedemptionFromSessionHandler 
-                ?? throw new ArgumentNullException(nameof(confirmRedemptionFromSessionHandler));
-            _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler 
-                ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountsHandler));
-            _getMyLoyaltyHistoryHandler = getMyLoyaltyHistoryHandler 
-                ?? throw new ArgumentNullException(nameof(getMyLoyaltyHistoryHandler));
-            _getMyLoyaltyAccountForBusinessHandler = getMyLoyaltyAccountForBusinessHandler 
-                ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountForBusinessHandler));
-            _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler 
-                ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
+            _prepareScanSessionHandler = prepareScanSessionHandler ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
+            _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
+            _confirmAccrualFromSessionHandler = confirmAccrualFromSessionHandler ?? throw new ArgumentNullException(nameof(confirmAccrualFromSessionHandler));
+            _confirmRedemptionFromSessionHandler = confirmRedemptionFromSessionHandler ?? throw new ArgumentNullException(nameof(confirmRedemptionFromSessionHandler));
+            _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountsHandler));
+            _getMyLoyaltyHistoryHandler = getMyLoyaltyHistoryHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyHistoryHandler));
+            _getMyLoyaltyAccountForBusinessHandler = getMyLoyaltyAccountForBusinessHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountForBusinessHandler));
+            _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
+            _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
+            _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
         }
 
 
@@ -879,6 +878,285 @@ namespace Darwin.WebApi.Controllers.Loyalty
             return Ok(rewards);
         }
 
+
+
+        /// <summary>
+        /// Returns the list of businesses for which the current user has a loyalty account ("My places").
+        /// This endpoint is consumer/member scoped and relies on the current authenticated user resolved
+        /// in the Application layer via <c>ICurrentUserService</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The underlying Application handler uses standard joins/subqueries only (DB-agnostic),
+        /// and does not expose any internal identifiers.
+        /// </para>
+        /// <para>
+        /// This endpoint uses offset paging because the list is user-scoped and expected to be small.
+        /// </para>
+        /// </remarks>
+        /// <param name="page">1-based page index. Defaults to 1.</param>
+        /// <param name="pageSize">Page size. Defaults to 20. Maximum 200.</param>
+        /// <param name="includeInactiveBusinesses">
+        /// When true, includes businesses that may be inactive/hidden for discovery but still have an account.
+        /// </param>
+        /// <param name="ct">Cancellation token propagated from the HTTP request.</param>
+        /// <returns>A 200 OK with a paged list of "My places" items.</returns>
+        [HttpGet("my/businesses")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
+        [ProducesResponseType(typeof(MyLoyaltyBusinessesResponse), 200)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
+        public async Task<IActionResult> GetMyBusinessesAsync(
+            [FromQuery] int? page,
+            [FromQuery] int? pageSize,
+            [FromQuery] bool? includeInactiveBusinesses,
+            CancellationToken ct = default)
+        {
+            var normalizedPage = page.GetValueOrDefault(1);
+            if (normalizedPage <= 0)
+            {
+                return BadRequestProblem("Page must be a positive integer.");
+            }
+
+            var normalizedPageSize = pageSize.GetValueOrDefault(20);
+            if (normalizedPageSize <= 0 || normalizedPageSize > 200)
+            {
+                return BadRequestProblem("PageSize must be between 1 and 200.");
+            }
+
+            // IMPORTANT:
+            // The Application handler expects MyLoyaltyBusinessListRequestDto (not a GetMy... DTO).
+            var request = new MyLoyaltyBusinessListRequestDto
+            {
+                Page = normalizedPage,
+                PageSize = normalizedPageSize,
+                IncludeInactiveBusinesses = includeInactiveBusinesses.GetValueOrDefault(false)
+            };
+
+            // IMPORTANT:
+            // This handler returns a tuple (Items, Total) and is NOT Result-wrapped.
+            var (items, total) = await _getMyLoyaltyBusinessesHandler
+                .HandleAsync(request, ct)
+                .ConfigureAwait(false);
+
+            var safeItems = items ?? new List<MyLoyaltyBusinessListItemDto>();
+
+            var response = new MyLoyaltyBusinessesResponse
+            {
+                Total = total,
+                Items = safeItems
+                    .Select(MapToContractMyLoyaltyBusinessSummary)
+                    .ToList(),
+                Request = new PagedRequest
+                {
+                    Page = normalizedPage,
+                    PageSize = normalizedPageSize,
+                    Search = null
+                }
+            };
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Maps Application DTO <see cref="MyLoyaltyBusinessListItemDto"/> to API contract
+        /// <see cref="MyLoyaltyBusinessSummary"/> (contract-first boundary).
+        /// </summary>
+        /// <param name="dto">Application DTO instance.</param>
+        /// <returns>Contract DTO for mobile/web clients.</returns>
+        private static MyLoyaltyBusinessSummary MapToContractMyLoyaltyBusinessSummary(MyLoyaltyBusinessListItemDto dto)
+        {
+            ArgumentNullException.ThrowIfNull(dto);
+
+            // NOTE:
+            // - Application's Category is an enum (may be non-nullable). Do NOT use ?. on it.
+            // - Application DTO does NOT have "Status". It exposes account status using a different property name.
+            return new MyLoyaltyBusinessSummary
+            {
+                BusinessId = dto.BusinessId,
+                BusinessName = dto.BusinessName ?? string.Empty,
+                Category = dto.Category.ToString(),
+                City = dto.City,
+                Location = dto.Coordinate is null
+                    ? null
+                    : new GeoCoordinateModel
+                    {
+                        Latitude = dto.Coordinate.Latitude,
+                        Longitude = dto.Coordinate.Longitude,
+                        AltitudeMeters = dto.Coordinate.AltitudeMeters
+                    },
+                PrimaryImageUrl = dto.PrimaryImageUrl,
+                PointsBalance = dto.PointsBalance,
+                LifetimePoints = dto.LifetimePoints,
+
+                // IMPORTANT:
+                // Application DTO does not expose "Status". Use the actual account status property.
+                Status = dto.AccountStatus.ToString(),
+
+                LastAccrualAtUtc = dto.LastAccrualAtUtc
+            };
+        }
+
+
+
+
+        /// <summary>
+        /// Returns a single page of unified loyalty timeline entries for the current consumer user
+        /// within a specific business context.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This endpoint is consumer-facing and is designed for mobile "Activity" / "Timeline" screens.
+        /// It returns a unified stream of entries (transactions + redemptions) ordered newest-first.
+        /// </para>
+        /// <para>
+        /// Paging is cursor-based (keyset) using (BeforeAtUtc, BeforeId) to keep it deterministic and
+        /// provider-agnostic. The cursor rules are enforced by the Application handler as well.
+        /// </para>
+        /// <para>
+        /// IMPORTANT (Token-First Rule):
+        /// This endpoint must not expose internal operational identifiers such as ScanSessionId.
+        /// The returned entries contain only user-safe identifiers (transaction ids / redemption ids).
+        /// </para>
+        /// </remarks>
+        /// <param name="request">Paging request (business + cursor).</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>
+        /// HTTP 200 with a timeline page, or HTTP 400 with a problem response when validation fails.
+        /// </returns>
+        [HttpPost("my/timeline")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
+        [ProducesResponseType(typeof(GetMyLoyaltyTimelinePageResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetMyLoyaltyTimelinePageAsync(
+            [FromBody] GetMyLoyaltyTimelinePageRequest? request,
+            CancellationToken ct = default)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            // Contract currently allows nullable BusinessId; Application requires a non-empty GUID.
+            if (!request.BusinessId.HasValue || request.BusinessId.Value == Guid.Empty)
+            {
+                return BadRequestProblem("BusinessId is required and must be a non-empty GUID.");
+            }
+
+            // Defensive cursor validation at API boundary (Application validates again).
+            // Cursor correctness: both parts must be provided together.
+            if ((request.BeforeAtUtc is null) != (request.BeforeId is null))
+            {
+                return BadRequestProblem("Invalid cursor. Both BeforeAtUtc and BeforeId must be provided together.");
+            }
+
+            var dto = new GetMyLoyaltyTimelinePageDto
+            {
+                BusinessId = request.BusinessId.Value,
+                PageSize = request.PageSize,
+                BeforeAtUtc = request.BeforeAtUtc,
+                BeforeId = request.BeforeId
+            };
+
+            var result = await _getMyLoyaltyTimelinePageHandler
+                .HandleAsync(dto, ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value is null)
+            {
+                return ProblemFromResult(result);
+            }
+
+            var value = result.Value;
+
+            var response = new GetMyLoyaltyTimelinePageResponse
+            {
+                Items = (value.Items ?? Array.Empty<LoyaltyTimelineEntryDto>())
+                    .Select(MapToContractTimelineEntry)
+                    .ToList(),
+                NextBeforeAtUtc = value.NextBeforeAtUtc,
+                NextBeforeId = value.NextBeforeId
+            };
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Maps the Application timeline DTO to the public API contract.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Contract requires:
+        /// - Kind (stable enum)
+        /// - Type (stable string token)
+        /// - Delta (signed points delta, when applicable)
+        /// </para>
+        /// <para>
+        /// Application DTO provides:
+        /// - Kind (PointsTransaction / RewardRedemption)
+        /// - PointsDelta (for transactions)
+        /// - PointsSpent (for redemptions)
+        /// - Reference (e.g., "Accrual", "Redemption", ...)
+        /// </para>
+        /// <para>
+        /// Mapping rules:
+        /// - Kind: direct mapping by name
+        /// - Type:
+        ///   - For PointsTransaction: Reference (fallback to "Transaction")
+        ///   - For RewardRedemption: "Confirmed" (fallback, because Reference is null by design)
+        /// - Delta:
+        ///   - For PointsTransaction: PointsDelta
+        ///   - For RewardRedemption: negative PointsSpent (if provided) to represent balance impact
+        /// </para>
+        /// </remarks>
+        private static LoyaltyTimelineEntry MapToContractTimelineEntry(LoyaltyTimelineEntryDto dto)
+        {
+            ArgumentNullException.ThrowIfNull(dto);
+
+            var contractKind = dto.Kind switch
+            {
+                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.PointsTransaction
+                    => Darwin.Contracts.Loyalty.LoyaltyTimelineEntryKind.PointsTransaction,
+
+                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.RewardRedemption
+                    => Darwin.Contracts.Loyalty.LoyaltyTimelineEntryKind.RewardRedemption,
+
+                // Defensive default to keep API stable even if Application expands the enum later.
+                _ => Darwin.Contracts.Loyalty.LoyaltyTimelineEntryKind.PointsTransaction
+            };
+
+            string type = dto.Kind switch
+            {
+                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.PointsTransaction
+                    => string.IsNullOrWhiteSpace(dto.Reference) ? "Transaction" : dto.Reference,
+
+                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.RewardRedemption
+                    => "Confirmed",
+
+                _ => "Transaction"
+            };
+
+            int? delta = dto.Kind switch
+            {
+                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.PointsTransaction
+                    => dto.PointsDelta,
+
+                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.RewardRedemption
+                    => dto.PointsSpent.HasValue ? -dto.PointsSpent.Value : null,
+
+                _ => dto.PointsDelta
+            };
+
+            return new LoyaltyTimelineEntry
+            {
+                Id = dto.Id,
+                Kind = contractKind,
+                BusinessId = dto.BusinessId,
+                OccurredAtUtc = dto.OccurredAtUtc,
+                Type = type,
+                Delta = delta,
+                Note = dto.Note
+            };
+        }
 
 
     }

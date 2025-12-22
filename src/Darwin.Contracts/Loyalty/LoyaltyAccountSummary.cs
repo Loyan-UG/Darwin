@@ -35,6 +35,28 @@ namespace Darwin.Contracts.Loyalty
         public int PointsBalance { get; init; }
 
         /// <summary>
+        /// Gets or sets the stable identifier of the loyalty account.
+        /// </summary>
+        /// <remarks>
+        /// This value is primarily useful as a stable key for navigation and caching scenarios.
+        /// The UI typically does not display this value directly.
+        /// </remarks>
+        public Guid LoyaltyAccountId { get; init; }
+
+        /// <summary>
+        /// Gets or sets the cumulative number of points ever earned by this account.
+        /// </summary>
+        public int LifetimePoints { get; init; }
+
+        /// <summary>
+        /// Gets or sets the logical status of the account as a string (e.g., "Active", "Suspended").
+        /// </summary>
+        /// <remarks>
+        /// WebApi maps the server-side enum to its name to keep the contract stable and decoupled.
+        /// </remarks>
+        public string Status { get; init; } = "Active";
+
+        /// <summary>
         /// Gets the UTC timestamp of the last accrual for this account, if available.
         /// </summary>
         public DateTime? LastAccrualAtUtc { get; init; }

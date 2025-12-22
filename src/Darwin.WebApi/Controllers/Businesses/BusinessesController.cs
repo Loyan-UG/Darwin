@@ -37,20 +37,25 @@ namespace Darwin.WebApi.Controllers.Businesses;
 public sealed class BusinessesController : ApiControllerBase
 {
     private const int MaxPageSize = 100;
-    private const int DefaultRadiusMeters = 3000;
 
     private readonly GetBusinessesForDiscoveryHandler _getBusinessesForDiscovery;
     private readonly GetBusinessPublicDetailHandler _getBusinessPublicDetail;
+    private readonly GetBusinessPublicDetailWithMyAccountHandler _getBusinessPublicDetailWithMyAccount;
+    private readonly GetBusinessesForMapDiscoveryHandler _getBusinessesForMapDiscovery;
 
     /// <summary>
     /// Creates a new instance of <see cref="BusinessesController"/>.
     /// </summary>
     public BusinessesController(
         GetBusinessesForDiscoveryHandler getBusinessesForDiscovery,
-        GetBusinessPublicDetailHandler getBusinessPublicDetail)
+        GetBusinessPublicDetailHandler getBusinessPublicDetail,
+        GetBusinessesForMapDiscoveryHandler getBusinessesForMapDiscovery,
+        GetBusinessPublicDetailWithMyAccountHandler getBusinessPublicDetailWithMyAccount)
     {
         _getBusinessesForDiscovery = getBusinessesForDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForDiscovery));
         _getBusinessPublicDetail = getBusinessPublicDetail ?? throw new ArgumentNullException(nameof(getBusinessPublicDetail));
+        _getBusinessesForMapDiscovery = getBusinessesForMapDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForMapDiscovery));
+        _getBusinessPublicDetailWithMyAccount = getBusinessPublicDetailWithMyAccount ?? throw new ArgumentNullException(nameof(getBusinessPublicDetailWithMyAccount));
     }
 
     /// <summary>
@@ -169,6 +174,78 @@ public sealed class BusinessesController : ApiControllerBase
         return Ok(contract);
     }
 
+
+    /// <summary>
+    /// Returns public business detail along with the current user's loyalty account summary for that business (if any).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is a consumer/mobile endpoint. It requires member access because it depends on the current user
+    /// for the "MyAccount" portion.
+    /// </para>
+    /// <para>
+    /// If the business is not visible/active, the handler returns <c>Ok(null)</c> and WebApi translates it to 404.
+    /// </para>
+    /// </remarks>
+    /// <param name="id">Public business identifier.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A combined contract model for business detail + my account.</returns>
+    [HttpGet("{id:guid}/with-my-account")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(BusinessDetailWithMyAccount), 200)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 404)]
+    public async Task<IActionResult> GetWithMyAccountAsync(
+        [FromRoute] Guid id,
+        CancellationToken ct = default)
+    {
+        if (id == Guid.Empty)
+        {
+            return NotFoundProblem("Business not found.");
+        }
+
+        var result = await _getBusinessPublicDetailWithMyAccount
+            .HandleAsync(id, ct)
+            .ConfigureAwait(false);
+
+        if (!result.Succeeded)
+        {
+            return ProblemFromResult(result);
+        }
+
+        // Defensive: even on success, Value may be null (documented behavior for not visible / not found).
+        var dto = result.Value;
+        if (dto is null)
+        {
+            return NotFoundProblem("Business not found.");
+        }
+
+        if (dto.Business is null)
+        {
+            // Defensive: should not happen based on handler implementation, but avoid null leakage.
+            return NotFoundProblem("Business not found.");
+        }
+
+        var contract = new BusinessDetailWithMyAccount
+        {
+            Business = MapToContractDetail(dto.Business),
+            HasAccount = dto.HasAccount,
+            MyAccount = dto.MyAccount is null
+                ? null
+                : new LoyaltyAccountSummary
+                {
+                    LoyaltyAccountId = dto.MyAccount.Id,
+                    BusinessId = dto.MyAccount.BusinessId,
+                    BusinessName = dto.MyAccount.BusinessName ?? string.Empty,
+                    PointsBalance = dto.MyAccount.PointsBalance,
+                    LifetimePoints = dto.MyAccount.LifetimePoints,
+                    Status = dto.MyAccount.Status.ToString(),
+                    LastAccrualAtUtc = dto.MyAccount.LastAccrualAtUtc
+                }
+        };
+
+        return Ok(contract);
+    }
 
 
     private static BusinessSummary MapToContractSummary(BusinessDiscoveryListItemDto dto)
