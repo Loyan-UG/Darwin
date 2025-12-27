@@ -15,6 +15,11 @@ namespace Darwin.Contracts.Loyalty
     /// <para>
     /// This contract must not leak internal operational identifiers such as ScanSessionId.
     /// </para>
+    /// <para>
+    /// IMPORTANT:
+    /// This contract intentionally mirrors the Application-layer projection used by the
+    /// unified timeline handler, so that WebApi remains a thin boundary (glue only).
+    /// </para>
     /// </remarks>
     public sealed class LoyaltyTimelineEntry
     {
@@ -29,6 +34,11 @@ namespace Darwin.Contracts.Loyalty
         public LoyaltyTimelineEntryKind Kind { get; init; }
 
         /// <summary>
+        /// Gets or sets the loyalty account identifier associated with this entry.
+        /// </summary>
+        public Guid LoyaltyAccountId { get; init; }
+
+        /// <summary>
         /// Gets or sets the business identifier associated with this entry.
         /// </summary>
         public Guid BusinessId { get; init; }
@@ -39,17 +49,30 @@ namespace Darwin.Contracts.Loyalty
         public DateTime OccurredAtUtc { get; init; }
 
         /// <summary>
-        /// Gets or sets a stable string token describing the entry subtype.
-        /// Example: "Accrual", "Redemption", "Adjustment" (for points transactions),
-        /// or "Confirmed" (for redemptions) depending on server mapping.
+        /// Gets or sets the signed points delta when the entry represents a points transaction.
+        /// For reward redemptions this value is typically null.
         /// </summary>
-        public string Type { get; init; } = string.Empty;
+        public int? PointsDelta { get; init; }
 
         /// <summary>
-        /// Gets or sets the signed delta applied to points balance, when applicable.
-        /// For reward redemptions this may be null if the server chooses to not expose it separately.
+        /// Gets or sets the points spent when the entry represents a reward redemption.
+        /// For points transactions this value is typically null.
         /// </summary>
-        public int? Delta { get; init; }
+        public int? PointsSpent { get; init; }
+
+        /// <summary>
+        /// Gets or sets the related reward tier identifier (if applicable).
+        /// When the entry is a redemption, this points to the redeemed tier.
+        /// For transactions it may be null.
+        /// </summary>
+        public Guid? RewardTierId { get; init; }
+
+        /// <summary>
+        /// Gets or sets an optional reference token describing the origin/category of the entry.
+        /// For example, for transactions this may carry values like "Accrual", "Redemption", "Adjustment".
+        /// For redemptions it is typically null by design.
+        /// </summary>
+        public string? Reference { get; init; }
 
         /// <summary>
         /// Gets or sets an optional description/note (best-effort; may be null).

@@ -76,6 +76,23 @@ namespace Darwin.Domain.Entities.Settings
 
 
 
+        // Mobile app bootstrap
+        /// <summary>
+        /// Refresh cadence (in seconds) for QR token refresh logic used by mobile clients.
+        /// This value is returned by the App Bootstrap endpoint and allows changing client behavior
+        /// without publishing a new mobile version.
+        /// </summary>
+        public int MobileQrTokenRefreshSeconds { get; set; } = 30;
+
+        /// <summary>
+        /// Maximum number of outbox items that a mobile client should keep locally before forcing a flush.
+        /// This value is returned by the App Bootstrap endpoint and allows server-side tuning of client sync behavior.
+        /// </summary>
+        public int MobileMaxOutboxItems { get; set; } = 200;
+
+
+
+
         // Data retention / soft-delete cleanup
 
         /// <summary>

@@ -1,24 +1,58 @@
-﻿namespace Darwin.Contracts.Profile;
+﻿using System;
 
-/// <summary>
-/// Represents the current customer's profile data returned by the public API.
-/// This contract is used by mobile apps for profile screens and must remain stable.
-/// </summary>
-public sealed class CustomerProfile
+namespace Darwin.Contracts.Profile
 {
-    /// <summary>Server authoritative id of the current user.</summary>
-    public Guid Id { get; init; }
-    public string FirstName { get; init; } = default!;
-    public string LastName { get; init; } = default!;
-    public string Email { get; init; } = default!;
-    public string? Locale { get; init; }
-    public string? Timezone { get; init; }
-    public string? PhoneE164 { get; init; }
-
     /// <summary>
-    /// Concurrency token used for optimistic concurrency control.
-    /// Serialized as Base64 in JSON by System.Text.Json.
+    /// Represents the editable customer profile for the currently authenticated user.
+    /// This contract is used by mobile/web clients and must remain backward compatible.
     /// </summary>
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
-}
+    public sealed class CustomerProfile
+    {
+        /// <summary>
+        /// The user's public identifier.
+        /// </summary>
+        public Guid Id { get; init; }
 
+        /// <summary>
+        /// User's email address (read-only in most scenarios; server may ignore changes).
+        /// </summary>
+        public string? Email { get; init; }
+
+        /// <summary>
+        /// User's first name.
+        /// </summary>
+        public string? FirstName { get; init; }
+
+        /// <summary>
+        /// User's last name.
+        /// </summary>
+        public string? LastName { get; init; }
+
+        /// <summary>
+        /// Phone number in E.164 format (e.g., +49123456789).
+        /// </summary>
+        public string? PhoneE164 { get; init; }
+
+        /// <summary>
+        /// Preferred UI locale/culture (e.g., "de-DE").
+        /// </summary>
+        public string? Locale { get; init; }
+
+        /// <summary>
+        /// Preferred IANA timezone id (e.g., "Europe/Berlin").
+        /// </summary>
+        public string? Timezone { get; init; }
+
+        /// <summary>
+        /// Preferred ISO 4217 currency code (e.g., "EUR").
+        /// IMPORTANT: Added for contract completeness (Application requires it).
+        /// </summary>
+        public string? Currency { get; init; }
+
+        /// <summary>
+        /// Optimistic concurrency token (row version).
+        /// Clients must round-trip this value on updates.
+        /// </summary>
+        public byte[]? RowVersion { get; init; }
+    }
+}

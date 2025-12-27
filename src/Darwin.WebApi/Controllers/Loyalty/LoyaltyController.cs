@@ -792,9 +792,14 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 BusinessId = dto.BusinessId,
                 BusinessName = dto.BusinessName ?? string.Empty,
                 PointsBalance = dto.PointsBalance,
+
+                LoyaltyAccountId = dto.Id,
+                LifetimePoints = dto.LifetimePoints,
+                Status = dto.Status.ToString(),
+                
                 LastAccrualAtUtc = dto.LastAccrualAtUtc,
-                // LoyaltyAccountSummaryDto currently does not compute the next reward
-                // title; the client can derive this using reward-tier APIs if needed.
+
+                // Not currently provided by Application; keep null (explicit contract supports it).
                 NextRewardTitle = null
             };
 
@@ -1108,6 +1113,16 @@ namespace Darwin.WebApi.Controllers.Loyalty
         ///   - For RewardRedemption: negative PointsSpent (if provided) to represent balance impact
         /// </para>
         /// </remarks>
+        /// <summary>
+        /// Maps the Application timeline DTO to the public API contract.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is a contract-first boundary. The contract mirrors the Application projection,
+        /// therefore the mapping must remain a pure field-to-field translation without inventing
+        /// new semantics or derived fields.
+        /// </para>
+        /// </remarks>
         private static LoyaltyTimelineEntry MapToContractTimelineEntry(LoyaltyTimelineEntryDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
@@ -1124,39 +1139,21 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 _ => Darwin.Contracts.Loyalty.LoyaltyTimelineEntryKind.PointsTransaction
             };
 
-            string type = dto.Kind switch
-            {
-                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.PointsTransaction
-                    => string.IsNullOrWhiteSpace(dto.Reference) ? "Transaction" : dto.Reference,
-
-                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.RewardRedemption
-                    => "Confirmed",
-
-                _ => "Transaction"
-            };
-
-            int? delta = dto.Kind switch
-            {
-                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.PointsTransaction
-                    => dto.PointsDelta,
-
-                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.RewardRedemption
-                    => dto.PointsSpent.HasValue ? -dto.PointsSpent.Value : null,
-
-                _ => dto.PointsDelta
-            };
-
             return new LoyaltyTimelineEntry
             {
                 Id = dto.Id,
                 Kind = contractKind,
+                LoyaltyAccountId = dto.LoyaltyAccountId,
                 BusinessId = dto.BusinessId,
                 OccurredAtUtc = dto.OccurredAtUtc,
-                Type = type,
-                Delta = delta,
+                PointsDelta = dto.PointsDelta,
+                PointsSpent = dto.PointsSpent,
+                RewardTierId = dto.RewardTierId,
+                Reference = dto.Reference,
                 Note = dto.Note
             };
         }
+
 
 
     }

@@ -20,6 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Meta\Commands\" />
+    <Folder Include="Meta\Validators\" />
     <Folder Include="x\Commands\" />
     <Folder Include="x\DTOs\" />
     <Folder Include="x\Validators\" />
