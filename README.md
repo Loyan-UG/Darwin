@@ -2,7 +2,7 @@
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)  
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-9.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)  
-[![Build](https://img.shields.io/github/actions/workflow/status/YOURORG/Darwin/build.yml?branch=main&logo=githubactions&label=CI)](../../actions)  
+[![Build](https://img.shields.io/github/actions/workflow/status/YOURORG/Darwin/build.yml?branch=master&logo=githubactions&label=CI)](../../actions)  
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)  
 
 Darwin is a **modern CMS + e-commerce solution** designed for **European SMBs** who need a  

@@ -90,6 +90,18 @@ namespace Darwin.Application.Settings.DTOs
         /// </summary>
         public int JwtClockSkewSeconds { get; set; } = 60;
 
+        /// <summary>
+        /// Refresh cadence (in seconds) for QR token refresh logic used by mobile clients.
+        /// </summary>
+        public int MobileQrTokenRefreshSeconds { get; set; }
+
+        /// <summary>
+        /// Maximum number of outbox items that a mobile client should keep locally before forcing a flush.
+        /// </summary>
+        public int MobileMaxOutboxItems { get; set; }
+
+
+
         // -------- Soft delete / data retention --------
         public bool SoftDeleteCleanupEnabled { get; set; } = true;
         public int SoftDeleteRetentionDays { get; set; } = 90;

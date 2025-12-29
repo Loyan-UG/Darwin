@@ -66,6 +66,11 @@ namespace Darwin.Application.Settings.Queries
                 JwtRequireDeviceBinding = s.JwtRequireDeviceBinding,
                 JwtClockSkewSeconds = s.JwtClockSkewSeconds,
 
+                // Mobile bootstrap
+                MobileQrTokenRefreshSeconds = s.MobileQrTokenRefreshSeconds,
+                MobileMaxOutboxItems = s.MobileMaxOutboxItems,
+
+
                 // Soft delete
                 SoftDeleteCleanupEnabled = s.SoftDeleteCleanupEnabled,
                 SoftDeleteRetentionDays = s.SoftDeleteRetentionDays,

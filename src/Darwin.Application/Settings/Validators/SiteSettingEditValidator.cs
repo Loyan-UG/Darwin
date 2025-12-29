@@ -65,6 +65,20 @@ namespace Darwin.Application.Settings.Validators
                 .LessThanOrEqualTo(3600)
                 .WithMessage("JwtClockSkewSeconds must be between 0 and 3600 seconds.");
 
+
+            // -------- Mobile bootstrap --------
+            RuleFor(x => x.MobileQrTokenRefreshSeconds)
+                .GreaterThan(0)
+                .LessThanOrEqualTo(3600)
+                .WithMessage("MobileQrTokenRefreshSeconds must be between 1 and 3600 seconds.");
+
+            RuleFor(x => x.MobileMaxOutboxItems)
+                .GreaterThan(0)
+                .LessThanOrEqualTo(10000)
+                .WithMessage("MobileMaxOutboxItems must be between 1 and 10000.");
+
+
+
             // -------- Soft delete / data retention --------
             RuleFor(x => x.SoftDeleteRetentionDays)
                 .GreaterThanOrEqualTo(1)

@@ -1,12 +1,15 @@
-﻿using System;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Darwin.Application.Abstractions.Services;
+﻿using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Meta.Queries;
+using Darwin.Contracts.Meta;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Darwin.WebApi.Controllers
 {
@@ -17,7 +20,7 @@ namespace Darwin.WebApi.Controllers
     /// </summary>
     [ApiController]
     [Route("api/meta")]
-    public sealed class MetaController : ControllerBase
+    public sealed class MetaController : ApiControllerBase
     {
         private static readonly DateTime ProcessStartUtc = DateTime.UtcNow;
 
@@ -25,23 +28,28 @@ namespace Darwin.WebApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly IClock _clock;
         private readonly ILogger<MetaController> _logger;
+        private readonly GetAppBootstrapHandler _getAppBootstrap;
+
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MetaController"/> class.
+        /// Initializes a new instance of the <see cref="MetaController"/>.
         /// </summary>
-        /// <param name="hostEnvironment">The ASP.NET Core host environment abstraction.</param>
-        /// <param name="configuration">The configuration root for reading meta settings.</param>
-        /// <param name="clock">The application-level clock abstraction.</param>
-        /// <param name="logger">The logger used to emit diagnostic log entries.</param>
+        /// <param name="clock">Clock abstraction used for deterministic time reads.</param>
+        /// <param name="getAppBootstrap">Application handler that returns mobile bootstrap configuration.</param>
+        /// <param name="configuration">Application configuration source.</param>
+        /// <param name="hostEnvironment">Host environment information (dev/staging/prod).</param>
+        /// <param name="logger">Logger used for diagnostics.</param>
         public MetaController(
-            IHostEnvironment hostEnvironment,
-            IConfiguration configuration,
             IClock clock,
+            GetAppBootstrapHandler getAppBootstrap,
+            IConfiguration configuration,
+            IHostEnvironment hostEnvironment,
             ILogger<MetaController> logger)
         {
-            _hostEnvironment = hostEnvironment ?? throw new ArgumentNullException(nameof(hostEnvironment));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _getAppBootstrap = getAppBootstrap ?? throw new ArgumentNullException(nameof(getAppBootstrap));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _hostEnvironment = hostEnvironment ?? throw new ArgumentNullException(nameof(hostEnvironment));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -151,5 +159,44 @@ namespace Darwin.WebApi.Controllers
             var entryName = Assembly.GetEntryAssembly()?.GetName().Name;
             return string.IsNullOrWhiteSpace(entryName) ? "Darwin.WebApi" : entryName!;
         }
+
+
+
+        /// <summary>
+        /// Returns minimal non-sensitive bootstrap configuration for mobile apps.
+        /// This endpoint must be thin glue and delegate the source of truth to Application.
+        /// </summary>
+        [HttpGet("bootstrap")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(AppBootstrapResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AppBootstrapResponse>> GetBootstrapAsync(CancellationToken ct)
+        {
+            var result = await _getAppBootstrap.HandleAsync(ct).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                // Keep response intentionally small and consistent.
+                return BadRequest(new { error = result.Error ?? "Bootstrap request failed." });
+            }
+
+            if (result.Value is null)
+            {
+                // Defensive: success with null payload should not happen, but we must be null-safe.
+                return BadRequest(new { error = "Bootstrap payload is empty. This is a server bug." });
+            }
+
+            var dto = result.Value;
+
+            var response = new AppBootstrapResponse
+            {
+                JwtAudience = dto.JwtAudience,
+                QrTokenRefreshSeconds = dto.QrTokenRefreshSeconds,
+                MaxOutboxItems = dto.MaxOutboxItems
+            };
+
+            return Ok(response);
+        }
+
     }
 }

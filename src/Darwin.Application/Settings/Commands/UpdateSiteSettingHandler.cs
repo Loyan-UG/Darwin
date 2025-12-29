@@ -1,4 +1,5 @@
-﻿using Darwin.Application.Abstractions.Persistence;
+﻿using AngleSharp.Dom;
+using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Settings.DTOs;
 using Darwin.Domain.Entities.Settings;
 using FluentValidation;
@@ -72,6 +73,12 @@ namespace Darwin.Application.Settings.Commands
             s.JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly;
             s.JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding;
             s.JwtClockSkewSeconds = dto.JwtClockSkewSeconds;
+
+
+            // Mobile bootstrap
+            s.MobileQrTokenRefreshSeconds = dto.MobileQrTokenRefreshSeconds;
+            s.MobileMaxOutboxItems = dto.MobileMaxOutboxItems;
+
 
             // -------- Soft delete / data retention --------
             s.SoftDeleteCleanupEnabled = dto.SoftDeleteCleanupEnabled;

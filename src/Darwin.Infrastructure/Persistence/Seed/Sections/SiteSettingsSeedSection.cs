@@ -70,7 +70,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 JwtRequireDeviceBinding = true,
                 JwtClockSkewSeconds = 120,
 
-
+                // Mobile app bootstrap defaults (keep in sync with Contracts defaults).
+                // These values are not secrets; they define client polling behavior and
+                // offline/outbox safety limits.
+                MobileQrTokenRefreshSeconds = 60,
+                MobileMaxOutboxItems = 100,
 
                 // Soft delete / data retention
                 SoftDeleteCleanupEnabled = true,

@@ -67,6 +67,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.WebAuthnAllowedOriginsCsv).IsRequired().HasMaxLength(2000);
             builder.Property(x => x.WebAuthnRequireUserVerification).IsRequired();
 
+            // --- Mobile app bootstrap (single source of truth for WebApi "bootstrap") ---
+            builder.Property(x => x.MobileQrTokenRefreshSeconds).IsRequired();
+            builder.Property(x => x.MobileMaxOutboxItems).IsRequired();
+
             // --- Email (SMTP) ---
             builder.Property(x => x.SmtpEnabled).IsRequired();
             builder.Property(x => x.SmtpHost).HasMaxLength(255);
