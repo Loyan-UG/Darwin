@@ -1,15 +1,16 @@
-﻿using System;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using Darwin.Application.Identity.Commands;
+﻿using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
+using Darwin.Application.Identity.Queries;
 using Darwin.Contracts.Identity;
 using Darwin.Shared.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace Darwin.WebApi.Controllers
@@ -21,11 +22,16 @@ namespace Darwin.WebApi.Controllers
     /// </summary>
     [ApiController]
     [Route("api/auth")]
-    public sealed class AuthController : ControllerBase
+    public sealed class AuthController : ApiControllerBase
     {
         private readonly LoginWithPasswordHandler _loginWithPassword;
         private readonly RefreshTokenHandler _refresh;
         private readonly RevokeRefreshTokensHandler _revoke;
+        private readonly RegisterUserHandler _registerUser;
+        private readonly ChangePasswordHandler _changePassword;
+        private readonly RequestPasswordResetHandler _requestPasswordReset;
+        private readonly ResetPasswordHandler _resetPassword;
+        private readonly GetRoleIdByKeyHandler _getRoleIdByKey;
         private readonly ILogger<AuthController> _logger;
 
         /// <summary>
@@ -39,11 +45,21 @@ namespace Darwin.WebApi.Controllers
             LoginWithPasswordHandler loginWithPassword,
             RefreshTokenHandler refresh,
             RevokeRefreshTokensHandler revoke,
+            RegisterUserHandler registerUser,
+            ChangePasswordHandler changePassword,
+            RequestPasswordResetHandler requestPasswordReset,
+            ResetPasswordHandler resetPassword,
+            GetRoleIdByKeyHandler getRoleIdByKey,
             ILogger<AuthController> logger)
         {
             _loginWithPassword = loginWithPassword ?? throw new ArgumentNullException(nameof(loginWithPassword));
             _refresh = refresh ?? throw new ArgumentNullException(nameof(refresh));
             _revoke = revoke ?? throw new ArgumentNullException(nameof(revoke));
+            _registerUser = registerUser ?? throw new ArgumentNullException(nameof(registerUser));
+            _changePassword = changePassword ?? throw new ArgumentNullException(nameof(changePassword));
+            _requestPasswordReset = requestPasswordReset ?? throw new ArgumentNullException(nameof(requestPasswordReset));
+            _resetPassword = resetPassword ?? throw new ArgumentNullException(nameof(resetPassword));
+            _getRoleIdByKey = getRoleIdByKey ?? throw new ArgumentNullException(nameof(getRoleIdByKey));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -258,6 +274,178 @@ namespace Darwin.WebApi.Controllers
         }
 
 
+        /// <summary>
+        /// Registers a new consumer account. Only available for consumer apps; business accounts are provisioned separately.
+        /// </summary>
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterAsync(
+            [FromBody] RegisterRequest request,
+            CancellationToken ct)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var dto = new UserCreateDto
+            {
+                Email = request.Email ?? string.Empty,
+                Password = request.Password ?? string.Empty,
+                FirstName = request.FirstName ?? string.Empty,
+                LastName = request.LastName ?? string.Empty,
+                PhoneE164 = null,
+                //Locale = null,
+                //Timezone = null,
+                //Currency = null,
+                IsActive = true,
+                IsSystem = false
+            };
+
+            Guid? defaultRoleId = null;
+            try
+            {
+                var roleResult = await _getRoleIdByKey.HandleAsync("Members", ct).ConfigureAwait(false);
+                if (roleResult.Succeeded)
+                {
+                    defaultRoleId = roleResult.Value;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Default role not found for key 'Members'. New users will be created without a default role. Error={Error}",
+                        roleResult.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resolving default role for registration.");
+            }
+
+            var result = await _registerUser.HandleAsync(dto, defaultRoleId, ct).ConfigureAwait(false);
+            if (result.Succeeded && result.Value != Guid.Empty)
+            {
+                var response = new RegisterResponse
+                {
+                    DisplayName = $"{dto.FirstName} {dto.LastName}".Trim(),
+                    ConfirmationEmailSent = false
+                };
+                return Ok(response);
+            }
+
+            return ProblemFromResult(result);
+        }
+
+
+        /// <summary>
+        /// Changes the current user's password. Requires authentication.
+        /// </summary>
+        [HttpPost("password/change")]
+        [Authorize]
+        public async Task<IActionResult> ChangePasswordAsync(
+            [FromBody] ChangePasswordRequest request,
+            CancellationToken ct)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var userId = GetUserIdFromClaims(HttpContext.User);
+            if (userId is null)
+            {
+                var problem = new ProblemDetails
+                {
+                    Status = 401,
+                    Title = "Unauthorized",
+                    Detail = "User identifier could not be resolved from the access token.",
+                    Instance = HttpContext.Request?.Path.Value
+                };
+                _logger.LogWarning(
+                    "Change password rejected because user id could not be resolved. Ip={Ip}",
+                    GetClientIp());
+                return StatusCode(problem.Status ?? 400, problem);
+            }
+
+            var dto = new UserChangePasswordDto
+            {
+                Id = userId.Value,
+                CurrentPassword = request.CurrentPassword ?? string.Empty,
+                NewPassword = request.NewPassword ?? string.Empty
+            };
+
+            var result = await _changePassword.HandleAsync(dto, ct).ConfigureAwait(false);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+
+            return ProblemFromResult(result);
+        }
+
+
+        /// <summary>
+        /// Initiates a password reset by generating a token and sending notification (email/SMS). Always returns 200/OK to prevent user enumeration.
+        /// </summary>
+        [HttpPost("password/request-reset")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RequestPasswordResetAsync(
+            [FromBody] RequestPasswordResetRequest request,
+            CancellationToken ct)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var dto = new RequestPasswordResetDto
+            {
+                Email = request.Email ?? string.Empty
+            };
+
+            try
+            {
+                await _requestPasswordReset.HandleAsync(dto, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing password reset request for email {Email}", dto.Email);
+            }
+            return Ok();
+        }
+
+
+
+        /// <summary>
+        /// Completes a password reset using the provided email, token, and new password.
+        /// </summary>
+        [HttpPost("password/reset")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPasswordAsync(
+            [FromBody] ResetPasswordRequest request,
+            CancellationToken ct)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var dto = new ResetPasswordDto
+            {
+                Email = request.Email ?? string.Empty,
+                Token = request.Token ?? string.Empty,
+                NewPassword = request.NewPassword ?? string.Empty
+            };
+
+            var result = await _resetPassword.HandleAsync(dto, ct).ConfigureAwait(false);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+            return ProblemFromResult(result);
+        }
+
+
 
 
         /// <summary>
@@ -321,7 +509,7 @@ namespace Darwin.WebApi.Controllers
                 Instance = HttpContext.Request?.Path.Value
             };
 
-            return StatusCode(problem.Status, problem);
+            return StatusCode(problem.Status != 0 ? problem.Status : 400, problem);
         }
 
 
