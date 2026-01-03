@@ -32,70 +32,8 @@ It combines **content management (CMS)** and **full e-commerce features** such a
   - **Data Protection** key ring persisted for shared hosting
 - 📊 **Analytics**: Google Analytics, Tag Manager, Search Console (via settings).
 - 🧪 **Testing**: Unit + Integration tests, GitHub Actions CI.
-- 📱 **Mobile (MAUI)**: Two apps
-  - **Consumer** (session-based QR loyalty, map-based discovery, rewards dashboard)
-  - **Business** (camera QR scan, process scan sessions to accrue points or confirm redemptions)
-  - Shared library (**Darwin.Mobile.Shared**) provides HTTP + retry, auth helpers, and scanner/location abstractions
-  - DTOs come from **Darwin.Contracts**
+- 📱 **Mobile (MAUI)**: Consumer + Business apps with shared HTTP/auth/scanner abstractions.
 - 🔗 **API & Contracts**: Public **Darwin.WebApi** (JWT, Swagger) using **Darwin.Contracts** as the single source of request/response models for both Web and Mobile.
-
----
-
-## 📱 Mobile/WebApi Quick Start (Contracts-first)
-
-Darwin.WebApi is the public surface for mobile (Consumer + Business). All payloads and errors use `Darwin.Contracts` types.
-
-### Auth & Bootstrap
-- `GET /api/meta/bootstrap` — minimal mobile bootstrap (JWT audience, QR refresh seconds, outbox limits). **AllowAnonymous**
-- `POST /api/auth/login` — password login → `TokenResponse` (access + refresh). **AllowAnonymous**
-- `POST /api/auth/refresh` — refresh token → `TokenResponse`. **AllowAnonymous**
-- `POST /api/auth/logout` — revoke refresh token (per device). **Authorize**
-- `POST /api/auth/logout-all` — revoke all refresh tokens. **Authorize**
-- `POST /api/auth/password/change` — change password (current → new). **Authorize**
-- `POST /api/auth/password/request-reset` — request reset (always 200). **AllowAnonymous**
-- `POST /api/auth/password/reset` — complete reset. **AllowAnonymous**
-- `POST /api/auth/register` — consumer self-registration. **AllowAnonymous**
-- Access token policies:
-  - Consumer: `perm:AccessMemberArea`
-  - Business: `perm:AccessLoyaltyBusiness`
-- Required claim for business endpoints: `business_id` (GUID). Business id is **never** accepted from body.
-
-### Profile (Consumer)
-- `GET /api/v1/profile/me` — current user profile (edit shape with RowVersion). **perm:AccessMemberArea**
-- `PUT /api/v1/profile/me` — update profile (optimistic concurrency with RowVersion). **perm:AccessMemberArea**
-
-### Loyalty (Consumer + Business)
-All responses use `Darwin.Contracts.Loyalty`; errors are `Darwin.Contracts.Common.ProblemDetails`.
-
-Consumer:
-- `POST /api/v1/loyalty/scan/prepare` — prepare scan session → `ScanSessionToken`. **perm:AccessMemberArea**
-- `GET  /api/v1/loyalty/my/accounts` — list my loyalty accounts. **perm:AccessMemberArea**
-- `GET  /api/v1/loyalty/my/history/{businessId}` — points history per business. **perm:AccessMemberArea**
-- `GET  /api/v1/loyalty/account/{businessId}` — account summary (404 if none). **perm:AccessMemberArea**
-- `GET  /api/v1/loyalty/business/{businessId}/rewards` — available rewards (consumer view). **perm:AccessMemberArea**
-- `GET  /api/v1/loyalty/my/businesses` — “My places” (paged). **perm:AccessMemberArea**
-- `POST /api/v1/loyalty/my/timeline` — unified timeline (cursor paging). **perm:AccessMemberArea**
-
-Business:
-- `POST /api/v1/loyalty/scan/process` — process scanned token → session view. **perm:AccessLoyaltyBusiness** (business_id from JWT)
-- `POST /api/v1/loyalty/scan/confirm-accrual` — confirm accrual. **perm:AccessLoyaltyBusiness**
-- `POST /api/v1/loyalty/scan/confirm-redemption` — confirm redemption. **perm:AccessLoyaltyBusiness**
-
-### Business Discovery (Consumer)
-- `POST /api/v1/businesses/list` — paged discovery (query/search, category, city, proximity). **AllowAnonymous**
-- `POST /api/v1/businesses/map` — map viewport discovery. **AllowAnonymous**
-- `GET  /api/v1/businesses/{id}` — public detail. **AllowAnonymous**
-- `GET  /api/v1/businesses/{id}/with-my-account` — detail + my account summary. **perm:AccessMemberArea**
-
-### Error & Result Shape
-- Errors use `Darwin.Contracts.Common.ProblemDetails` (RFC 7807 shape).
-- Application handlers return `Result` / `Result<T>`; controllers convert failures to `ProblemDetails`.
-
-### Security & Composition (WebApi)
-- JWT bearer auth (`JwtTokenService`); rate limiting on login/refresh (`EnableRateLimiting` policies).
-- Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
-- `ICurrentUserService` is resolved from claims (no admin fallback).
-- DI: `AddWebApiComposition` registers Application, Persistence, JWT auth core, HttpContextAccessor, CurrentUserService, Swagger (dev), RateLimiter, Controllers.
 
 ---
 
@@ -118,21 +56,23 @@ src/
 ```
 
 ### Key Principles
-- **SOLID** principles applied consistently.  
-- **Minor units for money** (`long` cents) to avoid floating-point errors.  
-- **Audit fields** (`CreatedAtUtc`, `ModifiedAtUtc`, `CreatedByUserId`, `ModifiedByUserId`).  
-- **Soft delete** with `IsDeleted`.  
-- **Optimistic concurrency** via `RowVersion`.  
-- **Normalized translation tables** for multilingual content.  
+- **SOLID** applied consistently.
+- **Minor units for money** (`long` cents) to avoid floating-point errors.
+- **Audit fields** (`CreatedAtUtc`, `ModifiedAtUtc`, `CreatedByUserId`, `ModifiedByUserId`).
+- **Soft delete** with `IsDeleted`.
+- **Optimistic concurrency** via `RowVersion`.
+- **Normalized translation tables** for multilingual content.
 
 ### Composition
 
 - **Web composition root**: `src/Darwin.Web/Extensions/DependencyInjection.cs`
-  - calls Infrastructure modules:
-    - `AddSharedHostingDataProtection(configuration)`
-    - `AddPersistence(configuration)`
-    - `AddIdentityInfrastructure()`
-    - `AddNotificationsInfrastructure(configuration)`
+  - `AddSharedHostingDataProtection(configuration)`
+  - `AddPersistence(configuration)`
+  - `AddIdentityInfrastructure()`
+  - `AddNotificationsInfrastructure(configuration)`
+- **WebApi composition root**: `src/Darwin.WebApi/Extensions/DependencyInjection.cs`
+  - Adds Application, Persistence, JWT auth core, HttpContextAccessor, `ICurrentUserService`, Swagger (dev), RateLimiter, Controllers.
+  - Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
 
 ---
 
@@ -140,20 +80,70 @@ src/
 
 The mobile suite consists of two .NET MAUI apps:
 
-- **Darwin.Mobile.Consumer**: end-user app with authentication, a **short-lived scan session QR** for in-store scans (Accrual/Redemption), discover/map, rewards dashboard, and profile.
+- **Darwin.Mobile.Consumer**: end-user app with authentication, a **short-lived scan session QR** (Accrual/Redemption), discover/map, rewards dashboard, profile.
 - **Darwin.Mobile.Business**: tablet app for partners to **scan the consumer QR**, load the server-side scan session, and then **accrue points** or **confirm reward redemptions**.
 
 Shared libraries and contracts:
 
-- **Darwin.Mobile.Shared**: typed HTTP client (System.Text.Json), **retry policy**, token storage helpers, and abstractions for camera scanning (`IScanner`) and geolocation (`ILocation`). Registered via `AddDarwinMobileShared(ApiOptions)` which requires `Microsoft.Extensions.Http` for `AddHttpClient`.
+- **Darwin.Mobile.Shared**: typed HTTP client (System.Text.Json), retry policy, token storage helpers, abstractions for camera scanning (`IScanner`) and geolocation (`ILocation`). Registered via `AddDarwinMobileShared(ApiOptions)` (requires `Microsoft.Extensions.Http`).
 - **Darwin.Contracts**: single source of **request/response DTOs** used by both WebApi and the mobile apps (identity tokens, loyalty scan flows, discovery, paging/sorting, problem details).
 
 Security highlights:
 
-- **No internal user IDs in QR**; the QR is an **opaque, short-lived scan session token** exchanged server-side for an ephemeral session. Short expiry and one-time semantics limit replay risk.
-- **JWT + refresh tokens** for app authentication; server uses Data Protection and Argon2/WebAuthn/TOTP per platform defaults.
+- **No internal user IDs in QR**; QR is an opaque, short-lived ScanSessionToken. Short expiry and one-time semantics limit replay risk.
+- **JWT + refresh tokens** for app authentication; server uses Data Protection and Argon2/WebAuthn/TOTP.
 
-WebApi provides the endpoints consumed by both apps and composes Infrastructure modules (Persistence, Identity/JWT, Notifications, Data Protection).
+### Mobile/WebApi Quick Start (Contracts-first)
+
+Darwin.WebApi is the public surface for mobile. All payloads/errors use `Darwin.Contracts`.
+
+**Auth & Bootstrap**
+- `GET /api/meta/bootstrap` — mobile bootstrap (JWT audience, QR refresh seconds, outbox limits). **AllowAnonymous**
+- `POST /api/auth/login` — password login → `TokenResponse`. **AllowAnonymous**
+- `POST /api/auth/refresh` — refresh token → `TokenResponse`. **AllowAnonymous**
+- `POST /api/auth/logout` — revoke refresh token (per device). **Authorize**
+- `POST /api/auth/logout-all` — revoke all refresh tokens. **Authorize**
+- `POST /api/auth/password/change` — change password (current → new). **Authorize**
+- `POST /api/auth/password/request-reset` — request reset (always 200). **AllowAnonymous**
+- `POST /api/auth/password/reset` — complete reset. **AllowAnonymous**
+- `POST /api/auth/register` — consumer self-registration. **AllowAnonymous**
+- Access token policies:
+  - Consumer: `perm:AccessMemberArea`
+  - Business: `perm:AccessLoyaltyBusiness`
+- Required claim for business endpoints: `business_id` (GUID). Business id is **never** accepted from body.
+
+**Profile (Consumer)**
+- `GET /api/v1/profile/me` — profile (RowVersion). **perm:AccessMemberArea**
+- `PUT /api/v1/profile/me` — update profile (RowVersion). **perm:AccessMemberArea**
+
+**Loyalty (Consumer + Business)**
+- Consumer:
+  - `POST /api/v1/loyalty/scan/prepare` → `ScanSessionToken`. **perm:AccessMemberArea**
+  - `GET /api/v1/loyalty/my/accounts` — list my accounts. **perm:AccessMemberArea**
+  - `GET /api/v1/loyalty/my/history/{businessId}` — points history. **perm:AccessMemberArea**
+  - `GET /api/v1/loyalty/account/{businessId}` — account summary (404 if none). **perm:AccessMemberArea**
+  - `GET /api/v1/loyalty/business/{businessId}/rewards` — rewards (consumer). **perm:AccessMemberArea**
+  - `GET /api/v1/loyalty/my/businesses` — “My places” (paged). **perm:AccessMemberArea**
+  - `POST /api/v1/loyalty/my/timeline` — unified timeline (cursor paging). **perm:AccessMemberArea**
+- Business:
+  - `POST /api/v1/loyalty/scan/process` — process scanned token → session view. **perm:AccessLoyaltyBusiness** (business_id from JWT)
+  - `POST /api/v1/loyalty/scan/confirm-accrual` — confirm accrual. **perm:AccessLoyaltyBusiness**
+  - `POST /api/v1/loyalty/scan/confirm-redemption` — confirm redemption. **perm:AccessLoyaltyBusiness**
+
+**Business Discovery (Consumer)**
+- `POST /api/v1/businesses/list` — paged discovery (query/search, category, city, proximity). **AllowAnonymous**
+- `POST /api/v1/businesses/map` — map viewport discovery. **AllowAnonymous**
+- `GET /api/v1/businesses/{id}` — public detail. **AllowAnonymous**
+- `GET /api/v1/businesses/{id}/with-my-account` — detail + my account summary. **perm:AccessMemberArea**
+
+**Error & Result Shape**
+- Errors: `Darwin.Contracts.Common.ProblemDetails`.
+- Handlers return `Result/Result<T>`; controllers convert failures to `ProblemDetails`.
+
+**Security (WebApi)**
+- JWT bearer auth (`JwtTokenService`); rate limiting on login/refresh (`EnableRateLimiting` policies).
+- Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
+- `ICurrentUserService` resolved from claims (no admin fallback).
 
 ---
 
