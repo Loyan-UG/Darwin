@@ -19,7 +19,7 @@ namespace Darwin.WebApi.Controllers
     /// verify that the Web API is running and to inspect environment/version data.
     /// </summary>
     [ApiController]
-    [Route("api/meta")]
+    [Route("api/v1/meta")]
     public sealed class MetaController : ApiControllerBase
     {
         private static readonly DateTime ProcessStartUtc = DateTime.UtcNow;

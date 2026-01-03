@@ -281,7 +281,6 @@ services.AddDarwinMobileShared(new ApiOptions
     BaseUrl = "https://api.example.com/",
     JwtAudience = "Darwin.PublicApi"
 });
-
 ```
 
 ---
@@ -366,7 +365,33 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ---
 
-## 17) Roadmap Coupling (Phases 1–3)
+## 17) Mobile API Matrix (Consumer/Business)
+
+| Area      | Endpoint                                     | Policy                      | Client     |
+|-----------|----------------------------------------------|-----------------------------|------------|
+| Auth      | POST /api/auth/login                         | AllowAnonymous              | Both       |
+| Auth      | POST /api/auth/refresh                       | AllowAnonymous              | Both       |
+| Auth      | POST /api/auth/logout                        | Authorize                   | Both       |
+| Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
+| Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | POST /api/v1/loyalty/scan/process            | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | POST /api/v1/loyalty/scan/confirm-accrual    | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | POST /api/v1/loyalty/scan/confirm-redemption | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | GET /api/v1/loyalty/my/accounts              | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | GET /api/v1/loyalty/my/history/{businessId}  | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | GET /api/v1/loyalty/account/{businessId}     | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | GET /api/v1/loyalty/business/{id}/rewards    | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | GET /api/v1/loyalty/my/businesses            | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | POST /api/v1/loyalty/my/timeline             | perm:AccessMemberArea       | Consumer   |
+| Discovery | POST /api/v1/businesses/list                 | AllowAnonymous              | Consumer   |
+| Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
+| Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
+| Discovery | GET /api/v1/businesses/{id}/with-my-account  | perm:AccessMemberArea       | Consumer   |
+
+---
+
+## 18) Roadmap Coupling (Phases 1–3)
 
 - **Phase 1**: Endpoints: login, session-based loyalty scan (prepare/process/confirm), basic rewards read models, discovery basics, profile.
 - **Phase 2**: Map discovery with filters & details, richer reward dashboard, feed/promo endpoints.
@@ -374,7 +399,7 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ---
 
-## 18) Contributor Checklist
+## 19) Contributor Checklist
 
 1. Install SDKs (MAUI workloads for target platforms).
 2. Use the appropriate Solution Filter (`Darwin.MobileOnly.slnf`).
@@ -387,7 +412,7 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ---
 
-## 19) Appendix — Contracts (Snapshot)
+## 20) Appendix — Contracts (Snapshot)
 
 > Modules present/added in `Darwin.Contracts`:
 

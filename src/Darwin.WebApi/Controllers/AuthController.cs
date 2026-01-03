@@ -21,7 +21,7 @@ namespace Darwin.WebApi.Controllers
     /// Inputs and outputs use Darwin.Contracts models; handlers use Application DTOs.
     /// </summary>
     [ApiController]
-    [Route("api/auth")]
+    [Route("api/v1/auth")]
     public sealed class AuthController : ApiControllerBase
     {
         private readonly LoginWithPasswordHandler _loginWithPassword;

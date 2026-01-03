@@ -25,11 +25,6 @@ namespace Darwin.WebApi.Controllers.Businesses;
 /// IMPORTANT: This controller is intentionally thin and contains no business rules.
 /// All filtering/searching logic is handled in the Application layer.
 /// </para>
-/// <para>
-/// Routes:
-/// - POST   /api/v1/businesses/list   (also /api/businesses/list and /biz/list for backward compatibility)
-/// - GET    /api/v1/businesses/{id}   (also /api/businesses/{id} and /biz/{id})
-/// </para>
 /// </remarks>
 [ApiController]
 [Authorize]
@@ -40,8 +35,8 @@ public sealed class BusinessesController : ApiControllerBase
 
     private readonly GetBusinessesForDiscoveryHandler _getBusinessesForDiscovery;
     private readonly GetBusinessPublicDetailHandler _getBusinessPublicDetail;
-    private readonly GetBusinessPublicDetailWithMyAccountHandler _getBusinessPublicDetailWithMyAccount;
-    private readonly GetBusinessesForMapDiscoveryHandler _getBusinessesForMapDiscovery;
+    private readonly GetBusinessPublicDetailWithMyAccountHandler _getBusinessPublicDetailWithMyAccountHandler;
+    private readonly GetBusinessesForMapDiscoveryHandler _getBusinessesForMapDiscoveryHandler;
 
     /// <summary>
     /// Creates a new instance of <see cref="BusinessesController"/>.
@@ -49,13 +44,13 @@ public sealed class BusinessesController : ApiControllerBase
     public BusinessesController(
         GetBusinessesForDiscoveryHandler getBusinessesForDiscovery,
         GetBusinessPublicDetailHandler getBusinessPublicDetail,
-        GetBusinessesForMapDiscoveryHandler getBusinessesForMapDiscovery,
-        GetBusinessPublicDetailWithMyAccountHandler getBusinessPublicDetailWithMyAccount)
+        GetBusinessesForMapDiscoveryHandler getBusinessesForMapDiscoveryHandler,
+        GetBusinessPublicDetailWithMyAccountHandler getBusinessPublicDetailWithMyAccountHandler)
     {
         _getBusinessesForDiscovery = getBusinessesForDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForDiscovery));
         _getBusinessPublicDetail = getBusinessPublicDetail ?? throw new ArgumentNullException(nameof(getBusinessPublicDetail));
-        _getBusinessesForMapDiscovery = getBusinessesForMapDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForMapDiscovery));
-        _getBusinessPublicDetailWithMyAccount = getBusinessPublicDetailWithMyAccount ?? throw new ArgumentNullException(nameof(getBusinessPublicDetailWithMyAccount));
+        _getBusinessesForMapDiscoveryHandler = getBusinessesForMapDiscoveryHandler ?? throw new ArgumentNullException(nameof(getBusinessesForMapDiscoveryHandler));
+        _getBusinessPublicDetailWithMyAccountHandler = getBusinessPublicDetailWithMyAccountHandler ?? throw new ArgumentNullException(nameof(getBusinessPublicDetailWithMyAccountHandler));
     }
 
     /// <summary>
@@ -176,92 +171,6 @@ public sealed class BusinessesController : ApiControllerBase
 
 
     /// <summary>
-    /// Returns a paged list of businesses within the provided map bounds (viewport).
-    /// Designed for mobile map "pins" experiences.
-    /// </summary>
-    [HttpPost("map")]
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(PagedResponse<BusinessSummary>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Map
-        ([FromBody] BusinessMapDiscoveryRequest? request, CancellationToken ct)
-    {
-        if (request is null)
-            return BadRequestProblem("Request body is required.");
-
-        if (request.Bounds is null)
-            return BadRequestProblem("Bounds is required.");
-
-        if (!TryParseBusinessCategoryKind(request.Category, out var kind, out var categoryError))
-            return BadRequestProblem(categoryError);
-
-        var bounds = request.Bounds;
-        var boundsError = ValidateBounds(bounds);
-        if (!string.IsNullOrWhiteSpace(boundsError))
-            return BadRequestProblem(boundsError);
-
-        var page = request.Page.GetValueOrDefault(1);
-        var pageSize = request.PageSize.GetValueOrDefault(200);
-
-        var appRequest = new BusinessMapDiscoveryRequestDto
-        {
-            Page = page,
-            PageSize = pageSize,
-            Category = kind,
-            Query = NormalizeNullable(request.Query),
-            CountryCode = NormalizeNullable(request.CountryCode),
-            Bounds = new GeoBoundsDto
-            {
-                NorthLat = bounds.NorthLat,
-                SouthLat = bounds.SouthLat,
-                EastLon = bounds.EastLon,
-                WestLon = bounds.WestLon
-            }
-        };
-
-        var (items, total) = await _getBusinessesForMapDiscovery.HandleAsync(appRequest, ct);
-
-        var response = new PagedResponse<BusinessSummary>
-        {
-            Total = total,
-            Items = (items ?? new List<BusinessDiscoveryListItemDto>())
-                .Select(MapToContractSummary)
-                .ToList(),
-                Request = new PagedRequest
-                {
-                    Page = page,
-                    PageSize = pageSize,
-                    Search = NormalizeNullable(request.Query)
-                }
-        };
-
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Validates map bounds to prevent inverted or nonsensical ranges.
-    /// </summary>
-    private static string? ValidateBounds(GeoBoundsModel bounds)
-    {
-        // Latitude is [-90, 90], longitude is [-180, 180]. We keep checks minimal and deterministic.
-        if (bounds.NorthLat < bounds.SouthLat)
-            return "Bounds are invalid: NorthLat must be greater than or equal to SouthLat.";
-
-        if (bounds.EastLon < bounds.WestLon)
-            return "Bounds are invalid: EastLon must be greater than or equal to WestLon.";
-
-        if (bounds.NorthLat is < -90 or > 90 || bounds.SouthLat is < -90 or > 90)
-            return "Bounds are invalid: latitude values must be between -90 and 90.";
-
-        if (bounds.EastLon is < -180 or > 180 || bounds.WestLon is < -180 or > 180)
-            return "Bounds are invalid: longitude values must be between -180 and 180.";
-
-        return null;
-    }
-
-
-
-    /// <summary>
     /// Returns public business detail along with the current user's loyalty account summary for that business (if any).
     /// </summary>
     /// <remarks>
@@ -287,10 +196,10 @@ public sealed class BusinessesController : ApiControllerBase
     {
         if (id == Guid.Empty)
         {
-            return BadRequestProblem("Business id must be a non-empty GUID.");
+            return NotFoundProblem("Business not found.");
         }
 
-        var result = await _getBusinessPublicDetailWithMyAccount
+        var result = await _getBusinessPublicDetailWithMyAccountHandler
             .HandleAsync(id, ct)
             .ConfigureAwait(false);
 
@@ -314,22 +223,19 @@ public sealed class BusinessesController : ApiControllerBase
 
         var contract = new BusinessDetailWithMyAccount
         {
-            Business = MapToContractDetail(dto.Business),
+            Business = MapBusinessDetail(dto.Business),
             HasAccount = dto.HasAccount,
             MyAccount = dto.MyAccount is null
                 ? null
                 : new LoyaltyAccountSummary
                 {
-                    LoyaltyAccountId = dto.MyAccount.Id,
+                    LoyaltyAccountId = dto.MyAccount.LoyaltyAccountId,
                     BusinessId = dto.MyAccount.BusinessId,
-                    BusinessName = dto.MyAccount.BusinessName ?? string.Empty,
+                    BusinessName = dto.MyAccount.BusinessName,
+                    Status = dto.MyAccount.Status,
                     PointsBalance = dto.MyAccount.PointsBalance,
                     LifetimePoints = dto.MyAccount.LifetimePoints,
-                    Status = dto.MyAccount.Status.ToString(),
-                    LastAccrualAtUtc = dto.MyAccount.LastAccrualAtUtc,
-
-                    // Not currently provided by Application; keep null (explicit contract supports it).
-                    NextRewardTitle = null
+                    LastAccrualAtUtc = dto.MyAccount.LastAccrualAtUtc
                 }
         };
 
@@ -402,7 +308,7 @@ public sealed class BusinessesController : ApiControllerBase
             },
 
             OpeningHours = null,
-            PhoneE164 = null,
+            PhoneE164 = dto.ContactPhoneE164,
             DefaultCurrency = string.IsNullOrWhiteSpace(dto.DefaultCurrency) ? "EUR" : dto.DefaultCurrency,
             DefaultCulture = string.IsNullOrWhiteSpace(dto.DefaultCulture) ? "de-DE" : dto.DefaultCulture,
             WebsiteUrl = dto.WebsiteUrl,
