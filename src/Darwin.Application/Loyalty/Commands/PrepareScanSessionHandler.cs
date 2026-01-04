@@ -38,7 +38,7 @@ namespace Darwin.Application.Loyalty.Commands
         /// <summary>
         /// Default scan session lifetime in minutes.
         /// </summary>
-        private const int DefaultSessionLifetimeMinutes = 2;
+        private const int DefaultSessionLifetimeMinutes = 5;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrepareScanSessionHandler"/> class.
@@ -126,6 +126,23 @@ namespace Darwin.Application.Loyalty.Commands
                 ExpiresAtUtc = expiresAt,
                 IssuedDeviceId = dto.DeviceId
             };
+
+            // ---------------------------------------------------------------------
+            // CRITICAL FIX:
+            // Ensure the token entity has a non-empty Id BEFORE referencing it from ScanSession.
+            //
+            // Why:
+            // - BaseEntity.Id does not default to Guid.NewGuid().
+            // - EF Core may generate Id only at SaveChanges (ValueGeneratedOnAdd).
+            // - ScanSession.QrCodeTokenId must be a valid FK to QrCodeTokens.Id.
+            //
+            // By assigning a Guid explicitly here, we keep a single SaveChanges call (atomic)
+            // and guarantee correct FK correlation.
+            // ---------------------------------------------------------------------
+            if (qrToken.Id == Guid.Empty)
+            {
+                qrToken.Id = Guid.NewGuid();
+            }
 
             _db.Set<QrCodeToken>().Add(qrToken);
 
