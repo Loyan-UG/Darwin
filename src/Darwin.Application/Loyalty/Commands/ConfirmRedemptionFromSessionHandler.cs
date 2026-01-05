@@ -95,10 +95,27 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ConfirmRedemptionResultDto>.Fail("Scan session is not in redemption mode.");
             }
 
-            // Consume token early to reduce replay risk. In later failures we cancel the session.
             await _tokenResolver
                 .ConsumeAsync(token, businessId, session.BusinessLocationId, ct)
                 .ConfigureAwait(false);
+
+            // Concurrency re-check (same pattern as accrual handler)
+            var tokenAfterConsume = await _db.Set<QrCodeToken>()
+                .AsNoTracking()
+                .SingleOrDefaultAsync(t => t.Id == token.Id && !t.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (tokenAfterConsume is null ||
+                tokenAfterConsume.ConsumedAtUtc is null ||
+                tokenAfterConsume.ConsumedByBusinessId != businessId)
+            {
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "TokenAlreadyConsumed";
+                session.FailureReason = "Token was consumed concurrently by another request.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+                return Result<ConfirmRedemptionResultDto>.Fail("Scan session token has already been consumed.");
+            }
 
             var now = _clock.UtcNow;
 

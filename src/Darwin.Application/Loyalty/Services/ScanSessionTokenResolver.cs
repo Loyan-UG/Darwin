@@ -129,6 +129,16 @@ namespace Darwin.Application.Loyalty.Services
         /// <summary>
         /// Marks the token as consumed, binding it to the specified business context.
         /// </summary>
+        /// <remarks>
+        /// Implementation details:
+        /// - Uses a single conditional UPDATE to guarantee one-time use semantics even under concurrency.
+        /// - If another request consumes the token first, the update affects 0 rows and we return without throwing.
+        ///
+        /// Why not throw?
+        /// - Callers already handle the "already consumed" path by validating through ResolveForBusinessAsync.
+        /// - Under race, ResolveForBusinessAsync may pass in both requests; ConsumeAsync is the final guardrail.
+        /// - We keep the method idempotent and safe to call multiple times.
+        /// </remarks>
         /// <param name="token">Token entity to consume.</param>
         /// <param name="businessId">Business that consumed the token.</param>
         /// <param name="businessLocationId">Optional location that consumed the token.</param>
@@ -149,16 +159,47 @@ namespace Darwin.Application.Loyalty.Services
                 throw new ArgumentException("BusinessId must not be empty.", nameof(businessId));
             }
 
+            // Fast-path: if this in-memory instance is already consumed, do nothing.
             if (token.ConsumedAtUtc is not null)
             {
                 return;
             }
 
-            token.ConsumedAtUtc = _clock.UtcNow;
+            var now = _clock.UtcNow;
+
+            // Atomic consume:
+            // Update only if:
+            // - matching Id
+            // - not soft-deleted (defensive)
+            // - not yet consumed
+            var affected = await _db.Set<QrCodeToken>()
+                .Where(t =>
+                    t.Id == token.Id &&
+                    !t.IsDeleted &&
+                    t.ConsumedAtUtc == null)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(t => t.ConsumedAtUtc, now)
+                    .SetProperty(t => t.ConsumedByBusinessId, businessId)
+                    .SetProperty(t => t.ConsumedByBusinessLocationId, businessLocationId),
+                    ct)
+                .ConfigureAwait(false);
+
+            if (affected == 0)
+            {
+                // Someone else consumed it first (or it was deleted). Keep idempotency:
+                // - Do not throw, just return.
+                // - Caller logic will treat the token as consumed on next resolve/confirm step.
+                return;
+            }
+
+            // Keep the tracked instance consistent for any further usage in the same request scope.
+            token.ConsumedAtUtc = now;
             token.ConsumedByBusinessId = businessId;
             token.ConsumedByBusinessLocationId = businessLocationId;
 
-            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            // Important:
+            // ExecuteUpdateAsync writes directly to the database and does NOT require SaveChangesAsync.
+            // Calling SaveChangesAsync here could accidentally persist unrelated tracked changes.
         }
 
         /// <summary>

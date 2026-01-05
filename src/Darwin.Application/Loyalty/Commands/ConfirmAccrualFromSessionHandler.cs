@@ -85,7 +85,6 @@ namespace Darwin.Application.Loyalty.Commands
                 return Result<ConfirmAccrualResultDto>.Fail("Points must be a positive integer.");
             }
 
-            // Resolve token -> (QrCodeToken, ScanSession) and validate business ownership, expiry and pending status.
             var resolvedResult = await _tokenResolver
                 .ResolveForBusinessAsync(dto.ScanSessionToken, businessId, ct)
                 .ConfigureAwait(false);
@@ -104,10 +103,32 @@ namespace Darwin.Application.Loyalty.Commands
             }
 
             // Consume token early to reduce replay window.
-            // If any later failure occurs, we will cancel the session with a failure reason.
             await _tokenResolver
                 .ConsumeAsync(token, businessId, session.BusinessLocationId, ct)
                 .ConfigureAwait(false);
+
+            // -----------------------------------------------------------------
+            // Concurrency re-check:
+            // If a competing request consumed the token first, ConsumeAsync is a no-op.
+            // We detect that here and stop the operation.
+            // -----------------------------------------------------------------
+            var tokenAfterConsume = await _db.Set<QrCodeToken>()
+                .AsNoTracking()
+                .SingleOrDefaultAsync(t => t.Id == token.Id && !t.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (tokenAfterConsume is null ||
+                tokenAfterConsume.ConsumedAtUtc is null ||
+                tokenAfterConsume.ConsumedByBusinessId != businessId)
+            {
+                // Best-effort: mark the session as cancelled to aid debugging and analytics.
+                session.Status = LoyaltyScanStatus.Cancelled;
+                session.Outcome = "TokenAlreadyConsumed";
+                session.FailureReason = "Token was consumed concurrently by another request.";
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+                return Result<ConfirmAccrualResultDto>.Fail("Scan session token has already been consumed.");
+            }
 
             var account = await _db.Set<LoyaltyAccount>()
                 .AsQueryable()
@@ -136,7 +157,6 @@ namespace Darwin.Application.Loyalty.Commands
 
             var now = _clock.UtcNow;
 
-            // Extra safety: If the session expired between resolve and now, treat as expired.
             if (session.ExpiresAtUtc <= now)
             {
                 session.Status = LoyaltyScanStatus.Expired;
