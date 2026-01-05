@@ -223,16 +223,16 @@ public sealed class BusinessesController : ApiControllerBase
 
         var contract = new BusinessDetailWithMyAccount
         {
-            Business = MapBusinessDetail(dto.Business),
+            Business = MapToContractDetail(dto.Business),
             HasAccount = dto.HasAccount,
             MyAccount = dto.MyAccount is null
                 ? null
                 : new LoyaltyAccountSummary
                 {
-                    LoyaltyAccountId = dto.MyAccount.LoyaltyAccountId,
+                    LoyaltyAccountId = dto.MyAccount.Id,
                     BusinessId = dto.MyAccount.BusinessId,
-                    BusinessName = dto.MyAccount.BusinessName,
-                    Status = dto.MyAccount.Status,
+                    BusinessName = dto.MyAccount.BusinessName ?? string.Empty,
+                    Status = dto.MyAccount.Status.ToString(),
                     PointsBalance = dto.MyAccount.PointsBalance,
                     LifetimePoints = dto.MyAccount.LifetimePoints,
                     LastAccrualAtUtc = dto.MyAccount.LastAccrualAtUtc
