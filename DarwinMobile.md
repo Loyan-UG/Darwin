@@ -1,5 +1,11 @@
 ﻿# Darwin Mobile Suite & Contracts — Technical Guide
 
+[![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
+[![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
+[![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
+
+
 > Scope: **Mobile** projects and the **Darwin.Contracts** package only. This guide enables a new contributor to continue the mobile work without needing any prior chat context.
 
 ---
@@ -348,7 +354,7 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ## 15) Build & Tooling
 
-- **Target SDK**: .NET 9.
+- **Target SDK**: .NET 10.
 - **Packages (apps)**:
   - `Microsoft.Extensions.Http` for `AddHttpClient`.
   - Camera/QR packages per platform (to be selected in each MAUI app).

@@ -1,9 +1,13 @@
 ﻿# 🛒 Darwin CMS + E-Commerce Platform
 
-[![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
-[![EF Core](https://img.shields.io/badge/EntityFrameworkCore-9.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
+[![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
+[![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
+[![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
+[![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
+[![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
 [![Build](https://img.shields.io/github/actions/workflow/status/shahramvafadar/Darwin/build.yml?branch=master&logo=githubactions&label=CI)](../../actions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 
 Darwin is a **modern CMS + e-commerce solution** designed for **European SMBs** who need a
 flexible, future-proof platform that runs even on **shared hosting**.
@@ -159,7 +163,7 @@ Darwin.WebApi is the public surface for mobile. All payloads/errors use `Darwin.
 ## 🚀 Getting Started
 
 ### Prerequisites
-- [.NET 9 SDK](https://dotnet.microsoft.com/)
+- [.NET 10 SDK](https://dotnet.microsoft.com/)
 - SQL Server (local or hosted; LocalDB works for dev)
 - Node/npm (optional, for front-end tooling)
 
