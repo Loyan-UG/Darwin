@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Application", "src\Darwin.Application\Darwin.Application.csproj", "{BB7C4A04-E5E4-479F-8BB1-832B8DB04AC3}"
 EndProject
@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{02EA681E-C
 		BACKLOG.md = BACKLOG.md
 		CONTRIBUTING.md = CONTRIBUTING.md
 		DarwinMobile.md = DarwinMobile.md
+		DarwinTesting.md = DarwinTesting.md
 		howto-identity-access.md = howto-identity-access.md
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
