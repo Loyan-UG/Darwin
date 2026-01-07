@@ -3,8 +3,8 @@ using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Common.DTOs;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Common;
-using Darwin.Contracts.Loyalty;
 using Darwin.Domain.Enums;
+using Darwin.WebApi.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -21,10 +21,9 @@ namespace Darwin.WebApi.Controllers.Businesses;
 /// while Application DTOs remain internal and are mapped explicitly.
 /// </summary>
 /// <remarks>
-/// <para>
-/// IMPORTANT: This controller is intentionally thin and contains no business rules.
-/// All filtering/searching logic is handled in the Application layer.
-/// </para>
+/// IMPORTANT:
+/// This controller must remain thin. It should contain no business rules.
+/// All query logic belongs to Application handlers.
 /// </remarks>
 [ApiController]
 [Authorize]
@@ -38,9 +37,6 @@ public sealed class BusinessesController : ApiControllerBase
     private readonly GetBusinessPublicDetailWithMyAccountHandler _getBusinessPublicDetailWithMyAccountHandler;
     private readonly GetBusinessesForMapDiscoveryHandler _getBusinessesForMapDiscoveryHandler;
 
-    /// <summary>
-    /// Creates a new instance of <see cref="BusinessesController"/>.
-    /// </summary>
     public BusinessesController(
         GetBusinessesForDiscoveryHandler getBusinessesForDiscovery,
         GetBusinessPublicDetailHandler getBusinessPublicDetail,
@@ -53,20 +49,6 @@ public sealed class BusinessesController : ApiControllerBase
         _getBusinessPublicDetailWithMyAccountHandler = getBusinessPublicDetailWithMyAccountHandler ?? throw new ArgumentNullException(nameof(getBusinessPublicDetailWithMyAccountHandler));
     }
 
-    /// <summary>
-    /// Returns a paged list of businesses for consumer/mobile discovery.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This endpoint is Contract-first and maps to <see cref="GetBusinessesForDiscoveryHandler"/> in Application.
-    /// </para>
-    /// <para>
-    /// We intentionally return <see cref="IActionResult"/> (instead of <c>ActionResult&lt;T&gt;</c>) to keep
-    /// error shaping consistent across controllers via <see cref="ApiControllerBase"/> helper methods
-    /// (<see cref="ApiControllerBase.BadRequestProblem"/> / <see cref="ApiControllerBase.NotFoundProblem"/>).
-    /// Typed response shapes are still documented via <see cref="ProducesResponseTypeAttribute"/>.
-    /// </para>
-    /// </remarks>
     [HttpPost("list")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(PagedResponse<BusinessSummary>), 200)]
@@ -87,10 +69,7 @@ public sealed class BusinessesController : ApiControllerBase
             pageSize = MaxPageSize;
         }
 
-        // Query text: keep backward compatibility by allowing either Query or Search.
-        // BusinessListRequest has Query; PagedRequest has Search. If both are set, Query wins.
         var queryText = NormalizeNullable(request.Query) ?? NormalizeNullable(request.Search);
-
 
         if (!TryParseBusinessCategoryKind(request.CategoryKindKey, out var categoryKind, out var categoryError))
         {
@@ -122,7 +101,7 @@ public sealed class BusinessesController : ApiControllerBase
         {
             Total = total,
             Items = (items ?? new List<BusinessDiscoveryListItemDto>())
-                .Select(MapToContractSummary)
+                .Select(BusinessContractsMapper.ToContract)
                 .ToList(),
             Request = new PagedRequest
             {
@@ -135,16 +114,6 @@ public sealed class BusinessesController : ApiControllerBase
         return Ok(response);
     }
 
-
-
-    /// <summary>
-    /// Returns the public detail view for a business.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// We return <see cref="IActionResult"/> to keep error shaping consistent through <see cref="ApiControllerBase"/>.
-    /// </para>
-    /// </remarks>
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(BusinessDetail), 200)]
@@ -165,26 +134,10 @@ public sealed class BusinessesController : ApiControllerBase
             return NotFoundProblem("Business was not found.");
         }
 
-        var contract = MapToContractDetail(dto);
+        var contract = BusinessContractsMapper.ToContract(dto);
         return Ok(contract);
     }
 
-
-    /// <summary>
-    /// Returns public business detail along with the current user's loyalty account summary for that business (if any).
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This is a consumer/mobile endpoint. It requires member access because it depends on the current user
-    /// for the "MyAccount" portion.
-    /// </para>
-    /// <para>
-    /// If the business is not visible/active, the handler returns <c>Ok(null)</c> and WebApi translates it to 404.
-    /// </para>
-    /// </remarks>
-    /// <param name="id">Public business identifier.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>A combined contract model for business detail + my account.</returns>
     [HttpGet("{id:guid}/with-my-account")]
     [Authorize(Policy = "perm:AccessMemberArea")]
     [ProducesResponseType(typeof(BusinessDetailWithMyAccount), 200)]
@@ -208,193 +161,18 @@ public sealed class BusinessesController : ApiControllerBase
             return ProblemFromResult(result);
         }
 
-        // Defensive: even on success, Value may be null (documented behavior for not visible / not found).
         var dto = result.Value;
-        if (dto is null)
+        if (dto is null || dto.Business is null)
         {
             return NotFoundProblem("Business not found.");
         }
 
-        if (dto.Business is null)
-        {
-            // Defensive: should not happen based on handler implementation, but avoid null leakage.
-            return NotFoundProblem("Business not found.");
-        }
-
-        var contract = new BusinessDetailWithMyAccount
-        {
-            Business = MapToContractDetail(dto.Business),
-            HasAccount = dto.HasAccount,
-            MyAccount = dto.MyAccount is null
-                ? null
-                : new LoyaltyAccountSummary
-                {
-                    LoyaltyAccountId = dto.MyAccount.Id,
-                    BusinessId = dto.MyAccount.BusinessId,
-                    BusinessName = dto.MyAccount.BusinessName ?? string.Empty,
-                    Status = dto.MyAccount.Status.ToString(),
-                    PointsBalance = dto.MyAccount.PointsBalance,
-                    LifetimePoints = dto.MyAccount.LifetimePoints,
-                    LastAccrualAtUtc = dto.MyAccount.LastAccrualAtUtc
-                }
-        };
-
+        var contract = BusinessContractsMapper.ToContract(dto);
         return Ok(contract);
     }
 
-
-    private static BusinessSummary MapToContractSummary(BusinessDiscoveryListItemDto dto)
-    {
-        ArgumentNullException.ThrowIfNull(dto);
-
-        return new BusinessSummary
-        {
-            Id = dto.Id,
-            Name = dto.Name ?? string.Empty,
-            ShortDescription = dto.ShortDescription,
-            LogoUrl = dto.PrimaryImageUrl,
-            Category = dto.Category.ToString(),
-            Location = dto.Coordinate is null ? null : new GeoCoordinateModel
-            {
-                Latitude = dto.Coordinate.Latitude,
-                Longitude = dto.Coordinate.Longitude,
-                AltitudeMeters = dto.Coordinate.AltitudeMeters
-            },
-            City = dto.City,
-            IsOpenNow = dto.IsOpenNow,
-            IsActive = dto.IsActive,
-
-            // Application provides DistanceKm; API standardizes on meters.
-            DistanceMeters = dto.DistanceKm.HasValue
-                    ? (int?)Math.Round(dto.DistanceKm.Value * 1000.0, MidpointRounding.AwayFromZero)
-                    : null,
-
-            // TODO: Ratings
-            // Rating fields are not provided by the current discovery handler output.
-            Rating = null,
-            RatingCount = null
-        };
-    }
-
-
-    private static BusinessDetail MapToContractDetail(BusinessPublicDetailDto dto)
-    {
-        ArgumentNullException.ThrowIfNull(dto);
-
-        var primaryLocation = dto.Locations?.FirstOrDefault(l => l.IsPrimary) ?? dto.Locations?.FirstOrDefault();
-
-        return new BusinessDetail
-        {
-            Id = dto.Id,
-            Name = dto.Name ?? string.Empty,
-            Category = dto.Category.ToString(),
-
-            // Prefer explicit short description; do not fabricate long description.
-            ShortDescription = dto.ShortDescription,
-            Description = null,
-
-            PrimaryImageUrl = dto.PrimaryImageUrl,
-            GalleryImageUrls = dto.GalleryImageUrls,
-
-            // Legacy combined list preserved for backward compatibility.
-            ImageUrls = BuildImageUrls(dto.PrimaryImageUrl, dto.GalleryImageUrls),
-
-            City = primaryLocation?.City,
-            Coordinate = primaryLocation?.Coordinate is null ? null : new GeoCoordinateModel
-            {
-                Latitude = primaryLocation.Coordinate.Latitude,
-                Longitude = primaryLocation.Coordinate.Longitude,
-                AltitudeMeters = primaryLocation.Coordinate.AltitudeMeters
-            },
-
-            OpeningHours = null,
-            PhoneE164 = dto.ContactPhoneE164,
-            DefaultCurrency = string.IsNullOrWhiteSpace(dto.DefaultCurrency) ? "EUR" : dto.DefaultCurrency,
-            DefaultCulture = string.IsNullOrWhiteSpace(dto.DefaultCulture) ? "de-DE" : dto.DefaultCulture,
-            WebsiteUrl = dto.WebsiteUrl,
-            ContactEmail = dto.ContactEmail,
-            ContactPhoneE164 = dto.ContactPhoneE164,
-
-            Locations = (dto.Locations ?? new List<BusinessPublicLocationDto>())
-                .Select(MapToContractLocation)
-                .ToList(),
-
-            LoyaltyProgram = null,
-            LoyaltyProgramPublic = dto.LoyaltyProgram is null ? null : MapToContractLoyaltyProgramPublic(dto.LoyaltyProgram)
-        };
-    }
-
-    private static BusinessLocation MapToContractLocation(BusinessPublicLocationDto dto)
-    {
-        ArgumentNullException.ThrowIfNull(dto);
-
-        return new BusinessLocation
-        {
-            BusinessLocationId = dto.Id,
-            Name = dto.Name ?? string.Empty,
-            AddressLine1 = dto.AddressLine1,
-            AddressLine2 = dto.AddressLine2,
-            City = dto.City,
-            Region = dto.Region,
-            CountryCode = dto.CountryCode,
-            PostalCode = dto.PostalCode,
-            Coordinate = dto.Coordinate is null ? null : new GeoCoordinateModel
-            {
-                Latitude = dto.Coordinate.Latitude,
-                Longitude = dto.Coordinate.Longitude,
-                AltitudeMeters = dto.Coordinate.AltitudeMeters
-            },
-            IsPrimary = dto.IsPrimary,
-            OpeningHoursJson = dto.OpeningHoursJson
-        };
-    }
-
-    private static LoyaltyProgramPublic MapToContractLoyaltyProgramPublic(LoyaltyProgramPublicDto dto)
-    {
-        ArgumentNullException.ThrowIfNull(dto);
-
-        return new LoyaltyProgramPublic
-        {
-            Id = dto.Id,
-            BusinessId = dto.BusinessId,
-            Name = dto.Name ?? string.Empty,
-            IsActive = dto.IsActive,
-            RewardTiers = (dto.RewardTiers ?? new List<LoyaltyRewardTierPublicDto>())
-                .Select(t => new LoyaltyRewardTierPublic
-                {
-                    Id = t.Id,
-                    PointsRequired = t.PointsRequired,
-                    RewardType = t.RewardType.ToString(),
-                    RewardValue = t.RewardValue,
-                    Description = t.Description,
-                    AllowSelfRedemption = t.AllowSelfRedemption
-                })
-                .ToList()
-        };
-    }
-
-    private static IReadOnlyList<string> BuildImageUrls(string? primaryImageUrl, List<string>? galleryImageUrls)
-    {
-        var list = new List<string>(capacity: 1 + (galleryImageUrls?.Count ?? 0));
-
-        if (!string.IsNullOrWhiteSpace(primaryImageUrl))
-        {
-            list.Add(primaryImageUrl.Trim());
-        }
-
-        if (galleryImageUrls is { Count: > 0 })
-        {
-            foreach (var url in galleryImageUrls)
-            {
-                if (!string.IsNullOrWhiteSpace(url))
-                {
-                    list.Add(url.Trim());
-                }
-            }
-        }
-
-        return list;
-    }
+    // NOTE: GetBusinessesForMapDiscoveryHandler endpoint isn't shown in this controller file snippet,
+    // but if/when you add it, it should also map using a dedicated mapper to keep the controller thin.
 
     private static string? NormalizeNullable(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -422,10 +200,6 @@ public sealed class BusinessesController : ApiControllerBase
         return false;
     }
 
-    /// <summary>
-    /// Maps contract proximity fields to Application proximity fields.
-    /// Contract uses meters; Application uses kilometers.
-    /// </summary>
     private static (GeoCoordinateDto? Coordinate, double? RadiusKm, string? Error) TryMapProximity(
         GeoCoordinateModel? near,
         int? radiusMeters)
@@ -452,7 +226,6 @@ public sealed class BusinessesController : ApiControllerBase
             AltitudeMeters = near.AltitudeMeters
         };
 
-        // Convert meters -> km for Application.
         var radiusKm = radiusMeters.HasValue
             ? radiusMeters.Value / 1000.0
             : (double?)null;
