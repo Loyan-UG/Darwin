@@ -168,28 +168,20 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var value = result.Value;
 
+            // Default to an empty list; only redemption-mode sessions with accepted reward tiers populate this.
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            // Redemption: enrich selected tier ids with reward details (name/description/etc.)
+            // Redemption: enrich accepted tier ids with reward details via centralized helper.
             if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
                 value.SelectedRewardTierIds is { Count: > 0 })
             {
-                var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
-                    .HandleAsync(request.BusinessId, ct)
-                    .ConfigureAwait(false);
-
-                if (availableRewardsResult.Succeeded && availableRewardsResult.Value is not null)
+                // caller decides policy: for prepare (consumer-initiated redemption) we want strict behavior
+                var enrichResult = await BuildSelectedRewardsAsync(request.BusinessId, value.SelectedRewardTierIds, failIfMissing: true, ct);
+                if (!enrichResult.Succeeded)
                 {
-                    var acceptedTierIds = value.SelectedRewardTierIds
-                        .Where(x => x != Guid.Empty)
-                        .Distinct()
-                        .ToHashSet();
-
-                    selectedRewards = availableRewardsResult.Value
-                        .Where(r => acceptedTierIds.Contains(r.LoyaltyRewardTierId))
-                        .Select(LoyaltyContractsMapper.ToContract)
-                        .ToList();
+                    return ProblemFromResult(enrichResult); // converts Result.Fail -> ProblemDetails
                 }
+                selectedRewards = enrichResult.Value;
             }
 
             var response = new PrepareScanSessionResponse
@@ -257,29 +249,23 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var value = result.Value;
 
+            // Default to empty list; only redemption-mode sessions may carry selected rewards.
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            // Redemption: enrich selected tier ids with reward details
+            // Redemption: enrich selected tier ids with reward details via centralized helper.
             if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
                 value.SelectedRewards is { Count: > 0 })
             {
-                var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
-                    .HandleAsync(businessId, ct)
-                    .ConfigureAwait(false);
+                var tierIds = value.SelectedRewards?
+                    .Select(x => x.LoyaltyRewardTierId)
+                    .Where(x => x != Guid.Empty)
+                    .Distinct()
+                    .ToList();
 
-                if (availableRewardsResult.Succeeded && availableRewardsResult.Value is not null)
-                {
-                    var selectedTierIds = value.SelectedRewards
-                        .Select(x => x.LoyaltyRewardTierId)
-                        .Where(x => x != Guid.Empty)
-                        .Distinct()
-                        .ToHashSet();
-
-                    selectedRewards = availableRewardsResult.Value
-                        .Where(r => selectedTierIds.Contains(r.LoyaltyRewardTierId))
-                        .Select(LoyaltyContractsMapper.ToContract)
-                        .ToList();
-                }
+                var enrichResult = await BuildSelectedRewardsAsync(businessId, tierIds, failIfMissing: true, ct);
+                if (!enrichResult.Succeeded)
+                    return ProblemFromResult(enrichResult);
+                selectedRewards = enrichResult.Value;
             }
 
             var allowedActions =
@@ -287,7 +273,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
                     ? LoyaltyScanAllowedActions.CanConfirmAccrual
                     : LoyaltyScanAllowedActions.CanConfirmRedemption;
 
-            var response = new  
+            // IMPORTANT:
+            // Return the contract type (not an anonymous object) to keep OpenAPI/clients stable.
+            var response = new ProcessScanSessionForBusinessResponse
             {
                 Mode = LoyaltyContractsMapper.ToContract(value.Mode),
                 BusinessId = businessId,
@@ -298,12 +286,97 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
-
         #endregion
 
 
 
+        /// <summary>
+        /// Enriches selected reward tier ids with public reward metadata for the specified business.
+        /// Returns Result.Failed when the enrichment could not be performed or when required tier ids were missing
+        /// and failIfMissing is true.
+        /// </summary>
+        /// <param name="businessId">Business to query available rewards for.</param>
+        /// <param name="selectedTierIds">Ordered collection of selected reward tier ids (may be null/empty).</param>
+        /// <param name="failIfMissing">When true, treat missing reward metadata as an error; otherwise return best-effort list.</param>
+        /// <param name="ct">Cancellation token.</param>
+        private async Task<Result<IReadOnlyList<LoyaltyRewardSummary>>> BuildSelectedRewardsAsync(
+            Guid businessId,
+            IReadOnlyCollection<Guid>? selectedTierIds,
+            bool failIfMissing,
+            CancellationToken ct = default)
+        {
+            if (selectedTierIds is null || selectedTierIds.Count == 0)
+            {
+                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(Array.Empty<LoyaltyRewardSummary>());
+            }
 
+            // Normalize requested ids, preserve provided order but remove empties/dups.
+            var orderedDistinct = selectedTierIds
+                .Where(x => x != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            if (orderedDistinct.Count == 0)
+            {
+                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(Array.Empty<LoyaltyRewardSummary>());
+            }
+
+            // Fetch available rewards from Application handler
+            var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
+                .HandleAsync(businessId, ct)
+                .ConfigureAwait(false);
+
+            if (!availableRewardsResult.Succeeded || availableRewardsResult.Value is null)
+            {
+                if (failIfMissing)
+                {
+                    return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail("Could not load business rewards for enrichment.");
+                }
+                else
+                {
+                    // Best-effort: return empty list to keep caller available
+                    return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(Array.Empty<LoyaltyRewardSummary>());
+                }
+            }
+
+            var available = availableRewardsResult.Value;
+
+            // Build a dictionary for fast lookup
+            var dict = available.ToDictionary(r => r.LoyaltyRewardTierId);
+
+            var missing = new List<Guid>();
+            var resultList = new List<LoyaltyRewardSummary>(orderedDistinct.Count);
+
+            // Preserve the order of orderedDistinct
+            foreach (var id in orderedDistinct)
+            {
+                if (dict.TryGetValue(id, out var rewardDto))
+                {
+                    resultList.Add(new LoyaltyRewardSummary
+                    {
+                        LoyaltyRewardTierId = rewardDto.LoyaltyRewardTierId,
+                        BusinessId = rewardDto.BusinessId,
+                        Name = rewardDto.Name ?? string.Empty,
+                        Description = rewardDto.Description,
+                        RequiredPoints = rewardDto.RequiredPoints,
+                        IsActive = rewardDto.IsActive,
+                        IsSelectable = rewardDto.IsSelectable
+                    });
+                }
+                else
+                {
+                    missing.Add(id);
+                }
+            }
+
+            if (missing.Count > 0 && failIfMissing)
+            {
+                // Helpful diagnostic: include count or first missing id (avoid leaking data)
+                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail("Some selected rewards are not available for this business.");
+            }
+
+            return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(resultList);
+        }
 
 
 
@@ -843,7 +916,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             return Ok(response);
         }
 
-        
+
 
 
 
