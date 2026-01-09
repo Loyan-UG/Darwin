@@ -4,6 +4,7 @@ using Darwin.Application.Loyalty.Queries;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
 using Darwin.Shared.Results;
+using Darwin.WebApi.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ContractLoyaltyScanMode = Darwin.Contracts.Loyalty.LoyaltyScanMode;
@@ -13,23 +14,20 @@ using DomainLoyaltyScanMode = Darwin.Domain.Enums.LoyaltyScanMode;
 namespace Darwin.WebApi.Controllers.Loyalty
 {
     /// <summary>
-    /// API endpoints for the loyalty system used by both consumer and business
-    /// mobile applications.
+    /// API endpoints for the loyalty system used by both consumer and business mobile applications.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The consumer app primarily uses the <c>/scan/prepare</c> endpoint to
-    /// create a short-lived scan session that is encoded into a QR code.
-    /// </para>
-    /// <para>
-    /// The business (staff) app uses the remaining endpoints to process the
-    /// scanned session, confirm accrual or redemption, and browse loyalty
-    /// accounts and history.
-    /// </para>
+    /// IMPORTANT:
+    /// This controller must remain thin. It performs:
+    /// - Request validation (format-level)
+    /// - Auth/claims boundary checks
+    /// - Delegation to Application handlers
+    /// - Mapping from Application DTOs to Darwin.Contracts
+    /// 
+    /// All business rules must remain in the Application layer.
     /// </remarks>
     [ApiController]
     [Route("api/v1/loyalty")]
-
     [Authorize]
     public sealed class LoyaltyController : ApiControllerBase
     {
@@ -151,9 +149,11 @@ namespace Darwin.WebApi.Controllers.Loyalty
             {
                 BusinessId = request.BusinessId,
                 BusinessLocationId = request.BusinessLocationId,
-                Mode = MapScanMode(request.Mode),
-                SelectedRewardTierIds = request.SelectedRewardTierIds?.Where(x => x != Guid.Empty).Distinct().ToList()
-                    ?? new List<Guid>(),
+                Mode = LoyaltyContractsMapper.ToDomain(request.Mode),
+                SelectedRewardTierIds = request.SelectedRewardTierIds?
+                    .Where(x => x != Guid.Empty)
+                    .Distinct()
+                    .ToList() ?? new List<Guid>(),
                 DeviceId = request.DeviceId
             };
 
@@ -168,10 +168,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var value = result.Value;
 
-            // Default to an empty list; only redemption-mode sessions with accepted reward tiers populate this.
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            if (value.Mode == DomainLoyaltyScanMode.Redemption &&
+            // Redemption: enrich selected tier ids with reward details (name/description/etc.)
+            if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
                 value.SelectedRewardTierIds is { Count: > 0 })
             {
                 var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
@@ -187,16 +187,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
                     selectedRewards = availableRewardsResult.Value
                         .Where(r => acceptedTierIds.Contains(r.LoyaltyRewardTierId))
-                        .Select(r => new LoyaltyRewardSummary
-                        {
-                            LoyaltyRewardTierId = r.LoyaltyRewardTierId,
-                            BusinessId = r.BusinessId,
-                            Name = r.Name ?? string.Empty,
-                            Description = r.Description,
-                            RequiredPoints = r.RequiredPoints,
-                            IsActive = r.IsActive,
-                            IsSelectable = r.IsSelectable
-                        })
+                        .Select(LoyaltyContractsMapper.ToContract)
                         .ToList();
                 }
             }
@@ -204,7 +195,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             var response = new PrepareScanSessionResponse
             {
                 ScanSessionToken = value.ScanSessionToken,
-                Mode = MapScanMode(value.Mode),
+                Mode = LoyaltyContractsMapper.ToContract(value.Mode),
                 ExpiresAtUtc = value.ExpiresAtUtc,
                 CurrentPointsBalance = value.CurrentPointsBalance,
                 SelectedRewards = selectedRewards
@@ -212,44 +203,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
-
         #endregion
 
 
-
-        #region Enum mapping helpers
-
-        /// <summary>
-        /// Maps the contract-level scan mode enum to the domain/Application enum.
-        /// </summary>
-        /// <param name="mode">Contract scan mode value.</param>
-        /// <returns>Domain scan mode value.</returns>
-        private static DomainLoyaltyScanMode MapScanMode(ContractLoyaltyScanMode mode)
-        {
-            return mode switch
-            {
-                ContractLoyaltyScanMode.Accrual => DomainLoyaltyScanMode.Accrual,
-                ContractLoyaltyScanMode.Redemption => DomainLoyaltyScanMode.Redemption,
-                _ => DomainLoyaltyScanMode.Accrual
-            };
-        }
-
-        /// <summary>
-        /// Maps the domain/Application scan mode enum to the contract-level enum.
-        /// </summary>
-        /// <param name="mode">Domain scan mode value.</param>
-        /// <returns>Contract scan mode value.</returns>
-        private static ContractLoyaltyScanMode MapScanMode(DomainLoyaltyScanMode mode)
-        {
-            return mode switch
-            {
-                DomainLoyaltyScanMode.Accrual => ContractLoyaltyScanMode.Accrual,
-                DomainLoyaltyScanMode.Redemption => ContractLoyaltyScanMode.Redemption,
-                _ => ContractLoyaltyScanMode.Accrual
-            };
-        }
-
-        #endregion
 
 
         #region Scan processing (business)
@@ -301,10 +257,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var value = result.Value;
 
-            // Default to empty list; only redemption-mode sessions may carry selected rewards.
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            if (value.Mode == DomainLoyaltyScanMode.Redemption &&
+            // Redemption: enrich selected tier ids with reward details
+            if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
                 value.SelectedRewards is { Count: > 0 })
             {
                 var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
@@ -321,35 +277,21 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
                     selectedRewards = availableRewardsResult.Value
                         .Where(r => selectedTierIds.Contains(r.LoyaltyRewardTierId))
-                        .Select(r => new LoyaltyRewardSummary
-                        {
-                            LoyaltyRewardTierId = r.LoyaltyRewardTierId,
-                            BusinessId = r.BusinessId,
-                            Name = r.Name ?? string.Empty,
-                            Description = r.Description,
-                            RequiredPoints = r.RequiredPoints,
-                            IsActive = r.IsActive,
-                            IsSelectable = r.IsSelectable
-                        })
+                        .Select(LoyaltyContractsMapper.ToContract)
                         .ToList();
                 }
             }
 
             var allowedActions =
-                value.Mode == DomainLoyaltyScanMode.Accrual
+                value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Accrual
                     ? LoyaltyScanAllowedActions.CanConfirmAccrual
                     : LoyaltyScanAllowedActions.CanConfirmRedemption;
 
             var response = new ProcessScanSessionForBusinessResponse
             {
-                Mode = MapScanMode(value.Mode),
+                Mode = LoyaltyContractsMapper.ToContract(value.Mode),
                 BusinessId = businessId,
-                AccountSummary = new BusinessLoyaltyAccountSummary
-                {
-                    LoyaltyAccountId = value.LoyaltyAccountId,
-                    PointsBalance = value.CurrentPointsBalance,
-                    CustomerDisplayName = value.CustomerDisplayName
-                },
+                AccountSummary = LoyaltyContractsMapper.ToContractBusinessAccountSummary(value),
                 SelectedRewards = selectedRewards,
                 AllowedActions = allowedActions
             };
@@ -458,7 +400,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequestProblem("ScanSessionToken is required.");
             }
 
-            // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
             if (request.ScanSessionToken.Length > 4000)
             {
                 return BadRequestProblem("ScanSessionToken is too long.");
@@ -496,7 +437,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
             {
                 Success = true,
                 NewBalance = value.NewPointsBalance,
+
+                // Future-friendly: allow richer response later (needs an Application DTO for updated account snapshot)
                 UpdatedAccount = null,
+
                 ErrorCode = null,
                 ErrorMessage = null
             };
@@ -551,7 +495,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return BadRequestProblem("ScanSessionToken is required.");
             }
 
-            // Keep controller validation format-level only; semantic validation is in Application (resolver/handler).
             if (request.ScanSessionToken.Length > 4000)
             {
                 return BadRequestProblem("ScanSessionToken is too long.");
@@ -631,26 +574,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return ProblemFromResult(result);
             }
 
-            // Map Application DTOs to the public contract model. The contract type
-            // is intentionally smaller than the internal DTO; we only expose fields
-            // that are required by the mobile UI and keep the rest internal.
+            /// FIX: previously mapping omitted LoyaltyAccountId/LifetimePoints/Status.
+            // Centralized mapping ensures contract completeness and stability.
             var items = result.Value
-                .Select(a => new LoyaltyAccountSummary
-                {
-                    BusinessId = a.BusinessId,
-                    // The contract requires a non-null business name. When the DTO
-                    // happens to have a null value (for example, if the business
-                    // record was partially populated), we fall back to an empty
-                    // string to avoid null reference issues on the client.
-                    BusinessName = a.BusinessName ?? string.Empty,
-                    PointsBalance = a.PointsBalance,
-                    LastAccrualAtUtc = a.LastAccrualAtUtc,
-                    // The Application layer does not currently compute the next
-                    // reward title for each account. We leave this as null so
-                    // clients can optionally hide the field or derive it from
-                    // other API calls (e.g., reward tier listings).
-                    NextRewardTitle = null
-                })
+                .Select(LoyaltyContractsMapper.ToContract)
                 .ToList();
 
             return Ok(items);
@@ -708,21 +635,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             }
 
             var items = result.Value
-                .Select(tx => new PointsTransaction
-                {
-                    // The contract uses "OccurredAtUtc" while the DTO exposes
-                    // "CreatedAtUtc"; conceptually they represent the same timestamp.
-                    OccurredAtUtc = tx.CreatedAtUtc,
-                    // The contract expects a string type; we use the enum name
-                    // (Accrual, Redemption, Adjustment) as a stable machine-readable
-                    // value that can also be shown in the UI if needed.
-                    Type = tx.Type.ToString(),
-                    // The contract calls this field "Delta"; in the DTO it is
-                    // named "PointsDelta".
-                    Delta = tx.PointsDelta,
-                    Reference = tx.Reference,
-                    Notes = tx.Notes
-                })
+                .Select(LoyaltyContractsMapper.ToContract)
                 .ToList();
 
             return Ok(items);
@@ -787,23 +700,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return NotFoundProblem("Loyalty account not found for the specified business and user.");
             }
 
-            var response = new LoyaltyAccountSummary
-            {
-                BusinessId = dto.BusinessId,
-                BusinessName = dto.BusinessName ?? string.Empty,
-                PointsBalance = dto.PointsBalance,
-
-                LoyaltyAccountId = dto.Id,
-                LifetimePoints = dto.LifetimePoints,
-                Status = dto.Status.ToString(),
-                
-                LastAccrualAtUtc = dto.LastAccrualAtUtc,
-
-                // Not currently provided by Application; keep null (explicit contract supports it).
-                NextRewardTitle = null
-            };
-
-            return Ok(response);
+            return Ok(LoyaltyContractsMapper.ToContract(dto));
         }
 
 
@@ -863,21 +760,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             }
 
             var rewards = result.Value
-                .Select(r => new LoyaltyRewardSummary
-                {
-                    LoyaltyRewardTierId = r.LoyaltyRewardTierId,
-                    BusinessId = r.BusinessId,
-                    Name = r.Name ?? string.Empty,
-                    Description = r.Description,
-                    RequiredPoints = r.RequiredPoints,
-                    IsActive = r.IsActive,
-                    // The Application DTO also exposes RequiresConfirmation, but the
-                    // public contract type intentionally does not. Client applications
-                    // that need this information should use separate endpoints or
-                    // configuration APIs. We therefore ignore RequiresConfirmation
-                    // when mapping to the contract.
-                    IsSelectable = r.IsSelectable
-                })
+                .Select(LoyaltyContractsMapper.ToContract)
                 .ToList();
 
             return Ok(rewards);
@@ -948,9 +831,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             var response = new MyLoyaltyBusinessesResponse
             {
                 Total = total,
-                Items = safeItems
-                    .Select(MapToContractMyLoyaltyBusinessSummary)
-                    .ToList(),
+                Items = safeItems.Select(LoyaltyContractsMapper.ToContract).ToList(),
                 Request = new PagedRequest
                 {
                     Page = normalizedPage,
@@ -962,44 +843,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             return Ok(response);
         }
 
-        /// <summary>
-        /// Maps Application DTO <see cref="MyLoyaltyBusinessListItemDto"/> to API contract
-        /// <see cref="MyLoyaltyBusinessSummary"/> (contract-first boundary).
-        /// </summary>
-        /// <param name="dto">Application DTO instance.</param>
-        /// <returns>Contract DTO for mobile/web clients.</returns>
-        private static MyLoyaltyBusinessSummary MapToContractMyLoyaltyBusinessSummary(MyLoyaltyBusinessListItemDto dto)
-        {
-            ArgumentNullException.ThrowIfNull(dto);
-
-            // NOTE:
-            // - Application's Category is an enum (may be non-nullable). Do NOT use ?. on it.
-            // - Application DTO does NOT have "Status". It exposes account status using a different property name.
-            return new MyLoyaltyBusinessSummary
-            {
-                BusinessId = dto.BusinessId,
-                BusinessName = dto.BusinessName ?? string.Empty,
-                Category = dto.Category.ToString(),
-                City = dto.City,
-                Location = dto.Coordinate is null
-                    ? null
-                    : new GeoCoordinateModel
-                    {
-                        Latitude = dto.Coordinate.Latitude,
-                        Longitude = dto.Coordinate.Longitude,
-                        AltitudeMeters = dto.Coordinate.AltitudeMeters
-                    },
-                PrimaryImageUrl = dto.PrimaryImageUrl,
-                PointsBalance = dto.PointsBalance,
-                LifetimePoints = dto.LifetimePoints,
-
-                // IMPORTANT:
-                // Application DTO does not expose "Status". Use the actual account status property.
-                Status = dto.AccountStatus.ToString(),
-
-                LastAccrualAtUtc = dto.LastAccrualAtUtc
-            };
-        }
+        
 
 
 
@@ -1076,7 +920,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             var response = new GetMyLoyaltyTimelinePageResponse
             {
                 Items = (value.Items ?? Array.Empty<LoyaltyTimelineEntryDto>())
-                    .Select(MapToContractTimelineEntry)
+                    .Select(LoyaltyContractsMapper.ToContract)
                     .ToList(),
                 NextBeforeAtUtc = value.NextBeforeAtUtc,
                 NextBeforeId = value.NextBeforeId
@@ -1084,76 +928,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
-
-        /// <summary>
-        /// Maps the Application timeline DTO to the public API contract.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Contract requires:
-        /// - Kind (stable enum)
-        /// - Type (stable string token)
-        /// - Delta (signed points delta, when applicable)
-        /// </para>
-        /// <para>
-        /// Application DTO provides:
-        /// - Kind (PointsTransaction / RewardRedemption)
-        /// - PointsDelta (for transactions)
-        /// - PointsSpent (for redemptions)
-        /// - Reference (e.g., "Accrual", "Redemption", ...)
-        /// </para>
-        /// <para>
-        /// Mapping rules:
-        /// - Kind: direct mapping by name
-        /// - Type:
-        ///   - For PointsTransaction: Reference (fallback to "Transaction")
-        ///   - For RewardRedemption: "Confirmed" (fallback, because Reference is null by design)
-        /// - Delta:
-        ///   - For PointsTransaction: PointsDelta
-        ///   - For RewardRedemption: negative PointsSpent (if provided) to represent balance impact
-        /// </para>
-        /// </remarks>
-        /// <summary>
-        /// Maps the Application timeline DTO to the public API contract.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This is a contract-first boundary. The contract mirrors the Application projection,
-        /// therefore the mapping must remain a pure field-to-field translation without inventing
-        /// new semantics or derived fields.
-        /// </para>
-        /// </remarks>
-        private static LoyaltyTimelineEntry MapToContractTimelineEntry(LoyaltyTimelineEntryDto dto)
-        {
-            ArgumentNullException.ThrowIfNull(dto);
-
-            var contractKind = dto.Kind switch
-            {
-                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.PointsTransaction
-                    => Darwin.Contracts.Loyalty.LoyaltyTimelineEntryKind.PointsTransaction,
-
-                Darwin.Application.Loyalty.DTOs.LoyaltyTimelineEntryKind.RewardRedemption
-                    => Darwin.Contracts.Loyalty.LoyaltyTimelineEntryKind.RewardRedemption,
-
-                // Defensive default to keep API stable even if Application expands the enum later.
-                _ => Darwin.Contracts.Loyalty.LoyaltyTimelineEntryKind.PointsTransaction
-            };
-
-            return new LoyaltyTimelineEntry
-            {
-                Id = dto.Id,
-                Kind = contractKind,
-                LoyaltyAccountId = dto.LoyaltyAccountId,
-                BusinessId = dto.BusinessId,
-                OccurredAtUtc = dto.OccurredAtUtc,
-                PointsDelta = dto.PointsDelta,
-                PointsSpent = dto.PointsSpent,
-                RewardTierId = dto.RewardTierId,
-                Reference = dto.Reference,
-                Note = dto.Note
-            };
-        }
-
 
 
     }
