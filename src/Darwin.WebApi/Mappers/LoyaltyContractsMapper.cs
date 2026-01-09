@@ -92,7 +92,7 @@ namespace Darwin.WebApi.Mappers
         /// <summary>
         /// Maps Application "business scan processing" account snapshot to the business contract model.
         /// </summary>
-        public static BusinessLoyaltyAccountSummary ToContractBusinessAccountSummary(ProcessScanSessionForBusinessResultDto dto)
+        public static BusinessLoyaltyAccountSummary ToContractBusinessAccountSummary(ScanSessionBusinessViewDto dto)
         {
             ArgumentNullException.ThrowIfNull(dto);
 

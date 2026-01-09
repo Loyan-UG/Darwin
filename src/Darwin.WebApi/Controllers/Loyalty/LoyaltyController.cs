@@ -287,7 +287,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                     ? LoyaltyScanAllowedActions.CanConfirmAccrual
                     : LoyaltyScanAllowedActions.CanConfirmRedemption;
 
-            var response = new ProcessScanSessionForBusinessResponse
+            var response = new  
             {
                 Mode = LoyaltyContractsMapper.ToContract(value.Mode),
                 BusinessId = businessId,
