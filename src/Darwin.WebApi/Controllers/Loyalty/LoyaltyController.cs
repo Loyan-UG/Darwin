@@ -5,6 +5,7 @@ using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
 using Darwin.Shared.Results;
 using Darwin.WebApi.Mappers;
+using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ContractLoyaltyScanMode = Darwin.Contracts.Loyalty.LoyaltyScanMode;
@@ -42,6 +43,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly GetMyLoyaltyBusinessesHandler _getMyLoyaltyBusinessesHandler;
         private readonly GetMyLoyaltyTimelinePageHandler _getMyLoyaltyTimelinePageHandler;
         private readonly CreateLoyaltyAccountHandler _createLoyaltyAccountHandler;
+        private readonly ILoyaltyPresentationService _presentationService;
+        private readonly ILogger<LoyaltyController> _logger;
 
 
         /// <summary>
@@ -82,7 +85,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
             GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
             GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
             GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
-            CreateLoyaltyAccountHandler createLoyaltyAccountHandler)
+            CreateLoyaltyAccountHandler createLoyaltyAccountHandler,
+            ILoyaltyPresentationService presentationService,
+            ILogger<LoyaltyController> logger)
         {
             _prepareScanSessionHandler = prepareScanSessionHandler ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
             _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
@@ -95,6 +100,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
             _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
             _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
             _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
+            _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
 
@@ -171,20 +178,24 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var value = result.Value;
 
-            // Default to an empty list; only redemption-mode sessions with accepted reward tiers populate this.
+            // Default to an empty list; only redemption-mode sessions with accepted reward tiers populate this.s
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            // Redemption: enrich accepted tier ids with reward details via centralized helper.
+            // Redemption: enrich selected tier ids with reward details (name/description/etc.)
             if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
                 value.SelectedRewardTierIds is { Count: > 0 })
             {
-                // caller decides policy: for prepare (consumer-initiated redemption) we want strict behavior
-                var enrichResult = await BuildSelectedRewardsAsync(request.BusinessId, value.SelectedRewardTierIds, failIfMissing: true, ct);
+                var enrichResult = await _presentationService
+                    .EnrichSelectedRewardsAsync(request.BusinessId, value.SelectedRewardTierIds, failIfMissing: true, ct)
+                    .ConfigureAwait(false);
+
                 if (!enrichResult.Succeeded)
                 {
-                    return ProblemFromResult(enrichResult); // converts Result.Fail -> ProblemDetails
+                    // Convert Result.Fail into ProblemDetails
+                    return ProblemFromResult(enrichResult);
                 }
-                selectedRewards = enrichResult.Value;
+
+                selectedRewards = enrichResult.Value ?? Array.Empty<LoyaltyRewardSummary>();
             }
 
             var response = new PrepareScanSessionResponse
@@ -198,6 +209,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
+
         #endregion
 
 
@@ -255,20 +267,26 @@ namespace Darwin.WebApi.Controllers.Loyalty
             // Default to empty list; only redemption-mode sessions may carry selected rewards.
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            // Redemption: enrich selected tier ids with reward details via centralized helper.
+            // Redemption: enrich selected tier ids with reward details
             if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
                 value.SelectedRewards is { Count: > 0 })
             {
-                var tierIds = value.SelectedRewards?
+                var tierIds = value.SelectedRewards
                     .Select(x => x.LoyaltyRewardTierId)
                     .Where(x => x != Guid.Empty)
                     .Distinct()
                     .ToList();
 
-                var enrichResult = await BuildSelectedRewardsAsync(businessId, tierIds, failIfMissing: true, ct);
+                var enrichResult = await _presentationService
+                    .EnrichSelectedRewardsAsync(businessId, tierIds, failIfMissing: true, ct)
+                    .ConfigureAwait(false);
+
                 if (!enrichResult.Succeeded)
+                {
                     return ProblemFromResult(enrichResult);
-                selectedRewards = enrichResult.Value;
+                }
+
+                selectedRewards = enrichResult.Value ?? Array.Empty<LoyaltyRewardSummary>();
             }
 
             var allowedActions =
@@ -1044,5 +1062,68 @@ namespace Darwin.WebApi.Controllers.Loyalty
             var contract = LoyaltyContractsMapper.ToContract(dto);
             return Ok(contract);
         }
+
+
+
+        /// <summary>
+        /// Returns the next available reward (the smallest RequiredPoints greater than user's current balance)
+        /// for the specified business. Returns 204 No Content when no further reward exists.
+        /// </summary>
+        [HttpGet("account/{businessId:guid}/next-reward")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
+        [ProducesResponseType(typeof(LoyaltyRewardSummary), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetNextRewardAsync([FromRoute] Guid businessId, CancellationToken ct = default)
+        {
+            if (businessId == Guid.Empty)
+            {
+                return BadRequestProblem("BusinessId is required.");
+            }
+
+            var accountResult = await _getMyLoyaltyAccountForBusinessHandler
+                .HandleAsync(businessId, ct)
+                .ConfigureAwait(false);
+
+            if (!accountResult.Succeeded)
+            {
+                return ProblemFromResult(accountResult);
+            }
+
+            var account = accountResult.Value;
+            if (account is null)
+            {
+                return NotFoundProblem("Loyalty account not found for the specified business and user.");
+            }
+
+            var availableResult = await _getAvailableLoyaltyRewardsForBusinessHandler
+                .HandleAsync(businessId, ct)
+                .ConfigureAwait(false);
+
+            if (!availableResult.Succeeded)
+            {
+                return ProblemFromResult(availableResult);
+            }
+
+            var available = availableResult.Value ?? Array.Empty<Darwin.Application.Loyalty.DTOs.LoyaltyRewardSummaryDto>();
+
+            // Find the smallest reward that requires more points than current balance and is active/selectable.
+            var candidate = available
+                .Where(r => r.RequiredPoints > account.PointsBalance && r.IsActive && r.IsSelectable)
+                .OrderBy(r => r.RequiredPoints)
+                .FirstOrDefault();
+
+            if (candidate is null)
+            {
+                return NoContent();
+            }
+
+            var contract = LoyaltyContractsMapper.ToContract(candidate);
+            return Ok(contract);
+        }
+
+
+
+
     }
 }
