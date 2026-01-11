@@ -41,6 +41,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly GetAvailableLoyaltyRewardsForBusinessHandler _getAvailableLoyaltyRewardsForBusinessHandler;
         private readonly GetMyLoyaltyBusinessesHandler _getMyLoyaltyBusinessesHandler;
         private readonly GetMyLoyaltyTimelinePageHandler _getMyLoyaltyTimelinePageHandler;
+        private readonly CreateLoyaltyAccountHandler _createLoyaltyAccountHandler;
 
 
         /// <summary>
@@ -80,7 +81,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
             GetMyLoyaltyAccountForBusinessHandler getMyLoyaltyAccountForBusinessHandler,
             GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
             GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
-            GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler)
+            GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
+            CreateLoyaltyAccountHandler createLoyaltyAccountHandler)
         {
             _prepareScanSessionHandler = prepareScanSessionHandler ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
             _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
@@ -92,6 +94,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
             _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
             _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
+            _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
         }
 
 
@@ -1003,5 +1006,43 @@ namespace Darwin.WebApi.Controllers.Loyalty
         }
 
 
+        /// <summary>
+        /// Join (create) a loyalty account for the current authenticated user for the specified business.
+        /// </summary>
+        /// <remarks>
+        /// - The business identifier is provided in the route and is authoritative.
+        /// - This endpoint is idempotent: calling it when an account already exists returns the existing account summary.
+        /// - A consumer-facing client typically calls this when the user taps "Join loyalty program" on a business detail page.
+        /// </remarks>
+        /// <param name="businessId">Business identifier (route).</param>
+        /// <param name="request">Optional request body (for example selected BusinessLocationId).</param>
+        /// <param name="ct">Cancellation token.</param>
+        [HttpPost("account/{businessId:guid}/join")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
+        [ProducesResponseType(typeof(LoyaltyAccountSummary), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> JoinLoyaltyAsync(
+            [FromRoute] Guid businessId,
+            [FromBody] Contracts.Loyalty.JoinLoyaltyRequest? request,
+            CancellationToken ct = default)
+        {
+            if (businessId == Guid.Empty)
+            {
+                return BadRequestProblem("BusinessId is required.");
+            }
+
+            var result = await _createLoyaltyAccountHandler
+                .HandleAsync(businessId, request?.BusinessLocationId, ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value is null)
+            {
+                return ProblemFromResult(result);
+            }
+
+            var dto = result.Value;
+            var contract = LoyaltyContractsMapper.ToContract(dto);
+            return Ok(contract);
+        }
     }
 }
