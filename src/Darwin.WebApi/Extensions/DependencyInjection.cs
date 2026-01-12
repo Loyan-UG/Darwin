@@ -85,6 +85,8 @@ namespace Darwin.WebApi.Extensions
             // SMTP notifications (password reset emails, etc.).
             services.AddNotificationsInfrastructure(configuration);
 
+            services.AddLoyaltyPresentationServices();
+
 
             // Controllers + System.Text.Json options.
             services
