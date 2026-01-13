@@ -178,7 +178,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var value = result.Value;
 
-            // Default to an empty list; only redemption-mode sessions with accepted reward tiers populate this.s
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
             // Redemption: enrich selected tier ids with reward details (name/description/etc.)
@@ -191,7 +190,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
                 if (!enrichResult.Succeeded)
                 {
-                    // Convert Result.Fail into ProblemDetails
                     return ProblemFromResult(enrichResult);
                 }
 
