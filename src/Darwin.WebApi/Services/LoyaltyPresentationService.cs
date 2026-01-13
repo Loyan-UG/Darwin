@@ -47,6 +47,11 @@ namespace Darwin.WebApi.Services
             bool failIfMissing,
             CancellationToken ct = default)
         {
+            if (businessId == Guid.Empty)
+            {
+                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail("BusinessId is required.");
+            }
+
             if (selectedTierIds is null || selectedTierIds.Count == 0)
             {
                 return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(Array.Empty<LoyaltyRewardSummary>());
@@ -77,17 +82,20 @@ namespace Darwin.WebApi.Services
             }
 
             var available = availableResult.Value;
+
             // Build lookup by tier id for fast mapping
             var dict = available.ToDictionary(r => r.LoyaltyRewardTierId);
 
             var missing = new List<Guid>();
             var resultList = new List<LoyaltyRewardSummary>(orderedDistinct.Count);
 
+            // Preserve the order of requested ids in the result.
             foreach (var id in orderedDistinct)
             {
-                if (dict.TryGetValue(id, out var rewardDto))
+                if (dict.TryGetValue(id, out var reward))
                 {
-                    resultList.Add(LoyaltyContractsMapper.ToContract(rewardDto));
+                    // reward is already a contract (LoyaltyRewardSummary), add directly.
+                    resultList.Add(reward);
                 }
                 else
                 {
@@ -116,7 +124,7 @@ namespace Darwin.WebApi.Services
 
             var cacheKey = GetCacheKey(businessId);
 
-            if (_cache.TryGetValue(cacheKey, out IReadOnlyList<LoyaltyRewardSummary>? cached))
+            if (_cache.TryGetValue(cacheKey, out IReadOnlyList<LoyaltyRewardSummary>? cached) && cached is not null)
             {
                 return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(cached);
             }
@@ -128,9 +136,13 @@ namespace Darwin.WebApi.Services
                 return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail(handlerResult.Error ?? "Failed to load available rewards.");
             }
 
-            var mapped = handlerResult.Value.Select(LoyaltyContractsMapper.ToContract).ToList().AsReadOnly();
+            // Map application DTOs (handlerResult.Value) to contract types using existing mapper.
+            // Note: handlerResult.Value is expected to be IReadOnlyList<...Dto>
+            var mapped = handlerResult.Value
+                .Select(Darwin.WebApi.Mappers.LoyaltyContractsMapper.ToContract)
+                .ToList()
+                .AsReadOnly();
 
-            // Cache mapped results for a short interval to reduce DB pressure on hot businesses.
             var cacheEntryOptions = new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(DefaultAvailableRewardsCacheSeconds)

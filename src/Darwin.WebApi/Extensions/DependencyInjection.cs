@@ -85,6 +85,10 @@ namespace Darwin.WebApi.Extensions
             // SMTP notifications (password reset emails, etc.).
             services.AddNotificationsInfrastructure(configuration);
 
+            // Add memory cache used by presentation services (short-lived per-process cache).
+            services.AddMemoryCache();
+
+            // Register loyalty presentation services (enrichment + caching)
             services.AddLoyaltyPresentationServices();
 
 
