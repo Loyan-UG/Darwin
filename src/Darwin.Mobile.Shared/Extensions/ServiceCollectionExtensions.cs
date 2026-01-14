@@ -5,6 +5,7 @@ using Darwin.Mobile.Shared.Resilience;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Loyalty;
+using Darwin.Mobile.Shared.Services.Profile;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
@@ -38,9 +39,16 @@ namespace Darwin.Mobile.Shared.Extensions
             // Retry policy: small attempt count + exponential backoff with jitter to limit battery/network impact.
             services.AddSingleton<IRetryPolicy>(_ => new ExponentialBackoffRetryPolicy(maxAttempts: 3));
 
-            // Resilient HTTP client for API calls (timeout is intentionally short for mobile UX).
+            // Configure HttpClient with BaseAddress and timeout from options.
             services.AddHttpClient<IApiClient, ApiClient>()
-                    .ConfigureHttpClient(c => c.Timeout = TimeSpan.FromSeconds(15));
+                    .ConfigureHttpClient(c =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(options.BaseUrl))
+                        {
+                            c.BaseAddress = new Uri(options.BaseUrl, UriKind.Absolute);
+                        }
+                        c.Timeout = TimeSpan.FromSeconds(15);
+                    });
 
             // Token storage (SecureStorage under the hood in platform-specific implementation).
             services.AddSingleton<ITokenStore, TokenStore>();
@@ -53,6 +61,7 @@ namespace Darwin.Mobile.Shared.Extensions
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<ILoyaltyService, LoyaltyService>();
             services.AddSingleton<IBusinessService, BusinessService>();
+            services.AddSingleton<IProfileService, ProfileService>();
 
             // NOTE: QrTokenRefresher is opt-in; pages/viewmodels can new it up or register as needed.
 

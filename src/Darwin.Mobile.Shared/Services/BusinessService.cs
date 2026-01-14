@@ -12,18 +12,30 @@ namespace Darwin.Mobile.Shared.Services;
 /// </summary>
 public interface IBusinessService
 {
-    Task<PagedResponse<BusinessSummary>> ListAsync(BusinessListRequest req, CancellationToken ct);
-    Task<BusinessDetail> GetAsync(string id, CancellationToken ct);
+    Task<PagedResponse<BusinessSummary>?> ListAsync(BusinessListRequest req, CancellationToken ct);
+    Task<PagedResponse<BusinessSummary>?> MapAsync(BusinessMapDiscoveryRequest req, CancellationToken ct);
+    Task<BusinessDetail?> GetAsync(Guid id, CancellationToken ct);
+    Task<BusinessDetailWithMyAccount?> GetWithMyAccountAsync(Guid id, CancellationToken ct);
+    Task<BusinessCategoryKindsResponse?> GetCategoryKindsAsync(CancellationToken ct);
 }
 
 public sealed class BusinessService : IBusinessService
 {
     private readonly IApiClient _api;
-    public BusinessService(IApiClient api) => _api = api;
+    public BusinessService(IApiClient api) => _api = api ?? throw new ArgumentNullException(nameof(api));
 
-    public Task<PagedResponse<BusinessSummary>> ListAsync(BusinessListRequest req, CancellationToken ct)
-        => _api.PostAsync<BusinessListRequest, PagedResponse<BusinessSummary>>("biz/list", req, ct)!;
+    public Task<PagedResponse<BusinessSummary>?> ListAsync(BusinessListRequest req, CancellationToken ct)
+        => _api.PostAsync<BusinessListRequest, PagedResponse<BusinessSummary>>(ApiRoutes.Businesses.List, req, ct);
 
-    public Task<BusinessDetail> GetAsync(string id, CancellationToken ct)
-        => _api.GetAsync<BusinessDetail>($"biz/{id}", ct)!;
+    public Task<PagedResponse<BusinessSummary>?> MapAsync(BusinessMapDiscoveryRequest req, CancellationToken ct)
+        => _api.PostAsync<BusinessMapDiscoveryRequest, PagedResponse<BusinessSummary>>(ApiRoutes.Businesses.Map, req, ct);
+
+    public Task<BusinessDetail?> GetAsync(Guid id, CancellationToken ct)
+        => _api.GetAsync<BusinessDetail>(ApiRoutes.Businesses.GetById(id), ct);
+
+    public Task<BusinessDetailWithMyAccount?> GetWithMyAccountAsync(Guid id, CancellationToken ct)
+        => _api.GetAsync<BusinessDetailWithMyAccount>(ApiRoutes.Businesses.GetWithMyAccount(id), ct);
+
+    public Task<BusinessCategoryKindsResponse?> GetCategoryKindsAsync(CancellationToken ct)
+        => _api.GetAsync<BusinessCategoryKindsResponse>(ApiRoutes.Businesses.CategoryKinds, ct);
 }

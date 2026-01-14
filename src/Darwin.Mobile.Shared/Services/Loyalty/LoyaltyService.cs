@@ -108,20 +108,19 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         {
             if (businessId == Guid.Empty)
             {
-                return Result<LoyaltyAccountSummary>.Fail("Invalid business identifier.");
+                return Result<LoyaltyAccountSummary>.Fail(
+                    "Invalid business identifier.");
             }
 
             try
             {
-                var route = string.Format(GetAccountSummaryRouteTemplate, businessId);
                 var response = await _apiClient
-                    .GetAsync<LoyaltyAccountSummary>(route, cancellationToken)
+                    .GetAsync<LoyaltyAccountSummary>(ApiRoutes.Loyalty.GetAccountForBusiness(businessId), cancellationToken)
                     .ConfigureAwait(false);
 
                 if (response is null)
-                {
-                    return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
-                }
+                    return Result<LoyaltyAccountSummary>.Fail(
+                        "Empty response from server.");
 
                 return Result<LoyaltyAccountSummary>.Ok(response);
             }
@@ -243,46 +242,35 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             {
                 var response = await _apiClient
                     .PostAsync<ConfirmAccrualRequest, ConfirmAccrualResponse>(
-                        ConfirmAccrualRoute,
+                        ApiRoutes.Loyalty.ConfirmAccrual,
                         request,
-                        cancellationToken)
-                    .ConfigureAwait(false);
+                        cancellationToken).ConfigureAwait(false);
 
                 if (response is null)
-                {
-                    return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
-                }
+                    return Result<LoyaltyAccountSummary>.Fail(
+                        "Empty response from server.");
 
                 if (!response.Success)
                 {
-                    var message = !string.IsNullOrWhiteSpace(response.ErrorMessage)
-                        ? response.ErrorMessage
-                        : "Accrual could not be confirmed.";
+                    var message = !string.IsNullOrWhiteSpace(response.ErrorMessage) ? 
+                        response.ErrorMessage : "Accrual could not be confirmed.";
 
                     if (!string.IsNullOrWhiteSpace(response.ErrorCode))
-                    {
                         message = $"{message} (code: {response.ErrorCode})";
-                    }
 
                     return Result<LoyaltyAccountSummary>.Fail(message);
                 }
 
-                // Prefer server-provided snapshot; otherwise fall back to NewBalance.
                 if (response.UpdatedAccount is not null)
-                {
                     return Result<LoyaltyAccountSummary>.Ok(response.UpdatedAccount);
-                }
 
-                var synthesized = new LoyaltyAccountSummary
+                return Result<LoyaltyAccountSummary>.Ok(new LoyaltyAccountSummary
                 {
                     BusinessId = Guid.Empty,
                     BusinessName = string.Empty,
                     PointsBalance = response.NewBalance ?? 0,
-                    LastAccrualAtUtc = DateTime.UtcNow,
-                    NextRewardTitle = null
-                };
-
-                return Result<LoyaltyAccountSummary>.Ok(synthesized);
+                    LastAccrualAtUtc = DateTime.UtcNow
+                });
             }
             catch (HttpRequestException ex)
             {
@@ -292,68 +280,205 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         }
 
         /// <inheritdoc />
-        public async Task<Result<LoyaltyAccountSummary>> ConfirmRedemptionAsync(
-            string sessionToken,
-            CancellationToken cancellationToken)
+        public async Task<Result<LoyaltyAccountSummary>> ConfirmRedemptionAsync(string sessionToken, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(sessionToken))
-            {
                 return Result<LoyaltyAccountSummary>.Fail("Session token is required.");
-            }
 
-            var request = new ConfirmRedemptionRequest
-            {
-                ScanSessionToken = sessionToken
-            };
+            var request = new ConfirmRedemptionRequest { ScanSessionToken = sessionToken };
 
             try
             {
                 var response = await _apiClient
                     .PostAsync<ConfirmRedemptionRequest, ConfirmRedemptionResponse>(
-                        ConfirmRedemptionRoute,
+                        ApiRoutes.Loyalty.ConfirmRedemption,
                         request,
-                        cancellationToken)
-                    .ConfigureAwait(false);
+                        cancellationToken).ConfigureAwait(false);
 
                 if (response is null)
-                {
                     return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
-                }
 
                 if (!response.Success)
                 {
-                    var message = !string.IsNullOrWhiteSpace(response.ErrorMessage)
-                        ? response.ErrorMessage
-                        : "Redemption could not be confirmed.";
-
+                    var message = !string.IsNullOrWhiteSpace(response.ErrorMessage) ? response.ErrorMessage : "Redemption could not be confirmed.";
                     if (!string.IsNullOrWhiteSpace(response.ErrorCode))
-                    {
                         message = $"{message} (code: {response.ErrorCode})";
-                    }
-
                     return Result<LoyaltyAccountSummary>.Fail(message);
                 }
 
                 if (response.UpdatedAccount is not null)
-                {
                     return Result<LoyaltyAccountSummary>.Ok(response.UpdatedAccount);
-                }
 
-                var synthesized = new LoyaltyAccountSummary
+                return Result<LoyaltyAccountSummary>.Ok(new LoyaltyAccountSummary
                 {
                     BusinessId = Guid.Empty,
                     BusinessName = string.Empty,
                     PointsBalance = response.NewBalance ?? 0,
-                    LastAccrualAtUtc = DateTime.UtcNow,
-                    NextRewardTitle = null
-                };
-
-                return Result<LoyaltyAccountSummary>.Ok(synthesized);
+                    LastAccrualAtUtc = DateTime.UtcNow
+                });
             }
             catch (HttpRequestException ex)
             {
-                return Result<LoyaltyAccountSummary>.Fail(
-                    $"Network error while confirming redemption: {ex.Message}");
+                return Result<LoyaltyAccountSummary>.Fail($"Network error while confirming redemption: {ex.Message}");
+            }
+        }
+
+
+        /// <inheritdoc />
+        public async Task<Result<IReadOnlyList<LoyaltyAccountSummary>>> GetMyAccountsAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _apiClient
+                    .GetAsync<IReadOnlyList<LoyaltyAccountSummary>>(ApiRoutes.Loyalty.GetMyAccounts, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (response is null)
+                    return Result<IReadOnlyList<LoyaltyAccountSummary>>.Fail("Empty response from server.");
+
+                return Result<IReadOnlyList<LoyaltyAccountSummary>>.Ok(response);
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<IReadOnlyList<LoyaltyAccountSummary>>.Fail($"Network error while retrieving accounts: {ex.Message}");
+            }
+        }
+
+
+        /// <inheritdoc />
+        public async Task<Result<IReadOnlyList<PointsTransaction>>> GetMyHistoryAsync(Guid businessId, CancellationToken cancellationToken)
+        {
+            if (businessId == Guid.Empty)
+                return Result<IReadOnlyList<PointsTransaction>>.Fail("Invalid business identifier.");
+
+            try
+            {
+                var response = await _apiClient
+                    .GetAsync<IReadOnlyList<PointsTransaction>>(ApiRoutes.Loyalty.GetMyHistory(businessId), cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (response is null)
+                    return Result<IReadOnlyList<PointsTransaction>>.Fail("Empty response from server.");
+
+                return Result<IReadOnlyList<PointsTransaction>>.Ok(response);
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<IReadOnlyList<PointsTransaction>>.Fail($"Network error while retrieving history: {ex.Message}");
+            }
+        }
+
+
+        /// <inheritdoc />
+        public async Task<Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>> GetMyBusinessesAsync(int page, int pageSize, bool includeInactive, CancellationToken cancellationToken)
+        {
+            if (page <= 0)
+                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail("Page must be a positive integer.");
+            if (pageSize <= 0 || pageSize > 200)
+                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail("PageSize must be between 1 and 200.");
+
+            // GET with query parameters
+            var route = $"{ApiRoutes.Loyalty.GetMyBusinesses}?page={page}&pageSize={pageSize}&includeInactiveBusinesses={(includeInactive ? "true" : "false")}";
+
+            try
+            {
+                var response = await _apiClient
+                    .GetAsync<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>(route, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (response is null)
+                    return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail("Empty response from server.");
+
+                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Ok(response);
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail($"Network error while retrieving my businesses: {ex.Message}");
+            }
+        }
+
+
+        /// <inheritdoc />
+        public async Task<Result<GetMyLoyaltyTimelinePageResponse>> GetMyLoyaltyTimelinePageAsync(GetMyLoyaltyTimelinePageRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+                return Result<GetMyLoyaltyTimelinePageResponse>.Fail("Request body is required.");
+
+            try
+            {
+                var response = await _apiClient
+                    .PostAsync<GetMyLoyaltyTimelinePageRequest, GetMyLoyaltyTimelinePageResponse>(
+                        ApiRoutes.Loyalty.GetMyTimeline,
+                        request,
+                        cancellationToken).ConfigureAwait(false);
+
+                if (response is null)
+                    return Result<GetMyLoyaltyTimelinePageResponse>.Fail("Empty response from server.");
+
+                return Result<GetMyLoyaltyTimelinePageResponse>.Ok(response);
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<GetMyLoyaltyTimelinePageResponse>.Fail($"Network error while retrieving timeline: {ex.Message}");
+            }
+        }
+
+
+        /// <inheritdoc />
+        public async Task<Result<LoyaltyAccountSummary>> JoinLoyaltyAsync(Guid businessId, Guid? businessLocationId, CancellationToken cancellationToken)
+        {
+            if (businessId == Guid.Empty)
+                return Result<LoyaltyAccountSummary>.Fail("Invalid business identifier.");
+
+            var body = businessLocationId.HasValue
+                ? new JoinLoyaltyRequest { BusinessLocationId = businessLocationId }
+                : new JoinLoyaltyRequest();
+
+            try
+            {
+                var response = await _apiClient
+                    .PostAsync<JoinLoyaltyRequest, LoyaltyAccountSummary>(
+                        ApiRoutes.Loyalty.Join(businessId),
+                        body,
+                        cancellationToken).ConfigureAwait(false);
+
+                if (response is null)
+                    return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
+
+                return Result<LoyaltyAccountSummary>.Ok(response);
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<LoyaltyAccountSummary>.Fail($"Network error while joining loyalty: {ex.Message}");
+            }
+        }
+
+
+        /// <inheritdoc />
+        public async Task<Result<LoyaltyRewardSummary?>> GetNextRewardAsync(Guid businessId, CancellationToken cancellationToken)
+        {
+            if (businessId == Guid.Empty)
+                return Result<LoyaltyRewardSummary?>.Fail("Invalid business identifier.");
+
+            try
+            {
+                // This endpoint returns 200 with payload or 204 No Content when none.
+                var result = await _apiClient.GetResultAsync<LoyaltyRewardSummary>(ApiRoutes.Loyalty.GetNextReward(businessId), cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (result.Succeeded)
+                    return Result<LoyaltyRewardSummary?>.Ok(result.Value);
+
+                // When server returns 204, ApiClient currently fails with "Server returned no content."
+                // Treat that as a valid "no next reward" case.
+                if (string.Equals(result.Error, "Server returned no content.", StringComparison.OrdinalIgnoreCase))
+                    return Result<LoyaltyRewardSummary?>.Ok(null);
+
+                return Result<LoyaltyRewardSummary?>.Fail(result.Error ?? "Request failed.");
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<LoyaltyRewardSummary?>.Fail($"Network error while retrieving next reward: {ex.Message}");
             }
         }
     }

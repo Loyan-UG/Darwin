@@ -104,5 +104,23 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         Task<Result<LoyaltyAccountSummary>> ConfirmRedemptionAsync(
             string sessionToken,
             CancellationToken cancellationToken);
+
+        // My accounts (consumer)
+        Task<Result<IReadOnlyList<LoyaltyAccountSummary>>> GetMyAccountsAsync(CancellationToken cancellationToken);
+
+        // My history (consumer)
+        Task<Result<IReadOnlyList<PointsTransaction>>> GetMyHistoryAsync(Guid businessId, CancellationToken cancellationToken);
+
+        // My businesses (consumer, paged GET with query)
+        Task<Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>> GetMyBusinessesAsync(int page, int pageSize, bool includeInactive, CancellationToken cancellationToken);
+
+        // My timeline (consumer, cursor POST)
+        Task<Result<GetMyLoyaltyTimelinePageResponse>> GetMyLoyaltyTimelinePageAsync(GetMyLoyaltyTimelinePageRequest request, CancellationToken cancellationToken);
+
+        // Join loyalty (consumer)
+        Task<Result<LoyaltyAccountSummary>> JoinLoyaltyAsync(Guid businessId, Guid? businessLocationId, CancellationToken cancellationToken);
+
+        // Next reward (consumer) - 204 when none
+        Task<Result<LoyaltyRewardSummary?>> GetNextRewardAsync(Guid businessId, CancellationToken cancellationToken);
     }
 }

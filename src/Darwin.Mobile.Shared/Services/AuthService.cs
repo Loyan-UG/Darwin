@@ -27,22 +27,28 @@ public sealed class AuthService : IAuthService
 
     public AuthService(IApiClient api, ITokenStore store, ApiOptions opts)
     {
-        _api = api; _store = store; _opts = opts;
+        _api = api ?? throw new ArgumentNullException(nameof(api));
+        _store = store ?? throw new ArgumentNullException(nameof(store));
+        _opts = opts ?? throw new ArgumentNullException(nameof(opts));
     }
 
     public async Task<AppBootstrapResponse> LoginAsync(string email, string password, string? deviceId, CancellationToken ct)
     {
-        var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>("auth/login", new PasswordLoginRequest
-        {
-            Email = email,
-            Password = password,
-            DeviceId = deviceId
-        }, ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Empty token response.");
+        var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>(
+            ApiRoutes.Auth.Login,
+            new PasswordLoginRequest
+            {
+                Email = email,
+                Password = password,
+                DeviceId = deviceId
+            },
+            ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Empty token response.");
 
         await _store.SaveAsync(token.AccessToken, token.AccessTokenExpiresAtUtc, token.RefreshToken, token.RefreshTokenExpiresAtUtc);
-        _api.SetBearer(token.AccessToken);
+        _api.SetBearerToken(token.AccessToken);
 
-        var boot = await _api.GetAsync<AppBootstrapResponse>("meta/bootstrap", ct) ?? new AppBootstrapResponse();
+        var boot = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false)
+                   ?? new AppBootstrapResponse();
         _opts.JwtAudience = boot.JwtAudience;
         _opts.QrRefreshSeconds = boot.QrTokenRefreshSeconds;
         _opts.MaxOutbox = boot.MaxOutboxItems;
@@ -52,23 +58,34 @@ public sealed class AuthService : IAuthService
 
     public async Task<bool> TryRefreshAsync(CancellationToken ct)
     {
-        var (rt, rtex) = await _store.GetRefreshAsync();
-        if (string.IsNullOrWhiteSpace(rt) || rtex is null || rtex <= DateTime.UtcNow) return false;
+        var (rt, rtex) = await _store.GetRefreshAsync().ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(rt) || rtex is null || rtex <= DateTime.UtcNow)
+            return false;
 
-        var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>("auth/refresh", new RefreshTokenRequest { RefreshToken = rt! }, ct);
-        if (res is null) return false;
+        var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>(
+            ApiRoutes.Auth.Refresh,
+            new RefreshTokenRequest { RefreshToken = rt!, DeviceId = null },
+            ct).ConfigureAwait(false);
+
+        if (res is null)
+            return false;
 
         await _store.SaveAsync(res.AccessToken, res.AccessTokenExpiresAtUtc, res.RefreshToken, res.RefreshTokenExpiresAtUtc);
-        _api.SetBearer(res.AccessToken);
+        _api.SetBearerToken(res.AccessToken);
         return true;
     }
 
     public async Task LogoutAsync(CancellationToken ct)
     {
-        var (rt, _) = await _store.GetRefreshAsync();
+        var (rt, _) = await _store.GetRefreshAsync().ConfigureAwait(false);
         if (!string.IsNullOrWhiteSpace(rt))
-            _ = await _api.PostAsync<LogoutRequest, object?>("auth/logout", new LogoutRequest { RefreshToken = rt! }, ct);
-        await _store.ClearAsync();
-        _api.SetBearer(null);
+        {
+            _ = await _api.PostAsync<LogoutRequest, object?>(
+                ApiRoutes.Auth.Logout,
+                new LogoutRequest { RefreshToken = rt! },
+                ct).ConfigureAwait(false);
+        }
+        await _store.ClearAsync().ConfigureAwait(false);
+        _api.SetBearerToken(null);
     }
 }
