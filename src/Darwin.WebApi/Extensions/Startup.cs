@@ -49,6 +49,9 @@ namespace Darwin.WebApi.Extensions
             // so rejected requests are short-circuited early.
             app.UseRateLimiter();
 
+            // Idempotency middleware: prevents duplicate processing of mutating requests
+            app.UseMiddleware<Darwin.WebApi.Middleware.IdempotencyMiddleware>();
+
             app.UseAuthentication();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
