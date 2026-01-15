@@ -13,14 +13,12 @@ namespace Darwin.Mobile.Shared.Api
 {
     /// <summary>
     /// Default implementation of <see cref="IApiClient"/> for the mobile apps.
+    /// Responsible for:
+    /// - Configuring Authorization headers (bearer)
+    /// - JSON (de)serialization using System.Text.Json with web defaults
+    /// - Returning functional Result/Result{T} instead of throwing on HTTP errors
+    /// - Extracting error messages from ProblemDetails or plain text when possible
     /// </summary>
-    /// <remarks>
-    /// Design goals:
-    /// - No exceptions as control-flow: return <see cref="Result{T}"/> for all primary methods.
-    /// - Support raw DTO responses and <see cref="ApiEnvelope{T}"/> responses.
-    /// - Attempt to parse server errors into a meaningful message (ProblemDetails / text).
-    /// - Be strict about null-safety: never return Ok(null) for reference payloads.
-    /// </remarks>
     public sealed class ApiClient : IApiClient
     {
         private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
@@ -163,8 +161,79 @@ namespace Darwin.Mobile.Shared.Api
             return result.Succeeded ? result.Value : default;
         }
 
+        /// <inheritdoc />
+        public async Task<Result<TResponse>> PutResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(route))
+                return Result<TResponse>.Fail("Route is required.");
+
+            if (request is null)
+                return Result<TResponse>.Fail("Request payload is required.");
+
+            var normalized = ApiRoutes.Normalize(route);
+
+            try
+            {
+                using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, ct).ConfigureAwait(false);
+                return await ReadAsResultAsync<TResponse>(response, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<TResponse>.Fail($"Network error: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<TResponse?> PutAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
+        {
+            var result = await PutResultAsync<TRequest, TResponse>(route, request, ct).ConfigureAwait(false);
+            return result.Succeeded ? result.Value : default;
+        }
+
+        /// <inheritdoc />
+        public async Task<Result> PutNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(route))
+                return Result.Fail("Route is required.");
+
+            if (request is null)
+                return Result.Fail("Request payload is required.");
+
+            var normalized = ApiRoutes.Normalize(route);
+
+            try
+            {
+                using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, ct).ConfigureAwait(false);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Treat 204 (No Content) as a successful update.
+                    // Some APIs may return 200/201 with empty or ignored payloads; also treat them as success.
+                    return Result.Ok();
+                }
+
+                var errorMessage = await TryReadErrorMessageAsync(response, ct).ConfigureAwait(false)
+                                  ?? $"Request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}).";
+
+                return Result.Fail(errorMessage);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail($"Network error: {ex.Message}");
+            }
+        }
+
         /// <summary>
-        /// Reads the response content into <typeparamref name="TResponse"/> and wraps it as <see cref="Result{T}"/>.
+        /// Reads the response content into TResponse and wraps it as Result{T}.
+        /// Note: For 204 No Content this returns a failed Result by design; prefer PutNoContentAsync for 204 patterns.
         /// </summary>
         private static async Task<Result<TResponse>> ReadAsResultAsync<TResponse>(HttpResponseMessage response, CancellationToken ct)
         {
@@ -199,6 +268,9 @@ namespace Darwin.Mobile.Shared.Api
 
         /// <summary>
         /// Attempts to parse server error payloads into a human-readable message.
+        /// Priority:
+        /// 1) Darwin.Contracts.Common.ProblemDetails
+        /// 2) Plain text
         /// </summary>
         private static async Task<string?> TryReadErrorMessageAsync(HttpResponseMessage response, CancellationToken ct)
         {
@@ -209,7 +281,6 @@ namespace Darwin.Mobile.Shared.Api
                 // Try ProblemDetails-like payload first (preferred).
                 if (!string.IsNullOrWhiteSpace(contentType) && contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
                 {
-                    // 1) Try Darwin.Contracts.Common.ProblemDetails (if server uses it)
                     var pd = await response.Content.ReadFromJsonAsync<ProblemDetails>(_jsonOptions, ct).ConfigureAwait(false);
                     if (pd is not null)
                     {
