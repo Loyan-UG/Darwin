@@ -6,14 +6,20 @@ namespace Darwin.Domain.Entities.Businesses
 {
     /// <summary>
     /// Represents a user's "favorite" (bookmark) relationship with a business.
-    /// This entity powers mobile features such as:
-    /// - Favorites list ("My favorites")
-    /// - Personalization signals for feed/ranking (future phases)
-    ///
-    /// Persistence guidelines:
-    /// - Enforce uniqueness for (UserId, BusinessId) for rows where IsDeleted = false.
-    /// - Use soft delete for "unfavorite" to preserve audit trails and support restore.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is a user-controlled, low-risk toggle. Therefore, it should be physically deleted
+    /// when a user removes a favorite (unfavorite). No soft-delete semantics are intended for this entity.
+    /// </para>
+    /// <para>
+    /// Persistence guidelines:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>Enforce uniqueness for (UserId, BusinessId) (unfiltered unique index).</description></item>
+    /// <item><description>Delete rows physically on "unfavorite".</description></item>
+    /// </list>
+    /// </remarks>
     public sealed class BusinessFavorite : BaseEntity
     {
         /// <summary>
@@ -62,17 +68,5 @@ namespace Darwin.Domain.Entities.Businesses
             UserId = userId;
             BusinessId = businessId;
         }
-
-        /// <summary>
-        /// Marks this favorite as removed using soft delete.
-        /// The operation is idempotent.
-        /// </summary>
-        public void Remove() => IsDeleted = true;
-
-        /// <summary>
-        /// Restores a previously removed favorite by clearing soft delete flag.
-        /// The operation is idempotent.
-        /// </summary>
-        public void Restore() => IsDeleted = false;
     }
 }

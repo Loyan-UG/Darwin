@@ -6,15 +6,20 @@ namespace Darwin.Domain.Entities.Businesses
 {
     /// <summary>
     /// Represents a user's "like" relationship with a business.
-    /// Storing likes as rows (instead of a counter) enables:
-    /// - "Did I like it?" per-user state
-    /// - Accurate like counts with soft-delete history
-    /// - Abuse mitigation (rate limiting, constraints, auditing)
-    ///
-    /// Persistence guidelines:
-    /// - Enforce uniqueness for (UserId, BusinessId) where IsDeleted = false.
-    /// - Soft delete represents "unlike".
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is a user-controlled, low-risk toggle. Therefore, it should be physically deleted
+    /// when a user removes a like (unlike). No soft-delete semantics are intended for this entity.
+    /// </para>
+    /// <para>
+    /// Persistence guidelines:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>Enforce uniqueness for (UserId, BusinessId) (unfiltered unique index).</description></item>
+    /// <item><description>Delete rows physically on "unlike".</description></item>
+    /// </list>
+    /// </remarks>
     public sealed class BusinessLike : BaseEntity
     {
         /// <summary>
@@ -63,17 +68,5 @@ namespace Darwin.Domain.Entities.Businesses
             UserId = userId;
             BusinessId = businessId;
         }
-
-        /// <summary>
-        /// Soft-deletes the like to represent an "unlike".
-        /// The operation is idempotent.
-        /// </summary>
-        public void Unlike() => IsDeleted = true;
-
-        /// <summary>
-        /// Restores the like to represent a "re-like".
-        /// The operation is idempotent.
-        /// </summary>
-        public void Relike() => IsDeleted = false;
     }
 }

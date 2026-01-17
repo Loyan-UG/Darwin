@@ -72,6 +72,28 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
                 .WithOne()
                 .HasForeignKey(l => l.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Engagement (Favorites / Likes / Reviews / Stats)
+            builder.HasMany(x => x.Favorites)
+                .WithOne()
+                .HasForeignKey(f => f.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.Likes)
+                .WithOne()
+                .HasForeignKey(l => l.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.Reviews)
+                .WithOne()
+                .HasForeignKey(r => r.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //builder.HasMany(x => x.EngagementStats)
+            //    .WithOne()
+            //    .HasForeignKey(s => s.BusinessId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

@@ -53,6 +53,12 @@ namespace Darwin.Domain.Entities.Businesses
         public DateTime? LastCalculatedAtUtc { get; set; }
 
         /// <summary>
+        /// Optional EF navigation to the owning business.
+        /// This navigation supports 1:1 mapping and convenient graph traversal.
+        /// </summary>
+        public Business? Business { get; private set; }
+
+        /// <summary>
         /// Returns the average rating computed from RatingSum/RatingCount.
         /// Returns null when RatingCount is 0.
         /// </summary>
@@ -64,6 +70,35 @@ namespace Darwin.Domain.Entities.Businesses
             }
 
             return (decimal)RatingSum / RatingCount;
+        }
+
+        /// <summary>
+        /// Updates the aggregate values in a single operation.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This method is designed for background reconciliation jobs or handler-level aggregate updates.
+        /// It enforces basic invariants and stamps <see cref="LastCalculatedAtUtc"/>.
+        /// </para>
+        /// </remarks>
+        /// <param name="ratingCount">Visible review count.</param>
+        /// <param name="ratingSum">Sum of visible review ratings.</param>
+        /// <param name="likeCount">Active like count.</param>
+        /// <param name="favoriteCount">Active favorite count.</param>
+        /// <param name="utcNow">UTC timestamp for the recalculation event.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when any numeric argument is negative.</exception>
+        public void SetSnapshot(int ratingCount, int ratingSum, int likeCount, int favoriteCount, DateTime utcNow)
+        {
+            if (ratingCount < 0) throw new ArgumentOutOfRangeException(nameof(ratingCount), "Value must be non-negative.");
+            if (ratingSum < 0) throw new ArgumentOutOfRangeException(nameof(ratingSum), "Value must be non-negative.");
+            if (likeCount < 0) throw new ArgumentOutOfRangeException(nameof(likeCount), "Value must be non-negative.");
+            if (favoriteCount < 0) throw new ArgumentOutOfRangeException(nameof(favoriteCount), "Value must be non-negative.");
+
+            RatingCount = ratingCount;
+            RatingSum = ratingSum;
+            LikeCount = likeCount;
+            FavoriteCount = favoriteCount;
+            LastCalculatedAtUtc = utcNow;
         }
     }
 }

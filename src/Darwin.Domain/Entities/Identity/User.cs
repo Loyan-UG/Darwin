@@ -1,5 +1,6 @@
 ﻿using System;
 using Darwin.Domain.Common;
+using Darwin.Domain.Entities.Businesses;
 
 namespace Darwin.Domain.Entities.Identity
 {
@@ -78,12 +79,36 @@ namespace Darwin.Domain.Entities.Identity
         public string? Tags { get; set; }
         public string ExternalIdsJson { get; set; } = "{}";
 
-
         // Navigations
         public ICollection<UserRole> UserRoles { get; private set; } = new List<UserRole>();
         public ICollection<UserLogin> Logins { get; private set; } = new List<UserLogin>();
         public ICollection<UserToken> Tokens { get; private set; } = new List<UserToken>();
         public ICollection<UserTwoFactorSecret> TwoFactorSecrets { get; private set; } = new List<UserTwoFactorSecret>();
+
+        /// <summary>
+        /// Navigation: Registered devices for push notifications and device binding.
+        /// </summary>
+        public ICollection<UserDevice> Devices { get; private set; } = new List<UserDevice>();
+
+        /// <summary>
+        /// Navigation: Favorite businesses (discovery feature).
+        /// </summary>
+        public ICollection<BusinessFavorite> BusinessFavorites { get; private set; } = new List<BusinessFavorite>();
+
+        /// <summary>
+        /// Navigation: Liked businesses (discovery feature).
+        /// </summary>
+        public ICollection<BusinessLike> BusinessLikes { get; private set; } = new List<BusinessLike>();
+
+        /// <summary>
+        /// Navigation: Authored business reviews (discovery feature).
+        /// </summary>
+        public ICollection<BusinessReview> BusinessReviews { get; private set; } = new List<BusinessReview>();
+
+        /// <summary>
+        /// Navigation: Cached engagement snapshot (projection).
+        /// </summary>
+        public UserEngagementSnapshot? EngagementSnapshot { get; private set; }
 
         // EF parameterless constructor (kept protected to avoid misuse)
         private User() { }

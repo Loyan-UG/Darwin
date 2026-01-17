@@ -28,5 +28,25 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Business media items (logo, gallery, etc.).
         /// </summary>
         public DbSet<BusinessMedia> BusinessMedias => Set<BusinessMedia>();
+
+        /// <summary>
+        /// User favorites for businesses (soft-deletable).
+        /// </summary>
+        public DbSet<BusinessFavorite> BusinessFavorites => Set<BusinessFavorite>();
+
+        /// <summary>
+        /// User likes for businesses (soft-deletable).
+        /// </summary>
+        public DbSet<BusinessLike> BusinessLikes => Set<BusinessLike>();
+
+        /// <summary>
+        /// User reviews for businesses (soft-deletable + hide/unhide moderation).
+        /// </summary>
+        public DbSet<BusinessReview> BusinessReviews => Set<BusinessReview>();
+
+        /// <summary>
+        /// Aggregated engagement statistics per business (rating sum/count, totals).
+        /// </summary>
+        public DbSet<BusinessEngagementStats> BusinessEngagementStats => Set<BusinessEngagementStats>();
     }
 }

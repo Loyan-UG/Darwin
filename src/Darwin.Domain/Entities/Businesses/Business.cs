@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Darwin.Domain.Common;
+using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Integration;
 using Darwin.Domain.Enums;
 
 namespace Darwin.Domain.Entities.Businesses
@@ -79,5 +81,55 @@ namespace Darwin.Domain.Entities.Businesses
         /// Navigation: Physical or virtual locations owned by this business.
         /// </summary>
         public ICollection<BusinessLocation> Locations { get; } = new List<BusinessLocation>();
+
+        /// <summary>
+        /// Navigation: Favorites created by users for this business (discovery feature).
+        /// </summary>
+        public ICollection<BusinessFavorite> Favorites { get; } = new List<BusinessFavorite>();
+
+        /// <summary>
+        /// Navigation: Likes created by users for this business (discovery feature).
+        /// </summary>
+        public ICollection<BusinessLike> Likes { get; } = new List<BusinessLike>();
+
+        /// <summary>
+        /// Navigation: Reviews created by users for this business (discovery feature).
+        /// </summary>
+        public ICollection<BusinessReview> Reviews { get; } = new List<BusinessReview>();
+
+        /// <summary>
+        /// Navigation: Cached engagement stats for this business (optional 1:1 row).
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is intentionally modeled as an optional 1:1 navigation (not a collection).
+        /// A single row per business enables fast reads for discovery pages and avoids duplicate aggregates.
+        /// </para>
+        /// <para>
+        /// Infrastructure must enforce uniqueness on <see cref="BusinessEngagementStats.BusinessId"/>.
+        /// </para>
+        /// </remarks>
+        public BusinessEngagementStats? EngagementStats { get; private set; }
+
+
+        /// <summary>
+        /// Navigation: Invitations issued for onboarding into this business.
+        /// </summary>
+        public ICollection<BusinessInvitation> Invitations { get; } = new List<BusinessInvitation>();
+
+        /// <summary>
+        /// Navigation: Staff QR codes issued within this business.
+        /// </summary>
+        public ICollection<BusinessStaffQrCode> StaffQrCodes { get; } = new List<BusinessStaffQrCode>();
+
+        /// <summary>
+        /// Navigation: Business subscription records (billing history).
+        /// </summary>
+        public ICollection<BusinessSubscription> Subscriptions { get; } = new List<BusinessSubscription>();
+
+        /// <summary>
+        /// Navigation: Analytics export jobs scoped to this business.
+        /// </summary>
+        public ICollection<AnalyticsExportJob> AnalyticsExportJobs { get; } = new List<AnalyticsExportJob>();
     }
 }
