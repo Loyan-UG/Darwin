@@ -375,9 +375,9 @@ services.AddDarwinMobileShared(new ApiOptions
 
 | Area      | Endpoint                                     | Policy                      | Client     |
 |-----------|----------------------------------------------|-----------------------------|------------|
-| Auth      | POST /api/auth/login                         | AllowAnonymous              | Both       |
-| Auth      | POST /api/auth/refresh                       | AllowAnonymous              | Both       |
-| Auth      | POST /api/auth/logout                        | Authorize                   | Both       |
+| Auth      | POST /api/v1/auth/login                      | AllowAnonymous              | Both       |
+| Auth      | POST /api/v1/auth/refresh                    | AllowAnonymous              | Both       |
+| Auth      | POST /api/v1/auth/logout                     | Authorize                   | Both       |
 | Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |

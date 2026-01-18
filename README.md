@@ -102,15 +102,15 @@ Security highlights:
 Darwin.WebApi is the public surface for mobile. All payloads/errors use `Darwin.Contracts`.
 
 **Auth & Bootstrap**
-- `GET /api/meta/bootstrap` — mobile bootstrap (JWT audience, QR refresh seconds, outbox limits). **AllowAnonymous**
-- `POST /api/auth/login` — password login → `TokenResponse`. **AllowAnonymous**
-- `POST /api/auth/refresh` — refresh token → `TokenResponse`. **AllowAnonymous**
-- `POST /api/auth/logout` — revoke refresh token (per device). **Authorize**
-- `POST /api/auth/logout-all` — revoke all refresh tokens. **Authorize**
-- `POST /api/auth/password/change` — change password (current → new). **Authorize**
-- `POST /api/auth/password/request-reset` — request reset (always 200). **AllowAnonymous**
-- `POST /api/auth/password/reset` — complete reset. **AllowAnonymous**
-- `POST /api/auth/register` — consumer self-registration. **AllowAnonymous**
+- `GET /api/v1/meta/bootstrap` — mobile bootstrap (JWT audience, QR refresh seconds, outbox limits). **AllowAnonymous**
+- `POST /api/v1/auth/login` — password login → `TokenResponse`. **AllowAnonymous**
+- `POST /api/v1/auth/refresh` — refresh token → `TokenResponse`. **AllowAnonymous**
+- `POST /api/v1/auth/logout` — revoke refresh token (per device). **Authorize**
+- `POST /api/v1/auth/logout-all` — revoke all refresh tokens. **Authorize**
+- `POST /api/v1/auth/password/change` — change password (current → new). **Authorize**
+- `POST /api/v1/auth/password/request-reset` — request reset (always 200). **AllowAnonymous**
+- `POST /api/v1/auth/password/reset` — complete reset. **AllowAnonymous**
+- `POST /api/v1/auth/register` — consumer self-registration. **AllowAnonymous**
 - Access token policies:
   - Consumer: `perm:AccessMemberArea`
   - Business: `perm:AccessLoyaltyBusiness`
