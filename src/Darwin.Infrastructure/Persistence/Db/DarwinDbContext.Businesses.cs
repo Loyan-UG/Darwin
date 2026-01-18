@@ -18,7 +18,7 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Business branches / locations.
         /// </summary>
         public DbSet<BusinessLocation> BusinessLocations => Set<BusinessLocation>();
-
+            
         /// <summary>
         /// Business members (join between Business and User with role).
         /// </summary>
@@ -48,5 +48,15 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Aggregated engagement statistics per business (rating sum/count, totals).
         /// </summary>
         public DbSet<BusinessEngagementStats> BusinessEngagementStats => Set<BusinessEngagementStats>();
+
+        /// <summary>
+        /// Staff QR codes issued for business staff flows (sign-in, pairing, privileged actions).
+        /// </summary>
+        public DbSet<BusinessStaffQrCode> BusinessStaffQrCodes => Set<BusinessStaffQrCode>();
+
+        /// <summary>
+        /// Invitations used for onboarding users into a business workspace.
+        /// </summary>
+        public DbSet<BusinessInvitation> BusinessInvitations => Set<BusinessInvitation>();
     }
 }

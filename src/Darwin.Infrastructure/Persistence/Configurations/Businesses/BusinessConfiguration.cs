@@ -89,10 +89,6 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
                 .HasForeignKey(r => r.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            //builder.HasMany(x => x.EngagementStats)
-            //    .WithOne()
-            //    .HasForeignKey(s => s.BusinessId)
-            //    .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

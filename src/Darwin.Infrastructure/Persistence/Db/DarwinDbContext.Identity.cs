@@ -21,5 +21,17 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<UserTwoFactorSecret> UserTwoFactorSecrets => Set<UserTwoFactorSecret>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
         public DbSet<Address> Addresses => Set<Address>();
+
+        /// <summary>
+        /// Registered mobile device installations for users.
+        /// </summary>
+        public DbSet<UserDevice> UserDevices => Set<UserDevice>();
+
+        /// <summary>
+        /// Denormalized per-user engagement snapshot used for segmentation and personalization.
+        /// Intended uniqueness is enforced at the database level via a unique index on UserId.
+        /// </summary>
+        public DbSet<UserEngagementSnapshot> UserEngagementSnapshots => Set<UserEngagementSnapshot>();
     }
 }
+    

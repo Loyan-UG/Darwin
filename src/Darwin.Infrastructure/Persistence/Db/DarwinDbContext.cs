@@ -105,13 +105,23 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ShippingMethod> ShippingMethods => Set<ShippingMethod>();
         public DbSet<ShippingRate> ShippingRates => Set<ShippingRate>();
 
-        
-        // Integration / SEO / Settings
+
+        // Integration / SEO / Settings / Analytics
         public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
         public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
         public DbSet<EventLog> EventLogs => Set<EventLog>();
         public DbSet<RedirectRule> RedirectRules => Set<RedirectRule>();
         public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
+
+        /// <summary>
+        /// Export jobs requested by business users.
+        /// </summary>
+        public DbSet<AnalyticsExportJob> AnalyticsExportJobs => Set<AnalyticsExportJob>();
+
+        /// <summary>
+        /// Output files produced by <see cref="AnalyticsExportJob"/>.
+        /// </summary>
+        public DbSet<AnalyticsExportFile> AnalyticsExportFiles => Set<AnalyticsExportFile>();
 
 
         /// <summary>
