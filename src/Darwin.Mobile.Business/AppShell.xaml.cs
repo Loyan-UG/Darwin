@@ -1,11 +1,26 @@
-﻿namespace Darwin.Mobile.Business
+﻿using Microsoft.Maui.Controls;
+using Darwin.Mobile.Business.Views;
+
+namespace Darwin.Mobile.Business;
+
+/// <summary>
+/// Defines the shell and registers application routes.
+/// </summary>
+public sealed partial class AppShell : Shell
 {
-    public partial class AppShell : Shell
+    public AppShell()
     {
-        public AppShell()
-        {
-            InitializeComponent();
-            // TODO: Routing.RegisterRoute("redeem", typeof(Pages.SessionPage));
-        }
+        InitializeComponent();
+        Routing.RegisterRoute(Routes.Home, typeof(HomePage));
+        Routing.RegisterRoute(Routes.Rewards, typeof(ComingSoonPage));
     }
+}
+
+/// <summary>
+/// Static class containing route names for navigation.
+/// </summary>
+public static class Routes
+{
+    public const string Home = "Home";
+    public const string Rewards = "Rewards";
 }

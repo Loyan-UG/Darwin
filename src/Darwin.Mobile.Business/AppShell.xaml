@@ -5,20 +5,14 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Darwin.Mobile.Business"
     xmlns:pages="clr-namespace:Darwin.Mobile.Business.Pages"
-    Title="Darwin.Mobile.Business">
+    Title="Loyan - Business">
 
-    <!-- TODO: routes & tabs -->
-    <TabBar>
-        <ShellContent Title="Scan" 
-                      ContentTemplate="{DataTemplate pages:ScannerPage}" 
-                      Route="scan" />
-        <ShellContent Title="Session" 
-                      ContentTemplate="{DataTemplate pages:SessionPage}" 
-                      Route="session" />
-    </TabBar>
+    <FlyoutItem Title="Home" Icon="home.png" Route="Home">
+        <ShellContent ContentTemplate="{DataTemplate views:HomePage}" />
+    </FlyoutItem>
 
-    <!-- Additional routes -->
-    <ShellContent Title="Login" 
-                  ContentTemplate="{DataTemplate pages:LoginPage}" 
-                  Route="login" />
+    <FlyoutItem Title="Rewards" Icon="reward.png" Route="Rewards">
+        <ShellContent ContentTemplate="{DataTemplate views:ComingSoonPage}" />
+    </FlyoutItem>
+    
 </Shell>

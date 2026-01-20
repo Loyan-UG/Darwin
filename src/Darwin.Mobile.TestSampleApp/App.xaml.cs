@@ -1,4 +1,6 @@
-﻿namespace Darwin.Mobile.TestSampleApp
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Darwin.Mobile.TestSampleApp
 {
     public partial class App : Application
     {

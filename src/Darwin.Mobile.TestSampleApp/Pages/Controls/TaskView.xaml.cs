@@ -22,11 +22,11 @@ namespace Darwin.Mobile.TestSampleApp.Pages.Controls
             set => SetValue(TaskCompletedCommandProperty, value);
         }
 
-        private void CheckBox_CheckedChanged(object sender, CheckedChangedEventArgs e)
+        private void CheckBox_CheckedChanged(object? sender, CheckedChangedEventArgs e)
         {
-            var checkbox = (CheckBox)sender;
+            var checkbox = (CheckBox?)sender;
 
-            if (checkbox.BindingContext is not ProjectTask task)
+            if (checkbox?.BindingContext is not ProjectTask task)
                 return;
 
             if (task.IsCompleted == e.Value)

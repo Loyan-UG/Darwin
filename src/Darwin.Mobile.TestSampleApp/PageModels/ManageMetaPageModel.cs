@@ -47,6 +47,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             }
 
             await AppShell.DisplayToastAsync("Categories saved");
+            SemanticScreenReader.Announce("Categories saved");
         }
 
         [RelayCommand]
@@ -55,6 +56,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             Categories.Remove(category);
             await _categoryRepository.DeleteItemAsync(category);
             await AppShell.DisplayToastAsync("Category deleted");
+            SemanticScreenReader.Announce("Category deleted");
         }
 
         [RelayCommand]
@@ -64,6 +66,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             Categories.Add(category);
             await _categoryRepository.SaveItemAsync(category);
             await AppShell.DisplayToastAsync("Category added");
+            SemanticScreenReader.Announce("Category added");
         }
 
         [RelayCommand]
@@ -75,6 +78,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             }
 
             await AppShell.DisplayToastAsync("Tags saved");
+            SemanticScreenReader.Announce("Tags saved");
         }
 
         [RelayCommand]
@@ -83,6 +87,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             Tags.Remove(tag);
             await _tagRepository.DeleteItemAsync(tag);
             await AppShell.DisplayToastAsync("Tag deleted");
+            SemanticScreenReader.Announce("Tags deleted");
         }
 
         [RelayCommand]
@@ -92,6 +97,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             Tags.Add(tag);
             await _tagRepository.SaveItemAsync(tag);
             await AppShell.DisplayToastAsync("Tag added");
+            SemanticScreenReader.Announce("Tags added");
         }
 
         [RelayCommand]

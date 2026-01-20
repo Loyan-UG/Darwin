@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Darwin.Mobile.TestSampleApp.Models;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace Darwin.Mobile.TestSampleApp.PageModels
 {
@@ -34,6 +36,8 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
         [ObservableProperty]
         private List<Tag> _allTags = [];
 
+        public IList<object> SelectedTags { get; set; } = new List<object>();
+
         [ObservableProperty]
         private IconData _icon;
 
@@ -51,6 +55,18 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             new IconData { Icon = FluentUI.people_24_regular, Description = "People Icon" },
             new IconData { Icon = FluentUI.bot_24_regular, Description = "Bot Icon" }
         };
+
+        private bool _canDelete;
+
+        public bool CanDelete
+        {
+            get => _canDelete;
+            set
+            {
+                _canDelete = value;
+                DeleteCommand.NotifyCanExecuteChanged();
+            }
+        }
 
         public bool HasCompletedTasks
             => _project?.Tasks.Any(t => t.IsCompleted) ?? false;
@@ -135,6 +151,10 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
                 foreach (var tag in allTags)
                 {
                     tag.IsSelected = _project.Tags.Any(t => t.ID == tag.ID);
+                    if (tag.IsSelected)
+                    {
+                        SelectedTags.Add(tag);
+                    }
                 }
                 AllTags = new(allTags);
             }
@@ -145,6 +165,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             finally
             {
                 IsBusy = false;
+                CanDelete = !_project.IsNullOrNew();
                 OnPropertyChanged(nameof(HasCompletedTasks));
             }
         }
@@ -155,7 +176,6 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             await _taskRepository.SaveItemAsync(task);
             OnPropertyChanged(nameof(HasCompletedTasks));
         }
-
 
         [RelayCommand]
         private async Task Save()
@@ -174,14 +194,11 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             _project.Icon = Icon.Icon ?? FluentUI.ribbon_24_regular;
             await _projectRepository.SaveItemAsync(_project);
 
-            if (_project.IsNullOrNew())
+            foreach (var tag in AllTags)
             {
-                foreach (var tag in AllTags)
+                if (tag.IsSelected)
                 {
-                    if (tag.IsSelected)
-                    {
-                        await _tagRepository.SaveItemAsync(tag, _project.ID);
-                    }
+                    await _tagRepository.SaveItemAsync(tag, _project.ID);
                 }
             }
 
@@ -217,7 +234,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
                 });
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanDelete))]
         private async Task Delete()
         {
             if (_project.IsNullOrNew())
@@ -236,7 +253,7 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             Shell.Current.GoToAsync($"task?id={task.ID}");
 
         [RelayCommand]
-        private async Task ToggleTag(Tag tag)
+        internal async Task ToggleTag(Tag tag)
         {
             tag.IsSelected = !tag.IsSelected;
 
@@ -253,6 +270,13 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             }
 
             AllTags = new(AllTags);
+            SemanticScreenReader.Announce($"{tag.Title} {(tag.IsSelected ? "selected" : "unselected")}");
+        }
+
+        [RelayCommand]
+        private void IconSelected(IconData icon)
+        {
+            SemanticScreenReader.Announce($"{icon.Description} selected");
         }
 
         [RelayCommand]
@@ -268,6 +292,36 @@ namespace Darwin.Mobile.TestSampleApp.PageModels
             Tasks = new(Tasks);
             OnPropertyChanged(nameof(HasCompletedTasks));
             await AppShell.DisplayToastAsync("All cleaned up!");
+        }
+
+        [RelayCommand]
+        private async Task SelectionChanged(object parameter)
+        {
+            if (parameter is IEnumerable<object> enumerableParameter)
+            {
+                var currentSelection = enumerableParameter.OfType<Tag>().ToList();
+                var previousSelection = AllTags.Where(t => t.IsSelected).ToList();
+
+                // Handle newly selected tags
+                foreach (var tag in currentSelection.Except(previousSelection))
+                {
+                    tag.IsSelected = true;
+                    if (!_project.IsNullOrNew())
+                    {
+                        await _tagRepository.SaveItemAsync(tag, _project.ID);
+                    }
+                }
+
+                // Handle deselected tags
+                foreach (var tag in previousSelection.Except(currentSelection))
+                {
+                    tag.IsSelected = false;
+                    if (!_project.IsNullOrNew())
+                    {
+                        await _tagRepository.DeleteItemAsync(tag, _project.ID);
+                    }
+                }
+            }
         }
     }
 }

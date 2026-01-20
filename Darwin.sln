@@ -63,6 +63,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Mobile.Consumer", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Mobile.Business", "src\Darwin.Mobile.Business\Darwin.Mobile.Business.csproj", "{2E4F21EC-F276-4B25-AC7F-F21D5BCA242E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Mobile.TestSampleApp", "src\Darwin.Mobile.TestSampleApp\Darwin.Mobile.TestSampleApp.csproj", "{E56DC535-1231-4D10-B855-0A638F3A1174}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -121,6 +123,10 @@ Global
 		{2E4F21EC-F276-4B25-AC7F-F21D5BCA242E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E4F21EC-F276-4B25-AC7F-F21D5BCA242E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E4F21EC-F276-4B25-AC7F-F21D5BCA242E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E56DC535-1231-4D10-B855-0A638F3A1174}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E56DC535-1231-4D10-B855-0A638F3A1174}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E56DC535-1231-4D10-B855-0A638F3A1174}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E56DC535-1231-4D10-B855-0A638F3A1174}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -139,6 +145,7 @@ Global
 		{96C1E275-3097-4F53-A72A-CA69FA435158} = {19DD8962-0A65-48C1-90EF-DA11158FCFAC}
 		{0127CAE8-1506-4C3B-8B43-6E4BFC7DE882} = {19DD8962-0A65-48C1-90EF-DA11158FCFAC}
 		{2E4F21EC-F276-4B25-AC7F-F21D5BCA242E} = {19DD8962-0A65-48C1-90EF-DA11158FCFAC}
+		{E56DC535-1231-4D10-B855-0A638F3A1174} = {19DD8962-0A65-48C1-90EF-DA11158FCFAC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {14EF492C-6C72-429B-A2BE-3FC3BB81356B}

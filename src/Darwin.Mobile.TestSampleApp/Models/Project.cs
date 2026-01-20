@@ -18,6 +18,11 @@ namespace Darwin.Mobile.TestSampleApp.Models
 
         public List<Tag> Tags { get; set; } = [];
 
+        public string AccessibilityDescription
+        {
+            get { return $"{Name} Project. {Description}"; }
+        }
+
         public override string ToString() => $"{Name}";
     }
 
