@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Darwin.Mobile.Consumer.Constants;
 
-namespace Darwin.Mobile.Consumer.Constants
+/// <summary>
+/// Contains route names for shell navigation.
+/// </summary>
+public static class Routes
 {
-    internal class Routes
-    {
-    }
+    public const string Home = "Home";
+    public const string Rewards = "Rewards";
+
 }

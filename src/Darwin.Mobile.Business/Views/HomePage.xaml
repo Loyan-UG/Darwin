@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    x:Class="Darwin.Mobile.Business.Views.HomePage"
+    x:DataType="vm:HomeViewModel"
+    Title="{x:Static res:AppResources.HomeTitle}">
+
+    <VerticalStackLayout Spacing="20" Padding="24">
+        <Label Text="{Binding Greeting}" Style="{StaticResource TitleLabelStyle}" />
+        <Button Text="{x:Static res:AppResources.StartButton}"
+                Style="{StaticResource PrimaryButtonStyle}"
+                Command="{Binding StartCommand}" />
+    </VerticalStackLayout>
+</ContentPage>

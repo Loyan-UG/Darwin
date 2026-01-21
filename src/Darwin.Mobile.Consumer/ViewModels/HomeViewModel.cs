@@ -1,25 +1,34 @@
-﻿using System.Windows.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Windows.Input;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// View model for the home page.
+/// View model for the consumer application's home page.
 /// </summary>
 public sealed partial class HomeViewModel : ObservableObject
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HomeViewModel"/> class.
+    /// </summary>
     public HomeViewModel()
     {
         StartCommand = new RelayCommand(OnStart);
     }
 
-    public string Greeting => "Welcome to Loyan!";
+    /// <summary>
+    /// Gets a greeting message displayed on the home page.
+    /// </summary>
+    public string Greeting => "Welcome to DarwinMobile!";
 
+    /// <summary>
+    /// Command executed when the user taps the start button.
+    /// </summary>
     public ICommand StartCommand { get; }
 
     private void OnStart()
     {
-        // TODO: Navigate to the actual first feature of phase 1
+        // TODO: Navigate to the first functional feature of phase 1.
     }
 }

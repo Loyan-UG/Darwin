@@ -2,13 +2,14 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     x:Class="Darwin.Mobile.Consumer.Views.HomePage"
-    x:DataType="local:HomeViewModel"
+    x:DataType="vm:HomeViewModel"
     Title="{x:Static res:AppResources.HomeTitle}">
 
-    <VerticalStackLayout Spacing="16" Padding="24">
-        <Label Text="{Binding Greeting}" FontSize="24"
-               TextColor="{StaticResource ColorOnSurface}" />
+    <VerticalStackLayout Spacing="20" Padding="24">
+        <Label Text="{Binding Greeting}" Style="{StaticResource TitleLabelStyle}" />
         <Button Text="{x:Static res:AppResources.StartButton}"
                 Style="{StaticResource PrimaryButtonStyle}"
                 Command="{Binding StartCommand}" />
