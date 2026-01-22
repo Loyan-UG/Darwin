@@ -1,5 +1,7 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Darwin.Mobile.Business.Constants;
 using Darwin.Mobile.Business.Views;
+using Microsoft.Maui.Controls;
+
 
 namespace Darwin.Mobile.Business;
 
@@ -8,6 +10,9 @@ namespace Darwin.Mobile.Business;
 /// </summary>
 public sealed partial class AppShell : Shell
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AppShell"/> class.
+    /// </summary>
     public AppShell()
     {
         InitializeComponent();

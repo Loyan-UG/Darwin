@@ -5,6 +5,9 @@ using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Hosting;
 using Darwin.Mobile.Consumer.Extensions;
+using CommunityToolkit.Maui;
+using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Mobile.Consumer.Views;
 
 namespace Darwin.Mobile.Consumer
 {
@@ -15,6 +18,7 @@ namespace Darwin.Mobile.Consumer
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -22,6 +26,11 @@ namespace Darwin.Mobile.Consumer
                 });
 
             builder.Services.AddConsumerApp();
+
+            // DI registration
+            builder.Services.AddSingleton<HomeViewModel>();
+            builder.Services.AddSingleton<HomePage>();
+            builder.Services.AddSingleton<ComingSoonPage>();
 
 
 #if DEBUG
