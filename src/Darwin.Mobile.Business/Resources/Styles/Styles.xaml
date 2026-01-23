@@ -4,19 +4,20 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
+    <!-- Primary button style -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
-        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="16,10" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor"       Value="{StaticResource BrushOnPrimary}" />
+        <Setter Property="CornerRadius"    Value="8" />
+        <Setter Property="Padding"         Value="16,10" />
+        <Setter Property="FontAttributes"  Value="Bold" />
     </Style>
 
-    <!-- Title Label Style -->
+    <!-- Title label style -->
     <Style x:Key="TitleLabelStyle" TargetType="Label">
-        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontSize"       Value="26" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+        <Setter Property="TextColor"      Value="{StaticResource BrushOnSurface}" />
     </Style>
 
 </ResourceDictionary>

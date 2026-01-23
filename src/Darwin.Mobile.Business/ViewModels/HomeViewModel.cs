@@ -5,7 +5,7 @@ using System.Windows.Input;
 namespace Darwin.Mobile.Business.ViewModels;
 
 /// <summary>
-/// View model for the consumer application's home page.
+/// View model for the business home page.
 /// </summary>
 public sealed partial class HomeViewModel : ObservableObject
 {
@@ -14,22 +14,22 @@ public sealed partial class HomeViewModel : ObservableObject
     /// </summary>
     public HomeViewModel()
     {
-        StartCommand = new RelayCommand(OnStart);
+        ScanCommand = new RelayCommand(OnScan);
     }
 
     /// <summary>
-    /// Gets a greeting message displayed on the home page.
+    /// Displayed greeting to the staff user.
     /// </summary>
-    public string Greeting => "Welcome to Loyan Business!";
+    public string Greeting => "Welcome Loyan staff!";
 
     /// <summary>
-    /// Command executed when the user taps the start button.
+    /// Command to navigate to the scanner page.
     /// </summary>
-    public ICommand StartCommand { get; }
+    public ICommand ScanCommand { get; }
 
-    private void OnStart()
+    private void OnScan()
     {
-        // TODO: Navigate to the first functional feature of phase 1.
+        // TODO: Use Shell navigation to go to the scanner page (phase 1)
+        // await Shell.Current.GoToAsync(Routes.Scanner);
     }
 }
-

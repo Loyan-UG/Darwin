@@ -4,14 +4,27 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    xmlns:fa="clr-namespace:FontAwesome" 
     x:Class="Darwin.Mobile.Business.Views.HomePage"
     x:DataType="vm:HomeViewModel"
     Title="{x:Static res:AppResources.HomeTitle}">
 
     <VerticalStackLayout Spacing="20" Padding="24">
-        <Label Text="{Binding Greeting}" Style="{StaticResource TitleLabelStyle}" />
+        <Image Source="Loyan_Logo.PNG"
+               WidthRequest="140" HeightRequest="140"
+               HorizontalOptions="Center" Margin="0,20" />
+
+        <Label Text="{Binding Greeting}"
+               Style="{StaticResource TitleLabelStyle}" />
+
+        <!-- Main icon with FontAwesome -->
+        <fa:FontAwesome Icon="HandSparkles"
+                        Size="48"
+                        Color="{StaticResource BrushPrimary}"
+                        HorizontalOptions="Center" />
+
         <Button Text="{x:Static res:AppResources.StartButton}"
                 Style="{StaticResource PrimaryButtonStyle}"
-                Command="{Binding StartCommand}" />
+                Command="{Binding ScanCommand}" />
     </VerticalStackLayout>
 </ContentPage>

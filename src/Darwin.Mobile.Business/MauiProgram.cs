@@ -1,13 +1,15 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CommunityToolkit.Maui;
+using Darwin.Mobile.Business.Extensions;
+using Darwin.Mobile.Business.Pages;
+using Darwin.Mobile.Business.ViewModels;
+using Darwin.Mobile.Business.Views;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Hosting;
-using Darwin.Mobile.Business.Extensions;
-using CommunityToolkit.Maui;
-using Darwin.Mobile.Business.ViewModels;
-using Darwin.Mobile.Business.Views;
+using UraniumUI;
 
 namespace Darwin.Mobile.Business
 {
@@ -23,6 +25,7 @@ namespace Darwin.Mobile.Business
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFontAwesomeIconFonts();
                 });
 
             builder.Services.AddBusinessApp(); // Keeps MauiProgram clean
@@ -31,6 +34,9 @@ namespace Darwin.Mobile.Business
             builder.Services.AddSingleton<HomeViewModel>();
             builder.Services.AddSingleton<HomePage>();
             builder.Services.AddSingleton<ComingSoonPage>();
+            builder.Services.AddSingleton<ScannerViewModel>();
+            builder.Services.AddSingleton<ScannerPage>();
+
 
 
 #if DEBUG

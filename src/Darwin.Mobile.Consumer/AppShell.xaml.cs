@@ -20,11 +20,4 @@ public sealed partial class AppShell : Shell
     }
 }
 
-/// <summary>
-/// Static class containing route names for navigation.
-/// </summary>
-public static class Routes
-{
-    public const string Home = "Home";
-    public const string Rewards = "Rewards";
-}
+

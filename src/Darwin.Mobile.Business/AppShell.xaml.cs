@@ -1,4 +1,5 @@
 ﻿using Darwin.Mobile.Business.Constants;
+using Darwin.Mobile.Business.Pages;
 using Darwin.Mobile.Business.Views;
 using Microsoft.Maui.Controls;
 
@@ -17,15 +18,7 @@ public sealed partial class AppShell : Shell
     {
         InitializeComponent();
         Routing.RegisterRoute(Routes.Home, typeof(HomePage));
-        Routing.RegisterRoute(Routes.Rewards, typeof(ComingSoonPage));
+        Routing.RegisterRoute(Routes.Scanner, typeof(ScannerPage));
     }
 }
 
-/// <summary>
-/// Static class containing route names for navigation.
-/// </summary>
-public static class Routes
-{
-    public const string Home = "Home";
-    public const string Rewards = "Rewards";
-}
