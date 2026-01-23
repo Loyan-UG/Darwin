@@ -59,5 +59,86 @@ namespace Darwin.Mobile.Business.Resources {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirm Accrual.
+        /// </summary>
+        internal static string AccrueButton {
+            get {
+                return ResourceManager.GetString("AccrueButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Coming soon.
+        /// </summary>
+        internal static string ComingSoonTitle {
+            get {
+                return ResourceManager.GetString("ComingSoonTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error.
+        /// </summary>
+        internal static string ErrorLabel {
+            get {
+                return ResourceManager.GetString("ErrorLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Home.
+        /// </summary>
+        internal static string HomeTitle {
+            get {
+                return ResourceManager.GetString("HomeTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last token.
+        /// </summary>
+        internal static string LastTokenLabel {
+            get {
+                return ResourceManager.GetString("LastTokenLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Points.
+        /// </summary>
+        internal static string PointsLabel {
+            get {
+                return ResourceManager.GetString("PointsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirm Redemption.
+        /// </summary>
+        internal static string RedeemButton {
+            get {
+                return ResourceManager.GetString("RedeemButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scan.
+        /// </summary>
+        internal static string ScanTitle {
+            get {
+                return ResourceManager.GetString("ScanTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Start.
+        /// </summary>
+        internal static string StartButton {
+            get {
+                return ResourceManager.GetString("StartButton", resourceCulture);
+            }
+        }
     }
 }

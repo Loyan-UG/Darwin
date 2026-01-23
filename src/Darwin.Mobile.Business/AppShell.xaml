@@ -4,6 +4,7 @@
        xmlns:views="clr-namespace:Darwin.Mobile.Business.Views"
        xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources;assembly=Darwin.Mobile.Business"
        xmlns:local="clr-namespace:Darwin.Mobile.Business.Constants"
+       xmlns:fa="clr-namespace:UraniumUI.Icons.FontAwesome;assembly=UraniumUI.Icons.FontAwesome"
        x:Class="Darwin.Mobile.Business.AppShell">
     <FlyoutItem Title="{x:Static res:AppResources.HomeTitle}" Route="{x:Static local:Routes.Home}">
         <ShellContent ContentTemplate="{DataTemplate views:HomePage}" />

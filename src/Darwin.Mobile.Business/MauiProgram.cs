@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Hosting;
 using UraniumUI;
+using UraniumUI.Icons.FontAwesome;
 
 namespace Darwin.Mobile.Business
 {

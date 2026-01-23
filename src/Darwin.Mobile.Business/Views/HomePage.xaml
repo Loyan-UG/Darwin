@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
-    xmlns:fa="clr-namespace:FontAwesome" 
+	xmlns:fa="clr-namespace:UraniumUI.Icons.FontAwesome;assembly=UraniumUI.Icons.FontAwesome"
     x:Class="Darwin.Mobile.Business.Views.HomePage"
     x:DataType="vm:HomeViewModel"
     Title="{x:Static res:AppResources.HomeTitle}">
