@@ -10,18 +10,14 @@
     Title="{x:Static res:AppResources.HomeTitle}">
 
     <VerticalStackLayout Spacing="20" Padding="24">
-        <Image Source="Loyan_Logo.PNG"
+        <Image Source="loyan_logo.png"
                WidthRequest="140" HeightRequest="140"
                HorizontalOptions="Center" Margin="0,20" />
 
         <Label Text="{Binding Greeting}"
                Style="{StaticResource TitleLabelStyle}" />
 
-        <!-- Main icon with FontAwesome -->
-        <fa:FontAwesome Icon="HandSparkles"
-                        Size="48"
-                        Color="{StaticResource BrushPrimary}"
-                        HorizontalOptions="Center" />
+        
 
         <Button Text="{x:Static res:AppResources.StartButton}"
                 Style="{StaticResource PrimaryButtonStyle}"
