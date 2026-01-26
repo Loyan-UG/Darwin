@@ -8,29 +8,19 @@ namespace Darwin.Mobile.Business.Resources;
 /// </summary>
 public static class AppResources
 {
-    /// <summary>
-    /// Gets or sets the culture used for resource lookup.
-    /// </summary>
     public static CultureInfo? Culture { get; set; }
 
     private static readonly ResourceManager ResourceManager =
         new ResourceManager("Darwin.Mobile.Business.Resources.Strings", typeof(AppResources).Assembly);
 
-    /// <summary>
-    /// Title for the home page.
-    /// </summary>
-    public static string HomeTitle =>
-        ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
+    public static string HomeTitle => ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
+    public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
+    public static string ComingSoonTitle => ResourceManager.GetString(nameof(ComingSoonTitle), Culture) ?? "Coming soon";
 
-    /// <summary>
-    /// Text for the start button on the home page.
-    /// </summary>
-    public static string StartButton =>
-        ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
-
-    /// <summary>
-    /// Title shown on pages that are not yet implemented.
-    /// </summary>
-    public static string ComingSoonTitle =>
-        ResourceManager.GetString(nameof(ComingSoonTitle), Culture) ?? "Coming soon";
+    // Newly added keys for scanner functionality
+    public static string ScanTitle => ResourceManager.GetString(nameof(ScanTitle), Culture) ?? "Scan";
+    public static string LastTokenLabel => ResourceManager.GetString(nameof(LastTokenLabel), Culture) ?? "Last token";
+    public static string PointsLabel => ResourceManager.GetString(nameof(PointsLabel), Culture) ?? "Points";
+    public static string AccrueButton => ResourceManager.GetString(nameof(AccrueButton), Culture) ?? "Confirm Accrual";
+    public static string RedeemButton => ResourceManager.GetString(nameof(RedeemButton), Culture) ?? "Confirm Redemption";
 }

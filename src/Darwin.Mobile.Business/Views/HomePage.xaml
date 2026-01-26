@@ -4,25 +4,21 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
-	xmlns:fa="clr-namespace:UraniumUI.Icons.FontAwesome;assembly=UraniumUI.Icons.FontAwesome"
     x:Class="Darwin.Mobile.Business.Views.HomePage"
     x:DataType="vm:HomeViewModel"
     Title="{x:Static res:AppResources.HomeTitle}">
 
     <VerticalStackLayout Spacing="20" Padding="24">
-        <Image Source="loyan_logo.png"
+        <!-- Loyan logo -->
+        <Image Source="Loyan_Logo.PNG"
                WidthRequest="140" HeightRequest="140"
                HorizontalOptions="Center" Margin="0,20" />
 
+        <!-- Greeting text -->
         <Label Text="{Binding Greeting}"
                Style="{StaticResource TitleLabelStyle}" />
 
-        <!-- Decorative FontAwesome icon using UraniumUI -->
-        <fa:Icon Icon="HandSparkles"
-                 Size="48"
-                 Color="{StaticResource BrushPrimary}"
-                 HorizontalOptions="Center" />
-
+        <!-- Start scanning button -->
         <Button Text="{x:Static res:AppResources.StartButton}"
                 Style="{StaticResource PrimaryButtonStyle}"
                 Command="{Binding ScanCommand}" />

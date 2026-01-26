@@ -28,7 +28,7 @@ namespace Darwin.Mobile.Business
                 .UseMauiCommunityToolkit()
                 .UseUraniumUI()
                 .UseUraniumUIMaterial()
-                .UseBarcodeReader()
+                .UseBarcodeReader() // Registers ZXing barcode scanner services
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
