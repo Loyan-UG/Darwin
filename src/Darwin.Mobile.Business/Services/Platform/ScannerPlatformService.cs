@@ -1,33 +1,66 @@
-﻿using Darwin.Mobile.Shared.Integration;
-using ZXing.Net.Maui;
-using ZXing.Net.Maui.Controls;
+﻿using Darwin.Mobile.Business.Views;
+using Darwin.Mobile.Shared.Integration;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
+using System.Threading;
 
 namespace Darwin.Mobile.Business.Services.Platform;
 
 /// <summary>
-/// Platform-specific scanner implementation using ZXing.Net.MAUI 0.7.x.
+/// Provides a platform-specific QR scanner using ZXing.Net.Maui.
+/// This implementation opens a modal page containing a <see cref="QrScanPage"/>
+/// and returns the scanned QR code.
 /// </summary>
 public sealed class ScannerPlatformService : IScanner
 {
     /// <summary>
-    /// Initiates a QR code scan and returns the decoded text, or null if the scan is cancelled.
+    /// Initiates a QR code scan and returns the decoded value, or null if cancelled.
     /// </summary>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>The scanned QR code payload.</returns>
+    /// <param name="ct">A cancellation token for the scan operation.</param>
+    /// <returns>The decoded QR code payload, or null if no code was scanned.</returns>
     public async Task<string?> ScanAsync(CancellationToken ct)
     {
-        // Configure options to only scan QR codes.
-        var options = new BarcodeReaderOptions
+        // Ensure camera permission is granted
+        var status = await Permissions.RequestAsync<Permissions.Camera>();
+        if (status != PermissionStatus.Granted)
         {
-            Formats = BarcodeFormat.QrCode,
-            AutoRotate = true,
-            Multiple = false
-        };
+            // Without camera permission, scanning cannot proceed
+            return null;
+        }
 
-        // Use the default scanner to read a barcode. This shows a platform-specific scanner UI.
-        var result = await CameraBarcodeReaderView.Default.ReadAsync(options, ct);
+        // Create an instance of the scanning page
+        var scanPage = new QrScanPage();
+        var tcs = new TaskCompletionSource<string?>();
 
-        // Return the scanned value (null if nothing was scanned).
-        return result?.Value;
+        // Handle completion event
+        void CompletedHandler(object? sender, string? token)
+        {
+            tcs.TrySetResult(token);
+        }
+
+        scanPage.Completed += CompletedHandler;
+
+        // Show the scanning page modally
+        await Shell.Current!.Navigation.PushModalAsync(scanPage);
+
+        // Wait for the scan to complete or cancellation
+        string? result;
+        using (ct.Register(() => tcs.TrySetCanceled(ct)))
+        {
+            try
+            {
+                result = await tcs.Task;
+            }
+            catch (TaskCanceledException)
+            {
+                result = null;
+            }
+        }
+
+        // Unsubscribe and close the page
+        scanPage.Completed -= CompletedHandler;
+        await Shell.Current.Navigation.PopModalAsync();
+
+        return result;
     }
 }
