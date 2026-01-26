@@ -13,6 +13,8 @@ using UraniumUI;
 using UraniumUI.Icons.FontAwesome;
 using UraniumUI.Icons.MaterialIcons;
 using UraniumUI.Material;
+using ZXing.Net.Maui;
+using ZXing.Net.Maui.Controls;
 
 namespace Darwin.Mobile.Business
 {
@@ -26,6 +28,7 @@ namespace Darwin.Mobile.Business
                 .UseMauiCommunityToolkit()
                 .UseUraniumUI()
                 .UseUraniumUIMaterial()
+                .UseBarcodeReader()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
