@@ -17,7 +17,11 @@
         <Label Text="{Binding Greeting}"
                Style="{StaticResource TitleLabelStyle}" />
 
-        
+        <!-- Decorative FontAwesome icon using UraniumUI -->
+        <fa:Icon Icon="HandSparkles"
+                 Size="48"
+                 Color="{StaticResource BrushPrimary}"
+                 HorizontalOptions="Center" />
 
         <Button Text="{x:Static res:AppResources.StartButton}"
                 Style="{StaticResource PrimaryButtonStyle}"

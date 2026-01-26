@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Hosting;
 using UraniumUI;
 using UraniumUI.Icons.FontAwesome;
+using UraniumUI.Icons.MaterialIcons;
+using UraniumUI.Material;
 
 namespace Darwin.Mobile.Business
 {
@@ -19,14 +21,18 @@ namespace Darwin.Mobile.Business
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
-            builder     
+            builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseUraniumUI()
+                .UseUraniumUIMaterial()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+
                     fonts.AddFontAwesomeIconFonts();
+                    fonts.AddMaterialIconFonts();
                 });
 
             builder.Services.AddBusinessApp(); // Keeps MauiProgram clean

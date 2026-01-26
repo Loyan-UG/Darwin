@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    xmlns:fa="clr-namespace:UraniumUI.Icons.FontAwesome;assembly=UraniumUI.Icons.FontAwesome"
+    x:Class="Darwin.Mobile.Business.Views.ScannerPage"
+    x:DataType="vm:ScannerViewModel"
+    Title="{x:Static res:AppResources.ScanTitle}">
+
+    <VerticalStackLayout Spacing="16" Padding="24">
+        <!-- Scan button -->
+        <Button Text="{x:Static res:AppResources.ScanTitle}"
+                Style="{StaticResource PrimaryButtonStyle}"
+                Command="{Binding ScanCommand}"
+                HorizontalOptions="Fill" />
+
+        <!-- Show last scanned token (for debug or display) -->
+        <Label Text="{x:Static res:AppResources.LastTokenLabel}"
+               Style="{StaticResource TitleLabelStyle}" />
+        <Label Text="{Binding LastScannedToken}"
+               TextColor="{StaticResource BrushPrimary}"
+               FontSize="18" />
+
+        <!-- Input for points to accrue -->
+        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+            <Label Text="{x:Static res:AppResources.PointsLabel}"
+                   FontSize="18"
+                   TextColor="{StaticResource BrushOnSurface}" />
+            <Entry Text="{Binding PointsToAccrue}"
+                   Keyboard="Numeric"
+                   WidthRequest="80"
+                   TextColor="{StaticResource BrushOnSurface}" />
+        </HorizontalStackLayout>
+
+        <!-- Buttons for accrual and redemption -->
+        <Button Text="{x:Static res:AppResources.AccrueButton}"
+                Style="{StaticResource PrimaryButtonStyle}"
+                Command="{Binding ConfirmAccrualCommand}"
+                IsEnabled="{Binding CanConfirmAccrual}" />
+
+        <Button Text="{x:Static res:AppResources.RedeemButton}"
+                Style="{StaticResource PrimaryButtonStyle}"
+                Command="{Binding ConfirmRedemptionCommand}"
+                IsEnabled="{Binding CanConfirmRedemption}" />
+
+        <!-- Error message display -->
+        <Label Text="{Binding ErrorMessage}"
+               TextColor="Red"
+               FontSize="14" />
+
+        <!-- Busy indicator -->
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           Color="{StaticResource BrushPrimary}"
+                           HeightRequest="40" />
+    </VerticalStackLayout>
+</ContentPage>
