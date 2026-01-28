@@ -123,14 +123,35 @@
   <data name="ComingSoonTitle" xml:space="preserve">
     <value>Coming soon</value>
   </data>
+  <data name="EmailLabel" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Email is required.</value>
+  </data>
   <data name="ErrorLabel" xml:space="preserve">
     <value>Error</value>
   </data>
   <data name="HomeTitle" xml:space="preserve">
     <value>Home</value>
   </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Invalid email or password.</value>
+  </data>
   <data name="LastTokenLabel" xml:space="preserve">
     <value>Last token</value>
+  </data>
+  <data name="LoginButton" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="LoginTitle" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="PasswordLabel" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>Password is required.</value>
   </data>
   <data name="PointsLabel" xml:space="preserve">
     <value>Points</value>

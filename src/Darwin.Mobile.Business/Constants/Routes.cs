@@ -11,5 +11,5 @@ public static class Routes
 {
     public const string Home = "Home";
     public const string Scanner = "Scanner";
-
+    public const string Login = "Login";
 }
