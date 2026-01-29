@@ -12,4 +12,10 @@ public static class Routes
     public const string Home = "Home";
     public const string Scanner = "Scanner";
     public const string Login = "Login";
+
+    /// <summary>
+    /// Route used for the scan session page.
+    /// </summary>
+    public const string Session = "Session";
+
 }

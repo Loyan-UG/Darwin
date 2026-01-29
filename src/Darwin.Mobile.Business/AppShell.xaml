@@ -2,7 +2,7 @@
 <Shell
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:views="clr-namespace:Darwin.Mobile.Business.Pages"
+    xmlns:views="clr-namespace:Darwin.Mobile.Business.Views"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     xmlns:local="clr-namespace:Darwin.Mobile.Business.Constants"
     x:Class="Darwin.Mobile.Business.AppShell">
@@ -18,4 +18,7 @@
 
     <!-- Login route (not shown in flyout) -->
     <ShellContent Route="{x:Static local:Routes.Login}" ContentTemplate="{DataTemplate views:LoginPage}" />
+
+    <ShellContent Route="{x:Static local:Routes.Session}" ContentTemplate="{DataTemplate views:SessionPage}" />
+
 </Shell>

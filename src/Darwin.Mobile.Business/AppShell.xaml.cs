@@ -23,6 +23,8 @@ public sealed partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Home, typeof(HomePage));
         Routing.RegisterRoute(Routes.Scanner, typeof(ScannerPage));
         Routing.RegisterRoute(Routes.Login, typeof(LoginPage));
+        Routing.RegisterRoute(Routes.Session, typeof(SessionPage));
+
 
         // Navigate to login on startup
         Dispatcher.Dispatch(async () =>

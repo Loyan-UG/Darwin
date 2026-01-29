@@ -53,7 +53,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.SessionViewModel>();
         services.AddTransient<Views.SessionPage>();
 
-        // If there are other pages in the future (history, settings, etc.), register them here.
+        services.AddTransient<ViewModels.SessionViewModel>();
+        services.AddTransient<Views.SessionPage>();
+
 
         return services;
     }
