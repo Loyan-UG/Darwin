@@ -123,6 +123,15 @@
   <data name="ComingSoonTitle" xml:space="preserve">
     <value>Bald verfügbar</value>
   </data>
+  <data name="ConfirmAccrualButton" xml:space="preserve">
+    <value>Punkte bestätigen</value>
+  </data>
+  <data name="ConfirmRedemptionButton" xml:space="preserve">
+    <value>Prämie einlösen</value>
+  </data>
+  <data name="CustomerLabel" xml:space="preserve">
+    <value>Kunde</value>
+  </data>
   <data name="EmailLabel" xml:space="preserve">
     <value>E-Mail</value>
   </data>
@@ -156,11 +165,17 @@
   <data name="PointsLabel" xml:space="preserve">
     <value>Punkte</value>
   </data>
+  <data name="PointsPlaceholder" xml:space="preserve">
+    <value>Punkte eingeben</value>
+  </data>
   <data name="RedeemButton" xml:space="preserve">
     <value>Prämie einlösen</value>
   </data>
   <data name="ScanTitle" xml:space="preserve">
     <value>Scannen</value>
+  </data>
+  <data name="SessionTitle" xml:space="preserve">
+    <value>Sitzung</value>
   </data>
   <data name="StartButton" xml:space="preserve">
     <value>Start</value>

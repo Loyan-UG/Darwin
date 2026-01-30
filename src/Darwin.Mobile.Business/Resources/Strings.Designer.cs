@@ -79,6 +79,33 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Confirm Accrual.
+        /// </summary>
+        internal static string ConfirmAccrualButton {
+            get {
+                return ResourceManager.GetString("ConfirmAccrualButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirm Redemption.
+        /// </summary>
+        internal static string ConfirmRedemptionButton {
+            get {
+                return ResourceManager.GetString("ConfirmRedemptionButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Customer.
+        /// </summary>
+        internal static string CustomerLabel {
+            get {
+                return ResourceManager.GetString("CustomerLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Email.
         /// </summary>
         internal static string EmailLabel {
@@ -178,6 +205,15 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enter points.
+        /// </summary>
+        internal static string PointsPlaceholder {
+            get {
+                return ResourceManager.GetString("PointsPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirm Redemption.
         /// </summary>
         internal static string RedeemButton {
@@ -192,6 +228,15 @@ namespace Darwin.Mobile.Business.Resources {
         internal static string ScanTitle {
             get {
                 return ResourceManager.GetString("ScanTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Session.
+        /// </summary>
+        internal static string SessionTitle {
+            get {
+                return ResourceManager.GetString("SessionTitle", resourceCulture);
             }
         }
         
