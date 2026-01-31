@@ -1,0 +1,13 @@
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    x:Class="Darwin.Mobile.Consumer.Views.ProfilePage"
+    Title="{x:Static res:AppResources.ProfileTitle}">
+
+    <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
+        <Label Text="{x:Static res:AppResources.ComingSoonTitle}"
+               FontSize="18"
+               TextColor="{StaticResource BrushOnSurface}" />
+    </StackLayout>
+</ContentPage>

@@ -1,43 +1,44 @@
-﻿using Microsoft.Extensions.Logging;
-using Darwin.Mobile.Shared.Common;
-using Darwin.Mobile.Shared.Extensions;
-using Darwin.Mobile.Shared.Integration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.Hosting;
+﻿using CommunityToolkit.Maui;
 using Darwin.Mobile.Consumer.Extensions;
-using CommunityToolkit.Maui;
-using Darwin.Mobile.Consumer.ViewModels;
-using Darwin.Mobile.Consumer.Views;
+using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Hosting;
+using ZXing.Net.Maui;
+using UraniumUI;
+using UraniumUI.Icons.FontAwesome;
+//using UraniumUI.Icons.MaterialIcons;
+//using UraniumUI.Material;
+using ZXing.Net.Maui.Controls;
 
-namespace Darwin.Mobile.Consumer
+
+namespace Darwin.Mobile.Consumer;
+
+/// <summary>
+/// Configures the MAUI application for the Consumer project.
+/// </summary>
+public static class MauiProgram
 {
-    public static class MauiProgram
+    public static MauiApp CreateMauiApp()
     {
-        public static MauiApp CreateMauiApp()
-        {
-            var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .UseMauiCommunityToolkit()
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
+            .UseUraniumUI()
+            .UseBarcodeReader()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFontAwesomeIconFonts();
+            });
 
-            builder.Services.AddConsumerApp();
-
-            // DI registration
-            builder.Services.AddSingleton<HomeViewModel>();
-            builder.Services.AddSingleton<HomePage>();
-            builder.Services.AddSingleton<ComingSoonPage>();
-
+        // Register Consumer services, view models, and pages
+        builder.Services.AddConsumerApp();
 
 #if DEBUG
-            builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
-        }
+        return builder.Build();
     }
 }

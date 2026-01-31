@@ -16,21 +16,37 @@ public static class AppResources
     private static readonly ResourceManager ResourceManager =
         new ResourceManager("Darwin.Mobile.Consumer.Resources.Strings", typeof(AppResources).Assembly);
 
-    /// <summary>
-    /// Title for the home page.
-    /// </summary>
-    public static string HomeTitle =>
-        ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
+    public static string HomeTitle => ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
+    public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
+    public static string ComingSoonTitle => ResourceManager.GetString(nameof(ComingSoonTitle), Culture) ?? "Coming soon";
 
-    /// <summary>
-    /// Text for the start button on the home page.
-    /// </summary>
-    public static string StartButton =>
-        ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
+    // keys for scanner functionality
+    public static string ScanTitle => ResourceManager.GetString(nameof(ScanTitle), Culture) ?? "Scan";
+    public static string LastTokenLabel => ResourceManager.GetString(nameof(LastTokenLabel), Culture) ?? "Last token";
+    public static string PointsLabel => ResourceManager.GetString(nameof(PointsLabel), Culture) ?? "Points";
+    public static string AccrueButton => ResourceManager.GetString(nameof(AccrueButton), Culture) ?? "Confirm Accrual";
+    public static string RedeemButton => ResourceManager.GetString(nameof(RedeemButton), Culture) ?? "Confirm Redemption";
 
-    /// <summary>
-    /// Title shown on pages that are not yet implemented.
-    /// </summary>
-    public static string ComingSoonTitle =>
-        ResourceManager.GetString(nameof(ComingSoonTitle), Culture) ?? "Coming soon";
+    // keys for login functionality
+    public static string LoginTitle =>
+    ResourceManager.GetString(nameof(LoginTitle), Culture) ?? "Login";
+    public static string EmailLabel =>
+        ResourceManager.GetString(nameof(EmailLabel), Culture) ?? "Email";
+    public static string PasswordLabel =>
+        ResourceManager.GetString(nameof(PasswordLabel), Culture) ?? "Password";
+    public static string LoginButton =>
+        ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Sign in";
+    public static string InvalidCredentials =>
+        ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
+    public static string EmailRequired =>
+        ResourceManager.GetString(nameof(EmailRequired), Culture) ?? "Email is required.";
+    public static string PasswordRequired =>
+        ResourceManager.GetString(nameof(PasswordRequired), Culture) ?? "Password is required.";
+
+    public static string SessionTitle => ResourceManager.GetString(nameof(SessionTitle), Culture) ?? "Session";
+    public static string CustomerLabel => ResourceManager.GetString(nameof(CustomerLabel), Culture) ?? "Customer";
+    public static string PointsPlaceholder => ResourceManager.GetString(nameof(PointsPlaceholder), Culture) ?? "Enter points";
+    public static string ConfirmAccrualButton => ResourceManager.GetString(nameof(ConfirmAccrualButton), Culture) ?? "Confirm Accrual";
+    public static string ConfirmRedemptionButton => ResourceManager.GetString(nameof(ConfirmRedemptionButton), Culture) ?? "Confirm Redemption";
+
 }

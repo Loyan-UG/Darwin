@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    x:Class="Darwin.Mobile.Consumer.Views.QrPage"
+    x:DataType="vm:QrViewModel"
+    Title="{x:Static res:AppResources.QrTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <!-- Display QR token as text for now -->
+            <Label Text="{Binding QrToken}" 
+                   FontSize="24"
+                   TextColor="{StaticResource BrushPrimary}"
+                   HorizontalOptions="Center" />
+
+            <!-- Show expiry countdown -->
+            <Label Text="{Binding ExpiresAtUtc, StringFormat='Expires at: {0:HH:mm:ss}'}"
+                   FontSize="16"
+                   TextColor="{StaticResource BrushOnSurface}"
+                   HorizontalOptions="Center" />
+
+            <!-- Refresh buttons for accrual and redemption -->
+            <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding RefreshAccrualSessionCommand}" />
+
+            <Button Text="{x:Static res:AppResources.RefreshRedemptionButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding RefreshRedemptionSessionCommand}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToBoolConverter}}" />
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

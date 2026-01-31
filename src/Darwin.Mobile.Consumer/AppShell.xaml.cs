@@ -1,23 +1,29 @@
 ﻿using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Views;
-using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Consumer;
 
 /// <summary>
-/// Defines the shell and registers application routes.
+/// Defines the shell and registers routes for the Consumer app.
+/// Navigates to the login page on startup.
 /// </summary>
 public sealed partial class AppShell : Shell
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="AppShell"/> class.
-    /// </summary>
     public AppShell()
     {
         InitializeComponent();
-        Routing.RegisterRoute(Routes.Home, typeof(HomePage));
-        Routing.RegisterRoute(Routes.Rewards, typeof(ComingSoonPage));
+
+        // Register routes
+        Routing.RegisterRoute(Routes.Qr, typeof(QrPage));
+        Routing.RegisterRoute(Routes.Discover, typeof(DiscoverPage));
+        Routing.RegisterRoute(Routes.Rewards, typeof(RewardsPage));
+        Routing.RegisterRoute(Routes.Profile, typeof(ProfilePage));
+        Routing.RegisterRoute(Routes.Login, typeof(LoginPage));
+
+        // Navigate to login at startup
+        Dispatcher.Dispatch(async () =>
+        {
+            await GoToAsync($"//{Routes.Login}");
+        });
     }
 }
-
-

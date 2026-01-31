@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    x:Class="Darwin.Mobile.Consumer.Views.LoginPage"
+    x:DataType="vm:LoginViewModel"
+    Title="{x:Static res:AppResources.LoginTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="20">
+            <Image Source="Loyan_Logo.PNG"
+                   WidthRequest="120" HeightRequest="120"
+                   HorizontalOptions="Center" />
+
+            <Label Text="{x:Static res:AppResources.LoginTitle}"
+                   Style="{StaticResource TitleLabelStyle}"
+                   HorizontalOptions="Center" />
+
+            <Label Text="{x:Static res:AppResources.EmailLabel}" 
+                   TextColor="{StaticResource BrushOnSurface}" />
+            <Entry Text="{Binding Email}"
+                   Keyboard="Email"
+                   Placeholder="user@example.com"
+                   TextColor="{StaticResource BrushOnSurface}"
+                   PlaceholderColor="Gray" />
+
+            <Label Text="{x:Static res:AppResources.PasswordLabel}"
+                   TextColor="{StaticResource BrushOnSurface}" />
+            <Entry Text="{Binding Password}"
+                   IsPassword="True"
+                   Placeholder="••••••"
+                   TextColor="{StaticResource BrushOnSurface}"
+                   PlaceholderColor="Gray" />
+
+            <Button Text="{x:Static res:AppResources.LoginButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding LoginCommand}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToBoolConverter}}" />
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

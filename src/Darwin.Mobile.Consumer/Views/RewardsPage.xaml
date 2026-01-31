@@ -1,0 +1,38 @@
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    x:Class="Darwin.Mobile.Consumer.Views.RewardsPage"
+    x:DataType="vm:RewardsViewModel"
+    Title="{x:Static res:AppResources.RewardsTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.AccountSummaryLabel}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{Binding PointsBalance, StringFormat='Points: {0}'}"
+                   FontSize="18" />
+
+            <!-- Display available rewards -->
+            <CollectionView ItemsSource="{Binding AvailableRewards}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="12" Margin="4"
+                               BorderColor="{StaticResource BrushPrimary}">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" />
+                                <Label Text="{Binding PointsCost, StringFormat='Cost: {0} pts'}" FontSize="14" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
