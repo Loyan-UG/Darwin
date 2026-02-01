@@ -67,6 +67,15 @@ namespace Darwin.Infrastructure.Extensions
             services.AddScoped<CartSeedSection>();
             services.AddScoped<CatalogSeedSection>();
 
+            // Mobile-first seed sections
+            services.AddScoped<BusinessesSeedSection>();
+            services.AddScoped<LoyaltySeedSection>();
+
+            services.AddScoped<BillingSeedSection>();
+            services.AddScoped<MarketingSeedSection>();
+            services.AddScoped<ShippingSeedSection>();
+            services.AddScoped<OrdersSeedSection>();
+
             return services;
         }
 
