@@ -31,7 +31,6 @@ public partial class SessionPage : ContentPage
     /// <summary>
     /// When the page appears, explicitly invoke the LoadSessionAsync method on the view model.
     /// </summary>
-    /// <param name="eventArgs">Event args from ContentPage.</param>
     protected override async void OnAppearing()
     {
         base.OnAppearing();

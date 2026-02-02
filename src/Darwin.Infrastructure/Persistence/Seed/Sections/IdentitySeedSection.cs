@@ -53,7 +53,6 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 ("AccessAdminPanel", "Access Admin Panel", "Can sign in to the admin UI"),
                 ("RecycleBinAccess", "Recycle Bin Access", "View and restore soft-deleted items"),
                 ("AccessMemberArea", "Access Member Area", "Signed-in members area access"),
-                // Loyalty + WebApi
                 ("AccessLoyaltyBusiness", "Access Loyalty Business Features",
                     "Can process loyalty scan sessions and related business operations via Web and WebApi.")
             };
@@ -63,7 +62,6 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 var exists = await db.Set<Permission>().AnyAsync(p => p.Key == key && !p.IsDeleted, ct);
                 if (!exists)
                 {
-                    // Permission ctor: (key, displayName, isSystem, description) — IsSystem is set via ctor only.
                     db.Add(new Permission(key, display, isSystem: true, description: desc));
                 }
             }
@@ -72,64 +70,34 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             // ----------------------------
             // 2) Roles (system) + role-permissions
             // ----------------------------
-            // Administrators
-            var adminRole = await db.Set<Role>()
-                .FirstOrDefaultAsync(r => r.Key == "administrators" && !r.IsDeleted, ct);
+            var adminRole = await EnsureRoleAsync(db, "administrators", "Administrators", true,
+                "System administrators with full access", WellKnownIds.AdministratorsRoleId, ct);
 
-            if (adminRole is null)
-            {
-                adminRole = new Role(
-                    key: "administrators",
-                    displayName: "Administrators",
-                    isSystem: true,
-                    description: "System administrators with full access");
-                adminRole.Id = WellKnownIds.AdministratorsRoleId;
-                db.Add(adminRole);
-                await db.SaveChangesAsync(ct);
-            }
+            var membersRole = await EnsureRoleAsync(db, "members", "Site Members", true,
+                "Registered site members with standard access", WellKnownIds.MembersRoleId, ct);
 
-            // Members
-            var membersRole = await db.Set<Role>()
-                .FirstOrDefaultAsync(r => r.Key == "members" && !r.IsDeleted, ct);
+            var businessRole = await EnsureRoleAsync(db, "business", "Business Users", true,
+                "Business app users with loyalty access", null, ct);
 
-            if (membersRole is null)
-            {
-                membersRole = new Role(
-                    key: "members",
-                    displayName: "Site Members",
-                    isSystem: true,
-                    description: "Registered site members with standard access");
-                membersRole.Id = WellKnownIds.MembersRoleId;
-                db.Add(membersRole);
-                await db.SaveChangesAsync(ct);
-            }
+            var webUsersRole = await EnsureRoleAsync(db, "web-users", "Web Users", false,
+                "Website-only accounts with limited access", null, ct);
 
             // Bind permissions
-            var allPerms = await db.Set<Permission>()
-                .Where(p => !p.IsDeleted)
-                .ToListAsync(ct);
+            var allPerms = await db.Set<Permission>().Where(p => !p.IsDeleted).ToListAsync(ct);
 
             var pFullAdmin = allPerms.First(p => p.Key == "FullAdminAccess");
             var pMemberArea = allPerms.First(p => p.Key == "AccessMemberArea");
+            var pLoyaltyBiz = allPerms.First(p => p.Key == "AccessLoyaltyBusiness");
+            var pAccessAdminPanel = allPerms.First(p => p.Key == "AccessAdminPanel");
 
-            // Admins → FullAdminAccess
-            bool adminRpExists = await db.Set<RolePermission>()
-                .AnyAsync(x => x.RoleId == adminRole.Id && x.PermissionId == pFullAdmin.Id, ct);
-            if (!adminRpExists)
-                db.Add(new RolePermission(adminRole.Id, pFullAdmin.Id));
-
-            // Members → AccessMemberArea
-            bool membersRpExists = await db.Set<RolePermission>()
-                .AnyAsync(x => x.RoleId == membersRole.Id && x.PermissionId == pMemberArea.Id, ct);
-            if (!membersRpExists)
-                db.Add(new RolePermission(membersRole.Id, pMemberArea.Id));
-
-            await db.SaveChangesAsync(ct);
+            await EnsureRolePermissionAsync(db, adminRole.Id, pFullAdmin.Id, ct);
+            await EnsureRolePermissionAsync(db, membersRole.Id, pMemberArea.Id, ct);
+            await EnsureRolePermissionAsync(db, businessRole.Id, pLoyaltyBiz.Id, ct);
+            await EnsureRolePermissionAsync(db, webUsersRole.Id, pAccessAdminPanel.Id, ct);
 
             // ----------------------------
-            // 3) Users (admin + demos) + addresses + user-roles
+            // 3) Users (Admin)
             // ----------------------------
-            // Admin (dev-only password)
             var adminEmail = "admin@darwin.de";
             var adminUser = await db.Set<User>().FirstOrDefaultAsync(u => u.Email == adminEmail && !u.IsDeleted, ct);
             if (adminUser is null)
@@ -137,7 +105,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 var stamp = _stamps.NewStamp();
                 adminUser = new User(
                     email: adminEmail,
-                    passwordHash: _hasher.Hash("Admin123!"), // DEV-ONLY. Force change on first run (see backlog).
+                    passwordHash: _hasher.Hash("Admin123!"),
                     securityStamp: stamp)
                 {
                     Id = WellKnownIds.AdministratorUserId,
@@ -152,78 +120,168 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 db.Add(adminUser);
                 await db.SaveChangesAsync(ct);
 
-                // Link admin to Administrators role
                 db.Add(new UserRole(adminUser.Id, adminRole.Id));
                 await db.SaveChangesAsync(ct);
             }
 
-            // Demo users
-            var demos = new (string Email, string First, string Last, string Phone, string City, string Postal, string Street1)[]
+            // ----------------------------
+            // 4) Seed 30 users (10 business, 10 consumer, 10 web)
+            // ----------------------------
+            var businessUsers = new (string Email, string First, string Last, string City, string Postal, string Street)[]
             {
-                ("alice@darwin.com", "Alice", "Müller", "+49 30 1234567", "Berlin", "10115", "Hauptstr. 1"),
-                ("bob@darwin.com",   "Bob",   "Schmidt", "+49 89 7654321", "München", "80331", "Marienplatz 8"),
-                ("carol@darwin.com", "Carol", "Fischer", "+49 40 1122334", "Hamburg", "20095", "Spitalerstraße 3")
+                ("biz1@darwin.de","Lena","Becker","Berlin","10115","Invalidenstraße 117"),
+                ("biz2@darwin.de","Jonas","Klein","München","80331","Marienplatz 8"),
+                ("biz3@darwin.de","Mara","Wagner","Köln","50672","Hohenzollernring 22"),
+                ("biz4@darwin.de","Felix","Scholz","Hamburg","20095","Spitalerstraße 3"),
+                ("biz5@darwin.de","Nora","Hoffmann","Frankfurt","60313","Zeil 105"),
+                ("biz6@darwin.de","Paul","Schneider","Stuttgart","70173","Königstraße 12"),
+                ("biz7@darwin.de","Julia","Fischer","Düsseldorf","40212","Schadowstraße 55"),
+                ("biz8@darwin.de","Tim","Kaiser","Leipzig","04109","Grimmaische Straße 14"),
+                ("biz9@darwin.de","Sara","Müller","Dresden","01067","Altmarkt 10"),
+                ("biz10@darwin.de","Max","Weber","Nürnberg","90402","Königstraße 41")
             };
 
-            foreach (var d in demos)
+            var consumerUsers = new (string Email, string First, string Last, string City, string Postal, string Street)[]
             {
-                var u = await db.Set<User>().FirstOrDefaultAsync(x => x.Email == d.Email && !x.IsDeleted, ct);
-                if (u is null)
+                ("cons1@darwin.de","Emma","Krüger","Berlin","10115","Hauptstraße 1"),
+                ("cons2@darwin.de","Ben","Seidel","München","80331","Sendlinger Straße 5"),
+                ("cons3@darwin.de","Lia","Brandt","Köln","50672","Aachener Straße 12"),
+                ("cons4@darwin.de","Noah","Berg","Hamburg","20095","Mönckebergstraße 9"),
+                ("cons5@darwin.de","Mia","Vogel","Frankfurt","60313","Neue Kräme 7"),
+                ("cons6@darwin.de","Tom","Neumann","Stuttgart","70173","Calwer Straße 3"),
+                ("cons7@darwin.de","Lea","Hartmann","Düsseldorf","40212","Flinger Straße 10"),
+                ("cons8@darwin.de","Leon","Peters","Leipzig","04109","Katharinenstraße 2"),
+                ("cons9@darwin.de","Anna","Schmidt","Dresden","01067","Wilsdruffer Straße 6"),
+                ("cons10@darwin.de","Erik","Lang","Nürnberg","90402","Breite Gasse 15")
+            };
+
+            var webUsers = new (string Email, string First, string Last, string City, string Postal, string Street)[]
+            {
+                ("web1@darwin.de","Clara","Meier","Berlin","10115","Torstraße 19"),
+                ("web2@darwin.de","Jan","Lorenz","München","80331","Kaufingerstraße 3"),
+                ("web3@darwin.de","Sarah","Huber","Köln","50672","Roonstraße 4"),
+                ("web4@darwin.de","Tobias","Brand","Hamburg","20095","Bergstraße 11"),
+                ("web5@darwin.de","Laura","Zimmer","Frankfurt","60313","Große Bockenheimer 8"),
+                ("web6@darwin.de","Moritz","Kuhn","Stuttgart","70173","Rotebühlstraße 29"),
+                ("web7@darwin.de","Sophie","Graf","Düsseldorf","40212","Kasernenstraße 9"),
+                ("web8@darwin.de","Daniel","Franz","Leipzig","04109","Reichsstraße 1"),
+                ("web9@darwin.de","Isabel","Wolf","Dresden","01067","Prager Straße 5"),
+                ("web10@darwin.de","Lukas","Arnold","Nürnberg","90402","Kornmarkt 4")
+            };
+
+            foreach (var u in businessUsers)
+                await EnsureUserAsync(db, u, "Business123!", businessRole.Id, ct);
+
+            foreach (var u in consumerUsers)
+                await EnsureUserAsync(db, u, "Consumer123!", membersRole.Id, ct);
+
+            foreach (var u in webUsers)
+                await EnsureUserAsync(db, u, "Web123!", webUsersRole.Id, ct);
+
+            _logger.LogInformation("Identity seeding done.");
+        }
+
+        private async Task<User> EnsureUserAsync(
+            DarwinDbContext db,
+            (string Email, string First, string Last, string City, string Postal, string Street) data,
+            string password,
+            Guid roleId,
+            CancellationToken ct)
+        {
+            var user = await db.Set<User>()
+                .FirstOrDefaultAsync(x => x.Email == data.Email && !x.IsDeleted, ct);
+
+            if (user is null)
+            {
+                var stamp = _stamps.NewStamp();
+                user = new User(
+                    email: data.Email,
+                    passwordHash: _hasher.Hash(password),
+                    securityStamp: stamp)
                 {
-                    var stamp = _stamps.NewStamp();
-                    u = new User(
-                        email: d.Email,
-                        passwordHash: _hasher.Hash("User123!"), // DEV-ONLY convenience
-                        securityStamp: stamp)
-                    {
-                        FirstName = d.First,
-                        LastName = d.Last,
-                        IsActive = true,
-                        Locale = "de-DE",
-                        Timezone = "Europe/Berlin",
-                        Currency = "EUR",
-                    };
-                    db.Add(u);
-                    await db.SaveChangesAsync(ct);
+                    FirstName = data.First,
+                    LastName = data.Last,
+                    IsActive = true,
+                    Locale = "de-DE",
+                    Timezone = "Europe/Berlin",
+                    Currency = "EUR",
+                };
+                db.Add(user);
+                await db.SaveChangesAsync(ct);
 
-                    // Members role
-                    db.Add(new UserRole(u.Id, membersRole.Id));
+                db.Add(new UserRole(user.Id, roleId));
 
-                    // Address (German formatting)
-                    var addr = new Address
-                    {
-                        UserId = u.Id,
-                        FullName = $"{u.FirstName} {u.LastName}",
-                        Street1 = d.Street1,
-                        Street2 = null,
-                        PostalCode = d.Postal,
-                        City = d.City,
-                        CountryCode = "DE",
-                        PhoneE164 = d.Phone,
-                        IsDefaultBilling = true,
-                        IsDefaultShipping = true
-                    };
-                    db.Add(addr);
-                    await db.SaveChangesAsync(ct);
-
-                    u.DefaultBillingAddressId = addr.Id;
-                    u.DefaultShippingAddressId = addr.Id;
-                    await db.SaveChangesAsync(ct);
-                }
-                else
+                var addr = new Address
                 {
-                    // Ensure Members role exists for existing demo users (idempotent)
-                    bool hasMembers = await db.Set<UserRole>()
-                        .AnyAsync(x => x.UserId == u.Id && x.RoleId == membersRole.Id, ct);
-                    if (!hasMembers)
-                    {
-                        db.Add(new UserRole(u.Id, membersRole.Id));
-                        await db.SaveChangesAsync(ct);
-                    }
+                    UserId = user.Id,
+                    FullName = $"{user.FirstName} {user.LastName}",
+                    Street1 = data.Street,
+                    Street2 = null,
+                    PostalCode = data.Postal,
+                    City = data.City,
+                    CountryCode = "DE",
+                    PhoneE164 = null,
+                    IsDefaultBilling = true,
+                    IsDefaultShipping = true
+                };
+                db.Add(addr);
+                await db.SaveChangesAsync(ct);
+
+                user.DefaultBillingAddressId = addr.Id;
+                user.DefaultShippingAddressId = addr.Id;
+                await db.SaveChangesAsync(ct);
+            }
+            else
+            {
+                var hasRole = await db.Set<UserRole>()
+                    .AnyAsync(x => x.UserId == user.Id && x.RoleId == roleId, ct);
+                if (!hasRole)
+                {
+                    db.Add(new UserRole(user.Id, roleId));
+                    await db.SaveChangesAsync(ct);
                 }
             }
 
-            _logger.LogInformation("Identity seeding done.");
+            return user;
+        }
+
+        private static async Task<Role> EnsureRoleAsync(
+            DarwinDbContext db,
+            string key,
+            string displayName,
+            bool isSystem,
+            string? description,
+            Guid? forcedId,
+            CancellationToken ct)
+        {
+            var role = await db.Set<Role>()
+                .FirstOrDefaultAsync(r => r.Key == key && !r.IsDeleted, ct);
+
+            if (role is null)
+            {
+                role = new Role(key, displayName, isSystem, description);
+                if (forcedId.HasValue) role.Id = forcedId.Value;
+                db.Add(role);
+                await db.SaveChangesAsync(ct);
+            }
+
+            return role;
+        }
+
+        private static async Task EnsureRolePermissionAsync(
+            DarwinDbContext db,
+            Guid roleId,
+            Guid permissionId,
+            CancellationToken ct)
+        {
+            var exists = await db.Set<RolePermission>()
+                .AnyAsync(x => x.RoleId == roleId && x.PermissionId == permissionId && !x.IsDeleted, ct);
+
+            if (!exists)
+            {
+                db.Add(new RolePermission(roleId, permissionId));
+                await db.SaveChangesAsync(ct);
+            }
         }
     }
 }

@@ -192,13 +192,21 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             await db.SaveChangesAsync(ct);
         }
 
+
         private static async Task SeedMembersAsync(DarwinDbContext db, IReadOnlyList<Business> businesses, IReadOnlyList<User> users, CancellationToken ct)
         {
+            // Use ONLY business users for membership mapping
+            var businessUsers = users
+                .Where(u => u.Email.StartsWith("biz", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (businessUsers.Count == 0) return;
+
             var members = new List<BusinessMember>();
 
             for (var i = 0; i < businesses.Count && i < 10; i++)
             {
-                var user = users[i % users.Count];
+                var user = businessUsers[i % businessUsers.Count];
                 var role = i == 0 ? BusinessMemberRole.Owner : (i % 3 == 0 ? BusinessMemberRole.Manager : BusinessMemberRole.Staff);
 
                 members.Add(new BusinessMember
@@ -213,6 +221,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             db.AddRange(members);
             await db.SaveChangesAsync(ct);
         }
+
 
         private static async Task SeedMediaAsync(DarwinDbContext db, IReadOnlyList<Business> businesses, CancellationToken ct)
         {

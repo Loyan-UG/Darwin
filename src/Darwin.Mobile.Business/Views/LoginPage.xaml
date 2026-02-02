@@ -2,49 +2,86 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
-    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.LoginPage"
-    x:DataType="vm:LoginViewModel"
-    Title="{x:Static res:AppResources.LoginTitle}">
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="24">
-            <Image Source="Loyan_Logo.PNG"
-                   WidthRequest="120" HeightRequest="120"
-                   HorizontalOptions="Center" />
+    <!-- ScrollView prevents the keyboard from permanently hiding the button/error -->
+    <ScrollView VerticalOptions="Fill" HorizontalOptions="Fill">
+        <!--
+          Grid with three rows: flexible top, Auto content row, flexible bottom.
+          This centers the Auto-sized content without relying on FillAndExpand.
+        -->
+        <Grid
+            RowDefinitions="*, Auto, *"
+            ColumnDefinitions="*"
+            Padding="24"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill">
 
-            <Label Text="{x:Static res:AppResources.LoginTitle}"
-                   Style="{StaticResource TitleLabelStyle}"
-                   HorizontalOptions="Center" />
+            <!-- Center cell: main content -->
+            <StackLayout
+                Grid.Row="1"
+                Spacing="20"
+                HorizontalOptions="Center"
+                WidthRequest="360">
+                <!-- width request keeps layout readable on wide devices -->
 
-            <Label Text="{x:Static res:AppResources.EmailLabel}"
-                   TextColor="{StaticResource BrushOnSurface}" />
-            <Entry Text="{Binding Email}"
-                   Keyboard="Email"
-                   Placeholder="user@example.com"
-                   TextColor="{StaticResource BrushOnSurface}"
-                   PlaceholderColor="Gray" />
+                <!-- App logo / branding -->
+                <Image
+                    Source="app_logo.png"
+                    WidthRequest="160"
+                    HeightRequest="160"
+                    HorizontalOptions="Center"
+                    Aspect="AspectFit"
+                    SemanticProperties.Description="Darwin app logo" />
 
-            <Label Text="{x:Static res:AppResources.PasswordLabel}"
-                   TextColor="{StaticResource BrushOnSurface}" />
-            <Entry Text="{Binding Password}"
-                   IsPassword="True"
-                   Placeholder="••••••"
-                   TextColor="{StaticResource BrushOnSurface}"
-                   PlaceholderColor="Gray" />
+                <Label
+                    Text="Sign in"
+                    FontSize="22"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center" />
 
-            <Button Text="{x:Static res:AppResources.LoginButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding LoginCommand}" />
+                <!-- Form fields -->
+                <Entry
+                    Placeholder="Email"
+                    Keyboard="Email"
+                    Text="{Binding Email}"
+                    ReturnType="Next"
+                    AutomationId="EmailEntry" />
 
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToBoolConverter}}" />
+                <Entry
+                    Placeholder="Password"
+                    IsPassword="True"
+                    Text="{Binding Password}"
+                    ReturnType="Done"
+                    AutomationId="PasswordEntry" />
 
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrushPrimary}" />
-        </VerticalStackLayout>
+                <!-- Error area: visible only when HasError true -->
+                <Label
+                    Text="{Binding ErrorMessage}"
+                    TextColor="Crimson"
+                    FontSize="14"
+                    LineBreakMode="WordWrap"
+                    IsVisible="{Binding HasError}"
+                    AutomationId="ErrorLabel" />
+
+                <!-- Primary action -->
+                <Button
+                    Text="Sign in"
+                    Command="{Binding LoginCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                    HeightRequest="48"
+                    CornerRadius="6"
+                    AutomationId="SignInButton" />
+
+                <!-- Optional version/footer -->
+                <Label
+                    Text="{Binding AppVersion, FallbackValue=''}"
+                    FontSize="12"
+                    HorizontalOptions="Center"
+                    Opacity="0.6" />
+
+            </StackLayout>
+        </Grid>
     </ScrollView>
 </ContentPage>
