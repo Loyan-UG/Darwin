@@ -1,21 +1,22 @@
-﻿using Darwin.Application.Extensions;
+﻿using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Extensions;
+using Darwin.Application.Loyalty.Queries;
 using Darwin.Infrastructure.Extensions;
+using Darwin.WebApi.Auth;
 using Darwin.WebApi.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using Darwin.WebApi.Auth;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
 using System.Text;
 using System.Text.Json;
-using Darwin.Application.Abstractions.Auth;
+using System.Threading.RateLimiting;
 
 
 namespace Darwin.WebApi.Extensions
@@ -79,7 +80,7 @@ namespace Darwin.WebApi.Extensions
             // Register the dynamic policy provider and the handler that talks to IPermissionService.
             services.TryAddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
             services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IAuthorizationHandler, PermissionAuthorizationHandler>());
+                ServiceDescriptor.Scoped<IAuthorizationHandler, PermissionAuthorizationHandler>());
 
 
             // SMTP notifications (password reset emails, etc.).
@@ -90,6 +91,8 @@ namespace Darwin.WebApi.Extensions
 
             // Register loyalty presentation services (enrichment + caching)
             services.AddLoyaltyPresentationServices();
+
+            services.AddScoped<GetAvailableLoyaltyRewardsForBusinessHandler>();
 
 
             // Controllers + System.Text.Json options.

@@ -18,13 +18,25 @@ namespace Darwin.Infrastructure.Migrations
                 name: "Identity");
 
             migrationBuilder.EnsureSchema(
-                name: "CartCheckout");
-
-            migrationBuilder.EnsureSchema(
                 name: "Integration");
 
             migrationBuilder.EnsureSchema(
+                name: "Billing");
+
+            migrationBuilder.EnsureSchema(
+                name: "Businesses");
+
+            migrationBuilder.EnsureSchema(
+                name: "Marketing");
+
+            migrationBuilder.EnsureSchema(
+                name: "CartCheckout");
+
+            migrationBuilder.EnsureSchema(
                 name: "Inventory");
+
+            migrationBuilder.EnsureSchema(
+                name: "Loyalty");
 
             migrationBuilder.EnsureSchema(
                 name: "CMS");
@@ -150,6 +162,34 @@ namespace Darwin.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BillingPlans",
+                schema: "Billing",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    PriceMinor = table.Column<long>(type: "bigint", nullable: false),
+                    Currency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
+                    Interval = table.Column<short>(type: "smallint", nullable: false),
+                    IntervalCount = table.Column<int>(type: "int", nullable: false),
+                    TrialDays = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    FeaturesJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BillingPlans", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Brands",
                 schema: "Catalog",
                 columns: table => new
@@ -167,6 +207,90 @@ namespace Darwin.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Brands", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Businesses",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    LegalName = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    TaxId = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
+                    ShortDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    WebsiteUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ContactEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ContactPhoneE164 = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: true),
+                    Category = table.Column<short>(type: "smallint", nullable: false),
+                    DefaultCurrency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
+                    DefaultCulture = table.Column<string>(type: "nvarchar(16)", maxLength: 16, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Businesses", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessMedias",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Url = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Caption = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    SortOrder = table.Column<int>(type: "int", nullable: false),
+                    IsPrimary = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessMedias", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Campaigns",
+                schema: "Marketing",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    Subtitle = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    Body = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    MediaUrl = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    LandingUrl = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    Channels = table.Column<short>(type: "smallint", nullable: false),
+                    StartsAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EndsAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    TargetingJson = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: false),
+                    PayloadJson = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Campaigns", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -258,6 +382,54 @@ namespace Darwin.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_InventoryTransactions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LoyaltyAccounts",
+                schema: "Loyalty",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    PointsBalance = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    LifetimePoints = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    LastAccrualAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoyaltyAccounts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LoyaltyPrograms",
+                schema: "Loyalty",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    AccrualMode = table.Column<int>(type: "int", nullable: false),
+                    PointsPerCurrencyUnit = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    RulesJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoyaltyPrograms", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -459,6 +631,34 @@ namespace Darwin.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "QrCodeTokens",
+                schema: "Loyalty",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoyaltyAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Token = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
+                    Purpose = table.Column<int>(type: "int", nullable: false),
+                    IssuedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ConsumedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IssuedDeviceId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ConsumedByBusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ConsumedByBusinessLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QrCodeTokens", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RedirectRules",
                 schema: "SEO",
                 columns: table => new
@@ -524,6 +724,36 @@ namespace Darwin.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ScanSessions",
+                schema: "Loyalty",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    QrCodeTokenId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoyaltyAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Mode = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    SelectedRewardsJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedByDeviceId = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Outcome = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    FailureReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ResultingTransactionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ScanSessions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ShippingMethods",
                 schema: "Shipping",
                 columns: table => new
@@ -564,6 +794,22 @@ namespace Darwin.Infrastructure.Migrations
                     TimeZone = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     DateFormat = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     TimeFormat = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    JwtEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    JwtIssuer = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JwtAudience = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JwtAccessTokenMinutes = table.Column<int>(type: "int", nullable: false),
+                    JwtRefreshTokenDays = table.Column<int>(type: "int", nullable: false),
+                    JwtSigningKey = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JwtPreviousSigningKey = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JwtEmitScopes = table.Column<bool>(type: "bit", nullable: false),
+                    JwtSingleDeviceOnly = table.Column<bool>(type: "bit", nullable: false),
+                    JwtRequireDeviceBinding = table.Column<bool>(type: "bit", nullable: false),
+                    JwtClockSkewSeconds = table.Column<int>(type: "int", nullable: false),
+                    MobileQrTokenRefreshSeconds = table.Column<int>(type: "int", nullable: false),
+                    MobileMaxOutboxItems = table.Column<int>(type: "int", nullable: false),
+                    SoftDeleteCleanupEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    SoftDeleteRetentionDays = table.Column<int>(type: "int", nullable: false),
+                    SoftDeleteCleanupBatchSize = table.Column<int>(type: "int", nullable: false),
                     MeasurementSystem = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     DisplayWeightUnit = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     DisplayLengthUnit = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
@@ -613,6 +859,39 @@ namespace Darwin.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SiteSettings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SubscriptionInvoices",
+                schema: "Billing",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessSubscriptionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Provider = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    ProviderInvoiceId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    IssuedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DueAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Status = table.Column<short>(type: "smallint", nullable: false),
+                    TotalMinor = table.Column<long>(type: "bigint", nullable: false),
+                    Currency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
+                    HostedInvoiceUrl = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    PdfUrl = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
+                    PaidAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    FailureReason = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    LinesJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
+                    MetadataJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SubscriptionInvoices", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -820,6 +1099,299 @@ namespace Darwin.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AnalyticsExportJobs",
+                schema: "Integration",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RequestedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReportType = table.Column<short>(type: "smallint", nullable: false),
+                    Format = table.Column<short>(type: "smallint", nullable: false),
+                    Status = table.Column<short>(type: "smallint", nullable: false),
+                    ParametersJson = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: false),
+                    StartedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    FinishedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Error = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    IdempotencyKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    RetainUntilUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AnalyticsExportJobs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AnalyticsExportJobs_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessEngagementStats",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RatingCount = table.Column<int>(type: "int", nullable: false),
+                    RatingSum = table.Column<int>(type: "int", nullable: false),
+                    LikeCount = table.Column<int>(type: "int", nullable: false),
+                    FavoriteCount = table.Column<int>(type: "int", nullable: false),
+                    LastCalculatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessEngagementStats", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessEngagementStats_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessInvitations",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    InvitedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(320)", maxLength: 320, nullable: false),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(320)", maxLength: 320, nullable: false),
+                    Role = table.Column<short>(type: "smallint", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<short>(type: "smallint", nullable: false),
+                    AcceptedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    AcceptedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    RevokedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Note = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessInvitations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessInvitations_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BusinessInvitations_Businesses_BusinessId1",
+                        column: x => x.BusinessId1,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessLocations",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    AddressLine1 = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    AddressLine2 = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    City = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: true),
+                    Region = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: true),
+                    CountryCode = table.Column<string>(type: "nvarchar(2)", maxLength: 2, nullable: true),
+                    PostalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Latitude = table.Column<double>(type: "float", nullable: true),
+                    Longitude = table.Column<double>(type: "float", nullable: true),
+                    AltitudeMeters = table.Column<double>(type: "float", nullable: true),
+                    IsPrimary = table.Column<bool>(type: "bit", nullable: false),
+                    OpeningHoursJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    InternalNote = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessLocations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessLocations_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessMembers",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Role = table.Column<short>(type: "smallint", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessMembers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessMembers_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessStaffQrCodes",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessMemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Purpose = table.Column<short>(type: "smallint", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    IssuedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ConsumedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    RevokedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IssuedDeviceId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    ConsumedDeviceId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessStaffQrCodes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessStaffQrCodes_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessSubscriptions",
+                schema: "Billing",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BillingPlanId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Provider = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    ProviderCustomerId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    ProviderSubscriptionId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    Status = table.Column<short>(type: "smallint", nullable: false),
+                    StartedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CurrentPeriodStartUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CurrentPeriodEndUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CancelAtPeriodEnd = table.Column<bool>(type: "bit", nullable: false),
+                    CanceledAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TrialEndsAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UnitPriceMinor = table.Column<long>(type: "bigint", nullable: false),
+                    Currency = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
+                    MetadataJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessSubscriptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessSubscriptions_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CampaignDeliveries",
+                schema: "Marketing",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CampaignId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RecipientUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Channel = table.Column<short>(type: "smallint", nullable: false),
+                    Status = table.Column<short>(type: "smallint", nullable: false),
+                    Destination = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    AttemptCount = table.Column<int>(type: "int", nullable: false),
+                    FirstAttemptAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastAttemptAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastResponseCode = table.Column<int>(type: "int", nullable: true),
+                    ProviderMessageId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    LastError = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    IdempotencyKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    PayloadHash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CampaignDeliveries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CampaignDeliveries_Campaigns_CampaignId",
+                        column: x => x.CampaignId,
+                        principalSchema: "Marketing",
+                        principalTable: "Campaigns",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CartItems",
                 schema: "CartCheckout",
                 columns: table => new
@@ -879,6 +1451,104 @@ namespace Darwin.Infrastructure.Migrations
                         column: x => x.CategoryId,
                         principalSchema: "Catalog",
                         principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LoyaltyPointsTransactions",
+                schema: "Loyalty",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoyaltyAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    PointsDelta = table.Column<int>(type: "int", nullable: false),
+                    RewardRedemptionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    BusinessLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    PerformedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Reference = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Notes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoyaltyPointsTransactions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LoyaltyPointsTransactions_LoyaltyAccounts_LoyaltyAccountId",
+                        column: x => x.LoyaltyAccountId,
+                        principalSchema: "Loyalty",
+                        principalTable: "LoyaltyAccounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LoyaltyRewardRedemptions",
+                schema: "Loyalty",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoyaltyAccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoyaltyRewardTierId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PointsSpent = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    BusinessLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    MetadataJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoyaltyRewardRedemptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LoyaltyRewardRedemptions_LoyaltyAccounts_LoyaltyAccountId",
+                        column: x => x.LoyaltyAccountId,
+                        principalSchema: "Loyalty",
+                        principalTable: "LoyaltyAccounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LoyaltyRewardTiers",
+                schema: "Loyalty",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LoyaltyProgramId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PointsRequired = table.Column<int>(type: "int", nullable: false),
+                    RewardType = table.Column<int>(type: "int", nullable: false),
+                    RewardValue = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    AllowSelfRedemption = table.Column<bool>(type: "bit", nullable: false),
+                    MetadataJson = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LoyaltyRewardTiers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LoyaltyRewardTiers_LoyaltyPrograms_LoyaltyProgramId",
+                        column: x => x.LoyaltyProgramId,
+                        principalSchema: "Loyalty",
+                        principalTable: "LoyaltyPrograms",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1303,6 +1973,133 @@ namespace Darwin.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BusinessFavorites",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessFavorites", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessFavorites_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BusinessFavorites_Businesses_BusinessId1",
+                        column: x => x.BusinessId1,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_BusinessFavorites_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Identity",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessLikes",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessLikes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessLikes_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BusinessLikes_Businesses_BusinessId1",
+                        column: x => x.BusinessId1,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_BusinessLikes_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Identity",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BusinessReviews",
+                schema: "Businesses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Rating = table.Column<byte>(type: "tinyint", nullable: false),
+                    Comment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    IsHidden = table.Column<bool>(type: "bit", nullable: false),
+                    HiddenReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessReviews", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessReviews_Businesses_BusinessId",
+                        column: x => x.BusinessId,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BusinessReviews_Businesses_BusinessId1",
+                        column: x => x.BusinessId1,
+                        principalSchema: "Businesses",
+                        principalTable: "Businesses",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_BusinessReviews_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Identity",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PasswordResetTokens",
                 schema: "Identity",
                 columns: table => new
@@ -1337,6 +2134,82 @@ namespace Darwin.Infrastructure.Migrations
                         principalSchema: "Identity",
                         principalTable: "Users",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserDevices",
+                schema: "Identity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DeviceId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Platform = table.Column<short>(type: "smallint", nullable: false),
+                    PushToken = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    PushTokenUpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NotificationsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LastSeenAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    AppVersion = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
+                    DeviceModel = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    UserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserDevices", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserDevices_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Identity",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserDevices_Users_UserId1",
+                        column: x => x.UserId1,
+                        principalSchema: "Identity",
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserEngagementSnapshots",
+                schema: "Identity",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    LastActivityAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastLoginAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastLoyaltyActivityAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastOrderAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EventCount = table.Column<long>(type: "bigint", nullable: false),
+                    EngagementScore30d = table.Column<int>(type: "int", nullable: false),
+                    CalculatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SnapshotJson = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserEngagementSnapshots", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserEngagementSnapshots_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Identity",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1503,6 +2376,38 @@ namespace Darwin.Infrastructure.Migrations
                         column: x => x.AddOnOptionId,
                         principalSchema: "Catalog",
                         principalTable: "AddOnOptions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AnalyticsExportFiles",
+                schema: "Integration",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AnalyticsExportJobId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StorageKey = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    SizeBytes = table.Column<long>(type: "bigint", nullable: true),
+                    ContentHash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModifiedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AnalyticsExportFiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AnalyticsExportFiles_AnalyticsExportJobs_AnalyticsExportJobId",
+                        column: x => x.AnalyticsExportJobId,
+                        principalSchema: "Integration",
+                        principalTable: "AnalyticsExportJobs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1693,6 +2598,70 @@ namespace Darwin.Infrastructure.Migrations
                 columns: new[] { "UserId", "IsDefaultShipping" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AnalyticsExportFiles_ExpiresAtUtc",
+                schema: "Integration",
+                table: "AnalyticsExportFiles",
+                column: "ExpiresAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnalyticsExportFiles_JobId",
+                schema: "Integration",
+                table: "AnalyticsExportFiles",
+                column: "AnalyticsExportJobId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_AnalyticsExportFiles_Job_StorageKey",
+                schema: "Integration",
+                table: "AnalyticsExportFiles",
+                columns: new[] { "AnalyticsExportJobId", "StorageKey" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnalyticsExportJobs_BusinessId",
+                schema: "Integration",
+                table: "AnalyticsExportJobs",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnalyticsExportJobs_RequestedByUserId",
+                schema: "Integration",
+                table: "AnalyticsExportJobs",
+                column: "RequestedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnalyticsExportJobs_RetainUntilUtc",
+                schema: "Integration",
+                table: "AnalyticsExportJobs",
+                column: "RetainUntilUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnalyticsExportJobs_Status",
+                schema: "Integration",
+                table: "AnalyticsExportJobs",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_AnalyticsExportJobs_Business_IdempotencyKey",
+                schema: "Integration",
+                table: "AnalyticsExportJobs",
+                columns: new[] { "BusinessId", "IdempotencyKey" },
+                unique: true,
+                filter: "[IdempotencyKey] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BillingPlans_Code",
+                schema: "Billing",
+                table: "BillingPlans",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BillingPlans_IsActive",
+                schema: "Billing",
+                table: "BillingPlans",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Brands_Slug",
                 schema: "Catalog",
                 table: "Brands",
@@ -1706,6 +2675,288 @@ namespace Darwin.Infrastructure.Migrations
                 table: "BrandTranslations",
                 columns: new[] { "BrandId", "Culture" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "UX_BusinessEngagementStats_BusinessId",
+                schema: "Businesses",
+                table: "BusinessEngagementStats",
+                column: "BusinessId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Businesses_Category",
+                schema: "Businesses",
+                table: "Businesses",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Businesses_IsActive",
+                schema: "Businesses",
+                table: "Businesses",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Businesses_Name",
+                schema: "Businesses",
+                table: "Businesses",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessFavorites_BusinessId",
+                schema: "Businesses",
+                table: "BusinessFavorites",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessFavorites_BusinessId1",
+                schema: "Businesses",
+                table: "BusinessFavorites",
+                column: "BusinessId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessFavorites_UserId",
+                schema: "Businesses",
+                table: "BusinessFavorites",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_BusinessFavorites_User_Business",
+                schema: "Businesses",
+                table: "BusinessFavorites",
+                columns: new[] { "UserId", "BusinessId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessInvitations_Business_NormalizedEmail",
+                schema: "Businesses",
+                table: "BusinessInvitations",
+                columns: new[] { "BusinessId", "NormalizedEmail" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessInvitations_BusinessId1",
+                schema: "Businesses",
+                table: "BusinessInvitations",
+                column: "BusinessId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessInvitations_ExpiresAtUtc",
+                schema: "Businesses",
+                table: "BusinessInvitations",
+                column: "ExpiresAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessInvitations_Status",
+                schema: "Businesses",
+                table: "BusinessInvitations",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_BusinessInvitations_Token",
+                schema: "Businesses",
+                table: "BusinessInvitations",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessLikes_BusinessId",
+                schema: "Businesses",
+                table: "BusinessLikes",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessLikes_BusinessId1",
+                schema: "Businesses",
+                table: "BusinessLikes",
+                column: "BusinessId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessLikes_UserId",
+                schema: "Businesses",
+                table: "BusinessLikes",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_BusinessLikes_User_Business",
+                schema: "Businesses",
+                table: "BusinessLikes",
+                columns: new[] { "UserId", "BusinessId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessLocations_BusinessId",
+                schema: "Businesses",
+                table: "BusinessLocations",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessLocations_BusinessId_IsPrimary",
+                schema: "Businesses",
+                table: "BusinessLocations",
+                columns: new[] { "BusinessId", "IsPrimary" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessMedias_BusinessId",
+                schema: "Businesses",
+                table: "BusinessMedias",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessMedias_BusinessId_SortOrder",
+                schema: "Businesses",
+                table: "BusinessMedias",
+                columns: new[] { "BusinessId", "SortOrder" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessMedias_BusinessLocationId",
+                schema: "Businesses",
+                table: "BusinessMedias",
+                column: "BusinessLocationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessMembers_BusinessId_UserId",
+                schema: "Businesses",
+                table: "BusinessMembers",
+                columns: new[] { "BusinessId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessMembers_UserId",
+                schema: "Businesses",
+                table: "BusinessMembers",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessReviews_Business_Visibility",
+                schema: "Businesses",
+                table: "BusinessReviews",
+                columns: new[] { "BusinessId", "IsHidden", "IsDeleted" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessReviews_BusinessId1",
+                schema: "Businesses",
+                table: "BusinessReviews",
+                column: "BusinessId1");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_BusinessReviews_User_Business",
+                schema: "Businesses",
+                table: "BusinessReviews",
+                columns: new[] { "UserId", "BusinessId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessStaffQrCodes_BusinessId",
+                schema: "Businesses",
+                table: "BusinessStaffQrCodes",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessStaffQrCodes_BusinessMemberId",
+                schema: "Businesses",
+                table: "BusinessStaffQrCodes",
+                column: "BusinessMemberId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessStaffQrCodes_ExpiresAtUtc",
+                schema: "Businesses",
+                table: "BusinessStaffQrCodes",
+                column: "ExpiresAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessStaffQrCodes_Token",
+                schema: "Businesses",
+                table: "BusinessStaffQrCodes",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessSubscriptions_BillingPlanId",
+                schema: "Billing",
+                table: "BusinessSubscriptions",
+                column: "BillingPlanId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessSubscriptions_BusinessId",
+                schema: "Billing",
+                table: "BusinessSubscriptions",
+                column: "BusinessId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessSubscriptions_Provider_ProviderSubscriptionId",
+                schema: "Billing",
+                table: "BusinessSubscriptions",
+                columns: new[] { "Provider", "ProviderSubscriptionId" },
+                unique: true,
+                filter: "[ProviderSubscriptionId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampaignDeliveries_BusinessId",
+                schema: "Marketing",
+                table: "CampaignDeliveries",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampaignDeliveries_CampaignId",
+                schema: "Marketing",
+                table: "CampaignDeliveries",
+                column: "CampaignId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampaignDeliveries_Channel",
+                schema: "Marketing",
+                table: "CampaignDeliveries",
+                column: "Channel");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampaignDeliveries_LastAttemptAtUtc",
+                schema: "Marketing",
+                table: "CampaignDeliveries",
+                column: "LastAttemptAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampaignDeliveries_RecipientUserId",
+                schema: "Marketing",
+                table: "CampaignDeliveries",
+                column: "RecipientUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampaignDeliveries_Status",
+                schema: "Marketing",
+                table: "CampaignDeliveries",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_CampaignDeliveries_IdempotencyKey",
+                schema: "Marketing",
+                table: "CampaignDeliveries",
+                column: "IdempotencyKey",
+                unique: true,
+                filter: "[IdempotencyKey] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Campaigns_BusinessId",
+                schema: "Marketing",
+                table: "Campaigns",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Campaigns_EndsAtUtc",
+                schema: "Marketing",
+                table: "Campaigns",
+                column: "EndsAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Campaigns_IsActive",
+                schema: "Marketing",
+                table: "Campaigns",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Campaigns_StartsAtUtc",
+                schema: "Marketing",
+                table: "Campaigns",
+                column: "StartsAtUtc");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CartItems_CartId_VariantId",
@@ -1757,6 +3008,81 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Inventory",
                 table: "InventoryTransactions",
                 column: "VariantId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_LoyaltyAccounts_Business_User",
+                schema: "Loyalty",
+                table: "LoyaltyAccounts",
+                columns: new[] { "BusinessId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyPointsTransactions_BusinessId",
+                schema: "Loyalty",
+                table: "LoyaltyPointsTransactions",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyPointsTransactions_BusinessLocationId",
+                schema: "Loyalty",
+                table: "LoyaltyPointsTransactions",
+                column: "BusinessLocationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyPointsTransactions_LoyaltyAccountId",
+                schema: "Loyalty",
+                table: "LoyaltyPointsTransactions",
+                column: "LoyaltyAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyPointsTransactions_RewardRedemptionId",
+                schema: "Loyalty",
+                table: "LoyaltyPointsTransactions",
+                column: "RewardRedemptionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyPrograms_IsActive",
+                schema: "Loyalty",
+                table: "LoyaltyPrograms",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_LoyaltyPrograms_Business",
+                schema: "Loyalty",
+                table: "LoyaltyPrograms",
+                column: "BusinessId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyRewardRedemptions_BusinessId",
+                schema: "Loyalty",
+                table: "LoyaltyRewardRedemptions",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyRewardRedemptions_BusinessLocationId",
+                schema: "Loyalty",
+                table: "LoyaltyRewardRedemptions",
+                column: "BusinessLocationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyRewardRedemptions_LoyaltyAccountId",
+                schema: "Loyalty",
+                table: "LoyaltyRewardRedemptions",
+                column: "LoyaltyAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LoyaltyRewardRedemptions_LoyaltyRewardTierId",
+                schema: "Loyalty",
+                table: "LoyaltyRewardRedemptions",
+                column: "LoyaltyRewardTierId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_LoyaltyRewardTiers_Program_Points",
+                schema: "Loyalty",
+                table: "LoyaltyRewardTiers",
+                columns: new[] { "LoyaltyProgramId", "PointsRequired" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaAssets_ContentHash",
@@ -1937,6 +3263,31 @@ namespace Darwin.Infrastructure.Migrations
                 filter: "[Code] IS NOT NULL AND [IsActive] = 1 AND [IsDeleted] = 0");
 
             migrationBuilder.CreateIndex(
+                name: "IX_QrCodeTokens_ExpiresAtUtc",
+                schema: "Loyalty",
+                table: "QrCodeTokens",
+                column: "ExpiresAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QrCodeTokens_LoyaltyAccountId",
+                schema: "Loyalty",
+                table: "QrCodeTokens",
+                column: "LoyaltyAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QrCodeTokens_UserId",
+                schema: "Loyalty",
+                table: "QrCodeTokens",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_QrCodeTokens_Token",
+                schema: "Loyalty",
+                table: "QrCodeTokens",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RedirectRules_FromPath",
                 schema: "SEO",
                 table: "RedirectRules",
@@ -1982,6 +3333,42 @@ namespace Darwin.Infrastructure.Migrations
                 table: "Roles",
                 column: "NormalizedName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScanSessions_BusinessId",
+                schema: "Loyalty",
+                table: "ScanSessions",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScanSessions_BusinessLocationId",
+                schema: "Loyalty",
+                table: "ScanSessions",
+                column: "BusinessLocationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScanSessions_ExpiresAtUtc",
+                schema: "Loyalty",
+                table: "ScanSessions",
+                column: "ExpiresAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScanSessions_LoyaltyAccountId",
+                schema: "Loyalty",
+                table: "ScanSessions",
+                column: "LoyaltyAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScanSessions_QrCodeTokenId",
+                schema: "Loyalty",
+                table: "ScanSessions",
+                column: "QrCodeTokenId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScanSessions_ResultingTransactionId",
+                schema: "Loyalty",
+                table: "ScanSessions",
+                column: "ResultingTransactionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ShipmentLines_ShipmentId",
@@ -2032,6 +3419,32 @@ namespace Darwin.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionInvoices_BusinessId",
+                schema: "Billing",
+                table: "SubscriptionInvoices",
+                column: "BusinessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionInvoices_BusinessSubscriptionId",
+                schema: "Billing",
+                table: "SubscriptionInvoices",
+                column: "BusinessSubscriptionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionInvoices_IssuedAtUtc",
+                schema: "Billing",
+                table: "SubscriptionInvoices",
+                column: "IssuedAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SubscriptionInvoices_Provider_ProviderInvoiceId",
+                schema: "Billing",
+                table: "SubscriptionInvoices",
+                columns: new[] { "Provider", "ProviderInvoiceId" },
+                unique: true,
+                filter: "[ProviderInvoiceId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TaxCategories_EffectiveFromUtc",
                 schema: "Pricing",
                 table: "TaxCategories",
@@ -2042,6 +3455,56 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Pricing",
                 table: "TaxCategories",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDevices_IsActive",
+                schema: "Identity",
+                table: "UserDevices",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDevices_LastSeenAtUtc",
+                schema: "Identity",
+                table: "UserDevices",
+                column: "LastSeenAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDevices_UserId",
+                schema: "Identity",
+                table: "UserDevices",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDevices_UserId1",
+                schema: "Identity",
+                table: "UserDevices",
+                column: "UserId1");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_UserDevices_User_DeviceId",
+                schema: "Identity",
+                table: "UserDevices",
+                columns: new[] { "UserId", "DeviceId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserEngagementSnapshots_CalculatedAtUtc",
+                schema: "Identity",
+                table: "UserEngagementSnapshots",
+                column: "CalculatedAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserEngagementSnapshots_LastActivityAtUtc",
+                schema: "Identity",
+                table: "UserEngagementSnapshots",
+                column: "LastActivityAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_UserEngagementSnapshots_UserId",
+                schema: "Identity",
+                table: "UserEngagementSnapshots",
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserLogins_Provider_ProviderKey",
@@ -2181,8 +3644,60 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Identity");
 
             migrationBuilder.DropTable(
+                name: "AnalyticsExportFiles",
+                schema: "Integration");
+
+            migrationBuilder.DropTable(
+                name: "BillingPlans",
+                schema: "Billing");
+
+            migrationBuilder.DropTable(
                 name: "BrandTranslations",
                 schema: "Catalog");
+
+            migrationBuilder.DropTable(
+                name: "BusinessEngagementStats",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessFavorites",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessInvitations",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessLikes",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessLocations",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessMedias",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessMembers",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessReviews",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessStaffQrCodes",
+                schema: "Businesses");
+
+            migrationBuilder.DropTable(
+                name: "BusinessSubscriptions",
+                schema: "Billing");
+
+            migrationBuilder.DropTable(
+                name: "CampaignDeliveries",
+                schema: "Marketing");
 
             migrationBuilder.DropTable(
                 name: "CartItems",
@@ -2199,6 +3714,18 @@ namespace Darwin.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "InventoryTransactions",
                 schema: "Inventory");
+
+            migrationBuilder.DropTable(
+                name: "LoyaltyPointsTransactions",
+                schema: "Loyalty");
+
+            migrationBuilder.DropTable(
+                name: "LoyaltyRewardRedemptions",
+                schema: "Loyalty");
+
+            migrationBuilder.DropTable(
+                name: "LoyaltyRewardTiers",
+                schema: "Loyalty");
 
             migrationBuilder.DropTable(
                 name: "MediaAssets",
@@ -2242,6 +3769,10 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Pricing");
 
             migrationBuilder.DropTable(
+                name: "QrCodeTokens",
+                schema: "Loyalty");
+
+            migrationBuilder.DropTable(
                 name: "RedirectRules",
                 schema: "SEO");
 
@@ -2251,6 +3782,10 @@ namespace Darwin.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "RolePermissions",
                 schema: "Identity");
+
+            migrationBuilder.DropTable(
+                name: "ScanSessions",
+                schema: "Loyalty");
 
             migrationBuilder.DropTable(
                 name: "ShipmentLines");
@@ -2263,8 +3798,20 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Settings");
 
             migrationBuilder.DropTable(
+                name: "SubscriptionInvoices",
+                schema: "Billing");
+
+            migrationBuilder.DropTable(
                 name: "TaxCategories",
                 schema: "Pricing");
+
+            migrationBuilder.DropTable(
+                name: "UserDevices",
+                schema: "Identity");
+
+            migrationBuilder.DropTable(
+                name: "UserEngagementSnapshots",
+                schema: "Identity");
 
             migrationBuilder.DropTable(
                 name: "UserLogins",
@@ -2302,8 +3849,16 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Catalog");
 
             migrationBuilder.DropTable(
+                name: "AnalyticsExportJobs",
+                schema: "Integration");
+
+            migrationBuilder.DropTable(
                 name: "Brands",
                 schema: "Catalog");
+
+            migrationBuilder.DropTable(
+                name: "Campaigns",
+                schema: "Marketing");
 
             migrationBuilder.DropTable(
                 name: "Carts",
@@ -2312,6 +3867,14 @@ namespace Darwin.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "Categories",
                 schema: "Catalog");
+
+            migrationBuilder.DropTable(
+                name: "LoyaltyAccounts",
+                schema: "Loyalty");
+
+            migrationBuilder.DropTable(
+                name: "LoyaltyPrograms",
+                schema: "Loyalty");
 
             migrationBuilder.DropTable(
                 name: "MenuItems",
@@ -2351,6 +3914,10 @@ namespace Darwin.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "AddOnGroups",
                 schema: "Catalog");
+
+            migrationBuilder.DropTable(
+                name: "Businesses",
+                schema: "Businesses");
 
             migrationBuilder.DropTable(
                 name: "Menus",

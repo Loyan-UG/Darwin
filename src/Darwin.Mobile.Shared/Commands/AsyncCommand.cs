@@ -59,7 +59,7 @@ namespace Darwin.Mobile.Shared.Commands
                 _isExecuting = true;
                 RaiseCanExecuteChanged();
 
-                await _execute().ConfigureAwait(false);
+                await _execute();
             }
             finally
             {
@@ -153,7 +153,7 @@ namespace Darwin.Mobile.Shared.Commands
                 _isExecuting = true;
                 RaiseCanExecuteChanged();
 
-                await _execute(typed).ConfigureAwait(false);
+                await _execute(typed);
             }
             finally
             {

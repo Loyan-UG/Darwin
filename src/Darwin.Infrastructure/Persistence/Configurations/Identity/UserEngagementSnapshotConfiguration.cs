@@ -38,14 +38,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
                 .IsRequired()
                 .HasMaxLength(8000);
 
-            // Relationship to User is configured without relying on User-side navigation names.
-            // The domain suggests "one row per user", so this mapping enforces a one-to-one relationship.
-            builder.HasOne<User>()
-                .WithOne()
+            // Explicit one-to-one mapping to avoid ambiguous dependent side.
+            builder.HasOne(x => x.User)
+                .WithOne(u => u.EngagementSnapshot)
                 .HasForeignKey<UserEngagementSnapshot>(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Enforce the intended uniqueness: one snapshot row per user.
             builder.HasIndex(x => x.UserId)
                 .IsUnique()
                 .HasDatabaseName("UX_UserEngagementSnapshots_UserId");

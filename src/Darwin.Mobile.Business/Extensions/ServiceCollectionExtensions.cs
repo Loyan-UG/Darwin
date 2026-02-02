@@ -1,44 +1,34 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Storage;
 
 namespace Darwin.Mobile.Business.Extensions;
 
-/// <summary>
-/// Composes Business app-specific services: configuration binding, shared mobile services,
-/// platform implementations for scanning/location, plus pages and view models.
-/// </summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Adds Business app services and pages into the dependency injection container.
-    /// </summary>
     public static IServiceCollection AddBusinessApp(this IServiceCollection services)
     {
-        // 1) Load appsettings.mobile.json from output directory (Content copied to bin).
-        var basePath = AppContext.BaseDirectory;
         var config = new ConfigurationBuilder()
-            .SetBasePath(basePath)
-            .AddJsonFile("appsettings.mobile.json", optional: false, reloadOnChange: false)
+            .AddJsonFileFromMauiAsset("appsettings.mobile.json", optional: false)
 #if DEBUG
-            .AddJsonFile("appsettings.mobile.Development.json", optional: true, reloadOnChange: false)
+            .AddJsonFileFromMauiAsset("appsettings.mobile.Development.json", optional: true)
 #endif
             .Build();
 
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
             ?? throw new InvalidOperationException("Missing 'Api' section in appsettings.mobile.json");
 
-        // 2) Shared services: HttpClient + retry + Auth/Loyalty/Profile + navigation + token store
         services.AddDarwinMobileShared(apiOptions);
 
-        // 3) Platform services: scanner & location
         services.AddSingleton<IScanner, Services.Platform.ScannerPlatformService>();
         services.AddSingleton<ILocation, Services.Platform.LocationPlatformService>();
 
-        // 4) Register all pages and view models. Use transient for pages/viewmodels to avoid stale state.
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<Views.HomePage>();
 
@@ -53,10 +43,31 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.SessionViewModel>();
         services.AddTransient<Views.SessionPage>();
 
-        services.AddTransient<ViewModels.SessionViewModel>();
-        services.AddTransient<Views.SessionPage>();
-
-
         return services;
+    }
+
+    private static IConfigurationBuilder AddJsonFileFromMauiAsset(
+        this IConfigurationBuilder builder,
+        string assetName,
+        bool optional)
+    {
+        try
+        {
+            using var assetStream = FileSystem
+                .OpenAppPackageFileAsync(assetName)
+                .GetAwaiter()
+                .GetResult();
+
+            var ms = new MemoryStream();
+            assetStream.CopyTo(ms);
+            ms.Position = 0;
+
+            return builder.AddJsonStream(ms); // Configuration will dispose ms when done
+        }
+        catch (FileNotFoundException)
+        {
+            if (optional) return builder;
+            throw;
+        }
     }
 }

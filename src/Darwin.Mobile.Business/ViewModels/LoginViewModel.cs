@@ -81,25 +81,29 @@ public sealed partial class LoginViewModel : BaseViewModel
 
         try
         {
-            // Perform login via AuthService; device ID is null in this phase
-            await _authService.LoginAsync(Email, Password, deviceId: null, CancellationToken.None).ConfigureAwait(false);
-
-            // Navigate to the home page on success
-            await _navigationService.GoToAsync($"//{Routes.Home}").ConfigureAwait(false);
-
-            // Clear credentials for security
+            await _authService.LoginAsync(Email, Password, deviceId: null, CancellationToken.None);
+            await _navigationService.GoToAsync($"//{Routes.Home}");
             Email = string.Empty;
             Password = string.Empty;
         }
-        catch
+        catch (Exception ex)
         {
-            // Show a generic error to the user; avoid exposing details
-            ErrorMessage = AppResources.InvalidCredentials;
+            // user-friendly message, with optional developer details when debugging
+            var userMsg = AppResources.InvalidCredentials; // موجود در منابع
+    #if DEBUG
+            var devDetails = ex.Message;
+            RunOnMain(() => ErrorMessage = $"{userMsg}\n({devDetails})");
+    #else
+            RunOnMain(() => ErrorMessage = userMsg);
+    #endif
         }
         finally
         {
-            IsBusy = false;
-            LoginCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                LoginCommand.RaiseCanExecuteChanged();
+            });
         }
     }
 }

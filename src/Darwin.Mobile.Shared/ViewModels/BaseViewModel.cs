@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Microsoft.Maui.ApplicationModel;
 
 namespace Darwin.Mobile.Shared.ViewModels
 {
@@ -96,6 +97,20 @@ namespace Darwin.Mobile.Shared.ViewModels
         public virtual Task OnDisappearingAsync()
         {
             return Task.CompletedTask;
+        }
+
+
+        protected void RunOnMain(Action action)
+        {
+            if (action is null) return;
+            if (MainThread.IsMainThread)
+            {
+                action();
+            }
+            else
+            {
+                MainThread.BeginInvokeOnMainThread(action);
+            }
         }
     }
 }
