@@ -85,13 +85,13 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     InternalNotes = "Seeded order for backend testing."
                 };
 
-                // ADD THIS LINE to generate a client-side GUID so OrderId references are valid:
-                order.Id = Guid.NewGuid();
+                // after creating 'order' object
+                order.Id = Guid.NewGuid(); // <-- ensure Order.Id is non-empty
 
-                orders.Add(order);
-
+                // create line
                 var line = new OrderLine
                 {
+                    Id = Guid.NewGuid(),    // <-- ensure OrderLine.Id is non-empty (used by ShipmentLine)
                     OrderId = order.Id,
                     VariantId = variant.Id,
                     Name = $"Artikel {variant.Sku}",
@@ -106,10 +106,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     AddOnPriceDeltaMinor = 0
                 };
 
-                lines.Add(line);
-
+                // payment
                 var payment = new Payment
                 {
+                    Id = Guid.NewGuid(),     // optional but consistent
                     OrderId = order.Id,
                     Provider = "PayPal",
                     ProviderReference = $"PAY-{Guid.NewGuid():N}",
@@ -119,10 +119,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     CapturedAtUtc = DateTime.UtcNow.AddDays(-i)
                 };
 
-                payments.Add(payment);
-
+                // shipment
                 var shipment = new Shipment
                 {
+                    Id = Guid.NewGuid(),     // <-- ensure Shipment.Id is non-empty
                     OrderId = order.Id,
                     Carrier = "DHL",
                     Service = "Standard",
@@ -132,10 +132,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     ShippedAtUtc = DateTime.UtcNow.AddDays(-i)
                 };
 
-                shipments.Add(shipment);
-
+                // shipmentLine referencing shipment.Id and line.Id
                 shipmentLines.Add(new ShipmentLine
                 {
+                    Id = Guid.NewGuid(),
                     ShipmentId = shipment.Id,
                     OrderLineId = line.Id,
                     Quantity = qty

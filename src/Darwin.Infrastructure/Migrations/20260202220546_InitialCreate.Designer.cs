@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    [Migration("20260202211240_InitialCreate")]
+    [Migration("20260202220546_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
