@@ -85,6 +85,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     InternalNotes = "Seeded order for backend testing."
                 };
 
+                // ADD THIS LINE to generate a client-side GUID so OrderId references are valid:
+                order.Id = Guid.NewGuid();
+
                 orders.Add(order);
 
                 var line = new OrderLine
