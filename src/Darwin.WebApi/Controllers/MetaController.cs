@@ -32,7 +32,7 @@ namespace Darwin.WebApi.Controllers
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MetaController"/>.
+        /// Initializes a new instance of the <see cref="MetaController "/>.
         /// </summary>
         /// <param name="clock">Clock abstraction used for deterministic time reads.</param>
         /// <param name="getAppBootstrap">Application handler that returns mobile bootstrap configuration.</param>

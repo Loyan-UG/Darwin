@@ -17,6 +17,8 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using Darwin.Infrastructure.Adapters.Time;
+using Darwin.Application.Abstractions.Services;
 
 
 namespace Darwin.WebApi.Extensions
@@ -55,6 +57,7 @@ namespace Darwin.WebApi.Extensions
             // Application-layer services (AutoMapper profiles, validators, etc.)
             services.AddApplication();
 
+            services.AddScoped<IClock, SystemClock>();
 
             // Access to HttpContext and current user information for application handlers.
             services.AddHttpContextAccessor();

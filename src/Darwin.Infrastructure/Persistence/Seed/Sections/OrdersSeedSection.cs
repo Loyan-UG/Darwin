@@ -19,6 +19,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
     /// - Shipments (10+)
     /// - ShipmentLines (10+)
     /// - Refunds (10+)
+    ///
+    /// This implementation:
+    /// - Builds coherent parent->child object graphs and adds root orders to the context.
+    /// - Generates non-empty GUIDs client-side for entities that need cross-references before SaveChanges.
+    /// - Collects refunds in a separate list because Order does not expose a Refunds navigation property.
     /// </summary>
     public sealed class OrdersSeedSection
     {
@@ -29,12 +34,21 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             _logger = logger;
         }
 
+        /// <summary>
+        /// Idempotent seeding of orders and related entities.
+        /// </summary>
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
         {
             _logger.LogInformation("Seeding Orders (orders/payments/shipments) ...");
 
-            if (await db.Orders.AnyAsync(ct)) return;
+            // If any orders already exist, don't reseed.
+            if (await db.Orders.AnyAsync(ct))
+            {
+                _logger.LogInformation("Orders already present. Skipping.");
+                return;
+            }
 
+            // Ensure product variants are available — orders are seeded only if variants exist.
             var variants = await db.ProductVariants
                 .OrderBy(v => v.Sku)
                 .ToListAsync(ct);
@@ -46,12 +60,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
 
             var orders = new List<Order>();
-            var lines = new List<OrderLine>();
-            var payments = new List<Payment>();
-            var shipments = new List<Shipment>();
-            var shipmentLines = new List<ShipmentLine>();
-            var refunds = new List<Refund>();
+            var refunds = new List<Refund>(); // Refunds are collected separately because Order has no Refunds nav.
 
+            // Build sample orders with full child graphs.
             for (var i = 0; i < 10; i++)
             {
                 var variant = variants[i % variants.Count];
@@ -69,8 +80,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 var taxTotal = lineTax;
                 var grandTotal = subtotalNet + taxTotal + shipping;
 
+                // Create root order. Generate Id client-side to allow safe references.
                 var order = new Order
                 {
+                    Id = Guid.NewGuid(),
                     OrderNumber = $"DE-2026-{i + 1:D4}",
                     Currency = "EUR",
                     PricesIncludeTax = false,
@@ -85,14 +98,10 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     InternalNotes = "Seeded order for backend testing."
                 };
 
-                // after creating 'order' object
-                order.Id = Guid.NewGuid(); // <-- ensure Order.Id is non-empty
-
-                // create line
+                // Create order line with explicit Id so other children (e.g., ShipmentLine) can reference it.
                 var line = new OrderLine
                 {
-                    Id = Guid.NewGuid(),    // <-- ensure OrderLine.Id is non-empty (used by ShipmentLine)
-                    OrderId = order.Id,
+                    Id = Guid.NewGuid(),
                     VariantId = variant.Id,
                     Name = $"Artikel {variant.Sku}",
                     Sku = variant.Sku,
@@ -106,11 +115,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     AddOnPriceDeltaMinor = 0
                 };
 
-                // payment
+                // Attach via navigation property so EF will wire OrderId automatically.
+                order.Lines.Add(line);
+
+                // Create payment (attach via navigation).
                 var payment = new Payment
                 {
-                    Id = Guid.NewGuid(),     // optional but consistent
-                    OrderId = order.Id,
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id, // explicit is OK; navigation also set below
                     Provider = "PayPal",
                     ProviderReference = $"PAY-{Guid.NewGuid():N}",
                     AmountMinor = grandTotal,
@@ -118,11 +130,12 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     Status = PaymentStatus.Captured,
                     CapturedAtUtc = DateTime.UtcNow.AddDays(-i)
                 };
+                order.Payments.Add(payment);
 
-                // shipment
+                // Create shipment and shipment line (shipment line references OrderLine.Id).
                 var shipment = new Shipment
                 {
-                    Id = Guid.NewGuid(),     // <-- ensure Shipment.Id is non-empty
+                    Id = Guid.NewGuid(),
                     OrderId = order.Id,
                     Carrier = "DHL",
                     Service = "Standard",
@@ -132,31 +145,45 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     ShippedAtUtc = DateTime.UtcNow.AddDays(-i)
                 };
 
-                // shipmentLine referencing shipment.Id and line.Id
-                shipmentLines.Add(new ShipmentLine
+                var shipmentLine = new ShipmentLine
                 {
                     Id = Guid.NewGuid(),
-                    ShipmentId = shipment.Id,
-                    OrderLineId = line.Id,
+                    OrderLineId = line.Id, // safe because line.Id was generated above
                     Quantity = qty
-                });
+                };
 
-                refunds.Add(new Refund
+                // Add shipment line to shipment navigation, then add shipment to order.
+                shipment.Lines.Add(shipmentLine);
+                order.Shipments.Add(shipment);
+
+                // Optionally create a refund record (some orders only).
+                if (i % 3 == 0)
                 {
-                    OrderId = order.Id,
-                    PaymentId = payment.Id,
-                    AmountMinor = i % 3 == 0 ? 500 : 0,
-                    Reason = i % 3 == 0 ? "Teilrückerstattung (Test)" : null
-                });
+                    var refund = new Refund
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = order.Id,
+                        PaymentId = payment.Id,
+                        AmountMinor = 500,
+                        Reason = "Teilrückerstattung (Test)"
+                    };
+                    // Collect refunds separately because Order has no Refunds navigation.
+                    refunds.Add(refund);
+                }
+
+                orders.Add(order);
             }
 
+            // Add full graph of orders; EF will persist children as well.
             db.AddRange(orders);
-            db.AddRange(lines);
-            db.AddRange(payments);
-            db.AddRange(shipments);
-            db.AddRange(shipmentLines);
-            db.AddRange(refunds);
 
+            // Add refunds separately (because Order has no Refunds navigation property).
+            if (refunds.Count > 0)
+            {
+                db.AddRange(refunds);
+            }
+
+            // Single SaveChanges to persist all new entities in the correct order.
             await db.SaveChangesAsync(ct);
 
             _logger.LogInformation("Orders seeding done.");
