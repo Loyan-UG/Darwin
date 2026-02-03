@@ -1,6 +1,9 @@
 ﻿using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Extensions;
 using Darwin.Application.Loyalty.Queries;
+using Darwin.Application.Meta.Queries;
+using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.WebApi.Auth;
 using Darwin.WebApi.Security;
@@ -17,8 +20,6 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
-using Darwin.Infrastructure.Adapters.Time;
-using Darwin.Application.Abstractions.Services;
 
 
 namespace Darwin.WebApi.Extensions
@@ -96,6 +97,9 @@ namespace Darwin.WebApi.Extensions
             services.AddLoyaltyPresentationServices();
 
             services.AddScoped<GetAvailableLoyaltyRewardsForBusinessHandler>();
+
+            // Register meta handler used by MetaController (bootstrap endpoint).
+            services.AddScoped<GetAppBootstrapHandler>();
 
 
             // Controllers + System.Text.Json options.
