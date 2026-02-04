@@ -12,31 +12,6 @@ namespace Darwin.Infrastructure.Persistence.Db
     ///     Auditing partial of <see cref="DarwinDbContext"/> that populates audit fields
     ///     (CreatedAtUtc, ModifiedAtUtc, CreatedByUserId, ModifiedByUserId) on <c>SaveChanges</c>.
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         The auditing pipeline runs just before EF saves changes, iterating over tracked entities
-    ///         derived from <c>BaseEntity</c>. For added entities, it sets creation timestamp and creator identity.
-    ///         For modified entities, it updates modification timestamp and modifier identity.
-    ///     </para>
-    ///     <para>
-    ///         Identity Source:
-    ///         <list type="bullet">
-    ///             <item>At runtime, <c>ICurrentUserService</c> is resolved from DI and used to obtain the current user id.</item>
-    ///             <item>At design-time or when unavailable, the auditing fallbacks to <c>WellKnownIds.SystemUserId</c>.</item>
-    ///         </list>
-    ///     </para>
-    ///     <para>
-    ///         Concurrency:
-    ///         <list type="bullet">
-    ///             <item>The <c>RowVersion</c> property participates in optimistic concurrency checks.</item>
-    ///             <item>On INSERT, EF/SQL Server populates the rowversion column automatically.</item>
-    ///         </list>
-    ///     </para>
-    ///     <para>
-    ///         This file intentionally does not define <c>DbSet</c>s nor configuration; it only augments the behavior
-    ///         of the main context via the partial class mechanism.
-    ///     </para>
-    /// </remarks>
     public sealed partial class DarwinDbContext
     {
         private readonly ICurrentUserService? _currentUser;
@@ -66,7 +41,27 @@ namespace Darwin.Infrastructure.Persistence.Db
         private void ApplyAudit()
         {
             var now = DateTime.UtcNow;
-            var userId = _currentUser?.GetCurrentUserId() ?? Darwin.Shared.Constants.WellKnownIds.AdministratorUserId;
+
+            // Try to obtain the current user id from ICurrentUserService.
+            // If the current user service is not available or throws (e.g. when no authenticated user),
+            // fall back to the well-known Administrator user id to ensure auditing continues.
+            //
+            // Rationale:
+            // - Some operations (like issuing refresh tokens during login) happen before an authenticated
+            //   principal exists. The auditing pipeline must not throw in these normal flows.
+            // - Using a well-known system/administrator id is an accepted fallback for audit attribution
+            //   when no real user is available.
+            Guid userId;
+            try
+            {
+                userId = _currentUser?.GetCurrentUserId() ?? Darwin.Shared.Constants.WellKnownIds.AdministratorUserId;
+            }
+            catch (Exception)
+            {
+                // Swallow exceptions from CurrentUserService and use the system fallback.
+                // Avoid allowing auditing to break higher-level flows (login, seeding, etc.).
+                userId = Darwin.Shared.Constants.WellKnownIds.AdministratorUserId;
+            }
 
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {

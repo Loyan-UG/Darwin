@@ -156,6 +156,24 @@ namespace Darwin.Infrastructure.Security.Jwt
 
             _db.Set<UserToken>().Add(refreshRow);
 
+
+            // Optimization: if there is an existing active refresh token for the same user and purpose, reuse the same row.
+            var existingRow = _db.Set<UserToken>()
+                .FirstOrDefault(x => x.UserId == userId && x.Purpose == purpose && x.UsedAtUtc == null);
+
+            if (existingRow != null)
+            {
+                // reuse the existing row for the same user and purpose if it exists and is not used,
+                // to avoid cluttering the database with multiple rows for the same user and device.
+                existingRow.Value = refreshToken;
+                existingRow.ExpiresAtUtc = refreshExp;
+            }
+            else
+            {
+                // no existing active token for this user and purpose, create a new one.
+                _db.Set<UserToken>().Add(refreshRow);
+            }
+
             // The Application layer is synchronous for this use-case; blocking here is acceptable.
             _db.SaveChangesAsync().GetAwaiter().GetResult();
 
