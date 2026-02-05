@@ -45,33 +45,46 @@ namespace Darwin.Mobile.Shared.Services
         private readonly IApiClient _api;
         private readonly ITokenStore _store;
         private readonly ApiOptions _opts;
+        private readonly IDeviceIdProvider _deviceIdProvider;
 
-        public AuthService(IApiClient api, ITokenStore store, ApiOptions opts)
+        public AuthService(IApiClient api, ITokenStore store, ApiOptions opts, IDeviceIdProvider deviceIdProvider)
         {
             _api = api ?? throw new ArgumentNullException(nameof(api));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _opts = opts ?? throw new ArgumentNullException(nameof(opts));
+            _deviceIdProvider = deviceIdProvider ?? throw new ArgumentNullException(nameof(deviceIdProvider));
         }
 
         /// <inheritdoc />
         public async Task<AppBootstrapResponse> LoginAsync(string email, string password, string? deviceId, CancellationToken ct)
         {
+            // Resolve an effective device id if caller did not provide one.
+            var effectiveDeviceId = deviceId;
+            if (string.IsNullOrWhiteSpace(effectiveDeviceId))
+            {
+                // This will hit your breakpoint if provider is registered and working.
+                effectiveDeviceId = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
+            }
+
+            // Optional: log/debug the effective device id to verify it is non-null.
+            System.Diagnostics.Debug.WriteLine($"AuthService.LoginAsync using deviceId={effectiveDeviceId}");
+
             var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>(
                 ApiRoutes.Auth.Login,
                 new PasswordLoginRequest
                 {
                     Email = email,
                     Password = password,
-                    DeviceId = deviceId
+                    DeviceId = effectiveDeviceId
                 },
                 ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Empty token response.");
 
             await _store.SaveAsync(token.AccessToken, token.AccessTokenExpiresAtUtc, token.RefreshToken, token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
             _api.SetBearerToken(token.AccessToken);
 
-            // Pull bootstrap options that guide the mobile runtime (audience, QR refresh cadence, etc.)
             var boot = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false)
                        ?? new AppBootstrapResponse();
+
             _opts.JwtAudience = boot.JwtAudience;
             _opts.QrRefreshSeconds = boot.QrTokenRefreshSeconds;
             _opts.MaxOutbox = boot.MaxOutboxItems;
