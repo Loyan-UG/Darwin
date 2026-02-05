@@ -53,6 +53,9 @@ namespace Darwin.Mobile.Shared.Extensions
             // Token storage (SecureStorage under the hood in platform-specific implementation).
             services.AddSingleton<ITokenStore, TokenStore>();
 
+            // Register device id provider so AuthService (and other features) can obtain a stable installation id
+            services.AddSingleton<IDeviceIdProvider, DeviceIdProvider>();
+
             // inside AddDarwinMobileShared(ApiOptions options)
             services.AddSingleton<INavigationService, ShellNavigationService>();
 
