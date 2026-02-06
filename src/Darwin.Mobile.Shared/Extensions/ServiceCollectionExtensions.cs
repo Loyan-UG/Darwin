@@ -60,6 +60,31 @@ namespace Darwin.Mobile.Shared.Extensions
             services.AddSingleton<INavigationService, ShellNavigationService>();
 
 
+            // NOTE: This is strictly a development-time helper. Do NOT enable in production.
+            services.AddHttpClient<IApiClient, ApiClient>()
+                .ConfigureHttpClient(c =>
+                {
+                    if (!string.IsNullOrWhiteSpace(options.BaseUrl))
+                    {
+                        c.BaseAddress = new Uri(options.BaseUrl, UriKind.Absolute);
+                    }
+                    c.Timeout = TimeSpan.FromSeconds(15);
+                })
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                {
+            #if DEBUG
+                    // Development: accept any server certificate (trust all). This avoids TLS failures for self-signed dev certs.
+                    // WARNING: Unsafe for production. Keep inside #if DEBUG or guard with config flag.
+                    return new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    };
+            #else
+                    return new HttpClientHandler();
+            #endif
+                });
+
+
             // Feature services
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<ILoyaltyService, LoyaltyService>();
