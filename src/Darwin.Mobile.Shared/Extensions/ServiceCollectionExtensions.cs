@@ -48,6 +48,8 @@ namespace Darwin.Mobile.Shared.Extensions
                             c.BaseAddress = new Uri(options.BaseUrl, UriKind.Absolute);
                         }
                         c.Timeout = TimeSpan.FromSeconds(15);
+
+                        c.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "1");
                     });
 
             // Register device id provider so AuthService (and other features) can obtain a stable installation id

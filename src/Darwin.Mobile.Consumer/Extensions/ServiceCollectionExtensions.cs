@@ -18,13 +18,11 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddConsumerApp(this IServiceCollection services)
     {
-        var basePath = AppContext.BaseDirectory;
         var config = new ConfigurationBuilder()
-            .SetBasePath(basePath)
-            .AddJsonFile("appsettings.mobile.json", optional: false, reloadOnChange: false)
-#if DEBUG
-            .AddJsonFile("appsettings.mobile.Development.json", optional: true, reloadOnChange: false)
-#endif
+            .AddJsonFileFromMauiAsset("appsettings.mobile.json", optional: false)
+         #if DEBUG
+            .AddJsonFileFromMauiAsset("appsettings.mobile.Development.json", optional: true)
+        #endif
             .Build();
 
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
@@ -52,5 +50,31 @@ public static class ServiceCollectionExtensions
         services.AddTransient<Views.ProfilePage>();
 
         return services;
+    }
+
+
+    private static IConfigurationBuilder AddJsonFileFromMauiAsset(
+        this IConfigurationBuilder builder,
+        string assetName,
+        bool optional)
+    {
+        try
+        {
+            using var assetStream = FileSystem
+                .OpenAppPackageFileAsync(assetName)
+                .GetAwaiter()
+                .GetResult();
+
+            var ms = new MemoryStream();
+            assetStream.CopyTo(ms);
+            ms.Position = 0;
+
+            return builder.AddJsonStream(ms); // Configuration will dispose ms when done
+        }
+        catch (FileNotFoundException)
+        {
+            if (optional) return builder;
+            throw;
+        }
     }
 }

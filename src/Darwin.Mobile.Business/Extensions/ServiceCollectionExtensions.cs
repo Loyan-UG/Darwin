@@ -16,9 +16,9 @@ public static class ServiceCollectionExtensions
     {
         var config = new ConfigurationBuilder()
             .AddJsonFileFromMauiAsset("appsettings.mobile.json", optional: false)
-#if DEBUG
+        #if DEBUG
             .AddJsonFileFromMauiAsset("appsettings.mobile.Development.json", optional: true)
-#endif
+        #endif
             .Build();
 
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
