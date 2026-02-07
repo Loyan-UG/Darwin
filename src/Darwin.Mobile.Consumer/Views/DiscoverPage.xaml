@@ -1,13 +1,42 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     x:Class="Darwin.Mobile.Consumer.Views.DiscoverPage"
+    x:DataType="vm:DiscoverViewModel"
     Title="{x:Static res:AppResources.DiscoverTitle}">
 
-    <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
-        <Label Text="{x:Static res:AppResources.ComingSoonTitle}"
-               FontSize="18"
-               TextColor="{StaticResource BrushOnSurface}" />
-    </StackLayout>
+    <ScrollView>
+        <StackLayout Padding="24" Spacing="12">
+            <Label Text="{x:Static res:AppResources.DiscoverTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <!-- Error label -->
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToBoolConverter}}" />
+
+            <!-- Business list -->
+            <CollectionView ItemsSource="{Binding Businesses}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="12" Margin="4" BorderColor="{StaticResource BrushPrimary}">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}"
+                                       FontSize="16"
+                                       FontAttributes="Bold" />
+                                <Label Text="{Binding AddressLine1}"
+                                       FontSize="14" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}" />
+        </StackLayout>
+    </ScrollView>
 </ContentPage>

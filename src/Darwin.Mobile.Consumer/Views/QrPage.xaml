@@ -10,11 +10,18 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
-            <!-- Display QR token as text for now -->
-            <Label Text="{Binding QrToken}" 
-                   FontSize="24"
-                   TextColor="{StaticResource BrushPrimary}"
+            <!-- Render the QR image; fallback to hidden if no token is available -->
+            <Image Source="{Binding QrImage}"
+                   HeightRequest="200"
+                   WidthRequest="200"
+                   IsVisible="{Binding QrImage, Converter={StaticResource NullOrEmptyToBoolConverter}}"
                    HorizontalOptions="Center" />
+
+            <!-- Optional text representation for debugging -->
+            <Label Text="{Binding QrToken}"
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   Opacity="0.5" />
 
             <!-- Show expiry countdown -->
             <Label Text="{Binding ExpiresAtUtc, StringFormat='Expires at: {0:HH:mm:ss}'}"
