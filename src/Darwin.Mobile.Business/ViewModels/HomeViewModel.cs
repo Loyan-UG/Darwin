@@ -1,35 +1,49 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿// File: src/Darwin.Mobile.Business/ViewModels/HomeViewModel.cs
+using System;
 using System.Windows.Input;
+using Darwin.Mobile.Shared.Navigation;
+using Darwin.Mobile.Business.Constants;
+using Darwin.Mobile.Business.Resources;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
-namespace Darwin.Mobile.Business.ViewModels;
-
-/// <summary>
-/// View model for the business home page.
-/// </summary>
-public sealed partial class HomeViewModel : ObservableObject
+namespace Darwin.Mobile.Business.ViewModels
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="HomeViewModel"/> class.
+    /// View model for the business home page.
+    /// Displays a greeting and exposes a command to navigate to the scanner.
     /// </summary>
-    public HomeViewModel()
+    public sealed partial class HomeViewModel : ObservableObject
     {
-        ScanCommand = new RelayCommand(OnScan);
-    }
+        private readonly INavigationService _navigationService;
 
-    /// <summary>
-    /// Displayed greeting to the staff user.
-    /// </summary>
-    public string Greeting => "Welcome Loyan staff!";
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HomeViewModel"/> class.
+        /// </summary>
+        /// <param name="navigationService">Navigation service used to navigate between pages.</param>
+        public HomeViewModel(INavigationService navigationService)
+        {
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+            ScanCommand = new RelayCommand(OnScan);
+        }
 
-    /// <summary>
-    /// Command to navigate to the scanner page.
-    /// </summary>
-    public ICommand ScanCommand { get; }
+        /// <summary>
+        /// The greeting text displayed on the home page.
+        /// Pulled from localized resources.
+        /// </summary>
+        public string Greeting => AppResources.HomeTitle;
 
-    private void OnScan()
-    {
-        // TODO: Use Shell navigation to go to the scanner page (phase 1)
-        // await Shell.Current.GoToAsync(Routes.Scanner);
+        /// <summary>
+        /// Command executed when the user taps the “Start” button on the home page.
+        /// Navigates to the scanner page.
+        /// </summary>
+        public ICommand ScanCommand { get; }
+
+        private async void OnScan()
+        {
+            // Use the navigation service to navigate to the Scanner page.
+            // The double-slash prefix resets the navigation stack to ensure clean back navigation.
+            await _navigationService.GoToAsync($"//{Routes.Scanner}");
+        }
     }
 }
