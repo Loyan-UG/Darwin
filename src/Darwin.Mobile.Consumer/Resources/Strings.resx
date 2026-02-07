@@ -123,6 +123,9 @@
   <data name="AccrueButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>
+  <data name="BusinessCategoryFormat" xml:space="preserve">
+    <value>Category: {0}</value>
+  </data>
   <data name="ComingSoonTitle" xml:space="preserve">
     <value>Coming soon</value>
   </data>
@@ -168,6 +171,9 @@
   <data name="PasswordRequired" xml:space="preserve">
     <value>Password is required.</value>
   </data>
+  <data name="PointsBalanceFormat" xml:space="preserve">
+    <value>Points: {0}</value>
+  </data>
   <data name="PointsLabel" xml:space="preserve">
     <value>Points</value>
   </data>
@@ -188,6 +194,9 @@
   </data>
   <data name="RefreshRedemptionButton" xml:space="preserve">
     <value>Refresh Redemption</value>
+  </data>
+  <data name="RewardCostFormat" xml:space="preserve">
+    <value>Cost: {0} pts</value>
   </data>
   <data name="RewardsTitle" xml:space="preserve">
     <value>Rewards</value>

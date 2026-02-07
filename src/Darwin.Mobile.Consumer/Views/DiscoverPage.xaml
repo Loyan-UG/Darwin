@@ -1,42 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:contracts="clr-namespace:Darwin.Contracts.Businesses;assembly=Darwin.Contracts"
     x:Class="Darwin.Mobile.Consumer.Views.DiscoverPage"
     x:DataType="vm:DiscoverViewModel"
     Title="{x:Static res:AppResources.DiscoverTitle}">
 
     <ScrollView>
-        <StackLayout Padding="24" Spacing="12">
+        <VerticalStackLayout Padding="24" Spacing="16">
+
+            <!-- Header -->
             <Label Text="{x:Static res:AppResources.DiscoverTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <!-- Error label -->
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToBoolConverter}}" />
-
-            <!-- Business list -->
+            <!-- List of businesses -->
             <CollectionView ItemsSource="{Binding Businesses}">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame Padding="12" Margin="4" BorderColor="{StaticResource BrushPrimary}">
+                    <DataTemplate x:DataType="contracts:BusinessSummary">
+                        <Border Stroke="{StaticResource BrushPrimary}"
+                                StrokeThickness="1"
+                                Padding="12"
+                                Margin="4">
+
                             <VerticalStackLayout>
+                                <!-- Business name -->
                                 <Label Text="{Binding Name}"
                                        FontSize="16"
                                        FontAttributes="Bold" />
-                                <Label Text="{Binding AddressLine1}"
-                                       FontSize="14" />
+
+                                <!-- Optional category -->
+                                <Label Text="{Binding Category, StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}"
+                                       FontSize="14"
+                                       IsVisible="{Binding Category, Converter={StaticResource InverseBoolConverter}}" />
                             </VerticalStackLayout>
-                        </Frame>
+
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
+            <!-- Error message -->
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   IsVisible="{Binding HasError}" />
+
+            <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrushPrimary}" />
-        </StackLayout>
+
+        </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
