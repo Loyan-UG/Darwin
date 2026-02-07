@@ -79,6 +79,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Category: {0}.
+        /// </summary>
+        internal static string BusinessCategoryFormat {
+            get {
+                return ResourceManager.GetString("BusinessCategoryFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Coming soon.
         /// </summary>
         internal static string ComingSoonTitle {
@@ -214,6 +223,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Points: {0}.
+        /// </summary>
+        internal static string PointsBalanceFormat {
+            get {
+                return ResourceManager.GetString("PointsBalanceFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Points.
         /// </summary>
         internal static string PointsLabel {
@@ -273,6 +291,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string RefreshRedemptionButton {
             get {
                 return ResourceManager.GetString("RefreshRedemptionButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cost: {0} pts.
+        /// </summary>
+        internal static string RewardCostFormat {
+            get {
+                return ResourceManager.GetString("RewardCostFormat", resourceCulture);
             }
         }
         

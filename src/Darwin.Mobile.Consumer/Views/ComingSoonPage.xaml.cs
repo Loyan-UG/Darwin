@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+namespace Darwin.Mobile.Consumer.Views;
 
-namespace Darwin.Mobile.Consumer.Views
+public partial class ComingSoonPage : ContentPage
 {
-    internal class ComingSoonPage
-    {
-    }
+	public ComingSoonPage()
+	{
+		InitializeComponent();
+	}
 }

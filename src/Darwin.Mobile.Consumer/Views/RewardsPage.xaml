@@ -1,38 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:contracts="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
     x:Class="Darwin.Mobile.Consumer.Views.RewardsPage"
     x:DataType="vm:RewardsViewModel"
     Title="{x:Static res:AppResources.RewardsTitle}">
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
+
+            <!-- Title for account summary -->
             <Label Text="{x:Static res:AppResources.AccountSummaryLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <Label Text="{Binding PointsBalance, StringFormat='Points: {0}'}"
+            <!-- Current points balance -->
+            <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
                    FontSize="18" />
 
-            <!-- Display available rewards -->
+            <!-- List of available rewards -->
             <CollectionView ItemsSource="{Binding AvailableRewards}">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame Padding="12" Margin="4"
-                               BorderColor="{StaticResource BrushPrimary}">
+                    <DataTemplate x:DataType="contracts:LoyaltyRewardSummary">
+                        <Border Stroke="{StaticResource BrushPrimary}"
+                                StrokeThickness="1"
+                                Padding="12"
+                                Margin="4">
+
                             <VerticalStackLayout>
-                                <Label Text="{Binding Name}" FontSize="16" FontAttributes="Bold" />
-                                <Label Text="{Binding PointsCost, StringFormat='Cost: {0} pts'}" FontSize="14" />
+                                <!-- Reward name -->
+                                <Label Text="{Binding Name}"
+                                       FontSize="16"
+                                       FontAttributes="Bold" />
+
+                                <!-- Points required to redeem -->
+                                <Label Text="{Binding RequiredPoints,
+                                                      StringFormat='{x:Static res:AppResources.RewardCostFormat}'}"
+                                       FontSize="14" />
                             </VerticalStackLayout>
-                        </Frame>
+
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
+            <!-- Error message (visible only when HasError is true) -->
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   IsVisible="{Binding HasError}" />
+
+            <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrushPrimary}" />
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

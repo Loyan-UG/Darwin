@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
-    x:Class="Darwin.Mobile.Consumer.Views.ComingSoonPage"
-    Title="{x:Static res:AppResources.ComingSoonTitle}">
-    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+             x:Class="Darwin.Mobile.Consumer.Views.ComingSoonPage"
+             Title="ComingSoonPage">
+    <VerticalStackLayout>
         <Label Text="{x:Static res:AppResources.ComingSoonTitle}"
-               Style="{StaticResource TitleLabelStyle}" />
+            Style="{StaticResource TitleLabelStyle}" />
     </VerticalStackLayout>
 </ContentPage>

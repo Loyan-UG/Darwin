@@ -23,6 +23,7 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
+
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
@@ -41,9 +42,9 @@ public static class MauiProgram
         // Register Business services, pages, and view models.
         builder.Services.AddBusinessApp();
 
-#if DEBUG
+    #if DEBUG
         builder.Logging.AddDebug();
-#endif
+    #endif
 
         return builder.Build();
     }
