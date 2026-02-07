@@ -14,8 +14,8 @@
             <Image Source="{Binding QrImage}"
                    HeightRequest="200"
                    WidthRequest="200"
-                   IsVisible="{Binding QrImage, Converter={StaticResource NullOrEmptyToBoolConverter}}"
-                   HorizontalOptions="Center" />
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
 
             <!-- Optional text representation for debugging -->
             <Label Text="{Binding QrToken}"
@@ -40,7 +40,8 @@
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
-                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToBoolConverter}}" />
+                   FontSize="14"
+                   IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"

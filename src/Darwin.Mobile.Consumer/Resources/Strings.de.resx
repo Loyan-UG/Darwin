@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AccountSummaryLabel" xml:space="preserve">
+    <value>Kontozusammenfassung</value>
+  </data>
   <data name="AccrueButton" xml:space="preserve">
     <value>Punkte bestätigen</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="CustomerLabel" xml:space="preserve">
     <value>Kunde</value>
+  </data>
+  <data name="DiscoverTitle" xml:space="preserve">
+    <value>Entdecken</value>
   </data>
   <data name="EmailLabel" xml:space="preserve">
     <value>E-Mail</value>
@@ -168,8 +174,23 @@
   <data name="PointsPlaceholder" xml:space="preserve">
     <value>Punkte eingeben</value>
   </data>
+  <data name="ProfileTitle" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="QrTitle" xml:space="preserve">
+    <value>QR</value>
+  </data>
   <data name="RedeemButton" xml:space="preserve">
     <value>Prämie einlösen</value>
+  </data>
+  <data name="RefreshAccrualButton" xml:space="preserve">
+    <value>Punkte erneuern</value>
+  </data>
+  <data name="RefreshRedemptionButton" xml:space="preserve">
+    <value>Prämie erneuern</value>
+  </data>
+  <data name="RewardsTitle" xml:space="preserve">
+    <value>Prämien</value>
   </data>
   <data name="ScanTitle" xml:space="preserve">
     <value>Scannen</value>

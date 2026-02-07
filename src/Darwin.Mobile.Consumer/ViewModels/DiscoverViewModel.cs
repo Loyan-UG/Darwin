@@ -1,23 +1,23 @@
-﻿using Darwin.Contracts.Businesses;
-using Darwin.Mobile.Shared.Commands;
-using Darwin.Mobile.Shared.Services;
-using Darwin.Mobile.Shared.ViewModels;
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Mobile.Shared.Services;
+using Darwin.Contracts.Common;
+using Darwin.Contracts.Businesses;
+using Darwin.Mobile.Shared.Commands;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// View model for the discovery page. Loads a simple list of businesses from the API.
-/// In future phases this will support map viewports, filtering and searching.
+/// Loads a simple list of businesses for the discovery tab.
 /// </summary>
 public sealed class DiscoverViewModel : BaseViewModel
 {
     private readonly IBusinessService _businessService;
-    private bool _hasLoaded;
+    private bool _loaded;
 
     public DiscoverViewModel(IBusinessService businessService)
     {
@@ -26,23 +26,16 @@ public sealed class DiscoverViewModel : BaseViewModel
         RefreshCommand = new AsyncCommand(RefreshAsync);
     }
 
-    /// <summary>
-    /// Gets the collection of businesses retrieved from the server.
-    /// </summary>
     public ObservableCollection<BusinessSummary> Businesses { get; }
 
-    /// <summary>
-    /// Command that refreshes the business list.
-    /// </summary>
     public AsyncCommand RefreshCommand { get; }
 
-    /// <inheritdoc />
     public override async Task OnAppearingAsync()
     {
-        if (!_hasLoaded)
+        if (!_loaded)
         {
             await RefreshAsync().ConfigureAwait(false);
-            _hasLoaded = true;
+            _loaded = true;
         }
     }
 
@@ -54,25 +47,22 @@ public sealed class DiscoverViewModel : BaseViewModel
 
         try
         {
-            // Prepare a minimal request: ask for the first page of businesses.
-            var req = new BusinessListRequest
-            {
-                Page = 1,
-                PageSize = 25
-            };
-
-            var result = await _businessService.ListAsync(req, CancellationToken.None).ConfigureAwait(false);
-            if (result == null || result.Data == null)
-            {
-                ErrorMessage = "Failed to load businesses.";
-                Businesses.Clear();
-                return;
-            }
+            var request = new BusinessListRequest { Page = 1, PageSize = 25 };
+            var response = await _businessService.ListAsync(request, CancellationToken.None)
+                                .ConfigureAwait(false);
 
             Businesses.Clear();
-            foreach (var business in result.Data.OrderBy(b => b.Name))
+
+            if (response?.Items != null)
             {
-                Businesses.Add(business);
+                foreach (var b in response.Items.OrderBy(x => x.Name))
+                {
+                    Businesses.Add(b);
+                }
+            }
+            else
+            {
+                ErrorMessage = "Failed to load businesses.";
             }
         }
         catch (Exception ex)

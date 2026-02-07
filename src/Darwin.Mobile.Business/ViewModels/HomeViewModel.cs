@@ -1,5 +1,4 @@
-﻿// File: src/Darwin.Mobile.Business/ViewModels/HomeViewModel.cs
-using System;
+﻿using System;
 using System.Windows.Input;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Business.Constants;

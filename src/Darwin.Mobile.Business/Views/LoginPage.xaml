@@ -11,7 +11,7 @@
     <ScrollView VerticalOptions="Fill" HorizontalOptions="Fill">
         <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*" Padding="24">
             <StackLayout Grid.Row="1" Spacing="20" HorizontalOptions="Center" WidthRequest="360">
-                <Image Source="app_logo.png"
+                <Image Source="loyan_logo.png"
                        WidthRequest="160"
                        HeightRequest="160"
                        HorizontalOptions="Center"

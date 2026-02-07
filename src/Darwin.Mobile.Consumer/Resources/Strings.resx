@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AccountSummaryLabel" xml:space="preserve">
+    <value>Account summary</value>
+  </data>
   <data name="AccrueButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="CustomerLabel" xml:space="preserve">
     <value>Customer</value>
+  </data>
+  <data name="DiscoverTitle" xml:space="preserve">
+    <value>Discover</value>
   </data>
   <data name="EmailLabel" xml:space="preserve">
     <value>Email</value>
@@ -168,8 +174,23 @@
   <data name="PointsPlaceholder" xml:space="preserve">
     <value>Enter points</value>
   </data>
+  <data name="ProfileTitle" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="QrTitle" xml:space="preserve">
+    <value>QR</value>
+  </data>
   <data name="RedeemButton" xml:space="preserve">
     <value>Confirm Redemption</value>
+  </data>
+  <data name="RefreshAccrualButton" xml:space="preserve">
+    <value>Refresh Accrual</value>
+  </data>
+  <data name="RefreshRedemptionButton" xml:space="preserve">
+    <value>Refresh Redemption</value>
+  </data>
+  <data name="RewardsTitle" xml:space="preserve">
+    <value>Rewards</value>
   </data>
   <data name="ScanTitle" xml:space="preserve">
     <value>Scan</value>

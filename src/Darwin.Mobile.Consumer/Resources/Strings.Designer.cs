@@ -61,6 +61,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Account summary.
+        /// </summary>
+        internal static string AccountSummaryLabel {
+            get {
+                return ResourceManager.GetString("AccountSummaryLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirm Accrual.
         /// </summary>
         internal static string AccrueButton {
@@ -102,6 +111,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string CustomerLabel {
             get {
                 return ResourceManager.GetString("CustomerLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Discover.
+        /// </summary>
+        internal static string DiscoverTitle {
+            get {
+                return ResourceManager.GetString("DiscoverTitle", resourceCulture);
             }
         }
         
@@ -214,11 +232,56 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Profile.
+        /// </summary>
+        internal static string ProfileTitle {
+            get {
+                return ResourceManager.GetString("ProfileTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to QR.
+        /// </summary>
+        internal static string QrTitle {
+            get {
+                return ResourceManager.GetString("QrTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirm Redemption.
         /// </summary>
         internal static string RedeemButton {
             get {
                 return ResourceManager.GetString("RedeemButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refresh Accrual.
+        /// </summary>
+        internal static string RefreshAccrualButton {
+            get {
+                return ResourceManager.GetString("RefreshAccrualButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refresh Redemption.
+        /// </summary>
+        internal static string RefreshRedemptionButton {
+            get {
+                return ResourceManager.GetString("RefreshRedemptionButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rewards.
+        /// </summary>
+        internal static string RewardsTitle {
+            get {
+                return ResourceManager.GetString("RewardsTitle", resourceCulture);
             }
         }
         

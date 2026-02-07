@@ -1,35 +1,31 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Darwin.Contracts.Loyalty;
-using Darwin.Mobile.Shared.Commands;
-using Darwin.Mobile.Shared.Models.Loyalty;
-using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Mobile.Shared.Services.Loyalty;
+using Darwin.Mobile.Shared.Commands;
+using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Shared.Models.Loyalty;
 using Darwin.Shared.Results;
-using Microsoft.Maui.Controls;
 using QRCoder;
-using System.IO;
+using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
 /// View model for the consumer QR screen.
-/// Responsible for preparing scan sessions and exposing the QR code image and related state.
+/// Prepares scan sessions and generates a QR code image from the returned token.
 /// </summary>
 public sealed class QrViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
     private string _qrToken = string.Empty;
+    private ImageSource? _qrImage;
     private DateTimeOffset? _expiresAtUtc;
     private LoyaltyScanMode _mode = LoyaltyScanMode.Accrual;
-    private Guid _currentBusinessId;
-    private ImageSource? _qrImage;
+    private Guid _businessId;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="QrViewModel"/> class.
-    /// </summary>
-    /// <param name="loyaltyService">The loyalty service used to prepare sessions.</param>
     public QrViewModel(ILoyaltyService loyaltyService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
@@ -37,10 +33,7 @@ public sealed class QrViewModel : BaseViewModel
         RefreshRedemptionSessionCommand = new AsyncCommand(RefreshRedemptionSessionAsync);
     }
 
-    /// <summary>
-    /// Gets the current QR token string that should be rendered as a QR code.
-    /// Setting this property regenerates the corresponding QR image.
-    /// </summary>
+    /// <summary>Current scan session token. Setting it regenerates the QR image.</summary>
     public string QrToken
     {
         get => _qrToken;
@@ -48,66 +41,51 @@ public sealed class QrViewModel : BaseViewModel
         {
             if (SetProperty(ref _qrToken, value))
             {
-                UpdateQrImage();
+                GenerateQrImage();
             }
         }
     }
 
-    /// <summary>
-    /// Gets the image representation of the current QR token.
-    /// </summary>
+    /// <summary>Image representation of the current token.</summary>
     public ImageSource? QrImage
     {
         get => _qrImage;
         private set => SetProperty(ref _qrImage, value);
     }
 
-    /// <summary>
-    /// Gets the UTC expiry of the current scan session, if provided.
-    /// </summary>
+    /// <summary>UTC expiry time of the current session, if provided.</summary>
     public DateTimeOffset? ExpiresAtUtc
     {
         get => _expiresAtUtc;
         private set => SetProperty(ref _expiresAtUtc, value);
     }
 
-    /// <summary>
-    /// Gets the current scan mode (accrual or redemption).
-    /// </summary>
+    /// <summary>Current scan mode.</summary>
     public LoyaltyScanMode Mode
     {
         get => _mode;
         private set => SetProperty(ref _mode, value);
     }
 
-    /// <summary>
-    /// Command that prepares a new accrual session for the current business.
-    /// </summary>
+    /// <summary>Command to prepare a new accrual session.</summary>
     public AsyncCommand RefreshAccrualSessionCommand { get; }
 
-    /// <summary>
-    /// Command that prepares a new redemption session based on the consumer's selected rewards.
-    /// </summary>
+    /// <summary>Command to prepare a new redemption session.</summary>
     public AsyncCommand RefreshRedemptionSessionCommand { get; }
 
-    /// <summary>
-    /// Sets the business context for this QR view model.
-    /// This must be called by the parent screen before refreshing sessions.
-    /// </summary>
-    /// <param name="businessId">The active business identifier.</param>
+    /// <summary>Sets the current business context (must be called before refreshing).</summary>
     public void SetBusiness(Guid businessId)
     {
         if (businessId == Guid.Empty)
             throw new ArgumentException("Business id must not be empty.", nameof(businessId));
 
-        _currentBusinessId = businessId;
+        _businessId = businessId;
     }
 
-    /// <inheritdoc />
     public override async Task OnAppearingAsync()
     {
-        // When the page appears, ensure we have a QR for accrual by default.
-        if (_currentBusinessId != Guid.Empty && string.IsNullOrWhiteSpace(QrToken))
+        // On first appearance, prepare a default accrual session.
+        if (_businessId != Guid.Empty && string.IsNullOrEmpty(QrToken))
         {
             await RefreshAccrualSessionAsync().ConfigureAwait(false);
         }
@@ -115,7 +93,7 @@ public sealed class QrViewModel : BaseViewModel
 
     private async Task RefreshAccrualSessionAsync()
     {
-        if (_currentBusinessId == Guid.Empty)
+        if (_businessId == Guid.Empty)
         {
             ErrorMessage = "Business context is not set.";
             return;
@@ -127,11 +105,11 @@ public sealed class QrViewModel : BaseViewModel
 
         try
         {
-            var result = await _loyaltyService
-                .PrepareScanSessionAsync(_currentBusinessId, LoyaltyScanMode.Accrual, null, CancellationToken.None)
+            var result = await _loyaltyService.PrepareScanSessionAsync(
+                _businessId, LoyaltyScanMode.Accrual, null, CancellationToken.None)
                 .ConfigureAwait(false);
 
-            ApplyScanSessionResult(result);
+            ApplySessionResult(result);
         }
         finally
         {
@@ -141,7 +119,7 @@ public sealed class QrViewModel : BaseViewModel
 
     private async Task RefreshRedemptionSessionAsync()
     {
-        if (_currentBusinessId == Guid.Empty)
+        if (_businessId == Guid.Empty)
         {
             ErrorMessage = "Business context is not set.";
             return;
@@ -153,11 +131,11 @@ public sealed class QrViewModel : BaseViewModel
 
         try
         {
-            var result = await _loyaltyService
-                .PrepareScanSessionAsync(_currentBusinessId, LoyaltyScanMode.Redemption, null, CancellationToken.None)
+            var result = await _loyaltyService.PrepareScanSessionAsync(
+                _businessId, LoyaltyScanMode.Redemption, null, CancellationToken.None)
                 .ConfigureAwait(false);
 
-            ApplyScanSessionResult(result);
+            ApplySessionResult(result);
         }
         finally
         {
@@ -165,10 +143,7 @@ public sealed class QrViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Applies the scan session preparation result to the QR-related properties.
-    /// </summary>
-    private void ApplyScanSessionResult(Result<ScanSessionClientModel> result)
+    private void ApplySessionResult(Result<ScanSessionClientModel> result)
     {
         if (!result.Succeeded || result.Value is null)
         {
@@ -179,16 +154,15 @@ public sealed class QrViewModel : BaseViewModel
         }
 
         var session = result.Value;
+        Mode = session.Mode;
         QrToken = session.Token;
         ExpiresAtUtc = session.ExpiresAtUtc;
-        Mode = session.Mode;
     }
 
     /// <summary>
-    /// Generates a QR code image from the current <see cref="QrToken"/>.
-    /// Uses the QRCoder library to create a PNG in memory and assigns it to <see cref="QrImage"/>.
+    /// Generates a PNG QR code from the current token using QRCoder.
     /// </summary>
-    private void UpdateQrImage()
+    private void GenerateQrImage()
     {
         try
         {
@@ -199,17 +173,14 @@ public sealed class QrViewModel : BaseViewModel
             }
 
             var generator = new QRCodeGenerator();
-            var qrData = generator.CreateQrCode(_qrToken, QRCodeGenerator.ECCLevel.Q);
-            var pngGenerator = new PngByteQRCode(qrData);
-
-            // Pixels per module: higher values produce a larger image.
-            var pngBytes = pngGenerator.GetGraphic(20);
-            QrImage = ImageSource.FromStream(() => new MemoryStream(pngBytes));
+            var data = generator.CreateQrCode(_qrToken, QRCodeGenerator.ECCLevel.Q);
+            var png = new PngByteQRCode(data);
+            var bytes = png.GetGraphic(20); // pixels per module
+            QrImage = ImageSource.FromStream(() => new MemoryStream(bytes));
         }
         catch
         {
-            // Fallback to no image on error. Consider logging if needed.
-            QrImage = null;
+            QrImage = null; // silently drop image on error
         }
     }
 }
