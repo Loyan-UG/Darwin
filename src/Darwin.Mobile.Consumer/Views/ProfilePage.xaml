@@ -8,6 +8,6 @@
     <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
         <Label Text="{x:Static res:AppResources.ComingSoonTitle}"
                FontSize="18"
-               TextColor="{StaticResource BrushOnSurface}" />
+               TextColor="{StaticResource Neutral900}" />
     </StackLayout>
 </ContentPage>

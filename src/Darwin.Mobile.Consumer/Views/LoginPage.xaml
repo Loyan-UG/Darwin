@@ -19,19 +19,19 @@
                    HorizontalOptions="Center" />
 
             <Label Text="{x:Static res:AppResources.EmailLabel}" 
-                   TextColor="{StaticResource BrushOnSurface}" />
+                   TextColor="{StaticResource Neutral900}" />
             <Entry Text="{Binding Email}"
                    Keyboard="Email"
                    Placeholder="user@example.com"
-                   TextColor="{StaticResource BrushOnSurface}"
+                   TextColor="{StaticResource Neutral900}"
                    PlaceholderColor="Gray" />
 
             <Label Text="{x:Static res:AppResources.PasswordLabel}"
-                   TextColor="{StaticResource BrushOnSurface}" />
+                   TextColor="{StaticResource Neutral900}" />
             <Entry Text="{Binding Password}"
                    IsPassword="True"
                    Placeholder="••••••"
-                   TextColor="{StaticResource BrushOnSurface}"
+                   TextColor="{StaticResource Neutral900}"
                    PlaceholderColor="Gray" />
 
             <Button Text="{x:Static res:AppResources.LoginButton}"
@@ -44,7 +44,7 @@
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrushPrimary}" />
+                               Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

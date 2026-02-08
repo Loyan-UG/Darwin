@@ -9,7 +9,7 @@
         <ResourceDictionary>
             <!-- Register the converter for use in XAML (ensure Darwin.Mobile.Shared assembly referenced by the Business app) -->
             <conv:InverseBoolConverter x:Key="InverseBoolConverter" />
-
+            <conv:NullCheckConverter x:Key="NullCheckConverter" />
 
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

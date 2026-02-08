@@ -26,7 +26,7 @@
             <!-- Show expiry countdown -->
             <Label Text="{Binding ExpiresAtUtc, StringFormat='Expires at: {0:HH:mm:ss}'}"
                    FontSize="16"
-                   TextColor="{StaticResource BrushOnSurface}"
+                   TextColor="{StaticResource Neutral900}"
                    HorizontalOptions="Center" />
 
             <!-- Refresh buttons for accrual and redemption -->
@@ -45,7 +45,7 @@
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrushPrimary}" />
+                               Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

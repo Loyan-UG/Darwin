@@ -5,8 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
-        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource BrandGold500}" />
+        <Setter Property="TextColor" Value="{StaticResource Neutral0}" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="16,10" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -16,7 +16,7 @@
     <Style x:Key="TitleLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="24" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+        <Setter Property="TextColor" Value="{StaticResource Neutral900}" />
     </Style>
 
 </ResourceDictionary>
