@@ -1,10 +1,10 @@
-﻿﻿<?xml version="1.0" encoding="UTF-8" ?>
-<Application 
+<?xml version="1.0" encoding="utf-8" ?>
+<Application
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:conv="clr-namespace:Darwin.Mobile.Shared.Converters;assembly=Darwin.Mobile.Shared"
     x:Class="Darwin.Mobile.Consumer.App">
-    
+
     <Application.Resources>
         <ResourceDictionary>
             <!-- Register the converter for use in XAML (ensure Darwin.Mobile.Shared assembly referenced by the Consumer app) -->
