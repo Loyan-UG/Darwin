@@ -8,16 +8,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Common;
 using Darwin.Shared.Results;
+using Darwin.Mobile.Shared.Resilience;
 
 namespace Darwin.Mobile.Shared.Api
 {
     /// <summary>
     /// Default implementation of <see cref="IApiClient"/> for the mobile apps.
-    /// Responsible for:
-    /// - Configuring Authorization headers (bearer)
-    /// - JSON (de)serialization using System.Text.Json with web defaults
+    /// Responsibilities:
+    /// - Configuring Authorization headers (Bearer)
+    /// - JSON (de)serialization using System.Text.Json with Web defaults
     /// - Returning functional Result/Result{T} instead of throwing on HTTP errors
     /// - Extracting error messages from ProblemDetails or plain text when possible
+    /// - Executing network calls under an <see cref="IRetryPolicy"/> to improve resilience
     /// </summary>
     public sealed class ApiClient : IApiClient
     {
@@ -27,16 +29,25 @@ namespace Darwin.Mobile.Shared.Api
         };
 
         private readonly HttpClient _http;
+        private readonly IRetryPolicy _retry;
 
         /// <summary>
-        /// Creates a new instance bound to a pre-configured <see cref="HttpClient"/>.
+        /// Creates a new instance bound to a pre-configured <see cref="HttpClient"/> and an <see cref="IRetryPolicy"/>.
         /// </summary>
-        public ApiClient(HttpClient httpClient)
+        /// <param name="httpClient">Http client configured via IHttpClientFactory (base address, timeouts, handlers).</param>
+        /// <param name="retryPolicy">Retry policy used for transient network errors. Must not be null.</param>
+        public ApiClient(HttpClient httpClient, IRetryPolicy retryPolicy)
         {
             _http = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _retry = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
         }
 
         /// <inheritdoc />
+        /// <remarks>
+        /// Sets or clears the Authorization: Bearer header on the underlying HttpClient.
+        /// Using DefaultRequestHeaders is acceptable because the HttpClient instance is expected
+        /// to be a typed/hosted client per app registration. Trim input to avoid accidental spaces.
+        /// </remarks>
         public void SetBearerToken(string? accessToken)
         {
             if (string.IsNullOrWhiteSpace(accessToken))
@@ -58,15 +69,21 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                using var response = await _http.GetAsync(normalized, ct).ConfigureAwait(false);
-                return await ReadAsResultAsync<TResponse>(response, ct).ConfigureAwait(false);
+                // Entire network + parse operation is executed under the retry policy.
+                return await _retry.ExecuteAsync(async token =>
+                {
+                    using var response = await _http.GetAsync(normalized, token).ConfigureAwait(false);
+                    return await ReadAsResultAsync<TResponse>(response, token).ConfigureAwait(false);
+                }, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
+                // Respect cancellation semantics: propagate cancellation to caller.
                 throw;
             }
             catch (Exception ex)
             {
+                // Do not expose stack traces; produce a concise network error message.
                 return Result<TResponse>.Fail($"Network error: {ex.Message}");
             }
         }
@@ -84,8 +101,11 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                using var response = await _http.PostAsJsonAsync(normalized, request, _jsonOptions, ct).ConfigureAwait(false);
-                return await ReadAsResultAsync<TResponse>(response, ct).ConfigureAwait(false);
+                return await _retry.ExecuteAsync(async token =>
+                {
+                    using var response = await _http.PostAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
+                    return await ReadAsResultAsync<TResponse>(response, token).ConfigureAwait(false);
+                }, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -174,8 +194,11 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, ct).ConfigureAwait(false);
-                return await ReadAsResultAsync<TResponse>(response, ct).ConfigureAwait(false);
+                return await _retry.ExecuteAsync(async token =>
+                {
+                    using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
+                    return await ReadAsResultAsync<TResponse>(response, token).ConfigureAwait(false);
+                }, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -207,19 +230,22 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, ct).ConfigureAwait(false);
-
-                if (response.IsSuccessStatusCode)
+                return await _retry.ExecuteAsync(async token =>
                 {
-                    // Treat 204 (No Content) as a successful update.
-                    // Some APIs may return 200/201 with empty or ignored payloads; also treat them as success.
-                    return Result.Ok();
-                }
+                    using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
 
-                var errorMessage = await TryReadErrorMessageAsync(response, ct).ConfigureAwait(false)
-                                  ?? $"Request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}).";
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Treat 204 (No Content) as a successful update.
+                        // Some APIs may return 200/201 with empty or ignored payloads; also treat them as success.
+                        return Result.Ok();
+                    }
 
-                return Result.Fail(errorMessage);
+                    var errorMessage = await TryReadErrorMessageAsync(response, token).ConfigureAwait(false)
+                                      ?? $"Request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}).";
+
+                    return Result.Fail(errorMessage);
+                }, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -235,6 +261,9 @@ namespace Darwin.Mobile.Shared.Api
         /// Reads the response content into TResponse and wraps it as Result{T}.
         /// Note: For 204 No Content this returns a failed Result by design; prefer PutNoContentAsync for 204 patterns.
         /// </summary>
+        /// <typeparam name="TResponse">Type to deserialize to.</typeparam>
+        /// <param name="response">HTTP response message (must not be null).</param>
+        /// <param name="ct">Cancellation token used for reading content.</param>
         private static async Task<Result<TResponse>> ReadAsResultAsync<TResponse>(HttpResponseMessage response, CancellationToken ct)
         {
             if (response is null)
@@ -272,6 +301,9 @@ namespace Darwin.Mobile.Shared.Api
         /// 1) Darwin.Contracts.Common.ProblemDetails
         /// 2) Plain text
         /// </summary>
+        /// <param name="response">HTTP response message (may contain error payload).</param>
+        /// <param name="ct">Cancellation token for reading the content.</param>
+        /// <returns>Human-friendly error string or null if none could be derived.</returns>
         private static async Task<string?> TryReadErrorMessageAsync(HttpResponseMessage response, CancellationToken ct)
         {
             try
@@ -297,6 +329,7 @@ namespace Darwin.Mobile.Shared.Api
             }
             catch
             {
+                // Parsing error; swallow and return null so caller can fallback to status code messaging.
                 return null;
             }
         }
