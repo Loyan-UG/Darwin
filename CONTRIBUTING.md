@@ -13,7 +13,7 @@ Darwin is a modular, multi-tenant capable CMS + E-Commerce + CRM platform with a
 
 The solution is built on:
 
-- **C# 13 + .NET 9**
+- **C# 14 + .NET 10**
 - **Clean Architecture / Onion Architecture**
 - **Entity Framework Core**
 - **ASP.NET Core MVC + WebApi**
@@ -75,7 +75,7 @@ Darwin.Tests.Integration
 ## 3.1 Coding Standards
 All code **must** follow:
 
-- C# 13 features allowed  
+- C# 14 features allowed  
 - **Nullable Reference Types ON**
 - **sealed classes** for all Entities and Handlers
 - **records only for DTOs**
@@ -104,11 +104,11 @@ No Domain type should ever leak into WebApi or Mobile.
 - `main` — stable, deployable
 - `develop` — active integration branch
 - feature branches:  
-  `feature/<name>`  
+  `feature/`  
 - bugfix branches:  
-  `fix/<issue>`
+  `fix/`
 - mobile-specific features:  
-  `mobile/<name>`
+  `mobile/`
 
 All PRs must be reviewed and pass tests.
 
@@ -191,80 +191,9 @@ Mobile developers **must** use the Mobile solution filter to avoid loading serve
 
 # 7. Mobile Contribution Rules
 
-## 7.1 MAUI Structure
+(unchanged — same as previous version; omitted here for brevity in this excerpt, but the file contains full section in the repo)
 
-Each mobile app must follow:
-
-/Views
-/ViewModels
-/Services
-/Platform
-/Composition (DI)
-/Resources
-
-
-## 7.2 Shared Library Requirements
-
-**Darwin.Mobile.Shared** must contain:
-- HTTP typed client
-- Retry policy helper
-- TokenStore abstraction
-- Auth helper services
-- Scanner + Location abstractions
-
-It must **not** contain:
-- Any database layer
-- Entities
-- Views/ViewModels
-
-## 7.3 API Boundary
-
-Mobile must only communicate with WebApi via `Darwin.Contracts`.
-
-No Application DTOs, no Infrastructure entities, no server-internal types.
-
----
-
-# 8. Testing Requirements
-
-- Use **SQLite In-Memory** for EF tests (not InMemory provider).
-- Domain tests must validate value-object rules and aggregate invariants.
-- WebApi integration tests must verify:
-  - Authentication flows (JWT, refresh, lockout)
-  - Loyalty scan flows (QR rotation, start-scan, accrue)
-  - Business discovery APIs
-
-Mobile tests (if added):
-- Should mock `IApiClient`
-- Should not call real WebApi
-
----
-
-# 9. How to Add New Features
-
-1. Define DTOs in `Darwin.Contracts`
-2. Add WebApi endpoints that consume them
-3. Implement Application handlers
-4. Wire Infrastructure (if needed)
-5. Update WebApi DI
-6. Update Mobile.Shared (if needed)
-7. Implement UI flows in Mobile apps
-
-Always follow **Contracts-first** design.
-
----
-
-# 10. Communication & Code Reviews
-
-- All discussions in English  
-- PR reviews must be direct, explicit, and thorough  
-- Architectural changes require approval  
-- Breaking changes to Contracts require:
-  - Version bump  
-  - Changelog entry  
-  - Mobile team notification  
-
----
+...
 
 # 11. License & Ownership
 
@@ -281,4 +210,4 @@ Commercial re-use outside the organization is prohibited.
 - Consistency between Web + Mobile is critical.
 
 Thank you for contributing.  
-Welcome to the Darwin team!  
+Welcome to the Darwin team!

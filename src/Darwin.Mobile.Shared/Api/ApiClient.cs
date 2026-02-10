@@ -1,4 +1,7 @@
-﻿using System;
+﻿// src/Darwin.Mobile.Shared/Api/ApiClient.cs
+// https://github.com/shahramvafadar/Darwin/blob/301147077eba61b84e0eec8656aec08e20a1795a/src/Darwin.Mobile.Shared/Api/ApiClient.cs
+
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -20,9 +23,22 @@ namespace Darwin.Mobile.Shared.Api
     /// - Returning functional Result/Result{T} instead of throwing on HTTP errors
     /// - Extracting error messages from ProblemDetails or plain text when possible
     /// - Executing network calls under an <see cref="IRetryPolicy"/> to improve resilience
+    /// 
+    /// Rationale:
+    /// - Mobile code must avoid throwing for common HTTP error scenarios and instead return
+    ///   Result objects so UI code may present friendly messages without crashing.
+    /// - ReadAsResultAsync centralizes interpretation of HTTP responses so services can be simpler.
+    ///
+    /// Pitfalls:
+    /// - The client intentionally returns a Failed Result for 204 No Content (to distinguish
+    ///   "no payload" from a typed payload). Callers that expect 204 semantics should use
+    ///   PutNoContentAsync or check the well-known NoContentResultMessage constant.
     /// </summary>
     public sealed class ApiClient : IApiClient
     {
+        // Public constant so callers do not rely on a magic string and can detect the NoContent case reliably.
+        public const string NoContentResultMessage = "Server returned no content.";
+
         private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
         {
             PropertyNameCaseInsensitive = true
@@ -261,9 +277,6 @@ namespace Darwin.Mobile.Shared.Api
         /// Reads the response content into TResponse and wraps it as Result{T}.
         /// Note: For 204 No Content this returns a failed Result by design; prefer PutNoContentAsync for 204 patterns.
         /// </summary>
-        /// <typeparam name="TResponse">Type to deserialize to.</typeparam>
-        /// <param name="response">HTTP response message (must not be null).</param>
-        /// <param name="ct">Cancellation token used for reading content.</param>
         private static async Task<Result<TResponse>> ReadAsResultAsync<TResponse>(HttpResponseMessage response, CancellationToken ct)
         {
             if (response is null)
@@ -272,7 +285,7 @@ namespace Darwin.Mobile.Shared.Api
             if (response.IsSuccessStatusCode)
             {
                 if (response.StatusCode == HttpStatusCode.NoContent)
-                    return Result<TResponse>.Fail("Server returned no content.");
+                    return Result<TResponse>.Fail(NoContentResultMessage); // use constant
 
                 try
                 {
@@ -301,9 +314,6 @@ namespace Darwin.Mobile.Shared.Api
         /// 1) Darwin.Contracts.Common.ProblemDetails
         /// 2) Plain text
         /// </summary>
-        /// <param name="response">HTTP response message (may contain error payload).</param>
-        /// <param name="ct">Cancellation token for reading the content.</param>
-        /// <returns>Human-friendly error string or null if none could be derived.</returns>
         private static async Task<string?> TryReadErrorMessageAsync(HttpResponseMessage response, CancellationToken ct)
         {
             try
