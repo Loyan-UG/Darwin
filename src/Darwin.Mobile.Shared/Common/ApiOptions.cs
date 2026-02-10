@@ -1,7 +1,7 @@
 ﻿namespace Darwin.Mobile.Shared.Common;
 
 /// <summary>
-/// Options for configuring the mobile API client.
+/// Options for configuring the mobile API client and app-specific behavior.
 /// </summary>
 public sealed class ApiOptions
 {
@@ -16,4 +16,28 @@ public sealed class ApiOptions
 
     /// <summary>Maximum outbox size before forcing sync.</summary>
     public int MaxOutbox { get; set; } = 100;
+
+    /// <summary>
+    /// Declares the role/type of the mobile app using this shared library.
+    /// Used to validate tokens returned by the auth endpoint so Consumer and Business
+    /// apps cannot accidentally use tokens intended for the other persona.
+    /// Default is Unknown (no validation beyond normal token storage).
+    /// </summary>
+    public MobileAppRole AppRole { get; set; } = MobileAppRole.Unknown;
+}
+
+
+/// <summary>
+/// Mobile app role used by shared mobile components to apply app-specific checks.
+/// </summary>
+public enum MobileAppRole
+{
+    /// <summary>No specific app role declared (default).</summary>
+    Unknown = 0,
+
+    /// <summary>Consumer app — end user showing QR, using member APIs.</summary>
+    Consumer = 1,
+
+    /// <summary>Business app — operator, must present business_id claim in token.</summary>
+    Business = 2
 }

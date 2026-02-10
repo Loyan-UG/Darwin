@@ -1,6 +1,9 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Sources;
 using Darwin.Contracts.Identity;
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Shared.Api;
@@ -40,12 +43,25 @@ namespace Darwin.Mobile.Shared.Services
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct);
     }
 
-    public sealed class AuthService : IAuthService
+    /// <summary>
+    /// Default implementation of <see cref="IAuthService"/>.
+    /// Responsibilities include:
+    /// - Calling login/refresh/logout endpoints via <see cref="IApiClient"/>.
+    /// - Persisting tokens via <see cref="ITokenStore"/>.
+    /// - Validating returned JWT against the configured <see cref="ApiOptions.AppRole"/>.
+    /// - Coordinating concurrent refresh attempts (single-flight) to avoid refresh storms.
+    /// </summary>
+    public sealed class AuthService : IAuthService, IDisposable
     {
         private readonly IApiClient _api;
         private readonly ITokenStore _store;
         private readonly ApiOptions _opts;
         private readonly IDeviceIdProvider _deviceIdProvider;
+
+        // Single-flight refresh synchronization primitive.
+        // SemaphoreSlim used instead of lock to allow async waiting and cancellation.
+        private readonly SemaphoreSlim _refreshLock = new SemaphoreSlim(1, 1);
+        private bool _disposed;
 
         public AuthService(IApiClient api, ITokenStore store, ApiOptions opts, IDeviceIdProvider deviceIdProvider)
         {
@@ -58,16 +74,14 @@ namespace Darwin.Mobile.Shared.Services
         /// <inheritdoc />
         public async Task<AppBootstrapResponse> LoginAsync(string email, string password, string? deviceId, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             // Resolve an effective device id if caller did not provide one.
             var effectiveDeviceId = deviceId;
             if (string.IsNullOrWhiteSpace(effectiveDeviceId))
             {
-                // This will hit your breakpoint if provider is registered and working.
                 effectiveDeviceId = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
             }
-
-            // Optional: log/debug the effective device id to verify it is non-null.
-            System.Diagnostics.Debug.WriteLine($"AuthService.LoginAsync using deviceId={effectiveDeviceId}");
 
             var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>(
                 ApiRoutes.Auth.Login,
@@ -79,12 +93,16 @@ namespace Darwin.Mobile.Shared.Services
                 },
                 ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Empty token response.");
 
+            // Validate token shape/claims with app role (prevent cross-app logins).
+            ValidateTokenForApp(token.AccessToken, _opts);
+
             await _store.SaveAsync(token.AccessToken, token.AccessTokenExpiresAtUtc, token.RefreshToken, token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
             _api.SetBearerToken(token.AccessToken);
 
             var boot = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false)
                        ?? new AppBootstrapResponse();
 
+            // Populate runtime options from bootstrap
             _opts.JwtAudience = boot.JwtAudience;
             _opts.QrRefreshSeconds = boot.QrTokenRefreshSeconds;
             _opts.MaxOutbox = boot.MaxOutboxItems;
@@ -95,34 +113,75 @@ namespace Darwin.Mobile.Shared.Services
         /// <inheritdoc />
         public async Task<bool> TryRefreshAsync(CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
+            // Quick check: does a refresh token exist and is not expired?
             var (rt, rtex) = await _store.GetRefreshAsync().ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(rt) || rtex is null || rtex <= DateTime.UtcNow)
                 return false;
 
-            var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>(
-                ApiRoutes.Auth.Refresh,
-                new RefreshTokenRequest { RefreshToken = rt!, DeviceId = null },
-                ct).ConfigureAwait(false);
+            // Single-flight: ensure only one caller performs the network refresh.
+            await _refreshLock.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                // Re-read stored refresh token: another caller may have refreshed while we waited.
+                var (currentRt, currentRtex) = await _store.GetRefreshAsync().ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(currentRt) || currentRtex is null || currentRtex <= DateTime.UtcNow)
+                    return false;
 
-            if (res is null)
+                // If token changed since initial read, assume refresh already completed successfully.
+                if (!string.Equals(currentRt, rt, StringComparison.Ordinal))
+                    return true;
+
+                // Perform refresh network call.
+                var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>(
+                    ApiRoutes.Auth.Refresh,
+                    new RefreshTokenRequest { RefreshToken = currentRt!, DeviceId = null },
+                    ct).ConfigureAwait(false);
+
+                if (res is null)
+                    return false;
+
+                // Validate new access token against app role to avoid accepting wrong tokens.
+                ValidateTokenForApp(res.AccessToken, _opts);
+
+                // Persist tokens and apply bearer header.
+                await _store.SaveAsync(res.AccessToken, res.AccessTokenExpiresAtUtc, res.RefreshToken, res.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
+                _api.SetBearerToken(res.AccessToken);
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                // Propagate cancellation to caller.
+                throw;
+            }
+            catch
+            {
+                // Any error during refresh should be treated as 'refresh failed' (no throw).
                 return false;
-
-            await _store.SaveAsync(res.AccessToken, res.AccessTokenExpiresAtUtc, res.RefreshToken, res.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
-            _api.SetBearerToken(res.AccessToken);
-            return true;
+            }
+            finally
+            {
+                _refreshLock.Release();
+            }
         }
 
         /// <inheritdoc />
         public async Task LogoutAsync(CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             var (rt, _) = await _store.GetRefreshAsync().ConfigureAwait(false);
             if (!string.IsNullOrWhiteSpace(rt))
             {
+                // Best-effort revoke; do not fail logout if revoke fails.
                 _ = await _api.PostAsync<LogoutRequest, object?>(
                     ApiRoutes.Auth.Logout,
                     new LogoutRequest { RefreshToken = rt! },
                     ct).ConfigureAwait(false);
             }
+
             await _store.ClearAsync().ConfigureAwait(false);
             _api.SetBearerToken(null);
         }
@@ -130,7 +189,8 @@ namespace Darwin.Mobile.Shared.Services
         /// <inheritdoc />
         public async Task<bool> LogoutAllAsync(CancellationToken ct)
         {
-            // The endpoint accepts POST without body; sending an empty object "{}" is acceptable.
+            ct.ThrowIfCancellationRequested();
+
             var result = await _api.PostResultAsync<object, object?>(
                 ApiRoutes.Auth.LogoutAll,
                 new { },
@@ -138,7 +198,6 @@ namespace Darwin.Mobile.Shared.Services
 
             if (result.Succeeded)
             {
-                // Clear local tokens for good measure.
                 await _store.ClearAsync().ConfigureAwait(false);
                 _api.SetBearerToken(null);
                 return true;
@@ -151,6 +210,7 @@ namespace Darwin.Mobile.Shared.Services
         public async Task<RegisterResponse?> RegisterAsync(RegisterRequest request, CancellationToken ct)
         {
             if (request is null) throw new ArgumentNullException(nameof(request));
+            ct.ThrowIfCancellationRequested();
 
             return await _api.PostAsync<RegisterRequest, RegisterResponse>(
                 ApiRoutes.Auth.Register,
@@ -161,6 +221,8 @@ namespace Darwin.Mobile.Shared.Services
         /// <inheritdoc />
         public async Task<bool> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             var result = await _api.PostResultAsync<ChangePasswordRequest, object?>(
                 ApiRoutes.Auth.ChangePassword,
                 new ChangePasswordRequest
@@ -176,18 +238,21 @@ namespace Darwin.Mobile.Shared.Services
         /// <inheritdoc />
         public async Task<bool> RequestPasswordResetAsync(string email, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             var result = await _api.PostResultAsync<RequestPasswordResetRequest, object?>(
                 ApiRoutes.Auth.RequestPasswordReset,
                 new RequestPasswordResetRequest { Email = email },
                 ct).ConfigureAwait(false);
 
-            // The API always returns 200/OK to avoid user enumeration; treat success as true.
             return result.Succeeded;
         }
 
         /// <inheritdoc />
         public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             var result = await _api.PostResultAsync<ResetPasswordRequest, object?>(
                 ApiRoutes.Auth.ResetPassword,
                 new ResetPasswordRequest
@@ -199,6 +264,64 @@ namespace Darwin.Mobile.Shared.Services
                 ct).ConfigureAwait(false);
 
             return result.Succeeded;
+        }
+
+        /// <summary>
+        /// Validates the JWT access token against the configured app role.
+        /// Rules (conservative):
+        /// - If AppRole == Business: token MUST contain a non-empty "business_id" claim.
+        /// - If AppRole == Consumer: token MUST NOT contain "business_id" claim (prevent accidental business tokens).
+        /// - If AppRole == Unknown: no app-type-specific validation is performed.
+        /// Throws InvalidOperationException on validation failure.
+        /// </summary>
+        /// <param name="accessToken">Raw JWT access token string.</param>
+        /// <param name="opts">ApiOptions that may contain AppRole and audience expectations.</param>
+        private static void ValidateTokenForApp(string accessToken, ApiOptions opts)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken) || opts is null)
+                return;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(accessToken);
+
+                // Optionally validate audience if present in options (best-effort on client side).
+                if (!string.IsNullOrWhiteSpace(opts.JwtAudience))
+                {
+                    var audClaim = jwt.Audiences;
+                    if (audClaim != null && audClaim.Any() && !audClaim.Contains(opts.JwtAudience))
+                    {
+                        throw new InvalidOperationException("Token audience does not match this app's expected audience.");
+                    }
+                }
+
+                var hasBusinessId = jwt.Claims.Any(c => string.Equals(c.Type, "business_id", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(c.Value));
+
+                if (opts.AppRole == MobileAppRole.Business && !hasBusinessId)
+                {
+                    // Business app must receive tokens that include a business_id claim bound to the business.
+                    throw new InvalidOperationException("Received access token is not a Business token (missing business_id claim).");
+                }
+
+                if (opts.AppRole == MobileAppRole.Consumer && hasBusinessId)
+                {
+                    // Consumer app should not accept tokens tied to a business.
+                    throw new InvalidOperationException("Received access token appears to be a Business token. Please use a Consumer account.");
+                }
+            }
+            catch (ArgumentException)
+            {
+                // Malformed token — let higher layers handle the error.
+                throw new InvalidOperationException("Invalid access token format.");
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _refreshLock.Dispose();
+            _disposed = true;
         }
     }
 }
