@@ -40,6 +40,9 @@
   </Applications>
 
   <Capabilities>
+	  <Capability Name="internetClient" />
+	  <DeviceCapability Name="webcam" />
+	  <DeviceCapability Name="location" />
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 

@@ -3,4 +3,22 @@
 	<application android:usesCleartextTraffic="true" android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
+
+	<!-- Basic network -->
+	<uses-permission android:name="android.permission.INTERNET" />
+
+	<!-- Camera for QR scanning -->
+	<uses-permission android:name="android.permission.CAMERA" />
+
+	<!-- Location for Discover (fine accuracy); use COARSE if approximate sufficient -->
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+	<!-- Android 13+ notification runtime permission -->
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+	<!-- Suggest: do not require camera hardware so it can run on emulators without camera -->
+	<uses-feature android:name="android.hardware.camera" android:required="false" />
+	<!-- If you want autofocus awareness (optional) -->
+	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 </manifest>
