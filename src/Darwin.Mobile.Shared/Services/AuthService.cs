@@ -43,7 +43,6 @@ namespace Darwin.Mobile.Shared.Services
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct);
     }
 
-
     /// <summary>
     /// Default implementation of <see cref="IAuthService"/>.
     /// Responsibilities include:
@@ -84,10 +83,6 @@ namespace Darwin.Mobile.Shared.Services
                 effectiveDeviceId = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
             }
 
-<<<<<<<<< Temporary merge branch 1
-            // Call login endpoint
-=========
->>>>>>>>> Temporary merge branch 2
             var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>(
                 ApiRoutes.Auth.Login,
                 new PasswordLoginRequest
@@ -98,16 +93,9 @@ namespace Darwin.Mobile.Shared.Services
                 },
                 ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Empty token response.");
 
-<<<<<<<<< Temporary merge branch 1
-            // Basic token validation depending on app role to prevent cross-app login.
-            ValidateTokenForApp(token.AccessToken, _opts);
-
-            // Persist tokens and set bearer for subsequent requests
-=========
             // Validate token shape/claims with app role (prevent cross-app logins).
             ValidateTokenForApp(token.AccessToken, _opts);
 
->>>>>>>>> Temporary merge branch 2
             await _store.SaveAsync(token.AccessToken, token.AccessTokenExpiresAtUtc, token.RefreshToken, token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
             _api.SetBearerToken(token.AccessToken);
 
@@ -172,21 +160,11 @@ namespace Darwin.Mobile.Shared.Services
             {
                 // Any error during refresh should be treated as 'refresh failed' (no throw).
                 return false;
-<<<<<<<<< Temporary merge branch 1
-
-            // Validate refreshed token as well
-            ValidateTokenForApp(res.AccessToken, _opts);
-
-            await _store.SaveAsync(res.AccessToken, res.AccessTokenExpiresAtUtc, res.RefreshToken, res.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
-            _api.SetBearerToken(res.AccessToken);
-            return true;
-=========
             }
             finally
             {
                 _refreshLock.Release();
             }
->>>>>>>>> Temporary merge branch 2
         }
 
         /// <inheritdoc />
@@ -338,8 +316,6 @@ namespace Darwin.Mobile.Shared.Services
                 throw new InvalidOperationException("Invalid access token format.");
             }
         }
-<<<<<<<<< Temporary merge branch 1
-=========
 
         public void Dispose()
         {
@@ -347,6 +323,5 @@ namespace Darwin.Mobile.Shared.Services
             _refreshLock.Dispose();
             _disposed = true;
         }
->>>>>>>>> Temporary merge branch 2
     }
 }
