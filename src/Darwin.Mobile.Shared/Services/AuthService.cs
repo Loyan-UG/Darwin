@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Identity;
@@ -40,6 +42,13 @@ namespace Darwin.Mobile.Shared.Services
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct);
     }
 
+    /// <summary>
+    /// Default implementation of <see cref="IAuthService"/>.
+    /// Responsibilities include:
+    /// - Calling login/refresh/logout endpoints via <see cref="IApiClient"/>.
+    /// - Persisting tokens via <see cref="ITokenStore"/>.
+    /// - Validating returned JWT against the configured <see cref="ApiOptions.AppRole"/>.
+    /// </summary>
     public sealed class AuthService : IAuthService
     {
         private readonly IApiClient _api;
@@ -66,9 +75,7 @@ namespace Darwin.Mobile.Shared.Services
                 effectiveDeviceId = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
             }
 
-            // Optional: log/debug the effective device id to verify it is non-null.
-            System.Diagnostics.Debug.WriteLine($"AuthService.LoginAsync using deviceId={effectiveDeviceId}");
-
+            // Call login endpoint
             var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>(
                 ApiRoutes.Auth.Login,
                 new PasswordLoginRequest
@@ -79,9 +86,14 @@ namespace Darwin.Mobile.Shared.Services
                 },
                 ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Empty token response.");
 
+            // Basic token validation depending on app role to prevent cross-app login.
+            ValidateTokenForApp(token.AccessToken, _opts);
+
+            // Persist tokens and set bearer for subsequent requests
             await _store.SaveAsync(token.AccessToken, token.AccessTokenExpiresAtUtc, token.RefreshToken, token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
             _api.SetBearerToken(token.AccessToken);
 
+            // Fetch bootstrap data and populate options
             var boot = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false)
                        ?? new AppBootstrapResponse();
 
@@ -106,6 +118,9 @@ namespace Darwin.Mobile.Shared.Services
 
             if (res is null)
                 return false;
+
+            // Validate refreshed token as well
+            ValidateTokenForApp(res.AccessToken, _opts);
 
             await _store.SaveAsync(res.AccessToken, res.AccessTokenExpiresAtUtc, res.RefreshToken, res.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
             _api.SetBearerToken(res.AccessToken);
@@ -199,6 +214,57 @@ namespace Darwin.Mobile.Shared.Services
                 ct).ConfigureAwait(false);
 
             return result.Succeeded;
+        }
+
+        /// <summary>
+        /// Validates the JWT access token against the configured app role.
+        /// Rules (conservative):
+        /// - If AppRole == Business: token MUST contain a non-empty "business_id" claim.
+        /// - If AppRole == Consumer: token MUST NOT contain "business_id" claim (prevent accidental business tokens).
+        /// - If AppRole == Unknown: no app-type-specific validation is performed.
+        /// Throws InvalidOperationException on validation failure.
+        /// </summary>
+        /// <param name="accessToken">Raw JWT access token string.</param>
+        /// <param name="opts">ApiOptions that may contain AppRole and audience expectations.</param>
+        private static void ValidateTokenForApp(string accessToken, ApiOptions opts)
+        {
+            if (string.IsNullOrWhiteSpace(accessToken) || opts is null)
+                return;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(accessToken);
+
+                // Optionally validate audience if present in options (best-effort on client side).
+                if (!string.IsNullOrWhiteSpace(opts.JwtAudience))
+                {
+                    var audClaim = jwt.Audiences;
+                    if (audClaim != null && audClaim.Any() && !audClaim.Contains(opts.JwtAudience))
+                    {
+                        throw new InvalidOperationException("Token audience does not match this app's expected audience.");
+                    }
+                }
+
+                var hasBusinessId = jwt.Claims.Any(c => string.Equals(c.Type, "business_id", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(c.Value));
+
+                if (opts.AppRole == MobileAppRole.Business && !hasBusinessId)
+                {
+                    // Business app must receive tokens that include a business_id claim bound to the business.
+                    throw new InvalidOperationException("Received access token is not a Business token (missing business_id claim).");
+                }
+
+                if (opts.AppRole == MobileAppRole.Consumer && hasBusinessId)
+                {
+                    // Consumer app should not accept tokens tied to a business.
+                    throw new InvalidOperationException("Received access token appears to be a Business token. Please use a Consumer account.");
+                }
+            }
+            catch (ArgumentException)
+            {
+                // Malformed token — let higher layers handle the error.
+                throw new InvalidOperationException("Invalid access token format.");
+            }
         }
     }
 }
