@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Domain.Entities.Businesses;
@@ -20,21 +21,25 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
     /// - Accounts (10+)
     /// - Points transactions (10+)
     /// - Reward redemptions (10+)
-    /// - QR tokens (10+)
-    /// - Scan sessions (10+)
+    /// - QR tokens (10+) including negative scenarios
+    /// - Scan sessions (10+) including expired/mismatch scenarios
     /// </summary>
     public sealed class LoyaltySeedSection
     {
         private readonly ILogger<LoyaltySeedSection> _logger;
+
+        /// <summary>
+        /// Default expiry window for both QR tokens and scan sessions (minutes).
+        /// Rationale: single cohesive policy aligned with production handlers (PrepareScanSessionHandler = 5).
+        /// Pitfalls: too short harms UX; too long increases replay risk.
+        /// </summary>
+        private const int DefaultScanExpiryMinutes = 5;
 
         public LoyaltySeedSection(ILogger<LoyaltySeedSection> logger)
         {
             _logger = logger;
         }
 
-        /// <summary>
-        /// Entry point invoked by <see cref="DataSeeder"/>.
-        /// </summary>
         public async Task SeedAsync(DarwinDbContext db, CancellationToken ct = default)
         {
             _logger.LogInformation("Seeding Loyalty (programs/accounts/scan sessions) ...");
@@ -219,6 +224,30 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             await db.SaveChangesAsync(ct);
         }
 
+        /// <summary>
+        /// Generates a cryptographically secure, Base64Url-encoded opaque token (no padding).
+        /// Rationale: keep seed tokens realistic and compatible with production token parsing.
+        /// Pitfalls: do not log raw token values in production.
+        /// Example: used to seed QrCodeToken.Token values.
+        /// </summary>
+        private static string GenerateOpaqueToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(32);
+            return Base64UrlEncode(bytes);
+        }
+
+        /// <summary>
+        /// Encodes bytes using Base64Url (RFC 4648) without padding.
+        /// </summary>
+        private static string Base64UrlEncode(byte[] bytes)
+        {
+            var base64 = Convert.ToBase64String(bytes);
+            return base64
+                .Replace("+", "-", StringComparison.Ordinal)
+                .Replace("/", "_", StringComparison.Ordinal)
+                .TrimEnd('=');
+        }
+
         private static async Task SeedQrTokensAsync(DarwinDbContext db, IReadOnlyList<User> users, CancellationToken ct)
         {
             var accounts = await db.Set<LoyaltyAccount>().OrderBy(a => a.BusinessId).ToListAsync(ct);
@@ -227,17 +256,41 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             for (var i = 0; i < accounts.Count && i < 10; i++)
             {
                 var user = users[i % users.Count];
+                var now = DateTime.UtcNow;
 
-                tokens.Add(new QrCodeToken
+                var token = new QrCodeToken
                 {
                     UserId = user.Id,
                     LoyaltyAccountId = accounts[i].Id,
-                    Token = $"QR-{Guid.NewGuid():N}",
+                    Token = GenerateOpaqueToken(),
                     Purpose = i % 2 == 0 ? QrTokenPurpose.Accrual : QrTokenPurpose.Redemption,
-                    IssuedAtUtc = DateTime.UtcNow.AddSeconds(-30),
-                    ExpiresAtUtc = DateTime.UtcNow.AddMinutes(2),
+                    IssuedAtUtc = now.AddSeconds(-30),
+                    ExpiresAtUtc = now.AddMinutes(DefaultScanExpiryMinutes),
                     IssuedDeviceId = $"device-{i:D2}"
-                });
+                };
+
+                // Negative scenarios:
+                // - Some tokens expired (i % 7 == 0).
+                // - Some tokens consumed by the same business (i % 5 == 0).
+                // - Some tokens consumed by a different business (i % 9 == 0) to test mismatch handling.
+                if (i % 7 == 0)
+                {
+                    token.ExpiresAtUtc = now.AddMinutes(-1); // expired
+                }
+
+                if (i % 5 == 0)
+                {
+                    token.ConsumedAtUtc = now.AddSeconds(-5);
+                    token.ConsumedByBusinessId = accounts[i].BusinessId; // consumed by correct business
+                }
+                else if (i % 9 == 0)
+                {
+                    var otherBizId = accounts[(i + 1) % accounts.Count].BusinessId;
+                    token.ConsumedAtUtc = now.AddSeconds(-5);
+                    token.ConsumedByBusinessId = otherBizId; // consumed by different business
+                }
+
+                tokens.Add(token);
             }
 
             db.AddRange(tokens);
@@ -260,11 +313,15 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 var tier = tiers[i % tiers.Count];
                 var mode = tokens[i].Purpose == QrTokenPurpose.Redemption ? LoyaltyScanMode.Redemption : LoyaltyScanMode.Accrual;
 
-                var selectedRewards = mode == LoyaltyScanMode.Redemption
+                var now = DateTime.UtcNow;
+
+                var selectedRewardsJson = mode == LoyaltyScanMode.Redemption
                     ? $"[{{\"tierId\":\"{tier.Id}\",\"requiredPoints\":{tier.PointsRequired},\"quantity\":1}}]"
                     : null;
 
-                sessions.Add(new ScanSession
+                var expires = now.AddMinutes(DefaultScanExpiryMinutes);
+
+                var session = new ScanSession
                 {
                     QrCodeTokenId = tokens[i].Id,
                     LoyaltyAccountId = account.Id,
@@ -272,13 +329,31 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     BusinessLocationId = location?.Id,
                     Mode = mode,
                     Status = i % 2 == 0 ? LoyaltyScanStatus.Completed : LoyaltyScanStatus.Pending,
-                    SelectedRewardsJson = selectedRewards,
-                    ExpiresAtUtc = DateTime.UtcNow.AddMinutes(2),
+                    SelectedRewardsJson = selectedRewardsJson,
+                    ExpiresAtUtc = expires,
                     CreatedByDeviceId = tokens[i].IssuedDeviceId,
                     Outcome = i % 2 == 0 ? "Accepted" : "Pending",
                     FailureReason = null,
                     ResultingTransactionId = null
-                });
+                };
+
+                // Negative scenarios:
+                // - If the token is expired, mirror with an expired session.
+                // - Some sessions intentionally expired (i % 6 == 0).
+                // - Some sessions have mismatched business (i % 11 == 0) to validate resolver strictness.
+                if (tokens[i].ExpiresAtUtc <= now || i % 6 == 0)
+                {
+                    session.ExpiresAtUtc = now.AddMinutes(-2); // expired session
+                    session.Status = LoyaltyScanStatus.Pending; // pending but expired
+                }
+
+                if (i % 11 == 0 && accounts.Count > 1)
+                {
+                    var mismatchedBizId = accounts[(i + 1) % accounts.Count].BusinessId;
+                    session.BusinessId = mismatchedBizId; // business mismatch on purpose
+                }
+
+                sessions.Add(session);
             }
 
             db.AddRange(sessions);

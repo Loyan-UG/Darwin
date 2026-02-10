@@ -37,7 +37,7 @@ namespace Darwin.Domain.Entities.Loyalty
         public DateTime IssuedAtUtc { get; set; } = DateTime.UtcNow;
 
         /// <summary>
-        /// UTC expiry. Keep short (e.g., 60-120s) to minimize replay risk.
+        /// UTC expiry. Keep short (e.g., 300s) to minimize replay risk.
         /// </summary>
         public DateTime ExpiresAtUtc { get; set; }
 
