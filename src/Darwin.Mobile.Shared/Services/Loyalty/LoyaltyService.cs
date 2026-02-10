@@ -1,4 +1,7 @@
-﻿using System;
+﻿// src/Darwin.Mobile.Shared/Services/Loyalty/LoyaltyService.cs
+// https://github.com/shahramvafadar/Darwin/blob/301147077eba61b84e0eec8656aec08e20a1795a/src/Darwin.Mobile.Shared/Services/Loyalty/LoyaltyService.cs
+
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
@@ -17,6 +20,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
     /// - Confirm accrual and redemption.
     /// - Read models for accounts, history, rewards and "my places".
     /// Contract-first: consumes Darwin.WebApi endpoints using Darwin.Contracts.
+    /// 
+    /// Rationale / Pitfalls:
+    /// - ApiClient returns Result<T></T> instead of throwing on normal HTTP errors.
+    /// - We must honor cancellation (OperationCanceledException) and not swallow it.
+    /// - Use conservative exception handling to avoid crashing UI on unexpected parse errors.
     /// </summary>
     public sealed class LoyaltyService : ILoyaltyService
     {
@@ -77,10 +85,15 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<ScanSessionClientModel>.Ok(model);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
             {
-                return Result<ScanSessionClientModel>.Fail(
-                    $"Network error while preparing scan session: {ex.Message}");
+                // Propagate cancellation to caller so callers can respect timeout/token semantics.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Any other error is treated as a network/transport/parsing failure from the client's perspective.
+                return Result<ScanSessionClientModel>.Fail($"Network error while preparing scan session: {ex.Message}");
             }
         }
 
@@ -105,10 +118,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<LoyaltyAccountSummary>.Ok(response);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
             {
-                return Result<LoyaltyAccountSummary>.Fail(
-                    $"Network error while retrieving account summary: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<LoyaltyAccountSummary>.Fail($"Network error while retrieving account summary: {ex.Message}");
             }
         }
 
@@ -135,10 +151,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(response);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
             {
-                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail(
-                    $"Network error while retrieving rewards: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail($"Network error while retrieving rewards: {ex.Message}");
             }
         }
 
@@ -186,10 +205,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<BusinessScanSessionClientModel>.Ok(model);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
             {
-                return Result<BusinessScanSessionClientModel>.Fail(
-                    $"Network error while processing scan: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<BusinessScanSessionClientModel>.Fail($"Network error while processing scan: {ex.Message}");
             }
         }
 
@@ -250,10 +272,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     LastAccrualAtUtc = DateTime.UtcNow
                 });
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
             {
-                return Result<LoyaltyAccountSummary>.Fail(
-                    $"Network error while confirming accrual: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<LoyaltyAccountSummary>.Fail($"Network error while confirming accrual: {ex.Message}");
             }
         }
 
@@ -295,7 +320,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                     LastAccrualAtUtc = DateTime.UtcNow
                 });
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 return Result<LoyaltyAccountSummary>.Fail($"Network error while confirming redemption: {ex.Message}");
             }
@@ -315,7 +344,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<IReadOnlyList<LoyaltyAccountSummary>>.Ok(response);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 return Result<IReadOnlyList<LoyaltyAccountSummary>>.Fail($"Network error while retrieving accounts: {ex.Message}");
             }
@@ -338,7 +371,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<IReadOnlyList<PointsTransaction>>.Ok(response);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 return Result<IReadOnlyList<PointsTransaction>>.Fail($"Network error while retrieving history: {ex.Message}");
             }
@@ -365,7 +402,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Ok(response);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail($"Network error while retrieving my businesses: {ex.Message}");
             }
@@ -390,7 +431,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<GetMyLoyaltyTimelinePageResponse>.Ok(response);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 return Result<GetMyLoyaltyTimelinePageResponse>.Fail($"Network error while retrieving timeline: {ex.Message}");
             }
@@ -419,7 +464,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
                 return Result<LoyaltyAccountSummary>.Ok(response);
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 return Result<LoyaltyAccountSummary>.Fail($"Network error while joining loyalty: {ex.Message}");
             }
@@ -440,14 +489,17 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 if (result.Succeeded)
                     return Result<LoyaltyRewardSummary?>.Ok(result.Value);
 
-                // When server returns 204, ApiClient currently fails with "Server returned no content."
-                // Treat that as a valid "no next reward" case.
-                if (string.Equals(result.Error, "Server returned no content.", StringComparison.OrdinalIgnoreCase))
+                // When server returns 204, ApiClient returns ApiClient.NoContentResultMessage
+                if (string.Equals(result.Error, ApiClient.NoContentResultMessage, StringComparison.OrdinalIgnoreCase))
                     return Result<LoyaltyRewardSummary?>.Ok(null);
 
                 return Result<LoyaltyRewardSummary?>.Fail(result.Error ?? "Request failed.");
             }
-            catch (HttpRequestException ex)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 return Result<LoyaltyRewardSummary?>.Fail($"Network error while retrieving next reward: {ex.Message}");
             }
