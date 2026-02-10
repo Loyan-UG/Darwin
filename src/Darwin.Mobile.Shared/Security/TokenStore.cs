@@ -1,13 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-#if NET10_0_ANDROID || NET10_0_IOS || NET10_0_MACCATALYST
-// SecureStorage is provided by MAUI; compile this using only when targeting MAUI mobile TFMs.
-// We intentionally compile this block for .NET 10 MAUI TFMs. This keeps the mobile builds secure
-// while allowing non-mobile test TFMs to use an in-memory fallback.
-using Microsoft.Maui.Storage;
-#endif
-
 namespace Darwin.Mobile.Shared.Security
 {
     /// <summary>
@@ -65,50 +58,24 @@ namespace Darwin.Mobile.Shared.Security
             return (rt, DateTime.TryParse(exp, null, System.Globalization.DateTimeStyles.RoundtripKind, out var d) ? d : null);
         }
 
-        /// <inheritdoc />
-        public Task ClearAsync()
-        {
-            // SecureStorage.Remove is synchronous in the current MAUI contract.
-            SecureStorage.Remove("access_token");
-            SecureStorage.Remove("access_expires");
-            SecureStorage.Remove("refresh_token");
-            SecureStorage.Remove("refresh_expires");
-            return Task.CompletedTask;
-        }
+    public Task ClearAsync()
+    {
+        SecureStorage.Remove("access_token");
+        SecureStorage.Remove("access_expires");
+        SecureStorage.Remove("refresh_token");
+        SecureStorage.Remove("refresh_expires");
+        return Task.CompletedTask;
+    }
 #else
-        // In-memory fallback for non-mobile TFMs (tests, CI, desktop tooling).
-        // This is intentionally simple and not thread-safe for high-concurrency scenarios;
-        // tests should not rely on concurrent access to the same TokenStore instance.
-        private string? _accessToken;
-        private string? _refreshToken;
-        private DateTime? _accessExpiresUtc;
-        private DateTime? _refreshExpiresUtc;
+    private string? _at, _rt;
+    private DateTime? _atex, _rtex;
 
-        /// <inheritdoc />
-        public Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
-        {
-            _accessToken = accessToken;
-            _accessExpiresUtc = accessExpiresUtc;
-            _refreshToken = refreshToken;
-            _refreshExpiresUtc = refreshExpiresUtc;
-            return Task.CompletedTask;
-        }
+    public Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
+    { _at = accessToken; _atex = accessExpiresUtc; _rt = refreshToken; _rtex = refreshExpiresUtc; return Task.CompletedTask; }
 
-        /// <inheritdoc />
-        public Task<(string? AccessToken, DateTime? AccessExpiresUtc)> GetAccessAsync()
-            => Task.FromResult((_accessToken, _accessExpiresUtc));
-
-        /// <inheritdoc />
-        public Task<(string? RefreshToken, DateTime? RefreshExpiresUtc)> GetRefreshAsync()
-            => Task.FromResult((_refreshToken, _refreshExpiresUtc));
-
-        /// <inheritdoc />
-        public Task ClearAsync()
-        {
-            _accessToken = _refreshToken = null;
-            _accessExpiresUtc = _refreshExpiresUtc = null;
-            return Task.CompletedTask;
-        }
+    public Task<(string? AccessToken, DateTime? AccessExpiresUtc)> GetAccessAsync() => Task.FromResult((_at, _atex));
+    public Task<(string? RefreshToken, DateTime? RefreshExpiresUtc)> GetRefreshAsync() => Task.FromResult((_rt, _rtex));
+    public Task ClearAsync() { _at = _rt = null; _atex = _rtex = null; return Task.CompletedTask; }
 #endif
     }
 }

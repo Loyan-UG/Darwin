@@ -1,7 +1,4 @@
-﻿// src/Darwin.Mobile.Shared/Api/ApiClient.cs
-// https://github.com/shahramvafadar/Darwin/blob/301147077eba61b84e0eec8656aec08e20a1795a/src/Darwin.Mobile.Shared/Api/ApiClient.cs
-
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
