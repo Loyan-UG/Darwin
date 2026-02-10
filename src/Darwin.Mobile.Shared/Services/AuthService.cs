@@ -43,6 +43,7 @@ namespace Darwin.Mobile.Shared.Services
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct);
     }
 
+
     /// <summary>
     /// Default implementation of <see cref="IAuthService"/>.
     /// Responsibilities include:
