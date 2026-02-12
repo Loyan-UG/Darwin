@@ -109,6 +109,7 @@ namespace Darwin.Application.Loyalty.Services
             {
                 if (session.Status == LoyaltyScanStatus.Pending)
                 {
+                    // Pitfall: If a pending session expires, mark explicitly to aid analytics/debugging.
                     session.Status = LoyaltyScanStatus.Expired;
                     session.Outcome = "Expired";
                     session.FailureReason = "Session expired before use.";

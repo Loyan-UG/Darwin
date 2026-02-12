@@ -220,11 +220,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// view of the scan session.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// The business app scans a QR code that contains only an opaque <c>ScanSessionToken</c>.
-        /// The backend resolves the token to internal records, validates expiry/state/ownership,
-        /// and returns the session view.
-        /// </para>
+        /// - The business app scans a QR with an opaque ScanSessionToken.
+        /// - Backend resolves token, validates expiry/state/ownership, and returns session view.
+        /// - Error mapping: expired/consumed → 409; business mismatch → 403; token not found → 404.
         /// </remarks>
         /// <param name="request">Request payload containing <c>ScanSessionToken</c>.</param>
         /// <param name="ct">Cancellation token.</param>
@@ -257,7 +255,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             if (!result.Succeeded || result.Value is null)
             {
-                return ProblemFromResult(result);
+                // FIX: use generic MapScanFailure<Result<T>> to avoid CS1503 type mismatch
+                return MapScanFailure(result);
             }
 
             var value = result.Value;
@@ -265,7 +264,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             // Default to empty list; only redemption-mode sessions may carry selected rewards.
             IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
 
-            // Redemption: enrich selected tier ids with reward details
+            // Redemption: enrich selected tier ids with reward details (name/description/etc.)
             if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
                 value.SelectedRewards is { Count: > 0 })
             {
@@ -292,8 +291,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
                     ? LoyaltyScanAllowedActions.CanConfirmAccrual
                     : LoyaltyScanAllowedActions.CanConfirmRedemption;
 
-            // IMPORTANT:
-            // Return the contract type (not an anonymous object) to keep OpenAPI/clients stable.
             var response = new ProcessScanSessionForBusinessResponse
             {
                 Mode = LoyaltyContractsMapper.ToContract(value.Mode),
@@ -305,6 +302,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
+
         #endregion
 
 
@@ -443,36 +441,15 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
 
         /// <summary>
-        /// Confirms an accrual operation for a previously prepared scan session
-        /// on the business device.
+        /// Confirms an accrual operation for a previously prepared scan session on the business device.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// The business app calls this endpoint after scanning the consumer's QR
-        /// code and collecting the number of points to accrue (for example one
-        /// point per visit or a value computed on the device).
-        /// </para>
-        /// <para>
-        /// The business identifier is resolved from the authenticated principal
-        /// (for example from a <c>"business_id"</c> claim) and is not taken from
-        /// the request body, which prevents tampering with the target business.
-        /// </para>
-        /// <para>
-        /// On success, the endpoint returns a <see cref="ConfirmAccrualResponse"/>
-        /// with <see cref="ConfirmAccrualResponse.Success"/> set to <c>true</c>
-        /// and the new points balance. In case of validation or business rule
-        /// failures, it returns <c>400 Bad Request</c> with a simple error
-        /// payload rather than a <see cref="ConfirmAccrualResponse"/>.
-        /// </para>
+        /// - Business id is resolved from authenticated principal (claim "business_id").
+        /// - Error mapping: expired/consumed → 409; business mismatch → 403; token not found → 404.
+        /// - Validation errors remain 400.
         /// </remarks>
-        /// <param name="request">
-        /// The accrual confirmation request payload sent by the business app.
-        /// </param>
+        /// <param name="request">Accrual confirmation payload.</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A <see cref="ConfirmAccrualResponse"/> on success; otherwise a
-        /// <c>400 Bad Request</c> or <c>403 Forbidden</c> result.
-        /// </returns>
         [HttpPost("scan/confirm-accrual")]
         [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
         [ProducesResponseType(typeof(ConfirmAccrualResponse), StatusCodes.Status200OK)]
@@ -520,7 +497,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             if (!result.Succeeded || result.Value is null)
             {
-                return ProblemFromResult(result);
+                // FIX: use generic MapScanFailure<Result<T>> to avoid CS1503 type mismatch
+                return MapScanFailure(result);
             }
 
             var value = result.Value;
@@ -529,10 +507,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
             {
                 Success = true,
                 NewBalance = value.NewPointsBalance,
-
-                // Future-friendly: allow richer response later (needs an Application DTO for updated account snapshot)
+                // Future-friendly: allow richer response later (updated account snapshot)
                 UpdatedAccount = null,
-
                 ErrorCode = null,
                 ErrorMessage = null
             };
@@ -544,30 +520,15 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
 
         /// <summary>
-        /// Confirms a redemption operation for a previously prepared scan session
-        /// on the business device.
+        /// Confirms a redemption operation for a previously prepared scan session on the business device.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// The business app calls this endpoint after scanning the consumer's QR code
-        /// when the scan mode is redemption. The underlying application handler validates
-        /// the scan session, ensures it belongs to the current business, and applies
-        /// the redemption to the customer's loyalty account.
-        /// </para>
-        /// <para>
-        /// The business identifier is resolved from the authenticated principal
-        /// (for example from a <c>"business_id"</c> claim) and is not taken from the
-        /// request body to prevent tampering with the target business.
-        /// </para>
+        /// - Business id is resolved from the authenticated principal.
+        /// - Error mapping: expired/consumed → 409; business mismatch → 403; token not found → 404.
+        /// - Validation errors remain 400.
         /// </remarks>
-        /// <param name="request">
-        /// The redemption confirmation request payload containing the scan session id.
-        /// </param>
+        /// <param name="request">Redemption confirmation payload with ScanSessionToken.</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A <see cref="ConfirmRedemptionResponse"/> on success; otherwise a
-        /// <c>400 Bad Request</c> result with a simple error payload.
-        /// </returns>
         [HttpPost("scan/confirm-redemption")]
         [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
         [ProducesResponseType(typeof(ConfirmRedemptionResponse), StatusCodes.Status200OK)]
@@ -608,7 +569,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             if (!result.Succeeded || result.Value is null)
             {
-                return ProblemFromResult(result);
+                // FIX: use generic MapScanFailure<Result<T>> to avoid CS1503 type mismatch
+                return MapScanFailure(result);
             }
 
             var value = result.Value;
@@ -624,8 +586,6 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             return Ok(response);
         }
-
-
 
 
 
@@ -1122,6 +1082,72 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
 
 
+        /// <summary>
+        /// Maps common scan-session failures to HTTP status codes per Darwin Mobile error taxonomy.
+        /// </summary>
+        /// <typeparam name="T">Result payload type.</typeparam>
+        /// <param name="result">Application-layer Result (failed or missing Value).</param>
+        /// <returns>IActionResult with appropriate status (409/403/404/400).</returns>
+        /// <remarks>
+        /// Rationale:
+        /// - Avoid passing non-generic Result into a helper when controller works with Result&lt;T&gt;.
+        /// - Map common textual error categories to stable HTTP codes for mobile UX.
+        /// Pitfalls:
+        /// - Text-based checks can drift; prefer future move to structured error codes from Application.
+        /// Example:
+        /// - MapScanFailure(result) where result is Result&lt;ConfirmAccrualResultDto&gt;.
+        /// </remarks>
+        private IActionResult MapScanFailure<T>(Result<T> result)
+        {
+            var msg = (result.Error ?? "Operation failed.").Trim();
+            var text = msg.ToLowerInvariant();
 
+            // 409 Conflict — expired/consumed tokens or sessions
+            if (text.Contains("expired") || text.Contains("consumed"))
+            {
+                return ConflictProblem(msg);
+            }
+
+            // 404 Not Found — token/session not found
+            if (text.Contains("not found"))
+            {
+                return NotFoundProblem(msg);
+            }
+
+            // 403 Forbidden — cross-business mismatch (ownership violation)
+            if (text.Contains("belongs to a different business") ||
+                text.Contains("bound to a different business") ||
+                text.Contains("does not belong to this business"))
+            {
+                return Forbid();
+            }
+
+            // Fallback: standardized 400 Problem response
+            return ProblemFromResult(result);
+        }
+
+        /// <summary>
+        /// Returns a 409 Conflict response with RFC7807-like problem payload for mobile.
+        /// </summary>
+        /// <param name="detail">Human-readable explanation.</param>
+        /// <remarks>
+        /// Rationale:
+        /// - Mobile error taxonomy recommends 409 for expired/consumed tokens (user can retry).
+        /// Pitfalls:
+        /// - Do not leak sensitive values; keep messages generic.
+        /// Example:
+        /// - ConflictProblem("Scan session token has expired.")
+        /// </remarks>
+        private IActionResult ConflictProblem(string detail)
+        {
+            var problem = new Darwin.Contracts.Common.ProblemDetails
+            {
+                Type = "https://docs.darwincms.com/errors/conflict",
+                Title = "Conflict",
+                Status = StatusCodes.Status409Conflict,
+                Detail = detail
+            };
+            return StatusCode(StatusCodes.Status409Conflict, problem);
+        }
     }
 }
