@@ -1,4 +1,7 @@
 ﻿using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Navigation;
+using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Mobile.Consumer.Views;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using System;
@@ -13,19 +16,11 @@ public partial class App : Application
 {
     private readonly IAuthService _authService;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="App"/> class.
-    /// </summary>
-    /// <param name="authService">Service used to authenticate and refresh tokens.</param>
     public App(IAuthService authService)
     {
         InitializeComponent();
-
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-
-        // At start we set a placeholder page; real page is set once auth is checked.
         MainPage = new ContentPage();
-
         CheckAuthenticationState();
     }
 
@@ -34,29 +29,28 @@ public partial class App : Application
     /// </summary>
     private async void CheckAuthenticationState()
     {
-        bool tokenValid = false;
-
+        bool tokenValid;
         try
         {
-            // Attempt to refresh the stored token. Returns true if a valid access token is available.
             tokenValid = await _authService.TryRefreshAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch
         {
-            // Ignore exceptions; will fall back to showing the login page.
             tokenValid = false;
         }
 
-        // Navigate based on token availability.
         if (tokenValid)
         {
-            // User has a valid token; load the main shell.
-            MainPage = new AppShell();
+            // When authenticated, pass the auth service into the shell constructor.
+            MainPage = new AppShell(_authService);
         }
         else
         {
-            // No valid token; show the login page within a navigation context.
-            MainPage = new NavigationPage(new Views.LoginPage());
+            // When not authenticated, construct the LoginViewModel manually and inject dependencies.
+            var navigationService = new ShellNavigationService();
+            var loginViewModel = new LoginViewModel(_authService, navigationService);
+            var loginPage = new LoginPage(loginViewModel);
+            MainPage = new NavigationPage(loginPage);
         }
     }
 }
