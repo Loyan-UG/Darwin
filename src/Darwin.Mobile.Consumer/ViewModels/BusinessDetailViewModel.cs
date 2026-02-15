@@ -2,22 +2,20 @@
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Darwin.Contracts.Businesses;
+using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
-using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
-using Darwin.Contracts.Businesses;
-using Darwin.Contracts.Loyalty;
-using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// View model for displaying the details of a selected business and allowing the user
-/// to join its loyalty program. After joining, a scan session is prepared and the user is
-/// redirected to the QR page.
+/// View model for the Business Detail page.
+/// Loads business details, allows the user to join the loyalty program,
+/// prepares a scan session and navigates to the QR page.
 /// </summary>
 public sealed class BusinessDetailViewModel : BaseViewModel
 {
@@ -25,14 +23,11 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly INavigationService _navigationService;
 
-    private BusinessSummary? _business;
+    private BusinessDetail? _business;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BusinessDetailViewModel"/> class.
     /// </summary>
-    /// <param name="businessService">Service to load business information.</param>
-    /// <param name="loyaltyService">Service used to manage loyalty accounts and sessions.</param>
-    /// <param name="navigationService">Navigation service used for page transitions.</param>
     public BusinessDetailViewModel(
         IBusinessService businessService,
         ILoyaltyService loyaltyService,
@@ -42,40 +37,34 @@ public sealed class BusinessDetailViewModel : BaseViewModel
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
-        JoinCommand = new AsyncRelayCommand(JoinLoyaltyProgramAsync, () => !IsBusy && BusinessId != Guid.Empty);
+        JoinCommand = new AsyncRelayCommand(JoinAsync, () => !IsBusy && BusinessId != Guid.Empty);
     }
 
     /// <summary>
-    /// Gets the ID of the selected business. This must be set before loading the page.
+    /// The ID of the business being viewed.
     /// </summary>
     public Guid BusinessId { get; private set; }
 
     /// <summary>
-    /// Gets the loaded business summary.
+    /// The loaded business detail.
     /// </summary>
-    public BusinessSummary? Business
+    public BusinessDetail? Business
     {
         get => _business;
         private set => SetProperty(ref _business, value);
     }
 
     /// <summary>
-    /// Command triggered when the user chooses to join the business's loyalty program.
+    /// Command triggered when the user chooses to join the loyalty program.
     /// </summary>
     public IAsyncRelayCommand JoinCommand { get; }
 
     /// <summary>
-    /// Loads the business details when the page appears.
+    /// Loads business details on first appearance.
     /// </summary>
     public override async Task OnAppearingAsync()
     {
-        if (BusinessId == Guid.Empty)
-        {
-            ErrorMessage = "Business not specified.";
-            return;
-        }
-
-        if (Business is not null)
+        if (BusinessId == Guid.Empty || Business != null)
         {
             return;
         }
@@ -85,15 +74,10 @@ public sealed class BusinessDetailViewModel : BaseViewModel
 
         try
         {
-            // Load the full business details. Here we fetch the summary again; in a real app
-            // you might call GetBusinessDetailAsync instead.
-            var request = new BusinessListRequest { Page = 1, PageSize = 1, BusinessId = BusinessId };
-            var response = await _businessService.ListAsync(request, CancellationToken.None)
-                                                 .ConfigureAwait(false);
+            // Retrieve business details by ID.
+            Business = await _businessService.GetAsync(BusinessId, CancellationToken.None).ConfigureAwait(false);
 
-            Business = response?.Items?.Count > 0 ? response.Items[0] : null;
-
-            if (Business is null)
+            if (Business == null)
             {
                 ErrorMessage = "Business not found.";
             }
@@ -109,23 +93,17 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Sets the business context for this view model.
+    /// Sets the business context for the view model.
     /// </summary>
-    /// <param name="businessId">The identifier of the business to display.</param>
+    /// <param name="businessId">Identifier of the business to load.</param>
     public void SetBusiness(Guid businessId)
     {
         BusinessId = businessId;
     }
 
-    private async Task JoinLoyaltyProgramAsync()
+    private async Task JoinAsync()
     {
-        if (BusinessId == Guid.Empty)
-        {
-            ErrorMessage = "Invalid business.";
-            return;
-        }
-
-        if (IsBusy)
+        if (BusinessId == Guid.Empty || IsBusy)
         {
             return;
         }
@@ -135,31 +113,31 @@ public sealed class BusinessDetailViewModel : BaseViewModel
 
         try
         {
-            // Attempt to create or retrieve the loyalty account for the current business.
-            var joinResult = await _loyaltyService.CreateLoyaltyAccountAsync(BusinessId, CancellationToken.None)
+            // Join the loyalty program for this business.
+            var joinResult = await _loyaltyService.JoinLoyaltyAsync(BusinessId, null, CancellationToken.None)
                                                   .ConfigureAwait(false);
 
-            if (!joinResult.Succeeded || joinResult.Value is null)
+            if (!joinResult.Succeeded || joinResult.Value == null)
             {
-                ErrorMessage = joinResult.Error ?? "Failed to join loyalty program.";
+                ErrorMessage = joinResult.Error ?? "Unable to join the loyalty program.";
                 return;
             }
 
-            // After joining, prepare an accrual scan session.
+            // Prepare a scan session in accrual mode.
             var sessionResult = await _loyaltyService.PrepareScanSessionAsync(
                     BusinessId,
                     LoyaltyScanMode.Accrual,
-                    null,
+                    selectedRewardIds: null,
                     CancellationToken.None)
                 .ConfigureAwait(false);
 
-            if (!sessionResult.Succeeded || sessionResult.Value is null)
+            if (!sessionResult.Succeeded || sessionResult.Value == null)
             {
-                ErrorMessage = sessionResult.Error ?? "Failed to create scan session.";
+                ErrorMessage = sessionResult.Error ?? "Unable to create scan session.";
                 return;
             }
 
-            // Navigate to the QR tab, resetting the navigation stack.
+            // Navigate to the QR tab.
             await _navigationService.GoToAsync($"//{Routes.Qr}").ConfigureAwait(false);
         }
         finally
