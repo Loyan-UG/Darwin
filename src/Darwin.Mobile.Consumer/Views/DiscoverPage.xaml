@@ -11,27 +11,26 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
-
-            <!-- Page header -->
             <Label Text="{x:Static res:AppResources.DiscoverTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <!-- Business list with simple cards -->
-            <CollectionView ItemsSource="{Binding Businesses}">
+            <!-- List of businesses. Selection triggers navigation to business details. -->
+            <CollectionView x:Name="BusinessesCollectionView"
+                            ItemsSource="{Binding Businesses}"
+                            SelectionMode="Single"
+                            SelectionChanged="OnBusinessSelected">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="contracts:BusinessSummary">
+                        <!-- NOTE: MAUI Border does not support CornerRadius in the latest version -->
                         <Border Stroke="{StaticResource BrushPrimary}"
                                 StrokeThickness="1"
                                 Padding="12"
                                 Margin="4">
 
                             <VerticalStackLayout>
-                                <!-- Business name -->
                                 <Label Text="{Binding Name}"
                                        FontSize="16"
                                        FontAttributes="Bold" />
-
-                                <!-- Optional category line; hide if null or empty -->
                                 <Label Text="{Binding Category,
                                                   StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}"
                                        FontSize="14"
@@ -42,13 +41,11 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- Error message -->
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
                    FontSize="14"
                    IsVisible="{Binding HasError}" />
 
-            <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrushPrimary}" />

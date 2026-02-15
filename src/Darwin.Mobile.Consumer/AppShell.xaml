@@ -8,6 +8,15 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     Shell.FlyoutBehavior="Disabled">
 
+    <!-- Toolbar item for logout -->
+    <Shell.ToolbarItems>
+        <ToolbarItem Text="{x:Static res:AppResources.LogoutButtonText}"
+                     Priority="0"
+                     Order="Primary"
+                     Clicked="OnLogoutClicked" />
+    </Shell.ToolbarItems>
+    
+
     <!-- Tab bar ordering: Discover is the default tab, followed by QR, Rewards and Profile -->
     <TabBar>
 
