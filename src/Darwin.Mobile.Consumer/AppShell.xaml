@@ -1,31 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Shell
+    x:Class="Darwin.Mobile.Consumer.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:Darwin.Mobile.Consumer.Views"
-    xmlns:local="clr-namespace:Darwin.Mobile.Consumer.Constants"
+    xmlns:constants="clr-namespace:Darwin.Mobile.Consumer.Constants"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
-    x:Class="Darwin.Mobile.Consumer.AppShell">
+    Shell.FlyoutBehavior="Disabled">
 
-    <!-- Define bottom tabs -->
+    <!-- Tab bar ordering: Discover is the default tab, followed by QR, Rewards and Profile -->
     <TabBar>
-        <ShellContent Title="{x:Static res:AppResources.QrTitle}"
-                      Route="{x:Static local:Routes.Qr}"
-                      ContentTemplate="{DataTemplate views:QrPage}" />
 
-        <ShellContent Title="{x:Static res:AppResources.DiscoverTitle}"
-                      Route="{x:Static local:Routes.Discover}"
-                      ContentTemplate="{DataTemplate views:DiscoverPage}" />
+        <!-- Discover tab (first) -->
+        <ShellContent
+            Route="{x:Static constants:Routes.Discover}"
+            Title="{x:Static res:AppResources.DiscoverTitle}"
+            Icon="discover_tab_icon.png"
+            ContentTemplate="{DataTemplate views:DiscoverPage}" />
 
-        <ShellContent Title="{x:Static res:AppResources.RewardsTitle}"
-                      Route="{x:Static local:Routes.Rewards}"
-                      ContentTemplate="{DataTemplate views:RewardsPage}" />
+        <!-- QR tab -->
+        <ShellContent
+            Route="{x:Static constants:Routes.Qr}"
+            Title="{x:Static res:AppResources.QrTitle}"
+            Icon="qr_tab_icon.png"
+            ContentTemplate="{DataTemplate views:QrPage}" />
 
-        <ShellContent Title="{x:Static res:AppResources.ProfileTitle}"
-                      Route="{x:Static local:Routes.Profile}"
-                      ContentTemplate="{DataTemplate views:ProfilePage}" />
+        <!-- Rewards tab -->
+        <ShellContent
+            Route="{x:Static constants:Routes.Rewards}"
+            Title="{x:Static res:AppResources.RewardsTitle}"
+            Icon="rewards_tab_icon.png"
+            ContentTemplate="{DataTemplate views:RewardsPage}" />
+
+        <!-- Profile tab -->
+        <ShellContent
+            Route="{x:Static constants:Routes.Profile}"
+            Title="{x:Static res:AppResources.ProfileTitle}"
+            Icon="profile_tab_icon.png"
+            ContentTemplate="{DataTemplate views:ProfilePage}" />
+
     </TabBar>
-
-    <!-- Login route (not part of tab bar) -->
-    <ShellContent Route="{x:Static local:Routes.Login}" ContentTemplate="{DataTemplate views:LoginPage}" />
 </Shell>

@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Mobile.Consumer.Views;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Darwin.Mobile.Consumer.Extensions;
 
@@ -51,6 +53,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<Views.DiscoverPage>();
         services.AddTransient<Views.RewardsPage>();
         services.AddTransient<Views.ProfilePage>();
+        services.AddTransient<BusinessDetailPage>();
+        services.AddTransient<BusinessDetailViewModel>();
+
 
         return services;
     }

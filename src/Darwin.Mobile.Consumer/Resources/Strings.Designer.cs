@@ -88,6 +88,24 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Additional details coming soon..
+        /// </summary>
+        internal static string BusinessDetailsPlaceholder {
+            get {
+                return ResourceManager.GetString("BusinessDetailsPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Business.
+        /// </summary>
+        internal static string BusinessDetailsTitle {
+            get {
+                return ResourceManager.GetString("BusinessDetailsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Coming soon.
         /// </summary>
         internal static string ComingSoonTitle {
@@ -174,6 +192,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string InvalidCredentials {
             get {
                 return ResourceManager.GetString("InvalidCredentials", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Join Loyalty Program.
+        /// </summary>
+        internal static string JoinProgramButton {
+            get {
+                return ResourceManager.GetString("JoinProgramButton", resourceCulture);
             }
         }
         

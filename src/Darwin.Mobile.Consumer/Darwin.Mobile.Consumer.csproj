@@ -100,6 +100,9 @@
 	  <MauiXaml Update="App.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\BusinessDetailPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\ComingSoonPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

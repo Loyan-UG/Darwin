@@ -126,6 +126,12 @@
   <data name="BusinessCategoryFormat" xml:space="preserve">
     <value>Category: {0}</value>
   </data>
+  <data name="BusinessDetailsPlaceholder" xml:space="preserve">
+    <value>Additional details coming soon.</value>
+  </data>
+  <data name="BusinessDetailsTitle" xml:space="preserve">
+    <value>Business</value>
+  </data>
   <data name="ComingSoonTitle" xml:space="preserve">
     <value>Coming soon</value>
   </data>
@@ -155,6 +161,9 @@
   </data>
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
+  </data>
+  <data name="JoinProgramButton" xml:space="preserve">
+    <value>Join Loyalty Program</value>
   </data>
   <data name="LastTokenLabel" xml:space="preserve">
     <value>Last token</value>

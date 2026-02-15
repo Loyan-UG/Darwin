@@ -135,6 +135,7 @@ namespace Darwin.WebApi.Auth
             _permissions = permissions ?? throw new ArgumentNullException(nameof(permissions));
         }
 
+
         /// <inheritdoc />
         protected override async Task HandleRequirementAsync(
             AuthorizationHandlerContext context,

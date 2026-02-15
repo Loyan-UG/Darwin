@@ -12,11 +12,11 @@
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
 
-            <!-- Header -->
+            <!-- Page header -->
             <Label Text="{x:Static res:AppResources.DiscoverTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
-            <!-- List of businesses -->
+            <!-- Business list with simple cards -->
             <CollectionView ItemsSource="{Binding Businesses}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="contracts:BusinessSummary">
@@ -31,12 +31,12 @@
                                        FontSize="16"
                                        FontAttributes="Bold" />
 
-                                <!-- Optional category -->
-                                <Label Text="{Binding Category, StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}"
+                                <!-- Optional category line; hide if null or empty -->
+                                <Label Text="{Binding Category,
+                                                  StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}"
                                        FontSize="14"
                                        IsVisible="{Binding Category, Converter={StaticResource InverseBoolConverter}}" />
                             </VerticalStackLayout>
-
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
@@ -52,7 +52,6 @@
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrushPrimary}" />
-
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

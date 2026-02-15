@@ -95,7 +95,7 @@ namespace Darwin.WebApi.Extensions
             // 5) Authorization & permission policy wiring
             // ------------------------------------------------------------
             services.AddAuthorization();
-            services.TryAddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
             services.TryAddEnumerable(ServiceDescriptor.Scoped<IAuthorizationHandler, PermissionAuthorizationHandler>());
 
             // ------------------------------------------------------------
