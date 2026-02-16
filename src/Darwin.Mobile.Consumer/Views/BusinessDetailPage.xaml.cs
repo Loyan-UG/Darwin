@@ -6,8 +6,8 @@ using Microsoft.Maui.Controls;
 namespace Darwin.Mobile.Consumer.Views;
 
 /// <summary>
-/// Code-behind for BusinessDetailPage. Implements <see cref="IQueryAttributable"/>
-/// to receive the business ID from the navigation route.
+/// Code-behind for BusinessDetailPage.
+/// Supports both Shell query-based initialization and direct page initialization.
 /// </summary>
 public partial class BusinessDetailPage : ContentPage, IQueryAttributable
 {
@@ -18,6 +18,14 @@ public partial class BusinessDetailPage : ContentPage, IQueryAttributable
         InitializeComponent();
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
+    }
+
+    /// <summary>
+    /// Allows callers (for example DiscoverPage) to initialize business context before push navigation.
+    /// </summary>
+    public void SetBusinessId(Guid businessId)
+    {
+        _viewModel.SetBusiness(businessId);
     }
 
     /// <summary>
@@ -33,5 +41,11 @@ public partial class BusinessDetailPage : ContentPage, IQueryAttributable
         {
             _viewModel.SetBusiness(id);
         }
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await _viewModel.OnAppearingAsync();
     }
 }

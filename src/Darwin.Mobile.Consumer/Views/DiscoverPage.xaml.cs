@@ -1,7 +1,7 @@
 using System;
 using Darwin.Contracts.Businesses;
-using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Consumer.Views;
@@ -17,12 +17,14 @@ namespace Darwin.Mobile.Consumer.Views;
 public partial class DiscoverPage : ContentPage
 {
     private readonly DiscoverViewModel _viewModel;
+    private readonly IServiceProvider _serviceProvider;
 
-    public DiscoverPage(DiscoverViewModel viewModel)
+    public DiscoverPage(DiscoverViewModel viewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
 
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         BindingContext = _viewModel;
     }
 
@@ -37,30 +39,32 @@ public partial class DiscoverPage : ContentPage
 
     /// <summary>
     /// Handles selection of a business from the collection view.
-    /// Navigates to the business detail route and resets selection.
+    /// Navigates to business details and resets selection.
     /// </summary>
     private async void OnBusinessSelected(object sender, SelectionChangedEventArgs e)
     {
+        if (e.CurrentSelection.Count == 0)
+        {
+            return;
+        }
+
         try
         {
-            if (e.CurrentSelection.Count == 0)
-            {
-                return;
-            }
-
             if (e.CurrentSelection[0] is BusinessSummary selected)
             {
-                // Navigate to the dynamic route and pass business id in the route segment.
-                await Shell.Current.GoToAsync($"{Routes.BusinessDetail}/{selected.Id}");
+                // Resolve details page from DI so its constructor dependencies are satisfied.
+                var detailsPage = _serviceProvider.GetRequiredService<BusinessDetailPage>();
 
-                // Clear selection to allow selecting the same item again later.
-                ((CollectionView)sender).SelectedItem = null;
+                // Set context explicitly before pushing, so the page can load immediately.
+                detailsPage.SetBusinessId(selected.Id);
+
+                await Navigation.PushAsync(detailsPage);
             }
         }
-        catch
+        finally
         {
-            // Selection/navigation exceptions should not crash the page.
-            // TODO: A centralized logger can be added here later if needed.
+            // Always clear selection to allow selecting the same row again later.
+            ((CollectionView)sender).SelectedItem = null;
         }
     }
 }

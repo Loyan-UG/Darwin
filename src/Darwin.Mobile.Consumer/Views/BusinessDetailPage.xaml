@@ -4,41 +4,100 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:contracts="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
     x:Class="Darwin.Mobile.Consumer.Views.BusinessDetailPage"
     x:DataType="vm:BusinessDetailViewModel"
     Title="{Binding Business.Name, FallbackValue={x:Static res:AppResources.BusinessDetailsTitle}}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="20">
+        <VerticalStackLayout Padding="20" Spacing="16">
 
-            <!-- Business name -->
-            <Label Text="{Binding Business.Name}"
-                   Style="{StaticResource TitleLabelStyle}"
-                   LineBreakMode="WordWrap" />
+            <!-- Hero image (if available) -->
+            <Border StrokeThickness="0" BackgroundColor="{StaticResource Neutral100}" StrokeShape="RoundRectangle 16">
+                <Grid HeightRequest="180">
+                    <Image Source="{Binding Business.PrimaryImageUrl}"
+                           Aspect="AspectFill"
+                           IsVisible="{Binding Business.PrimaryImageUrl, Converter={StaticResource NullCheckConverter}}" />
+                    <Label Text="{Binding Business.Name}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Neutral900}"
+                           Margin="16"
+                           VerticalOptions="End" />
+                </Grid>
+            </Border>
 
-            <!-- Business category if available -->
-            <Label Text="{Binding Business.Category,
-                                  StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}"
+            <Label Text="{Binding Business.ShortDescription}"
                    FontSize="14"
-                   IsVisible="{Binding Business.Category, Converter={StaticResource InverseBoolConverter}}" />
+                   TextColor="{StaticResource Neutral900}"
+                   IsVisible="{Binding Business.ShortDescription, Converter={StaticResource NullCheckConverter}}" />
 
-            <!-- Placeholder for additional details (description, address, etc.) -->
-            <Label Text="{x:Static res:AppResources.BusinessDetailsPlaceholder}"
-                   FontSize="14"
-                   TextColor="{StaticResource TextSecondaryColor}" />
+            <Border Stroke="{StaticResource BrushPrimary}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Business Information" FontSize="18" FontAttributes="Bold" />
 
-            <!-- Error message -->
+                    <Label Text="{Binding Business.Category, StringFormat='Category: {0}'}"
+                           IsVisible="{Binding Business.Category, Converter={StaticResource NullCheckConverter}}" />
+
+                    <Label Text="{Binding Business.City, StringFormat='City: {0}'}"
+                           IsVisible="{Binding Business.City, Converter={StaticResource NullCheckConverter}}" />
+
+                    <Label Text="{Binding Business.WebsiteUrl, StringFormat='Website: {0}'}"
+                           IsVisible="{Binding Business.WebsiteUrl, Converter={StaticResource NullCheckConverter}}" />
+
+                    <Label Text="{Binding Business.ContactPhoneE164, StringFormat='Phone: {0}'}"
+                           IsVisible="{Binding Business.ContactPhoneE164, Converter={StaticResource NullCheckConverter}}" />
+
+                    <Label Text="{Binding Business.ContactEmail, StringFormat='Email: {0}'}"
+                           IsVisible="{Binding Business.ContactEmail, Converter={StaticResource NullCheckConverter}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Stroke="{StaticResource BrushPrimary}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12"
+                    IsVisible="{Binding Business.LoyaltyProgramPublic, Converter={StaticResource NullCheckConverter}}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Loyalty Program" FontSize="18" FontAttributes="Bold" />
+
+                    <Label Text="{Binding Business.LoyaltyProgramPublic.Name}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, StringFormat='Active: {0}'}" />
+
+                    <Label Text="Reward Tiers" FontAttributes="Bold" />
+
+                    <VerticalStackLayout
+                        Spacing="8"
+                        BindableLayout.ItemsSource="{Binding Business.LoyaltyProgramPublic.RewardTiers}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="contracts:LoyaltyRewardTierPublic">
+                                <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="8">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding PointsRequired, StringFormat='Points: {0}'}"
+                                               FontAttributes="Bold" />
+                                        <Label Text="{Binding RewardType, StringFormat='Type: {0}'}" />
+                                        <Label Text="{Binding RewardValue, StringFormat='Value: {0}'}"
+                                               IsVisible="{Binding RewardValue, Converter={StaticResource NullCheckConverter}}" />
+                                        <Label Text="{Binding Description}"
+                                               IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
+                                        <Label Text="{Binding AllowSelfRedemption, StringFormat='Self Redemption: {0}'}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
                    IsVisible="{Binding HasError}" />
 
-            <!-- Join loyalty program button -->
             <Button Text="{x:Static res:AppResources.JoinProgramButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding JoinCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
 
-            <!-- Loading indicator -->
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrushPrimary}" />
