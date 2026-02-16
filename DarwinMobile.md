@@ -428,3 +428,128 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
 
 > Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
+
+> Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
+
+---
+
+
+## Mobile Discovery & QR Troubleshooting (Consumer + Business)
+
+### Symptoms: Discover tab is empty after successful login
+
+If login succeeds (for example `cons1@darwin.de`) but no businesses are shown in the Discover tab, validate in this order:
+
+1. **Seed data exists**
+   - `IdentitySeedSection` creates consumer users (`cons1..cons10`) and member-role assignments.
+   - `BusinessesSeedSection` creates 10+ active businesses and primary locations.
+   - `LoyaltySeedSection` creates active loyalty programs/accounts for seeded businesses.
+2. **Consumer Discover page has a bound ViewModel**
+   - `DiscoverPage` must receive `DiscoverViewModel` through DI and call `OnAppearingAsync()`.
+   - Without this, no API call is triggered and list remains empty.
+3. **Business context reaches QR page**
+   - Join flow must navigate with `businessId` query parameter.
+   - `QrPage` must parse `businessId` and call `QrViewModel.SetBusiness(...)` before session refresh.
+
+### Expected end-to-end flow
+
+1. Consumer logs in (`cons1@darwin.de` / seeded password).
+2. Consumer sees business list in Discover.
+3. Consumer opens a business detail and taps Join.
+4. App prepares a scan session and opens QR tab with business-scoped token.
+5. Business app scans the QR and calls `ProcessScanSessionForBusiness`.
+
+---
+
+## Postman verification guide (WebApi)
+
+Use this flow to confirm whether the backend is healthy independently from the mobile app.
+
+### 1) Login and capture tokens
+
+- **POST** `{{baseUrl}}/api/v1/auth/login`
+- Body:
+
+```json
+{
+  "email": "cons1@darwin.de",
+  "password": "Consumer123!",
+  "deviceId": "postman-consumer-device"
+}
+```
+
+- Save `accessToken` and `refreshToken` from response.
+
+### 2) List businesses (discover endpoint)
+
+- **POST** `{{baseUrl}}/api/v1/businesses/list`
+- Authorization: `Bearer {{accessToken}}`
+- Body:
+
+```json
+{
+  "page": 1,
+  "pageSize": 20,
+  "query": null,
+  "city": null,
+  "countryCode": null,
+  "addressQuery": null,
+  "categoryKindKey": null,
+  "near": null,
+  "radiusMeters": null
+}
+```
+
+- Expected: `items` contains seeded businesses (e.g., Café Aurora, Bäckerei König, ...).
+
+### 3) Get business detail
+
+- **GET** `{{baseUrl}}/api/v1/businesses/{{businessId}}`
+- Authorization: `Bearer {{accessToken}}`
+
+### 4) Join loyalty program
+
+- **POST** `{{baseUrl}}/api/v1/loyalty/account/{{businessId}}/join`
+- Authorization: `Bearer {{accessToken}}`
+- Body:
+
+```json
+{
+  "businessLocationId": null
+}
+```
+
+### 5) Prepare scan session (QR token)
+
+- **POST** `{{baseUrl}}/api/v1/loyalty/scan/prepare`
+- Authorization: `Bearer {{accessToken}}`
+- Body:
+
+```json
+{
+  "businessId": "{{businessId}}",
+  "mode": "Accrual",
+  "selectedRewardTierIds": [],
+  "businessLocationId": null,
+  "deviceId": "postman-consumer-device"
+}
+```
+
+- Expected: response includes session token used by consumer QR.
+
+### 6) Business-side processing test (requires business account token)
+
+1. Login as business user (`biz1@darwin.de` / `Business123!`).
+2. Call process endpoint with token from step 5.
+
+- **POST** `{{baseUrl}}/api/v1/loyalty/scan/process`
+
+```json
+{
+  "scanSessionToken": "{{scanSessionToken}}"
+}
+```
+
+Then confirm accrual/redemption with corresponding endpoints.
+
+> If Postman works but app does not, the issue is inside mobile UI/data-binding flow, not backend contracts or handlers.

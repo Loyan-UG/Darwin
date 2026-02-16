@@ -47,7 +47,7 @@ public sealed class DiscoverViewModel : BaseViewModel
     {
         if (!_hasLoaded)
         {
-            await RefreshAsync().ConfigureAwait(false);
+            await RefreshAsync();
             _hasLoaded = true;
         }
     }
@@ -70,18 +70,21 @@ public sealed class DiscoverViewModel : BaseViewModel
                 PageSize = 50
             };
 
-            var response = await _businessService
-                .ListAsync(request, CancellationToken.None)
-                .ConfigureAwait(false);
+            var response = await _businessService.ListAsync(request, CancellationToken.None);
 
-            Businesses.Clear();
+            // ObservableCollection is UI-bound, so updates are dispatched to the main thread.
+            RunOnMain(() => Businesses.Clear());
 
             if (response?.Items != null)
             {
-                foreach (var business in response.Items.OrderBy(b => b.Name))
+                var ordered = response.Items.OrderBy(b => b.Name).ToList();
+                RunOnMain(() =>
                 {
-                    Businesses.Add(business);
-                }
+                    foreach (var business in ordered)
+                    {
+                        Businesses.Add(business);
+                    }
+                });
             }
             else
             {

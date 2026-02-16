@@ -75,7 +75,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
         try
         {
             // Retrieve business details by ID.
-            Business = await _businessService.GetAsync(BusinessId, CancellationToken.None).ConfigureAwait(false);
+            Business = await _businessService.GetAsync(BusinessId, CancellationToken.None);
 
             if (Business == null)
             {
@@ -114,8 +114,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
         try
         {
             // Join the loyalty program for this business.
-            var joinResult = await _loyaltyService.JoinLoyaltyAsync(BusinessId, null, CancellationToken.None)
-                                                  .ConfigureAwait(false);
+            var joinResult = await _loyaltyService.JoinLoyaltyAsync(BusinessId, null, CancellationToken.None);
 
             if (!joinResult.Succeeded || joinResult.Value == null)
             {
@@ -125,11 +124,10 @@ public sealed class BusinessDetailViewModel : BaseViewModel
 
             // Prepare a scan session in accrual mode.
             var sessionResult = await _loyaltyService.PrepareScanSessionAsync(
-                    BusinessId,
-                    LoyaltyScanMode.Accrual,
-                    selectedRewardIds: null,
-                    CancellationToken.None)
-                .ConfigureAwait(false);
+                BusinessId,
+                LoyaltyScanMode.Accrual,
+                selectedRewardIds: null,
+                CancellationToken.None);
 
             if (!sessionResult.Succeeded || sessionResult.Value == null)
             {
@@ -139,7 +137,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
 
             // Navigate to the QR tab and pass the active business context.
             // The QR page reads this query parameter and prepares a session for that business.
-            await _navigationService.GoToAsync($"//{Routes.Qr}?businessId={BusinessId:D}").ConfigureAwait(false);
+            await _navigationService.GoToAsync($"//{Routes.Qr}?businessId={BusinessId:D}");
         }
         finally
         {

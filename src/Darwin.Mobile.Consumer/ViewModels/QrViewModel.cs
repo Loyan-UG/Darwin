@@ -87,7 +87,7 @@ public sealed class QrViewModel : BaseViewModel
         // On first appearance, prepare a default accrual session.
         if (_businessId != Guid.Empty && string.IsNullOrEmpty(QrToken))
         {
-            await RefreshAccrualSessionAsync().ConfigureAwait(false);
+            await RefreshAccrualSessionAsync();
         }
     }
 
@@ -106,8 +106,7 @@ public sealed class QrViewModel : BaseViewModel
         try
         {
             var result = await _loyaltyService.PrepareScanSessionAsync(
-                _businessId, LoyaltyScanMode.Accrual, null, CancellationToken.None)
-                .ConfigureAwait(false);
+                _businessId, LoyaltyScanMode.Accrual, null, CancellationToken.None);
 
             ApplySessionResult(result);
         }
@@ -132,8 +131,7 @@ public sealed class QrViewModel : BaseViewModel
         try
         {
             var result = await _loyaltyService.PrepareScanSessionAsync(
-                _businessId, LoyaltyScanMode.Redemption, null, CancellationToken.None)
-                .ConfigureAwait(false);
+                _businessId, LoyaltyScanMode.Redemption, null, CancellationToken.None);
 
             ApplySessionResult(result);
         }
