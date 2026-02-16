@@ -465,6 +465,8 @@ If login succeeds (for example `cons1@darwin.de`) but no businesses are shown in
 
 Use this flow to confirm whether the backend is healthy independently from the mobile app.
 
+- **Important:** In this environment `JwtRequireDeviceBinding = true`, so `deviceId` must be sent on login and refresh calls.
+
 ### 1) Login and capture tokens
 
 - **POST** `{{baseUrl}}/api/v1/auth/login`

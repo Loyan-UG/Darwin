@@ -3,7 +3,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
 using Darwin.Contracts.Identity;
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Shared.Api;
@@ -76,14 +75,11 @@ namespace Darwin.Mobile.Shared.Services
         {
             ct.ThrowIfCancellationRequested();
 
-            // Resolve an effective device id if caller did not provide one.
-            var effectiveDeviceId = deviceId;
-            if (string.IsNullOrWhiteSpace(effectiveDeviceId))
-            {
-                effectiveDeviceId = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
-            }
+            var effectiveDeviceId = await ResolveEffectiveDeviceIdAsync(deviceId).ConfigureAwait(false);
 
-            var token = await _api.PostAsync<PasswordLoginRequest, TokenResponse>(
+            // Use PostResultAsync so API errors (for example device-binding requirement)
+            // are propagated as meaningful messages instead of collapsing to "Empty token response.".
+            var tokenResult = await _api.PostResultAsync<PasswordLoginRequest, TokenResponse>(
                 ApiRoutes.Auth.Login,
                 new PasswordLoginRequest
                 {
@@ -91,18 +87,34 @@ namespace Darwin.Mobile.Shared.Services
                     Password = password,
                     DeviceId = effectiveDeviceId
                 },
-                ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Empty token response.");
+                ct).ConfigureAwait(false);
+
+            if (!tokenResult.Succeeded || tokenResult.Value is null)
+            {
+                var message = string.IsNullOrWhiteSpace(tokenResult.Error)
+                    ? "Login failed."
+                    : tokenResult.Error;
+
+                throw new InvalidOperationException(message);
+            }
+
+            var token = tokenResult.Value;
 
             // Validate token shape/claims with app role (prevent cross-app logins).
             ValidateTokenForApp(token.AccessToken, _opts);
 
-            await _store.SaveAsync(token.AccessToken, token.AccessTokenExpiresAtUtc, token.RefreshToken, token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
+            await _store.SaveAsync(
+                token.AccessToken,
+                token.AccessTokenExpiresAtUtc,
+                token.RefreshToken,
+                token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
+
             _api.SetBearerToken(token.AccessToken);
 
             var boot = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false)
                        ?? new AppBootstrapResponse();
 
-            // Populate runtime options from bootstrap
+            // Populate runtime options from bootstrap.
             _opts.JwtAudience = boot.JwtAudience;
             _opts.QrRefreshSeconds = boot.QrTokenRefreshSeconds;
             _opts.MaxOutbox = boot.MaxOutboxItems;
@@ -124,7 +136,7 @@ namespace Darwin.Mobile.Shared.Services
             await _refreshLock.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                // Re-read stored refresh token: another caller may have refreshed while we waited.
+                // Re-check state inside lock in case another waiter refreshed already.
                 var (currentRt, currentRtex) = await _store.GetRefreshAsync().ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(currentRt) || currentRtex is null || currentRtex <= DateTime.UtcNow)
                     return false;
@@ -133,10 +145,12 @@ namespace Darwin.Mobile.Shared.Services
                 if (!string.Equals(currentRt, rt, StringComparison.Ordinal))
                     return true;
 
+                var effectiveDeviceId = await ResolveEffectiveDeviceIdAsync(deviceId: null).ConfigureAwait(false);
+
                 // Perform refresh network call.
                 var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>(
                     ApiRoutes.Auth.Refresh,
-                    new RefreshTokenRequest { RefreshToken = currentRt!, DeviceId = null },
+                    new RefreshTokenRequest { RefreshToken = currentRt!, DeviceId = effectiveDeviceId },
                     ct).ConfigureAwait(false);
 
                 if (res is null)
@@ -264,6 +278,27 @@ namespace Darwin.Mobile.Shared.Services
                 ct).ConfigureAwait(false);
 
             return result.Succeeded;
+        }
+
+        /// <summary>
+        /// Resolves a device id that can be sent to authentication endpoints.
+        /// The method guarantees a non-empty value even when platform storage APIs are unavailable.
+        /// </summary>
+        private async Task<string> ResolveEffectiveDeviceIdAsync(string? deviceId)
+        {
+            if (!string.IsNullOrWhiteSpace(deviceId))
+            {
+                return deviceId.Trim();
+            }
+
+            var provided = await _deviceIdProvider.GetDeviceIdAsync().ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(provided))
+            {
+                return provided;
+            }
+
+            // Defensive fallback for extreme edge cases.
+            return Guid.NewGuid().ToString("N");
         }
 
         /// <summary>

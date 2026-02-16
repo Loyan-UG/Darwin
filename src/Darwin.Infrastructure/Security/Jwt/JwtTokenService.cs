@@ -12,6 +12,8 @@ using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Darwin.Domain.Entities.Businesses;
+
 
 namespace Darwin.Infrastructure.Security.Jwt
 {
@@ -108,6 +110,15 @@ namespace Darwin.Infrastructure.Security.Jwt
             {
                 claims.Add(new Claim("scope", string.Join(",", scopes)));
             }
+
+            // When the user is an active member of a business, embed that context as business_id.
+            // Business mobile clients rely on this claim to call business-scoped loyalty endpoints.
+            var businessId = ResolveActiveBusinessId(userId);
+            if (businessId.HasValue)
+            {
+                claims.Add(new Claim("business_id", businessId.Value.ToString("D")));
+            }
+
 
             // Create the JWT access token.
             var jwt = new JwtSecurityToken(
@@ -355,5 +366,31 @@ namespace Darwin.Infrastructure.Security.Jwt
         /// </summary>
         private static string BuildRefreshPurpose(string? deviceId) =>
             string.IsNullOrWhiteSpace(deviceId) ? "JwtRefresh" : $"JwtRefresh:{deviceId}";
+
+
+        /// <summary>
+        /// Resolves a deterministic active business id for the authenticated user, when available.
+        ///
+        /// Selection strategy:
+        /// - Active, non-deleted memberships only.
+        /// - Membership must point to an active, non-deleted business.
+        /// - Lowest GUID ordering is used for deterministic claim value when multiple memberships exist.
+        ///
+        /// Returning null means the user is not a business member and should receive a consumer-style token.
+        /// </summary>
+        private Guid? ResolveActiveBusinessId(Guid userId)
+        {
+            return (from m in _db.Set<BusinessMember>()
+                    join b in _db.Set<Business>() on m.BusinessId equals b.Id
+                    where m.UserId == userId
+                          && !m.IsDeleted
+                          && m.IsActive
+                          && !b.IsDeleted
+                          && b.IsActive
+                    orderby m.BusinessId
+                    select (Guid?)m.BusinessId)
+                .FirstOrDefault();
+        }
+
     }
 }
