@@ -1,7 +1,6 @@
 ﻿using Darwin.Mobile.Consumer.Constants;
-using Darwin.Mobile.Consumer.ViewModels;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.Views;
-using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services;
 using Microsoft.Maui.Controls;
 using System;
@@ -15,11 +14,14 @@ namespace Darwin.Mobile.Consumer;
 public partial class AppShell : Shell
 {
     private readonly IAuthService _authService;
+    private readonly IAppRootNavigator _appRootNavigator;
 
-    public AppShell(IAuthService authService)
+    public AppShell(IAuthService authService, IAppRootNavigator appRootNavigator)
     {
         InitializeComponent();
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+
         Routing.RegisterRoute($"{Routes.BusinessDetail}/{{businessId}}", typeof(BusinessDetailPage));
     }
 
@@ -27,17 +29,12 @@ public partial class AppShell : Shell
     {
         try
         {
-            await _authService.LogoutAsync(CancellationToken.None).ConfigureAwait(false);
+            await _authService.LogoutAsync(CancellationToken.None);
         }
         finally
         {
-            // Create new LoginViewModel with required services
-            var navigationService = new ShellNavigationService();
-            var loginViewModel = new LoginViewModel(_authService, navigationService);
-            var loginPage = new LoginPage(loginViewModel);
-
-            // Reset MainPage to a new navigation stack starting from the login page
-            Application.Current.MainPage = new NavigationPage(loginPage);
+            // Always reset to the login flow even if remote logout fails.
+            await _appRootNavigator.NavigateToLoginAsync();
         }
     }
 }

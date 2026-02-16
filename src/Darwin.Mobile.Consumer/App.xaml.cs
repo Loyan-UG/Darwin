@@ -1,38 +1,56 @@
-﻿using Darwin.Mobile.Shared.Services;
-using Darwin.Mobile.Shared.Navigation;
-using Darwin.Mobile.Consumer.ViewModels;
-using Darwin.Mobile.Consumer.Views;
+﻿using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Shared.Services;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Darwin.Mobile.Consumer;
 
 /// <summary>
-/// The root application class. Decides which page to show at startup based on authentication state.
+/// Application entry point for the Consumer app.
+///
+/// Startup responsibility:
+/// - Create the first window.
+/// - Resolve authentication state.
+/// - Delegate root-page switching to a window-aware navigator.
 /// </summary>
 public partial class App : Application
 {
     private readonly IAuthService _authService;
+    private readonly IAppRootNavigator _appRootNavigator;
 
-    public App(IAuthService authService)
+    public App(IAuthService authService, IAppRootNavigator appRootNavigator)
     {
         InitializeComponent();
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-        MainPage = new ContentPage();
-        CheckAuthenticationState();
+        _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
     }
 
     /// <summary>
-    /// Checks whether a valid token exists and navigates accordingly.
+    /// Creates the application window and starts asynchronous startup routing.
     /// </summary>
-    private async void CheckAuthenticationState()
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        // Use a minimal placeholder page while token refresh is evaluated.
+        var window = new Window(new ContentPage());
+
+        // Register this specific window as the primary target for root changes.
+        _appRootNavigator.AttachWindow(window);
+
+        // Fire-and-forget startup bootstrap; exceptions are contained inside the method.
+        _ = InitializeRootAsync();
+
+        return window;
+    }
+
+    private async Task InitializeRootAsync()
     {
         bool tokenValid;
         try
         {
-            tokenValid = await _authService.TryRefreshAsync(CancellationToken.None).ConfigureAwait(false);
+            tokenValid = await _authService.TryRefreshAsync(CancellationToken.None);
         }
         catch
         {
@@ -41,16 +59,10 @@ public partial class App : Application
 
         if (tokenValid)
         {
-            // When authenticated, pass the auth service into the shell constructor.
-            MainPage = new AppShell(_authService);
+            await _appRootNavigator.NavigateToAuthenticatedShellAsync();
+            return;
         }
-        else
-        {
-            // When not authenticated, construct the LoginViewModel manually and inject dependencies.
-            var navigationService = new ShellNavigationService();
-            var loginViewModel = new LoginViewModel(_authService, navigationService);
-            var loginPage = new LoginPage(loginViewModel);
-            MainPage = new NavigationPage(loginPage);
-        }
+
+        await _appRootNavigator.NavigateToLoginAsync();
     }
 }

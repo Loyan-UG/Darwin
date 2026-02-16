@@ -137,8 +137,9 @@ public sealed class BusinessDetailViewModel : BaseViewModel
                 return;
             }
 
-            // Navigate to the QR tab.
-            await _navigationService.GoToAsync($"//{Routes.Qr}").ConfigureAwait(false);
+            // Navigate to the QR tab and pass the active business context.
+            // The QR page reads this query parameter and prepares a session for that business.
+            await _navigationService.GoToAsync($"//{Routes.Qr}?businessId={BusinessId:D}").ConfigureAwait(false);
         }
         finally
         {
