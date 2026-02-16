@@ -45,7 +45,7 @@
             <!-- Error message -->
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
-                   IsVisible="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToBoolConverter}}" />
+                   IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"

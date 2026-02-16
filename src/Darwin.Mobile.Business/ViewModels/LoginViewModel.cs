@@ -1,109 +1,87 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Darwin.Mobile.Shared.Commands;
+﻿using CommunityToolkit.Mvvm.Input;
+using Darwin.Contracts.Meta;
+using Darwin.Mobile.Business;
+using Darwin.Mobile.Business.Constants;
+using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.ViewModels;
-using Darwin.Mobile.Business.Constants;
-using Darwin.Mobile.Business.Resources;
-using Darwin.Mobile.Shared.Navigation;
+using Microsoft.Maui.Controls;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Darwin.Mobile.Business.ViewModels;
+namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// View model responsible for handling user login.
+/// Handles user login via <see cref="IAuthService"/>.
+/// After successful authentication, the application root is swapped to <see cref="AppShell"/>.
 /// </summary>
 public sealed partial class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
-    private readonly INavigationService _navigationService;
-
-    private string? _email;
-    private string? _password;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LoginViewModel"/> class.
     /// </summary>
-    public LoginViewModel(IAuthService authService, INavigationService navigationService)
+    /// <param name="authService">Service used to authenticate users.</param>
+    public LoginViewModel(IAuthService authService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
-        LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
     }
 
     /// <summary>
-    /// Gets or sets the user's email address.
+    /// Gets or sets the email entered by the user.
     /// </summary>
-    public string? Email
-    {
-        get => _email;
-        set => SetProperty(ref _email, value);
-    }
+    public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the user's password.
+    /// Gets or sets the password entered by the user.
     /// </summary>
-    public string? Password
-    {
-        get => _password;
-        set => SetProperty(ref _password, value);
-    }
+    public string Password { get; set; } = string.Empty;
 
     /// <summary>
-    /// Command used to initiate the login process.
+    /// Executes the login process. Uses <see cref="IAuthService.LoginAsync"/> and
+    /// switches the app root page to the authenticated shell on success.
     /// </summary>
-    public AsyncCommand LoginCommand { get; }
-
-    private bool CanLogin() => !IsBusy;
-
-    /// <summary>
-    /// Attempts to log the user in and navigate to the home page on success.
-    /// </summary>
+    [RelayCommand]
     private async Task LoginAsync()
     {
-        ErrorMessage = null;
-
-        // Validate fields
-        if (string.IsNullOrWhiteSpace(Email))
+        if (IsBusy)
         {
-            ErrorMessage = AppResources.EmailRequired;
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(Password))
-        {
-            ErrorMessage = AppResources.PasswordRequired;
             return;
         }
 
         IsBusy = true;
-        LoginCommand.RaiseCanExecuteChanged();
+        ErrorMessage = null;
 
         try
         {
-            await _authService.LoginAsync(Email, Password, deviceId: null, CancellationToken.None);
-            await _navigationService.GoToAsync($"//{Routes.Home}");
-            Email = string.Empty;
-            Password = string.Empty;
+            // Attempt to log in with email/password.
+            // DeviceId remains null until we wire a dedicated device identity flow.
+            AppBootstrapResponse _ = await _authService.LoginAsync(
+                Email,
+                Password,
+                deviceId: null,
+                CancellationToken.None);
+
+            // Root page replacement must run through App so it can target the active window.
+            if (Application.Current is App app)
+            {
+                await app.NavigateToAuthenticatedShellAsync();
+            }
+            else
+            {
+                throw new InvalidOperationException("Application instance is not available.");
+            }
         }
         catch (Exception ex)
         {
-            // user-friendly message, with optional developer details when debugging
-            var userMsg = AppResources.InvalidCredentials; // موجود در منابع
-    #if DEBUG
-            var devDetails = ex.Message;
-            RunOnMain(() => ErrorMessage = $"{userMsg}\n({devDetails})");
-    #else
-            RunOnMain(() => ErrorMessage = userMsg);
-    #endif
+            // Surface a user-friendly message while preserving the exception text for diagnostics during development.
+            ErrorMessage = "Login failed. Please check your credentials and try again. " + ex.Message;
         }
         finally
         {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                LoginCommand.RaiseCanExecuteChanged();
-            });
+            IsBusy = false;
         }
     }
 }
