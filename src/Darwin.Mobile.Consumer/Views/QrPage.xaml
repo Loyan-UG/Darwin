@@ -10,6 +10,18 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{Binding BusinessDisplayName, StringFormat='Business: {0}'}"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding BusinessDisplayName, Converter={StaticResource NullCheckConverter}}" />
+
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="14"
+                   TextColor="Green"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
+
             <!-- Render the QR image; fallback to hidden if no token is available -->
             <Image Source="{Binding QrImage}"
                    HeightRequest="200"

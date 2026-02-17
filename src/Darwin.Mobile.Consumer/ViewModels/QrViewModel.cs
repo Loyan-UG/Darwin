@@ -25,6 +25,8 @@ public sealed class QrViewModel : BaseViewModel
     private DateTimeOffset? _expiresAtUtc;
     private LoyaltyScanMode _mode = LoyaltyScanMode.Accrual;
     private Guid _businessId;
+    private string _businessDisplayName = string.Empty;
+    private string _statusMessage = string.Empty;
 
     public QrViewModel(ILoyaltyService loyaltyService)
     {
@@ -67,6 +69,24 @@ public sealed class QrViewModel : BaseViewModel
         private set => SetProperty(ref _mode, value);
     }
 
+    /// <summary>
+    /// Friendly business name shown above the QR so users know exactly which business this QR belongs to.
+    /// </summary>
+    public string BusinessDisplayName
+    {
+        get => _businessDisplayName;
+        private set => SetProperty(ref _businessDisplayName, value);
+    }
+
+    /// <summary>
+    /// User-facing status message for contextual actions (for example, successful join confirmation).
+    /// </summary>
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        private set => SetProperty(ref _statusMessage, value);
+    }
+
     /// <summary>Command to prepare a new accrual session.</summary>
     public AsyncCommand RefreshAccrualSessionCommand { get; }
 
@@ -80,6 +100,24 @@ public sealed class QrViewModel : BaseViewModel
             throw new ArgumentException("Business id must not be empty.", nameof(businessId));
 
         _businessId = businessId;
+    }
+
+    /// <summary>
+    /// Sets the display name for the currently active business context.
+    /// </summary>
+    public void SetBusinessDisplayName(string? businessName)
+    {
+        BusinessDisplayName = string.IsNullOrWhiteSpace(businessName) ? string.Empty : businessName.Trim();
+    }
+
+    /// <summary>
+    /// Applies a contextual message when the user just joined a loyalty program.
+    /// </summary>
+    public void SetJoinedStatus(bool justJoined)
+    {
+        StatusMessage = justJoined
+            ? "You have successfully joined this loyalty program. Show this QR code to the business scanner."
+            : string.Empty;
     }
 
     public override async Task OnAppearingAsync()

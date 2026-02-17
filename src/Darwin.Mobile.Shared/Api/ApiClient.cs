@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Common;
 using Darwin.Shared.Results;
 using Darwin.Mobile.Shared.Resilience;
+using Darwin.Mobile.Shared.Security;
 
 namespace Darwin.Mobile.Shared.Api
 {
@@ -43,24 +44,20 @@ namespace Darwin.Mobile.Shared.Api
 
         private readonly HttpClient _http;
         private readonly IRetryPolicy _retry;
+        private readonly ITokenStore _tokenStore;
 
         /// <summary>
-        /// Creates a new instance bound to a pre-configured <see cref="HttpClient"/> and an <see cref="IRetryPolicy"/>.
+        /// Creates a new instance bound to a pre-configured <see cref="HttpClient"/>,
+        /// an <see cref="IRetryPolicy"/>, and persistent <see cref="ITokenStore"/>.
         /// </summary>
-        /// <param name="httpClient">Http client configured via IHttpClientFactory (base address, timeouts, handlers).</param>
-        /// <param name="retryPolicy">Retry policy used for transient network errors. Must not be null.</param>
-        public ApiClient(HttpClient httpClient, IRetryPolicy retryPolicy)
+        public ApiClient(HttpClient httpClient, IRetryPolicy retryPolicy, ITokenStore tokenStore)
         {
             _http = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _retry = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
+            _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
         }
 
         /// <inheritdoc />
-        /// <remarks>
-        /// Sets or clears the Authorization: Bearer header on the underlying HttpClient.
-        /// Using DefaultRequestHeaders is acceptable because the HttpClient instance is expected
-        /// to be a typed/hosted client per app registration. Trim input to avoid accidental spaces.
-        /// </remarks>
         public void SetBearerToken(string? accessToken)
         {
             if (string.IsNullOrWhiteSpace(accessToken))
@@ -82,7 +79,8 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                // Entire network + parse operation is executed under the retry policy.
+                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+
                 return await _retry.ExecuteAsync(async token =>
                 {
                     using var response = await _http.GetAsync(normalized, token).ConfigureAwait(false);
@@ -91,12 +89,10 @@ namespace Darwin.Mobile.Shared.Api
             }
             catch (OperationCanceledException)
             {
-                // Respect cancellation semantics: propagate cancellation to caller.
                 throw;
             }
             catch (Exception ex)
             {
-                // Do not expose stack traces; produce a concise network error message.
                 return Result<TResponse>.Fail($"Network error: {ex.Message}");
             }
         }
@@ -114,6 +110,8 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
+                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+
                 return await _retry.ExecuteAsync(async token =>
                 {
                     using var response = await _http.PostAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
@@ -134,20 +132,12 @@ namespace Darwin.Mobile.Shared.Api
         public async Task<Result<TResponse>> GetEnvelopeResultAsync<TResponse>(string route, CancellationToken ct)
         {
             var raw = await GetResultAsync<ApiEnvelope<TResponse>>(route, ct).ConfigureAwait(false);
-            if (!raw.Succeeded)
-                return Result<TResponse>.Fail(raw.Error ?? "Request failed.");
+            if (!raw.Succeeded || raw.Value is null)
+                return Result<TResponse>.Fail(raw.Error ?? "Envelope request failed.");
 
             var envelope = raw.Value;
-            if (envelope is null)
-                return Result<TResponse>.Fail("Empty response envelope from server.");
-
-            if (!envelope.Succeeded)
-            {
-                var msg = !string.IsNullOrWhiteSpace(envelope.Message) ? envelope.Message : "Request failed.";
-                if (!string.IsNullOrWhiteSpace(envelope.ErrorCode))
-                    msg = $"{msg} (code: {envelope.ErrorCode})";
-                return Result<TResponse>.Fail(msg);
-            }
+            if (!envelope.Success)
+                return Result<TResponse>.Fail(envelope.Message ?? "Request failed.");
 
             if (envelope.Data is null)
                 return Result<TResponse>.Fail("Response envelope did not contain data.");
@@ -155,24 +145,17 @@ namespace Darwin.Mobile.Shared.Api
             return Result<TResponse>.Ok(envelope.Data);
         }
 
+
         /// <inheritdoc />
         public async Task<Result<TResponse>> PostEnvelopeResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
         {
             var raw = await PostResultAsync<TRequest, ApiEnvelope<TResponse>>(route, request, ct).ConfigureAwait(false);
-            if (!raw.Succeeded)
-                return Result<TResponse>.Fail(raw.Error ?? "Request failed.");
+            if (!raw.Succeeded || raw.Value is null)
+                return Result<TResponse>.Fail(raw.Error ?? "Envelope request failed.");
 
             var envelope = raw.Value;
-            if (envelope is null)
-                return Result<TResponse>.Fail("Empty response envelope from server.");
-
-            if (!envelope.Succeeded)
-            {
-                var msg = !string.IsNullOrWhiteSpace(envelope.Message) ? envelope.Message : "Request failed.";
-                if (!string.IsNullOrWhiteSpace(envelope.ErrorCode))
-                    msg = $"{msg} (code: {envelope.ErrorCode})";
-                return Result<TResponse>.Fail(msg);
-            }
+            if (!envelope.Success)
+                return Result<TResponse>.Fail(envelope.Message ?? "Request failed.");
 
             if (envelope.Data is null)
                 return Result<TResponse>.Fail("Response envelope did not contain data.");
@@ -207,6 +190,8 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
+                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+
                 return await _retry.ExecuteAsync(async token =>
                 {
                     using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
@@ -243,14 +228,14 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
+                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+
                 return await _retry.ExecuteAsync(async token =>
                 {
                     using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        // Treat 204 (No Content) as a successful update.
-                        // Some APIs may return 200/201 with empty or ignored payloads; also treat them as success.
                         return Result.Ok();
                     }
 
@@ -270,10 +255,19 @@ namespace Darwin.Mobile.Shared.Api
             }
         }
 
-        /// <summary>
-        /// Reads the response content into TResponse and wraps it as Result{T}.
-        /// Note: For 204 No Content this returns a failed Result by design; prefer PutNoContentAsync for 204 patterns.
-        /// </summary>
+        private async Task ApplyBearerFromStoreAsync()
+        {
+            var (accessToken, expiresAtUtc) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+
+            if (string.IsNullOrWhiteSpace(accessToken) || (expiresAtUtc.HasValue && expiresAtUtc.Value <= DateTime.UtcNow))
+            {
+                _http.DefaultRequestHeaders.Authorization = null;
+                return;
+            }
+
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
         private static async Task<Result<TResponse>> ReadAsResultAsync<TResponse>(HttpResponseMessage response, CancellationToken ct)
         {
             if (response is null)
@@ -282,7 +276,7 @@ namespace Darwin.Mobile.Shared.Api
             if (response.IsSuccessStatusCode)
             {
                 if (response.StatusCode == HttpStatusCode.NoContent)
-                    return Result<TResponse>.Fail(NoContentResultMessage); // use constant
+                    return Result<TResponse>.Fail(NoContentResultMessage);
 
                 try
                 {
@@ -305,40 +299,40 @@ namespace Darwin.Mobile.Shared.Api
             return Result<TResponse>.Fail(errorMessage);
         }
 
-        /// <summary>
-        /// Attempts to parse server error payloads into a human-readable message.
-        /// Priority:
-        /// 1) Darwin.Contracts.Common.ProblemDetails
-        /// 2) Plain text
-        /// </summary>
         private static async Task<string?> TryReadErrorMessageAsync(HttpResponseMessage response, CancellationToken ct)
         {
             try
             {
                 var contentType = response.Content.Headers.ContentType?.MediaType;
 
-                // Try ProblemDetails-like payload first (preferred).
-                if (!string.IsNullOrWhiteSpace(contentType) && contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(contentType) &&
+                    contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
                 {
                     var pd = await response.Content.ReadFromJsonAsync<ProblemDetails>(_jsonOptions, ct).ConfigureAwait(false);
                     if (pd is not null)
                     {
-                        var title = !string.IsNullOrWhiteSpace(pd.Title) ? pd.Title : "Request failed.";
-                        var detail = !string.IsNullOrWhiteSpace(pd.Detail) ? pd.Detail : null;
-
-                        return detail is null ? title : $"{title} - {detail}";
+                        if (!string.IsNullOrWhiteSpace(pd.Detail)) return pd.Detail;
+                        if (!string.IsNullOrWhiteSpace(pd.Title)) return pd.Title;
                     }
                 }
 
-                // Fallback to plain text.
                 var text = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text.Trim();
             }
             catch
             {
-                // Parsing error; swallow and return null so caller can fallback to status code messaging.
-                return null;
+                // TODO: Best effort
             }
+
+            return null;
+        }
+
+        private sealed class ApiEnvelope<T>
+        {
+            public bool Success { get; set; }
+            public string? Message { get; set; }
+            public T? Data { get; set; }
         }
     }
 }

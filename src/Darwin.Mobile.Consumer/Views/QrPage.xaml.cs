@@ -10,6 +10,7 @@ namespace Darwin.Mobile.Consumer.Views;
 ///
 /// Navigation contract:
 /// - Accepts a `businessId` query parameter (GUID).
+/// - Accepts optional `businessName` and `joined` parameters for user context messaging.
 /// - Sets the business context on the view model before OnAppearing refresh.
 /// </summary>
 public partial class QrPage : IQueryAttributable
@@ -25,13 +26,27 @@ public partial class QrPage : IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        // The query dictionary contains string values when route params are passed via Shell URI.
         if (query.TryGetValue("businessId", out var rawValue)
             && rawValue is string businessIdText
             && Guid.TryParse(businessIdText, out var businessId))
         {
             _viewModel.SetBusiness(businessId);
         }
+
+        if (query.TryGetValue("businessName", out var rawBusinessName)
+            && rawBusinessName is string businessNameText)
+        {
+            _viewModel.SetBusinessDisplayName(Uri.UnescapeDataString(businessNameText));
+        }
+
+        var joined = false;
+        if (query.TryGetValue("joined", out var rawJoined) && rawJoined is string joinedText)
+        {
+            joined = string.Equals(joinedText, "true", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(joinedText, "1", StringComparison.OrdinalIgnoreCase);
+        }
+
+        _viewModel.SetJoinedStatus(joined);
     }
 
     protected override async void OnAppearing()
