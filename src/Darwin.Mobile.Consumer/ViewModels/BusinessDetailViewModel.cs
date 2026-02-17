@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
@@ -135,9 +136,16 @@ public sealed class BusinessDetailViewModel : BaseViewModel
                 return;
             }
 
-            // Navigate to the QR tab and pass the active business context.
-            // The QR page reads this query parameter and prepares a session for that business.
-            await _navigationService.GoToAsync($"//{Routes.Qr}?businessId={BusinessId:D}");
+            // Navigate to the QR tab and pass the active business context using Shell parameters.
+            // Using a parameter dictionary avoids brittle URI construction and escaping issues.
+            var parameters = new Dictionary<string, object?>
+            {
+                ["businessId"] = BusinessId,
+                ["businessName"] = Business?.Name,
+                ["joined"] = true
+            };
+
+            await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
         }
         finally
         {

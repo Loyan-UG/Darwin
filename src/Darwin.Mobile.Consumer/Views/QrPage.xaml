@@ -10,6 +10,24 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{Binding GuidanceMessage}"
+                   FontSize="14"
+                   TextColor="{StaticResource Neutral900}"
+                   LineBreakMode="WordWrap"
+                   HorizontalTextAlignment="Center" />
+
+            <Label Text="{Binding BusinessDisplayName, StringFormat='Business: {0}'}"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding BusinessDisplayName, Converter={StaticResource NullCheckConverter}}" />
+
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="14"
+                   TextColor="Green"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
+
             <!-- Render the QR image; fallback to hidden if no token is available -->
             <Image Source="{Binding QrImage}"
                    HeightRequest="200"
@@ -21,22 +39,37 @@
             <Label Text="{Binding QrToken}"
                    FontSize="14"
                    HorizontalOptions="Center"
-                   Opacity="0.5" />
+                   Opacity="0.5"
+                   IsVisible="{Binding HasBusinessContext}" />
 
             <!-- Show expiry countdown -->
             <Label Text="{Binding ExpiresAtUtc, StringFormat='Expires at: {0:HH:mm:ss}'}"
                    FontSize="16"
                    TextColor="{StaticResource Neutral900}"
-                   HorizontalOptions="Center" />
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding HasBusinessContext}" />
 
-            <!-- Refresh buttons for accrual and redemption -->
+            <!-- Refresh button for accrual -->
             <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding RefreshAccrualSessionCommand}" />
+                    Command="{Binding RefreshAccrualSessionCommand}"
+                    IsEnabled="{Binding HasBusinessContext}" />
+            <Label Text="Use this when the business should add new points to your account."
+                   FontSize="12"
+                   TextColor="{StaticResource Neutral900}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding HasBusinessContext}" />
 
+            <!-- Refresh button for redemption -->
             <Button Text="{x:Static res:AppResources.RefreshRedemptionButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding RefreshRedemptionSessionCommand}" />
+                    Command="{Binding RefreshRedemptionSessionCommand}"
+                    IsEnabled="{Binding HasBusinessContext}" />
+            <Label Text="Use this when you want to redeem points or claim an available reward."
+                   FontSize="12"
+                   TextColor="{StaticResource Neutral900}"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding HasBusinessContext}" />
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"

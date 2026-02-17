@@ -19,12 +19,18 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// </summary>
 public sealed class QrViewModel : BaseViewModel
 {
+    private const string DiscoverGuidanceMessage = "To generate a QR code, first go to Discover, open a business, and join its loyalty program.";
+    private const string RefreshGuidanceMessage = "Accrual creates a QR for earning points. Redemption creates a QR for spending points/rewards.";
+
     private readonly ILoyaltyService _loyaltyService;
     private string _qrToken = string.Empty;
     private ImageSource? _qrImage;
     private DateTimeOffset? _expiresAtUtc;
     private LoyaltyScanMode _mode = LoyaltyScanMode.Accrual;
     private Guid _businessId;
+    private string _businessDisplayName = string.Empty;
+    private string _statusMessage = string.Empty;
+    private string _guidanceMessage = DiscoverGuidanceMessage;
 
     public QrViewModel(ILoyaltyService loyaltyService)
     {
@@ -67,6 +73,40 @@ public sealed class QrViewModel : BaseViewModel
         private set => SetProperty(ref _mode, value);
     }
 
+    /// <summary>
+    /// Friendly business name shown above the QR so users know exactly which business this QR belongs to.
+    /// </summary>
+    public string BusinessDisplayName
+    {
+        get => _businessDisplayName;
+        private set => SetProperty(ref _businessDisplayName, value);
+    }
+
+    /// <summary>
+    /// User-facing status message for contextual actions (for example, successful join confirmation).
+    /// </summary>
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        private set => SetProperty(ref _statusMessage, value);
+    }
+
+    /// <summary>
+    /// UX guidance message shown on the QR screen.
+    /// It helps users understand what to do when no business context exists,
+    /// and also explains the purpose of accrual vs redemption refresh actions.
+    /// </summary>
+    public string GuidanceMessage
+    {
+        get => _guidanceMessage;
+        private set => SetProperty(ref _guidanceMessage, value);
+    }
+
+    /// <summary>
+    /// Indicates whether a business context has already been selected for QR generation.
+    /// </summary>
+    public bool HasBusinessContext => _businessId != Guid.Empty;
+
     /// <summary>Command to prepare a new accrual session.</summary>
     public AsyncCommand RefreshAccrualSessionCommand { get; }
 
@@ -79,23 +119,53 @@ public sealed class QrViewModel : BaseViewModel
         if (businessId == Guid.Empty)
             throw new ArgumentException("Business id must not be empty.", nameof(businessId));
 
-        _businessId = businessId;
+        // When business context changes, reset prior QR/session artifacts so the new business session can be loaded.
+        if (_businessId != businessId)
+        {
+            _businessId = businessId;
+            QrToken = string.Empty;
+            ExpiresAtUtc = null;
+            ErrorMessage = null;
+            OnPropertyChanged(nameof(HasBusinessContext));
+            UpdateGuidanceMessage();
+        }
+    }
+
+    /// <summary>
+    /// Sets the display name for the currently active business context.
+    /// </summary>
+    public void SetBusinessDisplayName(string? businessName)
+    {
+        BusinessDisplayName = string.IsNullOrWhiteSpace(businessName) ? string.Empty : businessName.Trim();
+    }
+
+    /// <summary>
+    /// Applies a contextual message when the user just joined a loyalty program.
+    /// </summary>
+    public void SetJoinedStatus(bool justJoined)
+    {
+        StatusMessage = justJoined
+            ? "You have successfully joined this loyalty program. Show this QR code to the business scanner."
+            : string.Empty;
     }
 
     public override async Task OnAppearingAsync()
     {
-        // On first appearance, prepare a default accrual session.
-        if (_businessId != Guid.Empty && string.IsNullOrEmpty(QrToken))
+        // Ensure a fresh QR session is prepared as soon as business context exists and no token has been generated yet.
+        if (_businessId != Guid.Empty && string.IsNullOrWhiteSpace(QrToken))
         {
             await RefreshAccrualSessionAsync();
         }
+
+        UpdateGuidanceMessage();
     }
 
     private async Task RefreshAccrualSessionAsync()
     {
         if (_businessId == Guid.Empty)
         {
-            ErrorMessage = "Business context is not set.";
+            ErrorMessage = "No business selected yet. Please go to Discover, open a business, and join first.";
+            UpdateGuidanceMessage();
             return;
         }
 
@@ -120,7 +190,8 @@ public sealed class QrViewModel : BaseViewModel
     {
         if (_businessId == Guid.Empty)
         {
-            ErrorMessage = "Business context is not set.";
+            ErrorMessage = "No business selected yet. Please go to Discover, open a business, and join first.";
+            UpdateGuidanceMessage();
             return;
         }
 
@@ -155,6 +226,7 @@ public sealed class QrViewModel : BaseViewModel
         Mode = session.Mode;
         QrToken = session.Token;
         ExpiresAtUtc = session.ExpiresAtUtc;
+        UpdateGuidanceMessage();
     }
 
     /// <summary>
@@ -180,5 +252,12 @@ public sealed class QrViewModel : BaseViewModel
         {
             QrImage = null; // silently drop image on error
         }
+    }
+
+    private void UpdateGuidanceMessage()
+    {
+        GuidanceMessage = _businessId == Guid.Empty
+            ? DiscoverGuidanceMessage
+            : RefreshGuidanceMessage;
     }
 }

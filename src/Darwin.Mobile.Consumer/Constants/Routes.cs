@@ -1,49 +1,43 @@
 ﻿namespace Darwin.Mobile.Consumer.Constants;
 
 /// <summary>
-/// Contains route constants used for navigation throughout the Consumer app.
-/// These keys must remain stable across releases to avoid breaking deep links and navigation history.
+/// Centralized Shell route names used by the Consumer mobile app.
+///
+/// Important conventions:
+/// - Keep route names as single, stable segments (no embedded '/') to avoid Shell URI parsing ambiguity.
+/// - Use absolute navigation (for example: "//" + Routes.Qr) when switching tabs/root sections.
+/// - Keep these identifiers backward-compatible once released to avoid breaking deep links/bookmarks.
 /// </summary>
 public static class Routes
 {
     /// <summary>
-    /// Represents the endpoint path for user login in the consumer application.
+    /// Login route used by the unauthenticated flow.
     /// </summary>
-    /// <remarks>Use this constant to specify the login route when making authentication-related API calls
-    /// within the application. Centralizing the route as a constant helps ensure consistency and simplifies maintenance
-    /// if the endpoint changes.</remarks>
-    public const string Login = "consumer/main/login";
+    public const string Login = "login";
 
     /// <summary>
-    /// Route for the Discover tab (default landing page).
+    /// Discover tab route (default authenticated landing tab).
     /// </summary>
-    public const string Discover = "consumer/main/discover";
+    public const string Discover = "discover";
 
     /// <summary>
-    /// Route for the QR tab.
+    /// QR tab route.
     /// </summary>
-    public const string Qr = "consumer/main/qr";
+    public const string Qr = "qr";
 
     /// <summary>
-    /// Route for the Rewards tab.
+    /// Rewards tab route.
     /// </summary>
-    public const string Rewards = "consumer/main/rewards";
+    public const string Rewards = "rewards";
 
     /// <summary>
-    /// Route for the Profile tab.
+    /// Profile tab route.
     /// </summary>
-    public const string Profile = "consumer/main/profile";
+    public const string Profile = "profile";
 
     /// <summary>
-    /// Route prefix for viewing details of a business. A business ID should be appended.
-    /// Example: $"consumer/discover/business/{businessId}"
+    /// Route prefix for the business detail page.
+    /// The page may receive additional route/query parameters (for example a business identifier).
     /// </summary>
-    public const string BusinessDetail = "consumer/discover/business";
-
-
-    //public const string Login = "Login";
-    //public const string Qr = "Qr";
-    //public const string Discover = "Discover";
-    //public const string Rewards = "Rewards";
-    //public const string Profile = "Profile";
+    public const string BusinessDetail = "business-detail";
 }
