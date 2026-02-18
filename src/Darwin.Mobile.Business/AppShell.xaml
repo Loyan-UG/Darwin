@@ -9,8 +9,9 @@
     Shell.FlyoutBehavior="Disabled">
 
     <!--
-      Logout is visible only when user is in authenticated area.
-      It is hidden on Login route from code-behind.
+      Toolbar logout item:
+      MAUI ToolbarItem has no IsVisible property.
+      Visibility is controlled from code-behind by adding/removing this item from ToolbarItems collection.
     -->
     <Shell.ToolbarItems>
         <ToolbarItem x:Name="LogoutToolbarItem"
@@ -20,49 +21,50 @@
                      Clicked="OnLogoutClicked" />
     </Shell.ToolbarItems>
 
-    <!--
-      Bottom tab navigation:
-      - Phase 1 tabs are active (Home, Scan).
-      - Future tabs are present now and point to Coming Soon placeholders.
-    -->
-    <TabBar>
+    <!-- Login route (kept outside TabBar) -->
+    <ShellContent
+        Route="{x:Static local:Routes.Login}"
+        ContentTemplate="{DataTemplate views:LoginPage}" />
 
-        <!-- Phase 1: Home -->
+    <!-- Main bottom navigation (all phases visible) -->
+    <TabBar Route="MainTabs">
+
+        <!-- Phase 1 (active) -->
         <ShellContent
             Route="{x:Static local:Routes.Home}"
             Title="{x:Static res:AppResources.HomeTitle}"
             ContentTemplate="{DataTemplate views:HomePage}" />
 
-        <!-- Phase 1: Scanner -->
         <ShellContent
             Route="{x:Static local:Routes.Scanner}"
             Title="{x:Static res:AppResources.ScanTitle}"
             ContentTemplate="{DataTemplate views:ScannerPage}" />
 
-        <!-- Phase 2+: Dashboard (placeholder for now) -->
+        <!-- Future phases (currently placeholders) -->
         <ShellContent
-            Route="{x:Static local:Routes.ComingSoonDashboard}"
+            Route="dashboard"
             Title="Dashboard"
             ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <!-- Phase 2+: Rewards (placeholder for now) -->
         <ShellContent
-            Route="{x:Static local:Routes.ComingSoonRewards}"
+            Route="rewards"
             Title="Rewards"
             ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <!-- Phase 2+: Team (placeholder for now) -->
         <ShellContent
-            Route="{x:Static local:Routes.ComingSoonTeam}"
+            Route="team"
             Title="Team"
             ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <!-- Phase 2+: Settings (placeholder for now) -->
         <ShellContent
-            Route="{x:Static local:Routes.ComingSoonSettings}"
+            Route="settings"
             Title="Settings"
             ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
     </TabBar>
 
+    <!-- Session details route -->
+    <ShellContent
+        Route="{x:Static local:Routes.Session}"
+        ContentTemplate="{DataTemplate views:SessionPage}" />
 </Shell>

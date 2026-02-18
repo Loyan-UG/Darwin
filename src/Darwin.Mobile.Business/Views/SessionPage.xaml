@@ -9,46 +9,7 @@
     Title="{x:Static res:AppResources.SessionTitle}">
 
     <ScrollView x:Name="RootScrollView">
-        <VerticalStackLayout Padding="24" Spacing="14">
-
-            <!-- Success feedback -->
-            <Border StrokeThickness="1"
-                    Stroke="#2E7D32"
-                    BackgroundColor="#1A2E7D32"
-                    Padding="10"
-                    IsVisible="{Binding HasSuccess}"
-                    StrokeShape="RoundRectangle 8">
-                <Label Text="{Binding SuccessMessage}"
-                       TextColor="#1B5E20"
-                       FontSize="14"
-                       LineBreakMode="WordWrap" />
-            </Border>
-
-            <!-- Warning feedback -->
-            <Border StrokeThickness="1"
-                    Stroke="#F9A825"
-                    BackgroundColor="#1AF9A825"
-                    Padding="10"
-                    IsVisible="{Binding HasWarning}"
-                    StrokeShape="RoundRectangle 8">
-                <Label Text="{Binding WarningMessage}"
-                       TextColor="#8D6E00"
-                       FontSize="14"
-                       LineBreakMode="WordWrap" />
-            </Border>
-
-            <!-- Error feedback -->
-            <Border StrokeThickness="1"
-                    Stroke="Crimson"
-                    BackgroundColor="#19DC143C"
-                    Padding="10"
-                    IsVisible="{Binding HasError}"
-                    StrokeShape="RoundRectangle 8">
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="Crimson"
-                       LineBreakMode="WordWrap" />
-            </Border>
-
+        <VerticalStackLayout Padding="24" Spacing="16">
             <Label Text="{x:Static res:AppResources.CustomerLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
             <Label Text="{Binding CustomerName}"
@@ -73,12 +34,26 @@
                     Command="{Binding ConfirmAccrualCommand}"
                     IsVisible="{Binding CanConfirmAccrual}"
                     Clicked="OnActionClicked" />
+            <Label Text="Adds points to the customer account for this visit."
+                   IsVisible="{Binding CanConfirmAccrual}"
+                   FontSize="12"
+                   Opacity="0.75"
+                   TextColor="{StaticResource BrushOnSurface}" />
 
             <Button Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmRedemptionCommand}"
                     IsVisible="{Binding CanConfirmRedemption}"
                     Clicked="OnActionClicked" />
+            <Label Text="Confirms reward redemption and deducts required points."
+                   IsVisible="{Binding CanConfirmRedemption}"
+                   FontSize="12"
+                   Opacity="0.75"
+                   TextColor="{StaticResource BrushOnSurface}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
