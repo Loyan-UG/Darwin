@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -8,52 +8,90 @@
     x:DataType="vm:ScannerViewModel"
     Title="{x:Static res:AppResources.ScanTitle}">
 
-    <VerticalStackLayout Spacing="16" Padding="24">
-        <!-- Initiates scan -->
-        <Button Text="{x:Static res:AppResources.ScanTitle}"
-                Style="{StaticResource PrimaryButtonStyle}"
-                Command="{Binding ScanCommand}"
-                HorizontalOptions="Fill" />
+    <!--
+      The page is scrollable and feedback cards are placed at the top.
+      This prevents important warnings/errors from being hidden by keyboard.
+    -->
+    <ScrollView x:Name="RootScrollView">
+        <VerticalStackLayout Padding="24" Spacing="14">
 
-        <!-- Last scanned token display -->
-        <Label Text="{x:Static res:AppResources.LastTokenLabel}"
-               Style="{StaticResource TitleLabelStyle}" />
-        <Label Text="{Binding LastScannedToken}"
-               TextColor="{StaticResource BrushPrimary}"
-               FontSize="18" />
+            <!-- Success feedback -->
+            <Border StrokeThickness="1"
+                    Stroke="#2E7D32"
+                    BackgroundColor="#1A2E7D32"
+                    Padding="10"
+                    IsVisible="{Binding HasSuccess}"
+                    StrokeShape="RoundRectangle 8">
+                <Label Text="{Binding SuccessMessage}"
+                       TextColor="#1B5E20"
+                       FontSize="14"
+                       LineBreakMode="WordWrap" />
+            </Border>
 
-        <!-- Points to accrue input -->
-        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-            <Label Text="{x:Static res:AppResources.PointsLabel}"
-                   FontSize="18"
-                   TextColor="{StaticResource BrushOnSurface}" />
-            <Entry Text="{Binding PointsToAccrue}"
-                   Keyboard="Numeric"
-                   WidthRequest="80"
-                   TextColor="{StaticResource BrushOnSurface}" />
-        </HorizontalStackLayout>
+            <!-- Warning feedback -->
+            <Border StrokeThickness="1"
+                    Stroke="#F9A825"
+                    BackgroundColor="#1AF9A825"
+                    Padding="10"
+                    IsVisible="{Binding HasWarning}"
+                    StrokeShape="RoundRectangle 8">
+                <Label Text="{Binding WarningMessage}"
+                       TextColor="#8D6E00"
+                       FontSize="14"
+                       LineBreakMode="WordWrap" />
+            </Border>
 
-        <!-- Accrual confirmation -->
-        <Button Text="{x:Static res:AppResources.AccrueButton}"
-                Style="{StaticResource PrimaryButtonStyle}"
-                Command="{Binding ConfirmAccrualCommand}"
-                IsEnabled="{Binding CanConfirmAccrual}" />
+            <!-- Error feedback -->
+            <Border StrokeThickness="1"
+                    Stroke="Crimson"
+                    BackgroundColor="#19DC143C"
+                    Padding="10"
+                    IsVisible="{Binding HasError}"
+                    StrokeShape="RoundRectangle 8">
+                <Label Text="{Binding ErrorMessage}"
+                       TextColor="Crimson"
+                       FontSize="14"
+                       LineBreakMode="WordWrap" />
+            </Border>
 
-        <!-- Redemption confirmation -->
-        <Button Text="{x:Static res:AppResources.RedeemButton}"
-                Style="{StaticResource PrimaryButtonStyle}"
-                Command="{Binding ConfirmRedemptionCommand}"
-                IsEnabled="{Binding CanConfirmRedemption}" />
+            <Button Text="{x:Static res:AppResources.ScanTitle}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding ScanCommand}"
+                    HorizontalOptions="Fill" />
 
-        <!-- Error message -->
-        <Label Text="{Binding ErrorMessage}"
-               TextColor="Red"
-               FontSize="14" />
+            <Label Text="{x:Static res:AppResources.LastTokenLabel}"
+                   Style="{StaticResource TitleLabelStyle}" />
 
-        <!-- Busy indicator -->
-        <ActivityIndicator IsRunning="{Binding IsBusy}"
-                           IsVisible="{Binding IsBusy}"
-                           Color="{StaticResource BrushPrimary}"
-                           HeightRequest="40" />
-    </VerticalStackLayout>
+            <Label Text="{Binding LastScannedToken}"
+                   TextColor="{StaticResource BrushPrimary}"
+                   FontSize="16"
+                   LineBreakMode="CharacterWrap" />
+
+            <!-- Optional quick actions if user stays on this page -->
+            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                <Label Text="{x:Static res:AppResources.PointsLabel}"
+                       FontSize="16"
+                       TextColor="{StaticResource BrushOnSurface}" />
+                <Entry Text="{Binding PointsToAccrue}"
+                       Keyboard="Numeric"
+                       WidthRequest="100"
+                       TextColor="{StaticResource BrushOnSurface}" />
+            </HorizontalStackLayout>
+
+            <Button Text="{x:Static res:AppResources.AccrueButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding ConfirmAccrualCommand}"
+                    IsEnabled="{Binding CanConfirmAccrual}" />
+
+            <Button Text="{x:Static res:AppResources.RedeemButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding ConfirmRedemptionCommand}"
+                    IsEnabled="{Binding CanConfirmRedemption}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}"
+                               HeightRequest="36" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

@@ -13,10 +13,12 @@ using Darwin.Mobile.Shared.ViewModels;
 namespace Darwin.Mobile.Business.ViewModels;
 
 /// <summary>
-/// View model for the business scanner screen.
-/// Orchestrates scanning a consumer QR code and calling the loyalty service
-/// to resolve, accrue points, or redeem rewards. After a successful scan,
-/// it navigates to the session page to display the session details.
+/// ViewModel for the Business scanner screen.
+///
+/// UX goals:
+/// - Show clear feedback for success/warning/error states.
+/// - Keep scan flow predictable and avoid silent failures.
+/// - Request the view to reveal feedback area when needed (so messages are not hidden).
 /// </summary>
 public sealed class ScannerViewModel : BaseViewModel
 {
@@ -26,17 +28,18 @@ public sealed class ScannerViewModel : BaseViewModel
 
     private string _lastScannedToken = string.Empty;
     private BusinessScanSessionClientModel? _currentSession;
-
     private bool _canConfirmAccrual;
     private bool _canConfirmRedemption;
     private int _pointsToAccrue = 1;
 
+    private string? _successMessage;
+    private string? _warningMessage;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="ScannerViewModel"/> class.
+    /// Raised when the page should scroll feedback into view.
     /// </summary>
-    /// <param name="loyaltyService">The loyalty service abstraction.</param>
-    /// <param name="scanner">The scanner implementation used to read QR codes.</param>
-    /// <param name="navigationService">Shell navigation service for page transitions.</param>
+    public event Action? FeedbackVisibilityRequested;
+
     public ScannerViewModel(
         ILoyaltyService loyaltyService,
         IScanner scanner,
@@ -47,12 +50,12 @@ public sealed class ScannerViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         ScanCommand = new AsyncCommand(ScanAsync);
-        ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual);
-        ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanConfirmRedemption);
+        ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual && !IsBusy);
+        ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanConfirmRedemption && !IsBusy);
     }
 
     /// <summary>
-    /// Gets the last scanned QR token, mainly for debugging or display only.
+    /// Last scanned token (for operator visibility/debugging).
     /// </summary>
     public string LastScannedToken
     {
@@ -61,8 +64,7 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Gets or sets the number of points to accrue when confirming.
-    /// This may represent a fixed per-visit value or be set by the cashier.
+    /// Points input for optional accrual action.
     /// </summary>
     public int PointsToAccrue
     {
@@ -70,9 +72,6 @@ public sealed class ScannerViewModel : BaseViewModel
         set => SetProperty(ref _pointsToAccrue, value);
     }
 
-    /// <summary>
-    /// Gets a value indicating whether the current session allows confirming accrual.
-    /// </summary>
     public bool CanConfirmAccrual
     {
         get => _canConfirmAccrual;
@@ -85,9 +84,6 @@ public sealed class ScannerViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Gets a value indicating whether the current session allows confirming redemption.
-    /// </summary>
     public bool CanConfirmRedemption
     {
         get => _canConfirmRedemption;
@@ -101,19 +97,40 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Command that triggers scanning a QR code and resolving it via WebApi.
-    /// On successful scan and session resolution, navigates to the session page.
+    /// Success banner text shown at top of page.
     /// </summary>
+    public string? SuccessMessage
+    {
+        get => _successMessage;
+        private set
+        {
+            if (SetProperty(ref _successMessage, value))
+            {
+                OnPropertyChanged(nameof(HasSuccess));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Warning banner text shown at top of page.
+    /// </summary>
+    public string? WarningMessage
+    {
+        get => _warningMessage;
+        private set
+        {
+            if (SetProperty(ref _warningMessage, value))
+            {
+                OnPropertyChanged(nameof(HasWarning));
+            }
+        }
+    }
+
+    public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
+    public bool HasWarning => !string.IsNullOrWhiteSpace(WarningMessage);
+
     public AsyncCommand ScanCommand { get; }
-
-    /// <summary>
-    /// Command that confirms point accrual for the current scan session.
-    /// </summary>
     public AsyncCommand ConfirmAccrualCommand { get; }
-
-    /// <summary>
-    /// Command that confirms reward redemption for the current scan session.
-    /// </summary>
     public AsyncCommand ConfirmRedemptionCommand { get; }
 
     private async Task ScanAsync()
@@ -124,54 +141,56 @@ public sealed class ScannerViewModel : BaseViewModel
         }
 
         IsBusy = true;
-        ErrorMessage = null;
+        ClearFeedback();
+
         _currentSession = null;
         CanConfirmAccrual = false;
         CanConfirmRedemption = false;
 
         try
         {
-            // Read a QR code from the scanner. If the user cancels or no QR is found,
-            // scanner returns null or empty string.
-            var token = await _scanner.ScanAsync(CancellationToken.None).ConfigureAwait(false);
+            // Scanner service handles camera permission and fallback flow.
+            var token = await _scanner.ScanAsync(CancellationToken.None);
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                ErrorMessage = "No QR code detected.";
                 LastScannedToken = string.Empty;
+                SetWarning("No QR code was scanned. Please try again.");
                 return;
             }
 
             LastScannedToken = token;
 
-            // Resolve the scanned token via WebApi to determine session details
-            var result = await _loyaltyService
-                .ProcessScanSessionForBusinessAsync(token, CancellationToken.None)
-                .ConfigureAwait(false);
-
+            var result = await _loyaltyService.ProcessScanSessionForBusinessAsync(token, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to process scan.";
+                SetError(result.Error ?? "Failed to process the scanned QR token.");
                 return;
             }
 
             _currentSession = result.Value;
-
-            // Determine which actions are allowed on this session.
             CanConfirmAccrual = _currentSession.CanConfirmAccrual;
             CanConfirmRedemption = _currentSession.CanConfirmRedemption;
 
-            // Navigate to the session page and pass the session token as a query parameter.
-            var parameters = new Dictionary<string, object?>
-            {
-                ["token"] = token
-            };
+            SetSuccess("QR code scanned successfully. Loading session details...");
 
-            await _navigationService.GoToAsync(Routes.Session, parameters).ConfigureAwait(false);
+            // Keep navigation explicit and deterministic.
+            var parameters = new Dictionary<string, object?> { ["token"] = token };
+            await _navigationService.GoToAsync(Routes.Session, parameters);
+        }
+        catch (OperationCanceledException)
+        {
+            SetWarning("Scan operation was cancelled.");
+        }
+        catch (Exception)
+        {
+            SetError("Unexpected error while scanning. Please try again.");
         }
         finally
         {
             IsBusy = false;
+            ConfirmAccrualCommand.RaiseCanExecuteChanged();
+            ConfirmRedemptionCommand.RaiseCanExecuteChanged();
         }
     }
 
@@ -179,19 +198,19 @@ public sealed class ScannerViewModel : BaseViewModel
     {
         if (_currentSession is null)
         {
-            ErrorMessage = "No active scan session.";
+            SetWarning("There is no active scan session.");
             return;
         }
 
         if (!CanConfirmAccrual)
         {
-            ErrorMessage = "Accrual is not allowed for this session.";
+            SetWarning("Accrual is not allowed for this session.");
             return;
         }
 
         if (PointsToAccrue <= 0)
         {
-            ErrorMessage = "Points must be greater than zero.";
+            SetWarning("Points must be greater than zero.");
             return;
         }
 
@@ -201,27 +220,30 @@ public sealed class ScannerViewModel : BaseViewModel
         }
 
         IsBusy = true;
-        ErrorMessage = null;
+        ClearFeedback();
 
         try
         {
-            var result = await _loyaltyService
-                .ConfirmAccrualAsync(_currentSession.Token, PointsToAccrue, CancellationToken.None)
-                .ConfigureAwait(false);
-
+            var result = await _loyaltyService.ConfirmAccrualAsync(_currentSession.Token, PointsToAccrue, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to confirm accrual.";
+                SetError(result.Error ?? "Failed to confirm accrual.");
                 return;
             }
 
-            // After a successful accrual, disable further accrual and redemption on this session.
             CanConfirmAccrual = false;
             CanConfirmRedemption = false;
+            SetSuccess("Points accrual confirmed successfully.");
+        }
+        catch (Exception)
+        {
+            SetError("Unexpected error while confirming accrual.");
         }
         finally
         {
             IsBusy = false;
+            ConfirmAccrualCommand.RaiseCanExecuteChanged();
+            ConfirmRedemptionCommand.RaiseCanExecuteChanged();
         }
     }
 
@@ -229,13 +251,13 @@ public sealed class ScannerViewModel : BaseViewModel
     {
         if (_currentSession is null)
         {
-            ErrorMessage = "No active scan session.";
+            SetWarning("There is no active scan session.");
             return;
         }
 
         if (!CanConfirmRedemption)
         {
-            ErrorMessage = "Redemption is not allowed for this session.";
+            SetWarning("Redemption is not allowed for this session.");
             return;
         }
 
@@ -245,27 +267,64 @@ public sealed class ScannerViewModel : BaseViewModel
         }
 
         IsBusy = true;
-        ErrorMessage = null;
+        ClearFeedback();
 
         try
         {
-            var result = await _loyaltyService
-                .ConfirmRedemptionAsync(_currentSession.Token, CancellationToken.None)
-                .ConfigureAwait(false);
-
+            var result = await _loyaltyService.ConfirmRedemptionAsync(_currentSession.Token, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to confirm redemption.";
+                SetError(result.Error ?? "Failed to confirm redemption.");
                 return;
             }
 
-            // After redemption, prevent repeat actions on the same session.
-            CanConfirmRedemption = false;
             CanConfirmAccrual = false;
+            CanConfirmRedemption = false;
+            SetSuccess("Reward redemption confirmed successfully.");
+        }
+        catch (Exception)
+        {
+            SetError("Unexpected error while confirming redemption.");
         }
         finally
         {
             IsBusy = false;
+            ConfirmAccrualCommand.RaiseCanExecuteChanged();
+            ConfirmRedemptionCommand.RaiseCanExecuteChanged();
         }
+    }
+
+    /// <summary>
+    /// Clears all feedback messages before a new operation starts.
+    /// </summary>
+    private void ClearFeedback()
+    {
+        SuccessMessage = null;
+        WarningMessage = null;
+        ErrorMessage = null;
+    }
+
+    private void SetSuccess(string message)
+    {
+        SuccessMessage = message;
+        WarningMessage = null;
+        ErrorMessage = null;
+        FeedbackVisibilityRequested?.Invoke();
+    }
+
+    private void SetWarning(string message)
+    {
+        SuccessMessage = null;
+        WarningMessage = message;
+        ErrorMessage = null;
+        FeedbackVisibilityRequested?.Invoke();
+    }
+
+    private void SetError(string message)
+    {
+        SuccessMessage = null;
+        WarningMessage = null;
+        ErrorMessage = message;
+        FeedbackVisibilityRequested?.Invoke();
     }
 }

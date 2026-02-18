@@ -8,44 +8,77 @@
     x:DataType="vm:SessionViewModel"
     Title="{x:Static res:AppResources.SessionTitle}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <!-- Customer name -->
+    <ScrollView x:Name="RootScrollView">
+        <VerticalStackLayout Padding="24" Spacing="14">
+
+            <!-- Success feedback -->
+            <Border StrokeThickness="1"
+                    Stroke="#2E7D32"
+                    BackgroundColor="#1A2E7D32"
+                    Padding="10"
+                    IsVisible="{Binding HasSuccess}"
+                    StrokeShape="RoundRectangle 8">
+                <Label Text="{Binding SuccessMessage}"
+                       TextColor="#1B5E20"
+                       FontSize="14"
+                       LineBreakMode="WordWrap" />
+            </Border>
+
+            <!-- Warning feedback -->
+            <Border StrokeThickness="1"
+                    Stroke="#F9A825"
+                    BackgroundColor="#1AF9A825"
+                    Padding="10"
+                    IsVisible="{Binding HasWarning}"
+                    StrokeShape="RoundRectangle 8">
+                <Label Text="{Binding WarningMessage}"
+                       TextColor="#8D6E00"
+                       FontSize="14"
+                       LineBreakMode="WordWrap" />
+            </Border>
+
+            <!-- Error feedback -->
+            <Border StrokeThickness="1"
+                    Stroke="Crimson"
+                    BackgroundColor="#19DC143C"
+                    Padding="10"
+                    IsVisible="{Binding HasError}"
+                    StrokeShape="RoundRectangle 8">
+                <Label Text="{Binding ErrorMessage}"
+                       TextColor="Crimson"
+                       LineBreakMode="WordWrap" />
+            </Border>
+
             <Label Text="{x:Static res:AppResources.CustomerLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
             <Label Text="{Binding CustomerName}"
                    FontSize="18"
                    TextColor="{StaticResource BrushOnSurface}" />
 
-            <!-- Current points balance -->
             <Label Text="{x:Static res:AppResources.PointsLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
             <Label Text="{Binding PointsBalance}"
                    FontSize="18"
                    TextColor="{StaticResource BrushOnSurface}" />
 
-            <!-- Points entry for accrual -->
-            <Entry Text="{Binding PointsToAccrue}"
+            <Entry x:Name="PointsEntry"
+                   Text="{Binding PointsToAccrue}"
                    Keyboard="Numeric"
                    Placeholder="{x:Static res:AppResources.PointsPlaceholder}"
                    IsVisible="{Binding CanConfirmAccrual}"
                    TextColor="{StaticResource BrushOnSurface}" />
 
-            <!-- Confirm buttons -->
             <Button Text="{x:Static res:AppResources.ConfirmAccrualButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmAccrualCommand}"
-                    IsVisible="{Binding CanConfirmAccrual}" />
+                    IsVisible="{Binding CanConfirmAccrual}"
+                    Clicked="OnActionClicked" />
 
             <Button Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmRedemptionCommand}"
-                    IsVisible="{Binding CanConfirmRedemption}" />
-
-            <!-- Error message -->
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   IsVisible="{Binding HasError}" />
+                    IsVisible="{Binding CanConfirmRedemption}"
+                    Clicked="OnActionClicked" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
