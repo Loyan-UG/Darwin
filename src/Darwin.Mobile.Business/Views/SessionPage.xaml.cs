@@ -1,40 +1,62 @@
+using System;
+using System.Threading.Tasks;
 using Darwin.Mobile.Business.ViewModels;
 using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Business.Views;
 
 /// <summary>
-/// Displays the session summary after scanning a QR code.
+/// Displays session details after scan and keeps feedback visible for operator UX.
 /// </summary>
 [QueryProperty(nameof(SessionToken), "token")]
 public partial class SessionPage : ContentPage
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SessionPage"/> class.
-    /// </summary>
+    private SessionViewModel Vm => (SessionViewModel)BindingContext;
+
     public SessionPage(SessionViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;
+
+        viewModel.FeedbackVisibilityRequested += OnFeedbackVisibilityRequested;
     }
 
-    /// <summary>
-    /// Gets or sets the session token passed via navigation.
-    /// Setting this property on the ViewModel triggers data loading.
-    /// </summary>
     public string SessionToken
     {
-        get => ((SessionViewModel)BindingContext).SessionToken;
-        set => ((SessionViewModel)BindingContext).SessionToken = value;
+        get => Vm.SessionToken;
+        set => Vm.SessionToken = value;
     }
 
-    /// <summary>
-    /// When the page appears, explicitly invoke the LoadSessionAsync method on the view model.
-    /// </summary>
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        var viewModel = (SessionViewModel)BindingContext;
-        await viewModel.LoadSessionAsync();
+        await Vm.LoadSessionAsync();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        Vm.FeedbackVisibilityRequested -= OnFeedbackVisibilityRequested;
+    }
+
+    /// <summary>
+    /// Unfocus input before action to keep feedback area visible if an error occurs.
+    /// </summary>
+    private void OnActionClicked(object? sender, EventArgs e)
+    {
+        PointsEntry?.Unfocus();
+    }
+
+    private async void OnFeedbackVisibilityRequested()
+    {
+        try
+        {
+            await Task.Delay(40);
+            await RootScrollView.ScrollToAsync(0, 0, true);
+        }
+        catch
+        {
+            // Ignore scroll exceptions to keep business flow uninterrupted.
+        }
     }
 }

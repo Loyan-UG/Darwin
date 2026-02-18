@@ -1,22 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
-using Darwin.Mobile.Shared.Navigation;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
 /// <summary>
-/// View model for the scan session page in the business app.
-/// It loads details about a scanned QR session and exposes commands to confirm accrual or redemption.
+/// View model for the scan session page in the Business app.
+/// Handles session loading, accrual confirmation and redemption confirmation,
+/// with explicit success/warning/error feedback for operator UX.
 /// </summary>
 public sealed class SessionViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
-    private readonly INavigationService _navigationService;
 
     private string _sessionToken = string.Empty;
     private string? _customerName;
@@ -25,49 +23,41 @@ public sealed class SessionViewModel : BaseViewModel
     private bool _canConfirmRedemption;
     private int _pointsToAccrue = 1;
 
+    private string? _successMessage;
+    private string? _warningMessage;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="SessionViewModel"/> class.
+    /// Raised when page should reveal feedback cards (scroll to top).
     /// </summary>
-    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
+    public event Action? FeedbackVisibilityRequested;
+
+    public SessionViewModel(ILoyaltyService loyaltyService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
-        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         LoadSessionCommand = new AsyncCommand(LoadSessionAsync);
         ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual && !IsBusy);
         ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanConfirmRedemption && !IsBusy);
     }
 
-    /// <summary>
-    /// Gets or sets the session token (passed from the scanner).
-    /// </summary>
     public string SessionToken
     {
         get => _sessionToken;
         set => SetProperty(ref _sessionToken, value);
     }
 
-    /// <summary>
-    /// Gets or sets the customer display name.
-    /// </summary>
     public string? CustomerName
     {
         get => _customerName;
         private set => SetProperty(ref _customerName, value);
     }
 
-    /// <summary>
-    /// Gets or sets the current points balance of the account associated with this session.
-    /// </summary>
     public int PointsBalance
     {
         get => _pointsBalance;
         private set => SetProperty(ref _pointsBalance, value);
     }
 
-    /// <summary>
-    /// Gets a value indicating whether accrual is allowed.
-    /// </summary>
     public bool CanConfirmAccrual
     {
         get => _canConfirmAccrual;
@@ -80,9 +70,6 @@ public sealed class SessionViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Gets a value indicating whether redemption is allowed.
-    /// </summary>
     public bool CanConfirmRedemption
     {
         get => _canConfirmRedemption;
@@ -95,51 +82,60 @@ public sealed class SessionViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Gets or sets the number of points that will be added when confirming accrual.
-    /// </summary>
     public int PointsToAccrue
     {
         get => _pointsToAccrue;
         set => SetProperty(ref _pointsToAccrue, value);
     }
 
-    /// <summary>
-    /// Command that loads session details from the server.
-    /// </summary>
+    public string? SuccessMessage
+    {
+        get => _successMessage;
+        private set
+        {
+            if (SetProperty(ref _successMessage, value))
+            {
+                OnPropertyChanged(nameof(HasSuccess));
+            }
+        }
+    }
+
+    public string? WarningMessage
+    {
+        get => _warningMessage;
+        private set
+        {
+            if (SetProperty(ref _warningMessage, value))
+            {
+                OnPropertyChanged(nameof(HasWarning));
+            }
+        }
+    }
+
+    public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
+    public bool HasWarning => !string.IsNullOrWhiteSpace(WarningMessage);
+
     public AsyncCommand LoadSessionCommand { get; }
-
-    /// <summary>
-    /// Command that confirms a points accrual for the current session.
-    /// </summary>
     public AsyncCommand ConfirmAccrualCommand { get; }
-
-    /// <summary>
-    /// Command that confirms a redemption for the current session.
-    /// </summary>
     public AsyncCommand ConfirmRedemptionCommand { get; }
 
-    /// <summary>
-    /// Loads session details using the current <see cref="SessionToken"/>.
-    /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns>
     public async Task LoadSessionAsync()
     {
-        ErrorMessage = null;
+        ClearFeedback();
 
         if (string.IsNullOrWhiteSpace(SessionToken))
         {
-            ErrorMessage = "Invalid session token.";
+            SetWarning("Invalid session token.");
             return;
         }
 
         IsBusy = true;
         try
         {
-            var result = await _loyaltyService.ProcessScanSessionForBusinessAsync(SessionToken, CancellationToken.None).ConfigureAwait(false);
+            var result = await _loyaltyService.ProcessScanSessionForBusinessAsync(SessionToken, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to load session details.";
+                SetError(result.Error ?? "Failed to load session details.");
                 return;
             }
 
@@ -148,6 +144,8 @@ public sealed class SessionViewModel : BaseViewModel
             PointsBalance = model.AccountSummary.PointsBalance;
             CanConfirmAccrual = model.CanConfirmAccrual;
             CanConfirmRedemption = model.CanConfirmRedemption;
+
+            SetSuccess("Session loaded successfully.");
         }
         finally
         {
@@ -155,41 +153,37 @@ public sealed class SessionViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Confirms points accrual for the current session.
-    /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task ConfirmAccrualAsync()
     {
-        ErrorMessage = null;
+        ClearFeedback();
+
         if (!CanConfirmAccrual)
         {
-            ErrorMessage = "Accrual is not allowed for this session.";
+            SetWarning("Accrual is not allowed for this session.");
             return;
         }
 
         if (PointsToAccrue <= 0)
         {
-            ErrorMessage = "Points must be greater than zero.";
+            SetWarning("Points must be greater than zero.");
             return;
         }
 
         IsBusy = true;
         try
         {
-            var result = await _loyaltyService.ConfirmAccrualAsync(SessionToken, PointsToAccrue, CancellationToken.None).ConfigureAwait(false);
+            var result = await _loyaltyService.ConfirmAccrualAsync(SessionToken, PointsToAccrue, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to confirm accrual.";
+                SetError(result.Error ?? "Failed to confirm accrual.");
                 return;
             }
 
-            // Update points balance and disable further accrual/redemption on this session.
             PointsBalance = result.Value.PointsBalance;
             CanConfirmAccrual = false;
             CanConfirmRedemption = false;
 
-            // TODO: Navigate to a result sheet page in a later step.
+            SetSuccess("Points were added successfully.");
         }
         finally
         {
@@ -197,26 +191,23 @@ public sealed class SessionViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Confirms reward redemption for the current session.
-    /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task ConfirmRedemptionAsync()
     {
-        ErrorMessage = null;
+        ClearFeedback();
+
         if (!CanConfirmRedemption)
         {
-            ErrorMessage = "Redemption is not allowed for this session.";
+            SetWarning("Redemption is not allowed for this session.");
             return;
         }
 
         IsBusy = true;
         try
         {
-            var result = await _loyaltyService.ConfirmRedemptionAsync(SessionToken, CancellationToken.None).ConfigureAwait(false);
+            var result = await _loyaltyService.ConfirmRedemptionAsync(SessionToken, CancellationToken.None);
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to confirm redemption.";
+                SetError(result.Error ?? "Failed to confirm redemption.");
                 return;
             }
 
@@ -224,11 +215,42 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmAccrual = false;
             CanConfirmRedemption = false;
 
-            // TODO: Navigate to a result sheet page in a later step.
+            SetSuccess("Redemption confirmed successfully.");
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    private void ClearFeedback()
+    {
+        SuccessMessage = null;
+        WarningMessage = null;
+        ErrorMessage = null;
+    }
+
+    private void SetSuccess(string message)
+    {
+        SuccessMessage = message;
+        WarningMessage = null;
+        ErrorMessage = null;
+        FeedbackVisibilityRequested?.Invoke();
+    }
+
+    private void SetWarning(string message)
+    {
+        SuccessMessage = null;
+        WarningMessage = message;
+        ErrorMessage = null;
+        FeedbackVisibilityRequested?.Invoke();
+    }
+
+    private void SetError(string message)
+    {
+        SuccessMessage = null;
+        WarningMessage = null;
+        ErrorMessage = message;
+        FeedbackVisibilityRequested?.Invoke();
     }
 }

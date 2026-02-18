@@ -5,8 +5,16 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.ComingSoonPage"
     Title="{x:Static res:AppResources.ComingSoonTitle}">
-    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center">
+
+    <VerticalStackLayout VerticalOptions="Center"
+                         HorizontalOptions="Center"
+                         Padding="24"
+                         Spacing="10">
         <Label Text="{x:Static res:AppResources.ComingSoonTitle}"
                Style="{StaticResource TitleLabelStyle}" />
+        <Label Text="This section is part of a future phase and is not active yet."
+               HorizontalTextAlignment="Center"
+               FontSize="14"
+               Opacity="0.8" />
     </VerticalStackLayout>
 </ContentPage>

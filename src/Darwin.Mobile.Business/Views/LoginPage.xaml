@@ -1,4 +1,4 @@
-<!-- File: src/Darwin.Mobile.Business/Views/LoginPage.xaml -->
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -7,58 +7,91 @@
     Title="{x:Static res:AppResources.LoginTitle}"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-    <!-- ScrollView prevents the keyboard from permanently hiding the button/error -->
-    <ScrollView VerticalOptions="Fill" HorizontalOptions="Fill">
-        <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*" Padding="24">
-            <StackLayout Grid.Row="1" Spacing="20" HorizontalOptions="Center" WidthRequest="360">
+    <!--
+      UX note:
+      The page is scrollable and the error region is near the top of the form.
+      This ensures validation/auth errors remain visible even when the software keyboard is open.
+    -->
+    <ScrollView x:Name="LoginScrollView"
+                VerticalOptions="Fill"
+                HorizontalOptions="Fill">
+
+        <Grid RowDefinitions="*,Auto,*"
+              ColumnDefinitions="*"
+              Padding="24">
+
+            <VerticalStackLayout Grid.Row="1"
+                                 Spacing="14"
+                                 HorizontalOptions="Center"
+                                 WidthRequest="360">
+
                 <Image Source="loyan_logo.png"
-                       WidthRequest="160"
-                       HeightRequest="160"
+                       WidthRequest="140"
+                       HeightRequest="140"
                        HorizontalOptions="Center"
                        Aspect="AspectFit"
                        SemanticProperties.Description="Darwin app logo" />
 
                 <Label Text="{x:Static res:AppResources.LoginTitle}"
-                       FontSize="22"
+                       FontSize="24"
                        FontAttributes="Bold"
                        HorizontalOptions="Center" />
 
-                <!-- Email entry -->
-                <Entry Placeholder="{x:Static res:AppResources.EmailLabel}"
+                <!--
+                  Error area intentionally placed above inputs to avoid hidden messages behind keyboard.
+                  We reserve clear visual priority for critical auth feedback.
+                -->
+                <Border StrokeThickness="1"
+                        Stroke="Crimson"
+                        BackgroundColor="#19DC143C"
+                        Padding="10"
+                        IsVisible="{Binding HasError}"
+                        StrokeShape="RoundRectangle 8">
+                    <Label x:Name="ErrorLabel"
+                           Text="{Binding ErrorMessage}"
+                           TextColor="Crimson"
+                           FontSize="14"
+                           LineBreakMode="WordWrap"
+                           AutomationId="ErrorLabel" />
+                </Border>
+
+                <Label Text="{x:Static res:AppResources.EmailLabel}"
+                       FontAttributes="Bold" />
+
+                <Entry x:Name="EmailEntry"
+                       Placeholder="{x:Static res:AppResources.EmailLabel}"
                        Keyboard="Email"
                        Text="{Binding Email}"
                        ReturnType="Next"
                        AutomationId="EmailEntry" />
 
-                <!-- Password entry -->
-                <Entry Placeholder="{x:Static res:AppResources.PasswordLabel}"
+                <Label Text="{x:Static res:AppResources.PasswordLabel}"
+                       FontAttributes="Bold" />
+
+                <Entry x:Name="PasswordEntry"
+                       Placeholder="{x:Static res:AppResources.PasswordLabel}"
                        IsPassword="True"
                        Text="{Binding Password}"
                        ReturnType="Done"
                        AutomationId="PasswordEntry" />
 
-                <!-- Error label -->
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="Crimson"
-                       FontSize="14"
-                       LineBreakMode="WordWrap"
-                       IsVisible="{Binding HasError}"
-                       AutomationId="ErrorLabel" />
-
-                <!-- Sign in button -->
                 <Button Text="{x:Static res:AppResources.LoginButton}"
                         Command="{Binding LoginCommand}"
+                        Clicked="OnSignInClicked"
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
                         HeightRequest="48"
-                        CornerRadius="6"
+                        CornerRadius="8"
                         AutomationId="SignInButton" />
 
-                <!-- Optional version/footer -->
+                <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                   IsRunning="{Binding IsBusy}"
+                                   HeightRequest="28" />
+
                 <Label Text="{Binding AppVersion, FallbackValue=''}"
                        FontSize="12"
                        HorizontalOptions="Center"
                        Opacity="0.6" />
-            </StackLayout>
+            </VerticalStackLayout>
         </Grid>
     </ScrollView>
 </ContentPage>
