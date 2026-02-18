@@ -1,18 +1,17 @@
-using System;
-using System.Threading.Tasks;
 using Darwin.Mobile.Business.ViewModels;
 using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Business.Views;
 
 /// <summary>
-/// Displays session details after scan and keeps feedback visible for operator UX.
+/// Displays scan session details and triggers load when page appears.
 /// </summary>
 [QueryProperty(nameof(SessionToken), "token")]
 public partial class SessionPage : ContentPage
 {
-    private SessionViewModel Vm => (SessionViewModel)BindingContext;
-
+    /// <summary>
+    /// Initializes Session page with dependency-injected ViewModel.
+    /// </summary>
     public SessionPage(SessionViewModel viewModel)
     {
         InitializeComponent();
@@ -21,23 +20,27 @@ public partial class SessionPage : ContentPage
         viewModel.FeedbackVisibilityRequested += OnFeedbackVisibilityRequested;
     }
 
+    /// <summary>
+    /// Session token passed via Shell query parameter.
+    /// </summary>
     public string SessionToken
     {
-        get => Vm.SessionToken;
-        set => Vm.SessionToken = value;
+        get => ((SessionViewModel)BindingContext).SessionToken;
+        set => ((SessionViewModel)BindingContext).SessionToken = value;
     }
 
+    /// <summary>
+    /// Loads session data whenever page becomes visible.
+    /// </summary>
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await Vm.LoadSessionAsync();
+
+        var viewModel = (SessionViewModel)BindingContext;
+        await viewModel.LoadSessionAsync();
     }
 
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
-        Vm.FeedbackVisibilityRequested -= OnFeedbackVisibilityRequested;
-    }
+
 
     /// <summary>
     /// Unfocus input before action to keep feedback area visible if an error occurs.

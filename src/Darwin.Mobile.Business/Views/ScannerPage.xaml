@@ -9,65 +9,26 @@
     Title="{x:Static res:AppResources.ScanTitle}">
 
     <!--
-      The page is scrollable and feedback cards are placed at the top.
-      This prevents important warnings/errors from being hidden by keyboard.
+      Named root scroll view so code-behind can bring feedback area into view.
+      This prevents error/warning text from being hidden under keyboard.
     -->
     <ScrollView x:Name="RootScrollView">
-        <VerticalStackLayout Padding="24" Spacing="14">
-
-            <!-- Success feedback -->
-            <Border StrokeThickness="1"
-                    Stroke="#2E7D32"
-                    BackgroundColor="#1A2E7D32"
-                    Padding="10"
-                    IsVisible="{Binding HasSuccess}"
-                    StrokeShape="RoundRectangle 8">
-                <Label Text="{Binding SuccessMessage}"
-                       TextColor="#1B5E20"
-                       FontSize="14"
-                       LineBreakMode="WordWrap" />
-            </Border>
-
-            <!-- Warning feedback -->
-            <Border StrokeThickness="1"
-                    Stroke="#F9A825"
-                    BackgroundColor="#1AF9A825"
-                    Padding="10"
-                    IsVisible="{Binding HasWarning}"
-                    StrokeShape="RoundRectangle 8">
-                <Label Text="{Binding WarningMessage}"
-                       TextColor="#8D6E00"
-                       FontSize="14"
-                       LineBreakMode="WordWrap" />
-            </Border>
-
-            <!-- Error feedback -->
-            <Border StrokeThickness="1"
-                    Stroke="Crimson"
-                    BackgroundColor="#19DC143C"
-                    Padding="10"
-                    IsVisible="{Binding HasError}"
-                    StrokeShape="RoundRectangle 8">
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="Crimson"
-                       FontSize="14"
-                       LineBreakMode="WordWrap" />
-            </Border>
-
+        <VerticalStackLayout Spacing="16" Padding="24">
+            <!-- Start scan action -->
             <Button Text="{x:Static res:AppResources.ScanTitle}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ScanCommand}"
                     HorizontalOptions="Fill" />
 
+            <!-- Last scanned token -->
             <Label Text="{x:Static res:AppResources.LastTokenLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
-
             <Label Text="{Binding LastScannedToken}"
                    TextColor="{StaticResource BrushPrimary}"
                    FontSize="16"
                    LineBreakMode="CharacterWrap" />
 
-            <!-- Optional quick actions if user stays on this page -->
+            <!-- Points entry for accrual -->
             <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
                 <Label Text="{x:Static res:AppResources.PointsLabel}"
                        FontSize="16"
@@ -78,20 +39,38 @@
                        TextColor="{StaticResource BrushOnSurface}" />
             </HorizontalStackLayout>
 
+            <!-- Confirm accrual -->
             <Button Text="{x:Static res:AppResources.AccrueButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmAccrualCommand}"
                     IsEnabled="{Binding CanConfirmAccrual}" />
+            <Label Text="Adds points to the customer account for this visit."
+                   FontSize="12"
+                   Opacity="0.75"
+                   TextColor="{StaticResource BrushOnSurface}" />
 
+            <!-- Confirm redemption -->
             <Button Text="{x:Static res:AppResources.RedeemButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmRedemptionCommand}"
                     IsEnabled="{Binding CanConfirmRedemption}" />
+            <Label Text="Confirms reward redemption and deducts required points."
+                   FontSize="12"
+                   Opacity="0.75"
+                   TextColor="{StaticResource BrushOnSurface}" />
 
+            <!-- Error feedback -->
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   LineBreakMode="WordWrap"
+                   IsVisible="{Binding HasError}" />
+
+            <!-- Busy indicator -->
             <ActivityIndicator IsRunning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}"
                                Color="{StaticResource BrushPrimary}"
-                               HeightRequest="36" />
+                               HeightRequest="40" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
