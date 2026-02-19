@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Constants;
+using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Integration;
 using Darwin.Mobile.Shared.Models.Loyalty;
@@ -13,16 +14,13 @@ using Darwin.Mobile.Shared.ViewModels;
 namespace Darwin.Mobile.Business.ViewModels;
 
 /// <summary>
-/// View model for the Business scanner screen.
+/// Scanner workflow view model for Business app.
 ///
-/// Responsibilities:
-/// - Start QR scan.
-/// - Resolve scanned token into a server-side scan session.
-/// - Expose action availability (accrual/redemption).
-/// - Trigger UI feedback visibility when error/warning should be shown.
-///
-/// Notes:
-/// - This class stays Business-app scoped and does not affect Consumer app behavior.
+/// Flow:
+/// 1) Acquire QR token from platform scanner.
+/// 2) Resolve token via WebApi business endpoint.
+/// 3) Expose allowed actions and navigate to session details.
+/// 4) Provide user-friendly localized feedback messages.
 /// </summary>
 public sealed class ScannerViewModel : BaseViewModel
 {
@@ -38,12 +36,12 @@ public sealed class ScannerViewModel : BaseViewModel
     private int _pointsToAccrue = 1;
 
     /// <summary>
-    /// Raised when the page should reveal feedback area (typically after validation/server errors).
+    /// Requests page to reveal feedback area when an error/warning is set.
     /// </summary>
     public event Action? FeedbackVisibilityRequested;
 
     /// <summary>
-    /// Initializes scanner view model.
+    /// Constructor.
     /// </summary>
     public ScannerViewModel(
         ILoyaltyService loyaltyService,
@@ -60,7 +58,7 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Last scanned token, useful for operator confirmation/debug.
+    /// Last scanned token for operator feedback.
     /// </summary>
     public string LastScannedToken
     {
@@ -69,7 +67,7 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Number of points to accrue.
+    /// Points input for accrual.
     /// </summary>
     public int PointsToAccrue
     {
@@ -78,7 +76,7 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// True when current session allows accrual action.
+    /// Whether current session allows accrual.
     /// </summary>
     public bool CanConfirmAccrual
     {
@@ -93,7 +91,7 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// True when current session allows redemption action.
+    /// Whether current session allows redemption.
     /// </summary>
     public bool CanConfirmRedemption
     {
@@ -108,29 +106,26 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Starts QR scan and resolves server session.
+    /// Command that initiates scan and session resolution.
     /// </summary>
     public AsyncCommand ScanCommand { get; }
 
     /// <summary>
-    /// Confirms points accrual for active session.
+    /// Command that confirms accrual.
     /// </summary>
     public AsyncCommand ConfirmAccrualCommand { get; }
 
     /// <summary>
-    /// Confirms reward redemption for active session.
+    /// Command that confirms redemption.
     /// </summary>
     public AsyncCommand ConfirmRedemptionCommand { get; }
 
     /// <summary>
-    /// Scans QR token and navigates to Session page when valid.
+    /// Scans token and resolves business session.
     /// </summary>
     private async Task ScanAsync()
     {
-        if (IsBusy)
-        {
-            return;
-        }
+        if (IsBusy) return;
 
         IsBusy = true;
         ErrorMessage = null;
@@ -144,9 +139,9 @@ public sealed class ScannerViewModel : BaseViewModel
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                ErrorMessage = "No QR code detected.";
+                ErrorMessage = AppResources.NoQrDetected;
                 LastScannedToken = string.Empty;
-                RequestFeedbackVisibility();
+                NotifyFeedbackVisibility();
                 return;
             }
 
@@ -158,8 +153,8 @@ public sealed class ScannerViewModel : BaseViewModel
 
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to process scan.";
-                RequestFeedbackVisibility();
+                ErrorMessage = result.Error ?? AppResources.FailedToProcessScan;
+                NotifyFeedbackVisibility();
                 return;
             }
 
@@ -167,11 +162,7 @@ public sealed class ScannerViewModel : BaseViewModel
             CanConfirmAccrual = _currentSession.CanConfirmAccrual;
             CanConfirmRedemption = _currentSession.CanConfirmRedemption;
 
-            var parameters = new Dictionary<string, object?>
-            {
-                ["token"] = token
-            };
-
+            var parameters = new Dictionary<string, object?> { ["token"] = token };
             await _navigationService.GoToAsync(Routes.Session, parameters).ConfigureAwait(false);
         }
         finally
@@ -181,35 +172,32 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Confirms accrual action on server.
+    /// Confirms accrual for the current session.
     /// </summary>
     private async Task ConfirmAccrualAsync()
     {
         if (_currentSession is null)
         {
-            ErrorMessage = "No active scan session.";
-            RequestFeedbackVisibility();
+            ErrorMessage = AppResources.NoActiveSession;
+            NotifyFeedbackVisibility();
             return;
         }
 
         if (!CanConfirmAccrual)
         {
-            ErrorMessage = "Accrual is not allowed for this session.";
-            RequestFeedbackVisibility();
+            ErrorMessage = AppResources.AccrualNotAllowed;
+            NotifyFeedbackVisibility();
             return;
         }
 
         if (PointsToAccrue <= 0)
         {
-            ErrorMessage = "Points must be greater than zero.";
-            RequestFeedbackVisibility();
+            ErrorMessage = AppResources.PointsMustBeGreaterThanZero;
+            NotifyFeedbackVisibility();
             return;
         }
 
-        if (IsBusy)
-        {
-            return;
-        }
+        if (IsBusy) return;
 
         IsBusy = true;
         ErrorMessage = null;
@@ -222,8 +210,8 @@ public sealed class ScannerViewModel : BaseViewModel
 
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to confirm accrual.";
-                RequestFeedbackVisibility();
+                ErrorMessage = result.Error ?? AppResources.FailedToConfirmAccrual;
+                NotifyFeedbackVisibility();
                 return;
             }
 
@@ -237,28 +225,25 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Confirms redemption action on server.
+    /// Confirms redemption for the current session.
     /// </summary>
     private async Task ConfirmRedemptionAsync()
     {
         if (_currentSession is null)
         {
-            ErrorMessage = "No active scan session.";
-            RequestFeedbackVisibility();
+            ErrorMessage = AppResources.NoActiveSession;
+            NotifyFeedbackVisibility();
             return;
         }
 
         if (!CanConfirmRedemption)
         {
-            ErrorMessage = "Redemption is not allowed for this session.";
-            RequestFeedbackVisibility();
+            ErrorMessage = AppResources.RedemptionNotAllowed;
+            NotifyFeedbackVisibility();
             return;
         }
 
-        if (IsBusy)
-        {
-            return;
-        }
+        if (IsBusy) return;
 
         IsBusy = true;
         ErrorMessage = null;
@@ -271,8 +256,8 @@ public sealed class ScannerViewModel : BaseViewModel
 
             if (!result.Succeeded || result.Value is null)
             {
-                ErrorMessage = result.Error ?? "Failed to confirm redemption.";
-                RequestFeedbackVisibility();
+                ErrorMessage = result.Error ?? AppResources.FailedToConfirmRedemption;
+                NotifyFeedbackVisibility();
                 return;
             }
 
@@ -286,10 +271,9 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Requests UI to make feedback visible on screen.
-    /// We marshal to main thread to keep UI updates safe.
+    /// Raises feedback-visibility request on the UI thread.
     /// </summary>
-    private void RequestFeedbackVisibility()
+    private void NotifyFeedbackVisibility()
     {
         RunOnMain(() => FeedbackVisibilityRequested?.Invoke());
     }

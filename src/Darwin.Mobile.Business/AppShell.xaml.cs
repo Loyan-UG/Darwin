@@ -11,57 +11,34 @@ namespace Darwin.Mobile.Business;
 
 /// <summary>
 /// Shell coordinator for the Business app.
-///
-/// Responsibilities:
-/// - Register navigation routes.
-/// - Perform startup navigation only after Shell is ready.
-/// - Provide a consistent logout entry point via toolbar item.
-/// - Keep toolbar state aligned with current route (hide on Login, show elsewhere).
-///
-/// Why this design:
-/// - Absolute navigation to login inside constructor can fail on Android in some Shell states.
-/// - ToolbarItem in MAUI does not support IsVisible, so we use add/remove pattern.
+/// 
+/// Why this implementation:
+/// - Startup navigation is performed after Shell appears (not in constructor) to avoid Android Shell route errors.
+/// - Logout button visibility is controlled by add/remove from ToolbarItems (ToolbarItem has no IsVisible in MAUI).
+/// - The logout button is declared once in XAML; code-behind never creates a second one.
 /// </summary>
 public sealed partial class AppShell : Shell
 {
     private bool _startupNavigationDone;
-    private bool _logoutToolbarAttached;
-
-    // We create toolbar item in code to avoid XAML coupling and keep behavior deterministic.
-    private readonly ToolbarItem _logoutToolbarItem;
+    private bool _logoutAttached = true;
 
     /// <summary>
-    /// Initializes shell, registers routes and wires route-change behavior.
+    /// Initializes shell and registers route handlers.
     /// </summary>
     public AppShell()
     {
         InitializeComponent();
 
-        // Register all routes used by Shell navigation.
         Routing.RegisterRoute(Routes.Home, typeof(HomePage));
         Routing.RegisterRoute(Routes.Scanner, typeof(ScannerPage));
         Routing.RegisterRoute(Routes.Login, typeof(LoginPage));
         Routing.RegisterRoute(Routes.Session, typeof(SessionPage));
 
-        // Create logout toolbar action once and manage its presence by route.
-        _logoutToolbarItem = new ToolbarItem
-        {
-            Text = "Logout",
-            Priority = 0,
-            Order = ToolbarItemOrder.Primary
-        };
-        _logoutToolbarItem.Clicked += OnLogoutClicked;
-
-        // Track navigation transitions so toolbar can be adjusted per route.
         Navigated += OnShellNavigated;
     }
 
     /// <summary>
-    /// Performs one-time startup navigation after Shell appears.
-    ///
-    /// Important:
-    /// - We intentionally do NOT navigate in constructor.
-    /// - This avoids Shell route-stack exceptions on some Android runs.
+    /// Performs one-time startup navigation when shell is fully ready.
     /// </summary>
     protected override void OnAppearing()
     {
@@ -76,26 +53,21 @@ public sealed partial class AppShell : Shell
 
         Dispatcher.Dispatch(async () =>
         {
-            // Start in login flow in a stable lifecycle moment.
             await GoToAsync($"//{Routes.Login}");
         });
     }
 
     /// <summary>
-    /// Handles logout action from toolbar.
-    ///
-    /// Behavior:
-    /// - Try to revoke/clear auth via IAuthService.
-    /// - Always navigate to Login even if network revoke fails.
+    /// Handles user logout.
     /// </summary>
     private async void OnLogoutClicked(object? sender, EventArgs e)
     {
         try
         {
-            var authService = Handler?.MauiContext?.Services?.GetService<IAuthService>();
-            if (authService is not null)
+            var auth = Handler?.MauiContext?.Services?.GetService<IAuthService>();
+            if (auth is not null)
             {
-                await authService.LogoutAsync(CancellationToken.None);
+                await auth.LogoutAsync(CancellationToken.None);
             }
         }
         finally
@@ -105,14 +77,14 @@ public sealed partial class AppShell : Shell
     }
 
     /// <summary>
-    /// Keeps toolbar composition in sync with current route.
+    /// Updates toolbar composition according to current route.
     /// </summary>
     private void OnShellNavigated(object? sender, ShellNavigatedEventArgs e)
     {
-        var current = e.Current?.Location?.OriginalString ?? string.Empty;
-        var onLoginRoute = current.Contains(Routes.Login, StringComparison.OrdinalIgnoreCase);
+        var route = e.Current?.Location?.OriginalString ?? string.Empty;
+        var onLogin = route.Contains(Routes.Login, StringComparison.OrdinalIgnoreCase);
 
-        if (onLoginRoute)
+        if (onLogin)
         {
             RemoveLogoutToolbarItemIfNeeded();
         }
@@ -123,30 +95,34 @@ public sealed partial class AppShell : Shell
     }
 
     /// <summary>
-    /// Removes logout item if currently attached.
+    /// Removes logout item only if currently attached.
     /// </summary>
     private void RemoveLogoutToolbarItemIfNeeded()
     {
-        if (!_logoutToolbarAttached)
+        if (!_logoutAttached)
         {
             return;
         }
 
-        ToolbarItems.Remove(_logoutToolbarItem);
-        _logoutToolbarAttached = false;
+        ToolbarItems.Remove(LogoutToolbarItem);
+        _logoutAttached = false;
     }
 
     /// <summary>
-    /// Adds logout item if currently detached.
+    /// Adds logout item only if currently detached.
     /// </summary>
     private void AddLogoutToolbarItemIfNeeded()
     {
-        if (_logoutToolbarAttached)
+        if (_logoutAttached)
         {
             return;
         }
 
-        ToolbarItems.Add(_logoutToolbarItem);
-        _logoutToolbarAttached = true;
+        if (!ToolbarItems.Contains(LogoutToolbarItem))
+        {
+            ToolbarItems.Add(LogoutToolbarItem);
+        }
+
+        _logoutAttached = true;
     }
 }

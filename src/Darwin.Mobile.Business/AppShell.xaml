@@ -8,28 +8,23 @@
     x:Class="Darwin.Mobile.Business.AppShell"
     Shell.FlyoutBehavior="Disabled">
 
-    <!--
-      Toolbar logout item:
-      MAUI ToolbarItem has no IsVisible property.
-      Visibility is controlled from code-behind by adding/removing this item from ToolbarItems collection.
-    -->
+    <!-- Single logout button (source of truth). -->
     <Shell.ToolbarItems>
         <ToolbarItem x:Name="LogoutToolbarItem"
-                     Text="Logout"
+                     Text="{x:Static res:AppResources.LogoutButtonText}"
                      Priority="0"
                      Order="Primary"
                      Clicked="OnLogoutClicked" />
     </Shell.ToolbarItems>
 
-    <!-- Login route (kept outside TabBar) -->
+    <!-- Login route outside main tabs -->
     <ShellContent
         Route="{x:Static local:Routes.Login}"
         ContentTemplate="{DataTemplate views:LoginPage}" />
 
-    <!-- Main bottom navigation (all phases visible) -->
+    <!-- Main bottom navigation -->
     <TabBar Route="MainTabs">
-
-        <!-- Phase 1 (active) -->
+        <!-- Phase 1 -->
         <ShellContent
             Route="{x:Static local:Routes.Home}"
             Title="{x:Static res:AppResources.HomeTitle}"
@@ -40,31 +35,27 @@
             Title="{x:Static res:AppResources.ScanTitle}"
             ContentTemplate="{DataTemplate views:ScannerPage}" />
 
-        <!-- Future phases (currently placeholders) -->
-        <ShellContent
-            Route="dashboard"
-            Title="Dashboard"
-            ContentTemplate="{DataTemplate views:ComingSoonPage}" />
+        <!-- Future phases (placeholder for now) -->
+        <ShellContent Route="dashboard"
+                      Title="Dashboard"
+                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <ShellContent
-            Route="rewards"
-            Title="Rewards"
-            ContentTemplate="{DataTemplate views:ComingSoonPage}" />
+        <ShellContent Route="rewards"
+                      Title="Rewards"
+                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <ShellContent
-            Route="team"
-            Title="Team"
-            ContentTemplate="{DataTemplate views:ComingSoonPage}" />
+        <ShellContent Route="team"
+                      Title="Team"
+                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <ShellContent
-            Route="settings"
-            Title="Settings"
-            ContentTemplate="{DataTemplate views:ComingSoonPage}" />
-
+        <ShellContent Route="settings"
+                      Title="Settings"
+                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
     </TabBar>
 
     <!-- Session details route -->
     <ShellContent
         Route="{x:Static local:Routes.Session}"
         ContentTemplate="{DataTemplate views:SessionPage}" />
+
 </Shell>

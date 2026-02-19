@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -8,19 +8,15 @@
     x:DataType="vm:ScannerViewModel"
     Title="{x:Static res:AppResources.ScanTitle}">
 
-    <!--
-      Named root scroll view so code-behind can bring feedback area into view.
-      This prevents error/warning text from being hidden under keyboard.
-    -->
+    <!-- Named scroll root to reveal feedback when needed -->
     <ScrollView x:Name="RootScrollView">
         <VerticalStackLayout Spacing="16" Padding="24">
-            <!-- Start scan action -->
+
             <Button Text="{x:Static res:AppResources.ScanTitle}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ScanCommand}"
                     HorizontalOptions="Fill" />
 
-            <!-- Last scanned token -->
             <Label Text="{x:Static res:AppResources.LastTokenLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
             <Label Text="{Binding LastScannedToken}"
@@ -28,7 +24,6 @@
                    FontSize="16"
                    LineBreakMode="CharacterWrap" />
 
-            <!-- Points entry for accrual -->
             <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
                 <Label Text="{x:Static res:AppResources.PointsLabel}"
                        FontSize="16"
@@ -39,34 +34,30 @@
                        TextColor="{StaticResource BrushOnSurface}" />
             </HorizontalStackLayout>
 
-            <!-- Confirm accrual -->
             <Button Text="{x:Static res:AppResources.AccrueButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmAccrualCommand}"
                     IsEnabled="{Binding CanConfirmAccrual}" />
-            <Label Text="Adds points to the customer account for this visit."
+            <Label Text="{x:Static res:AppResources.AccrualHelpText}"
                    FontSize="12"
                    Opacity="0.75"
                    TextColor="{StaticResource BrushOnSurface}" />
 
-            <!-- Confirm redemption -->
             <Button Text="{x:Static res:AppResources.RedeemButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmRedemptionCommand}"
                     IsEnabled="{Binding CanConfirmRedemption}" />
-            <Label Text="Confirms reward redemption and deducts required points."
+            <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
                    FontSize="12"
                    Opacity="0.75"
                    TextColor="{StaticResource BrushOnSurface}" />
 
-            <!-- Error feedback -->
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
                    FontSize="14"
-                   LineBreakMode="WordWrap"
-                   IsVisible="{Binding HasError}" />
+                   IsVisible="{Binding HasError}"
+                   LineBreakMode="WordWrap" />
 
-            <!-- Busy indicator -->
             <ActivityIndicator IsRunning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}"
                                Color="{StaticResource BrushPrimary}"

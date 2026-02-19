@@ -7,28 +7,28 @@ namespace Darwin.Mobile.Business.Views;
 
 /// <summary>
 /// Scanner page code-behind.
-///
-/// Why this class exists:
-/// - Attaches injected ViewModel as BindingContext.
-/// - Responds to ViewModel feedback event and scrolls to top so operator can see messages.
+/// 
+/// Responsibilities:
+/// - Attach injected ViewModel as BindingContext.
+/// - React to feedback visibility requests and scroll to top.
 /// </summary>
 public partial class ScannerPage : ContentPage
 {
     private ScannerViewModel? Vm => BindingContext as ScannerViewModel;
 
     /// <summary>
-    /// Initializes page with dependency-injected ViewModel.
+    /// Initializes page with DI-provided view model.
     /// </summary>
     public ScannerPage(ScannerViewModel viewModel)
     {
         InitializeComponent();
-
         BindingContext = viewModel;
+
         viewModel.FeedbackVisibilityRequested += OnFeedbackVisibilityRequested;
     }
 
     /// <summary>
-    /// Unsubscribe events to avoid handler accumulation across page lifecycle.
+    /// Unsubscribes event handlers when page disappears to avoid duplicate subscriptions.
     /// </summary>
     protected override void OnDisappearing()
     {
@@ -41,7 +41,7 @@ public partial class ScannerPage : ContentPage
     }
 
     /// <summary>
-    /// Scrolls to top so feedback labels are visible even when keyboard was open.
+    /// Scrolls to top so feedback labels are visible even when keyboard was previously open.
     /// </summary>
     private async void OnFeedbackVisibilityRequested()
     {
@@ -57,7 +57,7 @@ public partial class ScannerPage : ContentPage
         }
         catch
         {
-            // Never crash scanner flow due to a non-critical scroll failure.
+            // Feedback scroll failure should never crash scanner flow.
         }
     }
 }

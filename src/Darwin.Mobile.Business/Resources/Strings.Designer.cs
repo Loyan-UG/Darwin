@@ -61,6 +61,24 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Adds points to the customer account for this visit..
+        /// </summary>
+        internal static string AccrualHelpText {
+            get {
+                return ResourceManager.GetString("AccrualHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Accrual is not allowed for this session..
+        /// </summary>
+        internal static string AccrualNotAllowed {
+            get {
+                return ResourceManager.GetString("AccrualNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirm Accrual.
         /// </summary>
         internal static string AccrueButton {
@@ -133,6 +151,33 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to confirm accrual..
+        /// </summary>
+        internal static string FailedToConfirmAccrual {
+            get {
+                return ResourceManager.GetString("FailedToConfirmAccrual", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to confirm redemption..
+        /// </summary>
+        internal static string FailedToConfirmRedemption {
+            get {
+                return ResourceManager.GetString("FailedToConfirmRedemption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to process scan..
+        /// </summary>
+        internal static string FailedToProcessScan {
+            get {
+                return ResourceManager.GetString("FailedToProcessScan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Home.
         /// </summary>
         internal static string HomeTitle {
@@ -178,6 +223,33 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Logout.
+        /// </summary>
+        internal static string LogoutButtonText {
+            get {
+                return ResourceManager.GetString("LogoutButtonText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No active scan session..
+        /// </summary>
+        internal static string NoActiveSession {
+            get {
+                return ResourceManager.GetString("NoActiveSession", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No QR code detected. Please try again..
+        /// </summary>
+        internal static string NoQrDetected {
+            get {
+                return ResourceManager.GetString("NoQrDetected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Password.
         /// </summary>
         internal static string PasswordLabel {
@@ -205,6 +277,15 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Points must be greater than zero..
+        /// </summary>
+        internal static string PointsMustBeGreaterThanZero {
+            get {
+                return ResourceManager.GetString("PointsMustBeGreaterThanZero", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enter points.
         /// </summary>
         internal static string PointsPlaceholder {
@@ -219,6 +300,24 @@ namespace Darwin.Mobile.Business.Resources {
         internal static string RedeemButton {
             get {
                 return ResourceManager.GetString("RedeemButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirms reward redemption and deducts required points..
+        /// </summary>
+        internal static string RedemptionHelpText {
+            get {
+                return ResourceManager.GetString("RedemptionHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redemption is not allowed for this session..
+        /// </summary>
+        internal static string RedemptionNotAllowed {
+            get {
+                return ResourceManager.GetString("RedemptionNotAllowed", resourceCulture);
             }
         }
         
