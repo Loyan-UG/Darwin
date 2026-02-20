@@ -241,6 +241,15 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Your username and password are correct, but your account is not assigned to any business yet. Please contact support..
+        /// </summary>
+        internal static string NoBusinessMembershipMessage {
+            get {
+                return ResourceManager.GetString("NoBusinessMembershipMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No QR code detected. Please try again..
         /// </summary>
         internal static string NoQrDetected {
@@ -327,6 +336,15 @@ namespace Darwin.Mobile.Business.Resources {
         internal static string ScanTitle {
             get {
                 return ResourceManager.GetString("ScanTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to reach server. Please check your internet connection and try again..
+        /// </summary>
+        internal static string ServerUnreachableMessage {
+            get {
+                return ResourceManager.GetString("ServerUnreachableMessage", resourceCulture);
             }
         }
         

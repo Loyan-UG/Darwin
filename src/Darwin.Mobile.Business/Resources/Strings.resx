@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<!-- 
+  <!-- 
     Microsoft ResX Schema 
     
     Version 2.0
@@ -59,159 +59,164 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-		<xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-		<xsd:element name="root" msdata:IsDataSet="true">
-			<xsd:complexType>
-				<xsd:choice maxOccurs="unbounded">
-					<xsd:element name="metadata">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" />
-							</xsd:sequence>
-							<xsd:attribute name="name" use="required" type="xsd:string" />
-							<xsd:attribute name="type" type="xsd:string" />
-							<xsd:attribute name="mimetype" type="xsd:string" />
-							<xsd:attribute ref="xml:space" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="assembly">
-						<xsd:complexType>
-							<xsd:attribute name="alias" type="xsd:string" />
-							<xsd:attribute name="name" type="xsd:string" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="data">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-							<xsd:attribute ref="xml:space" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="resheader">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" use="required" />
-						</xsd:complexType>
-					</xsd:element>
-				</xsd:choice>
-			</xsd:complexType>
-		</xsd:element>
-	</xsd:schema>
-	<resheader name="resmimetype">
-		<value>text/microsoft-resx</value>
-	</resheader>
-	<resheader name="version">
-		<value>2.0</value>
-	</resheader>
-	<resheader name="reader">
-		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<resheader name="writer">
-		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<data name="AccrueButton" xml:space="preserve">
-  <value>Confirm Accrual</value>
-</data>
-	<data name="AccrualHelpText" xml:space="preserve">
-  <value>Adds points to the customer account for this visit.</value>
-</data>
-	<data name="ComingSoonTitle" xml:space="preserve">
-  <value>Coming soon</value>
-</data>
-	<data name="ConfirmAccrualButton" xml:space="preserve">
-  <value>Confirm Accrual</value>
-</data>
-	<data name="ConfirmRedemptionButton" xml:space="preserve">
-  <value>Confirm Redemption</value>
-</data>
-	<data name="CustomerLabel" xml:space="preserve">
-  <value>Customer</value>
-</data>
-	<data name="EmailLabel" xml:space="preserve">
-  <value>Email</value>
-</data>
-	<data name="EmailRequired" xml:space="preserve">
-  <value>Email is required.</value>
-</data>
-	<data name="ErrorLabel" xml:space="preserve">
-  <value>Error</value>
-</data>
-	<data name="FailedToConfirmAccrual" xml:space="preserve">
-  <value>Failed to confirm accrual.</value>
-</data>
-	<data name="FailedToConfirmRedemption" xml:space="preserve">
-  <value>Failed to confirm redemption.</value>
-</data>
-	<data name="FailedToProcessScan" xml:space="preserve">
-  <value>Failed to process scan.</value>
-</data>
-	<data name="HomeTitle" xml:space="preserve">
-  <value>Home</value>
-</data>
-	<data name="InvalidCredentials" xml:space="preserve">
-  <value>Invalid email or password.</value>
-</data>
-	<data name="LastTokenLabel" xml:space="preserve">
-  <value>Last token</value>
-</data>
-	<data name="LoginButton" xml:space="preserve">
-  <value>Sign in</value>
-</data>
-	<data name="LoginTitle" xml:space="preserve">
-  <value>Login</value>
-</data>
-	<data name="LogoutButtonText" xml:space="preserve">
-  <value>Logout</value>
-</data>
-	<data name="NoActiveSession" xml:space="preserve">
-  <value>No active scan session.</value>
-</data>
-	<data name="NoQrDetected" xml:space="preserve">
-  <value>No QR code detected. Please try again.</value>
-</data>
-	<data name="PasswordLabel" xml:space="preserve">
-  <value>Password</value>
-</data>
-	<data name="PasswordRequired" xml:space="preserve">
-  <value>Password is required.</value>
-</data>
-	<data name="PointsLabel" xml:space="preserve">
-  <value>Points</value>
-</data>
-	<data name="PointsMustBeGreaterThanZero" xml:space="preserve">
-  <value>Points must be greater than zero.</value>
-</data>
-	<data name="PointsPlaceholder" xml:space="preserve">
-  <value>Enter points</value>
-</data>
-	<data name="RedeemButton" xml:space="preserve">
-  <value>Confirm Redemption</value>
-</data>
-	<data name="RedemptionHelpText" xml:space="preserve">
-  <value>Confirms reward redemption and deducts required points.</value>
-</data>
-	<data name="RedemptionNotAllowed" xml:space="preserve">
-  <value>Redemption is not allowed for this session.</value>
-</data>
-	<data name="AccrualNotAllowed" xml:space="preserve">
-  <value>Accrual is not allowed for this session.</value>
-</data>
-	<data name="ScanTitle" xml:space="preserve">
-  <value>Scan</value>
-</data>
-	<data name="SessionTitle" xml:space="preserve">
-  <value>Session</value>
-</data>
-	<data name="StartButton" xml:space="preserve">
-  <value>Start</value>
-</data>
-
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AccrueButton" xml:space="preserve">
+    <value>Confirm Accrual</value>
+  </data>
+  <data name="AccrualHelpText" xml:space="preserve">
+    <value>Adds points to the customer account for this visit.</value>
+  </data>
+  <data name="ComingSoonTitle" xml:space="preserve">
+    <value>Coming soon</value>
+  </data>
+  <data name="ConfirmAccrualButton" xml:space="preserve">
+    <value>Confirm Accrual</value>
+  </data>
+  <data name="ConfirmRedemptionButton" xml:space="preserve">
+    <value>Confirm Redemption</value>
+  </data>
+  <data name="CustomerLabel" xml:space="preserve">
+    <value>Customer</value>
+  </data>
+  <data name="EmailLabel" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Email is required.</value>
+  </data>
+  <data name="ErrorLabel" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="FailedToConfirmAccrual" xml:space="preserve">
+    <value>Failed to confirm accrual.</value>
+  </data>
+  <data name="FailedToConfirmRedemption" xml:space="preserve">
+    <value>Failed to confirm redemption.</value>
+  </data>
+  <data name="FailedToProcessScan" xml:space="preserve">
+    <value>Failed to process scan.</value>
+  </data>
+  <data name="HomeTitle" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Invalid email or password.</value>
+  </data>
+  <data name="LastTokenLabel" xml:space="preserve">
+    <value>Last token</value>
+  </data>
+  <data name="LoginButton" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="LoginTitle" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="LogoutButtonText" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+  <data name="NoActiveSession" xml:space="preserve">
+    <value>No active scan session.</value>
+  </data>
+  <data name="NoQrDetected" xml:space="preserve">
+    <value>No QR code detected. Please try again.</value>
+  </data>
+  <data name="PasswordLabel" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>Password is required.</value>
+  </data>
+  <data name="PointsLabel" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="PointsMustBeGreaterThanZero" xml:space="preserve">
+    <value>Points must be greater than zero.</value>
+  </data>
+  <data name="PointsPlaceholder" xml:space="preserve">
+    <value>Enter points</value>
+  </data>
+  <data name="RedeemButton" xml:space="preserve">
+    <value>Confirm Redemption</value>
+  </data>
+  <data name="RedemptionHelpText" xml:space="preserve">
+    <value>Confirms reward redemption and deducts required points.</value>
+  </data>
+  <data name="RedemptionNotAllowed" xml:space="preserve">
+    <value>Redemption is not allowed for this session.</value>
+  </data>
+  <data name="AccrualNotAllowed" xml:space="preserve">
+    <value>Accrual is not allowed for this session.</value>
+  </data>
+  <data name="ScanTitle" xml:space="preserve">
+    <value>Scan</value>
+  </data>
+  <data name="SessionTitle" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="ServerUnreachableMessage" xml:space="preserve">
+    <value>Unable to reach server. Please check your internet connection and try again.</value>
+  </data>
+  <data name="NoBusinessMembershipMessage" xml:space="preserve">
+    <value>Your username and password are correct, but your account is not assigned to any business yet. Please contact support.</value>
+  </data>
 </root>
