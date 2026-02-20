@@ -5,16 +5,24 @@
 /// </summary>
 public sealed class ApiOptions
 {
-    /// <summary>Base URL of the Darwin WebApi (e.g., https://api.example.com/).</summary>
-    public string BaseUrl { get; init; } = default!;
+    /// <summary>
+    /// Base URL of the Darwin WebApi (e.g., https://api.darwin.com/).
+    /// </summary>
+    public string BaseUrl { get; set; } = default!;
 
-    /// <summary>Audience expected for JWT (provided by bootstrap endpoint).</summary>
+    /// <summary>
+    /// Audience expected for JWT (provided by bootstrap endpoint).
+    /// </summary>
     public string JwtAudience { get; set; } = "Darwin.PublicApi";
 
-    /// <summary>Suggested QR token refresh interval (seconds) provided by server bootstrap.</summary>
-    public int QrRefreshSeconds { get; set; } = 300;
+    /// <summary>
+    /// Suggested QR token refresh interval (seconds) provided by server bootstrap.
+    /// </summary>
+    public int QrRefreshSeconds { get; set; } = 60;
 
-    /// <summary>Maximum outbox size before forcing sync.</summary>
+    /// <summary>
+    /// Maximum outbox size before forcing sync.
+    /// </summary>
     public int MaxOutbox { get; set; } = 100;
 
     /// <summary>
@@ -25,14 +33,19 @@ public sealed class ApiOptions
     /// </summary>
     public MobileAppRole AppRole { get; set; } = MobileAppRole.Unknown;
 
-
     /// <summary>
-    /// TEST-ONLY switch to bypass TLS certificate validation.
-    /// Keep false in production.
+    /// TEST-ONLY switch:
+    /// When true, mobile client bypasses TLS certificate validation.
+    /// This is only for temporary test tunnels (e.g. ngrok).
     /// </summary>
     public bool UnsafeTrustAnyServerCertificate { get; set; } = false;
-}
 
+    /// <summary>
+    /// When true, login error message includes compact network diagnostics (exception type + hint).
+    /// Useful in Release test builds to identify DNS/TLS/connectivity root cause quickly.
+    /// </summary>
+    public bool EnableVerboseNetworkDiagnostics { get; set; } = false;
+}
 
 /// <summary>
 /// Mobile app role used by shared mobile components to apply app-specific checks.

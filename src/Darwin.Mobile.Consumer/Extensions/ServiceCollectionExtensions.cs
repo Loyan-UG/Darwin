@@ -31,6 +31,15 @@ public static class ServiceCollectionExtensions
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
             ?? throw new InvalidOperationException("Missing 'Api' section in appsettings.mobile.json");
 
+        if (string.IsNullOrWhiteSpace(apiOptions.BaseUrl))
+        {
+            // Fail fast with a clear message instead of hitting HttpClient invalid URI errors later.
+            throw new InvalidOperationException(
+                "Api:BaseUrl is empty after configuration binding. " +
+                "Check Resources/Raw/appsettings.mobile.json and rebuild/reinstall the app.");
+        }
+
+
         // Ensure app role is explicitly set for client-side validation (defensive).
         apiOptions.AppRole = MobileAppRole.Consumer;
 

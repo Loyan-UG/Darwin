@@ -52,13 +52,14 @@ namespace Darwin.Mobile.Shared.Extensions
                 if (!string.IsNullOrWhiteSpace(options.BaseUrl))
                 {
                     // Normalize base URL to avoid subtle URI composition issues.
-                    var normalizedBase = options.BaseUrl.Trim();
-                    if (!normalizedBase.EndsWith("/", StringComparison.Ordinal))
+                    // Normalize once to avoid subtle BaseAddress composition issues.
+                    var baseUrl = options.BaseUrl.Trim();
+                    if (!baseUrl.EndsWith("/", StringComparison.Ordinal))
                     {
-                        normalizedBase += "/";
+                        baseUrl += "/";
                     }
 
-                    client.BaseAddress = new Uri(normalizedBase, UriKind.Absolute);
+                    client.BaseAddress = new Uri(baseUrl, UriKind.Absolute);
                 }
 
                 client.Timeout = TimeSpan.FromSeconds(20);
