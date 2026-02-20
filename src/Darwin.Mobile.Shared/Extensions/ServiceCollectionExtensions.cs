@@ -51,9 +51,17 @@ namespace Darwin.Mobile.Shared.Extensions
             {
                 if (!string.IsNullOrWhiteSpace(options.BaseUrl))
                 {
-                    client.BaseAddress = new Uri(options.BaseUrl, UriKind.Absolute);
+                    // Normalize base URL to avoid subtle URI composition issues.
+                    var normalizedBase = options.BaseUrl.Trim();
+                    if (!normalizedBase.EndsWith("/", StringComparison.Ordinal))
+                    {
+                        normalizedBase += "/";
+                    }
+
+                    client.BaseAddress = new Uri(normalizedBase, UriKind.Absolute);
                 }
-                client.Timeout = TimeSpan.FromSeconds(15);
+
+                client.Timeout = TimeSpan.FromSeconds(20);
 
                 // Helpful header for local tunneling (ngrok) dev scenarios.
                 client.DefaultRequestHeaders.Add("ngrok-skip-browser-warning", "1");
@@ -71,23 +79,19 @@ namespace Darwin.Mobile.Shared.Extensions
                 //                return new HttpClientHandler();
                 //#endif
 
-
-                // TODO [SECURITY][MOBILE-RELEASE]:
-                // Temporary test-mode behavior:
-                // We are bypassing TLS certificate validation for ALL builds so Release APKs can
-                // reliably talk to ngrok/dev endpoints during integration testing.
-                //
-                // BEFORE production release:
-                // 1) Remove DangerousAcceptAnyServerCertificateValidator.
-                // 2) Re-enable strict certificate validation.
-                // 3) If needed, implement certificate pinning and environment-specific trust policy.
-                //
-                // This TODO must be resolved before final hardening phase.
-                return new HttpClientHandler
+                if (options.UnsafeTrustAnyServerCertificate)
                 {
-                    ServerCertificateCustomValidationCallback =
-                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                };
+                    // TODO [SECURITY][MOBILE-RELEASE]:
+                    // This is temporary for test environments (e.g., ngrok/dev tunnels).
+                    // Remove before production and restore strict certificate validation.
+                    return new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback =
+                            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    };
+                }
+
+                return new HttpClientHandler();
             });
 
             // Register device id provider so AuthService (and other features) can obtain a stable installation id

@@ -12,7 +12,7 @@ public sealed class ApiOptions
     public string JwtAudience { get; set; } = "Darwin.PublicApi";
 
     /// <summary>Suggested QR token refresh interval (seconds) provided by server bootstrap.</summary>
-    public int QrRefreshSeconds { get; set; } = 60;
+    public int QrRefreshSeconds { get; set; } = 300;
 
     /// <summary>Maximum outbox size before forcing sync.</summary>
     public int MaxOutbox { get; set; } = 100;
@@ -24,6 +24,13 @@ public sealed class ApiOptions
     /// Default is Unknown (no validation beyond normal token storage).
     /// </summary>
     public MobileAppRole AppRole { get; set; } = MobileAppRole.Unknown;
+
+
+    /// <summary>
+    /// TEST-ONLY switch to bypass TLS certificate validation.
+    /// Keep false in production.
+    /// </summary>
+    public bool UnsafeTrustAnyServerCertificate { get; set; } = false;
 }
 
 
