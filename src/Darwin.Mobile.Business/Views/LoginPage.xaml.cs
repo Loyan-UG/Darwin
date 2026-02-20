@@ -1,31 +1,30 @@
-using System;
+using System.Threading.Tasks;
 using Darwin.Mobile.Business.ViewModels;
 using Microsoft.Maui.Controls;
 
 namespace Darwin.Mobile.Business.Views;
 
 /// <summary>
-/// Code-behind for Business login page.
-///
-/// UX goals implemented here:
-/// - Keep login as a focused standalone entry page.
-/// - Dismiss keyboard before submit to avoid hidden error text.
-/// - Auto-scroll to the top error area when a login/validation error appears.
+/// Code-behind for <see cref="LoginPage"/>.
+/// This page disables Shell navigation and flyout so that the login screen is shown
+/// as a focused, standalone entry point for authentication.
 /// </summary>
-public partial class LoginPage : ContentPage
+public partial class LoginPage
 {
-
     public LoginPage(LoginViewModel viewModel)
     {
         InitializeComponent();
 
+        // Set the binding context to the injected view model
         BindingContext = viewModel;
 
-        // Keep login isolated from app navigation chrome.
+        // Make this login page standalone:
+        // - Hide the top navigation bar
+        // - Disable the flyout menu for this page
         Shell.SetNavBarIsVisible(this, false);
         Shell.SetFlyoutBehavior(this, FlyoutBehavior.Disabled);
 
-        // Subscribe to VM event so the page can reveal the error block.
+        // Subscribe once so VM can request "show error area".
         viewModel.ErrorBecameVisibleRequested += OnErrorBecameVisibleRequested;
     }
 
@@ -33,6 +32,7 @@ public partial class LoginPage : ContentPage
     {
         base.OnAppearing();
 
+        // If ViewModel needs OnAppearingAsync, call it (fire-and-forget).
 #pragma warning disable CS4014
         (BindingContext as LoginViewModel)?.OnAppearingAsync();
 #pragma warning restore CS4014
@@ -42,7 +42,7 @@ public partial class LoginPage : ContentPage
     {
         base.OnDisappearing();
 
-        // Defensive unsubscribe to avoid duplicate handlers if page instance is recreated.
+        // Always unsubscribe to avoid duplicate handlers on re-navigation.
         if (BindingContext is LoginViewModel vm)
         {
             vm.ErrorBecameVisibleRequested -= OnErrorBecameVisibleRequested;
@@ -50,34 +50,23 @@ public partial class LoginPage : ContentPage
     }
 
     /// <summary>
-    /// Called when sign-in button is tapped.
-    /// We explicitly remove focus from input controls so the keyboard closes
-    /// and the user can immediately see any resulting error state.
-    /// </summary>
-    private void OnSignInClicked(object? sender, EventArgs e)
-    {
-        EmailEntry?.Unfocus();
-        PasswordEntry?.Unfocus();
-    }
-
-    /// <summary>
-    /// Ensures the error area is visible after an error is produced.
+    /// Scrolls to top so validation/network errors remain visible even if keyboard is open.
     /// </summary>
     private async void OnErrorBecameVisibleRequested()
     {
         try
         {
-            if (LoginScrollView is not null)
+            if (RootScrollView is null)
             {
-                // Small delay gives layout a chance to render the error block before scrolling.
-                await Task.Delay(40);
-                await LoginScrollView.ScrollToAsync(0, 0, true);
+                return;
             }
+
+            await Task.Delay(40);
+            await RootScrollView.ScrollToAsync(0, 0, true);
         }
         catch
         {
-            // I intentionally swallow UI scrolling exceptions because failing to scroll
-            // must never block the login flow or crash the app.
+            // Non-critical UI behavior; never crash login flow for this.
         }
     }
 }
