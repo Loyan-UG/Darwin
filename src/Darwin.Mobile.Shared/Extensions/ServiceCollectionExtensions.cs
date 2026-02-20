@@ -60,16 +60,34 @@ namespace Darwin.Mobile.Shared.Extensions
             })
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
-#if DEBUG
-                // Development: accept any server certificate (trust all).
-                // WARNING: Unsafe for production. Keep inside #if DEBUG or guard with config flag.
+                //#if DEBUG
+                //                // Development: accept any server certificate (trust all).
+                //                // WARNING: Unsafe for production. Keep inside #if DEBUG or guard with config flag.
+                //                return new HttpClientHandler
+                //                {
+                //                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                //                };
+                //#else
+                //                return new HttpClientHandler();
+                //#endif
+
+
+                // TODO [SECURITY][MOBILE-RELEASE]:
+                // Temporary test-mode behavior:
+                // We are bypassing TLS certificate validation for ALL builds so Release APKs can
+                // reliably talk to ngrok/dev endpoints during integration testing.
+                //
+                // BEFORE production release:
+                // 1) Remove DangerousAcceptAnyServerCertificateValidator.
+                // 2) Re-enable strict certificate validation.
+                // 3) If needed, implement certificate pinning and environment-specific trust policy.
+                //
+                // This TODO must be resolved before final hardening phase.
                 return new HttpClientHandler
                 {
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    ServerCertificateCustomValidationCallback =
+                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
                 };
-#else
-                return new HttpClientHandler();
-#endif
             });
 
             // Register device id provider so AuthService (and other features) can obtain a stable installation id

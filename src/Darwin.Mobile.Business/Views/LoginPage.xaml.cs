@@ -14,7 +14,6 @@ namespace Darwin.Mobile.Business.Views;
 /// </summary>
 public partial class LoginPage : ContentPage
 {
-    private LoginViewModel? Vm => BindingContext as LoginViewModel;
 
     public LoginPage(LoginViewModel viewModel)
     {
@@ -30,14 +29,23 @@ public partial class LoginPage : ContentPage
         viewModel.ErrorBecameVisibleRequested += OnErrorBecameVisibleRequested;
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+#pragma warning disable CS4014
+        (BindingContext as LoginViewModel)?.OnAppearingAsync();
+#pragma warning restore CS4014
+    }
+
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
 
-        // Defensive unsubscribe to prevent duplicate handlers on page recreation.
-        if (Vm is not null)
+        // Defensive unsubscribe to avoid duplicate handlers if page instance is recreated.
+        if (BindingContext is LoginViewModel vm)
         {
-            Vm.ErrorBecameVisibleRequested -= OnErrorBecameVisibleRequested;
+            vm.ErrorBecameVisibleRequested -= OnErrorBecameVisibleRequested;
         }
     }
 

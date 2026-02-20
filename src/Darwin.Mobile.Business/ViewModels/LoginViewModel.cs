@@ -14,10 +14,9 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// Handles Business app login flow.
 ///
 /// Important behavior:
-/// - This ViewModel is Business-app specific and must not affect Consumer/Web flows.
-/// - It translates technical auth exceptions into user-friendly messages.
-/// - It keeps generic messaging for security-sensitive cases (invalid credentials or missing permission),
-///   while showing a specific support message only for the known "no business membership" case.
+/// - Keeps Business-specific error mapping in this app layer only.
+/// - Distinguishes connectivity issues from credential issues.
+/// - Raises an event so the view can reveal the error area when needed.
 /// </summary>
 public sealed partial class LoginViewModel : BaseViewModel
 {
@@ -27,9 +26,13 @@ public sealed partial class LoginViewModel : BaseViewModel
     private string? _email;
     private string? _password;
 
-    // I keep this message centralized to make future localization/resource migration easy.
+    // This message is intentionally explicit for business onboarding gap.
     private const string NoBusinessMembershipUserMessage =
         "Your username and password are correct, but your account is not assigned to any business yet. Please contact support.";
+
+    // Friendly connectivity message for mobile users.
+    private const string ServerUnreachableUserMessage =
+        "Unable to connect to server. Please check your internet connection and server URL, then try again.";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LoginViewModel"/> class.
@@ -66,8 +69,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     public AsyncCommand LoginCommand { get; }
 
     /// <summary>
-    /// Raised when the page should reveal the error area (e.g., scroll to top).
-    /// The view subscribes to this to avoid error text being hidden behind the keyboard.
+    /// Raised when the page should reveal the error area (for example: scroll to top).
     /// </summary>
     public event Action? ErrorBecameVisibleRequested;
 
@@ -78,7 +80,6 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// </summary>
     private async Task LoginAsync()
     {
-        // I always clear previous errors before a new submit.
         ErrorMessage = null;
 
         if (string.IsNullOrWhiteSpace(Email))
@@ -100,20 +101,16 @@ public sealed partial class LoginViewModel : BaseViewModel
 
         try
         {
-            // Shared endpoint is used by all clients.
-            // Business-specific handling is intentionally done only in this app layer.
             await _authService.LoginAsync(Email.Trim(), Password, deviceId: null, CancellationToken.None);
-
             await _navigationService.GoToAsync($"//{Routes.Home}");
 
-            // I clear credentials after success for privacy and to avoid stale inputs.
             Email = string.Empty;
             Password = string.Empty;
         }
         catch (Exception ex)
         {
-            // Convert technical/internal errors to a user-facing message appropriate for the Business app.
             var resolvedMessage = ResolveBusinessLoginErrorMessage(ex);
+
             RunOnMain(() =>
             {
                 ErrorMessage = resolvedMessage;
@@ -131,27 +128,32 @@ public sealed partial class LoginViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Maps exceptions to Business-app-specific user messages.
-    ///
-    /// Security and UX rules:
-    /// - Keep generic message for invalid credentials / insufficient permission.
-    /// - Show a dedicated support message only when we can confidently detect
-    ///   the "valid credentials but no business membership" path.
+    /// Maps technical errors to business-app-specific user messages.
     /// </summary>
     private static string ResolveBusinessLoginErrorMessage(Exception ex)
     {
         var raw = ex.Message ?? string.Empty;
 
-        // This is thrown by AuthService token validation when Business app receives an access token
-        // without business_id claim. In our architecture this means the account is not bound
-        // to an active business membership.
+        // Network / DNS / TLS / transport level failures.
+        if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("No such host", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("SSL", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("connection", StringComparison.OrdinalIgnoreCase))
+        {
+            return ServerUnreachableUserMessage;
+        }
+
+        // Business app token shape mismatch: valid auth but no business context in token.
         if (raw.Contains("missing business_id claim", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("not assigned to any business", StringComparison.OrdinalIgnoreCase))
         {
             return NoBusinessMembershipUserMessage;
         }
 
-        // Any other auth failure remains generic by design.
+        // Security-safe generic fallback.
         return AppResources.InvalidCredentials;
     }
 }

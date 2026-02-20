@@ -65,10 +65,22 @@ public static class AppResources
     public static string EmailRequired => ResourceManager.GetString(nameof(EmailRequired), Culture) ?? "Email is required.";
     public static string PasswordRequired => ResourceManager.GetString(nameof(PasswordRequired), Culture) ?? "Password is required.";
 
+    public static string ServerUnreachableMessage =>
+    ResourceManager.GetString(nameof(ServerUnreachableMessage), Culture)
+    ?? "Unable to reach server. Please check your internet connection and try again.";
+
+    public static string NoBusinessMembershipMessage =>
+        ResourceManager.GetString(nameof(NoBusinessMembershipMessage), Culture)
+        ?? "Your username and password are correct, but your account is not assigned to any business yet. Please contact support.";
+
+
     // Session
     public static string SessionTitle => ResourceManager.GetString(nameof(SessionTitle), Culture) ?? "Session";
     public static string CustomerLabel => ResourceManager.GetString(nameof(CustomerLabel), Culture) ?? "Customer";
 
     // Common
     public static string ErrorLabel => ResourceManager.GetString(nameof(ErrorLabel), Culture) ?? "Error";
+
+
+
 }
