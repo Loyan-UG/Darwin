@@ -42,6 +42,10 @@ public static class AppResources
         ResourceManager.GetString(nameof(EmailRequired), Culture) ?? "Email is required.";
     public static string PasswordRequired =>
         ResourceManager.GetString(nameof(PasswordRequired), Culture) ?? "Password is required.";
+    public static string ServerUnreachableMessage =>
+    ResourceManager.GetString(nameof(ServerUnreachableMessage), Culture)
+    ?? "Unable to connect to server. Please check your internet connection and server URL, then try again.";
+
 
     public static string SessionTitle => ResourceManager.GetString(nameof(SessionTitle), Culture) ?? "Session";
     public static string CustomerLabel => ResourceManager.GetString(nameof(CustomerLabel), Culture) ?? "Customer";

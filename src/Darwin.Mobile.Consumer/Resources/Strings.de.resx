@@ -216,6 +216,9 @@
   <data name="ScanTitle" xml:space="preserve">
     <value>Scannen</value>
   </data>
+  <data name="ServerUnreachableMessage" xml:space="preserve">
+    <value>Server nicht erreichbar. Bitte prüfen Sie Ihre Internetverbindung und die Serveradresse und versuchen Sie es erneut.</value>
+  </data>
   <data name="SessionTitle" xml:space="preserve">
     <value>Sitzung</value>
   </data>

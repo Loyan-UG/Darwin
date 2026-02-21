@@ -358,6 +358,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to connect to server. Please check your internet connection and server URL, then try again..
+        /// </summary>
+        internal static string ServerUnreachableMessage {
+            get {
+                return ResourceManager.GetString("ServerUnreachableMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Session.
         /// </summary>
         internal static string SessionTitle {

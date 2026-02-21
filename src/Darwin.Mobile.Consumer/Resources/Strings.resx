@@ -216,6 +216,9 @@
   <data name="ScanTitle" xml:space="preserve">
     <value>Scan</value>
   </data>
+  <data name="ServerUnreachableMessage" xml:space="preserve">
+    <value>Unable to connect to server. Please check your internet connection and server URL, then try again.</value>
+  </data>
   <data name="SessionTitle" xml:space="preserve">
     <value>Session</value>
   </data>

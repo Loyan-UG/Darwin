@@ -8,7 +8,7 @@
     x:DataType="vm:LoginViewModel"
     Title="{x:Static res:AppResources.LoginTitle}">
 
-    <ScrollView>
+    <ScrollView x:Name="RootScrollView">
         <VerticalStackLayout Padding="24" Spacing="20">
             <Image Source="Loyan_Logo.PNG"
                    WidthRequest="120" HeightRequest="120"
