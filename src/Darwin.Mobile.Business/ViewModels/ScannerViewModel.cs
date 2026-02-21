@@ -135,7 +135,7 @@ public sealed class ScannerViewModel : BaseViewModel
 
         try
         {
-            var token = await _scanner.ScanAsync(CancellationToken.None).ConfigureAwait(false);
+            var token = await _scanner.ScanAsync(CancellationToken.None);
 
             if (string.IsNullOrWhiteSpace(token))
             {
@@ -148,8 +148,7 @@ public sealed class ScannerViewModel : BaseViewModel
             LastScannedToken = token;
 
             var result = await _loyaltyService
-                .ProcessScanSessionForBusinessAsync(token, CancellationToken.None)
-                .ConfigureAwait(false);
+                .ProcessScanSessionForBusinessAsync(token, CancellationToken.None);
 
             if (!result.Succeeded || result.Value is null)
             {
@@ -163,7 +162,7 @@ public sealed class ScannerViewModel : BaseViewModel
             CanConfirmRedemption = _currentSession.CanConfirmRedemption;
 
             var parameters = new Dictionary<string, object?> { ["token"] = token };
-            await _navigationService.GoToAsync(Routes.Session, parameters).ConfigureAwait(false);
+            await _navigationService.GoToAsync(Routes.Session, parameters);
         }
         finally
         {
@@ -205,8 +204,7 @@ public sealed class ScannerViewModel : BaseViewModel
         try
         {
             var result = await _loyaltyService
-                .ConfirmAccrualAsync(_currentSession.Token, PointsToAccrue, CancellationToken.None)
-                .ConfigureAwait(false);
+                .ConfirmAccrualAsync(_currentSession.Token, PointsToAccrue, CancellationToken.None);
 
             if (!result.Succeeded || result.Value is null)
             {
@@ -251,8 +249,7 @@ public sealed class ScannerViewModel : BaseViewModel
         try
         {
             var result = await _loyaltyService
-                .ConfirmRedemptionAsync(_currentSession.Token, CancellationToken.None)
-                .ConfigureAwait(false);
+                .ConfirmRedemptionAsync(_currentSession.Token, CancellationToken.None);
 
             if (!result.Succeeded || result.Value is null)
             {
