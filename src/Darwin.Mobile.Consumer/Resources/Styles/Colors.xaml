@@ -10,6 +10,7 @@
     <Color x:Key="Neutral0">#FFFFFF</Color>
     <Color x:Key="Neutral50">#F5F5F5</Color>
     <Color x:Key="Neutral100">#E5E5E5</Color>
+    <Color x:Key="Neutral300">#D4D4D4</Color>
     <Color x:Key="Neutral900">#1A1A1A</Color>
 
     <!-- Brand Gold -->
