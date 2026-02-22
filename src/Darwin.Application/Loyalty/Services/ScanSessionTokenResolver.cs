@@ -63,8 +63,14 @@ namespace Darwin.Application.Loyalty.Services
                 return Result<ResolvedScanSessionContext>.Fail("BusinessId is required.");
             }
 
+            // IMPORTANT:
+            // We intentionally load the token as NO-TRACKING.
+            // Reason:
+            // - ConsumeAsync uses ExecuteUpdateAsync (database-side update).
+            // - Keeping a tracked token entity in the same DbContext can cause RowVersion conflicts
+            //   when SaveChanges later tries to persist stale tracked state.
             var token = await _db.Set<QrCodeToken>()
-                .AsQueryable()
+                .AsNoTracking()
                 .SingleOrDefaultAsync(t => t.Token == scanSessionToken && !t.IsDeleted, ct)
                 .ConfigureAwait(false);
 
@@ -126,6 +132,9 @@ namespace Darwin.Application.Loyalty.Services
 
             return Result<ResolvedScanSessionContext>.Ok(new ResolvedScanSessionContext(token, session));
         }
+
+
+
 
         /// <summary>
         /// Marks the token as consumed, binding it to the specified business context.
@@ -193,15 +202,15 @@ namespace Darwin.Application.Loyalty.Services
                 return;
             }
 
-            // Keep the tracked instance consistent for any further usage in the same request scope.
-            token.ConsumedAtUtc = now;
-            token.ConsumedByBusinessId = businessId;
-            token.ConsumedByBusinessLocationId = businessLocationId;
-
-            // Important:
-            // ExecuteUpdateAsync writes directly to the database and does NOT require SaveChangesAsync.
-            // Calling SaveChangesAsync here could accidentally persist unrelated tracked changes.
+            // IMPORTANT:
+            // We intentionally DO NOT mutate the passed token instance here.
+            // Reason:
+            // - In some call paths the token may still be tracked with stale RowVersion.
+            // - Mutating it would mark it Modified and SaveChanges could trigger optimistic concurrency errors.
+            //
+            // ExecuteUpdateAsync already wrote the correct values to the database.
         }
+
 
         /// <summary>
         /// Represents a resolved token/session pair that has passed validation.
