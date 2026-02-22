@@ -56,28 +56,30 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .PostAsync<PrepareScanSessionRequest, PrepareScanSessionResponse>(
+                    .PostResultAsync<PrepareScanSessionRequest, PrepareScanSessionResponse>(
                         ApiRoutes.Loyalty.PrepareScanSession,
                         request,
                         cancellationToken)
                     .ConfigureAwait(false);
 
-                if (response is null)
+                if (!response.Succeeded || response.Value is null)
                 {
-                    return Result<ScanSessionClientModel>.Fail("Empty response from server.");
+                    return Result<ScanSessionClientModel>.Fail(response.Error ?? "Request failed.");
                 }
 
-                if (string.IsNullOrWhiteSpace(response.ScanSessionToken))
+                var payload = response.Value;
+
+                if (string.IsNullOrWhiteSpace(payload.ScanSessionToken))
                 {
                     return Result<ScanSessionClientModel>.Fail("Server did not return a valid QR token.");
                 }
 
                 var model = new ScanSessionClientModel
                 {
-                    Token = response.ScanSessionToken,
-                    ExpiresAtUtc = new DateTimeOffset(response.ExpiresAtUtc, TimeSpan.Zero),
-                    Mode = response.Mode,
-                    SelectedRewards = response.SelectedRewards ?? Array.Empty<LoyaltyRewardSummary>()
+                    Token = payload.ScanSessionToken,
+                    ExpiresAtUtc = new DateTimeOffset(payload.ExpiresAtUtc, TimeSpan.Zero),
+                    Mode = payload.Mode,
+                    SelectedRewards = payload.SelectedRewards ?? Array.Empty<LoyaltyRewardSummary>()
                 };
 
                 return Result<ScanSessionClientModel>.Ok(model);
@@ -107,13 +109,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .GetAsync<LoyaltyAccountSummary>(ApiRoutes.Loyalty.GetAccountForBusiness(businessId), cancellationToken)
+                    .GetResultAsync<LoyaltyAccountSummary>(ApiRoutes.Loyalty.GetAccountForBusiness(businessId), cancellationToken)
                     .ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<LoyaltyAccountSummary>.Fail(response.Error ?? "Request failed.");
 
-                return Result<LoyaltyAccountSummary>.Ok(response);
+                return Result<LoyaltyAccountSummary>.Ok(response.Value);
             }
             catch (OperationCanceledException)
             {
@@ -138,15 +140,15 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .GetAsync<IReadOnlyList<LoyaltyRewardSummary>>(ApiRoutes.Loyalty.GetRewardsForBusiness(businessId), cancellationToken)
+                    .GetResultAsync<IReadOnlyList<LoyaltyRewardSummary>>(ApiRoutes.Loyalty.GetRewardsForBusiness(businessId), cancellationToken)
                     .ConfigureAwait(false);
 
-                if (response is null)
+                if (!response.Succeeded || response.Value is null)
                 {
-                    return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail("Empty response from server.");
+                    return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail(response.Error ?? "Request failed.");
                 }
 
-                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(response);
+                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(response.Value);
             }
             catch (OperationCanceledException)
             {
@@ -176,28 +178,30 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .PostAsync<ProcessScanSessionForBusinessRequest, ProcessScanSessionForBusinessResponse>(
+                    .PostResultAsync<ProcessScanSessionForBusinessRequest, ProcessScanSessionForBusinessResponse>(
                         ApiRoutes.Loyalty.ProcessScanSessionForBusiness,
                         request,
                         cancellationToken)
                     .ConfigureAwait(false);
 
-                if (response is null)
+                if (!response.Succeeded || response.Value is null)
                 {
-                    return Result<BusinessScanSessionClientModel>.Fail("Empty response from server.");
+                    return Result<BusinessScanSessionClientModel>.Fail(response.Error ?? "Request failed.");
                 }
+
+                var payload = response.Value;
 
                 var model = new BusinessScanSessionClientModel
                 {
                     Token = qrToken,
-                    Mode = response.Mode,
-                    BusinessId = response.BusinessId,
-                    BusinessLocationId = response.BusinessLocationId,
-                    AccountSummary = response.AccountSummary ?? new BusinessLoyaltyAccountSummary(),
-                    CustomerDisplayName = response.CustomerDisplayName,
-                    SelectedRewards = response.SelectedRewards ?? Array.Empty<LoyaltyRewardSummary>(),
-                    CanConfirmAccrual = response.AllowedActions.HasFlag(LoyaltyScanAllowedActions.CanConfirmAccrual),
-                    CanConfirmRedemption = response.AllowedActions.HasFlag(LoyaltyScanAllowedActions.CanConfirmRedemption)
+                    Mode = payload.Mode,
+                    BusinessId = payload.BusinessId,
+                    BusinessLocationId = payload.BusinessLocationId,
+                    AccountSummary = payload.AccountSummary ?? new BusinessLoyaltyAccountSummary(),
+                    CustomerDisplayName = payload.CustomerDisplayName,
+                    SelectedRewards = payload.SelectedRewards ?? Array.Empty<LoyaltyRewardSummary>(),
+                    CanConfirmAccrual = payload.AllowedActions.HasFlag(LoyaltyScanAllowedActions.CanConfirmAccrual),
+                    CanConfirmRedemption = payload.AllowedActions.HasFlag(LoyaltyScanAllowedActions.CanConfirmRedemption)
                 };
 
                 return Result<BusinessScanSessionClientModel>.Ok(model);
@@ -238,34 +242,36 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .PostAsync<ConfirmAccrualRequest, ConfirmAccrualResponse>(
+                    .PostResultAsync<ConfirmAccrualRequest, ConfirmAccrualResponse>(
                         ApiRoutes.Loyalty.ConfirmAccrual,
                         request,
                         cancellationToken).ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<LoyaltyAccountSummary>.Fail(response.Error ?? "Request failed.");
 
-                if (!response.Success)
+                var payload = response.Value;
+
+                if (!payload.Success)
                 {
-                    var message = !string.IsNullOrWhiteSpace(response.ErrorMessage)
-                        ? response.ErrorMessage
+                    var message = !string.IsNullOrWhiteSpace(payload.ErrorMessage)
+                        ? payload.ErrorMessage
                         : "Accrual could not be confirmed.";
 
-                    if (!string.IsNullOrWhiteSpace(response.ErrorCode))
-                        message = $"{message} (code: {response.ErrorCode})";
+                    if (!string.IsNullOrWhiteSpace(payload.ErrorCode))
+                        message = $"{message} (code: {payload.ErrorCode})";
 
                     return Result<LoyaltyAccountSummary>.Fail(message);
                 }
 
-                if (response.UpdatedAccount is not null)
-                    return Result<LoyaltyAccountSummary>.Ok(response.UpdatedAccount);
+                if (payload.UpdatedAccount is not null)
+                    return Result<LoyaltyAccountSummary>.Ok(payload.UpdatedAccount);
 
                 return Result<LoyaltyAccountSummary>.Ok(new LoyaltyAccountSummary
                 {
                     BusinessId = Guid.Empty,
                     BusinessName = string.Empty,
-                    PointsBalance = response.NewBalance ?? 0,
+                    PointsBalance = payload.NewBalance ?? 0,
                     LastAccrualAtUtc = DateTime.UtcNow
                 });
             }
@@ -290,30 +296,32 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .PostAsync<ConfirmRedemptionRequest, ConfirmRedemptionResponse>(
+                    .PostResultAsync<ConfirmRedemptionRequest, ConfirmRedemptionResponse>(
                         ApiRoutes.Loyalty.ConfirmRedemption,
                         request,
                         cancellationToken).ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<LoyaltyAccountSummary>.Fail(response.Error ?? "Request failed.");
 
-                if (!response.Success)
+                var payload = response.Value;
+
+                if (!payload.Success)
                 {
-                    var message = !string.IsNullOrWhiteSpace(response.ErrorMessage) ? response.ErrorMessage : "Redemption could not be confirmed.";
-                    if (!string.IsNullOrWhiteSpace(response.ErrorCode))
-                        message = $"{message} (code: {response.ErrorCode})";
+                    var message = !string.IsNullOrWhiteSpace(payload.ErrorMessage) ? payload.ErrorMessage : "Redemption could not be confirmed.";
+                    if (!string.IsNullOrWhiteSpace(payload.ErrorCode))
+                        message = $"{message} (code: {payload.ErrorCode})";
                     return Result<LoyaltyAccountSummary>.Fail(message);
                 }
 
-                if (response.UpdatedAccount is not null)
-                    return Result<LoyaltyAccountSummary>.Ok(response.UpdatedAccount);
+                if (payload.UpdatedAccount is not null)
+                    return Result<LoyaltyAccountSummary>.Ok(payload.UpdatedAccount);
 
                 return Result<LoyaltyAccountSummary>.Ok(new LoyaltyAccountSummary
                 {
                     BusinessId = Guid.Empty,
                     BusinessName = string.Empty,
-                    PointsBalance = response.NewBalance ?? 0,
+                    PointsBalance = payload.NewBalance ?? 0,
                     LastAccrualAtUtc = DateTime.UtcNow
                 });
             }
@@ -333,13 +341,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .GetAsync<IReadOnlyList<LoyaltyAccountSummary>>(ApiRoutes.Loyalty.GetMyAccounts, cancellationToken)
+                    .GetResultAsync<IReadOnlyList<LoyaltyAccountSummary>>(ApiRoutes.Loyalty.GetMyAccounts, cancellationToken)
                     .ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<IReadOnlyList<LoyaltyAccountSummary>>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<IReadOnlyList<LoyaltyAccountSummary>>.Fail(response.Error ?? "Request failed.");
 
-                return Result<IReadOnlyList<LoyaltyAccountSummary>>.Ok(response);
+                return Result<IReadOnlyList<LoyaltyAccountSummary>>.Ok(response.Value);
             }
             catch (OperationCanceledException)
             {
@@ -360,13 +368,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .GetAsync<IReadOnlyList<PointsTransaction>>(ApiRoutes.Loyalty.GetMyHistory(businessId), cancellationToken)
+                    .GetResultAsync<IReadOnlyList<PointsTransaction>>(ApiRoutes.Loyalty.GetMyHistory(businessId), cancellationToken)
                     .ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<IReadOnlyList<PointsTransaction>>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<IReadOnlyList<PointsTransaction>>.Fail(response.Error ?? "Request failed.");
 
-                return Result<IReadOnlyList<PointsTransaction>>.Ok(response);
+                return Result<IReadOnlyList<PointsTransaction>>.Ok(response.Value);
             }
             catch (OperationCanceledException)
             {
@@ -391,13 +399,13 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .GetAsync<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>(route, cancellationToken)
+                    .GetResultAsync<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>(route, cancellationToken)
                     .ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Fail(response.Error ?? "Request failed.");
 
-                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Ok(response);
+                return Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>.Ok(response.Value);
             }
             catch (OperationCanceledException)
             {
@@ -418,15 +426,15 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .PostAsync<GetMyLoyaltyTimelinePageRequest, GetMyLoyaltyTimelinePageResponse>(
+                    .PostResultAsync<GetMyLoyaltyTimelinePageRequest, GetMyLoyaltyTimelinePageResponse>(
                         ApiRoutes.Loyalty.GetMyTimeline,
                         request,
                         cancellationToken).ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<GetMyLoyaltyTimelinePageResponse>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<GetMyLoyaltyTimelinePageResponse>.Fail(response.Error ?? "Request failed.");
 
-                return Result<GetMyLoyaltyTimelinePageResponse>.Ok(response);
+                return Result<GetMyLoyaltyTimelinePageResponse>.Ok(response.Value);
             }
             catch (OperationCanceledException)
             {
@@ -451,15 +459,15 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             try
             {
                 var response = await _apiClient
-                    .PostAsync<JoinLoyaltyRequest, LoyaltyAccountSummary>(
+                    .PostResultAsync<JoinLoyaltyRequest, LoyaltyAccountSummary>(
                         ApiRoutes.Loyalty.Join(businessId),
                         body,
                         cancellationToken).ConfigureAwait(false);
 
-                if (response is null)
-                    return Result<LoyaltyAccountSummary>.Fail("Empty response from server.");
+                if (!response.Succeeded || response.Value is null)
+                    return Result<LoyaltyAccountSummary>.Fail(response.Error ?? "Request failed.");
 
-                return Result<LoyaltyAccountSummary>.Ok(response);
+                return Result<LoyaltyAccountSummary>.Ok(response.Value);
             }
             catch (OperationCanceledException)
             {

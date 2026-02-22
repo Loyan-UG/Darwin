@@ -296,6 +296,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 Mode = LoyaltyContractsMapper.ToContract(value.Mode),
                 BusinessId = businessId,
                 AccountSummary = LoyaltyContractsMapper.ToContractBusinessAccountSummary(value),
+                CustomerDisplayName = value.CustomerDisplayName,
                 SelectedRewards = selectedRewards,
                 AllowedActions = allowedActions
             };

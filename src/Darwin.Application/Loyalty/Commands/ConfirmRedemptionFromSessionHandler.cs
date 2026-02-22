@@ -218,6 +218,12 @@ namespace Darwin.Application.Loyalty.Commands
                 MetadataJson = session.SelectedRewardsJson
             };
 
+            // BaseEntity.Id does not auto-initialize; ensure non-empty ids before we reference them.
+            if (redemption.Id == Guid.Empty)
+            {
+                redemption.Id = Guid.NewGuid();
+            }
+
             _db.Set<LoyaltyRewardRedemption>().Add(redemption);
 
             var transaction = new LoyaltyPointsTransaction
@@ -232,6 +238,12 @@ namespace Darwin.Application.Loyalty.Commands
                 Reference = null,
                 Notes = "Redemption confirmed from scan session."
             };
+
+            // BaseEntity.Id does not auto-initialize; ensure non-empty ids before persisting.
+            if (transaction.Id == Guid.Empty)
+            {
+                transaction.Id = Guid.NewGuid();
+            }
 
             _db.Set<LoyaltyPointsTransaction>().Add(transaction);
 

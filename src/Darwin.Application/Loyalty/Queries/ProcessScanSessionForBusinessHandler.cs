@@ -8,6 +8,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Services;
+using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Loyalty;
 using Darwin.Shared.Results;
 using Microsoft.EntityFrameworkCore;
@@ -70,8 +71,10 @@ namespace Darwin.Application.Loyalty.Queries
                 return Result<ScanSessionBusinessViewDto>.Fail("Loyalty account for scan session not found.");
             }
 
-            // TODO (long-term): Join with Users to obtain a friendly display name rather than exposing PII.
-            var customerDisplayName = (string?)null;
+            // Build a minimal, business-safe customer label.
+            // We intentionally avoid exposing raw identifiers and only provide a friendly hint
+            // that helps the cashier confirm the customer verbally.
+            var customerDisplayName = await BuildCustomerDisplayNameAsync(account.UserId, ct).ConfigureAwait(false);
 
             var dto = new ScanSessionBusinessViewDto
             {
@@ -105,6 +108,71 @@ namespace Darwin.Application.Loyalty.Queries
             {
                 return new List<SelectedRewardItemDto>();
             }
+        }
+
+
+
+        /// <summary>
+        /// Resolves a privacy-safe customer display label for business-side confirmation.
+        /// </summary>
+        /// <remarks>
+        /// Priority:
+        /// 1) FirstName + last-name initial (if available)
+        /// 2) FirstName only
+        /// 3) Masked email local-part + domain
+        /// 4) Null (UI may render fallback label)
+        /// </remarks>
+        private async Task<string?> BuildCustomerDisplayNameAsync(Guid userId, CancellationToken ct)
+        {
+            if (userId == Guid.Empty)
+            {
+                return null;
+            }
+
+            var user = await _db.Set<User>()
+                .AsNoTracking()
+                .SingleOrDefaultAsync(u => u.Id == userId && !u.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (user is null)
+            {
+                return null;
+            }
+
+            var first = (user.FirstName ?? string.Empty).Trim();
+            var last = (user.LastName ?? string.Empty).Trim();
+
+            if (!string.IsNullOrWhiteSpace(first) && !string.IsNullOrWhiteSpace(last))
+            {
+                return $"{first} {char.ToUpperInvariant(last[0])}.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(first))
+            {
+                return first;
+            }
+
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                return null;
+            }
+
+            return MaskEmail(user.Email);
+        }
+
+        private static string MaskEmail(string email)
+        {
+            var at = email.IndexOf('@');
+            if (at <= 0 || at == email.Length - 1)
+            {
+                return "Customer";
+            }
+
+            var local = email[..at];
+            var domain = email[(at + 1)..];
+
+            var first = local[0];
+            return $"{first}***@{domain}";
         }
     }
 }

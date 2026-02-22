@@ -45,6 +45,29 @@ public partial class App : Application
         return window;
     }
 
+    /// <summary>
+    /// When the app resumes after being backgrounded for a while, attempt a best-effort token refresh
+    /// so subsequent API calls do not fail with stale access tokens.
+    /// </summary>
+    protected override void OnResume()
+    {
+        base.OnResume();
+
+        _ = TryRefreshSilentlyAsync();
+    }
+
+    private async Task TryRefreshSilentlyAsync()
+    {
+        try
+        {
+            await _authService.TryRefreshAsync(CancellationToken.None);
+        }
+        catch
+        {
+            // Best effort only. The next guarded API call or navigation decision will handle auth failures.
+        }
+    }
+
     private async Task InitializeRootAsync()
     {
         bool tokenValid;
