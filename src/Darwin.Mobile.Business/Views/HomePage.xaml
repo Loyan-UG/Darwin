@@ -6,21 +6,153 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
     x:Class="Darwin.Mobile.Business.Views.HomePage"
     x:DataType="vm:HomeViewModel"
-    Title="{x:Static res:AppResources.HomeTitle}">
+    Title="{x:Static res:AppResources.HomeTitle}"
+    Background="{StaticResource BrushBackground}">
 
-    <VerticalStackLayout Spacing="20" Padding="24">
-        <!-- Loyan logo -->
-        <Image Source="loyan_logo.png"
-               WidthRequest="140" HeightRequest="140"
-               HorizontalOptions="Center" Margin="0,20" />
+    <ScrollView>
+        <VerticalStackLayout Spacing="16" Padding="20,18,20,24">
 
-        <!-- Greeting text -->
-        <Label Text="{Binding Greeting}"
-               Style="{StaticResource TitleLabelStyle}" />
+            <!-- Brand logo + title -->
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalOptions="Center">
+                <Image Source="loyan_logo.png"
+                       WidthRequest="56"
+                       HeightRequest="56"
+                       Aspect="AspectFit" />
 
-        <!-- Start scanning button -->
-        <Button Text="{x:Static res:AppResources.StartButton}"
-                Style="{StaticResource PrimaryButtonStyle}"
-                Command="{Binding ScanCommand}" />
-    </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                    <Label Text="{Binding Greeting}"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource BrushOnSurface}" />
+                    <Label Text="Business Dashboard"
+                           FontSize="13"
+                           TextColor="{StaticResource BrushOnSurface}"
+                           Opacity="0.70" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Loading indicator -->
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}" />
+
+            <!-- Error card -->
+            <Border StrokeThickness="1"
+                    Stroke="#AA3333"
+                    BackgroundColor="#332222"
+                    IsVisible="{Binding HasError}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Padding="12" Spacing="4">
+                    <Label Text="Status"
+                           FontAttributes="Bold"
+                           TextColor="#FFB4B4" />
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="#FFDDDD"
+                           LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Current business context -->
+            <Border StrokeThickness="1"
+                    Stroke="{StaticResource BrushPrimary}"
+                    BackgroundColor="{StaticResource BrushSurface}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Padding="14" Spacing="10">
+
+                    <Label Text="Current Business Context"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource BrushOnSurface}" />
+
+                    <Label Text="{Binding BusinessName}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource BrushOnSurface}" />
+
+                    <HorizontalStackLayout Spacing="8">
+                        <Border StrokeThickness="0"
+                                BackgroundColor="#444444">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="999" />
+                            </Border.StrokeShape>
+                            <Label Text="{Binding BusinessCategory}"
+                                   Padding="10,4"
+                                   FontSize="12"
+                                   TextColor="{StaticResource BrushOnSurface}" />
+                        </Border>
+
+                        <Border StrokeThickness="0"
+                                BackgroundColor="#444444">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="999" />
+                            </Border.StrokeShape>
+                            <Label Text="{Binding BusinessCity}"
+                                   Padding="10,4"
+                                   FontSize="12"
+                                   TextColor="{StaticResource BrushOnSurface}" />
+                        </Border>
+                    </HorizontalStackLayout>
+
+                    <Label Text="{Binding BusinessDescription}"
+                           FontSize="13"
+                           TextColor="{StaticResource BrushOnSurface}"
+                           Opacity="0.85"
+                           LineBreakMode="WordWrap" />
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Label Text="Operator:"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource BrushOnSurface}" />
+                        <Label Grid.Column="1"
+                               Text="{Binding OperatorEmail}"
+                               FontSize="13"
+                               TextColor="{StaticResource BrushOnSurface}" />
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Guidance card -->
+            <Border StrokeThickness="1"
+                    Stroke="#555555"
+                    BackgroundColor="#222222">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Padding="12" Spacing="6">
+                    <Label Text="Testing Hint"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource BrushOnSurface}" />
+                    <Label Text="Before scanning a QR, ensure the Consumer account joined this same business."
+                           FontSize="13"
+                           TextColor="{StaticResource BrushOnSurface}"
+                           Opacity="0.82"
+                           LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Actions -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0"
+                        Text="Refresh Context"
+                        Command="{Binding LoadContextCommand}"
+                        CornerRadius="8"
+                        FontAttributes="Bold"
+                        BackgroundColor="#3A3A3A"
+                        TextColor="{StaticResource BrushOnSurface}" />
+
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.StartButton}"
+                        Command="{Binding ScanCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

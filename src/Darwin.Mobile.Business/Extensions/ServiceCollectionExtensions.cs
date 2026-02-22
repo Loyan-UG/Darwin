@@ -1,12 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
+﻿using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Storage;
+using System;
+using System.IO;
+using System.Reflection;
 
 namespace Darwin.Mobile.Business.Extensions;
 
@@ -40,6 +41,9 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IScanner, Services.Platform.ScannerPlatformService>();
         services.AddSingleton<ILocation, Services.Platform.LocationPlatformService>();
+
+        // Business identity context for Home dashboard
+        services.AddSingleton<IBusinessIdentityContextService, BusinessIdentityContextService>();
 
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<Views.HomePage>();
