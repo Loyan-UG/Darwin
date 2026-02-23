@@ -15,6 +15,10 @@ namespace Darwin.Mobile.Business
         {
             InitializeComponent();
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+
+            // Force a deterministic visual theme for the Business app.
+            // We intentionally do not follow device Dark/Light mode for now.
+            UserAppTheme = AppTheme.Light;
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

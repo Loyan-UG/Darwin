@@ -26,6 +26,10 @@ public partial class App : Application
         InitializeComponent();
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+
+        // Force a deterministic visual theme for the Consumer app.
+        // We intentionally do not follow device Dark/Light mode for now.
+        UserAppTheme = AppTheme.Light;
     }
 
     /// <summary>
@@ -52,6 +56,9 @@ public partial class App : Application
     protected override void OnResume()
     {
         base.OnResume();
+
+        // Re-assert theme to keep UI deterministic after OS/theme transitions.
+        UserAppTheme = AppTheme.Light;
 
         _ = TryRefreshSilentlyAsync();
     }

@@ -4,19 +4,40 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource BrandGold500}" />
-        <Setter Property="TextColor" Value="{StaticResource Neutral0}" />
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="16,10" />
-        <Setter Property="FontAttributes" Value="Bold" />
+    <!-- Keep Consumer style aligned with Business for cross-app consistency -->
+
+    <!-- Page defaults -->
+    <Style TargetType="ContentPage">
+        <Setter Property="BackgroundColor" Value="{StaticResource BrushBackground}" />
     </Style>
 
-    <!-- Title Label Style -->
+    <!-- Buttons -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
+        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="16,11" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="BorderWidth" Value="0" />
+    </Style>
+
+    <!-- Labels -->
     <Style x:Key="TitleLabelStyle" TargetType="Label">
         <Setter Property="FontSize" Value="24" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor" Value="{StaticResource Neutral900}" />
+        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+        <Setter Property="LineBreakMode" Value="TailTruncation" />
+    </Style>
+
+    <Style x:Key="BodyLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextColor" Value="{StaticResource BrushOnSurface}" />
+    </Style>
+
+    <Style x:Key="SecondaryBodyLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{StaticResource BrushOnSurfaceSecondary}" />
     </Style>
 
 </ResourceDictionary>

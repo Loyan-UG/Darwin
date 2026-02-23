@@ -83,7 +83,7 @@
                             <Label Text="{Binding BusinessCategory}"
                                    Padding="10,4"
                                    FontSize="12"
-                                   TextColor="{StaticResource BrushOnSurface}" />
+                                   TextColor="{StaticResource Neutral0}" />
                         </Border>
 
                         <Border StrokeThickness="0"
@@ -94,7 +94,7 @@
                             <Label Text="{Binding BusinessCity}"
                                    Padding="10,4"
                                    FontSize="12"
-                                   TextColor="{StaticResource BrushOnSurface}" />
+                                   TextColor="{StaticResource Neutral0}" />
                         </Border>
                     </HorizontalStackLayout>
 
@@ -128,10 +128,10 @@
                 <VerticalStackLayout Padding="12" Spacing="6">
                     <Label Text="Testing Hint"
                            FontAttributes="Bold"
-                           TextColor="{StaticResource BrushOnSurface}" />
+                           TextColor="{StaticResource Neutral0}" />
                     <Label Text="Before scanning a QR, ensure the Consumer account joined this same business."
                            FontSize="13"
-                           TextColor="{StaticResource BrushOnSurface}"
+                           TextColor="{StaticResource Neutral0}"
                            Opacity="0.82"
                            LineBreakMode="WordWrap" />
                 </VerticalStackLayout>

@@ -64,11 +64,8 @@ namespace Darwin.Application.Loyalty.Services
             }
 
             // IMPORTANT:
-            // We intentionally load the token as NO-TRACKING.
-            // Reason:
-            // - ConsumeAsync uses ExecuteUpdateAsync (database-side update).
-            // - Keeping a tracked token entity in the same DbContext can cause RowVersion conflicts
-            //   when SaveChanges later tries to persist stale tracked state.
+            // Load token as no-tracking to avoid stale tracked RowVersion conflicts
+            // after ConsumeAsync uses ExecuteUpdateAsync.
             var token = await _db.Set<QrCodeToken>()
                 .AsNoTracking()
                 .SingleOrDefaultAsync(t => t.Token == scanSessionToken && !t.IsDeleted, ct)
@@ -115,7 +112,6 @@ namespace Darwin.Application.Loyalty.Services
             {
                 if (session.Status == LoyaltyScanStatus.Pending)
                 {
-                    // Pitfall: If a pending session expires, mark explicitly to aid analytics/debugging.
                     session.Status = LoyaltyScanStatus.Expired;
                     session.Outcome = "Expired";
                     session.FailureReason = "Session expired before use.";
@@ -132,6 +128,7 @@ namespace Darwin.Application.Loyalty.Services
 
             return Result<ResolvedScanSessionContext>.Ok(new ResolvedScanSessionContext(token, session));
         }
+
 
 
 
@@ -169,7 +166,6 @@ namespace Darwin.Application.Loyalty.Services
                 throw new ArgumentException("BusinessId must not be empty.", nameof(businessId));
             }
 
-            // Fast-path: if this in-memory instance is already consumed, do nothing.
             if (token.ConsumedAtUtc is not null)
             {
                 return;
@@ -177,11 +173,6 @@ namespace Darwin.Application.Loyalty.Services
 
             var now = _clock.UtcNow;
 
-            // Atomic consume:
-            // Update only if:
-            // - matching Id
-            // - not soft-deleted (defensive)
-            // - not yet consumed
             var affected = await _db.Set<QrCodeToken>()
                 .Where(t =>
                     t.Id == token.Id &&
@@ -196,20 +187,15 @@ namespace Darwin.Application.Loyalty.Services
 
             if (affected == 0)
             {
-                // Someone else consumed it first (or it was deleted). Keep idempotency:
-                // - Do not throw, just return.
-                // - Caller logic will treat the token as consumed on next resolve/confirm step.
                 return;
             }
 
             // IMPORTANT:
-            // We intentionally DO NOT mutate the passed token instance here.
-            // Reason:
-            // - In some call paths the token may still be tracked with stale RowVersion.
-            // - Mutating it would mark it Modified and SaveChanges could trigger optimistic concurrency errors.
-            //
-            // ExecuteUpdateAsync already wrote the correct values to the database.
+            // Do not mutate the passed token instance here.
+            // ExecuteUpdateAsync already persisted the state, and mutating a possibly tracked stale instance
+            // can trigger optimistic concurrency exceptions later in SaveChanges.
         }
+
 
 
         /// <summary>
