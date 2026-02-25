@@ -185,6 +185,7 @@ These are sufficient for the map, directory and profile pages on Consumer.
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
 - `IIdentityService` – wraps Contracts for login/refresh/logout and integrates `ITokenStore` with `IApiClient` (Bearer handling).
 - There is **no client-side QR rotation loop**; sessions are short-lived and recreated explicitly via `PrepareScanSession`.
+- **Consumer QR auto-refresh policy (current app behavior)**: automatic refresh checks run every ~15 seconds, but the app enforces a **minimum 5-minute interval** between automatic refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
 

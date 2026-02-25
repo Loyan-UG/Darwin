@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
+	<!-- 
     Microsoft ResX Schema 
     
     Version 2.0
@@ -59,170 +59,236 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="metadata">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
-              </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="assembly">
-            <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string" />
-              <xsd:attribute name="name" type="xsd:string" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
-  <resheader name="resmimetype">
-    <value>text/microsoft-resx</value>
-  </resheader>
-  <resheader name="version">
-    <value>2.0</value>
-  </resheader>
-  <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </resheader>
-  <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </resheader>
-  <data name="AccountSummaryLabel" xml:space="preserve">
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="metadata">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" />
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string" />
+							<xsd:attribute name="type" type="xsd:string" />
+							<xsd:attribute name="mimetype" type="xsd:string" />
+							<xsd:attribute ref="xml:space" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="assembly">
+						<xsd:complexType>
+							<xsd:attribute name="alias" type="xsd:string" />
+							<xsd:attribute name="name" type="xsd:string" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+							<xsd:attribute ref="xml:space" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="AccountSummaryLabel" xml:space="preserve">
     <value>Account summary</value>
   </data>
-  <data name="AccrueButton" xml:space="preserve">
+	<data name="AccrueButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>
-  <data name="BusinessCategoryFormat" xml:space="preserve">
+	<data name="BusinessCategoryFormat" xml:space="preserve">
     <value>Category: {0}</value>
   </data>
-  <data name="BusinessDetailsPlaceholder" xml:space="preserve">
+	<data name="BusinessDetailsPlaceholder" xml:space="preserve">
     <value>Additional details coming soon.</value>
   </data>
-  <data name="BusinessDetailsTitle" xml:space="preserve">
+	<data name="BusinessDetailsTitle" xml:space="preserve">
     <value>Business</value>
   </data>
-  <data name="ComingSoonTitle" xml:space="preserve">
+	<data name="ComingSoonTitle" xml:space="preserve">
     <value>Coming soon</value>
   </data>
-  <data name="ConfirmAccrualButton" xml:space="preserve">
+	<data name="ConfirmAccrualButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>
-  <data name="ConfirmRedemptionButton" xml:space="preserve">
+	<data name="ConfirmRedemptionButton" xml:space="preserve">
     <value>Confirm Redemption</value>
   </data>
-  <data name="CustomerLabel" xml:space="preserve">
+	<data name="CustomerLabel" xml:space="preserve">
     <value>Customer</value>
   </data>
-  <data name="DiscoverTitle" xml:space="preserve">
+	<data name="DiscoverTitle" xml:space="preserve">
     <value>Discover</value>
   </data>
-  <data name="EmailLabel" xml:space="preserve">
+	<data name="EmailLabel" xml:space="preserve">
     <value>Email</value>
   </data>
-  <data name="EmailRequired" xml:space="preserve">
+	<data name="EmailRequired" xml:space="preserve">
     <value>Email is required.</value>
   </data>
-  <data name="ErrorLabel" xml:space="preserve">
+	<data name="ErrorLabel" xml:space="preserve">
     <value>Error</value>
   </data>
-  <data name="HomeTitle" xml:space="preserve">
+	<data name="HomeTitle" xml:space="preserve">
     <value>Home</value>
   </data>
-  <data name="InvalidCredentials" xml:space="preserve">
+	<data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
   </data>
-  <data name="JoinProgramButton" xml:space="preserve">
+	<data name="JoinProgramButton" xml:space="preserve">
     <value>Join Loyalty Program</value>
   </data>
-  <data name="LastTokenLabel" xml:space="preserve">
+	<data name="LastTokenLabel" xml:space="preserve">
     <value>Last token</value>
   </data>
-  <data name="LoginButton" xml:space="preserve">
+	<data name="LoginButton" xml:space="preserve">
     <value>Sign in</value>
   </data>
-  <data name="LoginTitle" xml:space="preserve">
+	<data name="LoginTitle" xml:space="preserve">
     <value>Login</value>
   </data>
-  <data name="LogoutButtonText" xml:space="preserve">
+	<data name="LogoutButtonText" xml:space="preserve">
     <value>Logout</value>
   </data>
-  <data name="PasswordLabel" xml:space="preserve">
+	<data name="PasswordLabel" xml:space="preserve">
     <value>Password</value>
   </data>
-  <data name="PasswordRequired" xml:space="preserve">
+	<data name="PasswordRequired" xml:space="preserve">
     <value>Password is required.</value>
   </data>
-  <data name="PointsBalanceFormat" xml:space="preserve">
+	<data name="PointsBalanceFormat" xml:space="preserve">
     <value>Points: {0}</value>
   </data>
-  <data name="PointsLabel" xml:space="preserve">
+	<data name="PointsLabel" xml:space="preserve">
     <value>Points</value>
   </data>
-  <data name="PointsPlaceholder" xml:space="preserve">
+	<data name="PointsPlaceholder" xml:space="preserve">
     <value>Enter points</value>
   </data>
-  <data name="ProfileTitle" xml:space="preserve">
+	<data name="ProfileTitle" xml:space="preserve">
     <value>Profile</value>
   </data>
-  <data name="QrTitle" xml:space="preserve">
+	<data name="QrTitle" xml:space="preserve">
     <value>QR</value>
   </data>
-  <data name="RedeemButton" xml:space="preserve">
+	<data name="RedeemButton" xml:space="preserve">
     <value>Confirm Redemption</value>
   </data>
-  <data name="RefreshAccrualButton" xml:space="preserve">
+	<data name="RefreshAccrualButton" xml:space="preserve">
     <value>Refresh Accrual</value>
   </data>
-  <data name="RefreshRedemptionButton" xml:space="preserve">
+	<data name="RefreshRedemptionButton" xml:space="preserve">
     <value>Refresh Redemption</value>
   </data>
-  <data name="RewardCostFormat" xml:space="preserve">
+	<data name="RewardCostFormat" xml:space="preserve">
     <value>Cost: {0} pts</value>
   </data>
-  <data name="RewardsTitle" xml:space="preserve">
+	<data name="RewardsTitle" xml:space="preserve">
     <value>Rewards</value>
   </data>
-  <data name="ScanTitle" xml:space="preserve">
+	<data name="ScanTitle" xml:space="preserve">
     <value>Scan</value>
   </data>
-  <data name="ServerUnreachableMessage" xml:space="preserve">
+	<data name="ServerUnreachableMessage" xml:space="preserve">
     <value>Unable to connect to server. Please check your internet connection and server URL, then try again.</value>
   </data>
-  <data name="SessionTitle" xml:space="preserve">
+	<data name="SessionTitle" xml:space="preserve">
     <value>Session</value>
   </data>
-  <data name="StartButton" xml:space="preserve">
+	<data name="StartButton" xml:space="preserve">
     <value>Start</value>
+  </data>
+	<data name="ProfileSectionTitle" xml:space="preserve">
+    <value>My profile</value>
+  </data>
+	<data name="FirstNameLabel" xml:space="preserve">
+    <value>First name</value>
+  </data>
+	<data name="LastNameLabel" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+	<data name="PhoneLabel" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+	<data name="LocaleLabel" xml:space="preserve">
+    <value>Locale</value>
+  </data>
+	<data name="TimezoneLabel" xml:space="preserve">
+    <value>Timezone</value>
+  </data>
+	<data name="CurrencyLabel" xml:space="preserve">
+    <value>Currency</value>
+  </data>
+	<data name="SaveProfileButton" xml:space="preserve">
+    <value>Save profile</value>
+  </data>
+	<data name="ChangePasswordTitle" xml:space="preserve">
+    <value>Change password</value>
+  </data>
+	<data name="CurrentPasswordLabel" xml:space="preserve">
+    <value>Current password</value>
+  </data>
+	<data name="NewPasswordLabel" xml:space="preserve">
+    <value>New password</value>
+  </data>
+	<data name="ConfirmNewPasswordLabel" xml:space="preserve">
+    <value>Confirm new password</value>
+  </data>
+	<data name="ChangePasswordButton" xml:space="preserve">
+    <value>Update password</value>
+  </data>
+	<data name="ProfileLoadFailed" xml:space="preserve">
+    <value>Unable to load profile data.</value>
+  </data>
+	<data name="ProfileSaveFailed" xml:space="preserve">
+    <value>Unable to save profile changes.</value>
+  </data>
+	<data name="ProfileSaveSuccess" xml:space="preserve">
+    <value>Profile updated successfully.</value>
+  </data>
+	<data name="ProfileRequiredNames" xml:space="preserve">
+    <value>First name and last name are required.</value>
+  </data>
+	<data name="ProfileRequiredFields" xml:space="preserve">
+    <value>Please fill all required profile fields before saving.</value>
+  </data>
+	<data name="PasswordMismatch" xml:space="preserve">
+    <value>New password and confirmation do not match.</value>
+  </data>
+	<data name="PasswordMinLength" xml:space="preserve">
+    <value>New password must be at least 8 characters long.</value>
+  </data>
+	<data name="PasswordChangeFailed" xml:space="preserve">
+    <value>Unable to change password. Please check your current password.</value>
+  </data>
+	<data name="PasswordChangeSuccess" xml:space="preserve">
+    <value>Password changed successfully.</value>
   </data>
 </root>
