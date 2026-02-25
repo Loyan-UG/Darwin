@@ -49,6 +49,12 @@
                    HorizontalOptions="Center"
                    IsVisible="{Binding HasBusinessContext}" />
 
+            <Label Text="{Binding ExpiresInText}"
+                   FontSize="13"
+                   TextColor="{StaticResource Neutral900}"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding HasBusinessContext}" />
+
             <!-- Refresh button for accrual -->
             <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
                     Style="{StaticResource PrimaryButtonStyle}"

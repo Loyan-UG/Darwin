@@ -71,7 +71,6 @@ namespace Darwin.Infrastructure.Security.Jwt
         public (string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)
             IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null)
         {
-            // Load the single SiteSetting row that carries all JWT configuration.
             var settings = _db.Set<SiteSetting>()
                 .AsNoTracking()
                 .First();
@@ -82,18 +81,14 @@ namespace Darwin.Infrastructure.Security.Jwt
             }
 
             var nowUtc = DateTime.UtcNow;
-
-            // Access token lifetime: minimum 5 minutes to avoid obviously broken configuration.
             var accessExp = nowUtc.AddMinutes(Math.Max(5, settings.JwtAccessTokenMinutes));
-
-            // Refresh token lifetime: minimum 1 day for predictable UX.
             var refreshExp = nowUtc.AddDays(Math.Max(1, settings.JwtRefreshTokenDays));
 
-            // Build the signing credentials for the JWT.
-            var signingKey = new SymmetricSecurityKey(GetKeyBytes(settings.JwtSigningKey));
+            // Null-safe signing key material to avoid nullable warning at call site.
+            var signingKeyMaterial = settings.JwtSigningKey ?? string.Empty;
+            var signingKey = new SymmetricSecurityKey(GetKeyBytes(signingKeyMaterial));
             var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
-            // Standard JWT claims for subject, email and unique identifier.
             var claims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Sub, userId.ToString()),
@@ -105,22 +100,17 @@ namespace Darwin.Infrastructure.Security.Jwt
                     ClaimValueTypes.Integer64)
             };
 
-            // Optional logical scopes, e.g. "api.read,loyalty.app"
             if (settings.JwtEmitScopes && scopes is not null)
             {
                 claims.Add(new Claim("scope", string.Join(",", scopes)));
             }
 
-            // When the user is an active member of a business, embed that context as business_id.
-            // Business mobile clients rely on this claim to call business-scoped loyalty endpoints.
             var businessId = ResolveActiveBusinessId(userId);
             if (businessId.HasValue)
             {
                 claims.Add(new Claim("business_id", businessId.Value.ToString("D")));
             }
 
-
-            // Create the JWT access token.
             var jwt = new JwtSecurityToken(
                 issuer: settings.JwtIssuer,
                 audience: settings.JwtAudience,
@@ -131,16 +121,11 @@ namespace Darwin.Infrastructure.Security.Jwt
 
             var accessToken = new JwtSecurityTokenHandler().WriteToken(jwt);
 
-            // Decide how the refresh token should be bound (device-bound or global)
-            // based on the current SiteSetting configuration.
             string? effectiveDeviceId = null;
             if (settings.JwtRequireDeviceBinding)
             {
                 if (string.IsNullOrWhiteSpace(deviceId))
                 {
-                    // With JwtRequireDeviceBinding = true, a missing device id is a programming error
-                    // in the caller (e.g., WebApi or mobile app). Failing fast here prevents the
-                    // system from silently issuing a non-bound refresh token.
                     throw new InvalidOperationException(
                         "Device binding is required (JwtRequireDeviceBinding = true) but no device id was supplied.");
                 }
@@ -150,36 +135,35 @@ namespace Darwin.Infrastructure.Security.Jwt
 
             var purpose = BuildRefreshPurpose(effectiveDeviceId);
 
-            // If only a single active device/session per user is allowed,
-            // revoke all previous refresh tokens before issuing a new one.
             if (settings.JwtSingleDeviceOnly)
             {
                 RevokeAllForUser(userId);
             }
 
-            // create refresh values but DON'T add yet
             var refreshToken = CreateOpaqueToken();
             var refreshRow = new UserToken(userId, purpose, refreshToken, refreshExp);
 
-            // find existing active token first
+            // Upsert by unique key (UserId + Purpose) to avoid duplicate key conflicts.
             var existingRow = _db.Set<UserToken>()
-                .FirstOrDefault(x => x.UserId == userId && x.Purpose == purpose && x.UsedAtUtc == null);
+                .FirstOrDefault(x => x.UserId == userId && x.Purpose == purpose);
 
             if (existingRow != null)
             {
                 existingRow.Value = refreshToken;
                 existingRow.ExpiresAtUtc = refreshExp;
+                existingRow.UsedAtUtc = null;
             }
             else
             {
                 _db.Set<UserToken>().Add(refreshRow);
             }
 
-            // The Application layer is synchronous for this use-case; blocking here is acceptable.
             _db.SaveChangesAsync().GetAwaiter().GetResult();
 
             return (accessToken, accessExp, refreshToken, refreshExp);
         }
+
+
 
 
         /// <summary>
@@ -242,6 +226,7 @@ namespace Darwin.Infrastructure.Security.Jwt
         }
 
 
+
         /// <summary>
         /// Revokes a single refresh token (typically on logout) by marking it as used.
         /// Device binding is taken into account in the same way as in <see cref="ValidateRefreshToken"/>.
@@ -284,62 +269,69 @@ namespace Darwin.Infrastructure.Security.Jwt
                 return;
             }
 
-            row.UsedAtUtc = DateTime.UtcNow;
-
-            _db.SaveChangesAsync().GetAwaiter().GetResult();
+            if (row.UsedAtUtc is null)
+            {
+                row.UsedAtUtc = DateTime.UtcNow;
+                _db.SaveChangesAsync().GetAwaiter().GetResult();
+            }
         }
 
 
+
         /// <summary>
-        /// Revokes all active refresh tokens for the specified user by marking them as used.
-        /// This is primarily used to implement "single device only" sessions and security-critical
-        /// operations such as password reset, account compromise recovery, and forced logout.
+        /// Revokes all active refresh tokens for the specified user.
+        /// This is used when SiteSetting.JwtSingleDeviceOnly is enabled and a new login occurs.
         /// </summary>
-        /// <param name="userId">User whose refresh tokens should be invalidated.</param>
-        /// <returns>The number of tokens that were marked as revoked.</returns>
+        /// <param name="userId">The user identifier whose refresh tokens should be revoked.</param>
         public int RevokeAllForUser(Guid userId)
         {
+            var nowUtc = DateTime.UtcNow;
+
             var rows = _db.Set<UserToken>()
                 .Where(x => x.UserId == userId && x.Purpose.StartsWith("JwtRefresh"))
                 .ToList();
 
-            if (rows.Count == 0)
-            {
-                return 0;
-            }
-
-            var now = DateTime.UtcNow;
+            var changed = false;
             foreach (var row in rows)
             {
-                row.UsedAtUtc = now;
+                if (row.UsedAtUtc is null)
+                {
+                    row.UsedAtUtc = nowUtc;
+                    changed = true;
+                }
             }
 
-            _db.SaveChangesAsync().GetAwaiter().GetResult();
+            if (changed)
+            {
+                _db.SaveChangesAsync().GetAwaiter().GetResult();
+            }
             return rows.Count;
         }
 
+
+
         /// <summary>
-        /// Converts a UTC <see cref="DateTime"/> to a Unix timestamp (seconds since epoch) as a string.
-        /// This format is expected when using ClaimValueTypes.Integer64 for the "iat" claim.
+        /// Converts DateTime to JWT "iat" Unix timestamp seconds.
         /// </summary>
-        private static string ToUnixTimestampSeconds(DateTime dtUtc)
+        private static string ToUnixTimestampSeconds(DateTime utc)
         {
-            var seconds = (long)(dtUtc - DateTime.UnixEpoch).TotalSeconds;
+            var seconds = new DateTimeOffset(utc).ToUnixTimeSeconds();
             return seconds.ToString(CultureInfo.InvariantCulture);
         }
 
+
         /// <summary>
-        /// Resolves the signing key bytes from the configuration value.
-        /// If the value looks like Base64, it is decoded; otherwise it is treated as UTF-8 text.
+        /// Builds signing key bytes from a configured secret string.
         /// </summary>
-        private static byte[] GetKeyBytes(string? key)
+        /// <param name="key">Raw key string from SiteSetting.JwtSigningKey.</param>
+        /// <returns>UTF8 bytes of the key.</returns>
+        private static byte[] GetKeyBytes(string key)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
                 throw new InvalidOperationException("JWT signing key (SiteSetting.JwtSigningKey) is not configured.");
             }
 
-            // Best-effort: attempt Base64 first; fall back to raw UTF-8.
             try
             {
                 return Convert.FromBase64String(key);
@@ -350,22 +342,26 @@ namespace Darwin.Infrastructure.Security.Jwt
             }
         }
 
+
+
         /// <summary>
-        /// Generates a cryptographically strong opaque token for use as a refresh token.
+        /// Returns cryptographically strong random opaque refresh token.
         /// </summary>
         private static string CreateOpaqueToken()
         {
-            var bytes = new byte[32];
+            Span<byte> bytes = stackalloc byte[32];
             RandomNumberGenerator.Fill(bytes);
-            return Convert.ToBase64String(bytes);
+            return Convert.ToHexString(bytes).ToLowerInvariant();
         }
 
         /// <summary>
-        /// Computes the logical purpose string for a refresh token.
+        /// Builds the refresh-token purpose string.
         /// Device-bound tokens use "JwtRefresh:{deviceId}", while device-less tokens use "JwtRefresh".
         /// </summary>
         private static string BuildRefreshPurpose(string? deviceId) =>
             string.IsNullOrWhiteSpace(deviceId) ? "JwtRefresh" : $"JwtRefresh:{deviceId}";
+
+
 
 
         /// <summary>

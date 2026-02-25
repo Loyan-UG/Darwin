@@ -225,4 +225,67 @@
   <data name="StartButton" xml:space="preserve">
     <value>Start</value>
   </data>
+<data name="ProfileSectionTitle" xml:space="preserve">
+    <value>My profile</value>
+  </data>
+  <data name="FirstNameLabel" xml:space="preserve">
+    <value>First name</value>
+  </data>
+  <data name="LastNameLabel" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+  <data name="PhoneLabel" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="LocaleLabel" xml:space="preserve">
+    <value>Locale</value>
+  </data>
+  <data name="TimezoneLabel" xml:space="preserve">
+    <value>Timezone</value>
+  </data>
+  <data name="CurrencyLabel" xml:space="preserve">
+    <value>Currency</value>
+  </data>
+  <data name="SaveProfileButton" xml:space="preserve">
+    <value>Save profile</value>
+  </data>
+  <data name="ChangePasswordTitle" xml:space="preserve">
+    <value>Change password</value>
+  </data>
+  <data name="CurrentPasswordLabel" xml:space="preserve">
+    <value>Current password</value>
+  </data>
+  <data name="NewPasswordLabel" xml:space="preserve">
+    <value>New password</value>
+  </data>
+  <data name="ConfirmNewPasswordLabel" xml:space="preserve">
+    <value>Confirm new password</value>
+  </data>
+  <data name="ChangePasswordButton" xml:space="preserve">
+    <value>Update password</value>
+  </data>
+  <data name="ProfileLoadFailed" xml:space="preserve">
+    <value>Unable to load profile data.</value>
+  </data>
+  <data name="ProfileSaveFailed" xml:space="preserve">
+    <value>Unable to save profile changes.</value>
+  </data>
+  <data name="ProfileSaveSuccess" xml:space="preserve">
+    <value>Profile updated successfully.</value>
+  </data>
+  <data name="ProfileRequiredNames" xml:space="preserve">
+    <value>First name and last name are required.</value>
+  </data>
+  <data name="PasswordMismatch" xml:space="preserve">
+    <value>New password and confirmation do not match.</value>
+  </data>
+  <data name="PasswordMinLength" xml:space="preserve">
+    <value>New password must be at least 8 characters long.</value>
+  </data>
+  <data name="PasswordChangeFailed" xml:space="preserve">
+    <value>Unable to change password. Please check your current password.</value>
+  </data>
+  <data name="PasswordChangeSuccess" xml:space="preserve">
+    <value>Password changed successfully.</value>
+  </data>
 </root>

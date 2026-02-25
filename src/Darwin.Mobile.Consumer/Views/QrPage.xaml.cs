@@ -75,4 +75,10 @@ public partial class QrPage : IQueryAttributable
         base.OnAppearing();
         await _viewModel.OnAppearingAsync();
     }
+
+    protected override async void OnDisappearing()
+    {
+        base.OnDisappearing();
+        await _viewModel.OnDisappearingAsync();
+    }
 }
