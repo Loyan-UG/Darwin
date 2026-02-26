@@ -54,6 +54,12 @@ public sealed partial class LoginViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
 
+        // TODO [TEST-ONLY][MOBILE-SECURITY]:
+        // Remove these default credentials before release builds.
+        // They are intentionally set for rapid QA loops in local/dev environments only.
+        Email = "biz1@darwin.de";
+        Password = "Business123!";
+
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
     }
 

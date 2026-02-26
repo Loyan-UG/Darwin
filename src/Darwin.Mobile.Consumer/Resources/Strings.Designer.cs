@@ -421,6 +421,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Profile is not loaded yet. Please refresh and try again..
+        /// </summary>
+        internal static string ProfileNotLoadedYet {
+            get {
+                return ResourceManager.GetString("ProfileNotLoadedYet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Please fill all required profile fields before saving..
         /// </summary>
         internal static string ProfileRequiredFields {
@@ -552,6 +561,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string ServerUnreachableMessage {
             get {
                 return ResourceManager.GetString("ServerUnreachableMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your session has expired. Please log in again..
+        /// </summary>
+        internal static string SessionExpiredReLogin {
+            get {
+                return ResourceManager.GetString("SessionExpiredReLogin", resourceCulture);
             }
         }
         

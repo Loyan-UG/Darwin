@@ -1,13 +1,14 @@
-﻿using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Darwin.Contracts.Identity;
+﻿using Darwin.Contracts.Identity;
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Security;
+using Darwin.Shared.Results;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Darwin.Mobile.Shared.Services
 {
@@ -233,11 +234,13 @@ namespace Darwin.Mobile.Shared.Services
         }
 
         /// <inheritdoc />
+        /// <inheritdoc />
         public async Task<bool> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            var result = await _api.PostResultAsync<ChangePasswordRequest, object?>(
+            // Try once with current token.
+            var firstAttempt = await _api.PostResultAsync<ChangePasswordRequest, object?>(
                 ApiRoutes.Auth.ChangePassword,
                 new ChangePasswordRequest
                 {
@@ -246,8 +249,78 @@ namespace Darwin.Mobile.Shared.Services
                 },
                 ct).ConfigureAwait(false);
 
-            return result.Succeeded;
+            if (IsSuccessfulNoPayloadScenario(firstAttempt))
+            {
+                return true;
+            }
+
+            // If unauthorized, refresh token once and retry exactly one time.
+            // This avoids infinite loops while still handling normal access-token expiry.
+            if (LooksUnauthorized(firstAttempt.Error))
+            {
+                var refreshed = await TryRefreshAsync(ct).ConfigureAwait(false);
+                if (!refreshed)
+                {
+                    return false;
+                }
+
+                var secondAttempt = await _api.PostResultAsync<ChangePasswordRequest, object?>(
+                    ApiRoutes.Auth.ChangePassword,
+                    new ChangePasswordRequest
+                    {
+                        CurrentPassword = currentPassword,
+                        NewPassword = newPassword
+                    },
+                    ct).ConfigureAwait(false);
+
+                return IsSuccessfulNoPayloadScenario(secondAttempt);
+            }
+
+            return false;
         }
+
+        /// <summary>
+        /// Treats endpoint responses that are semantically successful even if no JSON payload is returned.
+        /// Some endpoints return 200/OK with empty body, which is acceptable for command-style actions.
+        /// </summary>
+        private static bool IsSuccessfulNoPayloadScenario(Result<object?> result)
+        {
+            if (result.Succeeded)
+            {
+                return true;
+            }
+
+            var error = result.Error ?? string.Empty;
+
+            // ApiClient returns this message when status is success but JSON body is empty.
+            if (error.Contains("Empty JSON payload from server.", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Defensive support for explicit 204 handling, if backend behavior changes later.
+            if (error.Contains(ApiClient.NoContentResultMessage, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Detects whether a failed result indicates an authorization failure.
+        /// </summary>
+        private static bool LooksUnauthorized(string? error)
+        {
+            if (string.IsNullOrWhiteSpace(error))
+            {
+                return false;
+            }
+
+            return error.Contains("401", StringComparison.OrdinalIgnoreCase) ||
+                   error.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase);
+        }
+
 
         /// <inheritdoc />
         public async Task<bool> RequestPasswordResetAsync(string email, CancellationToken ct)

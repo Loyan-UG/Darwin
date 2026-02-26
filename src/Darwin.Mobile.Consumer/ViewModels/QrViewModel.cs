@@ -20,28 +20,27 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// Responsibilities:
 /// - Prepare scan sessions in accrual/redemption mode.
 /// - Render QR bitmap from the server-issued opaque token.
-/// - Keep QR fresh with a background rotation loop.
+/// - Keep QR token fresh with a controlled auto-refresh loop.
 ///
-/// Threading policy (important):
-/// - This type is UI-bound.
-/// - All property changes are marshalled to the main thread.
-/// - Service calls can run asynchronously, but UI mutation must always return to main thread.
+/// Refresh policy:
+/// - UI countdown updates every second for smooth UX.
+/// - Automatic network refresh is allowed at minimum every 5 minutes,
+///   unless the token is already expired (then immediate refresh is allowed).
 /// </summary>
 public sealed class QrViewModel : BaseViewModel
 {
     /// <summary>
-    /// Checks countdown periodically without excessive battery/network usage.
+    /// UI tick interval. Kept at 1 second so countdown feels natural.
     /// </summary>
-    private static readonly TimeSpan RotationCheckInterval = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan RotationCheckInterval = TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// Session is renewed when it is close to expiry.
+    /// If token is close to expiry, we consider a refresh (subject to minimum cadence guard).
     /// </summary>
     private static readonly TimeSpan RotationRenewThreshold = TimeSpan.FromMinutes(1);
 
     /// <summary>
-    /// Hard lower bound for automatic rotation cadence.
-    /// Product request: barcode should not auto-refresh too aggressively; keep >= 5 minutes when possible.
+    /// Product-required lower bound for automatic refresh cadence.
     /// </summary>
     private static readonly TimeSpan MinimumAutoRotationInterval = TimeSpan.FromMinutes(5);
 
@@ -85,9 +84,6 @@ public sealed class QrViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Image representation of the current token.
-    /// </summary>
     public ImageSource? QrImage
     {
         get => _qrImage;
@@ -95,7 +91,7 @@ public sealed class QrViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// UTC expiry time of the current session, if provided.
+    /// Server-side expiry time for the current QR session.
     /// </summary>
     public DateTimeOffset? ExpiresAtUtc
     {
@@ -110,7 +106,8 @@ public sealed class QrViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Friendly countdown string for UX.
+    /// Countdown text to the next auto-refresh slot (not server expiry).
+    /// This is intentionally based on the 5-minute product policy.
     /// </summary>
     public string ExpiresInText
     {
@@ -337,22 +334,22 @@ public sealed class QrViewModel : BaseViewModel
                     continue;
                 }
 
-                var remaining = expiry.Value - DateTimeOffset.UtcNow;
-                if (remaining > RotationRenewThreshold)
-                {
-                    continue;
-                }
-
+                var remainingUntilExpiry = expiry.Value - DateTimeOffset.UtcNow;
                 var elapsedSinceLastRefresh = DateTimeOffset.UtcNow - (_lastSuccessfulSessionRefreshUtc ?? DateTimeOffset.MinValue);
 
-                // Keep at least 5 minutes between automatic refresh operations.
-                // Exception: if token is already expired, refresh immediately regardless of elapsed time.
-                if (remaining > TimeSpan.Zero && elapsedSinceLastRefresh < MinimumAutoRotationInterval)
+                // Refresh immediately when token is already expired.
+                if (remainingUntilExpiry <= TimeSpan.Zero)
                 {
+                    await MainThread.InvokeOnMainThreadAsync(() => PrepareSessionAsync(Mode));
                     continue;
                 }
 
-                await MainThread.InvokeOnMainThreadAsync(() => PrepareSessionAsync(Mode));
+                // If token is near expiry, refresh only if the 5-minute cadence guard has passed.
+                if (remainingUntilExpiry <= RotationRenewThreshold &&
+                    elapsedSinceLastRefresh >= MinimumAutoRotationInterval)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => PrepareSessionAsync(Mode));
+                }
             }
             catch (OperationCanceledException)
             {
@@ -360,27 +357,33 @@ public sealed class QrViewModel : BaseViewModel
             }
             catch
             {
-                // Single tick failures must not terminate the loop.
+                // A single background tick failure must not kill the loop.
             }
         }
     }
 
     private void UpdateExpiresInText()
     {
-        if (!_expiresAtUtc.HasValue)
+        if (!_lastSuccessfulSessionRefreshUtc.HasValue)
         {
             ExpiresInText = string.Empty;
             return;
         }
 
-        var remaining = _expiresAtUtc.Value - DateTimeOffset.UtcNow;
+        var due = _lastSuccessfulSessionRefreshUtc.Value + MinimumAutoRotationInterval;
+        var remaining = due - DateTimeOffset.UtcNow;
+
         if (remaining <= TimeSpan.Zero)
         {
-            ExpiresInText = "Refreshing QR...";
+            ExpiresInText = "Auto refresh is due now.";
             return;
         }
 
-        ExpiresInText = $"Rotates in {remaining:mm\\:ss}";
+        // Floor to seconds for stable one-by-one countdown (avoids visual jumps like 5:01/4:59 oscillations).
+        var seconds = Math.Max(0, (int)Math.Floor(remaining.TotalSeconds));
+        var display = TimeSpan.FromSeconds(seconds);
+
+        ExpiresInText = $"Auto refresh in {display:mm\\:ss}";
     }
 
     private void UpdateGuidanceMessage()

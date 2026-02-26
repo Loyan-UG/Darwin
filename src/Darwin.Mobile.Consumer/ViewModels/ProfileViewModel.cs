@@ -13,10 +13,10 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// <summary>
 /// Handles profile load/update and password-change flows for the consumer app.
 ///
-/// Threading note:
-/// This ViewModel is UI-bound; property updates must always happen on the main thread.
-/// Even when awaited services are thread-safe, the UI-facing state mutation is marshalled via RunOnMain
-/// so Android never receives view updates from background worker threads.
+/// Threading and UX rules I want to keep explicit:
+/// - This ViewModel is UI-bound, therefore all UI-facing state changes must run on the main thread.
+/// - Service calls can run asynchronously, but bound properties (IsBusy, ErrorMessage, etc.) are always marshalled via RunOnMain.
+/// - Save command stays enabled by design (unless busy) so QA can always trigger validation and see the exact reason.
 /// </summary>
 public sealed class ProfileViewModel : BaseViewModel
 {
@@ -31,9 +31,9 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _firstName = string.Empty;
     private string _lastName = string.Empty;
     private string _phoneE164 = string.Empty;
-    private string _locale = string.Empty;
-    private string _timezone = string.Empty;
-    private string _currency = string.Empty;
+    private string _locale = "de-DE";
+    private string _timezone = "Europe/Berlin";
+    private string _currency = "EUR";
 
     private string _currentPassword = string.Empty;
     private string _newPassword = string.Empty;
@@ -47,7 +47,11 @@ public sealed class ProfileViewModel : BaseViewModel
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
-        SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy && CanSaveProfile());
+
+        // Intentionally keep Save command available whenever we are not busy.
+        // Validation is done inside SaveProfileAsync so user always gets actionable feedback.
+        SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
+
         ChangePasswordCommand = new AsyncCommand(ChangePasswordAsync, () => !IsBusy && CanChangePassword());
     }
 
@@ -58,8 +62,8 @@ public sealed class ProfileViewModel : BaseViewModel
     public AsyncCommand ChangePasswordCommand { get; }
 
     /// <summary>
-    /// Email is displayed as read-only in the UI because this endpoint is profile-edit focused.
-    /// Email changes have dedicated flows in other modules.
+    /// Email is displayed as read-only in this screen.
+    /// Dedicated email change flows may exist elsewhere.
     /// </summary>
     public string Email
     {
@@ -70,73 +74,37 @@ public sealed class ProfileViewModel : BaseViewModel
     public string FirstName
     {
         get => _firstName;
-        set
-        {
-            if (SetProperty(ref _firstName, value))
-            {
-                SaveProfileCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => SetProperty(ref _firstName, value);
     }
 
     public string LastName
     {
         get => _lastName;
-        set
-        {
-            if (SetProperty(ref _lastName, value))
-            {
-                SaveProfileCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => SetProperty(ref _lastName, value);
     }
 
     public string PhoneE164
     {
         get => _phoneE164;
-        set
-        {
-            if (SetProperty(ref _phoneE164, value))
-            {
-                SaveProfileCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => SetProperty(ref _phoneE164, value);
     }
 
     public string Locale
     {
         get => _locale;
-        set
-        {
-            if (SetProperty(ref _locale, value))
-            {
-                SaveProfileCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => SetProperty(ref _locale, value);
     }
 
     public string Timezone
     {
         get => _timezone;
-        set
-        {
-            if (SetProperty(ref _timezone, value))
-            {
-                SaveProfileCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => SetProperty(ref _timezone, value);
     }
 
     public string Currency
     {
         get => _currency;
-        set
-        {
-            if (SetProperty(ref _currency, value))
-            {
-                SaveProfileCommand.RaiseCanExecuteChanged();
-            }
-        }
+        set => SetProperty(ref _currency, value);
     }
 
     public string CurrentPassword
@@ -216,6 +184,13 @@ public sealed class ProfileViewModel : BaseViewModel
 
         try
         {
+            var refreshed = await TryRefreshTokenIfPossibleAsync();
+            if (!refreshed)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.SessionExpiredReLogin);
+                return;
+            }
+
             var profile = await _profileService.GetMeAsync(CancellationToken.None);
             if (profile is null)
             {
@@ -232,17 +207,16 @@ public sealed class ProfileViewModel : BaseViewModel
                 FirstName = profile.FirstName ?? string.Empty;
                 LastName = profile.LastName ?? string.Empty;
                 PhoneE164 = profile.PhoneE164 ?? string.Empty;
-                Locale = profile.Locale ?? string.Empty;
-                Timezone = profile.Timezone ?? string.Empty;
-                Currency = profile.Currency ?? string.Empty;
+                Locale = string.IsNullOrWhiteSpace(profile.Locale) ? "de-DE" : profile.Locale;
+                Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? "Europe/Berlin" : profile.Timezone;
+                Currency = string.IsNullOrWhiteSpace(profile.Currency) ? "EUR" : profile.Currency;
 
-                SaveProfileCommand.RaiseCanExecuteChanged();
                 ChangePasswordCommand.RaiseCanExecuteChanged();
             });
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ex.Message);
+            RunOnMain(() => ErrorMessage = ResolveFriendlyError(ex, AppResources.ProfileLoadFailed));
         }
         finally
         {
@@ -256,18 +230,6 @@ public sealed class ProfileViewModel : BaseViewModel
         }
     }
 
-    private bool CanSaveProfile()
-    {
-        // Id and RowVersion are required by API model validation for PUT /api/v1/profile/me.
-        return _profileId != Guid.Empty &&
-               _rowVersion is { Length: > 0 } &&
-               !string.IsNullOrWhiteSpace(FirstName) &&
-               !string.IsNullOrWhiteSpace(LastName) &&
-               !string.IsNullOrWhiteSpace(Locale) &&
-               !string.IsNullOrWhiteSpace(Timezone) &&
-               !string.IsNullOrWhiteSpace(Currency);
-    }
-
     private async Task SaveProfileAsync()
     {
         if (IsBusy)
@@ -279,16 +241,6 @@ public sealed class ProfileViewModel : BaseViewModel
         {
             ErrorMessage = null;
             SuccessMessage = null;
-        });
-
-        if (!CanSaveProfile())
-        {
-            RunOnMain(() => ErrorMessage = AppResources.ProfileRequiredFields);
-            return;
-        }
-
-        RunOnMain(() =>
-        {
             IsBusy = true;
             SaveProfileCommand.RaiseCanExecuteChanged();
             ChangePasswordCommand.RaiseCanExecuteChanged();
@@ -296,6 +248,25 @@ public sealed class ProfileViewModel : BaseViewModel
 
         try
         {
+            var refreshed = await TryRefreshTokenIfPossibleAsync();
+            if (!refreshed)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.SessionExpiredReLogin);
+                return;
+            }
+
+            if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.ProfileNotLoadedYet);
+                return;
+            }
+
+            if (!ValidateProfileFields())
+            {
+                RunOnMain(() => ErrorMessage = AppResources.ProfileRequiredFields);
+                return;
+            }
+
             var request = new CustomerProfile
             {
                 Id = _profileId,
@@ -318,14 +289,14 @@ public sealed class ProfileViewModel : BaseViewModel
 
             RunOnMain(() => SuccessMessage = AppResources.ProfileSaveSuccess);
 
-            // Reload after save to refresh RowVersion and any server-side normalization.
+            // Reload to get newest RowVersion and normalized values from server.
             _isLoaded = false;
             await RefreshAsync();
             _isLoaded = true;
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ex.Message);
+            RunOnMain(() => ErrorMessage = ResolveFriendlyError(ex, AppResources.ProfileSaveFailed));
         }
         finally
         {
@@ -357,28 +328,6 @@ public sealed class ProfileViewModel : BaseViewModel
         {
             ErrorMessage = null;
             SuccessMessage = null;
-        });
-
-        if (!CanChangePassword())
-        {
-            RunOnMain(() => ErrorMessage = AppResources.PasswordRequired);
-            return;
-        }
-
-        if (!string.Equals(NewPassword, ConfirmNewPassword, StringComparison.Ordinal))
-        {
-            RunOnMain(() => ErrorMessage = AppResources.PasswordMismatch);
-            return;
-        }
-
-        if (NewPassword.Length < 8)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.PasswordMinLength);
-            return;
-        }
-
-        RunOnMain(() =>
-        {
             IsBusy = true;
             SaveProfileCommand.RaiseCanExecuteChanged();
             ChangePasswordCommand.RaiseCanExecuteChanged();
@@ -386,18 +335,46 @@ public sealed class ProfileViewModel : BaseViewModel
 
         try
         {
-            var changed = await _authService
-                .ChangePasswordAsync(CurrentPassword, NewPassword, CancellationToken.None);
+            var refreshed = await TryRefreshTokenIfPossibleAsync();
+            if (!refreshed)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.SessionExpiredReLogin);
+                return;
+            }
+
+            if (!CanChangePassword())
+            {
+                RunOnMain(() => ErrorMessage = AppResources.PasswordRequired);
+                return;
+            }
+
+            if (!string.Equals(NewPassword, ConfirmNewPassword, StringComparison.Ordinal))
+            {
+                RunOnMain(() => ErrorMessage = AppResources.PasswordMismatch);
+                return;
+            }
+
+            if (NewPassword.Length < 8)
+            {
+                RunOnMain(() => ErrorMessage = AppResources.PasswordMinLength);
+                return;
+            }
+
+            var changed = await _authService.ChangePasswordAsync(
+                CurrentPassword,
+                NewPassword,
+                CancellationToken.None);
 
             if (!changed)
             {
+                // This should now happen only when API really rejects credentials/policy.
                 RunOnMain(() => ErrorMessage = AppResources.PasswordChangeFailed);
                 return;
             }
 
-            // Clear sensitive values immediately after successful password change.
             RunOnMain(() =>
             {
+                // Clear sensitive data immediately.
                 CurrentPassword = string.Empty;
                 NewPassword = string.Empty;
                 ConfirmNewPassword = string.Empty;
@@ -406,7 +383,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ex.Message);
+            RunOnMain(() => ErrorMessage = ResolveFriendlyError(ex, AppResources.PasswordChangeFailed));
         }
         finally
         {
@@ -418,6 +395,49 @@ public sealed class ProfileViewModel : BaseViewModel
                 RefreshCommand.RaiseCanExecuteChanged();
             });
         }
+    }
+
+    /// <summary>
+    /// Validates mandatory fields according to server-side expectations.
+    /// </summary>
+    private bool ValidateProfileFields()
+    {
+        return !string.IsNullOrWhiteSpace(FirstName) &&
+               !string.IsNullOrWhiteSpace(LastName) &&
+               !string.IsNullOrWhiteSpace(Locale) &&
+               !string.IsNullOrWhiteSpace(Timezone) &&
+               !string.IsNullOrWhiteSpace(Currency);
+    }
+
+    /// <summary>
+    /// Tries to refresh access token before sensitive calls.
+    /// If refresh fails, caller should show relogin message.
+    /// </summary>
+    private async Task<bool> TryRefreshTokenIfPossibleAsync()
+    {
+        try
+        {
+            return await _authService.TryRefreshAsync(CancellationToken.None);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Maps technical errors to more useful user-facing errors.
+    /// </summary>
+    private static string ResolveFriendlyError(Exception ex, string fallback)
+    {
+        var raw = ex.Message ?? string.Empty;
+        if (raw.Contains("401", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.SessionExpiredReLogin;
+        }
+
+        return string.IsNullOrWhiteSpace(raw) ? fallback : raw;
     }
 
     private static string? Normalize(string? value)
