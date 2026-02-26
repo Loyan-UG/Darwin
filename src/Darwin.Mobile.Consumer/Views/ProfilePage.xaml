@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>  
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -7,7 +7,6 @@
     x:Class="Darwin.Mobile.Consumer.Views.ProfilePage"
     x:DataType="vm:ProfileViewModel"
     Title="{x:Static res:AppResources.ProfileTitle}">
-
 
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="14">
@@ -39,45 +38,26 @@
                     <Label Text="{x:Static res:AppResources.CurrencyLabel}" />
                     <Entry Text="{Binding Currency}" Placeholder="EUR" />
 
+                    <!-- Messages are intentionally placed close to the primary action. -->
+                    <Label Text="{Binding SuccessMessage}"
+                           TextColor="Green"
+                           FontSize="14"
+                           IsVisible="{Binding HasSuccess}" />
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="Red"
+                           FontSize="14"
+                           IsVisible="{Binding HasError}" />
+
                     <Button Text="{x:Static res:AppResources.SaveProfileButton}"
                             Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding SaveProfileCommand}" />
+
+                    <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                       IsRunning="{Binding IsBusy}"
+                                       Color="{StaticResource BrandGold500}" />
                 </VerticalStackLayout>
             </Border>
-
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.ChangePasswordTitle}" FontAttributes="Bold" FontSize="16" />
-
-                    <Label Text="{x:Static res:AppResources.CurrentPasswordLabel}" />
-                    <Entry Text="{Binding CurrentPassword}" IsPassword="True" />
-
-                    <Label Text="{x:Static res:AppResources.NewPasswordLabel}" />
-                    <Entry Text="{Binding NewPassword}" IsPassword="True" />
-
-                    <Label Text="{x:Static res:AppResources.ConfirmNewPasswordLabel}" />
-                    <Entry Text="{Binding ConfirmNewPassword}" IsPassword="True" />
-
-                    <Button Text="{x:Static res:AppResources.ChangePasswordButton}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding ChangePasswordCommand}" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Label Text="{Binding SuccessMessage}"
-                   TextColor="Green"
-                   FontSize="14"
-                   IsVisible="{Binding HasSuccess}" />
-
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
-                   IsVisible="{Binding HasError}" />
-
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrandGold500}" />
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

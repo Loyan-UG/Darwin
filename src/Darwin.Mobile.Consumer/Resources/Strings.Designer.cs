@@ -583,6 +583,42 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Change password.
+        /// </summary>
+        internal static string SettingsChangePasswordButton {
+            get {
+                return ResourceManager.GetString("SettingsChangePasswordButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Profile.
+        /// </summary>
+        internal static string SettingsProfileButton {
+            get {
+                return ResourceManager.GetString("SettingsProfileButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Manage your account preferences..
+        /// </summary>
+        internal static string SettingsSubtitle {
+            get {
+                return ResourceManager.GetString("SettingsSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Settings.
+        /// </summary>
+        internal static string SettingsTitle {
+            get {
+                return ResourceManager.GetString("SettingsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Start.
         /// </summary>
         internal static string StartButton {

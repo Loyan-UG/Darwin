@@ -5,8 +5,7 @@ using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+
 
 namespace Darwin.Mobile.Consumer.Extensions;
 
@@ -54,20 +53,24 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILocation, Services.Platform.LocationPlatformService>();
 
         // ViewModels
-        services.AddTransient<ViewModels.LoginViewModel>();
-        services.AddTransient<ViewModels.QrViewModel>();
-        services.AddTransient<ViewModels.DiscoverViewModel>();
-        services.AddTransient<ViewModels.RewardsViewModel>();
-        services.AddTransient<ViewModels.ProfileViewModel>();
+        services.AddTransient<LoginViewModel>();
+        services.AddTransient<QrViewModel>();
+        services.AddTransient<DiscoverViewModel>();
+        services.AddTransient<RewardsViewModel>();
+        services.AddTransient<ProfileViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<ChangePasswordViewModel>();
+        services.AddTransient<BusinessDetailViewModel>();
 
         // Pages
-        services.AddTransient<Views.LoginPage>();
-        services.AddTransient<Views.QrPage>();
-        services.AddTransient<Views.DiscoverPage>();
-        services.AddTransient<Views.RewardsPage>();
-        services.AddTransient<Views.ProfilePage>();
+        services.AddTransient<LoginPage>();
+        services.AddTransient<QrPage>();
+        services.AddTransient<DiscoverPage>();
+        services.AddTransient<RewardsPage>();
+        services.AddTransient<SettingsPage>();
+        services.AddTransient<ProfilePage>();
+        services.AddTransient<ChangePasswordPage>();
         services.AddTransient<BusinessDetailPage>();
-        services.AddTransient<BusinessDetailViewModel>();
 
 
         return services;

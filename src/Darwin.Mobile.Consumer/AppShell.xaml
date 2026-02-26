@@ -43,10 +43,10 @@
 
         <!-- Profile tab -->
         <ShellContent
-            Route="{x:Static constants:Routes.Profile}"
-            Title="{x:Static res:AppResources.ProfileTitle}"
+            Route="{x:Static constants:Routes.Settings}"
+            Title="{x:Static res:AppResources.SettingsTitle}"
             Icon="profile_tab_icon.png"
-            ContentTemplate="{DataTemplate views:ProfilePage}" />
+            ContentTemplate="{DataTemplate views:SettingsPage}" />
 
     </TabBar>
 </Shell>

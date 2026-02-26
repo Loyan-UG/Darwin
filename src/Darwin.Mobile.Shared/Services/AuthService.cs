@@ -233,14 +233,14 @@ namespace Darwin.Mobile.Shared.Services
                 ct).ConfigureAwait(false);
         }
 
-        /// <inheritdoc />
+
+
         /// <inheritdoc />
         /// <inheritdoc />
         public async Task<bool> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            // First attempt with current access token.
             var firstAttempt = await _api.PostResultAsync<ChangePasswordRequest, object?>(
                 ApiRoutes.Auth.ChangePassword,
                 new ChangePasswordRequest
@@ -255,8 +255,7 @@ namespace Darwin.Mobile.Shared.Services
                 return true;
             }
 
-            // If token is expired/unauthorized, refresh once and retry exactly once.
-            // This avoids infinite loops and keeps behavior deterministic.
+            // If we hit unauthorized, perform a single refresh-retry.
             if (LooksUnauthorized(firstAttempt.Error))
             {
                 var refreshed = await TryRefreshAsync(ct).ConfigureAwait(false);
@@ -281,8 +280,9 @@ namespace Darwin.Mobile.Shared.Services
         }
 
         /// <summary>
-        /// Interprets command-style endpoints that may legitimately return HTTP success with no JSON payload.
-        /// The current ApiClient maps empty success payloads to a failed Result message, so we normalize that here.
+        /// Normalizes command-style API success, even when server returns HTTP 200 with empty body.
+        /// ApiClient currently maps empty successful payload to a failed Result with an error string,
+        /// so we explicitly treat those known cases as success for command endpoints.
         /// </summary>
         private static bool IsCommandStyleSuccess(Result<object?> result)
         {
@@ -293,13 +293,17 @@ namespace Darwin.Mobile.Shared.Services
 
             var error = result.Error ?? string.Empty;
 
-            // ApiClient success-with-empty-body behavior for generic PostResultAsync<TRequest, object?>.
             if (error.Contains("Empty JSON payload from server.", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
 
-            // Defensive fallback if endpoint returns 204 in future.
+            if (error.Contains("Invalid JSON payload", StringComparison.OrdinalIgnoreCase) &&
+                error.Contains("does not contain any JSON tokens", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             if (error.Contains(ApiClient.NoContentResultMessage, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
@@ -308,9 +312,8 @@ namespace Darwin.Mobile.Shared.Services
             return false;
         }
 
-
         /// <summary>
-        /// Detects whether a failed result indicates an authorization failure.
+        /// Detects authorization-style failures from ApiClient error messages.
         /// </summary>
         private static bool LooksUnauthorized(string? error)
         {
@@ -322,6 +325,7 @@ namespace Darwin.Mobile.Shared.Services
             return error.Contains("401", StringComparison.OrdinalIgnoreCase) ||
                    error.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase);
         }
+
 
 
         /// <inheritdoc />

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    x:Class="Darwin.Mobile.Consumer.Views.SettingsPage"
+    x:DataType="vm:SettingsViewModel"
+    Title="{x:Static res:AppResources.SettingsTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.SettingsTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.SettingsSubtitle}"
+                   FontSize="14"
+                   Opacity="0.8" />
+
+            <Button Text="{x:Static res:AppResources.SettingsProfileButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding OpenProfileCommand}" />
+
+            <Button Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding OpenChangePasswordCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
