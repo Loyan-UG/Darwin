@@ -35,6 +35,12 @@ public sealed partial class LoginViewModel : BaseViewModel
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+
+        // TODO [TEST-ONLY][MOBILE-SECURITY]:
+        // Remove these default credentials before release builds.
+        // They are intentionally set for rapid QA loops in local/dev environments only.
+        Email = "cons1@darwin.de";
+        Password = "Consumer123!";
     }
 
     /// <summary>
@@ -102,7 +108,6 @@ public sealed partial class LoginViewModel : BaseViewModel
             IsBusy = false;
         }
     }
-
 
     /// <summary>
     /// Maps technical exceptions to end-user login messages.

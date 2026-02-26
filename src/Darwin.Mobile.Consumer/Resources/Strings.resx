@@ -291,4 +291,10 @@
 	<data name="PasswordChangeSuccess" xml:space="preserve">
     <value>Password changed successfully.</value>
   </data>
+	<data name="SessionExpiredReLogin" xml:space="preserve">
+    <value>Your session has expired. Please log in again.</value>
+  </data>
+	<data name="ProfileNotLoadedYet" xml:space="preserve">
+    <value>Profile is not loaded yet. Please refresh and try again.</value>
+  </data>
 </root>
