@@ -23,6 +23,8 @@ public partial class AppShell : Shell
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
 
         Routing.RegisterRoute($"{Routes.BusinessDetail}/{{businessId}}", typeof(BusinessDetailPage));
+        Routing.RegisterRoute(Routes.ProfileEdit, typeof(ProfilePage));
+        Routing.RegisterRoute(Routes.ChangePassword, typeof(ChangePasswordPage));
     }
 
     private async void OnLogoutClicked(object sender, EventArgs e)

@@ -31,9 +31,19 @@ public static class Routes
     public const string Rewards = "rewards";
 
     /// <summary>
-    /// Profile tab route.
+    /// Central settings hub.
     /// </summary>
-    public const string Profile = "profile";
+    public const string Settings = "settings";
+
+    /// <summary>
+    /// Dedicated profile edit screen route.
+    /// </summary>
+    public const string ProfileEdit = "profile-edit";
+
+    /// <summary>
+    /// Dedicated password change screen route.
+    /// </summary>
+    public const string ChangePassword = "change-password";
 
     /// <summary>
     /// Route prefix for the business detail page.

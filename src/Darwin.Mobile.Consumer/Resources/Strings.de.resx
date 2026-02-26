@@ -297,4 +297,16 @@
 	<data name="ProfileNotLoadedYet" xml:space="preserve">
     <value>Profil ist noch nicht geladen. Bitte aktualisieren und erneut versuchen.</value>
   </data>
+	<data name="SettingsTitle" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+	<data name="SettingsSubtitle" xml:space="preserve">
+    <value>Verwalten Sie Ihre Kontoeinstellungen.</value>
+  </data>
+	<data name="SettingsProfileButton" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+	<data name="SettingsChangePasswordButton" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
 </root>

@@ -4,23 +4,21 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Shared.Commands;
-using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// Handles profile load/update and password-change flows for the consumer app.
+/// Handles profile load/update flows for the consumer app.
 ///
-/// Threading note:
-/// This ViewModel is UI-bound; all UI-facing state changes are marshalled to main thread via RunOnMain.
-/// This prevents Android's "Only the original thread can touch views" runtime exception.
+/// Design choice:
+/// - This screen is profile-only (no password section) to keep UX focused.
+/// - All messages are intended to be shown near the save action, not at page bottom.
 /// </summary>
 public sealed class ProfileViewModel : BaseViewModel
 {
     private readonly IProfileService _profileService;
-    private readonly IAuthService _authService;
 
     private Guid _profileId;
     private byte[]? _rowVersion;
@@ -34,29 +32,18 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _timezone = "Europe/Berlin";
     private string _currency = "EUR";
 
-    private string _currentPassword = string.Empty;
-    private string _newPassword = string.Empty;
-    private string _confirmNewPassword = string.Empty;
-
     private string? _successMessage;
 
-    public ProfileViewModel(IProfileService profileService, IAuthService authService)
+    public ProfileViewModel(IProfileService profileService)
     {
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
-
-        // Keep Save command enabled whenever page is not busy.
-        // Validation happens inside SaveProfileAsync to provide explicit error messages.
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
-
-        ChangePasswordCommand = new AsyncCommand(ChangePasswordAsync, () => !IsBusy && CanChangePassword());
     }
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand SaveProfileCommand { get; }
-    public AsyncCommand ChangePasswordCommand { get; }
 
     public string Email
     {
@@ -98,42 +85,6 @@ public sealed class ProfileViewModel : BaseViewModel
     {
         get => _currency;
         set => SetProperty(ref _currency, value);
-    }
-
-    public string CurrentPassword
-    {
-        get => _currentPassword;
-        set
-        {
-            if (SetProperty(ref _currentPassword, value))
-            {
-                ChangePasswordCommand.RaiseCanExecuteChanged();
-            }
-        }
-    }
-
-    public string NewPassword
-    {
-        get => _newPassword;
-        set
-        {
-            if (SetProperty(ref _newPassword, value))
-            {
-                ChangePasswordCommand.RaiseCanExecuteChanged();
-            }
-        }
-    }
-
-    public string ConfirmNewPassword
-    {
-        get => _confirmNewPassword;
-        set
-        {
-            if (SetProperty(ref _confirmNewPassword, value))
-            {
-                ChangePasswordCommand.RaiseCanExecuteChanged();
-            }
-        }
     }
 
     public string? SuccessMessage
@@ -196,13 +147,11 @@ public sealed class ProfileViewModel : BaseViewModel
                 Locale = string.IsNullOrWhiteSpace(profile.Locale) ? "de-DE" : profile.Locale;
                 Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? "Europe/Berlin" : profile.Timezone;
                 Currency = string.IsNullOrWhiteSpace(profile.Currency) ? "EUR" : profile.Currency;
-
-                ChangePasswordCommand.RaiseCanExecuteChanged();
             });
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ResolveFriendlyError(ex, AppResources.ProfileLoadFailed));
+            RunOnMain(() => ErrorMessage = ex.Message);
         }
         finally
         {
@@ -210,7 +159,6 @@ public sealed class ProfileViewModel : BaseViewModel
             {
                 IsBusy = false;
                 SaveProfileCommand.RaiseCanExecuteChanged();
-                ChangePasswordCommand.RaiseCanExecuteChanged();
                 RefreshCommand.RaiseCanExecuteChanged();
             });
         }
@@ -225,13 +173,19 @@ public sealed class ProfileViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
+            IsBusy = true;
             ErrorMessage = null;
             SuccessMessage = null;
-            IsBusy = true;
         });
 
         try
         {
+            // If identity metadata is missing, attempt one reload automatically instead of failing immediately.
+            if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
+            {
+                await RefreshAsync();
+            }
+
             if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
             {
                 RunOnMain(() => ErrorMessage = AppResources.ProfileNotLoadedYet);
@@ -272,7 +226,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ResolveFriendlyError(ex, AppResources.ProfileSaveFailed));
+            RunOnMain(() => ErrorMessage = ex.Message);
         }
         finally
         {
@@ -280,83 +234,6 @@ public sealed class ProfileViewModel : BaseViewModel
             {
                 IsBusy = false;
                 SaveProfileCommand.RaiseCanExecuteChanged();
-                ChangePasswordCommand.RaiseCanExecuteChanged();
-                RefreshCommand.RaiseCanExecuteChanged();
-            });
-        }
-    }
-
-    private bool CanChangePassword()
-    {
-        return !string.IsNullOrWhiteSpace(CurrentPassword) &&
-               !string.IsNullOrWhiteSpace(NewPassword) &&
-               !string.IsNullOrWhiteSpace(ConfirmNewPassword);
-    }
-
-    private async Task ChangePasswordAsync()
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        RunOnMain(() =>
-        {
-            ErrorMessage = null;
-            SuccessMessage = null;
-            IsBusy = true;
-        });
-
-        try
-        {
-            if (!CanChangePassword())
-            {
-                RunOnMain(() => ErrorMessage = AppResources.PasswordRequired);
-                return;
-            }
-
-            if (!string.Equals(NewPassword, ConfirmNewPassword, StringComparison.Ordinal))
-            {
-                RunOnMain(() => ErrorMessage = AppResources.PasswordMismatch);
-                return;
-            }
-
-            if (NewPassword.Length < 8)
-            {
-                RunOnMain(() => ErrorMessage = AppResources.PasswordMinLength);
-                return;
-            }
-
-            var changed = await _authService.ChangePasswordAsync(
-                CurrentPassword,
-                NewPassword,
-                CancellationToken.None);
-
-            if (!changed)
-            {
-                RunOnMain(() => ErrorMessage = AppResources.PasswordChangeFailed);
-                return;
-            }
-
-            RunOnMain(() =>
-            {
-                CurrentPassword = string.Empty;
-                NewPassword = string.Empty;
-                ConfirmNewPassword = string.Empty;
-                SuccessMessage = AppResources.PasswordChangeSuccess;
-            });
-        }
-        catch (Exception ex)
-        {
-            RunOnMain(() => ErrorMessage = ResolveFriendlyError(ex, AppResources.PasswordChangeFailed));
-        }
-        finally
-        {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                SaveProfileCommand.RaiseCanExecuteChanged();
-                ChangePasswordCommand.RaiseCanExecuteChanged();
                 RefreshCommand.RaiseCanExecuteChanged();
             });
         }
@@ -369,19 +246,6 @@ public sealed class ProfileViewModel : BaseViewModel
                !string.IsNullOrWhiteSpace(Locale) &&
                !string.IsNullOrWhiteSpace(Timezone) &&
                !string.IsNullOrWhiteSpace(Currency);
-    }
-
-    private static string ResolveFriendlyError(Exception ex, string fallback)
-    {
-        var raw = ex.Message ?? string.Empty;
-
-        if (raw.Contains("401", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
-        {
-            return AppResources.SessionExpiredReLogin;
-        }
-
-        return string.IsNullOrWhiteSpace(raw) ? fallback : raw;
     }
 
     private static string? Normalize(string? value)
