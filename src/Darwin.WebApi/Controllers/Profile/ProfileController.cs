@@ -60,6 +60,11 @@ namespace Darwin.WebApi.Controllers.Profile
 
             var contract = new CustomerProfile
             {
+                // IMPORTANT:
+                // Id must be returned so clients can round-trip it in PUT /profile/me.
+                // Missing this field forces clients to send Guid.Empty and update fails by contract validation.
+                Id = value.Id,
+
                 // Email is returned for display, but may be immutable for update depending on Application rules.
                 Email = value.Email,
 
@@ -114,6 +119,11 @@ namespace Darwin.WebApi.Controllers.Profile
             // Avoid passing nulls into Application DTO and keep strings deterministic.
             var dto = new UserProfileEditDto
             {
+                // IMPORTANT:
+                // UpdateCurrentUserHandler enforces currentUserId == dto.Id.
+                // If we do not map Id here, default Guid.Empty causes update to fail.
+                Id = request.Id,
+
                 Email = request.Email ?? string.Empty,
                 FirstName = request.FirstName ?? string.Empty,
                 LastName = request.LastName ?? string.Empty,
