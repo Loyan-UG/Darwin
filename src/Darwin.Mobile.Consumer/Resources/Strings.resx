@@ -309,4 +309,49 @@
   <data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Change password</value>
   </data>
+	<data name="RegisterTitle" xml:space="preserve">
+  <value>Create account</value>
+</data>
+	<data name="RegisterDescription" xml:space="preserve">
+  <value>Create your consumer account to start collecting points and rewards.</value>
+</data>
+	<data name="RegisterButton" xml:space="preserve">
+  <value>Register</value>
+</data>
+	<data name="RegisterFailed" xml:space="preserve">
+  <value>Unable to create your account right now. Please try again.</value>
+</data>
+	<data name="RegisterSuccess" xml:space="preserve">
+  <value>Your account has been created successfully.</value>
+</data>
+	<data name="RegisterSuccessConfirmationSent" xml:space="preserve">
+  <value>Your account has been created. Please check your email for confirmation.</value>
+</data>
+	<data name="RegisterEmailAlreadyUsed" xml:space="preserve">
+  <value>An account with this email already exists.</value>
+</data>
+	<data name="FirstNameRequired" xml:space="preserve">
+  <value>First name is required.</value>
+</data>
+	<data name="LastNameRequired" xml:space="preserve">
+  <value>Last name is required.</value>
+</data>
+	<data name="ForgotPasswordTitle" xml:space="preserve">
+  <value>Forgot password</value>
+</data>
+	<data name="ForgotPasswordDescription" xml:space="preserve">
+  <value>Enter your email and we will send you password reset instructions if an account exists.</value>
+</data>
+	<data name="ForgotPasswordButton" xml:space="preserve">
+  <value>Forgot password?</value>
+</data>
+	<data name="ForgotPasswordSendButton" xml:space="preserve">
+  <value>Send reset instructions</value>
+</data>
+	<data name="ForgotPasswordSuccess" xml:space="preserve">
+  <value>If the email exists, password reset instructions have been sent.</value>
+</data>
+	<data name="ForgotPasswordFailed" xml:space="preserve">
+  <value>Unable to request password reset right now. Please try again.</value>
+</data>
 </root>

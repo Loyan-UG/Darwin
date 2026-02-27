@@ -309,4 +309,49 @@
 	<data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>
+	<data name="RegisterTitle" xml:space="preserve">
+  <value>Konto erstellen</value>
+</data>
+	<data name="RegisterDescription" xml:space="preserve">
+  <value>Erstellen Sie Ihr Consumer-Konto, um Punkte und Prämien zu sammeln.</value>
+</data>
+	<data name="RegisterButton" xml:space="preserve">
+  <value>Registrieren</value>
+</data>
+	<data name="RegisterFailed" xml:space="preserve">
+  <value>Konto kann derzeit nicht erstellt werden. Bitte versuchen Sie es erneut.</value>
+</data>
+	<data name="RegisterSuccess" xml:space="preserve">
+  <value>Ihr Konto wurde erfolgreich erstellt.</value>
+</data>
+	<data name="RegisterSuccessConfirmationSent" xml:space="preserve">
+  <value>Ihr Konto wurde erstellt. Bitte prüfen Sie Ihre E-Mails zur Bestätigung.</value>
+</data>
+	<data name="RegisterEmailAlreadyUsed" xml:space="preserve">
+  <value>Für diese E-Mail existiert bereits ein Konto.</value>
+</data>
+	<data name="FirstNameRequired" xml:space="preserve">
+  <value>Vorname ist erforderlich.</value>
+</data>
+	<data name="LastNameRequired" xml:space="preserve">
+  <value>Nachname ist erforderlich.</value>
+</data>
+	<data name="ForgotPasswordTitle" xml:space="preserve">
+  <value>Passwort vergessen</value>
+</data>
+	<data name="ForgotPasswordDescription" xml:space="preserve">
+  <value>Geben Sie Ihre E-Mail ein. Falls ein Konto existiert, senden wir Anweisungen zum Zurücksetzen des Passworts.</value>
+</data>
+	<data name="ForgotPasswordButton" xml:space="preserve">
+  <value>Passwort vergessen?</value>
+</data>
+	<data name="ForgotPasswordSendButton" xml:space="preserve">
+  <value>Anweisungen senden</value>
+</data>
+	<data name="ForgotPasswordSuccess" xml:space="preserve">
+  <value>Falls die E-Mail existiert, wurden Anweisungen zum Zurücksetzen gesendet.</value>
+</data>
+	<data name="ForgotPasswordFailed" xml:space="preserve">
+  <value>Passwort-Zurücksetzung kann derzeit nicht angefordert werden. Bitte versuchen Sie es erneut.</value>
+</data>
 </root>

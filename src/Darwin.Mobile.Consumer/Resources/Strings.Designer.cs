@@ -232,6 +232,69 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to First name is required..
+        /// </summary>
+        internal static string FirstNameRequired {
+            get {
+                return ResourceManager.GetString("FirstNameRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Forgot password?.
+        /// </summary>
+        internal static string ForgotPasswordButton {
+            get {
+                return ResourceManager.GetString("ForgotPasswordButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter your email and we will send you password reset instructions if an account exists..
+        /// </summary>
+        internal static string ForgotPasswordDescription {
+            get {
+                return ResourceManager.GetString("ForgotPasswordDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to request password reset right now. Please try again..
+        /// </summary>
+        internal static string ForgotPasswordFailed {
+            get {
+                return ResourceManager.GetString("ForgotPasswordFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Send reset instructions.
+        /// </summary>
+        internal static string ForgotPasswordSendButton {
+            get {
+                return ResourceManager.GetString("ForgotPasswordSendButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to If the email exists, password reset instructions have been sent..
+        /// </summary>
+        internal static string ForgotPasswordSuccess {
+            get {
+                return ResourceManager.GetString("ForgotPasswordSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Forgot password.
+        /// </summary>
+        internal static string ForgotPasswordTitle {
+            get {
+                return ResourceManager.GetString("ForgotPasswordTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Home.
         /// </summary>
         internal static string HomeTitle {
@@ -264,6 +327,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string LastNameLabel {
             get {
                 return ResourceManager.GetString("LastNameLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last name is required..
+        /// </summary>
+        internal static string LastNameRequired {
+            get {
+                return ResourceManager.GetString("LastNameRequired", resourceCulture);
             }
         }
         
@@ -516,6 +588,69 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string RefreshRedemptionButton {
             get {
                 return ResourceManager.GetString("RefreshRedemptionButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Register.
+        /// </summary>
+        internal static string RegisterButton {
+            get {
+                return ResourceManager.GetString("RegisterButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create your consumer account to start collecting points and rewards..
+        /// </summary>
+        internal static string RegisterDescription {
+            get {
+                return ResourceManager.GetString("RegisterDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An account with this email already exists..
+        /// </summary>
+        internal static string RegisterEmailAlreadyUsed {
+            get {
+                return ResourceManager.GetString("RegisterEmailAlreadyUsed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to create your account right now. Please try again..
+        /// </summary>
+        internal static string RegisterFailed {
+            get {
+                return ResourceManager.GetString("RegisterFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your account has been created successfully..
+        /// </summary>
+        internal static string RegisterSuccess {
+            get {
+                return ResourceManager.GetString("RegisterSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your account has been created. Please check your email for confirmation..
+        /// </summary>
+        internal static string RegisterSuccessConfirmationSent {
+            get {
+                return ResourceManager.GetString("RegisterSuccessConfirmationSent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create account.
+        /// </summary>
+        internal static string RegisterTitle {
+            get {
+                return ResourceManager.GetString("RegisterTitle", resourceCulture);
             }
         }
         

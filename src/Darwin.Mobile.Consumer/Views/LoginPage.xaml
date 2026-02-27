@@ -18,7 +18,7 @@
                    Style="{StaticResource TitleLabelStyle}"
                    HorizontalOptions="Center" />
 
-            <Label Text="{x:Static res:AppResources.EmailLabel}" 
+            <Label Text="{x:Static res:AppResources.EmailLabel}"
                    TextColor="{StaticResource Neutral900}" />
             <Entry Text="{Binding Email}"
                    Keyboard="Email"
@@ -37,6 +37,18 @@
             <Button Text="{x:Static res:AppResources.LoginButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding LoginCommand}" />
+
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                <Button Text="{x:Static res:AppResources.RegisterButton}"
+                        Clicked="OnRegisterClicked"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource BrandGold500}" />
+
+                <Button Text="{x:Static res:AppResources.ForgotPasswordButton}"
+                        Clicked="OnForgotPasswordClicked"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource BrandGold500}" />
+            </HorizontalStackLayout>
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"

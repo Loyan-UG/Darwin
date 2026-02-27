@@ -102,4 +102,22 @@ public static class AppResources
     public static string SettingsProfileButton => ResourceManager.GetString(nameof(SettingsProfileButton), Culture) ?? "Profile";
     public static string SettingsChangePasswordButton => ResourceManager.GetString(nameof(SettingsChangePasswordButton), Culture) ?? "Change password";
 
+    public static string RegisterTitle => ResourceManager.GetString(nameof(RegisterTitle), Culture) ?? "Create account";
+    public static string RegisterDescription => ResourceManager.GetString(nameof(RegisterDescription), Culture) ?? "Create your consumer account to start collecting points and rewards.";
+    public static string RegisterButton => ResourceManager.GetString(nameof(RegisterButton), Culture) ?? "Register";
+    public static string RegisterFailed => ResourceManager.GetString(nameof(RegisterFailed), Culture) ?? "Unable to create your account right now. Please try again.";
+    public static string RegisterSuccess => ResourceManager.GetString(nameof(RegisterSuccess), Culture) ?? "Your account has been created successfully.";
+    public static string RegisterSuccessConfirmationSent => ResourceManager.GetString(nameof(RegisterSuccessConfirmationSent), Culture) ?? "Your account has been created. Please check your email for confirmation.";
+    public static string RegisterEmailAlreadyUsed => ResourceManager.GetString(nameof(RegisterEmailAlreadyUsed), Culture) ?? "An account with this email already exists.";
+    public static string FirstNameRequired => ResourceManager.GetString(nameof(FirstNameRequired), Culture) ?? "First name is required.";
+    public static string LastNameRequired => ResourceManager.GetString(nameof(LastNameRequired), Culture) ?? "Last name is required.";
+
+    public static string ForgotPasswordTitle => ResourceManager.GetString(nameof(ForgotPasswordTitle), Culture) ?? "Forgot password";
+    public static string ForgotPasswordDescription => ResourceManager.GetString(nameof(ForgotPasswordDescription), Culture) ?? "Enter your email and we will send you password reset instructions if an account exists.";
+    public static string ForgotPasswordButton => ResourceManager.GetString(nameof(ForgotPasswordButton), Culture) ?? "Forgot password?";
+    public static string ForgotPasswordSendButton => ResourceManager.GetString(nameof(ForgotPasswordSendButton), Culture) ?? "Send reset instructions";
+    public static string ForgotPasswordSuccess => ResourceManager.GetString(nameof(ForgotPasswordSuccess), Culture) ?? "If the email exists, password reset instructions have been sent.";
+    public static string ForgotPasswordFailed => ResourceManager.GetString(nameof(ForgotPasswordFailed), Culture) ?? "Unable to request password reset right now. Please try again.";
+
+
 }

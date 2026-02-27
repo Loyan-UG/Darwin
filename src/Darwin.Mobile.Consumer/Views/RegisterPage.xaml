@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    x:Class="Darwin.Mobile.Consumer.Views.RegisterPage"
+    x:DataType="vm:RegisterViewModel"
+    Title="{x:Static res:AppResources.RegisterTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.RegisterTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.RegisterDescription}"
+                   Style="{StaticResource BodyLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.FirstNameLabel}"
+                   TextColor="{StaticResource Neutral900}" />
+            <Entry Text="{Binding FirstName}"
+                   Placeholder="John"
+                   TextColor="{StaticResource Neutral900}"
+                   PlaceholderColor="Gray" />
+
+            <Label Text="{x:Static res:AppResources.LastNameLabel}"
+                   TextColor="{StaticResource Neutral900}" />
+            <Entry Text="{Binding LastName}"
+                   Placeholder="Doe"
+                   TextColor="{StaticResource Neutral900}"
+                   PlaceholderColor="Gray" />
+
+            <Label Text="{x:Static res:AppResources.EmailLabel}"
+                   TextColor="{StaticResource Neutral900}" />
+            <Entry Text="{Binding Email}"
+                   Keyboard="Email"
+                   Placeholder="user@example.com"
+                   TextColor="{StaticResource Neutral900}"
+                   PlaceholderColor="Gray" />
+
+            <Label Text="{x:Static res:AppResources.PasswordLabel}"
+                   TextColor="{StaticResource Neutral900}" />
+            <Entry Text="{Binding Password}"
+                   IsPassword="True"
+                   Placeholder="••••••••"
+                   TextColor="{StaticResource Neutral900}"
+                   PlaceholderColor="Gray" />
+
+            <Label Text="{x:Static res:AppResources.ConfirmNewPasswordLabel}"
+                   TextColor="{StaticResource Neutral900}" />
+            <Entry Text="{Binding ConfirmPassword}"
+                   IsPassword="True"
+                   Placeholder="••••••••"
+                   TextColor="{StaticResource Neutral900}"
+                   PlaceholderColor="Gray" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding HasError}" />
+
+            <Label Text="{Binding SuccessMessage}"
+                   TextColor="Green"
+                   IsVisible="{Binding HasSuccess}" />
+
+            <Button Text="{x:Static res:AppResources.RegisterButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding RegisterCommand}" />
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrandGold500}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

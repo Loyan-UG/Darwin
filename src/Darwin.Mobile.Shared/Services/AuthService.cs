@@ -338,8 +338,24 @@ namespace Darwin.Mobile.Shared.Services
                 new RequestPasswordResetRequest { Email = email },
                 ct).ConfigureAwait(false);
 
-            return result.Succeeded;
+            if (result.Succeeded)
+            {
+                return true;
+            }
+
+            // Some password-reset implementations intentionally return HTTP 200 with an empty body
+            // to avoid user enumeration. In that case, transport is successful but JSON deserialization
+            // of object? may fail with an "empty JSON" style error. We normalize this known shape to success.
+            var error = result.Error ?? string.Empty;
+            if (error.Contains(ApiClient.NoContentResultMessage, StringComparison.OrdinalIgnoreCase) ||
+                error.Contains("input does not contain any JSON tokens", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
         }
+
 
         /// <inheritdoc />
         public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct)
