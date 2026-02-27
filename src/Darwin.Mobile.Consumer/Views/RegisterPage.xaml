@@ -58,10 +58,6 @@
                    TextColor="Red"
                    IsVisible="{Binding HasError}" />
 
-            <Label Text="{Binding SuccessMessage}"
-                   TextColor="Green"
-                   IsVisible="{Binding HasSuccess}" />
-
             <Button Text="{x:Static res:AppResources.RegisterButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding RegisterCommand}" />

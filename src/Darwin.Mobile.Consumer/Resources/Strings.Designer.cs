@@ -592,6 +592,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Your account was created, but automatic sign-in failed. Please login manually..
+        /// </summary>
+        internal static string RegisterAutoLoginFailed {
+            get {
+                return ResourceManager.GetString("RegisterAutoLoginFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Register.
         /// </summary>
         internal static string RegisterButton {

@@ -297,16 +297,16 @@
 	<data name="ProfileNotLoadedYet" xml:space="preserve">
     <value>Profile is not loaded yet. Please refresh and try again.</value>
   </data>
-  <data name="SettingsTitle" xml:space="preserve">
+	<data name="SettingsTitle" xml:space="preserve">
     <value>Settings</value>
   </data>
-  <data name="SettingsSubtitle" xml:space="preserve">
+	<data name="SettingsSubtitle" xml:space="preserve">
     <value>Manage your account preferences.</value>
   </data>
-  <data name="SettingsProfileButton" xml:space="preserve">
+	<data name="SettingsProfileButton" xml:space="preserve">
     <value>Profile</value>
   </data>
-  <data name="SettingsChangePasswordButton" xml:space="preserve">
+	<data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Change password</value>
   </data>
 	<data name="RegisterTitle" xml:space="preserve">
@@ -353,5 +353,8 @@
 </data>
 	<data name="ForgotPasswordFailed" xml:space="preserve">
   <value>Unable to request password reset right now. Please try again.</value>
+</data>
+	<data name="RegisterAutoLoginFailed" xml:space="preserve">
+  <value>Your account was created, but automatic sign-in failed. Please login manually.</value>
 </data>
 </root>

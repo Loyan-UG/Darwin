@@ -354,4 +354,7 @@
 	<data name="ForgotPasswordFailed" xml:space="preserve">
   <value>Passwort-Zurücksetzung kann derzeit nicht angefordert werden. Bitte versuchen Sie es erneut.</value>
 </data>
+<data name="RegisterAutoLoginFailed" xml:space="preserve">
+  <value>Ihr Konto wurde erstellt, aber die automatische Anmeldung ist fehlgeschlagen. Bitte melden Sie sich manuell an.</value>
+</data>
 </root>

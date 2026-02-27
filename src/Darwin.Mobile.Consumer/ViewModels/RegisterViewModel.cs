@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Identity;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.ViewModels;
@@ -10,28 +11,30 @@ using Darwin.Mobile.Shared.ViewModels;
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// Handles customer self-service registration flow.
+/// Handles customer self-service registration with an auto-login continuation.
 ///
-/// UX and behavior notes:
-/// - This view model is intentionally UI-focused and keeps user-facing feedback deterministic.
-/// - Validation happens client-side first to avoid unnecessary API calls and to provide instant feedback.
-/// - Server-side validation remains authoritative; client checks are only a fast first gate.
-/// - Password fields are cleared after successful registration to avoid keeping sensitive data in memory-bound UI fields.
+/// UX contract:
+/// - Registration should not leave the user stranded on the same screen after success.
+/// - After account creation, the app attempts to sign in immediately and enters authenticated shell.
+/// - If auto-login fails after successful registration, the user gets a clear non-technical message
+///   and can still login manually without losing control of the flow.
 /// </summary>
 public sealed class RegisterViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
+    private readonly IAppRootNavigator _appRootNavigator;
 
     private string _firstName = string.Empty;
     private string _lastName = string.Empty;
     private string _email = string.Empty;
     private string _password = string.Empty;
     private string _confirmPassword = string.Empty;
-    private string? _successMessage;
 
-    public RegisterViewModel(IAuthService authService)
+    public RegisterViewModel(IAuthService authService, IAppRootNavigator appRootNavigator)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+
         RegisterCommand = new AsyncCommand(RegisterAsync, () => !IsBusy);
     }
 
@@ -70,26 +73,6 @@ public sealed class RegisterViewModel : BaseViewModel
         set => SetProperty(ref _confirmPassword, value);
     }
 
-    /// <summary>
-    /// User-facing success message after a successful registration attempt.
-    /// </summary>
-    public string? SuccessMessage
-    {
-        get => _successMessage;
-        private set
-        {
-            if (SetProperty(ref _successMessage, value))
-            {
-                OnPropertyChanged(nameof(HasSuccess));
-            }
-        }
-    }
-
-    /// <summary>
-    /// Convenience flag for XAML visibility binding.
-    /// </summary>
-    public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
-
     private async Task RegisterAsync()
     {
         if (IsBusy)
@@ -99,7 +82,10 @@ public sealed class RegisterViewModel : BaseViewModel
 
         IsBusy = true;
         ErrorMessage = null;
-        SuccessMessage = null;
+
+        // Keep normalized copies to avoid accidental drift between registration and auto-login inputs.
+        var normalizedEmail = Email.Trim();
+        var rawPassword = Password;
 
         try
         {
@@ -112,8 +98,8 @@ public sealed class RegisterViewModel : BaseViewModel
             {
                 FirstName = FirstName.Trim(),
                 LastName = LastName.Trim(),
-                Email = Email.Trim(),
-                Password = Password
+                Email = normalizedEmail,
+                Password = rawPassword
             };
 
             var response = await _authService.RegisterAsync(request, CancellationToken.None);
@@ -123,14 +109,29 @@ public sealed class RegisterViewModel : BaseViewModel
                 return;
             }
 
-            SuccessMessage = response.ConfirmationEmailSent
-                ? AppResources.RegisterSuccessConfirmationSent
-                : AppResources.RegisterSuccess;
+            // Registration succeeded. Next step is immediate sign-in to satisfy expected UX.
+            // We intentionally do not use ConfigureAwait(false) here because this view model is UI-bound.
+            try
+            {
+                _ = await _authService.LoginAsync(
+                    normalizedEmail,
+                    rawPassword,
+                    deviceId: null,
+                    CancellationToken.None);
 
-            // Keep email for convenience (in case user wants to login immediately),
-            // but clear password fields for security hygiene.
-            Password = string.Empty;
-            ConfirmPassword = string.Empty;
+                // Enter authenticated mode immediately after successful auto-login.
+                await _appRootNavigator.NavigateToAuthenticatedShellAsync();
+            }
+            catch
+            {
+                // Account was created but auto-login failed.
+                // We avoid technical exception details and provide a safe user-facing fallback.
+                ErrorMessage = AppResources.RegisterAutoLoginFailed;
+
+                // Clear sensitive password fields for security hygiene.
+                Password = string.Empty;
+                ConfirmPassword = string.Empty;
+            }
         }
         catch (Exception ex)
         {
@@ -144,7 +145,7 @@ public sealed class RegisterViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Performs light client-side validation for better UX and fewer unnecessary API calls.
+    /// Performs fast local validation before calling backend.
     /// </summary>
     private bool ValidateInputs()
     {
@@ -188,17 +189,28 @@ public sealed class RegisterViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Maps technical exceptions to stable, user-friendly registration messages.
+    /// Maps low-level exceptions to user-friendly messages.
     /// </summary>
     private static string ResolveFriendlyError(Exception ex, string fallback)
     {
         var raw = ex.Message ?? string.Empty;
 
-        // Common conflict patterns for duplicate email.
         if (raw.Contains("409", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("already exists", StringComparison.OrdinalIgnoreCase))
         {
             return AppResources.RegisterEmailAlreadyUsed;
+        }
+
+        if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("No such host", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("SSL", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
+            raw.Contains("invalid_requesturi", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.ServerUnreachableMessage;
         }
 
         return string.IsNullOrWhiteSpace(raw) ? fallback : raw;
