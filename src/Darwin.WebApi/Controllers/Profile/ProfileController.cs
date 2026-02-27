@@ -13,7 +13,8 @@ namespace Darwin.WebApi.Controllers.Profile
     /// </summary>
     [ApiController]
     [Route("api/v1/profile")]
-    [Authorize(Policy = "perm:AccessMemberArea")]
+    [Authorize]
+    //[Authorize(Policy = "perm:AccessMemberArea")]
     public sealed class ProfileController : ApiControllerBase
     {
         private readonly GetCurrentUserProfileHandler _getCurrentUserProfileHandler;
