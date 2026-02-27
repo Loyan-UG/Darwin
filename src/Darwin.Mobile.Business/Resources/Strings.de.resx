@@ -219,4 +219,87 @@
   <data name="NoBusinessMembershipMessage" xml:space="preserve">
     <value>Benutzername und Passwort sind korrekt, aber Ihr Konto ist noch keinem Unternehmen zugeordnet. Bitte kontaktieren Sie den Support.</value>
   </data>
+	<data name="SettingsTitle" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+	<data name="SettingsSubtitle" xml:space="preserve">
+    <value>Verwalten Sie Ihre Kontoeinstellungen.</value>
+  </data>
+	<data name="SettingsProfileButton" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+	<data name="SettingsChangePasswordButton" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+
+	<data name="ProfileTitle" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+	<data name="ProfileSectionTitle" xml:space="preserve">
+    <value>Mein Profil</value>
+  </data>
+	<data name="FirstNameLabel" xml:space="preserve">
+    <value>Vorname</value>
+  </data>
+	<data name="LastNameLabel" xml:space="preserve">
+    <value>Nachname</value>
+  </data>
+	<data name="PhoneLabel" xml:space="preserve">
+    <value>Telefon</value>
+  </data>
+	<data name="LocaleLabel" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+	<data name="TimezoneLabel" xml:space="preserve">
+    <value>Zeitzone</value>
+  </data>
+	<data name="CurrencyLabel" xml:space="preserve">
+    <value>Währung</value>
+  </data>
+	<data name="SaveProfileButton" xml:space="preserve">
+    <value>Profil speichern</value>
+  </data>
+	<data name="ProfileLoadFailed" xml:space="preserve">
+    <value>Profildaten konnten nicht geladen werden.</value>
+  </data>
+	<data name="ProfileSaveFailed" xml:space="preserve">
+    <value>Profiländerungen konnten nicht gespeichert werden.</value>
+  </data>
+	<data name="ProfileSaveSuccess" xml:space="preserve">
+    <value>Profil wurde erfolgreich aktualisiert.</value>
+  </data>
+	<data name="ProfileRequiredFields" xml:space="preserve">
+    <value>Bitte füllen Sie alle erforderlichen Profilfelder aus.</value>
+  </data>
+	<data name="ProfileNotLoadedYet" xml:space="preserve">
+    <value>Profil ist noch nicht geladen. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
+
+	<data name="ChangePasswordTitle" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+	<data name="CurrentPasswordLabel" xml:space="preserve">
+    <value>Aktuelles Passwort</value>
+  </data>
+	<data name="NewPasswordLabel" xml:space="preserve">
+    <value>Neues Passwort</value>
+  </data>
+	<data name="ConfirmNewPasswordLabel" xml:space="preserve">
+    <value>Neues Passwort bestätigen</value>
+  </data>
+	<data name="ChangePasswordButton" xml:space="preserve">
+    <value>Passwort aktualisieren</value>
+  </data>
+	<data name="PasswordMismatch" xml:space="preserve">
+    <value>Neues Passwort und Bestätigung stimmen nicht überein.</value>
+  </data>
+	<data name="PasswordMinLength" xml:space="preserve">
+    <value>Das neue Passwort muss mindestens 8 Zeichen lang sein.</value>
+  </data>
+	<data name="PasswordChangeFailed" xml:space="preserve">
+    <value>Passwort konnte nicht geändert werden. Bitte prüfen Sie Ihr aktuelles Passwort.</value>
+  </data>
+	<data name="PasswordChangeSuccess" xml:space="preserve">
+    <value>Passwort wurde erfolgreich geändert.</value>
+  </data>
 </root>

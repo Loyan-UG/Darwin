@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    x:Class="Darwin.Mobile.Business.Views.ProfilePage"
+    x:DataType="vm:ProfileViewModel"
+    Title="{x:Static res:AppResources.ProfileTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="14">
+            <Label Text="{x:Static res:AppResources.ProfileTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Border StrokeThickness="1" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.ProfileSectionTitle}" FontAttributes="Bold" FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.EmailLabel}" />
+                    <Entry Text="{Binding Email}" IsReadOnly="True" />
+
+                    <Label Text="{x:Static res:AppResources.FirstNameLabel}" />
+                    <Entry Text="{Binding FirstName}" />
+
+                    <Label Text="{x:Static res:AppResources.LastNameLabel}" />
+                    <Entry Text="{Binding LastName}" />
+
+                    <Label Text="{x:Static res:AppResources.PhoneLabel}" />
+                    <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" Placeholder="+49123456789" />
+
+                    <Label Text="{x:Static res:AppResources.LocaleLabel}" />
+                    <Entry Text="{Binding Locale}" Placeholder="de-DE" />
+
+                    <Label Text="{x:Static res:AppResources.TimezoneLabel}" />
+                    <Entry Text="{Binding Timezone}" Placeholder="Europe/Berlin" />
+
+                    <Label Text="{x:Static res:AppResources.CurrencyLabel}" />
+                    <Entry Text="{Binding Currency}" Placeholder="EUR" />
+
+                    <!-- Keep feedback directly above primary action for better visibility while keyboard is open. -->
+                    <Label Text="{Binding SuccessMessage}"
+                           TextColor="Green"
+                           IsVisible="{Binding HasSuccess}" />
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="Red"
+                           IsVisible="{Binding HasError}" />
+
+                    <Button Text="{x:Static res:AppResources.SaveProfileButton}"
+                            Command="{Binding SaveCommand}" />
+
+                    <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                       IsRunning="{Binding IsBusy}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

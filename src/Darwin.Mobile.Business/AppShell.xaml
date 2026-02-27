@@ -48,14 +48,15 @@
                       Title="Team"
                       ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <ShellContent Route="settings"
-                      Title="Settings"
-                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
+        <!-- Settings is now functional -->
+        <ShellContent
+            Route="{x:Static local:Routes.Settings}"
+            Title="{x:Static res:AppResources.SettingsTitle}"
+            ContentTemplate="{DataTemplate views:SettingsPage}" />
     </TabBar>
 
     <!-- Session details route -->
     <ShellContent
         Route="{x:Static local:Routes.Session}"
         ContentTemplate="{DataTemplate views:SessionPage}" />
-
 </Shell>

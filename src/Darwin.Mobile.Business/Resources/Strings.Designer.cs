@@ -88,6 +88,24 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update password.
+        /// </summary>
+        internal static string ChangePasswordButton {
+            get {
+                return ResourceManager.GetString("ChangePasswordButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Change password.
+        /// </summary>
+        internal static string ChangePasswordTitle {
+            get {
+                return ResourceManager.GetString("ChangePasswordTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Coming soon.
         /// </summary>
         internal static string ComingSoonTitle {
@@ -106,11 +124,38 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Confirm new password.
+        /// </summary>
+        internal static string ConfirmNewPasswordLabel {
+            get {
+                return ResourceManager.GetString("ConfirmNewPasswordLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirm Redemption.
         /// </summary>
         internal static string ConfirmRedemptionButton {
             get {
                 return ResourceManager.GetString("ConfirmRedemptionButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Currency.
+        /// </summary>
+        internal static string CurrencyLabel {
+            get {
+                return ResourceManager.GetString("CurrencyLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current password.
+        /// </summary>
+        internal static string CurrentPasswordLabel {
+            get {
+                return ResourceManager.GetString("CurrentPasswordLabel", resourceCulture);
             }
         }
         
@@ -178,6 +223,15 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to First name.
+        /// </summary>
+        internal static string FirstNameLabel {
+            get {
+                return ResourceManager.GetString("FirstNameLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Home.
         /// </summary>
         internal static string HomeTitle {
@@ -196,11 +250,29 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Last name.
+        /// </summary>
+        internal static string LastNameLabel {
+            get {
+                return ResourceManager.GetString("LastNameLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Last token.
         /// </summary>
         internal static string LastTokenLabel {
             get {
                 return ResourceManager.GetString("LastTokenLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Locale.
+        /// </summary>
+        internal static string LocaleLabel {
+            get {
+                return ResourceManager.GetString("LocaleLabel", resourceCulture);
             }
         }
         
@@ -232,6 +304,15 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to New password.
+        /// </summary>
+        internal static string NewPasswordLabel {
+            get {
+                return ResourceManager.GetString("NewPasswordLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No active scan session..
         /// </summary>
         internal static string NoActiveSession {
@@ -259,6 +340,24 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to change password. Please check your current password..
+        /// </summary>
+        internal static string PasswordChangeFailed {
+            get {
+                return ResourceManager.GetString("PasswordChangeFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Password changed successfully..
+        /// </summary>
+        internal static string PasswordChangeSuccess {
+            get {
+                return ResourceManager.GetString("PasswordChangeSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Password.
         /// </summary>
         internal static string PasswordLabel {
@@ -268,11 +367,38 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to New password must be at least 8 characters long..
+        /// </summary>
+        internal static string PasswordMinLength {
+            get {
+                return ResourceManager.GetString("PasswordMinLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New password and confirmation do not match..
+        /// </summary>
+        internal static string PasswordMismatch {
+            get {
+                return ResourceManager.GetString("PasswordMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Password is required..
         /// </summary>
         internal static string PasswordRequired {
             get {
                 return ResourceManager.GetString("PasswordRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Phone.
+        /// </summary>
+        internal static string PhoneLabel {
+            get {
+                return ResourceManager.GetString("PhoneLabel", resourceCulture);
             }
         }
         
@@ -304,6 +430,69 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to load profile data..
+        /// </summary>
+        internal static string ProfileLoadFailed {
+            get {
+                return ResourceManager.GetString("ProfileLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Profile is not loaded yet. Please refresh and try again..
+        /// </summary>
+        internal static string ProfileNotLoadedYet {
+            get {
+                return ResourceManager.GetString("ProfileNotLoadedYet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please fill all required profile fields before saving..
+        /// </summary>
+        internal static string ProfileRequiredFields {
+            get {
+                return ResourceManager.GetString("ProfileRequiredFields", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to save profile changes..
+        /// </summary>
+        internal static string ProfileSaveFailed {
+            get {
+                return ResourceManager.GetString("ProfileSaveFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Profile updated successfully..
+        /// </summary>
+        internal static string ProfileSaveSuccess {
+            get {
+                return ResourceManager.GetString("ProfileSaveSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to My profile.
+        /// </summary>
+        internal static string ProfileSectionTitle {
+            get {
+                return ResourceManager.GetString("ProfileSectionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Profile.
+        /// </summary>
+        internal static string ProfileTitle {
+            get {
+                return ResourceManager.GetString("ProfileTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirm Redemption.
         /// </summary>
         internal static string RedeemButton {
@@ -327,6 +516,15 @@ namespace Darwin.Mobile.Business.Resources {
         internal static string RedemptionNotAllowed {
             get {
                 return ResourceManager.GetString("RedemptionNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save profile.
+        /// </summary>
+        internal static string SaveProfileButton {
+            get {
+                return ResourceManager.GetString("SaveProfileButton", resourceCulture);
             }
         }
         
@@ -358,11 +556,56 @@ namespace Darwin.Mobile.Business.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Change password.
+        /// </summary>
+        internal static string SettingsChangePasswordButton {
+            get {
+                return ResourceManager.GetString("SettingsChangePasswordButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Profile.
+        /// </summary>
+        internal static string SettingsProfileButton {
+            get {
+                return ResourceManager.GetString("SettingsProfileButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Manage your account preferences..
+        /// </summary>
+        internal static string SettingsSubtitle {
+            get {
+                return ResourceManager.GetString("SettingsSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Settings.
+        /// </summary>
+        internal static string SettingsTitle {
+            get {
+                return ResourceManager.GetString("SettingsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Start.
         /// </summary>
         internal static string StartButton {
             get {
                 return ResourceManager.GetString("StartButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timezone.
+        /// </summary>
+        internal static string TimezoneLabel {
+            get {
+                return ResourceManager.GetString("TimezoneLabel", resourceCulture);
             }
         }
     }

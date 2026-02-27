@@ -59,6 +59,16 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.SessionViewModel>();
         services.AddTransient<Views.SessionPage>();
 
+        // Settings
+        services.AddTransient<ViewModels.SettingsViewModel>();
+        services.AddTransient<Views.SettingsPage>();
+
+        services.AddTransient<ViewModels.ProfileViewModel>();
+        services.AddTransient<Views.ProfilePage>();
+
+        services.AddTransient<ViewModels.ChangePasswordViewModel>();
+        services.AddTransient<Views.ChangePasswordPage>();
+
         return services;
     }
 
