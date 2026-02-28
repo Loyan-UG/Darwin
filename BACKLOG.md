@@ -66,6 +66,20 @@ It is designed as the **single source of truth** for development planning.
 - Canonical URL service
 - Shared admin UI components (`_Alerts.cshtml`, TagHelpers)
 
+## 1.6 Mobile Phase-1 Account & Loyalty Baseline
+- Consumer account flows completed in app:
+  - Register (self-service)
+  - Forgot password request
+  - Login + refresh token handling
+  - Profile read/update (`GET/PUT /api/v1/profile/me` with `RowVersion`)
+  - Change password (`POST /api/v1/auth/password/change`)
+- Consumer QR behavior baseline documented and implemented:
+  - Rotation check tick ~15s
+  - Minimum auto-refresh interval = 5 minutes while token still valid
+- Business scanner flow baseline completed:
+  - Scan token → process session → confirm accrual/redemption
+
+	- 
 ---
 
 # 2. 🚧 In Progress
@@ -73,7 +87,7 @@ It is designed as the **single source of truth** for development planning.
 ## 2.1 WebApi (High Priority — ACTIVE)
 - JWT Authentication (already implemented in Infrastructure)
 - Contracts-first endpoints using `Darwin.Contracts`
-- Identity endpoints: login, refresh token, logout
+- Identity endpoints: login, refresh token, logout, logout-all, register, password reset/change
 - Business endpoints:
   - Business info
   - Business locations
@@ -95,11 +109,11 @@ It is designed as the **single source of truth** for development planning.
 - DI composition (`AddDarwinMobileShared`)
 
 ## 2.3 Mobile Consumer App (ACTIVE)
-- Login + JWT storage
-- Rotating QR screen
-- Discover (map + list)
-- Rewards dashboard
-- Profile page
+- Stabilization and UX refinement of completed Phase-1 flows
+- Register / forgot-password / reset-password end-user journey hardening
+- Profile UX refinements (clearer inline feedback placement)
+- Rotating QR polish (countdown smoothness vs battery trade-off)
+- Discovery + rewards performance tuning and small UX fixes
 - Wire-up to Shared services
 
 ## 2.4 Mobile Business App (ACTIVE)
@@ -149,6 +163,12 @@ It is designed as the **single source of truth** for development planning.
 - Full analytics module (CSV/PDF export)
 - Business subscription management (Stripe)
 - Staff QR codes for internal access
+
+## 3.6 Backlog Additions from Recent Mobile Implementation
+- [ ] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
+- [ ] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
+- [ ] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
+- [ ] QR countdown UX decision: keep 15s update cadence (battery-friendly) vs 1s display refresh (smoother UI) with same 5-minute auto-rotation limit.
 
 ---
 

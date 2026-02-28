@@ -116,3 +116,30 @@
 - **Active navigation**: keep menu highlighting via `ActiveNavLinkTagHelper`.
 
 ---
+
+
+## 7) Appendix — Mobile Member Identity (Consumer App)
+
+> This document is admin-focused, but recent implementation added member self-service identity flows in mobile.
+> Keep this appendix synchronized with `DarwinMobile.md` and `README.md` whenever endpoints/contracts change.
+
+### Mobile endpoints now actively used
+- `POST /api/v1/auth/register` (AllowAnonymous)
+- `POST /api/v1/auth/password/request-reset` (AllowAnonymous, intentionally generic response)
+- `POST /api/v1/auth/password/reset` (AllowAnonymous)
+- `POST /api/v1/auth/password/change` (Authorize)
+- `GET /api/v1/profile/me` (perm:AccessMemberArea)
+- `PUT /api/v1/profile/me` (perm:AccessMemberArea, requires `Id` + `RowVersion`)
+
+### Client behavior notes (important for support/debug)
+- Password reset request may return HTTP 200 with an empty body by design (anti-user-enumeration).
+  Mobile shared client normalizes this known response shape as success so UI can show a generic confirmation message.
+- Profile updates are optimistic-concurrency based (`RowVersion`), so stale data can cause update failures and should prompt refresh/retry UX.
+
+### Contract ownership rule
+- `Darwin.Contracts` remains the only payload contract source for WebApi and mobile clients.
+- If any endpoint request/response changes, update:
+  1) `Darwin.Contracts`
+  2) WebApi controller/handler mapping
+  3) `Darwin.Mobile.Shared` services
+  4) This appendix + `DarwinMobile.md` API matrix

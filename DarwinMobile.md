@@ -37,8 +37,8 @@ Key principles for the loyalty flow:
   - **Loyalty QR page**: shows a QR built from a server-issued `ScanSessionToken`.
   - Rewards dashboard per business.
   - Business discovery (map + directory) and business detail.
-  - Profile (basic account data, favourites, reviews in later phases).
-- UI binds to **Shared** services (`ILoyaltyService`, `IIdentityService`, `IBusinessDiscoveryService`) and uses platform services (camera, location) via abstractions in `Darwin.Mobile.Shared`.
+  - Profile (read/update with optimistic concurrency via `RowVersion`).
+- UI binds to **Shared** services (`ILoyaltyService`, `IAuthService`, `IProfileService`, `IBusinessService`) and uses platform services (camera, location) via abstractions in `Darwin.Mobile.Shared`.
 
 ### 1.2 Darwin.Mobile.Business (MAUI)
 
@@ -55,10 +55,11 @@ Key principles for the loyalty flow:
 
 - **ApiClient** with JSON (System.Text.Json), bearer handling, and **retry** via an `IRetryPolicy` abstraction (exponential backoff with jitter).
 - **Abstractions** for camera scanning and geolocation (`IScanner`, `ILocation`) to keep UI projects platform-specific.
-- **Auth & Loyalty facades**:
-  - `IIdentityService` for login/refresh/logout.
+- **Auth/Profile/Loyalty/Discovery facades**:
+  - `IAuthService` for login/refresh/logout/register/change-password/forgot-password/reset-password.
+  - `IProfileService` for `GET/PUT /api/v1/profile/me` flows.
   - `ILoyaltyService` for session-based scan flows and loyalty accounts.
-  - `IBusinessDiscoveryService` for map/directory.
+  - `IBusinessService` for map/list/detail discovery calls.
   - `ITokenStore` abstraction over secure storage.
 - **DI composition** entry:
   - `AddDarwinMobileShared(ApiOptions)` registers ApiClient, retry policy, TokenStore, and service facades. Requires **Microsoft.Extensions.Http** for `AddHttpClient`.
@@ -68,7 +69,8 @@ Key principles for the loyalty flow:
 - **Single source of truth** for WebApi request/response models used by both mobile apps and Web.
 - Contains **no** EF types or server implementation details.
 - Current/added areas:
-  - **Identity**: login, token pair, refresh.
+  - **Identity**: login, refresh, logout, logout-all, register, change-password, request-reset, reset-password.
+  - **Profile**: member self profile read/update models (`RowVersion` based).
   - **Loyalty** (session-based scan model; see §4.3).
   - **Businesses**: discovery filters, map summaries, business details.
   - **Common**: paging, geo coordinates, problem details, sort options.
@@ -183,9 +185,9 @@ These are sufficient for the map, directory and profile pages on Consumer.
 ### 5.2 Auth Storage
 
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
-- `IIdentityService` – wraps Contracts for login/refresh/logout and integrates `ITokenStore` with `IApiClient` (Bearer handling).
-- There is **no client-side QR rotation loop**; sessions are short-lived and recreated explicitly via `PrepareScanSession`.
-- **Consumer QR auto-refresh policy (current app behavior)**: UI countdown ticks every second for smooth UX, while automatic refresh network calls enforce a **minimum 5-minute interval** between successful refreshes (except expired-token immediate recovery). Central configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so future tuning is straightforward.
+- `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
+- `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
+- **Consumer QR auto-refresh policy (current app behavior)**: automatic refresh checks run every ~15 seconds, and the app enforces a **minimum 5-minute interval** between automatic refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
 
@@ -202,23 +204,23 @@ These are sufficient for the map, directory and profile pages on Consumer.
    Access token is stored through `ITokenStore`; ApiClient bearer is set.
 
 2. To show QR in **Accrual** mode:
-   - Consumer calls `POST /loyalty/prepare-scan-session` with `PrepareScanSessionRequest { BusinessId, Mode = Accrual }`.
+   - Consumer calls `POST /api/v1/loyalty/scan/prepare` with `PrepareScanSessionRequest { BusinessId, Mode = Accrual }`.
    - Server returns `PrepareScanSessionResponse` with `ScanSessionToken` and `ExpireAtUtc`.
    - Consumer renders the QR using `ScanSessionToken`.
 
 3. To show QR in **Redemption** mode:
    - Consumer queries available rewards for the business and current balance.
    - User selects one or more rewards.
-   - Consumer calls `PrepareScanSession` with `Mode = Redemption` and `SelectedRewardIds`.
+   - Consumer calls `POST /api/v1/loyalty/scan/prepare` with `Mode = Redemption` and `SelectedRewardIds`.
    - Server validates that points are sufficient and returns `ScanSessionToken` + `SelectedRewards`.
    - Consumer refreshes the QR with the new token.
 
-4. If the session expires before being scanned, WebApi returns an error; the app should call `PrepareScanSession` again and show a new QR.
+4. If the session expires before being scanned, WebApi returns an error; the app should call `POST /api/v1/loyalty/scan/prepare` again and show a new QR.
 
 ### Business app
 
 1. Cashier taps “Scan” → `IScanner.ScanAsync()` yields the token string.
-2. App calls `POST /loyalty/process-scan-session-for-business` with `ProcessScanSessionForBusinessRequest { ScanSessionToken }`.
+2. App calls `POST /api/v1/loyalty/scan/process` with `ProcessScanSessionForBusinessRequest { ScanSessionToken }`.
 3. WebApi:
    - Validates the token and business, loads mode and account summary.
    - Returns `ProcessScanSessionForBusinessResponse`:
@@ -227,10 +229,10 @@ These are sufficient for the map, directory and profile pages on Consumer.
 4. UI logic:
    - If `Mode = Accrual` and `AllowedActions` contains `CanAccruePoints`:
      - Show current balance, optionally ask for amount.
-     - Call `POST /loyalty/confirm-accrual` with `ConfirmAccrualRequest { ScanSessionToken, Points }`.
+     - Call `POST /api/v1/loyalty/scan/confirm-accrual` with `ConfirmAccrualRequest { ScanSessionToken, Points }`.
    - If `Mode = Redemption` and `AllowedActions` contains `CanConfirmRedemption`:
      - Show list of `SelectedRewards`.
-     - Cashier confirms usage → call `POST /loyalty/confirm-redemption` with `ConfirmRedemptionRequest { ScanSessionToken }`.
+     - Cashier confirms usage → call `POST /api/v1/loyalty/scan/confirm-redemption` with `ConfirmRedemptionRequest { ScanSessionToken }`.
 
 5. Server updates balances and returns confirmations; Consumer app will see updated points on next refresh (or via push/polling in later phases).
 
@@ -379,6 +381,11 @@ services.AddDarwinMobileShared(new ApiOptions
 | Auth      | POST /api/v1/auth/login                      | AllowAnonymous              | Both       |
 | Auth      | POST /api/v1/auth/refresh                    | AllowAnonymous              | Both       |
 | Auth      | POST /api/v1/auth/logout                     | Authorize                   | Both       |
+| Auth      | POST /api/v1/auth/logout-all                 | Authorize                   | Both       |
+| Auth      | POST /api/v1/auth/register                   | AllowAnonymous              | Consumer   |
+| Auth      | POST /api/v1/auth/password/request-reset     | AllowAnonymous              | Consumer   |
+| Auth      | POST /api/v1/auth/password/reset             | AllowAnonymous              | Consumer   |
+| Auth      | POST /api/v1/auth/password/change            | Authorize                   | Both       |
 | Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |
@@ -400,7 +407,7 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ## 18) Roadmap Coupling (Phases 1–3)
 
-- **Phase 1**: Endpoints: login, session-based loyalty scan (prepare/process/confirm), basic rewards read models, discovery basics, profile.
+- **Phase 1**: Endpoints: login/refresh/logout, consumer register + forgot-password + reset-password, session-based loyalty scan (prepare/process/confirm), basic rewards read models, discovery basics, and profile read/update/change-password.
 - **Phase 2**: Map discovery with filters & details, richer reward dashboard, feed/promo endpoints.
 - **Phase 3**: Subscriptions/analytics/notifications; additive endpoints on top of existing Contracts.
 
