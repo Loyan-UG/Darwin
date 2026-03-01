@@ -64,6 +64,16 @@ public static class AppResources
 
     public static string PointsBalanceFormat => ResourceManager.GetString(nameof(PointsBalanceFormat), Culture) ?? "Points: {0}";
     public static string RewardCostFormat => ResourceManager.GetString(nameof(RewardCostFormat), Culture) ?? "Cost: {0} pts";
+    public static string RewardsBusinessPickerLabel => ResourceManager.GetString(nameof(RewardsBusinessPickerLabel), Culture) ?? "Business";
+    public static string RewardsAvailableRewardsLabel => ResourceManager.GetString(nameof(RewardsAvailableRewardsLabel), Culture) ?? "Available rewards";
+    public static string RewardsHistoryLabel => ResourceManager.GetString(nameof(RewardsHistoryLabel), Culture) ?? "Rewards history";
+    public static string RewardsNoHistoryMessage => ResourceManager.GetString(nameof(RewardsNoHistoryMessage), Culture) ?? "No reward history available yet.";
+    public static string RewardsNoAccountsFound => ResourceManager.GetString(nameof(RewardsNoAccountsFound), Culture) ?? "No loyalty accounts found yet.";
+    public static string RewardsLoadAccountsFailed => ResourceManager.GetString(nameof(RewardsLoadAccountsFailed), Culture) ?? "Unable to load your loyalty accounts.";
+    public static string RewardsLoadAccountSummaryFailed => ResourceManager.GetString(nameof(RewardsLoadAccountSummaryFailed), Culture) ?? "Unable to load account summary.";
+    public static string RewardsLoadRewardsFailed => ResourceManager.GetString(nameof(RewardsLoadRewardsFailed), Culture) ?? "Unable to load available rewards.";
+    public static string RewardsLoadHistoryFailed => ResourceManager.GetString(nameof(RewardsLoadHistoryFailed), Culture) ?? "Unable to load reward history.";
+    public static string RewardsJoinedBusinessesLabel => ResourceManager.GetString(nameof(RewardsJoinedBusinessesLabel), Culture) ?? "Joined businesses";
     public static string BusinessCategoryFormat => ResourceManager.GetString(nameof(BusinessCategoryFormat), Culture) ?? "Category: {0}";
 
     public static string BusinessDetailsTitle => ResourceManager.GetString(nameof(BusinessDetailsTitle), Culture) ?? "Business";

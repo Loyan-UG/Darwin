@@ -212,6 +212,33 @@
   </data>
 	<data name="RewardsTitle" xml:space="preserve">
     <value>Rewards</value>
+		</data>
+	<data name="RewardsBusinessPickerLabel" xml:space="preserve">
+    <value>Business</value>
+  </data>
+	<data name="RewardsAvailableRewardsLabel" xml:space="preserve">
+    <value>Available rewards</value>
+  </data>
+	<data name="RewardsHistoryLabel" xml:space="preserve">
+    <value>Rewards history</value>
+  </data>
+	<data name="RewardsNoHistoryMessage" xml:space="preserve">
+    <value>No reward history available yet.</value>
+  </data>
+	<data name="RewardsNoAccountsFound" xml:space="preserve">
+    <value>No loyalty accounts found yet.</value>
+  </data>
+	<data name="RewardsLoadAccountsFailed" xml:space="preserve">
+    <value>Unable to load your loyalty accounts.</value>
+  </data>
+	<data name="RewardsLoadAccountSummaryFailed" xml:space="preserve">
+    <value>Unable to load account summary.</value>
+  </data>
+	<data name="RewardsLoadRewardsFailed" xml:space="preserve">
+    <value>Unable to load available rewards.</value>
+  </data>
+	<data name="RewardsLoadHistoryFailed" xml:space="preserve">
+    <value>Unable to load reward history.</value>
   </data>
 	<data name="ScanTitle" xml:space="preserve">
     <value>Scan</value>
@@ -315,7 +342,10 @@
 	<data name="RegisterDescription" xml:space="preserve">
   <value>Create your consumer account to start collecting points and rewards.</value>
 </data>
-	<data name="RegisterButton" xml:space="preserve">
+<data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
+  <value>Joined businesses</value>
+</data>
+<data name="RegisterButton" xml:space="preserve">
   <value>Register</value>
 </data>
 	<data name="RegisterFailed" xml:space="preserve">

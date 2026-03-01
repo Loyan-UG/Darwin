@@ -212,6 +212,33 @@
   </data>
 	<data name="RewardsTitle" xml:space="preserve">
     <value>Prämien</value>
+		</data>
+	<data name="RewardsBusinessPickerLabel" xml:space="preserve">
+    <value>Unternehmen</value>
+  </data>
+	<data name="RewardsAvailableRewardsLabel" xml:space="preserve">
+    <value>Verfügbare Prämien</value>
+  </data>
+	<data name="RewardsHistoryLabel" xml:space="preserve">
+    <value>Prämienverlauf</value>
+  </data>
+	<data name="RewardsNoHistoryMessage" xml:space="preserve">
+    <value>Noch kein Prämienverlauf vorhanden.</value>
+  </data>
+	<data name="RewardsNoAccountsFound" xml:space="preserve">
+    <value>Noch keine Treuekonten gefunden.</value>
+  </data>
+	<data name="RewardsLoadAccountsFailed" xml:space="preserve">
+    <value>Ihre Treuekonten konnten nicht geladen werden.</value>
+  </data>
+	<data name="RewardsLoadAccountSummaryFailed" xml:space="preserve">
+    <value>Kontozusammenfassung konnte nicht geladen werden.</value>
+  </data>
+	<data name="RewardsLoadRewardsFailed" xml:space="preserve">
+    <value>Verfügbare Prämien konnten nicht geladen werden.</value>
+  </data>
+	<data name="RewardsLoadHistoryFailed" xml:space="preserve">
+    <value>Prämienverlauf konnte nicht geladen werden.</value>
   </data>
 	<data name="ScanTitle" xml:space="preserve">
     <value>Scannen</value>
@@ -276,7 +303,10 @@
 	<data name="ProfileRequiredNames" xml:space="preserve">
     <value>Vorname und Nachname sind erforderlich.</value>
   </data>
-	<data name="ProfileRequiredFields" xml:space="preserve">
+<data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
+  <value>Beigetretene Unternehmen</value>
+</data>
+<data name="ProfileRequiredFields" xml:space="preserve">
     <value>Bitte füllen Sie alle erforderlichen Profilfelder aus.</value>
   </data>
 	<data name="PasswordMismatch" xml:space="preserve">
@@ -354,7 +384,7 @@
 	<data name="ForgotPasswordFailed" xml:space="preserve">
   <value>Passwort-Zurücksetzung kann derzeit nicht angefordert werden. Bitte versuchen Sie es erneut.</value>
 </data>
-<data name="RegisterAutoLoginFailed" xml:space="preserve">
+	<data name="RegisterAutoLoginFailed" xml:space="preserve">
   <value>Ihr Konto wurde erstellt, aber die automatische Anmeldung ist fehlgeschlagen. Bitte melden Sie sich manuell an.</value>
 </data>
 </root>

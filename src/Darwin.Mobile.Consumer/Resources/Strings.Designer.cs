@@ -673,6 +673,96 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Available rewards.
+        /// </summary>
+        internal static string RewardsAvailableRewardsLabel {
+            get {
+                return ResourceManager.GetString("RewardsAvailableRewardsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Business.
+        /// </summary>
+        internal static string RewardsBusinessPickerLabel {
+            get {
+                return ResourceManager.GetString("RewardsBusinessPickerLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rewards history.
+        /// </summary>
+        internal static string RewardsHistoryLabel {
+            get {
+                return ResourceManager.GetString("RewardsHistoryLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Joined businesses.
+        /// </summary>
+        internal static string RewardsJoinedBusinessesLabel {
+            get {
+                return ResourceManager.GetString("RewardsJoinedBusinessesLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load your loyalty accounts..
+        /// </summary>
+        internal static string RewardsLoadAccountsFailed {
+            get {
+                return ResourceManager.GetString("RewardsLoadAccountsFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load account summary..
+        /// </summary>
+        internal static string RewardsLoadAccountSummaryFailed {
+            get {
+                return ResourceManager.GetString("RewardsLoadAccountSummaryFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load reward history..
+        /// </summary>
+        internal static string RewardsLoadHistoryFailed {
+            get {
+                return ResourceManager.GetString("RewardsLoadHistoryFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load available rewards..
+        /// </summary>
+        internal static string RewardsLoadRewardsFailed {
+            get {
+                return ResourceManager.GetString("RewardsLoadRewardsFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No loyalty accounts found yet..
+        /// </summary>
+        internal static string RewardsNoAccountsFound {
+            get {
+                return ResourceManager.GetString("RewardsNoAccountsFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No reward history available yet..
+        /// </summary>
+        internal static string RewardsNoHistoryMessage {
+            get {
+                return ResourceManager.GetString("RewardsNoHistoryMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Rewards.
         /// </summary>
         internal static string RewardsTitle {
