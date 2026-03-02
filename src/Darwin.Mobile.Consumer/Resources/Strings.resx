@@ -342,10 +342,10 @@
 	<data name="RegisterDescription" xml:space="preserve">
   <value>Create your consumer account to start collecting points and rewards.</value>
 </data>
-<data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
+	<data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
   <value>Joined businesses</value>
 </data>
-<data name="RegisterButton" xml:space="preserve">
+	<data name="RegisterButton" xml:space="preserve">
   <value>Register</value>
 </data>
 	<data name="RegisterFailed" xml:space="preserve">
@@ -384,10 +384,10 @@
 	<data name="ForgotPasswordFailed" xml:space="preserve">
   <value>Unable to request password reset right now. Please try again.</value>
 </data>
-<data name="RegisterAutoLoginFailed" xml:space="preserve">
+	<data name="RegisterAutoLoginFailed" xml:space="preserve">
   <value>Your account was created, but automatic sign-in failed. Please login manually.</value>
 </data>
-<data name="DiscoverMyBusinessesTab" xml:space="preserve">
+	<data name="DiscoverMyBusinessesTab" xml:space="preserve">
   <value>My Businesses</value>
 </data>
 	<data name="DiscoverExploreTab" xml:space="preserve">
@@ -423,22 +423,34 @@
 	<data name="DiscoverLoadExploreFailed" xml:space="preserve">
   <value>Unable to load explore businesses.</value>
 </data>
-<data name="DiscoverCategoryFilterLabel" xml:space="preserve">
+	<data name="DiscoverCategoryFilterLabel" xml:space="preserve">
   <value>Category</value>
 </data>
-<data name="DiscoverSearchButton" xml:space="preserve">
+	<data name="DiscoverSearchButton" xml:space="preserve">
   <value>Search</value>
 </data>
-<data name="DiscoverClearFiltersButton" xml:space="preserve">
+	<data name="DiscoverClearFiltersButton" xml:space="preserve">
   <value>Clear</value>
 </data>
-<data name="DiscoverNearbyOnlyLabel" xml:space="preserve">
+	<data name="DiscoverNearbyOnlyLabel" xml:space="preserve">
   <value>Nearby only</value>
 </data>
-<data name="DiscoverLocationUnavailable" xml:space="preserve">
+	<data name="DiscoverLocationUnavailable" xml:space="preserve">
   <value>Location is unavailable. Showing broad results instead.</value>
 </data>
 	<data name="DiscoverNearbyRadiusLabel" xml:space="preserve">
   <value>Radius</value>
+</data>
+	<data name="FeedTitle" xml:space="preserve">
+  <value>Feed</value>
+</data>
+	<data name="FeedEmptyMessage" xml:space="preserve">
+  <value>No feed items yet.</value>
+</data>
+	<data name="FeedLoadFailed" xml:space="preserve">
+  <value>Unable to load feed right now.</value>
+</data>
+	<data name="FeedLoadMoreButton" xml:space="preserve">
+  <value>Load more</value>
 </data>
 </root>

@@ -57,6 +57,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<QrViewModel>();
         services.AddTransient<DiscoverViewModel>();
         services.AddTransient<RewardsViewModel>();
+        services.AddTransient<FeedViewModel>();
         services.AddTransient<ProfileViewModel>();
         //services.AddTransient<SettingsViewModel>();
         services.AddTransient<ChangePasswordViewModel>();
@@ -69,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<QrPage>();
         services.AddTransient<DiscoverPage>();
         services.AddTransient<RewardsPage>();
+        services.AddTransient<FeedPage>();
         services.AddTransient<SettingsPage>();
         services.AddTransient<ProfilePage>();
         services.AddTransient<RegisterPage>();

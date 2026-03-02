@@ -441,4 +441,16 @@
 	<data name="DiscoverNearbyRadiusLabel" xml:space="preserve">
   <value>Radius</value>
 </data>
+	<data name="FeedTitle" xml:space="preserve">
+  <value>Feed</value>
+</data>
+	<data name="FeedEmptyMessage" xml:space="preserve">
+  <value>Noch keine Feed-Einträge vorhanden.</value>
+</data>
+	<data name="FeedLoadFailed" xml:space="preserve">
+  <value>Feed kann derzeit nicht geladen werden.</value>
+</data>
+	<data name="FeedLoadMoreButton" xml:space="preserve">
+  <value>Mehr laden</value>
+</data>
 </root>

@@ -385,6 +385,42 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No feed items yet..
+        /// </summary>
+        internal static string FeedEmptyMessage {
+            get {
+                return ResourceManager.GetString("FeedEmptyMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load feed right now..
+        /// </summary>
+        internal static string FeedLoadFailed {
+            get {
+                return ResourceManager.GetString("FeedLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Load more.
+        /// </summary>
+        internal static string FeedLoadMoreButton {
+            get {
+                return ResourceManager.GetString("FeedLoadMoreButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Feed.
+        /// </summary>
+        internal static string FeedTitle {
+            get {
+                return ResourceManager.GetString("FeedTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to First name.
         /// </summary>
         internal static string FirstNameLabel {

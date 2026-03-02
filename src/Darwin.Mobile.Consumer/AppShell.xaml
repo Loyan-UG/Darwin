@@ -15,7 +15,7 @@
                      Order="Primary"
                      Clicked="OnLogoutClicked" />
     </Shell.ToolbarItems>
-    
+
 
     <!-- Tab bar ordering: Discover is the default tab, followed by QR, Rewards and Profile -->
     <TabBar>
@@ -40,6 +40,14 @@
             Title="{x:Static res:AppResources.RewardsTitle}"
             Icon="rewards_tab_icon.png"
             ContentTemplate="{DataTemplate views:RewardsPage}" />
+
+
+        <!-- Feed tab -->
+        <ShellContent
+            Route="{x:Static constants:Routes.Feed}"
+            Title="{x:Static res:AppResources.FeedTitle}"
+            Icon="discover_tab_icon.png"
+            ContentTemplate="{DataTemplate views:FeedPage}" />
 
         <!-- Profile tab -->
         <ShellContent

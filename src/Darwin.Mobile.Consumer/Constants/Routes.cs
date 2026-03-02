@@ -31,6 +31,11 @@ public static class Routes
     public const string Rewards = "rewards";
 
     /// <summary>
+    /// Feed tab route.
+    /// </summary>
+    public const string Feed = "feed";
+
+    /// <summary>
     /// Central settings hub.
     /// </summary>
     public const string Settings = "settings";

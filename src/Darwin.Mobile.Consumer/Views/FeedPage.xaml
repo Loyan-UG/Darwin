@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:contracts="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
+    x:Class="Darwin.Mobile.Consumer.Views.FeedPage"
+    x:DataType="vm:FeedViewModel"
+    Title="{x:Static res:AppResources.FeedTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="12">
+
+            <Label Text="{x:Static res:AppResources.FeedTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.FeedEmptyMessage}"
+                   IsVisible="{Binding HasItems, Converter={StaticResource InverseBoolConverter}}" />
+
+            <CollectionView ItemsSource="{Binding Items}" IsVisible="{Binding HasItems}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="contracts:LoyaltyTimelineEntry">
+                        <Border Stroke="{StaticResource BrushGray300}"
+                                StrokeThickness="1"
+                                Padding="12"
+                                Margin="2">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding Kind}" FontAttributes="Bold" />
+                                <Label Text="{Binding Note}" IsVisible="{Binding Note, Converter={StaticResource NullCheckConverter}}" />
+                                <Label Text="{Binding PointsDelta, StringFormat='{0:+#;-#;0} pts'}"
+                                       IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}" />
+                                <Label Text="{Binding PointsSpent, StringFormat='Spent: {0} pts'}"
+                                       IsVisible="{Binding PointsSpent, Converter={StaticResource NullCheckConverter}}" />
+                                <Label Text="{Binding OccurredAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}"
+                                       FontSize="12"
+                                       Opacity="0.75" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Button Text="{x:Static res:AppResources.FeedLoadMoreButton}"
+                    Command="{Binding LoadMoreCommand}"
+                    IsVisible="{Binding HasMore}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding HasError}" />
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

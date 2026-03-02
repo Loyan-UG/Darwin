@@ -151,4 +151,8 @@ public static class AppResources
     public static string DiscoverNearbyOnlyLabel => ResourceManager.GetString(nameof(DiscoverNearbyOnlyLabel), Culture) ?? "Nearby only";
     public static string DiscoverLocationUnavailable => ResourceManager.GetString(nameof(DiscoverLocationUnavailable), Culture) ?? "Location is unavailable. Showing broad results instead.";
     public static string DiscoverNearbyRadiusLabel => ResourceManager.GetString(nameof(DiscoverNearbyRadiusLabel), Culture) ?? "Radius";
+    public static string FeedTitle => ResourceManager.GetString(nameof(FeedTitle), Culture) ?? "Feed";
+    public static string FeedEmptyMessage => ResourceManager.GetString(nameof(FeedEmptyMessage), Culture) ?? "No feed items yet.";
+    public static string FeedLoadFailed => ResourceManager.GetString(nameof(FeedLoadFailed), Culture) ?? "Unable to load feed right now.";
+    public static string FeedLoadMoreButton => ResourceManager.GetString(nameof(FeedLoadMoreButton), Culture) ?? "Load more";
 }
