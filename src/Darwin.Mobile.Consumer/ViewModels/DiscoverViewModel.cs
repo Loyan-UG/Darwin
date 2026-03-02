@@ -41,6 +41,9 @@ public sealed class DiscoverViewModel : BaseViewModel
     private string? _searchQuery;
     private bool _isNearbyOnly;
     private BusinessCategoryKindItem? _selectedCategory;
+    private int _selectedNearbyRadiusMeters = DefaultNearbyRadiusMeters;
+
+    private const int DefaultNearbyRadiusMeters = 5000;
 
     public DiscoverViewModel(
         IBusinessService businessService,
@@ -54,6 +57,7 @@ public sealed class DiscoverViewModel : BaseViewModel
         JoinedAccounts = new ObservableCollection<LoyaltyAccountSummary>();
         ExploreBusinesses = new ObservableCollection<DiscoverExploreItem>();
         CategoryKinds = new ObservableCollection<BusinessCategoryKindItem>();
+        NearbyRadiusOptions = new ObservableCollection<int> { 1000, 3000, 5000, 10000 };
 
         ShowJoinedTabCommand = new AsyncCommand(ShowJoinedTabAsync);
         ShowExploreTabCommand = new AsyncCommand(ShowExploreTabAsync);
@@ -76,6 +80,20 @@ public sealed class DiscoverViewModel : BaseViewModel
     /// Available category filter options resolved from API metadata.
     /// </summary>
     public ObservableCollection<BusinessCategoryKindItem> CategoryKinds { get; }
+
+    /// <summary>
+    /// Predefined nearby radius options (in meters) for Explore nearby mode.
+    /// </summary>
+    public ObservableCollection<int> NearbyRadiusOptions { get; }
+
+    /// <summary>
+    /// Selected nearby radius in meters used when <see cref="IsNearbyOnly"/> is enabled.
+    /// </summary>
+    public int SelectedNearbyRadiusMeters
+    {
+        get => _selectedNearbyRadiusMeters;
+        set => SetProperty(ref _selectedNearbyRadiusMeters, value);
+    }
 
     /// <summary>
     /// Free text query used for explore endpoint filtering.
@@ -201,6 +219,7 @@ public sealed class DiscoverViewModel : BaseViewModel
         SearchQuery = null;
         SelectedCategory = null;
         IsNearbyOnly = false;
+        SelectedNearbyRadiusMeters = DefaultNearbyRadiusMeters;
         await SearchAsync();
     }
 
@@ -298,7 +317,7 @@ public sealed class DiscoverViewModel : BaseViewModel
                     Longitude = current.Value.lng
                 };
 
-                radiusMeters = 5000;
+                radiusMeters = SelectedNearbyRadiusMeters <= 0 ? DefaultNearbyRadiusMeters : SelectedNearbyRadiusMeters;
             }
             else
             {

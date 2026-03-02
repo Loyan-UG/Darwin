@@ -150,4 +150,5 @@ public static class AppResources
     public static string DiscoverClearFiltersButton => ResourceManager.GetString(nameof(DiscoverClearFiltersButton), Culture) ?? "Clear";
     public static string DiscoverNearbyOnlyLabel => ResourceManager.GetString(nameof(DiscoverNearbyOnlyLabel), Culture) ?? "Nearby only";
     public static string DiscoverLocationUnavailable => ResourceManager.GetString(nameof(DiscoverLocationUnavailable), Culture) ?? "Location is unavailable. Showing broad results instead.";
+    public static string DiscoverNearbyRadiusLabel => ResourceManager.GetString(nameof(DiscoverNearbyRadiusLabel), Culture) ?? "Radius";
 }

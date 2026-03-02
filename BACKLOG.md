@@ -113,7 +113,9 @@ It is designed as the **single source of truth** for development planning.
 - Register / forgot-password / reset-password end-user journey hardening
 - Profile UX refinements (clearer inline feedback placement)
 - Rotating QR polish (countdown smoothness vs battery trade-off)
+- Discovery + rewards performance tuning and small UX fixes
 - Discover IA finalized: separate "My Businesses" (joined accounts + quick actions) from "Explore" (search/join flow).
+- Explore discovery finalized with category + nearby filters and joined-state routing to rewards.
 - Wire-up to Shared services
 
 ## 2.4 Mobile Business App (ACTIVE)

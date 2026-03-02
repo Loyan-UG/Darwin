@@ -438,4 +438,7 @@
 <data name="DiscoverLocationUnavailable" xml:space="preserve">
   <value>Location is unavailable. Showing broad results instead.</value>
 </data>
+	<data name="DiscoverNearbyRadiusLabel" xml:space="preserve">
+  <value>Radius</value>
+</data>
 </root>

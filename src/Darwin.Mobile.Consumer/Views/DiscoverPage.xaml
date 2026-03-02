@@ -104,6 +104,19 @@
                     <Switch IsToggled="{Binding IsNearbyOnly}" />
                 </HorizontalStackLayout>
 
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding IsNearbyOnly}">
+                    <Label Grid.Column="0"
+                           Text="{x:Static res:AppResources.DiscoverNearbyRadiusLabel}"
+                           VerticalOptions="Center" />
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding NearbyRadiusOptions}"
+                            SelectedItem="{Binding SelectedNearbyRadiusMeters}">
+                        <Picker.ItemDisplayBinding>
+                            <Binding Path="." StringFormat="{}{0} m" />
+                        </Picker.ItemDisplayBinding>
+                    </Picker>
+                </Grid>
+
                 <Label Text="{x:Static res:AppResources.DiscoverExploreEmpty}"
                        IsVisible="{Binding HasExploreResults, Converter={StaticResource InverseBoolConverter}}" />
 

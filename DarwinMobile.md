@@ -306,11 +306,9 @@ services.AddDarwinMobileShared(new ApiOptions
   - Fetch loyalty account + available rewards per business.
   - Enable selection of rewards for Redemption mode.
 - **Discover**:
-  - Call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummary`.
-  - Navigate to `BusinessDetail` for full info.
   - Discover tab is split into two journeys:
     1) **My Businesses**: joined loyalty businesses with per-business points and quick actions (Open QR / Open Rewards).
-    2) **Explore**: searchable businesses by name/address for joining new programs.
+    2) **Explore**: searchable businesses by name/address for joining new programs, with category and nearby filters.
   - Call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummary`.
   - Navigate to `BusinessDetail` for full info, or route directly to Rewards when the business is already joined.
 - **Profile**:

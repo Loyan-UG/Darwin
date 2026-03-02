@@ -304,6 +304,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Radius.
+        /// </summary>
+        internal static string DiscoverNearbyRadiusLabel {
+            get {
+                return ResourceManager.GetString("DiscoverNearbyRadiusLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open QR.
         /// </summary>
         internal static string DiscoverOpenQrButton {
