@@ -412,6 +412,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Join a business first to see your feed..
+        /// </summary>
+        internal static string FeedNoAccountsMessage {
+            get {
+                return ResourceManager.GetString("FeedNoAccountsMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Feed.
         /// </summary>
         internal static string FeedTitle {

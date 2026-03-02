@@ -148,19 +148,47 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         private static async Task SeedAccountsAsync(DarwinDbContext db, IReadOnlyList<Business> businesses, IReadOnlyList<User> users, CancellationToken ct)
         {
             var accounts = new List<LoyaltyAccount>();
+            var now = DateTime.UtcNow;
 
-            for (var i = 0; i < businesses.Count && i < 10; i++)
+            // Prioritize consumer users so mobile consumer accounts always exist after a clean database reset.
+            // This guarantees that rewards/feed/discover user journeys have deterministic seed coverage.
+            var consumerUsers = users
+                .Where(u => u.Email.StartsWith("cons", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var fallbackUsers = users
+                .Where(u => u.Email.StartsWith("biz", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (consumerUsers.Count == 0)
             {
-                var user = users[i % users.Count];
+                consumerUsers = users.Take(10).ToList();
+            }
 
+            for (var i = 0; i < consumerUsers.Count && i < businesses.Count; i++)
+            {
                 accounts.Add(new LoyaltyAccount
                 {
                     BusinessId = businesses[i].Id,
-                    UserId = user.Id,
+                    UserId = consumerUsers[i].Id,
                     Status = LoyaltyAccountStatus.Active,
-                    PointsBalance = 5 + i,
-                    LifetimePoints = 20 + (i * 3),
-                    LastAccrualAtUtc = DateTime.UtcNow.AddDays(-i)
+                    PointsBalance = 10 + i,
+                    LifetimePoints = 40 + (i * 5),
+                    LastAccrualAtUtc = now.AddDays(-(i + 1))
+                });
+            }
+
+            // Add a smaller set of business-user accounts to keep scan/merchant test paths covered as well.
+            for (var i = 0; i < fallbackUsers.Count && i < Math.Min(5, businesses.Count); i++)
+            {
+                accounts.Add(new LoyaltyAccount
+                {
+                    BusinessId = businesses[i].Id,
+                    UserId = fallbackUsers[i].Id,
+                    Status = LoyaltyAccountStatus.Active,
+                    PointsBalance = 6 + i,
+                    LifetimePoints = 24 + (i * 4),
+                    LastAccrualAtUtc = now.AddDays(-(i + 2))
                 });
             }
 
@@ -176,8 +204,14 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var redemptions = new List<LoyaltyRewardRedemption>();
 
-            for (var i = 0; i < accounts.Count && i < 10; i++)
+            // Seed redemptions for every second account so timeline pages include both accrual and redemption entries.
+            for (var i = 0; i < accounts.Count; i++)
             {
+                if (i % 2 != 0)
+                {
+                    continue;
+                }
+
                 var tier = tiers[i % tiers.Count];
                 var location = locations.FirstOrDefault(l => l.BusinessId == accounts[i].BusinessId);
 
@@ -187,9 +221,9 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     BusinessId = accounts[i].BusinessId,
                     LoyaltyRewardTierId = tier.Id,
                     PointsSpent = tier.PointsRequired,
-                    Status = i % 2 == 0 ? LoyaltyRedemptionStatus.Confirmed : LoyaltyRedemptionStatus.Pending,
+                    Status = LoyaltyRedemptionStatus.Confirmed,
                     BusinessLocationId = location?.Id,
-                    MetadataJson = "{\"source\":\"seed\"}"
+                    MetadataJson = "{\"source\":\"seed\",\"channel\":\"mobile\"}"
                 });
             }
 
@@ -204,7 +238,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var tx = new List<LoyaltyPointsTransaction>();
 
-            for (var i = 0; i < accounts.Count && i < 10; i++)
+            // Generate multiple accrual events per account so feed paging has enough records for scrolling tests.
+            for (var i = 0; i < accounts.Count; i++)
             {
                 var location = locations.FirstOrDefault(l => l.BusinessId == accounts[i].BusinessId);
 
@@ -213,10 +248,21 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     LoyaltyAccountId = accounts[i].Id,
                     BusinessId = accounts[i].BusinessId,
                     Type = LoyaltyPointsTransactionType.Accrual,
+                    PointsDelta = 2 + (i % 4),
+                    BusinessLocationId = location?.Id,
+                    Reference = $"VISIT-{i + 1:D3}-A",
+                    Notes = "Seeded accrual for mobile timeline testing."
+                });
+
+                tx.Add(new LoyaltyPointsTransaction
+                {
+                    LoyaltyAccountId = accounts[i].Id,
+                    BusinessId = accounts[i].BusinessId,
+                    Type = LoyaltyPointsTransactionType.Accrual,
                     PointsDelta = 1 + (i % 3),
                     BusinessLocationId = location?.Id,
-                    Reference = $"VISIT-{i + 1:D3}",
-                    Notes = "Seeded accrual for mobile testing."
+                    Reference = $"VISIT-{i + 1:D3}-B",
+                    Notes = "Seeded repeat visit accrual for timeline pagination coverage."
                 });
             }
 

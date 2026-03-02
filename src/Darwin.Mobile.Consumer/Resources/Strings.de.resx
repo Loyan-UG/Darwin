@@ -453,4 +453,7 @@
 	<data name="FeedLoadMoreButton" xml:space="preserve">
   <value>Mehr laden</value>
 </data>
+	<data name="FeedNoAccountsMessage" xml:space="preserve">
+  <value>Tritt zuerst einem Geschäft bei, um deinen Feed zu sehen.</value>
+</data>
 </root>

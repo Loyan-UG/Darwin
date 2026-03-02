@@ -26,6 +26,7 @@ public sealed class FeedViewModel : BaseViewModel
     private bool _isLoadingMore;
     private DateTime? _nextBeforeAtUtc;
     private Guid? _nextBeforeId;
+    private Guid _activeBusinessId;
 
     public FeedViewModel(ILoyaltyService loyaltyService)
     {
@@ -78,9 +79,14 @@ public sealed class FeedViewModel : BaseViewModel
 
         try
         {
+            if (!await EnsureActiveBusinessAsync())
+            {
+                return;
+            }
+
             var request = new GetMyLoyaltyTimelinePageRequest
             {
-                BusinessId = null,
+                BusinessId = _activeBusinessId,
                 PageSize = 20,
                 BeforeAtUtc = null,
                 BeforeId = null
@@ -143,9 +149,14 @@ public sealed class FeedViewModel : BaseViewModel
 
         try
         {
+            if (_activeBusinessId == Guid.Empty && !await EnsureActiveBusinessAsync())
+            {
+                return;
+            }
+
             var request = new GetMyLoyaltyTimelinePageRequest
             {
-                BusinessId = null,
+                BusinessId = _activeBusinessId,
                 PageSize = 20,
                 BeforeAtUtc = _nextBeforeAtUtc,
                 BeforeId = _nextBeforeId
@@ -182,5 +193,46 @@ public sealed class FeedViewModel : BaseViewModel
             _isLoadingMore = false;
             LoadMoreCommand.RaiseCanExecuteChanged();
         }
+    }
+
+    /// <summary>
+    /// Resolves a deterministic business context for the feed by selecting the first joined account.
+    /// The timeline endpoint is business-scoped, therefore sending a null/empty business id always fails.
+    /// </summary>
+    /// <returns>
+    /// True when a valid business id was resolved; otherwise false and the view model shows a user-safe message.
+    /// </returns>
+    private async Task<bool> EnsureActiveBusinessAsync()
+    {
+        if (_activeBusinessId != Guid.Empty)
+        {
+            return true;
+        }
+
+        var accountsResult = await _loyaltyService.GetMyAccountsAsync(CancellationToken.None);
+        if (!accountsResult.Succeeded || accountsResult.Value is null)
+        {
+            ErrorMessage = Resources.AppResources.FeedLoadFailed;
+            return false;
+        }
+
+        var account = accountsResult.Value.FirstOrDefault();
+        if (account is null)
+        {
+            ErrorMessage = Resources.AppResources.FeedNoAccountsMessage;
+            RunOnMain(() =>
+            {
+                Items.Clear();
+                OnPropertyChanged(nameof(HasItems));
+            });
+
+            _nextBeforeAtUtc = null;
+            _nextBeforeId = null;
+            OnPropertyChanged(nameof(HasMore));
+            return false;
+        }
+
+        _activeBusinessId = account.BusinessId;
+        return true;
     }
 }

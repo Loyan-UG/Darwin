@@ -155,4 +155,5 @@ public static class AppResources
     public static string FeedEmptyMessage => ResourceManager.GetString(nameof(FeedEmptyMessage), Culture) ?? "No feed items yet.";
     public static string FeedLoadFailed => ResourceManager.GetString(nameof(FeedLoadFailed), Culture) ?? "Unable to load feed right now.";
     public static string FeedLoadMoreButton => ResourceManager.GetString(nameof(FeedLoadMoreButton), Culture) ?? "Load more";
+    public static string FeedNoAccountsMessage => ResourceManager.GetString(nameof(FeedNoAccountsMessage), Culture) ?? "Join a business first to see your feed.";
 }

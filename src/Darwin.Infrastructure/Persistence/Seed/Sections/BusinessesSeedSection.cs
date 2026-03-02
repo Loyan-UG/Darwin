@@ -111,22 +111,26 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             var seeds = new[]
             {
                 new BusinessSeed("Café Aurora", "Aurora GmbH", "DE123456789", BusinessCategoryKind.Cafe,
-                    "Berlin", "Invalidenstraße 117", "10115", 52.5286, 13.3849, "info@cafe-aurora.de", "+49 30 1234567",
+                    "Hannover", "Georgstraße 26", "30159", 52.3759, 9.7320, "info@cafe-aurora.de", "+49 30 1234567",
                     "https://cafe-aurora.de", "Helles Café mit Spezialitätenkaffee und Frühstück.", "cafe-aurora"),
+
                 new BusinessSeed("Bäckerei König", "König Backwaren KG", "DE223456789", BusinessCategoryKind.Bakery,
-                    "München", "Marienplatz 8", "80331", 48.1374, 11.5755, "kontakt@baeckerei-koenig.de", "+49 89 2233445",
+                    "Göttingen", "Weender Straße 54", "37073", 51.5339, 9.9350, "kontakt@baeckerei-koenig.de", "+49 89 2233445",
                     "https://baeckerei-koenig.de", "Traditionelle Backwaren nach bayerischem Handwerk.", "baeckerei-koenig"),
+
                 new BusinessSeed("RheinEssen", "RheinEssen Restaurant GmbH", "DE323456789", BusinessCategoryKind.Restaurant,
-                    "Köln", "Hohenzollernring 22", "50672", 50.9375, 6.9431, "reservierung@rheinessen.de", "+49 221 998877",
+                    "Northeim", "Breite Straße 12", "37154", 51.7066, 9.9992, "reservierung@rheinessen.de", "+49 221 998877",
                     "https://rheinessen.de", "Rheinische Küche mit regionalen Zutaten.", "rheinessen"),
+
                 new BusinessSeed("NordFit Club", "NordFit Fitness GmbH", "DE423456789", BusinessCategoryKind.Fitness,
-                    "Hamburg", "Spitalerstraße 3", "20095", 53.5509, 9.9965, "info@nordfit.de", "+49 40 889900",
+                    "Hannover", "Lister Meile 45", "30161", 52.3830, 9.7480, "info@nordfit.de", "+49 40 889900",
                     "https://nordfit.de", "Modernes Fitnessstudio mit persönlichem Coaching.", "nordfit"),
+
                 new BusinessSeed("MainMarkt", "MainMarkt Supermarkt GmbH", "DE523456789", BusinessCategoryKind.Supermarket,
-                    "Frankfurt am Main", "Zeil 105", "60313", 50.1136, 8.6797, "service@mainmarkt.de", "+49 69 445566",
+                    "Göttingen", "Groner Straße 25", "37073", 51.5308, 9.9283, "service@mainmarkt.de", "+49 69 445566",
                     "https://mainmarkt.de", "Frischeprodukte und regionale Spezialitäten.", "mainmarkt"),
                 new BusinessSeed("SchönZeit Spa", "SchönZeit Wellness GmbH", "DE623456789", BusinessCategoryKind.SalonSpa,
-                    "Stuttgart", "Königstraße 12", "70173", 48.7770, 9.1799, "kontakt@schoenzeit.de", "+49 711 778899",
+                    "Northeim", "Markt 8", "37154", 51.7052, 10.0008, "kontakt@schoenzeit.de", "+49 711 778899",
                     "https://schoenzeit.de", "Entspannung, Massagen und Beauty-Services.", "schoenzeit"),
                 new BusinessSeed("DorfLaden Süd", "DorfLaden Süd e.K.", "DE723456789", BusinessCategoryKind.OtherRetail,
                     "Düsseldorf", "Schadowstraße 55", "40212", 51.2277, 6.7735, "hallo@dorfladen.de", "+49 211 556677",
