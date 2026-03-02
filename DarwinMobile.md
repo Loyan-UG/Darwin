@@ -308,6 +308,11 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Discover**:
   - Call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummary`.
   - Navigate to `BusinessDetail` for full info.
+  - Discover tab is split into two journeys:
+    1) **My Businesses**: joined loyalty businesses with per-business points and quick actions (Open QR / Open Rewards).
+    2) **Explore**: searchable businesses by name/address for joining new programs.
+  - Call discovery endpoints with `BusinessDiscoveryFilter` → paged `BusinessSummary`.
+  - Navigate to `BusinessDetail` for full info, or route directly to Rewards when the business is already joined.
 - **Profile**:
   - Fetch/edit using identity/profile Contracts as they evolve.
 

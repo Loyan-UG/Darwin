@@ -384,7 +384,43 @@
 	<data name="ForgotPasswordFailed" xml:space="preserve">
   <value>Unable to request password reset right now. Please try again.</value>
 </data>
-	<data name="RegisterAutoLoginFailed" xml:space="preserve">
+<data name="RegisterAutoLoginFailed" xml:space="preserve">
   <value>Your account was created, but automatic sign-in failed. Please login manually.</value>
+</data>
+<data name="DiscoverMyBusinessesTab" xml:space="preserve">
+  <value>My Businesses</value>
+</data>
+	<data name="DiscoverExploreTab" xml:space="preserve">
+  <value>Explore</value>
+</data>
+	<data name="DiscoverMyBusinessesHeadline" xml:space="preserve">
+  <value>Your joined businesses</value>
+</data>
+	<data name="DiscoverExploreHeadline" xml:space="preserve">
+  <value>Explore businesses</value>
+</data>
+	<data name="DiscoverSearchPlaceholder" xml:space="preserve">
+  <value>Search by business name or address</value>
+</data>
+	<data name="DiscoverMyBusinessesEmpty" xml:space="preserve">
+  <value>You have not joined any business yet. Use Explore to join one.</value>
+</data>
+	<data name="DiscoverExploreEmpty" xml:space="preserve">
+  <value>No businesses found for the current search.</value>
+</data>
+	<data name="DiscoverOpenQrButton" xml:space="preserve">
+  <value>Open QR</value>
+</data>
+	<data name="DiscoverOpenRewardsButton" xml:space="preserve">
+  <value>Open Rewards</value>
+</data>
+	<data name="DiscoverAlreadyJoinedLabel" xml:space="preserve">
+  <value>Already joined</value>
+</data>
+	<data name="DiscoverLoadJoinedFailed" xml:space="preserve">
+  <value>Unable to load your joined businesses.</value>
+</data>
+	<data name="DiscoverLoadExploreFailed" xml:space="preserve">
+  <value>Unable to load explore businesses.</value>
 </data>
 </root>

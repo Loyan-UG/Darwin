@@ -131,6 +131,17 @@ public static class AppResources
 
     public static string RegisterAutoLoginFailed => ResourceManager.GetString(nameof(RegisterAutoLoginFailed), Culture) ?? "Your account was created, but automatic sign-in failed. Please login manually.";
 
-
+    public static string DiscoverMyBusinessesTab => ResourceManager.GetString(nameof(DiscoverMyBusinessesTab), Culture) ?? "My Businesses";
+    public static string DiscoverExploreTab => ResourceManager.GetString(nameof(DiscoverExploreTab), Culture) ?? "Explore";
+    public static string DiscoverMyBusinessesHeadline => ResourceManager.GetString(nameof(DiscoverMyBusinessesHeadline), Culture) ?? "Your joined businesses";
+    public static string DiscoverExploreHeadline => ResourceManager.GetString(nameof(DiscoverExploreHeadline), Culture) ?? "Explore businesses";
+    public static string DiscoverSearchPlaceholder => ResourceManager.GetString(nameof(DiscoverSearchPlaceholder), Culture) ?? "Search by business name or address";
+    public static string DiscoverMyBusinessesEmpty => ResourceManager.GetString(nameof(DiscoverMyBusinessesEmpty), Culture) ?? "You have not joined any business yet. Use Explore to join one.";
+    public static string DiscoverExploreEmpty => ResourceManager.GetString(nameof(DiscoverExploreEmpty), Culture) ?? "No businesses found for the current search.";
+    public static string DiscoverOpenQrButton => ResourceManager.GetString(nameof(DiscoverOpenQrButton), Culture) ?? "Open QR";
+    public static string DiscoverOpenRewardsButton => ResourceManager.GetString(nameof(DiscoverOpenRewardsButton), Culture) ?? "Open Rewards";
+    public static string DiscoverAlreadyJoinedLabel => ResourceManager.GetString(nameof(DiscoverAlreadyJoinedLabel), Culture) ?? "Already joined";
+    public static string DiscoverLoadJoinedFailed => ResourceManager.GetString(nameof(DiscoverLoadJoinedFailed), Culture) ?? "Unable to load your joined businesses.";
+    public static string DiscoverLoadExploreFailed => ResourceManager.GetString(nameof(DiscoverLoadExploreFailed), Culture) ?? "Unable to load explore businesses.";
 
 }

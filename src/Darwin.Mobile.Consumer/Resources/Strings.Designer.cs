@@ -187,6 +187,114 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Already joined.
+        /// </summary>
+        internal static string DiscoverAlreadyJoinedLabel {
+            get {
+                return ResourceManager.GetString("DiscoverAlreadyJoinedLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No businesses found for the current search..
+        /// </summary>
+        internal static string DiscoverExploreEmpty {
+            get {
+                return ResourceManager.GetString("DiscoverExploreEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Explore businesses.
+        /// </summary>
+        internal static string DiscoverExploreHeadline {
+            get {
+                return ResourceManager.GetString("DiscoverExploreHeadline", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Explore.
+        /// </summary>
+        internal static string DiscoverExploreTab {
+            get {
+                return ResourceManager.GetString("DiscoverExploreTab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load explore businesses..
+        /// </summary>
+        internal static string DiscoverLoadExploreFailed {
+            get {
+                return ResourceManager.GetString("DiscoverLoadExploreFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load your joined businesses..
+        /// </summary>
+        internal static string DiscoverLoadJoinedFailed {
+            get {
+                return ResourceManager.GetString("DiscoverLoadJoinedFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have not joined any business yet. Use Explore to join one..
+        /// </summary>
+        internal static string DiscoverMyBusinessesEmpty {
+            get {
+                return ResourceManager.GetString("DiscoverMyBusinessesEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your joined businesses.
+        /// </summary>
+        internal static string DiscoverMyBusinessesHeadline {
+            get {
+                return ResourceManager.GetString("DiscoverMyBusinessesHeadline", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to My Businesses.
+        /// </summary>
+        internal static string DiscoverMyBusinessesTab {
+            get {
+                return ResourceManager.GetString("DiscoverMyBusinessesTab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open QR.
+        /// </summary>
+        internal static string DiscoverOpenQrButton {
+            get {
+                return ResourceManager.GetString("DiscoverOpenQrButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open Rewards.
+        /// </summary>
+        internal static string DiscoverOpenRewardsButton {
+            get {
+                return ResourceManager.GetString("DiscoverOpenRewardsButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search by business name or address.
+        /// </summary>
+        internal static string DiscoverSearchPlaceholder {
+            get {
+                return ResourceManager.GetString("DiscoverSearchPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Discover.
         /// </summary>
         internal static string DiscoverTitle {
