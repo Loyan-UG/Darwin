@@ -144,4 +144,10 @@ public static class AppResources
     public static string DiscoverLoadJoinedFailed => ResourceManager.GetString(nameof(DiscoverLoadJoinedFailed), Culture) ?? "Unable to load your joined businesses.";
     public static string DiscoverLoadExploreFailed => ResourceManager.GetString(nameof(DiscoverLoadExploreFailed), Culture) ?? "Unable to load explore businesses.";
 
+    
+    public static string DiscoverCategoryFilterLabel => ResourceManager.GetString(nameof(DiscoverCategoryFilterLabel), Culture) ?? "Category";
+    public static string DiscoverSearchButton => ResourceManager.GetString(nameof(DiscoverSearchButton), Culture) ?? "Search";
+    public static string DiscoverClearFiltersButton => ResourceManager.GetString(nameof(DiscoverClearFiltersButton), Culture) ?? "Clear";
+    public static string DiscoverNearbyOnlyLabel => ResourceManager.GetString(nameof(DiscoverNearbyOnlyLabel), Culture) ?? "Nearby only";
+    public static string DiscoverLocationUnavailable => ResourceManager.GetString(nameof(DiscoverLocationUnavailable), Culture) ?? "Location is unavailable. Showing broad results instead.";
 }

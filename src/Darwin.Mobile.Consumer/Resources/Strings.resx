@@ -423,4 +423,19 @@
 	<data name="DiscoverLoadExploreFailed" xml:space="preserve">
   <value>Unable to load explore businesses.</value>
 </data>
+<data name="DiscoverCategoryFilterLabel" xml:space="preserve">
+  <value>Category</value>
+</data>
+<data name="DiscoverSearchButton" xml:space="preserve">
+  <value>Search</value>
+</data>
+<data name="DiscoverClearFiltersButton" xml:space="preserve">
+  <value>Clear</value>
+</data>
+<data name="DiscoverNearbyOnlyLabel" xml:space="preserve">
+  <value>Nearby only</value>
+</data>
+<data name="DiscoverLocationUnavailable" xml:space="preserve">
+  <value>Location is unavailable. Showing broad results instead.</value>
+</data>
 </root>

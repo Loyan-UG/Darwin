@@ -196,6 +196,24 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Category.
+        /// </summary>
+        internal static string DiscoverCategoryFilterLabel {
+            get {
+                return ResourceManager.GetString("DiscoverCategoryFilterLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clear.
+        /// </summary>
+        internal static string DiscoverClearFiltersButton {
+            get {
+                return ResourceManager.GetString("DiscoverClearFiltersButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No businesses found for the current search..
         /// </summary>
         internal static string DiscoverExploreEmpty {
@@ -241,6 +259,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Location is unavailable. Showing broad results instead..
+        /// </summary>
+        internal static string DiscoverLocationUnavailable {
+            get {
+                return ResourceManager.GetString("DiscoverLocationUnavailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You have not joined any business yet. Use Explore to join one..
         /// </summary>
         internal static string DiscoverMyBusinessesEmpty {
@@ -268,6 +295,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Nearby only.
+        /// </summary>
+        internal static string DiscoverNearbyOnlyLabel {
+            get {
+                return ResourceManager.GetString("DiscoverNearbyOnlyLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open QR.
         /// </summary>
         internal static string DiscoverOpenQrButton {
@@ -282,6 +318,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string DiscoverOpenRewardsButton {
             get {
                 return ResourceManager.GetString("DiscoverOpenRewardsButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search.
+        /// </summary>
+        internal static string DiscoverSearchButton {
+            get {
+                return ResourceManager.GetString("DiscoverSearchButton", resourceCulture);
             }
         }
         
