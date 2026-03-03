@@ -23,7 +23,8 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// </para>
 /// <para>
 /// Current implementation uses the loyalty timeline endpoint as the feed source and provides
-/// account selection, paging, refresh, and direct context actions (Open QR / Open Rewards).
+/// account selection, paging, refresh, promotion cards, and quick context actions
+/// (Open QR / Open Rewards).
 /// </para>
 /// </remarks>
 public sealed class FeedViewModel : BaseViewModel
@@ -47,18 +48,30 @@ public sealed class FeedViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         Items = new ObservableCollection<LoyaltyTimelineEntry>();
+        PromotionItems = new ObservableCollection<PromotionFeedItem>();
         Accounts = new ObservableCollection<LoyaltyAccountSummary>();
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         LoadMoreCommand = new AsyncCommand(LoadMoreAsync, () => HasMore && !_isLoadingMore && !IsBusy);
         OpenQrCommand = new AsyncCommand(OpenQrAsync, () => CanNavigateWithSelection);
         OpenRewardsCommand = new AsyncCommand(OpenRewardsAsync, () => CanNavigateWithSelection);
+        OpenPromotionCommand = new AsyncCommand<PromotionFeedItem>(OpenPromotionAsync, item => item is not null && !IsBusy);
     }
 
     /// <summary>
     /// Timeline-backed feed items shown in the UI.
     /// </summary>
     public ObservableCollection<LoyaltyTimelineEntry> Items { get; }
+
+    /// <summary>
+    /// Promotion cards shown at the top of feed for quick actions.
+    /// </summary>
+    public ObservableCollection<PromotionFeedItem> PromotionItems { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether at least one promotion card exists.
+    /// </summary>
+    public bool HasPromotions => PromotionItems.Count > 0;
 
     /// <summary>
     /// Joined loyalty accounts available for business-context switching.
@@ -71,25 +84,22 @@ public sealed class FeedViewModel : BaseViewModel
     public bool HasAccounts => Accounts.Count > 0;
 
     /// <summary>
-    /// True when more server pages are available.
+    /// Gets a value indicating whether more timeline pages are available.
     /// </summary>
     public bool HasMore => _nextBeforeAtUtc.HasValue && _nextBeforeId.HasValue;
 
     /// <summary>
-    /// True when at least one feed record exists.
+    /// Gets a value indicating whether at least one timeline record exists.
     /// </summary>
     public bool HasItems => Items.Count > 0;
 
     /// <summary>
-    /// True when navigation actions can use the selected business context.
+    /// Gets a value indicating whether context-aware navigation can run.
     /// </summary>
     public bool CanNavigateWithSelection => SelectedAccount is not null && SelectedAccount.BusinessId != Guid.Empty && !IsBusy;
 
-    
-    public AsyncCommand<PromotionFeedItem> OpenPromotionCommand { get; }
-
     /// <summary>
-    /// Localized points summary for the selected business context.
+    /// Gets the localized points summary for the selected business context.
     /// </summary>
     public string SelectedPointsText
         => SelectedAccount is null
@@ -97,7 +107,7 @@ public sealed class FeedViewModel : BaseViewModel
             : string.Format(Resources.AppResources.FeedSelectedBusinessPointsFormat, SelectedAccount.PointsBalance);
 
     /// <summary>
-    /// Currently selected account that defines the active business context of the feed.
+    /// Gets or sets the currently selected account that defines the active business context of the feed.
     /// </summary>
     public LoyaltyAccountSummary? SelectedAccount
     {
@@ -135,6 +145,8 @@ public sealed class FeedViewModel : BaseViewModel
 
     public AsyncCommand OpenRewardsCommand { get; }
 
+    public AsyncCommand<PromotionFeedItem> OpenPromotionCommand { get; }
+
     public override async Task OnAppearingAsync()
     {
         if (_hasLoaded)
@@ -165,6 +177,7 @@ public sealed class FeedViewModel : BaseViewModel
                 return;
             }
 
+            await LoadPromotionsAsync(selectedBusinessId);
             await LoadFirstPageAsync(selectedBusinessId);
         }
         finally
@@ -263,6 +276,7 @@ public sealed class FeedViewModel : BaseViewModel
         {
             ErrorMessage = Resources.AppResources.FeedNoAccountsMessage;
             ClearFeedCollections();
+            ClearPromotions();
             return Guid.Empty;
         }
 
@@ -341,6 +355,7 @@ public sealed class FeedViewModel : BaseViewModel
             ErrorMessage = null;
             RaiseCommandsCanExecute();
 
+            await LoadPromotionsAsync(SelectedAccount.BusinessId);
             await LoadFirstPageAsync(SelectedAccount.BusinessId);
         }
         catch
@@ -352,6 +367,40 @@ public sealed class FeedViewModel : BaseViewModel
             IsBusy = false;
             RaiseCommandsCanExecute();
         }
+    }
+
+    /// <summary>
+    /// Loads promotion cards for the selected business context.
+    /// </summary>
+    private async Task LoadPromotionsAsync(Guid businessId)
+    {
+        var result = await _loyaltyService.GetMyPromotionsAsync(new MyPromotionsRequest
+        {
+            BusinessId = businessId,
+            MaxItems = 8
+        }, CancellationToken.None);
+
+        ClearPromotions();
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            return;
+        }
+
+        var ordered = result.Value.Items
+            .OrderByDescending(x => x.Priority)
+            .ThenBy(x => x.BusinessName)
+            .ToList();
+
+        RunOnMain(() =>
+        {
+            foreach (var item in ordered)
+            {
+                PromotionItems.Add(item);
+            }
+
+            OnPropertyChanged(nameof(HasPromotions));
+        });
     }
 
     /// <summary>
@@ -396,39 +445,8 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Clears feed records and pagination cursor while keeping account list intact.
+    /// Opens promotion target using CTA kind semantics while preserving selected business context.
     /// </summary>
-    private void ClearFeedCollections()
-    {
-        RunOnMain(() =>
-        {
-            Items.Clear();
-            OnPropertyChanged(nameof(HasItems));
-        });
-
-        _nextBeforeAtUtc = null;
-        _nextBeforeId = null;
-        OnPropertyChanged(nameof(HasMore));
-    }
-
-    /// <summary>
-    /// Re-evaluates command state whenever busy/selection/paging state changes.
-    /// </summary>
-    private void RaiseCommandsCanExecute()
-    {
-        RefreshCommand.RaiseCanExecuteChanged();
-        LoadMoreCommand.RaiseCanExecuteChanged();
-        OpenQrCommand.RaiseCanExecuteChanged();
-        OpenRewardsCommand.RaiseCanExecuteChanged();
-        OnPropertyChanged(nameof(CanNavigateWithSelection));
-    }
-
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="item"></param>
-    /// <returns></returns>
     private async Task OpenPromotionAsync(PromotionFeedItem? item)
     {
         if (item is null || item.BusinessId == Guid.Empty || IsBusy)
@@ -452,40 +470,43 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Loads promotion cards for the selected business context.
+    /// Clears feed records and pagination cursor while keeping account list intact.
     /// </summary>
-    private async Task LoadPromotionsAsync(Guid businessId)
+    private void ClearFeedCollections()
     {
-        var result = await _loyaltyService.GetMyPromotionsAsync(new MyPromotionsRequest
+        RunOnMain(() =>
         {
-            BusinessId = businessId,
-            MaxItems = 8
-        }, CancellationToken.None);
+            Items.Clear();
+            OnPropertyChanged(nameof(HasItems));
+        });
 
+        _nextBeforeAtUtc = null;
+        _nextBeforeId = null;
+        OnPropertyChanged(nameof(HasMore));
+    }
+
+    /// <summary>
+    /// Clears promotion cards and notifies the view.
+    /// </summary>
+    private void ClearPromotions()
+    {
         RunOnMain(() =>
         {
             PromotionItems.Clear();
             OnPropertyChanged(nameof(HasPromotions));
         });
+    }
 
-        if (!result.Succeeded || result.Value is null)
-        {
-            return;
-        }
-
-        var ordered = result.Value.Items
-            .OrderByDescending(x => x.Priority)
-            .ThenBy(x => x.BusinessName)
-            .ToList();
-
-        RunOnMain(() =>
-        {
-            foreach (var item in ordered)
-            {
-                PromotionItems.Add(item);
-            }
-
-            OnPropertyChanged(nameof(HasPromotions));
-        });
+    /// <summary>
+    /// Re-evaluates command state whenever busy/selection/paging state changes.
+    /// </summary>
+    private void RaiseCommandsCanExecute()
+    {
+        RefreshCommand.RaiseCanExecuteChanged();
+        LoadMoreCommand.RaiseCanExecuteChanged();
+        OpenQrCommand.RaiseCanExecuteChanged();
+        OpenRewardsCommand.RaiseCanExecuteChanged();
+        OpenPromotionCommand.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(CanNavigateWithSelection));
     }
 }
