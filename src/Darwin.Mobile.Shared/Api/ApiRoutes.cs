@@ -70,6 +70,11 @@ namespace Darwin.Mobile.Shared.Api
             public static string GetById(Guid id) => $"api/v1/businesses/{id:D}";
             public static string GetWithMyAccount(Guid id) => $"api/v1/businesses/{id:D}/with-my-account";
             public const string CategoryKinds = "api/v1/businesses/category-kinds";
+
+            public static string GetMyEngagement(Guid id) => $"api/v1/businesses/{id:D}/engagement/my";
+            public static string ToggleLike(Guid id) => $"api/v1/businesses/{id:D}/likes/toggle";
+            public static string ToggleFavorite(Guid id) => $"api/v1/businesses/{id:D}/favorites/toggle";
+            public static string UpsertMyReview(Guid id) => $"api/v1/businesses/{id:D}/my-review";
         }
 
         /// <summary>

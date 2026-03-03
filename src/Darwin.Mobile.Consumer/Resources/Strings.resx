@@ -456,4 +456,20 @@
 	<data name="FeedNoAccountsMessage" xml:space="preserve">
   <value>Join a business first to see your feed.</value>
 </data>
+	<data name="BusinessDetailsNotFound" xml:space="preserve"><value>Business not found.</value></data>
+	<data name="BusinessDetailsLoadFailed" xml:space="preserve"><value>Unable to load business details.</value></data>
+	<data name="BusinessEngagementTitle" xml:space="preserve"><value>Engagement</value></data>
+	<data name="BusinessEngagementLoadFailed" xml:space="preserve"><value>Unable to load engagement details.</value></data>
+	<data name="BusinessLikeButton" xml:space="preserve"><value>Like / Unlike</value></data>
+	<data name="BusinessFavoriteButton" xml:space="preserve"><value>Favorite / Unfavorite</value></data>
+	<data name="BusinessLikeToggleFailed" xml:space="preserve"><value>Unable to update like state.</value></data>
+	<data name="BusinessFavoriteToggleFailed" xml:space="preserve"><value>Unable to update favorite state.</value></data>
+	<data name="BusinessMyReviewTitle" xml:space="preserve"><value>My review</value></data>
+	<data name="BusinessMyReviewRatingLabel" xml:space="preserve"><value>Rating</value></data>
+	<data name="BusinessMyReviewCommentPlaceholder" xml:space="preserve"><value>Write your feedback (optional).</value></data>
+	<data name="BusinessSaveReviewButton" xml:space="preserve"><value>Save review</value></data>
+	<data name="BusinessReviewSaveFailed" xml:space="preserve"><value>Unable to save your review.</value></data>
+	<data name="BusinessRecentReviewsTitle" xml:space="preserve"><value>Recent reviews</value></data>
+	<data name="BusinessJoinFailed" xml:space="preserve"><value>Unable to join the loyalty program.</value></data>
+	<data name="BusinessScanSessionPrepareFailed" xml:space="preserve"><value>Unable to create scan session.</value></data>
 </root>

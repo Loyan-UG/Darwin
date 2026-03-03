@@ -156,4 +156,20 @@ public static class AppResources
     public static string FeedLoadFailed => ResourceManager.GetString(nameof(FeedLoadFailed), Culture) ?? "Unable to load feed right now.";
     public static string FeedLoadMoreButton => ResourceManager.GetString(nameof(FeedLoadMoreButton), Culture) ?? "Load more";
     public static string FeedNoAccountsMessage => ResourceManager.GetString(nameof(FeedNoAccountsMessage), Culture) ?? "Join a business first to see your feed.";
+    public static string BusinessDetailsNotFound => ResourceManager.GetString(nameof(BusinessDetailsNotFound), Culture) ?? "Business not found.";
+    public static string BusinessDetailsLoadFailed => ResourceManager.GetString(nameof(BusinessDetailsLoadFailed), Culture) ?? "Unable to load business details.";
+    public static string BusinessEngagementTitle => ResourceManager.GetString(nameof(BusinessEngagementTitle), Culture) ?? "Engagement";
+    public static string BusinessEngagementLoadFailed => ResourceManager.GetString(nameof(BusinessEngagementLoadFailed), Culture) ?? "Unable to load engagement details.";
+    public static string BusinessLikeButton => ResourceManager.GetString(nameof(BusinessLikeButton), Culture) ?? "Like / Unlike";
+    public static string BusinessFavoriteButton => ResourceManager.GetString(nameof(BusinessFavoriteButton), Culture) ?? "Favorite / Unfavorite";
+    public static string BusinessLikeToggleFailed => ResourceManager.GetString(nameof(BusinessLikeToggleFailed), Culture) ?? "Unable to update like state.";
+    public static string BusinessFavoriteToggleFailed => ResourceManager.GetString(nameof(BusinessFavoriteToggleFailed), Culture) ?? "Unable to update favorite state.";
+    public static string BusinessMyReviewTitle => ResourceManager.GetString(nameof(BusinessMyReviewTitle), Culture) ?? "My review";
+    public static string BusinessMyReviewRatingLabel => ResourceManager.GetString(nameof(BusinessMyReviewRatingLabel), Culture) ?? "Rating";
+    public static string BusinessMyReviewCommentPlaceholder => ResourceManager.GetString(nameof(BusinessMyReviewCommentPlaceholder), Culture) ?? "Write your feedback (optional).";
+    public static string BusinessSaveReviewButton => ResourceManager.GetString(nameof(BusinessSaveReviewButton), Culture) ?? "Save review";
+    public static string BusinessReviewSaveFailed => ResourceManager.GetString(nameof(BusinessReviewSaveFailed), Culture) ?? "Unable to save your review.";
+    public static string BusinessRecentReviewsTitle => ResourceManager.GetString(nameof(BusinessRecentReviewsTitle), Culture) ?? "Recent reviews";
+    public static string BusinessJoinFailed => ResourceManager.GetString(nameof(BusinessJoinFailed), Culture) ?? "Unable to join the loyalty program.";
+    public static string BusinessScanSessionPrepareFailed => ResourceManager.GetString(nameof(BusinessScanSessionPrepareFailed), Culture) ?? "Unable to create scan session.";
 }
