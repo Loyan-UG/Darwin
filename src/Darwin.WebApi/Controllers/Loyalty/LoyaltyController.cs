@@ -45,6 +45,8 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly CreateLoyaltyAccountHandler _createLoyaltyAccountHandler;
         private readonly ILoyaltyPresentationService _presentationService;
         private readonly ILogger<LoyaltyController> _logger;
+        private readonly GetMyPromotionsHandler _getMyPromotionsHandler;
+
 
 
         /// <summary>
@@ -84,6 +86,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             GetMyLoyaltyAccountForBusinessHandler getMyLoyaltyAccountForBusinessHandler,
             GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
             GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
+            GetMyPromotionsHandler getMyPromotionsHandler,
             GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
             CreateLoyaltyAccountHandler createLoyaltyAccountHandler,
             ILoyaltyPresentationService presentationService,
@@ -98,6 +101,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             _getMyLoyaltyAccountForBusinessHandler = getMyLoyaltyAccountForBusinessHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountForBusinessHandler));
             _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
             _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
+            _getMyPromotionsHandler = getMyPromotionsHandler ?? throw new ArgumentNullException(nameof(getMyPromotionsHandler));
             _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
             _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
             _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
@@ -891,6 +895,63 @@ namespace Darwin.WebApi.Controllers.Loyalty
                     PageSize = normalizedPageSize,
                     Search = null
                 }
+            };
+
+            return Ok(response);
+        }
+
+
+
+
+
+        /// <summary>
+        /// Returns personalized promotion cards for the current consumer user.
+        /// Promotions are generated from joined loyalty programs and reward tiers.
+        /// </summary>
+        [HttpPost("my/promotions")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
+        [ProducesResponseType(typeof(MyPromotionsResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetMyPromotionsAsync(
+            [FromBody] MyPromotionsRequest? request,
+            CancellationToken ct = default)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            if (request.BusinessId.HasValue && request.BusinessId.Value == Guid.Empty)
+            {
+                return BadRequestProblem("BusinessId must be a non-empty GUID when provided.");
+            }
+
+            var result = await _getMyPromotionsHandler
+                .HandleAsync(new MyPromotionsDto
+                {
+                    BusinessId = request.BusinessId,
+                    MaxItems = request.MaxItems
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value is null)
+            {
+                return ProblemFromResult(result);
+            }
+
+            var response = new MyPromotionsResponse
+            {
+                Items = result.Value.Items
+                    .Select(x => new PromotionFeedItem
+                    {
+                        BusinessId = x.BusinessId,
+                        BusinessName = x.BusinessName,
+                        Title = x.Title,
+                        Description = x.Description,
+                        CtaKind = x.CtaKind,
+                        Priority = x.Priority
+                    })
+                    .ToList()
             };
 
             return Ok(response);

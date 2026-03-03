@@ -682,6 +682,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Business.
+        /// </summary>
+        internal static string FeedBusinessPickerLabel {
+            get {
+                return ResourceManager.GetString("FeedBusinessPickerLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No feed items yet..
         /// </summary>
         internal static string FeedEmptyMessage {
@@ -718,6 +727,15 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open.
+        /// </summary>
+        internal static string FeedOpenPromotionButton {
+            get {
+                return ResourceManager.GetString("FeedOpenPromotionButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open QR.
         /// </summary>
         internal static string FeedOpenQrButton {
@@ -732,6 +750,24 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string FeedOpenRewardsButton {
             get {
                 return ResourceManager.GetString("FeedOpenRewardsButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Promotions for you.
+        /// </summary>
+        internal static string FeedPromotionsTitle {
+            get {
+                return ResourceManager.GetString("FeedPromotionsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refresh feed.
+        /// </summary>
+        internal static string FeedRefreshButton {
+            get {
+                return ResourceManager.GetString("FeedRefreshButton", resourceCulture);
             }
         }
         

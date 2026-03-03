@@ -95,6 +95,7 @@ namespace Darwin.Mobile.Shared.Api
             public const string GetMyTimeline = "api/v1/loyalty/my/timeline";     // POST
             public static string Join(Guid businessId) => $"api/v1/loyalty/account/{businessId:D}/join";
             public static string GetNextReward(Guid businessId) => $"api/v1/loyalty/account/{businessId:D}/next-reward";
+            public const string GetMyPromotions = "api/v1/loyalty/my/promotions"; // POST
         }
     }
 }

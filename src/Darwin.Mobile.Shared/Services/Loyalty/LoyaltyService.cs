@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Models.Loyalty;
+using Darwin.Shared.Results;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Darwin.Contracts.Loyalty;
-using Darwin.Mobile.Shared.Api;
-using Darwin.Mobile.Shared.Models.Loyalty;
-using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Shared.Services.Loyalty
 {
@@ -509,5 +509,49 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 return Result<LoyaltyRewardSummary?>.Fail($"Network error while retrieving next reward: {ex.Message}");
             }
         }
+
+
+        /// <summary>
+        /// Asynchronously retrieves the current user's available promotions based on the specified request parameters.
+        /// </summary>
+        /// <remarks>Throws an <see cref="OperationCanceledException"/> if the operation is canceled.
+        /// Returns a failure result if the request is invalid or if a network error occurs.</remarks>
+        /// <param name="request">An object containing the parameters required to fetch the user's promotions. Cannot be null.</param>
+        /// <param name="cancellationToken">A token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A result containing the user's promotions response if the operation succeeds; otherwise, a failure result
+        /// with an error message.</returns>
+        public async Task<Result<MyPromotionsResponse>> GetMyPromotionsAsync(MyPromotionsRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result<MyPromotionsResponse>.Fail("Request body is required.");
+            }
+
+            try
+            {
+                var response = await _apiClient
+                    .PostResultAsync<MyPromotionsRequest, MyPromotionsResponse>(
+                        ApiRoutes.Loyalty.GetMyPromotions,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<MyPromotionsResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<MyPromotionsResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<MyPromotionsResponse>.Fail($"Network error while retrieving promotions: {ex.Message}");
+            }
+        }
+
     }
 }
