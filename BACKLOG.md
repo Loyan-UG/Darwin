@@ -143,11 +143,12 @@ It is designed as the **single source of truth** for development planning.
 - Public Catalog endpoints for future storefront use
 
 ## 3.2 Mobile Consumer App – Phase 2
-- Full map integration (Google Maps / Apple MapKit)
-- Business detail page
-- Favorites, reviews, likes
-- Feed/promotions module
-- Rewards history
+- [ ] Full map integration (Google Maps / Apple MapKit)
+- [x] Business detail page
+- [x] Favorites, reviews, likes
+- [x] Feed/promotions module (timeline-backed + promotions endpoint)
+- [x] Rewards history
+- [x] Discover IA split: My Businesses + Explore (search/category/nearby)
 
 ## 3.3 Mobile Business App – Phase 2
 - Business dashboard
@@ -171,6 +172,15 @@ It is designed as the **single source of truth** for development planning.
 - [ ] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
 - [ ] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
 - [ ] QR countdown UX decision: keep 15s update cadence (battery-friendly) vs 1s display refresh (smoother UI) with same 5-minute auto-rotation limit.
+
+
+## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
+- [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
+- [ ] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
+- [ ] Add eligibility + audience rules (joined members, tier, points threshold, date window).
+- [ ] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
+- [ ] Add tracking events for impression/open/claim to measure conversion.
+- [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 ---
 

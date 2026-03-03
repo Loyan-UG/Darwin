@@ -532,4 +532,16 @@
 	<data name="FeedSelectedBusinessPointsFormat" xml:space="preserve">
   <value>Points: {0}</value>
 </data>
+	<data name="FeedPromotionsTitle" xml:space="preserve">
+  <value>Promotions for you</value>
+</data>
+	<data name="FeedRefreshButton" xml:space="preserve">
+  <value>Refresh feed</value>
+</data>
+	<data name="FeedBusinessPickerLabel" xml:space="preserve">
+  <value>Business</value>
+</data>
+	<data name="FeedOpenPromotionButton" xml:space="preserve">
+  <value>Open</value>
+</data>
 </root>

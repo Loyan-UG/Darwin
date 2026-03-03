@@ -122,5 +122,8 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
         // Next reward (consumer) - 204 when none
         Task<Result<LoyaltyRewardSummary?>> GetNextRewardAsync(Guid businessId, CancellationToken cancellationToken);
+
+        // Promotions feed (consumer, business-aware POST)
+        Task<Result<MyPromotionsResponse>> GetMyPromotionsAsync(MyPromotionsRequest request, CancellationToken cancellationToken);
     }
 }

@@ -6,6 +6,7 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:contracts="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
     x:Class="Darwin.Mobile.Consumer.Views.FeedPage"
+    x:Name="FeedRoot"
     x:DataType="vm:FeedViewModel"
     Title="{x:Static res:AppResources.FeedTitle}">
 
@@ -38,6 +39,33 @@
 
             <Button Text="{x:Static res:AppResources.FeedRefreshButton}"
                     Command="{Binding RefreshCommand}" />
+
+
+            <Label Text="{x:Static res:AppResources.FeedPromotionsTitle}"
+                   FontAttributes="Bold"
+                   IsVisible="{Binding HasPromotions}" />
+
+            <CollectionView ItemsSource="{Binding PromotionItems}"
+                            SelectionMode="None"
+                            IsVisible="{Binding HasPromotions}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="contracts:PromotionFeedItem">
+                        <Border Stroke="{StaticResource BrushGray300}"
+                                StrokeThickness="1"
+                                Padding="12"
+                                Margin="2">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding BusinessName}" FontAttributes="Bold" />
+                                <Label Text="{Binding Title}" FontAttributes="Bold" />
+                                <Label Text="{Binding Description}" />
+                                <Button Text="{x:Static res:AppResources.FeedOpenPromotionButton}"
+                                        Command="{Binding Source={x:Reference FeedRoot}, Path=BindingContext.OpenPromotionCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
             <Label Text="{x:Static res:AppResources.FeedEmptyMessage}"
                    IsVisible="{Binding HasItems, Converter={StaticResource InverseBoolConverter}}" />

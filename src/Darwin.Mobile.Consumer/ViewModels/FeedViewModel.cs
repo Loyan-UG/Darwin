@@ -85,6 +85,9 @@ public sealed class FeedViewModel : BaseViewModel
     /// </summary>
     public bool CanNavigateWithSelection => SelectedAccount is not null && SelectedAccount.BusinessId != Guid.Empty && !IsBusy;
 
+    
+    public AsyncCommand<PromotionFeedItem> OpenPromotionCommand { get; }
+
     /// <summary>
     /// Localized points summary for the selected business context.
     /// </summary>
@@ -110,6 +113,7 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(SelectedPointsText));
             OpenQrCommand.RaiseCanExecuteChanged();
             OpenRewardsCommand.RaiseCanExecuteChanged();
+            OpenPromotionCommand.RaiseCanExecuteChanged();
 
             if (value is null || value.BusinessId == Guid.Empty)
             {
@@ -417,5 +421,71 @@ public sealed class FeedViewModel : BaseViewModel
         OpenQrCommand.RaiseCanExecuteChanged();
         OpenRewardsCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanNavigateWithSelection));
+    }
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    private async Task OpenPromotionAsync(PromotionFeedItem? item)
+    {
+        if (item is null || item.BusinessId == Guid.Empty || IsBusy)
+        {
+            return;
+        }
+
+        var parameters = new Dictionary<string, object?>
+        {
+            ["businessId"] = item.BusinessId,
+            ["businessName"] = item.BusinessName
+        };
+
+        if (string.Equals(item.CtaKind, "OpenQr", StringComparison.OrdinalIgnoreCase))
+        {
+            await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+            return;
+        }
+
+        await _navigationService.GoToAsync($"//{Routes.Rewards}", parameters);
+    }
+
+    /// <summary>
+    /// Loads promotion cards for the selected business context.
+    /// </summary>
+    private async Task LoadPromotionsAsync(Guid businessId)
+    {
+        var result = await _loyaltyService.GetMyPromotionsAsync(new MyPromotionsRequest
+        {
+            BusinessId = businessId,
+            MaxItems = 8
+        }, CancellationToken.None);
+
+        RunOnMain(() =>
+        {
+            PromotionItems.Clear();
+            OnPropertyChanged(nameof(HasPromotions));
+        });
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            return;
+        }
+
+        var ordered = result.Value.Items
+            .OrderByDescending(x => x.Priority)
+            .ThenBy(x => x.BusinessName)
+            .ToList();
+
+        RunOnMain(() =>
+        {
+            foreach (var item in ordered)
+            {
+                PromotionItems.Add(item);
+            }
+
+            OnPropertyChanged(nameof(HasPromotions));
+        });
     }
 }

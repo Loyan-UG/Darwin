@@ -192,5 +192,9 @@ public static class AppResources
     public static string FeedOpenQrButton => ResourceManager.GetString(nameof(FeedOpenQrButton), Culture) ?? "Open QR";
     public static string FeedOpenRewardsButton => ResourceManager.GetString(nameof(FeedOpenRewardsButton), Culture) ?? "Open Rewards";
     public static string FeedSelectedBusinessPointsFormat => ResourceManager.GetString(nameof(FeedSelectedBusinessPointsFormat), Culture) ?? "Points: {0}";
+    public static string FeedPromotionsTitle => ResourceManager.GetString(nameof(FeedPromotionsTitle), Culture) ?? "Promotions for you";
+    public static string FeedBusinessPickerLabel => ResourceManager.GetString(nameof(FeedBusinessPickerLabel), Culture) ?? "Business";
+    public static string FeedRefreshButton => ResourceManager.GetString(nameof(FeedRefreshButton), Culture) ?? "Refresh feed";
+    public static string FeedOpenPromotionButton => ResourceManager.GetString(nameof(FeedOpenPromotionButton), Culture) ?? "Open";
 
 }
