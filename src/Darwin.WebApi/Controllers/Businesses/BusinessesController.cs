@@ -1,4 +1,5 @@
-﻿using Darwin.Application.Businesses.DTOs;
+﻿using Darwin.Application.Businesses.Commands;
+using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Common.DTOs;
 using Darwin.Contracts.Businesses;
@@ -36,17 +37,30 @@ public sealed class BusinessesController : ApiControllerBase
     private readonly GetBusinessPublicDetailHandler _getBusinessPublicDetail;
     private readonly GetBusinessPublicDetailWithMyAccountHandler _getBusinessPublicDetailWithMyAccountHandler;
     private readonly GetBusinessesForMapDiscoveryHandler _getBusinessesForMapDiscoveryHandler;
+    private readonly GetBusinessEngagementForMemberHandler _getBusinessEngagementForMemberHandler;
+    private readonly ToggleBusinessLikeHandler _toggleBusinessLikeHandler;
+    private readonly ToggleBusinessFavoriteHandler _toggleBusinessFavoriteHandler;
+    private readonly UpsertBusinessReviewHandler _upsertBusinessReviewHandler;
+
 
     public BusinessesController(
         GetBusinessesForDiscoveryHandler getBusinessesForDiscovery,
         GetBusinessPublicDetailHandler getBusinessPublicDetail,
         GetBusinessesForMapDiscoveryHandler getBusinessesForMapDiscoveryHandler,
-        GetBusinessPublicDetailWithMyAccountHandler getBusinessPublicDetailWithMyAccountHandler)
+        GetBusinessPublicDetailWithMyAccountHandler getBusinessPublicDetailWithMyAccountHandler,
+        GetBusinessEngagementForMemberHandler getBusinessEngagementForMemberHandler,
+        ToggleBusinessLikeHandler toggleBusinessLikeHandler,
+        ToggleBusinessFavoriteHandler toggleBusinessFavoriteHandler,
+        UpsertBusinessReviewHandler upsertBusinessReviewHandler)
     {
         _getBusinessesForDiscovery = getBusinessesForDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForDiscovery));
         _getBusinessPublicDetail = getBusinessPublicDetail ?? throw new ArgumentNullException(nameof(getBusinessPublicDetail));
         _getBusinessesForMapDiscoveryHandler = getBusinessesForMapDiscoveryHandler ?? throw new ArgumentNullException(nameof(getBusinessesForMapDiscoveryHandler));
         _getBusinessPublicDetailWithMyAccountHandler = getBusinessPublicDetailWithMyAccountHandler ?? throw new ArgumentNullException(nameof(getBusinessPublicDetailWithMyAccountHandler));
+        _getBusinessEngagementForMemberHandler = getBusinessEngagementForMemberHandler ?? throw new ArgumentNullException(nameof(getBusinessEngagementForMemberHandler));
+        _toggleBusinessLikeHandler = toggleBusinessLikeHandler ?? throw new ArgumentNullException(nameof(toggleBusinessLikeHandler));
+        _toggleBusinessFavoriteHandler = toggleBusinessFavoriteHandler ?? throw new ArgumentNullException(nameof(toggleBusinessFavoriteHandler));
+        _upsertBusinessReviewHandler = upsertBusinessReviewHandler ?? throw new ArgumentNullException(nameof(upsertBusinessReviewHandler));
     }
 
     [HttpPost("list")]
@@ -170,6 +184,173 @@ public sealed class BusinessesController : ApiControllerBase
         var contract = BusinessContractsMapper.ToContract(dto);
         return Ok(contract);
     }
+
+
+
+
+
+
+
+    /// <summary>
+    /// Returns a member-scoped engagement snapshot for the target business.
+    /// The payload contains aggregate counters (likes/favorites/ratings),
+    /// current-user states, my review (if any), and a short recent reviews list.
+    /// </summary>
+    /// <remarks>
+    /// This endpoint is intentionally read-only and optimized for Business Detail screen bootstrap
+    /// so mobile clients can render social proof and user state in one call.
+    /// </remarks>
+    [HttpGet("{id:guid}/engagement/my")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(BusinessEngagementSummaryResponse), 200)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
+    public async Task<IActionResult> GetMyEngagementAsync(
+        [FromRoute] Guid id,
+        CancellationToken ct = default)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem("Business id must be a non-empty GUID.");
+        }
+
+        var result = await _getBusinessEngagementForMemberHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        var dto = result.Value;
+        var response = new BusinessEngagementSummaryResponse
+        {
+            BusinessId = dto.BusinessId,
+            LikeCount = dto.LikeCount,
+            FavoriteCount = dto.FavoriteCount,
+            RatingCount = dto.RatingCount,
+            RatingAverage = dto.RatingAverage,
+            IsLikedByMe = dto.IsLikedByMe,
+            IsFavoritedByMe = dto.IsFavoritedByMe,
+            MyReview = dto.MyReview is null
+                ? null
+                : new BusinessReviewItem
+                {
+                    Id = dto.MyReview.Id,
+                    UserId = dto.MyReview.UserId,
+                    AuthorName = dto.MyReview.AuthorName,
+                    Rating = dto.MyReview.Rating,
+                    Comment = dto.MyReview.Comment,
+                    CreatedAtUtc = dto.MyReview.CreatedAtUtc
+                },
+            RecentReviews = dto.RecentReviews.Select(r => new BusinessReviewItem
+            {
+                Id = r.Id,
+                UserId = r.UserId,
+                AuthorName = r.AuthorName,
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedAtUtc = r.CreatedAtUtc
+            }).ToList()
+        };
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Toggles current member like state for the requested business.
+    /// Creates a like when missing, otherwise removes existing like.
+    /// </summary>
+    /// <remarks>
+    /// Response includes both final state and updated total count to support immediate UI refresh
+    /// without requiring an additional read request.
+    /// </remarks>
+    [HttpPut("{id:guid}/likes/toggle")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(ToggleBusinessReactionResponse), 200)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
+    public async Task<IActionResult> ToggleLikeAsync([FromRoute] Guid id, CancellationToken ct = default)
+    {
+        var result = await _toggleBusinessLikeHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(new ToggleBusinessReactionResponse
+        {
+            IsActive = result.Value.IsActive,
+            TotalCount = result.Value.TotalCount
+        });
+    }
+
+    /// <summary>
+    /// Toggles current member favorite state for the requested business.
+    /// Creates a favorite when missing, otherwise removes existing favorite relation.
+    /// </summary>
+    /// <remarks>
+    /// Response returns final boolean state plus updated count for optimistic client updates.
+    /// </remarks>
+    [HttpPut("{id:guid}/favorites/toggle")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(ToggleBusinessReactionResponse), 200)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
+    public async Task<IActionResult> ToggleFavoriteAsync([FromRoute] Guid id, CancellationToken ct = default)
+    {
+        var result = await _toggleBusinessFavoriteHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(new ToggleBusinessReactionResponse
+        {
+            IsActive = result.Value.IsActive,
+            TotalCount = result.Value.TotalCount
+        });
+    }
+
+    /// <summary>
+    /// Creates or updates current member review for the requested business.
+    /// </summary>
+    /// <remarks>
+    /// Uses upsert semantics to keep one active review per user/business.
+    /// Returns 204 on success to keep payload minimal and deterministic.
+    /// </remarks>
+    [HttpPut("{id:guid}/my-review")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
+    public async Task<IActionResult> UpsertMyReviewAsync(
+        [FromRoute] Guid id,
+        [FromBody] UpsertBusinessReviewRequest? request,
+        CancellationToken ct = default)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        var result = await _upsertBusinessReviewHandler
+            .HandleAsync(id, new UpsertBusinessReviewDto
+            {
+                Rating = request.Rating,
+                Comment = request.Comment
+            }, ct)
+            .ConfigureAwait(false);
+
+        if (!result.Succeeded)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return NoContent();
+    }
+
+
+
+
+
+
+
+
 
     // NOTE: GetBusinessesForMapDiscoveryHandler endpoint isn't shown in this controller file snippet,
     // but if/when you add it, it should also map using a dedicated mapper to keep the controller thin.

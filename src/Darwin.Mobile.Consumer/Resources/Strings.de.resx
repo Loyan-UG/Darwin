@@ -303,10 +303,10 @@
 	<data name="ProfileRequiredNames" xml:space="preserve">
     <value>Vorname und Nachname sind erforderlich.</value>
   </data>
-<data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
+	<data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
   <value>Beigetretene Unternehmen</value>
 </data>
-<data name="ProfileRequiredFields" xml:space="preserve">
+	<data name="ProfileRequiredFields" xml:space="preserve">
     <value>Bitte füllen Sie alle erforderlichen Profilfelder aus.</value>
   </data>
 	<data name="PasswordMismatch" xml:space="preserve">
@@ -384,7 +384,7 @@
 	<data name="ForgotPasswordFailed" xml:space="preserve">
   <value>Passwort-Zurücksetzung kann derzeit nicht angefordert werden. Bitte versuchen Sie es erneut.</value>
 </data>
-<data name="RegisterAutoLoginFailed" xml:space="preserve">
+	<data name="RegisterAutoLoginFailed" xml:space="preserve">
   <value>Ihr Konto wurde erstellt, aber die automatische Anmeldung ist fehlgeschlagen. Bitte melden Sie sich manuell an.</value>
 </data>
 	<data name="DiscoverMyBusinessesTab" xml:space="preserve">
@@ -455,5 +455,72 @@
 </data>
 	<data name="FeedNoAccountsMessage" xml:space="preserve">
   <value>Tritt zuerst einem Geschäft bei, um deinen Feed zu sehen.</value>
+</data>
+	<data name="BusinessDetailsNotFound" xml:space="preserve"><value>Geschäft nicht gefunden.</value></data>
+	<data name="BusinessDetailsLoadFailed" xml:space="preserve"><value>Geschäftsdetails konnten nicht geladen werden.</value></data>
+	<data name="BusinessEngagementTitle" xml:space="preserve"><value>Interaktionen</value></data>
+	<data name="BusinessEngagementLoadFailed" xml:space="preserve"><value>Interaktionsdaten konnten nicht geladen werden.</value></data>
+	<data name="BusinessLikeButton" xml:space="preserve"><value>Gefällt mir / Entfernen</value></data>
+	<data name="BusinessFavoriteButton" xml:space="preserve"><value>Favorit / Entfernen</value></data>
+	<data name="BusinessLikeToggleFailed" xml:space="preserve"><value>Gefällt-mir-Status konnte nicht aktualisiert werden.</value></data>
+	<data name="BusinessFavoriteToggleFailed" xml:space="preserve"><value>Favoritenstatus konnte nicht aktualisiert werden.</value></data>
+	<data name="BusinessMyReviewTitle" xml:space="preserve"><value>Meine Bewertung</value></data>
+	<data name="BusinessMyReviewRatingLabel" xml:space="preserve"><value>Bewertung</value></data>
+	<data name="BusinessMyReviewCommentPlaceholder" xml:space="preserve"><value>Schreibe dein Feedback (optional).</value></data>
+	<data name="BusinessSaveReviewButton" xml:space="preserve"><value>Bewertung speichern</value></data>
+	<data name="BusinessReviewSaveFailed" xml:space="preserve"><value>Deine Bewertung konnte nicht gespeichert werden.</value></data>
+	<data name="BusinessRecentReviewsTitle" xml:space="preserve"><value>Aktuelle Bewertungen</value></data>
+	<data name="BusinessJoinFailed" xml:space="preserve"><value>Dem Treueprogramm konnte nicht beigetreten werden.</value></data>
+	<data name="BusinessScanSessionPrepareFailed" xml:space="preserve"><value>Scan-Sitzung konnte nicht erstellt werden.</value></data>
+	<data name="BusinessCityFormat" xml:space="preserve">
+  <value>Stadt: {0}</value>
+</data>
+	<data name="BusinessWebsiteFormat" xml:space="preserve">
+  <value>Website: {0}</value>
+</data>
+	<data name="BusinessPhoneFormat" xml:space="preserve">
+  <value>Telefon: {0}</value>
+</data>
+	<data name="BusinessEmailFormat" xml:space="preserve">
+  <value>E-Mail: {0}</value>
+</data>
+	<data name="BusinessInformationTitle" xml:space="preserve">
+  <value>Geschäftsinformationen</value>
+</data>
+	<data name="BusinessLoyaltyProgramTitle" xml:space="preserve">
+  <value>Treueprogramm</value>
+</data>
+	<data name="BusinessRewardTiersTitle" xml:space="preserve">
+  <value>Prämienstufen</value>
+</data>
+	<data name="BusinessPointsFormat" xml:space="preserve">
+  <value>Punkte: {0}</value>
+</data>
+	<data name="BusinessRewardTypeFormat" xml:space="preserve">
+  <value>Typ: {0}</value>
+</data>
+	<data name="BusinessRewardValueFormat" xml:space="preserve">
+  <value>Wert: {0}</value>
+</data>
+	<data name="BusinessSelfRedemptionFormat" xml:space="preserve">
+  <value>Selbsteinlösung: {0}</value>
+</data>
+	<data name="BusinessLikesCountFormat" xml:space="preserve">
+  <value>Likes: {0}</value>
+</data>
+	<data name="BusinessFavoritesCountFormat" xml:space="preserve">
+  <value>Favoriten: {0}</value>
+</data>
+	<data name="BusinessRatingFormat" xml:space="preserve">
+  <value>Bewertung: {0}</value>
+</data>
+	<data name="BusinessReviewsCountFormat" xml:space="preserve">
+  <value>Bewertungen: {0}</value>
+</data>
+	<data name="BusinessCurrentRatingFormat" xml:space="preserve">
+  <value>Aktuelle Bewertung: {0}/5</value>
+</data>
+	<data name="BusinessReviewRatingFormat" xml:space="preserve">
+  <value>Bewertung: {0}/5</value>
 </data>
 </root>

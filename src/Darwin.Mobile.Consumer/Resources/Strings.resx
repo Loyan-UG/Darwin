@@ -456,4 +456,71 @@
 	<data name="FeedNoAccountsMessage" xml:space="preserve">
   <value>Join a business first to see your feed.</value>
 </data>
+	<data name="BusinessDetailsNotFound" xml:space="preserve"><value>Business not found.</value></data>
+	<data name="BusinessDetailsLoadFailed" xml:space="preserve"><value>Unable to load business details.</value></data>
+	<data name="BusinessEngagementTitle" xml:space="preserve"><value>Engagement</value></data>
+	<data name="BusinessEngagementLoadFailed" xml:space="preserve"><value>Unable to load engagement details.</value></data>
+	<data name="BusinessLikeButton" xml:space="preserve"><value>Like / Unlike</value></data>
+	<data name="BusinessFavoriteButton" xml:space="preserve"><value>Favorite / Unfavorite</value></data>
+	<data name="BusinessLikeToggleFailed" xml:space="preserve"><value>Unable to update like state.</value></data>
+	<data name="BusinessFavoriteToggleFailed" xml:space="preserve"><value>Unable to update favorite state.</value></data>
+	<data name="BusinessMyReviewTitle" xml:space="preserve"><value>My review</value></data>
+	<data name="BusinessMyReviewRatingLabel" xml:space="preserve"><value>Rating</value></data>
+	<data name="BusinessMyReviewCommentPlaceholder" xml:space="preserve"><value>Write your feedback (optional).</value></data>
+	<data name="BusinessSaveReviewButton" xml:space="preserve"><value>Save review</value></data>
+	<data name="BusinessReviewSaveFailed" xml:space="preserve"><value>Unable to save your review.</value></data>
+	<data name="BusinessRecentReviewsTitle" xml:space="preserve"><value>Recent reviews</value></data>
+	<data name="BusinessJoinFailed" xml:space="preserve"><value>Unable to join the loyalty program.</value></data>
+	<data name="BusinessScanSessionPrepareFailed" xml:space="preserve"><value>Unable to create scan session.</value></data>
+	<data name="BusinessCityFormat" xml:space="preserve">
+  <value>City: {0}</value>
+</data>
+	<data name="BusinessWebsiteFormat" xml:space="preserve">
+  <value>Website: {0}</value>
+</data>
+	<data name="BusinessPhoneFormat" xml:space="preserve">
+  <value>Phone: {0}</value>
+</data>
+	<data name="BusinessEmailFormat" xml:space="preserve">
+  <value>Email: {0}</value>
+</data>
+	<data name="BusinessInformationTitle" xml:space="preserve">
+  <value>Business Information</value>
+</data>
+	<data name="BusinessLoyaltyProgramTitle" xml:space="preserve">
+  <value>Loyalty Program</value>
+</data>
+	<data name="BusinessRewardTiersTitle" xml:space="preserve">
+  <value>Reward Tiers</value>
+</data>
+	<data name="BusinessPointsFormat" xml:space="preserve">
+  <value>Points: {0}</value>
+</data>
+	<data name="BusinessRewardTypeFormat" xml:space="preserve">
+  <value>Type: {0}</value>
+</data>
+	<data name="BusinessRewardValueFormat" xml:space="preserve">
+  <value>Value: {0}</value>
+</data>
+	<data name="BusinessSelfRedemptionFormat" xml:space="preserve">
+  <value>Self Redemption: {0}</value>
+</data>
+	<data name="BusinessLikesCountFormat" xml:space="preserve">
+  <value>Likes: {0}</value>
+</data>
+	<data name="BusinessFavoritesCountFormat" xml:space="preserve">
+  <value>Favorites: {0}</value>
+</data>
+	<data name="BusinessRatingFormat" xml:space="preserve">
+  <value>Rating: {0}</value>
+</data>
+	<data name="BusinessReviewsCountFormat" xml:space="preserve">
+  <value>Reviews: {0}</value>
+</data>
+	<data name="BusinessCurrentRatingFormat" xml:space="preserve">
+  <value>Current rating: {0}/5</value>
+</data>
+	<data name="BusinessReviewRatingFormat" xml:space="preserve">
+  <value>Rating: {0}/5</value>
+</data>
 </root>

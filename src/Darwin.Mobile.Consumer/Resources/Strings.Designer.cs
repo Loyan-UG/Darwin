@@ -88,6 +88,42 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to City: {0}.
+        /// </summary>
+        internal static string BusinessCityFormat {
+            get {
+                return ResourceManager.GetString("BusinessCityFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current rating: {0}/5.
+        /// </summary>
+        internal static string BusinessCurrentRatingFormat {
+            get {
+                return ResourceManager.GetString("BusinessCurrentRatingFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load business details..
+        /// </summary>
+        internal static string BusinessDetailsLoadFailed {
+            get {
+                return ResourceManager.GetString("BusinessDetailsLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Business not found..
+        /// </summary>
+        internal static string BusinessDetailsNotFound {
+            get {
+                return ResourceManager.GetString("BusinessDetailsNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Additional details coming soon..
         /// </summary>
         internal static string BusinessDetailsPlaceholder {
@@ -102,6 +138,267 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string BusinessDetailsTitle {
             get {
                 return ResourceManager.GetString("BusinessDetailsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Email: {0}.
+        /// </summary>
+        internal static string BusinessEmailFormat {
+            get {
+                return ResourceManager.GetString("BusinessEmailFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load engagement details..
+        /// </summary>
+        internal static string BusinessEngagementLoadFailed {
+            get {
+                return ResourceManager.GetString("BusinessEngagementLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Engagement.
+        /// </summary>
+        internal static string BusinessEngagementTitle {
+            get {
+                return ResourceManager.GetString("BusinessEngagementTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Favorite / Unfavorite.
+        /// </summary>
+        internal static string BusinessFavoriteButton {
+            get {
+                return ResourceManager.GetString("BusinessFavoriteButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Favorites: {0}.
+        /// </summary>
+        internal static string BusinessFavoritesCountFormat {
+            get {
+                return ResourceManager.GetString("BusinessFavoritesCountFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to update favorite state..
+        /// </summary>
+        internal static string BusinessFavoriteToggleFailed {
+            get {
+                return ResourceManager.GetString("BusinessFavoriteToggleFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Business Information.
+        /// </summary>
+        internal static string BusinessInformationTitle {
+            get {
+                return ResourceManager.GetString("BusinessInformationTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to join the loyalty program..
+        /// </summary>
+        internal static string BusinessJoinFailed {
+            get {
+                return ResourceManager.GetString("BusinessJoinFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Like / Unlike.
+        /// </summary>
+        internal static string BusinessLikeButton {
+            get {
+                return ResourceManager.GetString("BusinessLikeButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Likes: {0}.
+        /// </summary>
+        internal static string BusinessLikesCountFormat {
+            get {
+                return ResourceManager.GetString("BusinessLikesCountFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to update like state..
+        /// </summary>
+        internal static string BusinessLikeToggleFailed {
+            get {
+                return ResourceManager.GetString("BusinessLikeToggleFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loyalty Program.
+        /// </summary>
+        internal static string BusinessLoyaltyProgramTitle {
+            get {
+                return ResourceManager.GetString("BusinessLoyaltyProgramTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Write your feedback (optional)..
+        /// </summary>
+        internal static string BusinessMyReviewCommentPlaceholder {
+            get {
+                return ResourceManager.GetString("BusinessMyReviewCommentPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rating.
+        /// </summary>
+        internal static string BusinessMyReviewRatingLabel {
+            get {
+                return ResourceManager.GetString("BusinessMyReviewRatingLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to My review.
+        /// </summary>
+        internal static string BusinessMyReviewTitle {
+            get {
+                return ResourceManager.GetString("BusinessMyReviewTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Phone: {0}.
+        /// </summary>
+        internal static string BusinessPhoneFormat {
+            get {
+                return ResourceManager.GetString("BusinessPhoneFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Points: {0}.
+        /// </summary>
+        internal static string BusinessPointsFormat {
+            get {
+                return ResourceManager.GetString("BusinessPointsFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rating: {0}.
+        /// </summary>
+        internal static string BusinessRatingFormat {
+            get {
+                return ResourceManager.GetString("BusinessRatingFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recent reviews.
+        /// </summary>
+        internal static string BusinessRecentReviewsTitle {
+            get {
+                return ResourceManager.GetString("BusinessRecentReviewsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rating: {0}/5.
+        /// </summary>
+        internal static string BusinessReviewRatingFormat {
+            get {
+                return ResourceManager.GetString("BusinessReviewRatingFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to save your review..
+        /// </summary>
+        internal static string BusinessReviewSaveFailed {
+            get {
+                return ResourceManager.GetString("BusinessReviewSaveFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reviews: {0}.
+        /// </summary>
+        internal static string BusinessReviewsCountFormat {
+            get {
+                return ResourceManager.GetString("BusinessReviewsCountFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reward Tiers.
+        /// </summary>
+        internal static string BusinessRewardTiersTitle {
+            get {
+                return ResourceManager.GetString("BusinessRewardTiersTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type: {0}.
+        /// </summary>
+        internal static string BusinessRewardTypeFormat {
+            get {
+                return ResourceManager.GetString("BusinessRewardTypeFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value: {0}.
+        /// </summary>
+        internal static string BusinessRewardValueFormat {
+            get {
+                return ResourceManager.GetString("BusinessRewardValueFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save review.
+        /// </summary>
+        internal static string BusinessSaveReviewButton {
+            get {
+                return ResourceManager.GetString("BusinessSaveReviewButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to create scan session..
+        /// </summary>
+        internal static string BusinessScanSessionPrepareFailed {
+            get {
+                return ResourceManager.GetString("BusinessScanSessionPrepareFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Self Redemption: {0}.
+        /// </summary>
+        internal static string BusinessSelfRedemptionFormat {
+            get {
+                return ResourceManager.GetString("BusinessSelfRedemptionFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Website: {0}.
+        /// </summary>
+        internal static string BusinessWebsiteFormat {
+            get {
+                return ResourceManager.GetString("BusinessWebsiteFormat", resourceCulture);
             }
         }
         
