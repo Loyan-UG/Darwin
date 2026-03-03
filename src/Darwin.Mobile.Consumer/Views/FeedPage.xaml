@@ -15,6 +15,30 @@
             <Label Text="{x:Static res:AppResources.FeedTitle}"
                    Style="{StaticResource TitleLabelStyle}" />
 
+            <Label Text="{x:Static res:AppResources.FeedBusinessPickerLabel}"
+                   IsVisible="{Binding HasAccounts}" />
+
+            <Picker Title="{x:Static res:AppResources.FeedBusinessPickerLabel}"
+                    ItemsSource="{Binding Accounts}"
+                    ItemDisplayBinding="{Binding BusinessName}"
+                    SelectedItem="{Binding SelectedAccount}"
+                    IsVisible="{Binding HasAccounts}" />
+
+            <Label Text="{Binding SelectedPointsText}"
+                   IsVisible="{Binding CanNavigateWithSelection}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" IsVisible="{Binding CanNavigateWithSelection}">
+                <Button Grid.Column="0"
+                        Text="{x:Static res:AppResources.FeedOpenQrButton}"
+                        Command="{Binding OpenQrCommand}" />
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.FeedOpenRewardsButton}"
+                        Command="{Binding OpenRewardsCommand}" />
+            </Grid>
+
+            <Button Text="{x:Static res:AppResources.FeedRefreshButton}"
+                    Command="{Binding RefreshCommand}" />
+
             <Label Text="{x:Static res:AppResources.FeedEmptyMessage}"
                    IsVisible="{Binding HasItems, Converter={StaticResource InverseBoolConverter}}" />
 

@@ -523,4 +523,13 @@
 	<data name="BusinessReviewRatingFormat" xml:space="preserve">
   <value>Bewertung: {0}/5</value>
 </data>
+	<data name="FeedOpenQrButton" xml:space="preserve">
+  <value>QR öffnen</value>
+</data>
+	<data name="FeedOpenRewardsButton" xml:space="preserve">
+  <value>Prämien öffnen</value>
+</data>
+	<data name="FeedSelectedBusinessPointsFormat" xml:space="preserve">
+  <value>Punkte: {0}</value>
+</data>
 </root>

@@ -718,6 +718,33 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open QR.
+        /// </summary>
+        internal static string FeedOpenQrButton {
+            get {
+                return ResourceManager.GetString("FeedOpenQrButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open Rewards.
+        /// </summary>
+        internal static string FeedOpenRewardsButton {
+            get {
+                return ResourceManager.GetString("FeedOpenRewardsButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Points: {0}.
+        /// </summary>
+        internal static string FeedSelectedBusinessPointsFormat {
+            get {
+                return ResourceManager.GetString("FeedSelectedBusinessPointsFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Feed.
         /// </summary>
         internal static string FeedTitle {

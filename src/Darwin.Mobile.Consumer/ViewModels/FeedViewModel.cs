@@ -1,40 +1,58 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Shared.Commands;
+using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// View model for the Consumer feed/promotions tab.
+/// View model for the consumer Feed tab.
 /// </summary>
 /// <remarks>
-/// The initial Feed implementation is backed by the loyalty timeline endpoint.
-/// It provides a stable, paged stream of customer-facing loyalty events and can
-/// later be extended with dedicated promotions payloads without breaking the tab UX.
+/// <para>
+/// Feed is intentionally business-scoped because loyalty timeline entries are attached
+/// to a single loyalty account and each account belongs to one business.
+/// </para>
+/// <para>
+/// Current implementation uses the loyalty timeline endpoint as the feed source and provides
+/// account selection, paging, refresh, and direct context actions (Open QR / Open Rewards).
+/// </para>
 /// </remarks>
 public sealed class FeedViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
+    private readonly INavigationService _navigationService;
 
     private bool _hasLoaded;
     private bool _isLoadingMore;
     private DateTime? _nextBeforeAtUtc;
     private Guid? _nextBeforeId;
-    private Guid _activeBusinessId;
+    private LoyaltyAccountSummary? _selectedAccount;
+    private bool _suppressSelectionRefresh;
 
-    public FeedViewModel(ILoyaltyService loyaltyService)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeedViewModel"/> class.
+    /// </summary>
+    public FeedViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         Items = new ObservableCollection<LoyaltyTimelineEntry>();
-        RefreshCommand = new AsyncCommand(RefreshAsync);
+        Accounts = new ObservableCollection<LoyaltyAccountSummary>();
+
+        RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         LoadMoreCommand = new AsyncCommand(LoadMoreAsync, () => HasMore && !_isLoadingMore && !IsBusy);
+        OpenQrCommand = new AsyncCommand(OpenQrAsync, () => CanNavigateWithSelection);
+        OpenRewardsCommand = new AsyncCommand(OpenRewardsAsync, () => CanNavigateWithSelection);
     }
 
     /// <summary>
@@ -43,18 +61,75 @@ public sealed class FeedViewModel : BaseViewModel
     public ObservableCollection<LoyaltyTimelineEntry> Items { get; }
 
     /// <summary>
+    /// Joined loyalty accounts available for business-context switching.
+    /// </summary>
+    public ObservableCollection<LoyaltyAccountSummary> Accounts { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the user has at least one joined account.
+    /// </summary>
+    public bool HasAccounts => Accounts.Count > 0;
+
+    /// <summary>
     /// True when more server pages are available.
     /// </summary>
     public bool HasMore => _nextBeforeAtUtc.HasValue && _nextBeforeId.HasValue;
 
     /// <summary>
-    /// True when no feed records exist.
+    /// True when at least one feed record exists.
     /// </summary>
     public bool HasItems => Items.Count > 0;
+
+    /// <summary>
+    /// True when navigation actions can use the selected business context.
+    /// </summary>
+    public bool CanNavigateWithSelection => SelectedAccount is not null && SelectedAccount.BusinessId != Guid.Empty && !IsBusy;
+
+    /// <summary>
+    /// Localized points summary for the selected business context.
+    /// </summary>
+    public string SelectedPointsText
+        => SelectedAccount is null
+            ? string.Empty
+            : string.Format(Resources.AppResources.FeedSelectedBusinessPointsFormat, SelectedAccount.PointsBalance);
+
+    /// <summary>
+    /// Currently selected account that defines the active business context of the feed.
+    /// </summary>
+    public LoyaltyAccountSummary? SelectedAccount
+    {
+        get => _selectedAccount;
+        set
+        {
+            if (!SetProperty(ref _selectedAccount, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(CanNavigateWithSelection));
+            OnPropertyChanged(nameof(SelectedPointsText));
+            OpenQrCommand.RaiseCanExecuteChanged();
+            OpenRewardsCommand.RaiseCanExecuteChanged();
+
+            if (value is null || value.BusinessId == Guid.Empty)
+            {
+                return;
+            }
+
+            if (!_suppressSelectionRefresh)
+            {
+                _ = SafeRefreshForSelectionChangeAsync();
+            }
+        }
+    }
 
     public AsyncCommand RefreshCommand { get; }
 
     public AsyncCommand LoadMoreCommand { get; }
+
+    public AsyncCommand OpenQrCommand { get; }
+
+    public AsyncCommand OpenRewardsCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -76,69 +151,28 @@ public sealed class FeedViewModel : BaseViewModel
 
         IsBusy = true;
         ErrorMessage = null;
+        RaiseCommandsCanExecute();
 
         try
         {
-            if (!await EnsureActiveBusinessAsync())
+            var selectedBusinessId = await LoadAccountsAndResolveSelectionAsync();
+            if (selectedBusinessId == Guid.Empty)
             {
                 return;
             }
 
-            var request = new GetMyLoyaltyTimelinePageRequest
-            {
-                BusinessId = _activeBusinessId,
-                PageSize = 20,
-                BeforeAtUtc = null,
-                BeforeId = null
-            };
-
-            var result = await _loyaltyService.GetMyLoyaltyTimelinePageAsync(request, CancellationToken.None);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                ErrorMessage = Resources.AppResources.FeedLoadFailed;
-                RunOnMain(() =>
-                {
-                    Items.Clear();
-                    OnPropertyChanged(nameof(HasItems));
-                });
-
-                _nextBeforeAtUtc = null;
-                _nextBeforeId = null;
-                LoadMoreCommand.RaiseCanExecuteChanged();
-                return;
-            }
-
-            var ordered = result.Value.Items
-                .OrderByDescending(i => i.OccurredAtUtc)
-                .ToList();
-
-            RunOnMain(() =>
-            {
-                Items.Clear();
-                foreach (var item in ordered)
-                {
-                    Items.Add(item);
-                }
-
-                OnPropertyChanged(nameof(HasItems));
-            });
-
-            _nextBeforeAtUtc = result.Value.NextBeforeAtUtc;
-            _nextBeforeId = result.Value.NextBeforeId;
-            OnPropertyChanged(nameof(HasMore));
-            LoadMoreCommand.RaiseCanExecuteChanged();
+            await LoadFirstPageAsync(selectedBusinessId);
         }
         finally
         {
             IsBusy = false;
-            LoadMoreCommand.RaiseCanExecuteChanged();
+            RaiseCommandsCanExecute();
         }
     }
 
     private async Task LoadMoreAsync()
     {
-        if (_isLoadingMore || IsBusy || !HasMore)
+        if (_isLoadingMore || IsBusy || !HasMore || SelectedAccount is null)
         {
             return;
         }
@@ -149,14 +183,9 @@ public sealed class FeedViewModel : BaseViewModel
 
         try
         {
-            if (_activeBusinessId == Guid.Empty && !await EnsureActiveBusinessAsync())
-            {
-                return;
-            }
-
             var request = new GetMyLoyaltyTimelinePageRequest
             {
-                BusinessId = _activeBusinessId,
+                BusinessId = SelectedAccount.BusinessId,
                 PageSize = 20,
                 BeforeAtUtc = _nextBeforeAtUtc,
                 BeforeId = _nextBeforeId
@@ -196,43 +225,197 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Resolves a deterministic business context for the feed by selecting the first joined account.
-    /// The timeline endpoint is business-scoped, therefore sending a null/empty business id always fails.
+    /// Loads all joined accounts and resolves a deterministic selection.
+    /// Priority is the previously selected business (if still present), otherwise the first account alphabetically.
     /// </summary>
-    /// <returns>
-    /// True when a valid business id was resolved; otherwise false and the view model shows a user-safe message.
-    /// </returns>
-    private async Task<bool> EnsureActiveBusinessAsync()
+    private async Task<Guid> LoadAccountsAndResolveSelectionAsync()
     {
-        if (_activeBusinessId != Guid.Empty)
-        {
-            return true;
-        }
+        var previousBusinessId = SelectedAccount?.BusinessId ?? Guid.Empty;
 
         var accountsResult = await _loyaltyService.GetMyAccountsAsync(CancellationToken.None);
         if (!accountsResult.Succeeded || accountsResult.Value is null)
         {
             ErrorMessage = Resources.AppResources.FeedLoadFailed;
-            return false;
+            return Guid.Empty;
         }
 
-        var account = accountsResult.Value.FirstOrDefault();
-        if (account is null)
+        var orderedAccounts = accountsResult.Value
+            .Where(a => a.BusinessId != Guid.Empty)
+            .OrderBy(a => a.BusinessName)
+            .ToList();
+
+        RunOnMain(() =>
+        {
+            Accounts.Clear();
+            foreach (var account in orderedAccounts)
+            {
+                Accounts.Add(account);
+            }
+
+            OnPropertyChanged(nameof(HasAccounts));
+        });
+
+        if (orderedAccounts.Count == 0)
         {
             ErrorMessage = Resources.AppResources.FeedNoAccountsMessage;
-            RunOnMain(() =>
-            {
-                Items.Clear();
-                OnPropertyChanged(nameof(HasItems));
-            });
-
-            _nextBeforeAtUtc = null;
-            _nextBeforeId = null;
-            OnPropertyChanged(nameof(HasMore));
-            return false;
+            ClearFeedCollections();
+            return Guid.Empty;
         }
 
-        _activeBusinessId = account.BusinessId;
-        return true;
+        var selected = orderedAccounts.FirstOrDefault(a => a.BusinessId == previousBusinessId) ?? orderedAccounts[0];
+
+        RunOnMain(() =>
+        {
+            _suppressSelectionRefresh = true;
+            SelectedAccount = selected;
+            _suppressSelectionRefresh = false;
+        });
+
+        return selected.BusinessId;
+    }
+
+    /// <summary>
+    /// Loads the first page for the selected business and resets pagination state.
+    /// </summary>
+    private async Task LoadFirstPageAsync(Guid businessId)
+    {
+        var request = new GetMyLoyaltyTimelinePageRequest
+        {
+            BusinessId = businessId,
+            PageSize = 20,
+            BeforeAtUtc = null,
+            BeforeId = null
+        };
+
+        var result = await _loyaltyService.GetMyLoyaltyTimelinePageAsync(request, CancellationToken.None);
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            ErrorMessage = Resources.AppResources.FeedLoadFailed;
+            ClearFeedCollections();
+            return;
+        }
+
+        var ordered = result.Value.Items
+            .OrderByDescending(i => i.OccurredAtUtc)
+            .ToList();
+
+        RunOnMain(() =>
+        {
+            Items.Clear();
+            foreach (var item in ordered)
+            {
+                Items.Add(item);
+            }
+
+            OnPropertyChanged(nameof(HasItems));
+        });
+
+        _nextBeforeAtUtc = result.Value.NextBeforeAtUtc;
+        _nextBeforeId = result.Value.NextBeforeId;
+        OnPropertyChanged(nameof(HasMore));
+    }
+
+    /// <summary>
+    /// Safe wrapper for selection-triggered refresh to avoid unobserved task exceptions.
+    /// </summary>
+    private async Task SafeRefreshForSelectionChangeAsync()
+    {
+        try
+        {
+            if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty)
+            {
+                return;
+            }
+
+            if (IsBusy)
+            {
+                return;
+            }
+
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseCommandsCanExecute();
+
+            await LoadFirstPageAsync(SelectedAccount.BusinessId);
+        }
+        catch
+        {
+            ErrorMessage = Resources.AppResources.FeedLoadFailed;
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandsCanExecute();
+        }
+    }
+
+    /// <summary>
+    /// Navigates to QR tab using selected business as context.
+    /// </summary>
+    private async Task OpenQrAsync()
+    {
+        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty)
+        {
+            return;
+        }
+
+        var parameters = BuildContextParameters();
+        await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+    }
+
+    /// <summary>
+    /// Navigates to Rewards tab using selected business as context.
+    /// </summary>
+    private async Task OpenRewardsAsync()
+    {
+        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty)
+        {
+            return;
+        }
+
+        var parameters = BuildContextParameters();
+        await _navigationService.GoToAsync($"//{Routes.Rewards}", parameters);
+    }
+
+    /// <summary>
+    /// Creates a consistent Shell parameter payload for business-context navigation.
+    /// </summary>
+    private Dictionary<string, object?> BuildContextParameters()
+    {
+        return new Dictionary<string, object?>
+        {
+            ["businessId"] = SelectedAccount?.BusinessId,
+            ["businessName"] = SelectedAccount?.BusinessName,
+            ["pointsBalance"] = SelectedAccount?.PointsBalance
+        };
+    }
+
+    /// <summary>
+    /// Clears feed records and pagination cursor while keeping account list intact.
+    /// </summary>
+    private void ClearFeedCollections()
+    {
+        RunOnMain(() =>
+        {
+            Items.Clear();
+            OnPropertyChanged(nameof(HasItems));
+        });
+
+        _nextBeforeAtUtc = null;
+        _nextBeforeId = null;
+        OnPropertyChanged(nameof(HasMore));
+    }
+
+    /// <summary>
+    /// Re-evaluates command state whenever busy/selection/paging state changes.
+    /// </summary>
+    private void RaiseCommandsCanExecute()
+    {
+        RefreshCommand.RaiseCanExecuteChanged();
+        LoadMoreCommand.RaiseCanExecuteChanged();
+        OpenQrCommand.RaiseCanExecuteChanged();
+        OpenRewardsCommand.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(CanNavigateWithSelection));
     }
 }

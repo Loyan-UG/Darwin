@@ -189,4 +189,8 @@ public static class AppResources
     public static string BusinessReviewsCountFormat => ResourceManager.GetString(nameof(BusinessReviewsCountFormat), Culture) ?? "Reviews: {0}";
     public static string BusinessCurrentRatingFormat => ResourceManager.GetString(nameof(BusinessCurrentRatingFormat), Culture) ?? "Current rating: {0}/5";
     public static string BusinessReviewRatingFormat => ResourceManager.GetString(nameof(BusinessReviewRatingFormat), Culture) ?? "Rating: {0}/5";
+    public static string FeedOpenQrButton => ResourceManager.GetString(nameof(FeedOpenQrButton), Culture) ?? "Open QR";
+    public static string FeedOpenRewardsButton => ResourceManager.GetString(nameof(FeedOpenRewardsButton), Culture) ?? "Open Rewards";
+    public static string FeedSelectedBusinessPointsFormat => ResourceManager.GetString(nameof(FeedSelectedBusinessPointsFormat), Culture) ?? "Points: {0}";
+
 }
