@@ -139,7 +139,7 @@ It is designed as the **single source of truth** for development planning.
 - Business onboarding endpoints
 - Reward configuration endpoints
 - [x] Push notification registration (device tokens)
-- Extended discovery filters
+- [x] Extended discovery filters
 - Public Catalog endpoints for future storefront use
 
 ## 3.2 Mobile Consumer App – Phase 2

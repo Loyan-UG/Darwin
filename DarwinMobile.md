@@ -166,7 +166,7 @@ These Contracts support Phase-1/2 of the mobile roadmap while being extendable (
 
 ### 4.4 Businesses (Discovery)
 
-- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, sort, paging.
+- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, min-rating, active-loyalty-only, sort, paging.
 - `BusinessSummary` – id, name, category, rating, approximate location, open-now.
 - `BusinessDetail` – description, opening hours, phones/links, address, images, loyalty program preview.
 
