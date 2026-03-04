@@ -67,6 +67,7 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string List = "api/v1/businesses/list";
             public const string Map = "api/v1/businesses/map";
+            public const string Onboarding = "api/v1/businesses/onboarding";
             public static string GetById(Guid id) => $"api/v1/businesses/{id:D}";
             public static string GetWithMyAccount(Guid id) => $"api/v1/businesses/{id:D}/with-my-account";
             public const string CategoryKinds = "api/v1/businesses/category-kinds";
@@ -80,6 +81,14 @@ namespace Darwin.Mobile.Shared.Api
         /// <summary>
         /// Loyalty endpoints (WebApi).
         /// </summary>
+
+        /// <summary>
+        /// Notifications/device-registration endpoints (WebApi).
+        /// </summary>
+        public static class Notifications
+        {
+            public const string RegisterDevice = "api/v1/notifications/devices/register";
+        }
         public static class Loyalty
         {
             public const string PrepareScanSession = "api/v1/loyalty/scan/prepare";

@@ -51,6 +51,17 @@ namespace Darwin.Contracts.Businesses
         /// </remarks>
         public string? CategoryKindKey { get; init; }
 
+
+        /// <summary>
+        /// Optional minimum average rating filter (inclusive), expected range 0..5.
+        /// </summary>
+        public double? MinRating { get; init; }
+
+        /// <summary>
+        /// Optional filter to include only businesses that currently have an active loyalty program.
+        /// </summary>
+        public bool? HasActiveLoyaltyProgram { get; init; }
+
         /// <summary>
         /// Optional origin coordinate for proximity discovery (e.g. current device location).
         /// </summary>

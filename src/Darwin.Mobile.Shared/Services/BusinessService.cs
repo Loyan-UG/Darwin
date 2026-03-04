@@ -20,6 +20,7 @@ namespace Darwin.Mobile.Shared.Services
         Task<BusinessDetail?> GetAsync(Guid id, CancellationToken ct);
         Task<BusinessDetailWithMyAccount?> GetWithMyAccountAsync(Guid id, CancellationToken ct);
         Task<BusinessCategoryKindsResponse?> GetCategoryKindsAsync(CancellationToken ct);
+        Task<Result<BusinessOnboardingResponse>> OnboardAsync(BusinessOnboardingRequest request, CancellationToken ct);
 
         Task<Result<BusinessEngagementSummaryResponse>> GetMyEngagementAsync(Guid businessId, CancellationToken ct);
         Task<Result<ToggleBusinessReactionResponse>> ToggleLikeAsync(Guid businessId, CancellationToken ct);
@@ -47,6 +48,9 @@ namespace Darwin.Mobile.Shared.Services
 
         public Task<BusinessCategoryKindsResponse?> GetCategoryKindsAsync(CancellationToken ct)
             => _api.GetAsync<BusinessCategoryKindsResponse>(ApiRoutes.Businesses.CategoryKinds, ct);
+
+        public Task<Result<BusinessOnboardingResponse>> OnboardAsync(BusinessOnboardingRequest request, CancellationToken ct)
+            => _api.PostResultAsync<BusinessOnboardingRequest, BusinessOnboardingResponse>(ApiRoutes.Businesses.Onboarding, request, ct);
 
         public Task<Result<BusinessEngagementSummaryResponse>> GetMyEngagementAsync(Guid businessId, CancellationToken ct)
             => _api.GetResultAsync<BusinessEngagementSummaryResponse>(ApiRoutes.Businesses.GetMyEngagement(businessId), ct);
