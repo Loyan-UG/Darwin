@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
 
         // Root navigation service for window-aware app root switching.
         services.AddSingleton<IAppRootNavigator, AppRootNavigator>();
+        services.AddSingleton<IConsumerPushTokenProvider, ConsumerNoopPushTokenProvider>();
         services.AddSingleton<IConsumerPushRegistrationCoordinator, ConsumerPushRegistrationCoordinator>();
 
         // Platform services (scanner, location)
