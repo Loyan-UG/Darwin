@@ -391,6 +391,7 @@ services.AddDarwinMobileShared(new ApiOptions
 | Auth      | POST /api/v1/auth/password/request-reset     | AllowAnonymous              | Consumer   |
 | Auth      | POST /api/v1/auth/password/reset             | AllowAnonymous              | Consumer   |
 | Auth      | POST /api/v1/auth/password/change            | Authorize                   | Both       |
+| Notifications | POST /api/v1/notifications/devices/register | Authorize                | Both       |
 | Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |
@@ -439,6 +440,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.
 - **Loyalty**: `LoyaltyScanMode`, `LoyaltyScanAllowedActions`, `LoyaltyRewardSummary`, `LoyaltyAccountSummary`, `PrepareScanSessionRequest/Response`, `ProcessScanSessionForBusinessRequest/Response`, `ConfirmAccrualRequest/Response`, `ConfirmRedemptionRequest/Response`.
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
+- **Notifications**: `MobileDevicePlatform`, `RegisterPushDeviceRequest`, `RegisterPushDeviceResponse`.
 
 > Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 
