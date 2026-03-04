@@ -9,6 +9,8 @@ using Darwin.Mobile.Shared.Models.Loyalty;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Business.Resources;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
@@ -26,6 +28,7 @@ public sealed class ScannerViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly IScanner _scanner;
     private readonly INavigationService _navigationService;
+    private readonly IBusinessAuthorizationService _authorizationService;
 
     private string _lastScannedToken = string.Empty;
     private BusinessScanSessionClientModel? _currentSession;
@@ -51,11 +54,13 @@ public sealed class ScannerViewModel : BaseViewModel
     public ScannerViewModel(
         ILoyaltyService loyaltyService,
         IScanner scanner,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IBusinessAuthorizationService authorizationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
 
         ScanCommand = new AsyncCommand(ScanAsync);
         ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual);
@@ -228,6 +233,13 @@ public sealed class ScannerViewModel : BaseViewModel
             return;
         }
 
+        var authSnapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!authSnapshot.Succeeded || authSnapshot.Value is null || !authSnapshot.Value.CanConfirmAccrual)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedAccrual);
+            return;
+        }
+
         if (PointsToAccrue <= 0)
         {
             SetWarning("Points must be greater than zero.");
@@ -274,6 +286,13 @@ public sealed class ScannerViewModel : BaseViewModel
         if (!CanConfirmRedemption)
         {
             SetWarning("Redemption is not allowed for this session.");
+            return;
+        }
+
+        var authSnapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!authSnapshot.Succeeded || authSnapshot.Value is null || !authSnapshot.Value.CanConfirmRedemption)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedRedemption);
             return;
         }
 
