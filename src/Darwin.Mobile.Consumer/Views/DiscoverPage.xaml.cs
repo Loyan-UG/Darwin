@@ -165,7 +165,7 @@ public partial class DiscoverPage : ContentPage
             var pin = new Pin
             {
                 Label = item.Business.Name,
-                Address = item.Business.City,
+                Address = item.Business.City ?? string.Empty,
                 Type = PinType.Place,
                 Location = new Location(coordinate.Latitude, coordinate.Longitude)
             };
