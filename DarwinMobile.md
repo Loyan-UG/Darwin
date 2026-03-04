@@ -71,7 +71,7 @@ Key principles for the loyalty flow:
 - Current/added areas:
   - **Identity**: login, refresh, logout, logout-all, register, change-password, request-reset, reset-password.
   - **Profile**: member self profile read/update models (`RowVersion` based).
-  - **Loyalty** (session-based scan model; see §4.3).
+  - **Loyalty** (session-based scan model + business reward-configuration contracts for tier CRUD; see §4.3).
   - **Businesses**: discovery filters, map summaries, business details.
   - **Common**: paging, geo coordinates, problem details, sort options.
 

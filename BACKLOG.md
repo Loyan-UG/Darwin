@@ -137,7 +137,7 @@ It is designed as the **single source of truth** for development planning.
 
 ## 3.1 WebApi Extensions
 - [x] Business onboarding endpoints
-- Reward configuration endpoints
+- [x] Reward configuration endpoints
 - [x] Push notification registration (device tokens)
 - [x] Extended discovery filters
 - Public Catalog endpoints for future storefront use
