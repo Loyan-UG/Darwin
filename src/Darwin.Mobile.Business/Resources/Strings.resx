@@ -389,4 +389,13 @@
   <data name="DashboardRecentActivityEmpty" xml:space="preserve">
     <value>No recent activity was recorded yet.</value>
   </data>
+  <data name="BusinessPermissionDeniedRewardEdit" xml:space="preserve">
+    <value>Your account does not have permission to edit reward tiers.</value>
+  </data>
+  <data name="BusinessPermissionDeniedRedemption" xml:space="preserve">
+    <value>Your account does not have permission to confirm redemption.</value>
+  </data>
+  <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
+    <value>Your account does not have permission to confirm accrual.</value>
+  </data>
 </root>

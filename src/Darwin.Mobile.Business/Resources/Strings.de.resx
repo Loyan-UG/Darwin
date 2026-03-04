@@ -389,4 +389,13 @@
   <data name="DashboardRecentActivityEmpty" xml:space="preserve">
     <value>Es wurde noch keine Aktivität aufgezeichnet.</value>
   </data>
+  <data name="BusinessPermissionDeniedRewardEdit" xml:space="preserve">
+    <value>Ihr Konto hat keine Berechtigung, Prämienstufen zu bearbeiten.</value>
+  </data>
+  <data name="BusinessPermissionDeniedRedemption" xml:space="preserve">
+    <value>Ihr Konto hat keine Berechtigung, Einlösungen zu bestätigen.</value>
+  </data>
+  <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
+    <value>Ihr Konto hat keine Berechtigung, Gutschriften zu bestätigen.</value>
+  </data>
 </root>

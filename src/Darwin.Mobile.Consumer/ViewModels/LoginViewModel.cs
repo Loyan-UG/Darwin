@@ -2,6 +2,7 @@
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.ViewModels;
 using System;
@@ -18,6 +19,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
+    private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
 
     /// <summary>
     /// Raised when the page should reveal the error area (for example: scroll to top).
@@ -31,10 +33,11 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// </summary>
     /// <param name="authService">Service used to authenticate users.</param>
     /// <param name="appRootNavigator">Service that performs window-safe root navigation.</param>
-    public LoginViewModel(IAuthService authService, IAppRootNavigator appRootNavigator)
+    public LoginViewModel(IAuthService authService, IAppRootNavigator appRootNavigator, IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         // TODO [TEST-ONLY][MOBILE-SECURITY]:
         // Remove these default credentials before release builds.
@@ -92,6 +95,9 @@ public sealed partial class LoginViewModel : BaseViewModel
                 Password,
                 deviceId: null,
                 CancellationToken.None);
+
+            // Register current installation in backend device registry (best-effort, non-blocking for login).
+            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
 
             // Enter authenticated mode by switching the root page via the window-aware navigator.
             await _appRootNavigator.NavigateToAuthenticatedShellAsync();

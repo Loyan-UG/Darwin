@@ -7,9 +7,8 @@ using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Controls.Maps;
-using Microsoft.Maui.Devices.Sensors;
 using Microsoft.Maui.Maps;
+using Microsoft.Maui.Devices.Sensors;
 
 namespace Darwin.Mobile.Consumer.Views;
 

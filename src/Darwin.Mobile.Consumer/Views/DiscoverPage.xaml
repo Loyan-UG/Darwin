@@ -6,7 +6,7 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:contracts="clr-namespace:Darwin.Contracts.Businesses;assembly=Darwin.Contracts"
     xmlns:loyalty="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
-    xmlns:maps="clr-namespace:Microsoft.Maui.Controls.Maps;assembly=Microsoft.Maui.Controls.Maps"
+    xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
     x:Class="Darwin.Mobile.Consumer.Views.DiscoverPage"
     x:DataType="vm:DiscoverViewModel"
     Title="{x:Static res:AppResources.DiscoverTitle}">

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
@@ -24,13 +25,16 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// - edit an existing tier,
 /// - soft delete a tier with concurrency token.
 ///
-/// UI-bound state updates are always dispatched through <see cref="RunOnMain"/> to keep MAUI thread-safe.
+/// UI-bound state updates are always dispatched through <see cref="BaseViewModel.RunOnMain(System.Action)"/> to keep MAUI thread-safe.
 /// </remarks>
 public sealed class RewardsViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
+    private readonly IBusinessAuthorizationService _authorizationService;
 
     private bool _loadedOnce;
+    private bool _canManageRewards = true;
+    private string _operatorRole = "—";
     private Guid _editingRewardTierId;
     private byte[] _editingRowVersion = Array.Empty<byte>();
 
@@ -44,9 +48,10 @@ public sealed class RewardsViewModel : BaseViewModel
     private const string RewardTypePercentDiscount = "PercentDiscount";
     private const string RewardTypeAmountDiscount = "AmountDiscount";
 
-    public RewardsViewModel(ILoyaltyService loyaltyService)
+    public RewardsViewModel(ILoyaltyService loyaltyService, IBusinessAuthorizationService authorizationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
         RewardTypeOptions = new ObservableCollection<string>
@@ -57,9 +62,36 @@ public sealed class RewardsViewModel : BaseViewModel
         };
 
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
-        SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy);
-        DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && IsEditMode);
-        CreateNewCommand = new AsyncCommand(CreateNewAsync, () => !IsBusy);
+        SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
+        DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && IsEditMode && CanManageRewards);
+        CreateNewCommand = new AsyncCommand(CreateNewAsync, () => !IsBusy && CanManageRewards);
+    }
+
+
+    /// <summary>
+    /// Indicates whether the current operator can edit reward tiers.
+    /// </summary>
+    public bool CanManageRewards
+    {
+        get => _canManageRewards;
+        private set
+        {
+            if (SetProperty(ref _canManageRewards, value))
+            {
+                SaveCommand.RaiseCanExecuteChanged();
+                DeleteCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanDeleteReward));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Operator role display resolved from token claims.
+    /// </summary>
+    public string OperatorRole
+    {
+        get => _operatorRole;
+        private set => SetProperty(ref _operatorRole, value);
     }
 
     /// <summary>
@@ -123,6 +155,11 @@ public sealed class RewardsViewModel : BaseViewModel
     public bool IsEditMode => _editingRewardTierId != Guid.Empty;
 
     /// <summary>
+    /// Indicates whether current reward can be deleted by the current operator.
+    /// </summary>
+    public bool CanDeleteReward => IsEditMode && CanManageRewards;
+
+    /// <summary>
     /// Label shown on save button based on create/update mode.
     /// </summary>
     public string SaveButtonText => IsEditMode ? AppResources.RewardsUpdateButton : AppResources.RewardsCreateButton;
@@ -140,6 +177,7 @@ public sealed class RewardsViewModel : BaseViewModel
         }
 
         _loadedOnce = true;
+        await RefreshAuthorizationAsync().ConfigureAwait(false);
         await LoadConfigurationAsync().ConfigureAwait(false);
     }
 
@@ -206,6 +244,12 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         ArgumentNullException.ThrowIfNull(tier);
 
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
         RunOnMain(() =>
         {
             _editingRewardTierId = tier.RewardTierId;
@@ -219,12 +263,19 @@ public sealed class RewardsViewModel : BaseViewModel
 
             OnPropertyChanged(nameof(IsEditMode));
             OnPropertyChanged(nameof(SaveButtonText));
+            OnPropertyChanged(nameof(CanDeleteReward));
             DeleteCommand.RaiseCanExecuteChanged();
         });
     }
 
     private Task CreateNewAsync()
     {
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return Task.CompletedTask;
+        }
+
         RunOnMain(ClearEditor);
         return Task.CompletedTask;
     }
@@ -233,6 +284,12 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         if (IsBusy)
         {
+            return;
+        }
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
             return;
         }
 
@@ -310,6 +367,12 @@ public sealed class RewardsViewModel : BaseViewModel
             return;
         }
 
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
         IsBusy = true;
         RaiseCommandCanExecuteChanged();
 
@@ -346,6 +409,30 @@ public sealed class RewardsViewModel : BaseViewModel
             IsBusy = false;
             RaiseCommandCanExecuteChanged();
         }
+    }
+
+    /// <summary>
+    /// Refreshes authorization snapshot for reward-edit operations.
+    /// </summary>
+    private async Task RefreshAuthorizationAsync()
+    {
+        var snapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+
+        RunOnMain(() =>
+        {
+            if (snapshot.Succeeded && snapshot.Value is not null)
+            {
+                OperatorRole = snapshot.Value.RoleDisplayName;
+                CanManageRewards = snapshot.Value.CanEditRewards;
+            }
+            else
+            {
+                OperatorRole = "—";
+                CanManageRewards = false;
+            }
+
+            RaiseCommandCanExecuteChanged();
+        });
     }
 
     /// <summary>
@@ -430,6 +517,7 @@ public sealed class RewardsViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(IsEditMode));
         OnPropertyChanged(nameof(SaveButtonText));
+        OnPropertyChanged(nameof(CanDeleteReward));
         DeleteCommand.RaiseCanExecuteChanged();
     }
 

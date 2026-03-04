@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
 
         // Business identity context for Home dashboard
         services.AddSingleton<IBusinessIdentityContextService, BusinessIdentityContextService>();
+        services.AddSingleton<IBusinessAuthorizationService, BusinessAuthorizationService>();
 
         // Local activity tracker powering dashboard and lightweight reporting cards.
         services.AddSingleton<IBusinessActivityTracker, BusinessActivityTracker>();
