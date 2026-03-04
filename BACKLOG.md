@@ -169,8 +169,8 @@ It is designed as the **single source of truth** for development planning.
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
 - [x] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
-- [ ] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
-- [ ] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
+- [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
+- [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
 - [x] QR countdown UX decision finalized: keep 1s display refresh (smoother UI) with a 5-minute minimum automatic network refresh limit.
 
 
