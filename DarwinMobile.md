@@ -52,6 +52,7 @@ Key principles for the loyalty flow:
 - Uses the same Shared services; provides the scanner implementation for the device.
 - Phase-2 increment delivered: business-side reward tier editing (load/create/update/delete) backed by loyalty reward-configuration APIs.
 - Phase-2 increment delivered: business dashboard + lightweight reporting cards (sessions/accruals/redemptions/top customers/recent activity).
+- Phase-2 increment delivered: staff role visibility + client-side permission guards for reward edit and redemption/accrual confirmations.
 
 ### 1.3 Darwin.Mobile.Shared (Class Library)
 

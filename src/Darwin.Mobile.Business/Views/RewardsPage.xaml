@@ -17,11 +17,20 @@
                    FontSize="13"
                    Opacity="0.8" />
 
+            <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
+                   FontSize="12"
+                   Opacity="0.8" />
+
+            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRewardEdit}"
+                   TextColor="OrangeRed"
+                   IsVisible="{Binding CanManageRewards, Converter={StaticResource InverseBoolConverter}}" />
+
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                 <Button Text="{x:Static res:AppResources.RewardsRefreshButton}"
                         Command="{Binding RefreshCommand}" />
                 <Button Grid.Column="1"
                         Text="{x:Static res:AppResources.RewardsNewTierButton}"
+                        IsEnabled="{Binding CanManageRewards}"
                         Command="{Binding CreateNewCommand}" />
             </Grid>
 
@@ -58,6 +67,7 @@
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Button Text="{Binding SaveButtonText}"
                                 Command="{Binding SaveCommand}"
+                                IsEnabled="{Binding CanManageRewards}"
                                 Style="{StaticResource PrimaryButtonStyle}" />
 
                         <Button Grid.Column="1"

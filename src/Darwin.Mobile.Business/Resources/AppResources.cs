@@ -113,6 +113,12 @@ public static class AppResources
     public static string PasswordChangeSuccess => ResourceManager.GetString(nameof(PasswordChangeSuccess), Culture) ?? "Password changed successfully.";
 
 
+    // Business permissions
+    public static string BusinessPermissionDeniedRewardEdit => ResourceManager.GetString(nameof(BusinessPermissionDeniedRewardEdit), Culture) ?? "Your account does not have permission to edit reward tiers.";
+    public static string BusinessPermissionDeniedRedemption => ResourceManager.GetString(nameof(BusinessPermissionDeniedRedemption), Culture) ?? "Your account does not have permission to confirm redemption.";
+    public static string BusinessPermissionDeniedAccrual => ResourceManager.GetString(nameof(BusinessPermissionDeniedAccrual), Culture) ?? "Your account does not have permission to confirm accrual.";
+
+
     // Dashboard + reporting
     public static string DashboardTitle => ResourceManager.GetString(nameof(DashboardTitle), Culture) ?? "Dashboard";
     public static string DashboardSubtitle => ResourceManager.GetString(nameof(DashboardSubtitle), Culture) ?? "Operational snapshot for recent scanner activity.";

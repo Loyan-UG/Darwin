@@ -6,6 +6,8 @@ using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 using Darwin.Mobile.Business.Services.Reporting;
+using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Business.Resources;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
@@ -18,6 +20,7 @@ public sealed class SessionViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly INavigationService _navigationService;
     private readonly IBusinessActivityTracker _activityTracker;
+    private readonly IBusinessAuthorizationService _businessAuthorizationService;
 
     private string _sessionToken = string.Empty;
     private string? _customerName;
@@ -37,11 +40,12 @@ public sealed class SessionViewModel : BaseViewModel
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionViewModel"/> class.
     /// </summary>
-    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService, IBusinessActivityTracker activityTracker)
+    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService, IBusinessActivityTracker activityTracker, IBusinessAuthorizationService businessAuthorizationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
+        _businessAuthorizationService = businessAuthorizationService ?? throw new ArgumentNullException(nameof(businessAuthorizationService));
 
         LoadSessionCommand = new AsyncCommand(LoadSessionAsync);
         ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual && !IsBusy);
@@ -229,6 +233,13 @@ public sealed class SessionViewModel : BaseViewModel
             return;
         }
 
+        var authSnapshot = await _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!authSnapshot.Succeeded || authSnapshot.Value is null || !authSnapshot.Value.CanConfirmAccrual)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedAccrual);
+            return;
+        }
+
         if (PointsToAccrue <= 0)
         {
             SetWarning("Points must be greater than zero.");
@@ -275,6 +286,13 @@ public sealed class SessionViewModel : BaseViewModel
         if (!CanConfirmRedemption)
         {
             SetWarning("Redemption is not allowed for this session.");
+            return;
+        }
+
+        var authSnapshot = await _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!authSnapshot.Succeeded || authSnapshot.Value is null || !authSnapshot.Value.CanConfirmRedemption)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedRedemption);
             return;
         }
 

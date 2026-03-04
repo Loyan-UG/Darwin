@@ -154,7 +154,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business dashboard
 - [x] Simple reporting (visits, top customers, upcoming rewards)
 - [x] Reward editing interface
-- Staff roles & permissions
+- [x] Staff roles & permissions
 
 ## 3.4 Mobile Consumer App – Phase 3
 - Push notifications
