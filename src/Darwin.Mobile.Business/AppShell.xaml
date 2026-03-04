@@ -40,9 +40,9 @@
                       Title="Dashboard"
                       ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
-        <ShellContent Route="rewards"
-                      Title="Rewards"
-                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
+        <ShellContent Route="{x:Static local:Routes.Rewards}"
+                      Title="{x:Static res:AppResources.RewardsTitle}"
+                      ContentTemplate="{DataTemplate views:RewardsPage}" />
 
         <ShellContent Route="team"
                       Title="Team"

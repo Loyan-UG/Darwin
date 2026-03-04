@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,6 +42,8 @@ public sealed class BusinessesController : ApiControllerBase
     private readonly ToggleBusinessLikeHandler _toggleBusinessLikeHandler;
     private readonly ToggleBusinessFavoriteHandler _toggleBusinessFavoriteHandler;
     private readonly UpsertBusinessReviewHandler _upsertBusinessReviewHandler;
+    private readonly CreateBusinessHandler _createBusinessHandler;
+    private readonly CreateBusinessMemberHandler _createBusinessMemberHandler;
 
 
     public BusinessesController(
@@ -51,7 +54,9 @@ public sealed class BusinessesController : ApiControllerBase
         GetBusinessEngagementForMemberHandler getBusinessEngagementForMemberHandler,
         ToggleBusinessLikeHandler toggleBusinessLikeHandler,
         ToggleBusinessFavoriteHandler toggleBusinessFavoriteHandler,
-        UpsertBusinessReviewHandler upsertBusinessReviewHandler)
+        UpsertBusinessReviewHandler upsertBusinessReviewHandler,
+        CreateBusinessHandler createBusinessHandler,
+        CreateBusinessMemberHandler createBusinessMemberHandler)
     {
         _getBusinessesForDiscovery = getBusinessesForDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForDiscovery));
         _getBusinessPublicDetail = getBusinessPublicDetail ?? throw new ArgumentNullException(nameof(getBusinessPublicDetail));
@@ -61,6 +66,95 @@ public sealed class BusinessesController : ApiControllerBase
         _toggleBusinessLikeHandler = toggleBusinessLikeHandler ?? throw new ArgumentNullException(nameof(toggleBusinessLikeHandler));
         _toggleBusinessFavoriteHandler = toggleBusinessFavoriteHandler ?? throw new ArgumentNullException(nameof(toggleBusinessFavoriteHandler));
         _upsertBusinessReviewHandler = upsertBusinessReviewHandler ?? throw new ArgumentNullException(nameof(upsertBusinessReviewHandler));
+        _createBusinessHandler = createBusinessHandler ?? throw new ArgumentNullException(nameof(createBusinessHandler));
+        _createBusinessMemberHandler = createBusinessMemberHandler ?? throw new ArgumentNullException(nameof(createBusinessMemberHandler));
+    }
+
+    /// <summary>
+    /// Self-service business onboarding endpoint.
+    /// Creates a business and links the authenticated user as owner.
+    /// </summary>
+    [HttpPost("onboarding")]
+    [Authorize]
+    [ProducesResponseType(typeof(BusinessOnboardingResponse), 200)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 401)]
+    public async Task<IActionResult> OnboardAsync([FromBody] BusinessOnboardingRequest? request, CancellationToken ct = default)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequestProblem("Business name is required.");
+        }
+
+        if (!TryGetCurrentUserId(User, out var userId))
+        {
+            return StatusCode(StatusCodes.Status401Unauthorized, new Darwin.Contracts.Common.ProblemDetails
+            {
+                Status = 401,
+                Title = "Unauthorized",
+                Detail = "User identifier could not be resolved from the access token.",
+                Instance = HttpContext.Request?.Path.Value
+            });
+        }
+
+        if (!TryParseBusinessCategoryKind(request.CategoryKindKey, out var categoryKind, out var categoryError))
+        {
+            return BadRequestProblem(categoryError);
+        }
+
+        var createBusinessDto = new BusinessCreateDto
+        {
+            Name = request.Name,
+            LegalName = NormalizeNullable(request.LegalName),
+            TaxId = NormalizeNullable(request.TaxId),
+            ShortDescription = NormalizeNullable(request.ShortDescription),
+            WebsiteUrl = NormalizeNullable(request.WebsiteUrl),
+            ContactEmail = NormalizeNullable(request.ContactEmail),
+            ContactPhoneE164 = NormalizeNullable(request.ContactPhoneE164),
+            Category = categoryKind ?? BusinessCategoryKind.Unknown,
+            DefaultCurrency = NormalizeNullable(request.DefaultCurrency) ?? "EUR",
+            DefaultCulture = NormalizeNullable(request.DefaultCulture) ?? "de-DE",
+            IsActive = true
+        };
+
+        Guid businessId;
+        try
+        {
+            businessId = await _createBusinessHandler.HandleAsync(createBusinessDto, ct).ConfigureAwait(false);
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            return BadRequestProblem("Invalid business onboarding payload.", ex.Message);
+        }
+
+        var createMemberDto = new BusinessMemberCreateDto
+        {
+            BusinessId = businessId,
+            UserId = userId,
+            Role = BusinessMemberRole.Owner,
+            IsActive = true
+        };
+
+        Guid businessMemberId;
+        try
+        {
+            businessMemberId = await _createBusinessMemberHandler.HandleAsync(createMemberDto, ct).ConfigureAwait(false);
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            return BadRequestProblem("Business owner membership could not be created.", ex.Message);
+        }
+
+        return Ok(new BusinessOnboardingResponse
+        {
+            BusinessId = businessId,
+            BusinessMemberId = businessMemberId
+        });
     }
 
     [HttpPost("list")]
@@ -96,6 +190,12 @@ public sealed class BusinessesController : ApiControllerBase
             return BadRequestProblem(proximityError);
         }
 
+        var (minRating, ratingError) = TryNormalizeMinRating(request.MinRating);
+        if (ratingError is not null)
+        {
+            return BadRequestProblem(ratingError);
+        }
+
         var appRequest = new BusinessDiscoveryRequestDto
         {
             Page = page,
@@ -105,6 +205,8 @@ public sealed class BusinessesController : ApiControllerBase
             CountryCode = NormalizeNullable(request.CountryCode),
             AddressQuery = NormalizeNullable(request.AddressQuery),
             Category = categoryKind,
+            MinRating = minRating,
+            HasActiveLoyaltyProgram = request.HasActiveLoyaltyProgram,
             Coordinate = coordinate,
             RadiusKm = radiusKm
         };
@@ -358,6 +460,29 @@ public sealed class BusinessesController : ApiControllerBase
     private static string? NormalizeNullable(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+    private static bool TryGetCurrentUserId(ClaimsPrincipal user, out Guid userId)
+    {
+        userId = Guid.Empty;
+
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        var id =
+            user.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            user.FindFirstValue("sub") ??
+            user.FindFirstValue("uid");
+
+        if (!Guid.TryParse(id, out var parsed))
+        {
+            return false;
+        }
+
+        userId = parsed;
+        return true;
+    }
+
     private static bool TryParseBusinessCategoryKind(
         string? category,
         out BusinessCategoryKind? kind,
@@ -379,6 +504,26 @@ public sealed class BusinessesController : ApiControllerBase
 
         error = "Invalid category value. It must match a known BusinessCategoryKind enum name.";
         return false;
+    }
+
+    private static (double? Value, string? Error) TryNormalizeMinRating(double? minRating)
+    {
+        if (!minRating.HasValue)
+        {
+            return (null, null);
+        }
+
+        if (double.IsNaN(minRating.Value) || double.IsInfinity(minRating.Value))
+        {
+            return (null, "MinRating must be a finite number between 0 and 5.");
+        }
+
+        if (minRating.Value < 0 || minRating.Value > 5)
+        {
+            return (null, "MinRating must be between 0 and 5.");
+        }
+
+        return (minRating.Value, null);
     }
 
     private static (GeoCoordinateDto? Coordinate, double? RadiusKm, string? Error) TryMapProximity(

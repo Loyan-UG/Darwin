@@ -113,4 +113,27 @@ public static class AppResources
     public static string PasswordChangeSuccess => ResourceManager.GetString(nameof(PasswordChangeSuccess), Culture) ?? "Password changed successfully.";
 
 
+    // Rewards editor
+    public static string RewardsTitle => ResourceManager.GetString(nameof(RewardsTitle), Culture) ?? "Rewards";
+    public static string RewardsSubtitle => ResourceManager.GetString(nameof(RewardsSubtitle), Culture) ?? "Create and maintain reward tiers for your loyalty program.";
+    public static string RewardsRefreshButton => ResourceManager.GetString(nameof(RewardsRefreshButton), Culture) ?? "Refresh";
+    public static string RewardsNewTierButton => ResourceManager.GetString(nameof(RewardsNewTierButton), Culture) ?? "New tier";
+    public static string RewardsCreateButton => ResourceManager.GetString(nameof(RewardsCreateButton), Culture) ?? "Create tier";
+    public static string RewardsUpdateButton => ResourceManager.GetString(nameof(RewardsUpdateButton), Culture) ?? "Update tier";
+    public static string RewardsDeleteButton => ResourceManager.GetString(nameof(RewardsDeleteButton), Culture) ?? "Delete tier";
+    public static string RewardsCurrentTiersLabel => ResourceManager.GetString(nameof(RewardsCurrentTiersLabel), Culture) ?? "Current tiers";
+    public static string RewardsPointsPlaceholder => ResourceManager.GetString(nameof(RewardsPointsPlaceholder), Culture) ?? "Points required";
+    public static string RewardsTypePickerTitle => ResourceManager.GetString(nameof(RewardsTypePickerTitle), Culture) ?? "Reward type";
+    public static string RewardsValuePlaceholder => ResourceManager.GetString(nameof(RewardsValuePlaceholder), Culture) ?? "Reward value (optional)";
+    public static string RewardsDescriptionPlaceholder => ResourceManager.GetString(nameof(RewardsDescriptionPlaceholder), Culture) ?? "Description (optional)";
+    public static string RewardsAllowSelfRedemptionLabel => ResourceManager.GetString(nameof(RewardsAllowSelfRedemptionLabel), Culture) ?? "Allow self redemption";
+    public static string RewardsLoadFailed => ResourceManager.GetString(nameof(RewardsLoadFailed), Culture) ?? "Unable to load reward configuration.";
+    public static string RewardsSaveFailed => ResourceManager.GetString(nameof(RewardsSaveFailed), Culture) ?? "Unable to save reward tier.";
+    public static string RewardsDeleteFailed => ResourceManager.GetString(nameof(RewardsDeleteFailed), Culture) ?? "Unable to delete reward tier.";
+    public static string RewardsValidationFailed => ResourceManager.GetString(nameof(RewardsValidationFailed), Culture) ?? "Please review reward tier fields and try again.";
+    public static string RewardsPointsValidation => ResourceManager.GetString(nameof(RewardsPointsValidation), Culture) ?? "Points required must be a number greater than zero.";
+    public static string RewardsTypeValidation => ResourceManager.GetString(nameof(RewardsTypeValidation), Culture) ?? "Please select a valid reward type.";
+    public static string RewardsValueValidation => ResourceManager.GetString(nameof(RewardsValueValidation), Culture) ?? "Reward value must be a valid number.";
+
+
 }

@@ -114,21 +114,8 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// </summary>
     private static string ResolveLoginErrorMessage(Exception ex)
     {
-        var raw = ex.Message ?? string.Empty;
-
-        if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("No such host", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("SSL", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("invalid_requesturi", StringComparison.OrdinalIgnoreCase))
-        {
-            return AppResources.ServerUnreachableMessage;
-        }
-
-        // Keep credential failures generic for security.
-        return AppResources.InvalidCredentials;
+        // Keep credential failures generic for security for non-connectivity failures.
+        var mapped = ViewModelErrorMapper.ToUserMessage(ex, AppResources.InvalidCredentials);
+        return mapped;
     }
 }
