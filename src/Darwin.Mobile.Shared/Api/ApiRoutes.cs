@@ -67,6 +67,7 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string List = "api/v1/businesses/list";
             public const string Map = "api/v1/businesses/map";
+            public const string Onboarding = "api/v1/businesses/onboarding";
             public static string GetById(Guid id) => $"api/v1/businesses/{id:D}";
             public static string GetWithMyAccount(Guid id) => $"api/v1/businesses/{id:D}/with-my-account";
             public const string CategoryKinds = "api/v1/businesses/category-kinds";

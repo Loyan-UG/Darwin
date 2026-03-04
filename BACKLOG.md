@@ -136,7 +136,7 @@ It is designed as the **single source of truth** for development planning.
 # 3. 📝 Planned Next
 
 ## 3.1 WebApi Extensions
-- Business onboarding endpoints
+- [x] Business onboarding endpoints
 - Reward configuration endpoints
 - [x] Push notification registration (device tokens)
 - [x] Extended discovery filters

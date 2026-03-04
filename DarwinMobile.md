@@ -408,6 +408,7 @@ services.AddDarwinMobileShared(new ApiOptions
 | Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}/with-my-account  | perm:AccessMemberArea       | Consumer   |
+| Businesses | POST /api/v1/businesses/onboarding         | Authorize                   | Both       |
 
 ---
 
