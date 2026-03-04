@@ -54,9 +54,9 @@ namespace Darwin.WebApi.Mappers
                     ? (int?)Math.Round(dto.DistanceKm.Value * 1000.0, MidpointRounding.AwayFromZero)
                     : null,
 
-                // Ratings are intentionally not provided by the current handler.
-                Rating = null,
-                RatingCount = null
+                // Discovery pipeline now returns optional rating snapshot values.
+                Rating = dto.RatingAverage.HasValue ? (double?)dto.RatingAverage.Value : null,
+                RatingCount = dto.RatingCount
             };
         }
 

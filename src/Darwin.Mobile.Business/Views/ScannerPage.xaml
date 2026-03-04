@@ -17,6 +17,11 @@
                     Command="{Binding ScanCommand}"
                     HorizontalOptions="Fill" />
 
+            <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
+                   FontSize="12"
+                   Opacity="0.8"
+                   TextColor="{StaticResource BrushOnSurface}" />
+
             <Label Text="{x:Static res:AppResources.LastTokenLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
             <Label Text="{Binding LastScannedToken}"
@@ -37,7 +42,7 @@
             <Button Text="{x:Static res:AppResources.AccrueButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmAccrualCommand}"
-                    IsEnabled="{Binding CanConfirmAccrual}" />
+                    IsEnabled="{Binding CanExecuteAccrual}" />
             <Label Text="{x:Static res:AppResources.AccrualHelpText}"
                    FontSize="12"
                    Opacity="0.75"
@@ -46,11 +51,21 @@
             <Button Text="{x:Static res:AppResources.RedeemButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmRedemptionCommand}"
-                    IsEnabled="{Binding CanConfirmRedemption}" />
+                    IsEnabled="{Binding CanExecuteRedemption}" />
             <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
                    FontSize="12"
                    Opacity="0.75"
                    TextColor="{StaticResource BrushOnSurface}" />
+
+            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedAccrual}"
+                   TextColor="OrangeRed"
+                   FontSize="12"
+                   IsVisible="{Binding HasAccrualPermission, Converter={StaticResource InverseBoolConverter}}" />
+
+            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRedemption}"
+                   TextColor="OrangeRed"
+                   FontSize="12"
+                   IsVisible="{Binding HasRedemptionPermission, Converter={StaticResource InverseBoolConverter}}" />
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
