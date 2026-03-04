@@ -302,4 +302,64 @@
 	<data name="PasswordChangeSuccess" xml:space="preserve">
     <value>Passwort wurde erfolgreich geändert.</value>
   </data>
+  <data name="RewardsTitle" xml:space="preserve">
+    <value>Prämien</value>
+  </data>
+  <data name="RewardsSubtitle" xml:space="preserve">
+    <value>Prämienstufen für Ihr Treueprogramm erstellen und verwalten.</value>
+  </data>
+  <data name="RewardsRefreshButton" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="RewardsNewTierButton" xml:space="preserve">
+    <value>Neue Stufe</value>
+  </data>
+  <data name="RewardsCreateButton" xml:space="preserve">
+    <value>Stufe erstellen</value>
+  </data>
+  <data name="RewardsUpdateButton" xml:space="preserve">
+    <value>Stufe aktualisieren</value>
+  </data>
+  <data name="RewardsDeleteButton" xml:space="preserve">
+    <value>Stufe löschen</value>
+  </data>
+  <data name="RewardsCurrentTiersLabel" xml:space="preserve">
+    <value>Aktuelle Stufen</value>
+  </data>
+  <data name="RewardsPointsPlaceholder" xml:space="preserve">
+    <value>Benötigte Punkte</value>
+  </data>
+  <data name="RewardsTypePickerTitle" xml:space="preserve">
+    <value>Prämientyp</value>
+  </data>
+  <data name="RewardsValuePlaceholder" xml:space="preserve">
+    <value>Prämienwert (optional)</value>
+  </data>
+  <data name="RewardsDescriptionPlaceholder" xml:space="preserve">
+    <value>Beschreibung (optional)</value>
+  </data>
+  <data name="RewardsAllowSelfRedemptionLabel" xml:space="preserve">
+    <value>Selbsteinlösung erlauben</value>
+  </data>
+  <data name="RewardsLoadFailed" xml:space="preserve">
+    <value>Prämienkonfiguration konnte nicht geladen werden.</value>
+  </data>
+  <data name="RewardsSaveFailed" xml:space="preserve">
+    <value>Prämienstufe konnte nicht gespeichert werden.</value>
+  </data>
+  <data name="RewardsDeleteFailed" xml:space="preserve">
+    <value>Prämienstufe konnte nicht gelöscht werden.</value>
+  </data>
+  <data name="RewardsValidationFailed" xml:space="preserve">
+    <value>Bitte prüfen Sie die Felder der Prämienstufe und versuchen Sie es erneut.</value>
+  </data>
+  <data name="RewardsPointsValidation" xml:space="preserve">
+    <value>Benötigte Punkte müssen eine Zahl größer als null sein.</value>
+  </data>
+  <data name="RewardsTypeValidation" xml:space="preserve">
+    <value>Bitte wählen Sie einen gültigen Prämientyp aus.</value>
+  </data>
+  <data name="RewardsValueValidation" xml:space="preserve">
+    <value>Prämienwert muss eine gültige Zahl sein.</value>
+  </data>
 </root>

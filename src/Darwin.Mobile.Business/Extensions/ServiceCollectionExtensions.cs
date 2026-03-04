@@ -56,6 +56,9 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<Views.ComingSoonPage>();
 
+        services.AddTransient<ViewModels.RewardsViewModel>();
+        services.AddTransient<Views.RewardsPage>();
+
         services.AddTransient<ViewModels.SessionViewModel>();
         services.AddTransient<Views.SessionPage>();
 

@@ -153,7 +153,7 @@ It is designed as the **single source of truth** for development planning.
 ## 3.3 Mobile Business App – Phase 2
 - Business dashboard
 - Simple reporting (visits, top customers, upcoming rewards)
-- Reward editing interface
+- [x] Reward editing interface
 - Staff roles & permissions
 
 ## 3.4 Mobile Consumer App – Phase 3
