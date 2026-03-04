@@ -71,7 +71,7 @@ Key principles for the loyalty flow:
 - Current/added areas:
   - **Identity**: login, refresh, logout, logout-all, register, change-password, request-reset, reset-password.
   - **Profile**: member self profile read/update models (`RowVersion` based).
-  - **Loyalty** (session-based scan model; see §4.3).
+  - **Loyalty** (session-based scan model + business reward-configuration contracts for tier CRUD; see §4.3).
   - **Businesses**: discovery filters, map summaries, business details.
   - **Common**: paging, geo coordinates, problem details, sort options.
 
@@ -166,7 +166,7 @@ These Contracts support Phase-1/2 of the mobile roadmap while being extendable (
 
 ### 4.4 Businesses (Discovery)
 
-- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, sort, paging.
+- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, min-rating, active-loyalty-only, sort, paging.
 - `BusinessSummary` – id, name, category, rating, approximate location, open-now.
 - `BusinessDetail` – description, opening hours, phones/links, address, images, loyalty program preview.
 
@@ -187,7 +187,7 @@ These are sufficient for the map, directory and profile pages on Consumer.
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
 - `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
 - `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
-- **Consumer QR auto-refresh policy (current app behavior)**: automatic refresh checks run every ~15 seconds, and the app enforces a **minimum 5-minute interval** between automatic refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
+- **Consumer QR auto-refresh policy (current app behavior)**: the UI countdown check runs every ~1 second for a smooth countdown, while the app enforces a **minimum 5-minute interval** between automatic network refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
 
@@ -261,6 +261,8 @@ Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config 
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
 - Infrastructure exposes composition helpers (`AddSharedHostingDataProtection`, `AddPersistence`, `AddIdentityInfrastructure`, `AddNotificationsInfrastructure`, `AddJwtAuthCore`).
+- Password-reset emails are sent through `IEmailSender` (`SmtpEmailSender` by default), bound from `Email:Smtp` configuration. If this section is missing or points to a non-working relay, reset requests still return generic success (anti-enumeration) but no email is delivered.
+- For troubleshooting delivery issues, inspect WebApi logs (`logs/api-log-*.txt`) for `Error processing password reset request` and SMTP send diagnostics.
 
 ---
 
@@ -389,6 +391,7 @@ services.AddDarwinMobileShared(new ApiOptions
 | Auth      | POST /api/v1/auth/password/request-reset     | AllowAnonymous              | Consumer   |
 | Auth      | POST /api/v1/auth/password/reset             | AllowAnonymous              | Consumer   |
 | Auth      | POST /api/v1/auth/password/change            | Authorize                   | Both       |
+| Notifications | POST /api/v1/notifications/devices/register | Authorize                | Both       |
 | Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |
@@ -405,6 +408,7 @@ services.AddDarwinMobileShared(new ApiOptions
 | Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}/with-my-account  | perm:AccessMemberArea       | Consumer   |
+| Businesses | POST /api/v1/businesses/onboarding         | Authorize                   | Both       |
 
 ---
 
@@ -437,6 +441,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.
 - **Loyalty**: `LoyaltyScanMode`, `LoyaltyScanAllowedActions`, `LoyaltyRewardSummary`, `LoyaltyAccountSummary`, `PrepareScanSessionRequest/Response`, `ProcessScanSessionForBusinessRequest/Response`, `ConfirmAccrualRequest/Response`, `ConfirmRedemptionRequest/Response`.
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
+- **Notifications**: `MobileDevicePlatform`, `RegisterPushDeviceRequest`, `RegisterPushDeviceResponse`.
 
 > Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 

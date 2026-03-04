@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using ContractLoyaltyScanMode = Darwin.Contracts.Loyalty.LoyaltyScanMode;
 // Use explicit aliases to avoid ambiguity between domain and contract enums.
 using DomainLoyaltyScanMode = Darwin.Domain.Enums.LoyaltyScanMode;
+using DomainLoyaltyRewardType = Darwin.Domain.Enums.LoyaltyRewardType;
 
 namespace Darwin.WebApi.Controllers.Loyalty
 {
@@ -46,6 +47,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly ILoyaltyPresentationService _presentationService;
         private readonly ILogger<LoyaltyController> _logger;
         private readonly GetMyPromotionsHandler _getMyPromotionsHandler;
+        private readonly GetLoyaltyProgramsPageHandler _getLoyaltyProgramsPageHandler;
+        private readonly GetLoyaltyRewardTiersPageHandler _getLoyaltyRewardTiersPageHandler;
+        private readonly CreateLoyaltyProgramHandler _createLoyaltyProgramHandler;
+        private readonly CreateLoyaltyRewardTierHandler _createLoyaltyRewardTierHandler;
+        private readonly UpdateLoyaltyRewardTierHandler _updateLoyaltyRewardTierHandler;
+        private readonly SoftDeleteLoyaltyRewardTierHandler _softDeleteLoyaltyRewardTierHandler;
 
 
 
@@ -87,6 +94,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
             GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
             GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
             GetMyPromotionsHandler getMyPromotionsHandler,
+            GetLoyaltyProgramsPageHandler getLoyaltyProgramsPageHandler,
+            GetLoyaltyRewardTiersPageHandler getLoyaltyRewardTiersPageHandler,
+            CreateLoyaltyProgramHandler createLoyaltyProgramHandler,
+            CreateLoyaltyRewardTierHandler createLoyaltyRewardTierHandler,
+            UpdateLoyaltyRewardTierHandler updateLoyaltyRewardTierHandler,
+            SoftDeleteLoyaltyRewardTierHandler softDeleteLoyaltyRewardTierHandler,
             GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
             CreateLoyaltyAccountHandler createLoyaltyAccountHandler,
             ILoyaltyPresentationService presentationService,
@@ -102,11 +115,299 @@ namespace Darwin.WebApi.Controllers.Loyalty
             _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
             _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
             _getMyPromotionsHandler = getMyPromotionsHandler ?? throw new ArgumentNullException(nameof(getMyPromotionsHandler));
+            _getLoyaltyProgramsPageHandler = getLoyaltyProgramsPageHandler ?? throw new ArgumentNullException(nameof(getLoyaltyProgramsPageHandler));
+            _getLoyaltyRewardTiersPageHandler = getLoyaltyRewardTiersPageHandler ?? throw new ArgumentNullException(nameof(getLoyaltyRewardTiersPageHandler));
+            _createLoyaltyProgramHandler = createLoyaltyProgramHandler ?? throw new ArgumentNullException(nameof(createLoyaltyProgramHandler));
+            _createLoyaltyRewardTierHandler = createLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(createLoyaltyRewardTierHandler));
+            _updateLoyaltyRewardTierHandler = updateLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(updateLoyaltyRewardTierHandler));
+            _softDeleteLoyaltyRewardTierHandler = softDeleteLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(softDeleteLoyaltyRewardTierHandler));
             _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
             _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
             _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
+
+
+        #region Business reward configuration
+
+        [HttpGet("business/reward-config")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(typeof(BusinessRewardConfigurationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetBusinessRewardConfigurationAsync(CancellationToken ct = default)
+        {
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult ?? Forbid();
+            }
+
+            var programResult = await _getLoyaltyProgramsPageHandler
+                .HandleAsync(page: 1, pageSize: 1, businessId: businessId, ct: ct)
+                .ConfigureAwait(false);
+
+            var program = programResult.Items.FirstOrDefault();
+            if (program is null)
+            {
+                return Ok(new BusinessRewardConfigurationResponse
+                {
+                    LoyaltyProgramId = Guid.Empty,
+                    ProgramName = string.Empty,
+                    IsProgramActive = false,
+                    RewardTiers = Array.Empty<BusinessRewardTierConfigItem>()
+                });
+            }
+
+            var tiersResult = await _getLoyaltyRewardTiersPageHandler
+                .HandleAsync(program.Id, page: 1, pageSize: 200, ct)
+                .ConfigureAwait(false);
+
+            var response = new BusinessRewardConfigurationResponse
+            {
+                LoyaltyProgramId = program.Id,
+                ProgramName = program.Name ?? string.Empty,
+                IsProgramActive = program.IsActive,
+                RewardTiers = tiersResult.Items
+                    .Select(x => new BusinessRewardTierConfigItem
+                    {
+                        RewardTierId = x.Id,
+                        PointsRequired = x.PointsRequired,
+                        RewardType = x.RewardType.ToString(),
+                        RewardValue = x.RewardValue,
+                        Description = x.Description,
+                        AllowSelfRedemption = x.AllowSelfRedemption,
+                        RowVersion = x.RowVersion
+                    })
+                    .ToList()
+            };
+
+            return Ok(response);
+        }
+
+        [HttpPost("business/reward-config/tiers")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(typeof(BusinessRewardTierMutationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> CreateBusinessRewardTierAsync([FromBody] CreateBusinessRewardTierRequest? request, CancellationToken ct = default)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult ?? Forbid();
+            }
+
+            if (!TryParseRewardType(request.RewardType, out var rewardType))
+            {
+                return BadRequestProblem("RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.");
+            }
+
+            var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: true, ct).ConfigureAwait(false);
+
+            try
+            {
+                var tierId = await _createLoyaltyRewardTierHandler
+                    .HandleAsync(new LoyaltyRewardTierCreateDto
+                    {
+                        LoyaltyProgramId = programId,
+                        PointsRequired = request.PointsRequired,
+                        RewardType = rewardType,
+                        RewardValue = request.RewardValue,
+                        Description = request.Description,
+                        AllowSelfRedemption = request.AllowSelfRedemption,
+                        MetadataJson = request.MetadataJson
+                    }, ct)
+                    .ConfigureAwait(false);
+
+                return Ok(new BusinessRewardTierMutationResponse
+                {
+                    RewardTierId = tierId,
+                    Success = true
+                });
+            }
+            catch (FluentValidation.ValidationException ex)
+            {
+                return BadRequestProblem(ex.Message);
+            }
+        }
+
+        [HttpPut("business/reward-config/tiers")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(typeof(BusinessRewardTierMutationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> UpdateBusinessRewardTierAsync([FromBody] UpdateBusinessRewardTierRequest? request, CancellationToken ct = default)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            if (request.RewardTierId == Guid.Empty)
+            {
+                return BadRequestProblem("RewardTierId is required.");
+            }
+
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult ?? Forbid();
+            }
+
+            if (!TryParseRewardType(request.RewardType, out var rewardType))
+            {
+                return BadRequestProblem("RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.");
+            }
+
+            var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: false, ct).ConfigureAwait(false);
+            if (programId == Guid.Empty)
+            {
+                return BadRequestProblem("No loyalty program was found for the current business.");
+            }
+
+            var isOwnedByBusiness = await IsRewardTierOwnedByBusinessAsync(programId, request.RewardTierId, ct).ConfigureAwait(false);
+            if (!isOwnedByBusiness)
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                await _updateLoyaltyRewardTierHandler
+                    .HandleAsync(new LoyaltyRewardTierEditDto
+                    {
+                        Id = request.RewardTierId,
+                        LoyaltyProgramId = programId,
+                        PointsRequired = request.PointsRequired,
+                        RewardType = rewardType,
+                        RewardValue = request.RewardValue,
+                        Description = request.Description,
+                        AllowSelfRedemption = request.AllowSelfRedemption,
+                        MetadataJson = request.MetadataJson,
+                        RowVersion = request.RowVersion
+                    }, ct)
+                    .ConfigureAwait(false);
+
+                return Ok(new BusinessRewardTierMutationResponse
+                {
+                    RewardTierId = request.RewardTierId,
+                    Success = true
+                });
+            }
+            catch (FluentValidation.ValidationException ex)
+            {
+                return BadRequestProblem(ex.Message);
+            }
+        }
+
+        [HttpPost("business/reward-config/tiers/delete")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(typeof(BusinessRewardTierMutationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> DeleteBusinessRewardTierAsync([FromBody] DeleteBusinessRewardTierRequest? request, CancellationToken ct = default)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            if (request.RewardTierId == Guid.Empty)
+            {
+                return BadRequestProblem("RewardTierId is required.");
+            }
+
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult ?? Forbid();
+            }
+
+            var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: false, ct).ConfigureAwait(false);
+            if (programId == Guid.Empty)
+            {
+                return BadRequestProblem("No loyalty program was found for the current business.");
+            }
+
+            var isOwnedByBusiness = await IsRewardTierOwnedByBusinessAsync(programId, request.RewardTierId, ct).ConfigureAwait(false);
+            if (!isOwnedByBusiness)
+            {
+                return Forbid();
+            }
+
+            var result = await _softDeleteLoyaltyRewardTierHandler
+                .HandleAsync(new LoyaltyRewardTierDeleteDto
+                {
+                    Id = request.RewardTierId,
+                    RowVersion = request.RowVersion
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
+
+            return Ok(new BusinessRewardTierMutationResponse
+            {
+                RewardTierId = request.RewardTierId,
+                Success = true
+            });
+        }
+
+        private async Task<Guid> EnsureBusinessProgramAsync(Guid businessId, bool createIfMissing, CancellationToken ct)
+        {
+            var existing = await _getLoyaltyProgramsPageHandler
+                .HandleAsync(page: 1, pageSize: 1, businessId: businessId, ct: ct)
+                .ConfigureAwait(false);
+
+            var program = existing.Items.FirstOrDefault();
+            if (program is not null)
+            {
+                return program.Id;
+            }
+
+            if (!createIfMissing)
+            {
+                return Guid.Empty;
+            }
+
+            return await _createLoyaltyProgramHandler
+                .HandleAsync(new LoyaltyProgramCreateDto
+                {
+                    BusinessId = businessId,
+                    Name = "Default Loyalty Program",
+                    AccrualMode = Darwin.Domain.Enums.LoyaltyAccrualMode.PerVisit,
+                    IsActive = true
+                }, ct)
+                .ConfigureAwait(false);
+        }
+
+        private async Task<bool> IsRewardTierOwnedByBusinessAsync(Guid programId, Guid rewardTierId, CancellationToken ct)
+        {
+            var tiers = await _getLoyaltyRewardTiersPageHandler
+                .HandleAsync(programId, page: 1, pageSize: 200, ct)
+                .ConfigureAwait(false);
+
+            return tiers.Items.Any(x => x.Id == rewardTierId);
+        }
+
+        private static bool TryParseRewardType(string? rewardType, out DomainLoyaltyRewardType value)
+        {
+            if (Enum.TryParse(rewardType, ignoreCase: true, out DomainLoyaltyRewardType parsed) &&
+                Enum.IsDefined(parsed))
+            {
+                value = parsed;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        #endregion
 
 
 
