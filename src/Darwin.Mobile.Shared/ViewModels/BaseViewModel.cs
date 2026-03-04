@@ -12,7 +12,7 @@ namespace Darwin.Mobile.Shared.ViewModels
     /// busy/error state tracking.
     /// 
     /// Important: ViewModels may be updated from background continuations.
-    /// Use <see cref="RunOnMain(Action)"/> to marshal UI-bound updates to
+    /// Use <see cref="BaseViewModel.RunOnMain(System.Action)"/> to marshal UI-bound updates to
     /// the main (UI) thread when needed.
     /// </summary>
     public abstract class BaseViewModel : INotifyPropertyChanged

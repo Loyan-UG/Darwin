@@ -49,6 +49,17 @@ namespace Darwin.Application.Businesses.DTOs
         /// </summary>
         public BusinessCategoryKind? Category { get; set; }
 
+
+        /// <summary>
+        /// Optional minimum average rating filter (inclusive), expected range 0..5.
+        /// </summary>
+        public double? MinRating { get; set; }
+
+        /// <summary>
+        /// Optional filter to include only businesses with an active loyalty program.
+        /// </summary>
+        public bool? HasActiveLoyaltyProgram { get; set; }
+
         /// <summary>
         /// Optional coordinate used for proximity search.
         /// When provided, <see cref="RadiusKm"/> should also be provided.
@@ -90,6 +101,16 @@ namespace Darwin.Application.Businesses.DTOs
         /// Distance to the query coordinate in kilometers (only when coordinate search is used).
         /// </summary>
         public double? DistanceKm { get; set; }
+
+        /// <summary>
+        /// Average rating for discovery card rendering, if available.
+        /// </summary>
+        public decimal? RatingAverage { get; set; }
+
+        /// <summary>
+        /// Number of ratings used to calculate <see cref="RatingAverage"/>.
+        /// </summary>
+        public int? RatingCount { get; set; }
 
         /// <summary>
         /// Optional flag indicating whether the business is open "now" at the snapshot time.
