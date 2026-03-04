@@ -553,5 +553,134 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             }
         }
 
+
+        /// <inheritdoc />
+        public async Task<Result<BusinessRewardConfigurationResponse>> GetBusinessRewardConfigurationAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _apiClient
+                    .GetResultAsync<BusinessRewardConfigurationResponse>(ApiRoutes.Loyalty.GetBusinessRewardConfiguration, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<BusinessRewardConfigurationResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<BusinessRewardConfigurationResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<BusinessRewardConfigurationResponse>.Fail($"Network error while retrieving business reward configuration: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<BusinessRewardTierMutationResponse>> CreateBusinessRewardTierAsync(CreateBusinessRewardTierRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result<BusinessRewardTierMutationResponse>.Fail("Request body is required.");
+            }
+
+            try
+            {
+                var response = await _apiClient
+                    .PostResultAsync<CreateBusinessRewardTierRequest, BusinessRewardTierMutationResponse>(
+                        ApiRoutes.Loyalty.CreateBusinessRewardTier,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<BusinessRewardTierMutationResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<BusinessRewardTierMutationResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<BusinessRewardTierMutationResponse>.Fail($"Network error while creating reward tier: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<BusinessRewardTierMutationResponse>> UpdateBusinessRewardTierAsync(UpdateBusinessRewardTierRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result<BusinessRewardTierMutationResponse>.Fail("Request body is required.");
+            }
+
+            try
+            {
+                var response = await _apiClient
+                    .PutResultAsync<UpdateBusinessRewardTierRequest, BusinessRewardTierMutationResponse>(
+                        ApiRoutes.Loyalty.UpdateBusinessRewardTier,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<BusinessRewardTierMutationResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<BusinessRewardTierMutationResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<BusinessRewardTierMutationResponse>.Fail($"Network error while updating reward tier: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<BusinessRewardTierMutationResponse>> DeleteBusinessRewardTierAsync(DeleteBusinessRewardTierRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result<BusinessRewardTierMutationResponse>.Fail("Request body is required.");
+            }
+
+            try
+            {
+                var response = await _apiClient
+                    .PostResultAsync<DeleteBusinessRewardTierRequest, BusinessRewardTierMutationResponse>(
+                        ApiRoutes.Loyalty.DeleteBusinessRewardTier,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<BusinessRewardTierMutationResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<BusinessRewardTierMutationResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<BusinessRewardTierMutationResponse>.Fail($"Network error while deleting reward tier: {ex.Message}");
+            }
+        }
+
     }
 }
