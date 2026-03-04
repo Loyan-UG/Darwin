@@ -187,7 +187,7 @@ These are sufficient for the map, directory and profile pages on Consumer.
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
 - `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
 - `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
-- **Consumer QR auto-refresh policy (current app behavior)**: automatic refresh checks run every ~15 seconds, and the app enforces a **minimum 5-minute interval** between automatic refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
+- **Consumer QR auto-refresh policy (current app behavior)**: the UI countdown check runs every ~1 second for a smooth countdown, while the app enforces a **minimum 5-minute interval** between automatic network refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
 
@@ -261,6 +261,8 @@ Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config 
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
 - Infrastructure exposes composition helpers (`AddSharedHostingDataProtection`, `AddPersistence`, `AddIdentityInfrastructure`, `AddNotificationsInfrastructure`, `AddJwtAuthCore`).
+- Password-reset emails are sent through `IEmailSender` (`SmtpEmailSender` by default), bound from `Email:Smtp` configuration. If this section is missing or points to a non-working relay, reset requests still return generic success (anti-enumeration) but no email is delivered.
+- For troubleshooting delivery issues, inspect WebApi logs (`logs/api-log-*.txt`) for `Error processing password reset request` and SMTP send diagnostics.
 
 ---
 

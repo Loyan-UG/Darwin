@@ -129,6 +129,18 @@ public static class AppResources
     public static string ForgotPasswordSuccess => ResourceManager.GetString(nameof(ForgotPasswordSuccess), Culture) ?? "If the email exists, password reset instructions have been sent.";
     public static string ForgotPasswordFailed => ResourceManager.GetString(nameof(ForgotPasswordFailed), Culture) ?? "Unable to request password reset right now. Please try again.";
 
+
+    public static string ResetPasswordTitle => ResourceManager.GetString(nameof(ResetPasswordTitle), Culture) ?? "Reset password";
+    public static string ResetPasswordDescription => ResourceManager.GetString(nameof(ResetPasswordDescription), Culture) ?? "Enter your email, reset token, and new password to complete the reset.";
+    public static string ResetPasswordTokenLabel => ResourceManager.GetString(nameof(ResetPasswordTokenLabel), Culture) ?? "Reset token";
+    public static string ResetPasswordTokenPlaceholder => ResourceManager.GetString(nameof(ResetPasswordTokenPlaceholder), Culture) ?? "Paste token from your email";
+    public static string ResetPasswordTokenRequired => ResourceManager.GetString(nameof(ResetPasswordTokenRequired), Culture) ?? "Reset token is required.";
+    public static string ResetPasswordActionButton => ResourceManager.GetString(nameof(ResetPasswordActionButton), Culture) ?? "Reset password";
+    public static string ResetPasswordNavigateButton => ResourceManager.GetString(nameof(ResetPasswordNavigateButton), Culture) ?? "Already have a token? Reset password";
+    public static string ResetPasswordSuccess => ResourceManager.GetString(nameof(ResetPasswordSuccess), Culture) ?? "Your password has been reset successfully. Please log in with your new password.";
+    public static string ResetPasswordFailed => ResourceManager.GetString(nameof(ResetPasswordFailed), Culture) ?? "Unable to reset password. Please verify email/token and try again.";
+    public static string ProfileConcurrencyConflict => ResourceManager.GetString(nameof(ProfileConcurrencyConflict), Culture) ?? "Your profile was updated elsewhere. Please refresh and try again.";
+
     public static string RegisterAutoLoginFailed => ResourceManager.GetString(nameof(RegisterAutoLoginFailed), Culture) ?? "Your account was created, but automatic sign-in failed. Please login manually.";
 
     public static string DiscoverMyBusinessesTab => ResourceManager.GetString(nameof(DiscoverMyBusinessesTab), Culture) ?? "My Businesses";

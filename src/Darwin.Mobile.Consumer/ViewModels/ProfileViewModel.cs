@@ -151,7 +151,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ex.Message);
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileLoadFailed));
         }
         finally
         {
@@ -226,7 +226,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ex.Message);
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileSaveFailed));
         }
         finally
         {

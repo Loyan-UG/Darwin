@@ -3,7 +3,6 @@ using Darwin.Contracts.Meta;
 using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Security;
-using Darwin.Shared.Results;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -206,7 +205,7 @@ namespace Darwin.Mobile.Shared.Services
         {
             ct.ThrowIfCancellationRequested();
 
-            var result = await _api.PostResultAsync<object, object?>(
+            var result = await _api.PostNoContentAsync(
                 ApiRoutes.Auth.LogoutAll,
                 new { },
                 ct).ConfigureAwait(false);
@@ -236,12 +235,11 @@ namespace Darwin.Mobile.Shared.Services
 
 
         /// <inheritdoc />
-        /// <inheritdoc />
         public async Task<bool> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            var firstAttempt = await _api.PostResultAsync<ChangePasswordRequest, object?>(
+            var firstAttempt = await _api.PostNoContentAsync(
                 ApiRoutes.Auth.ChangePassword,
                 new ChangePasswordRequest
                 {
@@ -250,7 +248,7 @@ namespace Darwin.Mobile.Shared.Services
                 },
                 ct).ConfigureAwait(false);
 
-            if (IsCommandStyleSuccess(firstAttempt))
+            if (firstAttempt.Succeeded)
             {
                 return true;
             }
@@ -264,7 +262,7 @@ namespace Darwin.Mobile.Shared.Services
                     return false;
                 }
 
-                var secondAttempt = await _api.PostResultAsync<ChangePasswordRequest, object?>(
+                var secondAttempt = await _api.PostNoContentAsync(
                     ApiRoutes.Auth.ChangePassword,
                     new ChangePasswordRequest
                     {
@@ -273,40 +271,7 @@ namespace Darwin.Mobile.Shared.Services
                     },
                     ct).ConfigureAwait(false);
 
-                return IsCommandStyleSuccess(secondAttempt);
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Normalizes command-style API success, even when server returns HTTP 200 with empty body.
-        /// ApiClient currently maps empty successful payload to a failed Result with an error string,
-        /// so we explicitly treat those known cases as success for command endpoints.
-        /// </summary>
-        private static bool IsCommandStyleSuccess(Result<object?> result)
-        {
-            if (result.Succeeded)
-            {
-                return true;
-            }
-
-            var error = result.Error ?? string.Empty;
-
-            if (error.Contains("Empty JSON payload from server.", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (error.Contains("Invalid JSON payload", StringComparison.OrdinalIgnoreCase) &&
-                error.Contains("does not contain any JSON tokens", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (error.Contains(ApiClient.NoContentResultMessage, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
+                return secondAttempt.Succeeded;
             }
 
             return false;
@@ -333,27 +298,12 @@ namespace Darwin.Mobile.Shared.Services
         {
             ct.ThrowIfCancellationRequested();
 
-            var result = await _api.PostResultAsync<RequestPasswordResetRequest, object?>(
+            var result = await _api.PostNoContentAsync(
                 ApiRoutes.Auth.RequestPasswordReset,
                 new RequestPasswordResetRequest { Email = email },
                 ct).ConfigureAwait(false);
 
-            if (result.Succeeded)
-            {
-                return true;
-            }
-
-            // Some password-reset implementations intentionally return HTTP 200 with an empty body
-            // to avoid user enumeration. In that case, transport is successful but JSON deserialization
-            // of object? may fail with an "empty JSON" style error. We normalize this known shape to success.
-            var error = result.Error ?? string.Empty;
-            if (error.Contains(ApiClient.NoContentResultMessage, StringComparison.OrdinalIgnoreCase) ||
-                error.Contains("input does not contain any JSON tokens", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            return false;
+            return result.Succeeded;
         }
 
 
@@ -362,7 +312,7 @@ namespace Darwin.Mobile.Shared.Services
         {
             ct.ThrowIfCancellationRequested();
 
-            var result = await _api.PostResultAsync<ResetPasswordRequest, object?>(
+            var result = await _api.PostNoContentAsync(
                 ApiRoutes.Auth.ResetPassword,
                 new ResetPasswordRequest
                 {
