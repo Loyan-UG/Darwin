@@ -96,6 +96,12 @@ public sealed class BusinessesController : ApiControllerBase
             return BadRequestProblem(proximityError);
         }
 
+        var (minRating, ratingError) = TryNormalizeMinRating(request.MinRating);
+        if (ratingError is not null)
+        {
+            return BadRequestProblem(ratingError);
+        }
+
         var appRequest = new BusinessDiscoveryRequestDto
         {
             Page = page,
@@ -105,6 +111,8 @@ public sealed class BusinessesController : ApiControllerBase
             CountryCode = NormalizeNullable(request.CountryCode),
             AddressQuery = NormalizeNullable(request.AddressQuery),
             Category = categoryKind,
+            MinRating = minRating,
+            HasActiveLoyaltyProgram = request.HasActiveLoyaltyProgram,
             Coordinate = coordinate,
             RadiusKm = radiusKm
         };
@@ -379,6 +387,26 @@ public sealed class BusinessesController : ApiControllerBase
 
         error = "Invalid category value. It must match a known BusinessCategoryKind enum name.";
         return false;
+    }
+
+    private static (double? Value, string? Error) TryNormalizeMinRating(double? minRating)
+    {
+        if (!minRating.HasValue)
+        {
+            return (null, null);
+        }
+
+        if (double.IsNaN(minRating.Value) || double.IsInfinity(minRating.Value))
+        {
+            return (null, "MinRating must be a finite number between 0 and 5.");
+        }
+
+        if (minRating.Value < 0 || minRating.Value > 5)
+        {
+            return (null, "MinRating must be between 0 and 5.");
+        }
+
+        return (minRating.Value, null);
     }
 
     private static (GeoCoordinateDto? Coordinate, double? RadiusKm, string? Error) TryMapProximity(
