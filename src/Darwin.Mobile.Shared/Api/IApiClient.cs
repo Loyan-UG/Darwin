@@ -73,5 +73,15 @@ namespace Darwin.Mobile.Shared.Api
         /// - For non-2xx responses, attempts to parse a meaningful error (ProblemDetails/text).
         /// </remarks>
         Task<Result> PutNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct);
+
+        /// <summary>
+        /// Issues a POST request to endpoints that intentionally return 204/200 with no JSON body.
+        /// Use this for command-style endpoints where payload is irrelevant on success.
+        /// </summary>
+        /// <remarks>
+        /// - Returns Result.Ok() for any 2xx response (body ignored).
+        /// - For non-2xx responses, attempts to parse a meaningful error (ProblemDetails/text).
+        /// </remarks>
+        Task<Result> PostNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct);
     }
 }

@@ -5,6 +5,7 @@ using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Mobile.Business.Services.Reporting;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
@@ -16,6 +17,7 @@ public sealed class SessionViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
     private readonly INavigationService _navigationService;
+    private readonly IBusinessActivityTracker _activityTracker;
 
     private string _sessionToken = string.Empty;
     private string? _customerName;
@@ -35,10 +37,11 @@ public sealed class SessionViewModel : BaseViewModel
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionViewModel"/> class.
     /// </summary>
-    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
+    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService, IBusinessActivityTracker activityTracker)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
 
         LoadSessionCommand = new AsyncCommand(LoadSessionAsync);
         ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual && !IsBusy);
@@ -202,6 +205,7 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmRedemption = model.CanConfirmRedemption;
 
             SetSuccess("Session loaded successfully.");
+            await _activityTracker.RecordSessionLoadedAsync(CustomerName, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
@@ -250,6 +254,7 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmRedemption = false;
 
             SetSuccess("Points accrual confirmed successfully.");
+            await _activityTracker.RecordAccrualConfirmedAsync(CustomerName, PointsToAccrue, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
@@ -286,11 +291,14 @@ public sealed class SessionViewModel : BaseViewModel
                 return;
             }
 
+            var previousBalance = PointsBalance;
             PointsBalance = result.Value.PointsBalance;
             CanConfirmAccrual = false;
             CanConfirmRedemption = false;
 
             SetSuccess("Reward redemption confirmed successfully.");
+            var redeemedPoints = Math.Max(0, previousBalance - PointsBalance);
+            await _activityTracker.RecordRedemptionConfirmedAsync(CustomerName, redeemedPoints, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {

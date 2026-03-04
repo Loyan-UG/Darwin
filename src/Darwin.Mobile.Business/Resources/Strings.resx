@@ -302,4 +302,91 @@
 	<data name="PasswordChangeSuccess" xml:space="preserve">
     <value>Password changed successfully.</value>
   </data>
+  <data name="RewardsTitle" xml:space="preserve">
+    <value>Rewards</value>
+  </data>
+  <data name="RewardsSubtitle" xml:space="preserve">
+    <value>Create and maintain reward tiers for your loyalty program.</value>
+  </data>
+  <data name="RewardsRefreshButton" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="RewardsNewTierButton" xml:space="preserve">
+    <value>New tier</value>
+  </data>
+  <data name="RewardsCreateButton" xml:space="preserve">
+    <value>Create tier</value>
+  </data>
+  <data name="RewardsUpdateButton" xml:space="preserve">
+    <value>Update tier</value>
+  </data>
+  <data name="RewardsDeleteButton" xml:space="preserve">
+    <value>Delete tier</value>
+  </data>
+  <data name="RewardsCurrentTiersLabel" xml:space="preserve">
+    <value>Current tiers</value>
+  </data>
+  <data name="RewardsPointsPlaceholder" xml:space="preserve">
+    <value>Points required</value>
+  </data>
+  <data name="RewardsTypePickerTitle" xml:space="preserve">
+    <value>Reward type</value>
+  </data>
+  <data name="RewardsValuePlaceholder" xml:space="preserve">
+    <value>Reward value (optional)</value>
+  </data>
+  <data name="RewardsDescriptionPlaceholder" xml:space="preserve">
+    <value>Description (optional)</value>
+  </data>
+  <data name="RewardsAllowSelfRedemptionLabel" xml:space="preserve">
+    <value>Allow self redemption</value>
+  </data>
+  <data name="RewardsLoadFailed" xml:space="preserve">
+    <value>Unable to load reward configuration.</value>
+  </data>
+  <data name="RewardsSaveFailed" xml:space="preserve">
+    <value>Unable to save reward tier.</value>
+  </data>
+  <data name="RewardsDeleteFailed" xml:space="preserve">
+    <value>Unable to delete reward tier.</value>
+  </data>
+  <data name="RewardsValidationFailed" xml:space="preserve">
+    <value>Please review reward tier fields and try again.</value>
+  </data>
+  <data name="RewardsPointsValidation" xml:space="preserve">
+    <value>Points required must be a number greater than zero.</value>
+  </data>
+  <data name="RewardsTypeValidation" xml:space="preserve">
+    <value>Please select a valid reward type.</value>
+  </data>
+  <data name="RewardsValueValidation" xml:space="preserve">
+    <value>Reward value must be a valid number.</value>
+  </data>
+  <data name="DashboardTitle" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="DashboardSubtitle" xml:space="preserve">
+    <value>Operational snapshot for recent scanner activity.</value>
+  </data>
+  <data name="DashboardLookbackLabel" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="DashboardRefreshButton" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="DashboardLoadFailed" xml:space="preserve">
+    <value>Unable to load dashboard report.</value>
+  </data>
+  <data name="DashboardTopCustomersTitle" xml:space="preserve">
+    <value>Top customers</value>
+  </data>
+  <data name="DashboardTopCustomersEmpty" xml:space="preserve">
+    <value>No customer interactions were recorded in the selected window.</value>
+  </data>
+  <data name="DashboardRecentActivityTitle" xml:space="preserve">
+    <value>Recent activity</value>
+  </data>
+  <data name="DashboardRecentActivityEmpty" xml:space="preserve">
+    <value>No recent activity was recorded yet.</value>
+  </data>
 </root>
