@@ -1,4 +1,5 @@
 ﻿using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
@@ -45,6 +46,9 @@ public static class ServiceCollectionExtensions
         // Business identity context for Home dashboard
         services.AddSingleton<IBusinessIdentityContextService, BusinessIdentityContextService>();
 
+        // Local activity tracker powering dashboard and lightweight reporting cards.
+        services.AddSingleton<IBusinessActivityTracker, BusinessActivityTracker>();
+
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<Views.HomePage>();
 
@@ -55,6 +59,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<Views.ScannerPage>();
 
         services.AddTransient<Views.ComingSoonPage>();
+
+        services.AddTransient<ViewModels.DashboardViewModel>();
+        services.AddTransient<Views.DashboardPage>();
 
         services.AddTransient<ViewModels.RewardsViewModel>();
         services.AddTransient<Views.RewardsPage>();

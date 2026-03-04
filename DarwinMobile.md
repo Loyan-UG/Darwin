@@ -51,6 +51,7 @@ Key principles for the loyalty flow:
   - Call `ConfirmAccrual` / `ConfirmRedemption` to complete the operation.
 - Uses the same Shared services; provides the scanner implementation for the device.
 - Phase-2 increment delivered: business-side reward tier editing (load/create/update/delete) backed by loyalty reward-configuration APIs.
+- Phase-2 increment delivered: business dashboard + lightweight reporting cards (sessions/accruals/redemptions/top customers/recent activity).
 
 ### 1.3 Darwin.Mobile.Shared (Class Library)
 

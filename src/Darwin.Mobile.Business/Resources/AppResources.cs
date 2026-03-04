@@ -113,6 +113,18 @@ public static class AppResources
     public static string PasswordChangeSuccess => ResourceManager.GetString(nameof(PasswordChangeSuccess), Culture) ?? "Password changed successfully.";
 
 
+    // Dashboard + reporting
+    public static string DashboardTitle => ResourceManager.GetString(nameof(DashboardTitle), Culture) ?? "Dashboard";
+    public static string DashboardSubtitle => ResourceManager.GetString(nameof(DashboardSubtitle), Culture) ?? "Operational snapshot for recent scanner activity.";
+    public static string DashboardLookbackLabel => ResourceManager.GetString(nameof(DashboardLookbackLabel), Culture) ?? "Window";
+    public static string DashboardRefreshButton => ResourceManager.GetString(nameof(DashboardRefreshButton), Culture) ?? "Refresh";
+    public static string DashboardLoadFailed => ResourceManager.GetString(nameof(DashboardLoadFailed), Culture) ?? "Unable to load dashboard report.";
+    public static string DashboardTopCustomersTitle => ResourceManager.GetString(nameof(DashboardTopCustomersTitle), Culture) ?? "Top customers";
+    public static string DashboardTopCustomersEmpty => ResourceManager.GetString(nameof(DashboardTopCustomersEmpty), Culture) ?? "No customer interactions were recorded in the selected window.";
+    public static string DashboardRecentActivityTitle => ResourceManager.GetString(nameof(DashboardRecentActivityTitle), Culture) ?? "Recent activity";
+    public static string DashboardRecentActivityEmpty => ResourceManager.GetString(nameof(DashboardRecentActivityEmpty), Culture) ?? "No recent activity was recorded yet.";
+
+
     // Rewards editor
     public static string RewardsTitle => ResourceManager.GetString(nameof(RewardsTitle), Culture) ?? "Rewards";
     public static string RewardsSubtitle => ResourceManager.GetString(nameof(RewardsSubtitle), Culture) ?? "Create and maintain reward tiers for your loyalty program.";

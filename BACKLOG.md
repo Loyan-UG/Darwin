@@ -151,8 +151,8 @@ It is designed as the **single source of truth** for development planning.
 - [x] Discover IA split: My Businesses + Explore (search/category/nearby)
 
 ## 3.3 Mobile Business App – Phase 2
-- Business dashboard
-- Simple reporting (visits, top customers, upcoming rewards)
+- [x] Business dashboard
+- [x] Simple reporting (visits, top customers, upcoming rewards)
 - [x] Reward editing interface
 - Staff roles & permissions
 

@@ -362,4 +362,31 @@
   <data name="RewardsValueValidation" xml:space="preserve">
     <value>Prämienwert muss eine gültige Zahl sein.</value>
   </data>
+  <data name="DashboardTitle" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="DashboardSubtitle" xml:space="preserve">
+    <value>Betriebsübersicht für aktuelle Scanner-Aktivitäten.</value>
+  </data>
+  <data name="DashboardLookbackLabel" xml:space="preserve">
+    <value>Zeitraum</value>
+  </data>
+  <data name="DashboardRefreshButton" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="DashboardLoadFailed" xml:space="preserve">
+    <value>Dashboard-Bericht konnte nicht geladen werden.</value>
+  </data>
+  <data name="DashboardTopCustomersTitle" xml:space="preserve">
+    <value>Top-Kunden</value>
+  </data>
+  <data name="DashboardTopCustomersEmpty" xml:space="preserve">
+    <value>Im ausgewählten Zeitraum wurden keine Kundeninteraktionen aufgezeichnet.</value>
+  </data>
+  <data name="DashboardRecentActivityTitle" xml:space="preserve">
+    <value>Letzte Aktivität</value>
+  </data>
+  <data name="DashboardRecentActivityEmpty" xml:space="preserve">
+    <value>Es wurde noch keine Aktivität aufgezeichnet.</value>
+  </data>
 </root>

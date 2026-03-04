@@ -36,9 +36,9 @@
             ContentTemplate="{DataTemplate views:ScannerPage}" />
 
         <!-- Future phases (placeholder for now) -->
-        <ShellContent Route="dashboard"
-                      Title="Dashboard"
-                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
+        <ShellContent Route="{x:Static local:Routes.Dashboard}"
+                      Title="{x:Static res:AppResources.DashboardTitle}"
+                      ContentTemplate="{DataTemplate views:DashboardPage}" />
 
         <ShellContent Route="{x:Static local:Routes.Rewards}"
                       Title="{x:Static res:AppResources.RewardsTitle}"
