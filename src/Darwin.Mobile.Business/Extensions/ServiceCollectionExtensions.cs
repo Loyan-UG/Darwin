@@ -50,6 +50,9 @@ public static class ServiceCollectionExtensions
         // Local activity tracker powering dashboard and lightweight reporting cards.
         services.AddSingleton<IBusinessActivityTracker, BusinessActivityTracker>();
 
+        // Local activity tracker powering dashboard and lightweight reporting cards.
+        services.AddSingleton<IBusinessActivityTracker, BusinessActivityTracker>();
+
         services.AddTransient<ViewModels.HomeViewModel>();
         services.AddTransient<Views.HomePage>();
 
