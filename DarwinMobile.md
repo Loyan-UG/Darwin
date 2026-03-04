@@ -261,6 +261,8 @@ Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config 
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
 - Infrastructure exposes composition helpers (`AddSharedHostingDataProtection`, `AddPersistence`, `AddIdentityInfrastructure`, `AddNotificationsInfrastructure`, `AddJwtAuthCore`).
+- Password-reset emails are sent through `IEmailSender` (`SmtpEmailSender` by default), bound from `Email:Smtp` configuration. If this section is missing or points to a non-working relay, reset requests still return generic success (anti-enumeration) but no email is delivered.
+- For troubleshooting delivery issues, inspect WebApi logs (`logs/api-log-*.txt`) for `Error processing password reset request` and SMTP send diagnostics.
 
 ---
 

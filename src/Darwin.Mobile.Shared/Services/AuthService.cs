@@ -235,7 +235,6 @@ namespace Darwin.Mobile.Shared.Services
 
 
         /// <inheritdoc />
-        /// <inheritdoc />
         public async Task<bool> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
