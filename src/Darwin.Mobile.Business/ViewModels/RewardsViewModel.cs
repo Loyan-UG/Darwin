@@ -80,6 +80,7 @@ public sealed class RewardsViewModel : BaseViewModel
             {
                 SaveCommand.RaiseCanExecuteChanged();
                 DeleteCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanDeleteReward));
             }
         }
     }
@@ -152,6 +153,11 @@ public sealed class RewardsViewModel : BaseViewModel
     /// True when current editor is bound to an existing tier.
     /// </summary>
     public bool IsEditMode => _editingRewardTierId != Guid.Empty;
+
+    /// <summary>
+    /// Indicates whether current reward can be deleted by the current operator.
+    /// </summary>
+    public bool CanDeleteReward => IsEditMode && CanManageRewards;
 
     /// <summary>
     /// Label shown on save button based on create/update mode.
@@ -238,6 +244,12 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         ArgumentNullException.ThrowIfNull(tier);
 
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
         RunOnMain(() =>
         {
             _editingRewardTierId = tier.RewardTierId;
@@ -251,6 +263,7 @@ public sealed class RewardsViewModel : BaseViewModel
 
             OnPropertyChanged(nameof(IsEditMode));
             OnPropertyChanged(nameof(SaveButtonText));
+            OnPropertyChanged(nameof(CanDeleteReward));
             DeleteCommand.RaiseCanExecuteChanged();
         });
     }
@@ -351,6 +364,12 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         if (IsBusy || !IsEditMode)
         {
+            return;
+        }
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
             return;
         }
 
@@ -498,6 +517,7 @@ public sealed class RewardsViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(IsEditMode));
         OnPropertyChanged(nameof(SaveButtonText));
+        OnPropertyChanged(nameof(CanDeleteReward));
         DeleteCommand.RaiseCanExecuteChanged();
     }
 

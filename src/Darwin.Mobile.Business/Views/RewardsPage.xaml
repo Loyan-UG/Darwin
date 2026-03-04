@@ -73,7 +73,7 @@
                         <Button Grid.Column="1"
                                 Text="{x:Static res:AppResources.RewardsDeleteButton}"
                                 Command="{Binding DeleteCommand}"
-                                IsEnabled="{Binding IsEditMode}" />
+                                IsEnabled="{Binding CanDeleteReward}" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>

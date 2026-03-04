@@ -1,6 +1,7 @@
 ﻿using Darwin.Mobile.Consumer.ViewModels;
 using Darwin.Mobile.Consumer.Views;
 using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
@@ -47,6 +48,7 @@ public static class ServiceCollectionExtensions
 
         // Root navigation service for window-aware app root switching.
         services.AddSingleton<IAppRootNavigator, AppRootNavigator>();
+        services.AddSingleton<IConsumerPushRegistrationCoordinator, ConsumerPushRegistrationCoordinator>();
 
         // Platform services (scanner, location)
         services.AddSingleton<IScanner, Services.Platform.ScannerPlatformService>();

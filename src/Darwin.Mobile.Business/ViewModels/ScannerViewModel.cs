@@ -35,7 +35,10 @@ public sealed class ScannerViewModel : BaseViewModel
 
     private bool _canConfirmAccrual;
     private bool _canConfirmRedemption;
+    private bool _hasRedemptionPermission = true;
+    private bool _hasAccrualPermission = true;
     private int _pointsToAccrue = 1;
+    private string _operatorRole = "—";
 
     private string? _successMessage;
     private string? _warningMessage;
@@ -63,8 +66,8 @@ public sealed class ScannerViewModel : BaseViewModel
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
 
         ScanCommand = new AsyncCommand(ScanAsync);
-        ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual);
-        ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanConfirmRedemption);
+        ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanExecuteAccrual);
+        ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanExecuteRedemption);
     }
 
     /// <summary>
@@ -86,6 +89,58 @@ public sealed class ScannerViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Current operator role resolved from token claims.
+    /// </summary>
+    public string OperatorRole
+    {
+        get => _operatorRole;
+        private set => SetProperty(ref _operatorRole, value);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether current operator can confirm accruals.
+    /// </summary>
+    public bool HasAccrualPermission
+    {
+        get => _hasAccrualPermission;
+        private set
+        {
+            if (SetProperty(ref _hasAccrualPermission, value))
+            {
+                ConfirmAccrualCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteAccrual));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether current operator can confirm redemptions.
+    /// </summary>
+    public bool HasRedemptionPermission
+    {
+        get => _hasRedemptionPermission;
+        private set
+        {
+            if (SetProperty(ref _hasRedemptionPermission, value))
+            {
+                ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteRedemption));
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// UI helper: session and role both allow accrual confirmation.
+    /// </summary>
+    public bool CanExecuteAccrual => CanConfirmAccrual && HasAccrualPermission;
+
+    /// <summary>
+    /// UI helper: session and role both allow redemption confirmation.
+    /// </summary>
+    public bool CanExecuteRedemption => CanConfirmRedemption && HasRedemptionPermission;
+
+    /// <summary>
     /// Gets a value indicating whether the current session allows confirming accrual.
     /// </summary>
     public bool CanConfirmAccrual
@@ -96,6 +151,7 @@ public sealed class ScannerViewModel : BaseViewModel
             if (SetProperty(ref _canConfirmAccrual, value))
             {
                 ConfirmAccrualCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteAccrual));
             }
         }
     }
@@ -111,6 +167,7 @@ public sealed class ScannerViewModel : BaseViewModel
             if (SetProperty(ref _canConfirmRedemption, value))
             {
                 ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteRedemption));
             }
         }
     }
@@ -170,6 +227,11 @@ public sealed class ScannerViewModel : BaseViewModel
     /// </summary>
     public AsyncCommand ConfirmRedemptionCommand { get; }
 
+    public override async Task OnAppearingAsync()
+    {
+        await RefreshAuthorizationAsync().ConfigureAwait(false);
+    }
+
     private async Task ScanAsync()
     {
         if (IsBusy)
@@ -227,6 +289,12 @@ public sealed class ScannerViewModel : BaseViewModel
             return;
         }
 
+        if (!HasAccrualPermission)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedAccrual);
+            return;
+        }
+
         if (!CanConfirmAccrual)
         {
             SetWarning("Accrual is not allowed for this session.");
@@ -280,6 +348,12 @@ public sealed class ScannerViewModel : BaseViewModel
         if (_currentSession is null)
         {
             SetWarning("No active scan session.");
+            return;
+        }
+
+        if (!HasRedemptionPermission)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedRedemption);
             return;
         }
 
@@ -357,5 +431,22 @@ public sealed class ScannerViewModel : BaseViewModel
         WarningMessage = null;
         ErrorMessage = message;
         FeedbackVisibilityRequested?.Invoke();
+    }
+
+    private async Task RefreshAuthorizationAsync()
+    {
+        var snapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+
+        if (!snapshot.Succeeded || snapshot.Value is null)
+        {
+            OperatorRole = "—";
+            HasAccrualPermission = false;
+            HasRedemptionPermission = false;
+            return;
+        }
+
+        OperatorRole = snapshot.Value.RoleDisplayName;
+        HasAccrualPermission = snapshot.Value.CanConfirmAccrual;
+        HasRedemptionPermission = snapshot.Value.CanConfirmRedemption;
     }
 }
