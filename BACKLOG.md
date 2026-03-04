@@ -143,7 +143,7 @@ It is designed as the **single source of truth** for development planning.
 - Public Catalog endpoints for future storefront use
 
 ## 3.2 Mobile Consumer App – Phase 2
-- [ ] Full map integration (Google Maps / Apple MapKit)
+- [x] Full map integration (Google Maps / Apple MapKit)
 - [x] Business detail page
 - [x] Favorites, reviews, likes
 - [x] Feed/promotions module (timeline-backed + promotions endpoint)

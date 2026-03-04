@@ -36,7 +36,7 @@ Key principles for the loyalty flow:
   - Authentication (JWT access + refresh tokens).
   - **Loyalty QR page**: shows a QR built from a server-issued `ScanSessionToken`.
   - Rewards dashboard per business.
-  - Business discovery (map + directory) and business detail.
+  - Business discovery (full in-app map integration + directory) and business detail.
   - Profile (read/update with optimistic concurrency via `RowVersion`).
 - UI binds to **Shared** services (`ILoyaltyService`, `IAuthService`, `IProfileService`, `IBusinessService`) and uses platform services (camera, location) via abstractions in `Darwin.Mobile.Shared`.
 
