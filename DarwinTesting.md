@@ -516,7 +516,7 @@ This status is derived from the current repository state and must be refreshed w
 
 ### Pending
 
-- [ ] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>`.
+- [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password).
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`).
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm).
@@ -532,7 +532,7 @@ Keep this list as the execution tracker for the testing workstream.
 
 | Order | Work item | Status | Exit criteria |
 |---|---|---|---|
-| 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | Pending | One green smoke test can boot WebApi and hit `/health` or equivalent metadata endpoint |
+| 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and is committed; deterministic DB reset fixture is the next sub-step |
 | 2 | Identity flow test pack | Pending | Happy/failure tests for login, refresh, request-reset (including 200 empty body behavior), reset, change-password |
 | 3 | Profile concurrency test pack | Pending | Tests prove `RowVersion` success and stale conflict behavior |
 | 4 | Loyalty scan journey test pack | Pending | End-to-end tests for prepare → process → confirm-accrual and prepare → process → confirm-redemption |
@@ -545,6 +545,13 @@ Backlog update rule:
 1. Mark status only after tests are committed and passing in CLI.
 2. Keep each item linked to concrete test file paths in commit/PR notes.
 3. If scope changes, append a short reason in this section.
+
+### Latest progress log
+
+- Added the first integration smoke test for `GET /api/v1/meta/health` using `WebApplicationFactory<Program>`.
+- Added `Program` test host marker (`public partial class Program`) required by `WebApplicationFactory`.
+- Extended integration test project dependencies for host-based API integration testing.
+
 
 ---
 
