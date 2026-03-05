@@ -549,6 +549,7 @@ Backlog update rule:
 ### Latest progress log
 
 - Added the first integration smoke test for `GET /api/v1/meta/health` using `WebApplicationFactory<Program>`.
+- Added a second integration smoke test for `GET /api/v1/meta/info` to validate baseline diagnostics payload shape.
 - Added `Program` test host marker (`public partial class Program`) required by `WebApplicationFactory`.
 - Extended integration test project dependencies for host-based API integration testing.
 
