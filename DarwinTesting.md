@@ -25,6 +25,8 @@ Keep this document up-to-date as tests are added and as the CI pipeline evolves.
 11. CI considerations & pipeline setup
 12. Checklist for adding tests to new features
 13. Appendix: small helper snippets
+14. Current implementation status (done vs pending)
+15. Testing delivery backlog (execution order)
 
 ---
 
@@ -38,6 +40,14 @@ Keep this document up-to-date as tests are added and as the CI pipeline evolves.
 ---
 
 ## 2) Test projects & responsibilities
+
+Current repository status first:
+
+- Existing projects are `tests/Darwin.Tests.Unit` and `tests/Darwin.Tests.Integration`.
+- Unit tests currently cover slug validators and sanitizer helper behavior.
+- Integration project exists but is not yet wired for WebApi end-to-end scenarios.
+
+Recommended target structure (incremental evolution):
 
 Create separate test projects that align with layered architecture. Each project should reference only the production assemblies it needs.
 
@@ -55,7 +65,7 @@ Create separate test projects that align with layered architecture. Each project
 - `tests/Darwin.Mobile.Shared.Tests`  
   Purpose: Unit tests for the mobile shared client (ApiClient, retry policy, token store). Mock `HttpMessageHandler`.
 
-Note: Rename or restructure existing test projects to match these names to keep CI filter rules consistent.
+Note: Migrate to the target naming incrementally. If you rename projects, update CI, solution filters, and documentation in the same PR to avoid broken pipelines.
 
 ---
 
@@ -487,6 +497,54 @@ public static class TestAuthHelper
     }
 }
 ```
+
+---
+
+## 14) Current implementation status (done vs pending)
+
+This status is derived from the current repository state and must be refreshed whenever test assets change.
+
+### Done
+
+- [x] `tests/Darwin.Tests.Unit` exists on `net10.0` with xUnit + FluentAssertions setup.
+- [x] Unit tests exist for:
+  - `Catalog/ProductUniqueSlugValidatorTests`
+  - `CMS/PageUniqueSlugValidatorTests`
+  - `Common/HtmlSanitizerHelperTests`
+- [x] `tests/Darwin.Tests.Unit/TestDbFactory.cs` exists for DB-backed unit test setup.
+- [x] `tests/Darwin.Tests.Integration` project exists and can be expanded incrementally.
+
+### Pending
+
+- [ ] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>`.
+- [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password).
+- [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`).
+- [ ] Add loyalty scan flow integration tests (prepare/process/confirm).
+- [ ] Add contract serialization compatibility tests for mobile-critical DTOs.
+- [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
+- [ ] Add CI lane split and coverage publication for unit/integration.
+
+---
+
+## 15) Testing delivery backlog (execution order)
+
+Keep this list as the execution tracker for the testing workstream.
+
+| Order | Work item | Status | Exit criteria |
+|---|---|---|---|
+| 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | Pending | One green smoke test can boot WebApi and hit `/health` or equivalent metadata endpoint |
+| 2 | Identity flow test pack | Pending | Happy/failure tests for login, refresh, request-reset (including 200 empty body behavior), reset, change-password |
+| 3 | Profile concurrency test pack | Pending | Tests prove `RowVersion` success and stale conflict behavior |
+| 4 | Loyalty scan journey test pack | Pending | End-to-end tests for prepare → process → confirm-accrual and prepare → process → confirm-redemption |
+| 5 | Contracts compatibility pack | Pending | Serialization tests protect key DTO JSON shapes consumed by mobile apps |
+| 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
+| 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
+
+Backlog update rule:
+
+1. Mark status only after tests are committed and passing in CLI.
+2. Keep each item linked to concrete test file paths in commit/PR notes.
+3. If scope changes, append a short reason in this section.
 
 ---
 
