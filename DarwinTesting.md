@@ -506,7 +506,7 @@ This status is derived from the current repository state and must be refreshed w
 
 ### Done
 
-- [x] `tests/Darwin.Tests.Unit` exists on `net10.0` with xUnit + FluentAssertions setup.
+- [x] `tests/Darwin.Tests.Unit` exists on `net10.0` with xUnit v3 + FluentAssertions setup.
 - [x] Unit tests exist for:
   - `Catalog/ProductUniqueSlugValidatorTests`
   - `CMS/PageUniqueSlugValidatorTests`
@@ -550,6 +550,7 @@ Backlog update rule:
 
 - Added the first integration smoke test for `GET /api/v1/meta/health` using `WebApplicationFactory<Program>`.
 - Added a second integration smoke test for `GET /api/v1/meta/info` to validate baseline diagnostics payload shape.
+- Migrated current test projects from xUnit v2 packages to xUnit v3 (`3.2.2`) package line.
 - Added `Program` test host marker (`public partial class Program`) required by `WebApplicationFactory`.
 - Extended integration test project dependencies for host-based API integration testing.
 
