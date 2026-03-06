@@ -5,6 +5,9 @@ using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Mobile.Business.Services.Reporting;
+using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Business.Resources;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
@@ -16,13 +19,18 @@ public sealed class SessionViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
     private readonly INavigationService _navigationService;
+    private readonly IBusinessActivityTracker _activityTracker;
+    private readonly IBusinessAuthorizationService _businessAuthorizationService;
 
     private string _sessionToken = string.Empty;
     private string? _customerName;
     private int _pointsBalance;
     private bool _canConfirmAccrual;
     private bool _canConfirmRedemption;
+    private bool _hasAccrualPermission = true;
+    private bool _hasRedemptionPermission = true;
     private int _pointsToAccrue = 1;
+    private string _operatorRole = "—";
 
     private string? _successMessage;
     private string? _warningMessage;
@@ -35,14 +43,16 @@ public sealed class SessionViewModel : BaseViewModel
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionViewModel"/> class.
     /// </summary>
-    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
+    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService, IBusinessActivityTracker activityTracker, IBusinessAuthorizationService businessAuthorizationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+        _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
+        _businessAuthorizationService = businessAuthorizationService ?? throw new ArgumentNullException(nameof(businessAuthorizationService));
 
         LoadSessionCommand = new AsyncCommand(LoadSessionAsync);
-        ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanConfirmAccrual && !IsBusy);
-        ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanConfirmRedemption && !IsBusy);
+        ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanExecuteAccrual && !IsBusy);
+        ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanExecuteRedemption && !IsBusy);
     }
 
     /// <summary>
@@ -83,6 +93,7 @@ public sealed class SessionViewModel : BaseViewModel
             if (SetProperty(ref _canConfirmAccrual, value))
             {
                 ConfirmAccrualCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteAccrual));
             }
         }
     }
@@ -98,6 +109,7 @@ public sealed class SessionViewModel : BaseViewModel
             if (SetProperty(ref _canConfirmRedemption, value))
             {
                 ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteRedemption));
             }
         }
     }
@@ -110,6 +122,57 @@ public sealed class SessionViewModel : BaseViewModel
         get => _pointsToAccrue;
         set => SetProperty(ref _pointsToAccrue, value);
     }
+
+    /// <summary>
+    /// Current operator role resolved from token claims.
+    /// </summary>
+    public string OperatorRole
+    {
+        get => _operatorRole;
+        private set => SetProperty(ref _operatorRole, value);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether current operator can confirm accruals.
+    /// </summary>
+    public bool HasAccrualPermission
+    {
+        get => _hasAccrualPermission;
+        private set
+        {
+            if (SetProperty(ref _hasAccrualPermission, value))
+            {
+                ConfirmAccrualCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteAccrual));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether current operator can confirm redemptions.
+    /// </summary>
+    public bool HasRedemptionPermission
+    {
+        get => _hasRedemptionPermission;
+        private set
+        {
+            if (SetProperty(ref _hasRedemptionPermission, value))
+            {
+                ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteRedemption));
+            }
+        }
+    }
+
+    /// <summary>
+    /// UI helper: session and role both allow accrual confirmation.
+    /// </summary>
+    public bool CanExecuteAccrual => CanConfirmAccrual && HasAccrualPermission;
+
+    /// <summary>
+    /// UI helper: session and role both allow redemption confirmation.
+    /// </summary>
+    public bool CanExecuteRedemption => CanConfirmRedemption && HasRedemptionPermission;
 
     /// <summary>
     /// Success banner text shown at top of page.
@@ -166,6 +229,11 @@ public sealed class SessionViewModel : BaseViewModel
     /// </summary>
     public AsyncCommand ConfirmRedemptionCommand { get; }
 
+    public override async Task OnAppearingAsync()
+    {
+        await RefreshAuthorizationAsync().ConfigureAwait(false);
+    }
+
     /// <summary>
     /// Loads session details using the current <see cref="SessionToken"/>.
     /// </summary>
@@ -202,6 +270,7 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmRedemption = model.CanConfirmRedemption;
 
             SetSuccess("Session loaded successfully.");
+            await _activityTracker.RecordSessionLoadedAsync(CustomerName, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
@@ -222,6 +291,12 @@ public sealed class SessionViewModel : BaseViewModel
         if (!CanConfirmAccrual)
         {
             SetWarning("Accrual is not allowed for this session.");
+            return;
+        }
+
+        if (!HasAccrualPermission)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedAccrual);
             return;
         }
 
@@ -250,6 +325,7 @@ public sealed class SessionViewModel : BaseViewModel
             CanConfirmRedemption = false;
 
             SetSuccess("Points accrual confirmed successfully.");
+            await _activityTracker.RecordAccrualConfirmedAsync(CustomerName, PointsToAccrue, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
@@ -273,6 +349,12 @@ public sealed class SessionViewModel : BaseViewModel
             return;
         }
 
+        if (!HasRedemptionPermission)
+        {
+            SetWarning(AppResources.BusinessPermissionDeniedRedemption);
+            return;
+        }
+
         IsBusy = true;
         ConfirmAccrualCommand.RaiseCanExecuteChanged();
         ConfirmRedemptionCommand.RaiseCanExecuteChanged();
@@ -286,11 +368,14 @@ public sealed class SessionViewModel : BaseViewModel
                 return;
             }
 
+            var previousBalance = PointsBalance;
             PointsBalance = result.Value.PointsBalance;
             CanConfirmAccrual = false;
             CanConfirmRedemption = false;
 
             SetSuccess("Reward redemption confirmed successfully.");
+            var redeemedPoints = Math.Max(0, previousBalance - PointsBalance);
+            await _activityTracker.RecordRedemptionConfirmedAsync(CustomerName, redeemedPoints, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
@@ -332,5 +417,22 @@ public sealed class SessionViewModel : BaseViewModel
         WarningMessage = null;
         ErrorMessage = message;
         FeedbackVisibilityRequested?.Invoke();
+    }
+
+    private async Task RefreshAuthorizationAsync()
+    {
+        var authSnapshot = await _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
+
+        if (!authSnapshot.Succeeded || authSnapshot.Value is null)
+        {
+            OperatorRole = "—";
+            HasAccrualPermission = false;
+            HasRedemptionPermission = false;
+            return;
+        }
+
+        OperatorRole = authSnapshot.Value.RoleDisplayName;
+        HasAccrualPermission = authSnapshot.Value.CanConfirmAccrual;
+        HasRedemptionPermission = authSnapshot.Value.CanConfirmRedemption;
     }
 }

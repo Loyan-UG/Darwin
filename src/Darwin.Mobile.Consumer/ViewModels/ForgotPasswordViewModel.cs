@@ -96,20 +96,6 @@ public sealed class ForgotPasswordViewModel : BaseViewModel
 
     private static string ResolveFriendlyError(Exception ex)
     {
-        var raw = ex.Message ?? string.Empty;
-
-        if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("No such host", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("SSL", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("invalid_requesturi", StringComparison.OrdinalIgnoreCase))
-        {
-            return AppResources.ServerUnreachableMessage;
-        }
-
-        return AppResources.ForgotPasswordFailed;
+        return ViewModelErrorMapper.ToUserMessage(ex, AppResources.ForgotPasswordFailed);
     }
 }

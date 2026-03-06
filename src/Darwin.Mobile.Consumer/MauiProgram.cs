@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Maui;
 using Darwin.Mobile.Consumer.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using ZXing.Net.Maui;
 using UraniumUI;
@@ -28,6 +29,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseMauiMaps()
             .UseUraniumUI()
             .UseUraniumUIMaterial()
             .UseBarcodeReader() // Registers ZXing barcode scanner services

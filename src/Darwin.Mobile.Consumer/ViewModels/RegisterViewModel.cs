@@ -201,18 +201,6 @@ public sealed class RegisterViewModel : BaseViewModel
             return AppResources.RegisterEmailAlreadyUsed;
         }
 
-        if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("No such host", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("SSL", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("invalid_requesturi", StringComparison.OrdinalIgnoreCase))
-        {
-            return AppResources.ServerUnreachableMessage;
-        }
-
-        return string.IsNullOrWhiteSpace(raw) ? fallback : raw;
+        return ViewModelErrorMapper.ToUserMessage(ex, fallback);
     }
 }
