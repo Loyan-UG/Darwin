@@ -28,7 +28,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// - Category filtering.
 /// - Optional nearby mode (location-based query) with graceful fallback.
 ///
-/// All UI-bound collections are updated through <see cref="RunOnMain"/> to keep MAUI thread-safe.
+/// All UI-bound collections are updated through <see cref="BaseViewModel.RunOnMain(System.Action)"/> to keep MAUI thread-safe.
 /// </remarks>
 public sealed class DiscoverViewModel : BaseViewModel
 {

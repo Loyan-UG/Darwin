@@ -1,4 +1,5 @@
 ﻿using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Services;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
@@ -20,12 +21,14 @@ public partial class App : Application
 {
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
+    private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
 
-    public App(IAuthService authService, IAppRootNavigator appRootNavigator)
+    public App(IAuthService authService, IAppRootNavigator appRootNavigator, IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         InitializeComponent();
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         // Force a deterministic visual theme for the Consumer app.
         // We intentionally do not follow device Dark/Light mode for now.
@@ -67,7 +70,11 @@ public partial class App : Application
     {
         try
         {
-            await _authService.TryRefreshAsync(CancellationToken.None);
+            var refreshed = await _authService.TryRefreshAsync(CancellationToken.None);
+            if (refreshed)
+            {
+                _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
+            }
         }
         catch
         {
@@ -89,6 +96,7 @@ public partial class App : Application
 
         if (tokenValid)
         {
+            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
             await _appRootNavigator.NavigateToAuthenticatedShellAsync();
             return;
         }

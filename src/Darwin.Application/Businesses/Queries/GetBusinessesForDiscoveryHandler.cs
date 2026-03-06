@@ -7,6 +7,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Loyalty;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Queries
@@ -62,6 +63,31 @@ namespace Darwin.Application.Businesses.Queries
                 businessQuery = businessQuery.Where(x =>
                     x.Name.Contains(q) ||
                     (x.ShortDescription != null && x.ShortDescription.Contains(q)));
+            }
+
+            if (request.HasActiveLoyaltyProgram.HasValue)
+            {
+                var mustHaveLoyalty = request.HasActiveLoyaltyProgram.Value;
+                if (mustHaveLoyalty)
+                {
+                    businessQuery = businessQuery.Where(b =>
+                        _db.Set<LoyaltyProgram>().Any(lp => lp.BusinessId == b.Id && lp.IsActive));
+                }
+                else
+                {
+                    businessQuery = businessQuery.Where(b =>
+                        !_db.Set<LoyaltyProgram>().Any(lp => lp.BusinessId == b.Id && lp.IsActive));
+                }
+            }
+
+            if (request.MinRating.HasValue)
+            {
+                var minRating = (decimal)request.MinRating.Value;
+                businessQuery = businessQuery.Where(b =>
+                    _db.Set<BusinessEngagementStats>()
+                        .Where(es => es.BusinessId == b.Id && es.RatingCount > 0)
+                        .Select(es => (decimal?)es.RatingSum / es.RatingCount)
+                        .FirstOrDefault() >= minRating);
             }
 
             // Primary location acts as display location for discovery cards.
@@ -132,6 +158,16 @@ namespace Darwin.Application.Businesses.Queries
                         .Where(m => m.BusinessId == b.Id && m.IsPrimary)
                         .OrderBy(m => m.SortOrder)
                         .Select(m => m.Url)
+                        .FirstOrDefault(),
+                    RatingAverage = _db.Set<BusinessEngagementStats>()
+                        .AsNoTracking()
+                        .Where(es => es.BusinessId == b.Id && es.RatingCount > 0)
+                        .Select(es => (decimal?)es.RatingSum / es.RatingCount)
+                        .FirstOrDefault(),
+                    RatingCount = _db.Set<BusinessEngagementStats>()
+                        .AsNoTracking()
+                        .Where(es => es.BusinessId == b.Id)
+                        .Select(es => (int?)es.RatingCount)
                         .FirstOrDefault()
                 };
 

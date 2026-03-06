@@ -10,6 +10,11 @@
 
     <ScrollView x:Name="RootScrollView">
         <VerticalStackLayout Padding="24" Spacing="16">
+
+            <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
+                   FontSize="12"
+                   Opacity="0.8"
+                   TextColor="{StaticResource BrushOnSurface}" />
             <Label Text="{x:Static res:AppResources.CustomerLabel}"
                    Style="{StaticResource TitleLabelStyle}" />
             <Label Text="{Binding CustomerName}"
@@ -26,16 +31,16 @@
                    Text="{Binding PointsToAccrue}"
                    Keyboard="Numeric"
                    Placeholder="{x:Static res:AppResources.PointsPlaceholder}"
-                   IsVisible="{Binding CanConfirmAccrual}"
+                   IsVisible="{Binding CanExecuteAccrual}"
                    TextColor="{StaticResource BrushOnSurface}" />
 
             <Button Text="{x:Static res:AppResources.ConfirmAccrualButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmAccrualCommand}"
-                    IsVisible="{Binding CanConfirmAccrual}"
+                    IsVisible="{Binding CanExecuteAccrual}"
                     Clicked="OnActionClicked" />
             <Label Text="Adds points to the customer account for this visit."
-                   IsVisible="{Binding CanConfirmAccrual}"
+                   IsVisible="{Binding CanExecuteAccrual}"
                    FontSize="12"
                    Opacity="0.75"
                    TextColor="{StaticResource BrushOnSurface}" />
@@ -43,13 +48,23 @@
             <Button Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ConfirmRedemptionCommand}"
-                    IsVisible="{Binding CanConfirmRedemption}"
+                    IsVisible="{Binding CanExecuteRedemption}"
                     Clicked="OnActionClicked" />
             <Label Text="Confirms reward redemption and deducts required points."
-                   IsVisible="{Binding CanConfirmRedemption}"
+                   IsVisible="{Binding CanExecuteRedemption}"
                    FontSize="12"
                    Opacity="0.75"
                    TextColor="{StaticResource BrushOnSurface}" />
+
+            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedAccrual}"
+                   TextColor="OrangeRed"
+                   FontSize="12"
+                   IsVisible="{Binding HasAccrualPermission, Converter={StaticResource InverseBoolConverter}}" />
+
+            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRedemption}"
+                   TextColor="OrangeRed"
+                   FontSize="12"
+                   IsVisible="{Binding HasRedemptionPermission, Converter={StaticResource InverseBoolConverter}}" />
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"

@@ -22,6 +22,7 @@ namespace Darwin.Mobile.Business.ViewModels
     {
         private readonly INavigationService _navigationService;
         private readonly IBusinessIdentityContextService _businessIdentityContextService;
+        private readonly IBusinessAuthorizationService _businessAuthorizationService;
 
         private bool _loadedOnce;
         private string _businessName = "—";
@@ -29,13 +30,16 @@ namespace Darwin.Mobile.Business.ViewModels
         private string _businessCity = "—";
         private string _operatorEmail = "—";
         private string _businessDescription = string.Empty;
+        private string _operatorRole = "—";
 
         public HomeViewModel(
             INavigationService navigationService,
-            IBusinessIdentityContextService businessIdentityContextService)
+            IBusinessIdentityContextService businessIdentityContextService,
+            IBusinessAuthorizationService businessAuthorizationService)
         {
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
             _businessIdentityContextService = businessIdentityContextService ?? throw new ArgumentNullException(nameof(businessIdentityContextService));
+            _businessAuthorizationService = businessAuthorizationService ?? throw new ArgumentNullException(nameof(businessAuthorizationService));
 
             LoadContextCommand = new AsyncCommand(LoadContextAsync, () => !IsBusy);
             ScanCommand = new AsyncCommand(OpenScannerAsync, () => !IsBusy);
@@ -80,6 +84,16 @@ namespace Darwin.Mobile.Business.ViewModels
         {
             get => _operatorEmail;
             private set => SetProperty(ref _operatorEmail, value);
+        }
+
+
+        /// <summary>
+        /// Operator role resolved from token scope claims for UI visibility.
+        /// </summary>
+        public string OperatorRole
+        {
+            get => _operatorRole;
+            private set => SetProperty(ref _operatorRole, value);
         }
 
         /// <summary>
@@ -132,6 +146,7 @@ namespace Darwin.Mobile.Business.ViewModels
                         BusinessCity = "—";
                         OperatorEmail = "—";
                         BusinessDescription = string.Empty;
+                        OperatorRole = "—";
 
                         ErrorMessage = result.Error ?? "Unable to resolve current business context.";
                         OnPropertyChanged(nameof(HasBusinessContext));
@@ -152,6 +167,21 @@ namespace Darwin.Mobile.Business.ViewModels
 
                     ErrorMessage = null;
                     OnPropertyChanged(nameof(HasBusinessContext));
+                });
+
+                var authSnapshotResult = await _businessAuthorizationService.GetSnapshotAsync(CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                RunOnMain(() =>
+                {
+                    if (authSnapshotResult.Succeeded && authSnapshotResult.Value is not null)
+                    {
+                        OperatorRole = authSnapshotResult.Value.RoleDisplayName;
+                    }
+                    else
+                    {
+                        OperatorRole = "—";
+                    }
                 });
             }
             catch (Exception ex)
