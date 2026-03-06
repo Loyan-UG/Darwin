@@ -12,6 +12,7 @@ using Darwin.Shared.Results;
 using Darwin.Shared.Security;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Darwin.Application.Identity.Commands
 {
@@ -26,6 +27,7 @@ namespace Darwin.Application.Identity.Commands
         private readonly IEmailSender _email;
         private readonly IClock _clock;
         private readonly IValidator<RequestPasswordResetDto> _validator;
+        private readonly ILogger<RequestPasswordResetHandler> _logger;
 
         /// <summary>
         /// Creates a new instance of the handler.
@@ -38,12 +40,14 @@ namespace Darwin.Application.Identity.Commands
             IAppDbContext db,
             IEmailSender email,
             IClock clock,
-            IValidator<RequestPasswordResetDto> validator)
+            IValidator<RequestPasswordResetDto> validator,
+            ILogger<RequestPasswordResetHandler> logger)
         {
             _db = db;
             _email = email;
             _clock = clock;
             _validator = validator;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -89,8 +93,48 @@ namespace Darwin.Application.Identity.Commands
             var body = $"Use the following token to reset your password: <b>{token}</b><br/>" +
                        $"This token expires at {expires:u}.";
 
-            await _email.SendAsync(user.Email, subject, body, ct);
+
+            var maskedEmail = MaskEmail(user.Email);
+            _logger.LogInformation(
+                "Password reset token created for {Email}. Token expires at {ExpiresAtUtc}.",
+                maskedEmail,
+                expires);
+
+            try
+            {
+                await _email.SendAsync(user.Email, subject, body, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Password reset email send failed for {Email}. Check Email:Smtp configuration and SMTP relay connectivity.",
+                    maskedEmail);
+                throw;
+            }
+
+            _logger.LogInformation("Password reset email sent successfully to {Email}.", maskedEmail);
             return Result.Ok();
+        }
+
+        /// <summary>
+        /// Masks an email for operational logs to reduce sensitive-data exposure.
+        /// </summary>
+        private static string MaskEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return "(empty)";
+            }
+
+            var at = email.IndexOf('@');
+            if (at <= 1)
+            {
+                return "***";
+            }
+
+            var prefix = email.Substring(0, Math.Min(2, at));
+            return $"{prefix}***{email.Substring(at)}";
         }
     }
 }

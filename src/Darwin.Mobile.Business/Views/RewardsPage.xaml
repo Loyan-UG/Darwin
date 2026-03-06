@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+             xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+             x:Class="Darwin.Mobile.Business.Views.RewardsPage"
+             x:DataType="vm:RewardsViewModel"
+             Title="{x:Static res:AppResources.RewardsTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Label Text="{x:Static res:AppResources.RewardsTitle}"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="{x:Static res:AppResources.RewardsSubtitle}"
+                   FontSize="13"
+                   Opacity="0.8" />
+
+            <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
+                   FontSize="12"
+                   Opacity="0.8" />
+
+            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRewardEdit}"
+                   TextColor="OrangeRed"
+                   IsVisible="{Binding CanManageRewards, Converter={StaticResource InverseBoolConverter}}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Text="{x:Static res:AppResources.RewardsRefreshButton}"
+                        Command="{Binding RefreshCommand}" />
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.RewardsNewTierButton}"
+                        IsEnabled="{Binding CanManageRewards}"
+                        Command="{Binding CreateNewCommand}" />
+            </Grid>
+
+            <Border StrokeThickness="1" Stroke="{StaticResource BrushPrimary}" Padding="12">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding SaveButtonText}" FontAttributes="Bold" />
+
+                    <Entry Placeholder="{x:Static res:AppResources.RewardsPointsPlaceholder}"
+                           Keyboard="Numeric"
+                           Text="{Binding PointsRequiredInput}" />
+
+                    <Picker Title="{x:Static res:AppResources.RewardsTypePickerTitle}"
+                            ItemsSource="{Binding RewardTypeOptions}"
+                            SelectedItem="{Binding SelectedRewardType}" />
+
+                    <Entry Placeholder="{x:Static res:AppResources.RewardsValuePlaceholder}"
+                           Keyboard="Numeric"
+                           Text="{Binding RewardValueInput}" />
+
+                    <Editor Placeholder="{x:Static res:AppResources.RewardsDescriptionPlaceholder}"
+                            AutoSize="TextChanges"
+                            Text="{Binding DescriptionInput}" />
+
+                    <HorizontalStackLayout Spacing="8">
+                        <Switch IsToggled="{Binding AllowSelfRedemption}" />
+                        <Label Text="{x:Static res:AppResources.RewardsAllowSelfRedemptionLabel}"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Text="{Binding SaveButtonText}"
+                                Command="{Binding SaveCommand}"
+                                IsEnabled="{Binding CanManageRewards}"
+                                Style="{StaticResource PrimaryButtonStyle}" />
+
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.RewardsDeleteButton}"
+                                Command="{Binding DeleteCommand}"
+                                IsEnabled="{Binding CanDeleteReward}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="{x:Static res:AppResources.RewardsCurrentTiersLabel}"
+                   FontAttributes="Bold" />
+
+            <CollectionView x:Name="RewardTiersCollectionView"
+                            ItemsSource="{Binding RewardTiers}"
+                            SelectionMode="Single">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RewardTierEditorItem">
+                        <Border StrokeThickness="1" Stroke="#555555" Padding="10" Margin="0,4,0,4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{Binding PointsRequired, StringFormat='{}{0} pts'}"
+                                       FontAttributes="Bold"
+                                       FontSize="15" />
+
+                                <Label Text="{Binding RewardType}"
+                                       FontSize="13"
+                                       Opacity="0.85" />
+
+                                <Label Text="{Binding RewardValue, StringFormat='Value: {0}'}"
+                                       FontSize="13"
+                                       IsVisible="{Binding RewardValue, Converter={StaticResource NullCheckConverter}}" />
+
+                                <Label Text="{Binding Description}"
+                                       FontSize="13"
+                                       IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
+
+                                <Label Text="{Binding AllowSelfRedemption, StringFormat='Self redemption: {0}'}"
+                                       FontSize="12"
+                                       Opacity="0.7" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding HasError}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

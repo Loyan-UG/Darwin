@@ -26,7 +26,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// </para>
 /// <para>
 /// Threading note:
-/// Any update that can affect UI-bound collections/properties is marshaled through <see cref="RunOnMain"/>
+/// Any update that can affect UI-bound collections/properties is marshaled through <see cref="BaseViewModel.RunOnMain(System.Action)"/>
 /// to avoid MAUI cross-thread view access exceptions.
 /// </para>
 /// </remarks>
