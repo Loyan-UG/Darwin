@@ -42,6 +42,14 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 		<DefaultLanguage>de</DefaultLanguage>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))' == 'android'">
+		<!--
+		Google Maps key should come from environment/user-secrets/CI variables.
+		Do not hardcode production keys in source control.
+		-->
+		<GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
+		<AndroidManifestPlaceholders>$(AndroidManifestPlaceholders);googleMapsApiKey=$(GoogleMapsApiKey)</AndroidManifestPlaceholders>
+	</PropertyGroup>
 
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">YOUR_ANDROID_MAPS_API_KEY</GoogleMapsApiKey>

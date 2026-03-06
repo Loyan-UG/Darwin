@@ -260,6 +260,10 @@ These are sufficient for the map, directory and profile pages on Consumer.
 
 Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config class per build configuration) or compile-time constants; pass them into `AddDarwinMobileShared()` during startup.
 
+For map providers:
+- **Android (Google Maps)**: provide `GoogleMapsApiKey` via environment/CI secret and pass it to Android manifest placeholder (`googleMapsApiKey`). Avoid committing production API keys in `.csproj` or manifest files.
+- **iOS/MacCatalyst (MapKit)**: no Google Maps key is required for built-in MAUI MapKit rendering, but location/privacy entries (e.g., `NSLocationWhenInUseUsageDescription`) must remain configured.
+
 ### 7.2 Server
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
