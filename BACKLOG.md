@@ -176,6 +176,8 @@ It is designed as the **single source of truth** for development planning.
 
 - [ ] Externalize mobile map API keys (Android Google Maps) to secure secret providers and document iOS/MapKit key requirements per environment.
 
+- [ ] Externalize mobile map API keys (Android Google Maps) to secure secret providers and document iOS/MapKit key requirements per environment.
+
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
 - [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
 - [ ] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).

@@ -42,7 +42,8 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 		<DefaultLanguage>de</DefaultLanguage>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))' == 'android'">
+	
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 		<!--
 		Google Maps key should come from environment/user-secrets/CI variables.
 		Do not hardcode production keys in source control.
@@ -70,7 +71,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Maui" Version="14.0.0" />
+		<PackageReference Include="CommunityToolkit.Maui" Version="14.0.1" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="HtmlSanitizer" Version="9.0.892" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.3" />
