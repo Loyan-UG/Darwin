@@ -284,7 +284,7 @@ The project now validates this key during Android build:
 ### 7.1.2 Push provider setup (FCM/APNs production integration)
 
 Consumer app now resolves push tokens from native runtime providers:
-- At startup, Android requests Android 13+ `POST_NOTIFICATIONS` permission to align user-consent state with registration payload.
+- At startup, Android requests Android 13+ `POST_NOTIFICATIONS` permission to align user-consent state with registration payload, with one-time prompt persistence to avoid repeated dialogs after hard deny.
 - **Android**: Firebase Cloud Messaging token (`Xamarin.Firebase.Messaging`, wired only for Android target in `.csproj`).
 - **iOS/MacCatalyst**: APNs device token via `RegisterForRemoteNotifications` with explicit `CodesignEntitlements` binding to platform entitlements files.
 
