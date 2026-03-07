@@ -292,7 +292,7 @@ Required setup per environment:
 1. **Firebase project**
    - Create Android app entry with package id `com.loyan.darwin.mobile.consumer`.
    - Download `google-services.json` and place it at `src/Darwin.Mobile.Consumer/google-services.json` (not committed to source control for private environments).
-- Android Release builds now fail when `google-services.json` is missing (Debug warns only), to avoid shipping broken FCM configuration.
+   - Android Release builds now fail when `google-services.json` is missing (Debug warns only), to avoid shipping broken FCM configuration.
 
 2. **Apple Push capability**
    - Enable Push Notifications capability in Apple Developer portal for the app identifier.
@@ -305,6 +305,29 @@ Required setup per environment:
 Operational note:
 - If permissions are denied, registration still upserts device metadata with `NotificationsEnabled = false`; token can be null until the user enables permissions.
 - Legacy fallback config/noop providers are removed from the Consumer project to avoid environment drift in production builds.
+
+
+### 7.1.3 Push operational readiness checklist (Dev / Staging / Production)
+
+Use this checklist before promoting builds between environments.
+
+| Check | Dev | Staging | Production | Notes |
+|------|-----|---------|------------|-------|
+| Android `google-services.json` present and mapped to correct Firebase project | [ ] | [ ] | [ ] | Release build fails when missing. |
+| Android Firebase package name matches `com.loyan.darwin.mobile.consumer` | [ ] | [ ] | [ ] | Keep package id and Firebase app id aligned. |
+| iOS/MacCatalyst provisioning profile includes Push capability | [ ] | [ ] | [ ] | Validate on Apple Developer portal and CI signing profile. |
+| APNs entitlement environment is correct (`development` for Debug, `production` for Release) | [ ] | [ ] | [ ] | Project uses separate entitlements by configuration. |
+| Runtime permission path verified on fresh install (allow + deny + hard deny) | [ ] | [ ] | [ ] | Confirm one-time prompt behavior and settings recovery path. |
+| Profile push diagnostics labels verified (`permission`, `token availability`) | [ ] | [ ] | [ ] | Should reflect device runtime state without exposing raw token value. |
+| Profile "Open notification settings" action verified | [ ] | [ ] | [ ] | Must route user to app/system settings on device. |
+| Manual push registration sync returns success for authenticated user | [ ] | [ ] | [ ] | Check status text + last sync timestamp in Profile. |
+| WebApi `/api/v1/notifications/devices/register` observed in logs | [ ] | [ ] | [ ] | Confirm no auth/validation failures in API logs. |
+| Token rotation scenario validated (app reinstall or token refresh callback) | [ ] | [ ] | [ ] | Ensure backend receives updated token and old one is superseded. |
+
+Escalation guidance:
+- If diagnostics show `permission: disabled`, direct user to the in-app settings shortcut first.
+- If diagnostics show `token: missing` while permission is enabled, validate Firebase/APNs credentials and registration callbacks.
+- If sync fails with auth issues, validate access token freshness and retry after login refresh.
 
 ### 7.2 Server
 

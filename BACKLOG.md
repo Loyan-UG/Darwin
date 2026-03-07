@@ -173,7 +173,7 @@ It is designed as the **single source of truth** for development planning.
 - Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
-- [ ] Push provider operational readiness checklist per environment (Firebase `google-services.json`, Apple Push entitlement/certificate, runtime permission verification, and token rotation monitoring dashboard).
+- [x] Push provider operational readiness checklist per environment (Firebase `google-services.json`, Apple Push entitlement/certificate, runtime permission verification, and token rotation monitoring dashboard).
 - [x] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
 - [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
 - [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
@@ -201,6 +201,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
 - [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
 - [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
+- [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
 
 ---
 
