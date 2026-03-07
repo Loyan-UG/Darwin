@@ -123,6 +123,26 @@
 	<data name="AccrueButton" xml:space="preserve">
     <value>Punkte bestätigen</value>
   </data>
+
+	<data name="RewardsOverviewTitle" xml:space="preserve">
+    <value>Mehrfach-Unternehmensübersicht</value>
+  </data>
+
+	<data name="RewardsOverviewJoinedBusinessesFormat" xml:space="preserve">
+    <value>Beigetretene Unternehmen: {0}</value>
+  </data>
+
+	<data name="RewardsOverviewTotalPointsFormat" xml:space="preserve">
+    <value>Gesamtpunkte über alle Unternehmen: {0}</value>
+  </data>
+
+	<data name="RewardsOverviewTopBusinessFormat" xml:space="preserve">
+    <value>Unternehmen mit den meisten Punkten: {0}</value>
+  </data>
+
+	<data name="RewardsOpenSelectedBusinessQrButton" xml:space="preserve">
+    <value>QR für ausgewähltes Unternehmen öffnen</value>
+  </data>
 	<data name="BusinessCategoryFormat" xml:space="preserve">
     <value>Kategorie: {0}</value>
   </data>
@@ -293,6 +313,42 @@
   </data>
 	<data name="ProfilePushRegistrationLastSyncFormat" xml:space="preserve">
     <value>Letzte Synchronisierung: {0}</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsButton" xml:space="preserve">
+    <value>Benachrichtigungseinstellungen öffnen</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsHint" xml:space="preserve">
+    <value>Wenn Benachrichtigungen blockiert sind, öffnen Sie die Systemeinstellungen und erlauben Sie Benachrichtigungen für Loyan.</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsFailed" xml:space="preserve">
+    <value>Die Benachrichtigungseinstellungen konnten nicht geöffnet werden. Bitte öffnen Sie die App-Einstellungen manuell.</value>
+  </data>
+
+	<data name="ProfilePushPermissionEnabled" xml:space="preserve">
+    <value>Benachrichtigungsberechtigung: aktiviert</value>
+  </data>
+
+	<data name="ProfilePushPermissionDisabled" xml:space="preserve">
+    <value>Benachrichtigungsberechtigung: deaktiviert</value>
+  </data>
+
+	<data name="ProfilePushPermissionUnknown" xml:space="preserve">
+    <value>Benachrichtigungsberechtigung: unbekannt</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityReady" xml:space="preserve">
+    <value>Push-Token-Status: verfügbar</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityMissing" xml:space="preserve">
+    <value>Push-Token-Status: fehlt</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
+    <value>Push-Token-Status: unbekannt</value>
   </data>
 	<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>

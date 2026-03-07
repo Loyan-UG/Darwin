@@ -162,8 +162,8 @@ It is designed as the **single source of truth** for development planning.
 - [x] Manual push registration sync UX in Consumer Profile (status + last sync timestamp + retry action).
 
 ### Remaining
-- [ ] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
-- [ ] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
+- [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
+- [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
 - [ ] Promotion campaigns integration in consumer timeline.
 - [ ] Inactive user reminder strategy (triggering + suppression + measurement).
 
@@ -173,6 +173,7 @@ It is designed as the **single source of truth** for development planning.
 - Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
+- [x] Push provider operational readiness checklist per environment (Firebase `google-services.json`, Apple Push entitlement/certificate, runtime permission verification, and token rotation monitoring dashboard).
 - [x] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
 - [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
 - [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
@@ -194,7 +195,15 @@ It is designed as the **single source of truth** for development planning.
 - [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
 - [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
 - [ ] Add automated tests around Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior.
-- [ ] Confirm production token-provider strategy (`ConsumerConfigPushTokenProvider` vs real platform providers) and remove any dev-only fallback paths.
+- [x] Confirmed production token-provider strategy (`ConsumerPlatformPushTokenProvider` with Android FCM + iOS/MacCatalyst APNs bridges) and removed fallback registration path from DI.
+- [x] Hardened platform build wiring (Android-only Firebase package + explicit iOS/MacCatalyst entitlements binding) to prevent cross-target restore/signing misconfiguration.
+- [x] Added Android 13+ startup notification-permission request bootstrap with one-time prompt persistence, and removed legacy fallback push token providers to reduce production ambiguity.
+- [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
+- [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
+- [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
+- [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.
+- [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
+- [x] Rewards page now includes aggregated multi-business overview metrics and a quick QR action for the selected business context.
 
 ---
 
