@@ -232,5 +232,9 @@ public static class AppResources
     public static string FeedBusinessPickerLabel => ResourceManager.GetString(nameof(FeedBusinessPickerLabel), Culture) ?? "Business";
     public static string FeedRefreshButton => ResourceManager.GetString(nameof(FeedRefreshButton), Culture) ?? "Refresh feed";
     public static string FeedOpenPromotionButton => ResourceManager.GetString(nameof(FeedOpenPromotionButton), Culture) ?? "Open";
+    public static string FeedPromotionScopeSelectedBusinessButton => ResourceManager.GetString(nameof(FeedPromotionScopeSelectedBusinessButton), Culture) ?? "Selected business promotions";
+    public static string FeedPromotionScopeAllBusinessesButton => ResourceManager.GetString(nameof(FeedPromotionScopeAllBusinessesButton), Culture) ?? "All businesses promotions";
+    public static string FeedPromotionScopeSelectedBusiness => ResourceManager.GetString(nameof(FeedPromotionScopeSelectedBusiness), Culture) ?? "Promotion scope: selected business";
+    public static string FeedPromotionScopeAllBusinesses => ResourceManager.GetString(nameof(FeedPromotionScopeAllBusinesses), Culture) ?? "Promotion scope: all joined businesses";
 
 }

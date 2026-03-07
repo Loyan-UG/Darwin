@@ -164,7 +164,7 @@ It is designed as the **single source of truth** for development planning.
 ### Remaining
 - [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
 - [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
-- [ ] Promotion campaigns integration in consumer timeline.
+- [x] Promotion campaigns integration in consumer timeline.
 - [ ] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
@@ -204,6 +204,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.
 - [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
 - [x] Rewards page now includes aggregated multi-business overview metrics and a quick QR action for the selected business context.
+- [x] Feed promotions now support scope switching (selected business vs all joined businesses) with context-aware cards.
 
 ---
 

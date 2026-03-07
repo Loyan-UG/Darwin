@@ -615,6 +615,22 @@
 	<data name="FeedBusinessPickerLabel" xml:space="preserve">
   <value>Geschäft</value>
 </data>
+
+	<data name="FeedPromotionScopeSelectedBusinessButton" xml:space="preserve">
+    <value>Aktionen des ausgewählten Unternehmens</value>
+  </data>
+
+	<data name="FeedPromotionScopeAllBusinessesButton" xml:space="preserve">
+    <value>Aktionen aller Unternehmen</value>
+  </data>
+
+	<data name="FeedPromotionScopeSelectedBusiness" xml:space="preserve">
+    <value>Aktionsbereich: ausgewähltes Unternehmen</value>
+  </data>
+
+	<data name="FeedPromotionScopeAllBusinesses" xml:space="preserve">
+    <value>Aktionsbereich: alle beigetretenen Unternehmen</value>
+  </data>
 	<data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Öffnen</value>
 </data>

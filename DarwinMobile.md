@@ -501,11 +501,12 @@ services.AddDarwinMobileShared(new ApiOptions
 - Consumer Profile now shows runtime push diagnostics labels (permission state + token availability) for faster support and troubleshooting.
 - Consumer Profile refreshes push diagnostics on every `OnAppearing` so permission/token changes are reflected after returning from system settings.
 - Rewards tab now includes multi-business overview metrics (joined business count, aggregated points, top business) and a quick action to open selected-business QR.
+- Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
 
-### Remaining / follow-up (recommended next chat)
+### Remaining / follow-up
 - Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
 
