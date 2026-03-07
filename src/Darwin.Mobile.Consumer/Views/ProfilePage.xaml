@@ -53,6 +53,30 @@
                             Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding SaveProfileCommand}" />
 
+                    <BoxView HeightRequest="1"
+                             Color="{StaticResource Neutral300}" />
+
+                    <Label Text="{x:Static res:AppResources.ProfilePushRegistrationSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding PushRegistrationStatus}"
+                           FontSize="14"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{Binding LastPushSyncAtText}"
+                           FontSize="13"
+                           TextColor="{StaticResource Neutral600}"
+                           IsVisible="{Binding HasLastPushSyncAt}" />
+
+                    <Button Text="{x:Static res:AppResources.ProfilePushRegistrationSyncButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding SyncPushRegistrationCommand}" />
+
+                    <ActivityIndicator IsVisible="{Binding IsPushSyncBusy}"
+                                       IsRunning="{Binding IsPushSyncBusy}"
+                                       Color="{StaticResource BrandGold500}" />
+
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}"
                                        Color="{StaticResource BrandGold500}" />

@@ -33,6 +33,8 @@ public sealed partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Scanner, typeof(ScannerPage));
         Routing.RegisterRoute(Routes.Login, typeof(LoginPage));
         Routing.RegisterRoute(Routes.Session, typeof(SessionPage));
+        Routing.RegisterRoute(Routes.Dashboard, typeof(DashboardPage));
+        Routing.RegisterRoute(Routes.Rewards, typeof(RewardsPage));
 
         // Settings leaf routes
         Routing.RegisterRoute(Routes.SettingsProfile, typeof(ProfilePage));

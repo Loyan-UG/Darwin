@@ -74,8 +74,8 @@ It is designed as the **single source of truth** for development planning.
   - Profile read/update (`GET/PUT /api/v1/profile/me` with `RowVersion`)
   - Change password (`POST /api/v1/auth/password/change`)
 - Consumer QR behavior baseline documented and implemented:
-  - Rotation check tick ~15s
-  - Minimum auto-refresh interval = 5 minutes while token still valid
+  - Countdown/UI tick ~1s for smooth display
+  - Minimum automatic network refresh interval = 5 minutes while token still valid
 - Business scanner flow baseline completed:
   - Scan token → process session → confirm accrual/redemption
 
@@ -136,14 +136,14 @@ It is designed as the **single source of truth** for development planning.
 # 3. 📝 Planned Next
 
 ## 3.1 WebApi Extensions
-- Business onboarding endpoints
-- Reward configuration endpoints
-- Push notification registration (device tokens)
-- Extended discovery filters
+- [x] Business onboarding endpoints
+- [x] Reward configuration endpoints
+- [x] Push notification registration (device tokens)
+- [x] Extended discovery filters
 - Public Catalog endpoints for future storefront use
 
 ## 3.2 Mobile Consumer App – Phase 2
-- [ ] Full map integration (Google Maps / Apple MapKit)
+- [x] Full map integration (Google Maps / Apple MapKit)
 - [x] Business detail page
 - [x] Favorites, reviews, likes
 - [x] Feed/promotions module (timeline-backed + promotions endpoint)
@@ -151,10 +151,10 @@ It is designed as the **single source of truth** for development planning.
 - [x] Discover IA split: My Businesses + Explore (search/category/nearby)
 
 ## 3.3 Mobile Business App – Phase 2
-- Business dashboard
-- Simple reporting (visits, top customers, upcoming rewards)
-- Reward editing interface
-- Staff roles & permissions
+- [x] Business dashboard
+- [x] Simple reporting (visits, top customers, upcoming rewards)
+- [x] Reward editing interface
+- [x] Staff roles & permissions
 
 ## 3.4 Mobile Consumer App – Phase 3
 - Push notifications
@@ -168,11 +168,13 @@ It is designed as the **single source of truth** for development planning.
 - Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
-- [ ] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
-- [ ] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
-- [ ] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
-- [ ] QR countdown UX decision: keep 15s update cadence (battery-friendly) vs 1s display refresh (smoother UI) with same 5-minute auto-rotation limit.
+- [x] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
+- [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
+- [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
+- [x] QR countdown UX decision finalized: keep 1s display refresh (smoother UI) with a 5-minute minimum automatic network refresh limit.
+- [x] Consumer Profile push registration self-service sync: added manual sync action with user-visible status and last-sync timestamp.
 
+- [ ] Externalize mobile map API keys (Android Google Maps) to secure secret providers and document iOS/MapKit key requirements per environment.
 
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
 - [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
