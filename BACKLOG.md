@@ -201,6 +201,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
 - [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
 - [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
+- [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.
 - [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
 
 ---

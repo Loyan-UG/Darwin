@@ -166,6 +166,10 @@ public sealed class ProfileViewModel : BaseViewModel
 
     public override async Task OnAppearingAsync()
     {
+        // Always refresh push runtime diagnostics because permission/token state can change
+        // while the app was in background or after returning from system settings.
+        await RefreshPushRuntimeStateAsync();
+
         if (_isLoaded)
         {
             return;
