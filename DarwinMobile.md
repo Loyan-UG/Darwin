@@ -502,6 +502,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Consumer Profile refreshes push diagnostics on every `OnAppearing` so permission/token changes are reflected after returning from system settings.
 - Rewards tab now includes multi-business overview metrics (joined business count, aggregated points, top business) and a quick action to open selected-business QR.
 - Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
+- Feed promotions now apply delivery guardrails on the client: de-duplication (business/title/CTA), max 6 cards, and 8-hour suppression window with fallback when everything is suppressed.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
@@ -509,6 +510,7 @@ services.AddDarwinMobileShared(new ApiOptions
 ### Remaining / follow-up
 - Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
+- Align server-side promotion delivery guardrails with client behavior and expose configurable suppression policy in contracts.
 
 ## 19) Contributor Checklist
 

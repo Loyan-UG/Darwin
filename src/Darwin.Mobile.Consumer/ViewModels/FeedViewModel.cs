@@ -10,6 +10,7 @@ using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
+using Microsoft.Maui.Storage;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
@@ -29,6 +30,10 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// </remarks>
 public sealed class FeedViewModel : BaseViewModel
 {
+    private const string PromotionSeenAtStoragePrefix = "consumer.feed.promotion.seen-at.v1";
+    private static readonly TimeSpan PromotionDisplaySuppressionWindow = TimeSpan.FromHours(8);
+    private const int PromotionDisplayCap = 6;
+
     private readonly ILoyaltyService _loyaltyService;
     private readonly INavigationService _navigationService;
 
@@ -430,15 +435,143 @@ public sealed class FeedViewModel : BaseViewModel
             .ThenBy(x => x.BusinessName)
             .ToList();
 
+        var unique = ordered
+            .GroupBy(BuildPromotionGuardKey, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .ToList();
+
+        var nowUtc = DateTime.UtcNow;
+        var eligible = unique
+            .Where(item => !IsPromotionSuppressed(item, nowUtc))
+            .Take(PromotionDisplayCap)
+            .ToList();
+
+        if (eligible.Count == 0)
+        {
+            eligible = unique.Take(PromotionDisplayCap).ToList();
+        }
+
         RunOnMain(() =>
         {
-            foreach (var item in ordered)
+            foreach (var item in eligible)
             {
                 PromotionItems.Add(item);
             }
 
             OnPropertyChanged(nameof(HasPromotions));
         });
+
+        foreach (var item in eligible)
+        {
+            MarkPromotionAsSeen(item, nowUtc);
+        }
+    }
+
+    /// <summary>
+    /// Builds a deterministic key used for promotion de-duplication and suppression tracking.
+    /// </summary>
+    private static string BuildPromotionGuardKey(PromotionFeedItem item)
+    {
+        return string.Join("|",
+            item.BusinessId,
+            item.Title?.Trim() ?? string.Empty,
+            item.CtaKind?.Trim() ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Checks whether the promotion is still inside the suppression window.
+    /// </summary>
+    private static bool IsPromotionSuppressed(PromotionFeedItem item, DateTime nowUtc)
+    {
+        var storageKey = BuildPromotionSeenAtStorageKey(item);
+        var seenAtTicks = Preferences.Default.Get(storageKey, 0L);
+        if (seenAtTicks <= 0)
+        {
+            return false;
+        }
+
+        var seenAtUtc = new DateTime(seenAtTicks, DateTimeKind.Utc);
+        var elapsed = nowUtc - seenAtUtc;
+        return elapsed >= TimeSpan.Zero && elapsed < PromotionDisplaySuppressionWindow;
+    }
+
+    /// <summary>
+    /// Persists the latest display timestamp for suppression enforcement.
+    /// </summary>
+    private static void MarkPromotionAsSeen(PromotionFeedItem item, DateTime seenAtUtc)
+    {
+        var storageKey = BuildPromotionSeenAtStorageKey(item);
+        Preferences.Default.Set(storageKey, seenAtUtc.Ticks);
+    }
+
+    /// <summary>
+    /// Builds a stable preferences key for a promotion card.
+    /// </summary>
+    private static string BuildPromotionSeenAtStorageKey(PromotionFeedItem item)
+        => $"{PromotionSeenAtStoragePrefix}:{BuildPromotionGuardKey(item)}";
+
+    /// <summary>
+    /// Switches promotions scope to selected business and reloads promotion cards.
+    /// </summary>
+    private async Task ShowSelectedBusinessPromotionsAsync()
+    {
+        if (IsPromotionScopeSelectedBusiness)
+        {
+            return;
+        }
+
+        IsPromotionScopeAllBusinesses = false;
+
+        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty)
+        {
+            return;
+        }
+
+        await RefreshPromotionsOnlyAsync(SelectedAccount.BusinessId);
+    }
+
+    /// <summary>
+    /// Switches promotions scope to all joined businesses and reloads promotion cards.
+    /// </summary>
+    private async Task ShowAllBusinessesPromotionsAsync()
+    {
+        if (IsPromotionScopeAllBusinesses)
+        {
+            return;
+        }
+
+        IsPromotionScopeAllBusinesses = true;
+
+        if (SelectedAccount is null || SelectedAccount.BusinessId == Guid.Empty)
+        {
+            return;
+        }
+
+        await RefreshPromotionsOnlyAsync(SelectedAccount.BusinessId);
+    }
+
+    /// <summary>
+    /// Reloads only promotion cards while preserving timeline state.
+    /// </summary>
+    private async Task RefreshPromotionsOnlyAsync(Guid selectedBusinessId)
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        RaiseCommandsCanExecute();
+
+        try
+        {
+            await LoadPromotionsAsync(selectedBusinessId);
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandsCanExecute();
+        }
     }
 
     /// <summary>

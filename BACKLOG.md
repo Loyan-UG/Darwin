@@ -186,7 +186,7 @@ It is designed as the **single source of truth** for development planning.
 - [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
 - [ ] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
 - [ ] Add eligibility + audience rules (joined members, tier, points threshold, date window).
-- [ ] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
+- [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
 - [ ] Add tracking events for impression/open/claim to measure conversion.
 - [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
@@ -205,6 +205,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
 - [x] Rewards page now includes aggregated multi-business overview metrics and a quick QR action for the selected business context.
 - [x] Feed promotions now support scope switching (selected business vs all joined businesses) with context-aware cards.
+- [x] Feed promotions now enforce initial guardrails in mobile rendering (de-duplication by business/title/CTA, 6-card cap, and 8-hour suppression window with fallback behavior).
 
 ---
 
