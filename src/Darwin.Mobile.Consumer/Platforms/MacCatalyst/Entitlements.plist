@@ -9,6 +9,9 @@
         <!-- When App Sandbox is enabled, this value is required to open outgoing network connections. -->
         <key>com.apple.security.network.client</key>
         <true/>
+        <!-- Use 'development' for debug provisioning profiles and switch to 'production' for App Store/TestFlight builds. -->
+        <key>aps-environment</key>
+        <string>development</string>
     </dict>
 </plist>
 
