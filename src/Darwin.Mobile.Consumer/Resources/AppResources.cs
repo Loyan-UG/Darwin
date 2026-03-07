@@ -156,6 +156,9 @@ public static class AppResources
     public static string DiscoverLoadJoinedFailed => ResourceManager.GetString(nameof(DiscoverLoadJoinedFailed), Culture) ?? "Unable to load your joined businesses.";
     public static string DiscoverLoadExploreFailed => ResourceManager.GetString(nameof(DiscoverLoadExploreFailed), Culture) ?? "Unable to load explore businesses.";
 
+    public static string DiscoverJoinedBusinessesCountFormat => ResourceManager.GetString(nameof(DiscoverJoinedBusinessesCountFormat), Culture) ?? "Joined businesses: {0}";
+    public static string DiscoverTotalPointsFormat => ResourceManager.GetString(nameof(DiscoverTotalPointsFormat), Culture) ?? "Total points: {0}";
+    public static string DiscoverTopBalanceBusinessFormat => ResourceManager.GetString(nameof(DiscoverTopBalanceBusinessFormat), Culture) ?? "Top balance at: {0}";
     
     public static string DiscoverCategoryFilterLabel => ResourceManager.GetString(nameof(DiscoverCategoryFilterLabel), Culture) ?? "Category";
     public static string DiscoverSearchButton => ResourceManager.GetString(nameof(DiscoverSearchButton), Culture) ?? "Search";

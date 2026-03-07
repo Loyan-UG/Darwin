@@ -574,4 +574,13 @@
   <data name="ProfileConcurrencyConflict" xml:space="preserve">
     <value>Your profile was updated elsewhere. Please refresh and try again.</value>
   </data>
+  <data name="DiscoverJoinedBusinessesCountFormat" xml:space="preserve">
+    <value>Joined businesses: {0}</value>
+  </data>
+  <data name="DiscoverTotalPointsFormat" xml:space="preserve">
+    <value>Total points: {0}</value>
+  </data>
+  <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
+    <value>Top balance at: {0}</value>
+  </data>
 </root>

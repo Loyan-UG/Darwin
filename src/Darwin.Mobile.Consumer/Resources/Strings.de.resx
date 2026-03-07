@@ -574,4 +574,13 @@
   <data name="ProfileConcurrencyConflict" xml:space="preserve">
     <value>Ihr Profil wurde zwischenzeitlich geändert. Bitte aktualisieren und erneut versuchen.</value>
   </data>
+  <data name="DiscoverJoinedBusinessesCountFormat" xml:space="preserve">
+    <value>Beigetretene Unternehmen: {0}</value>
+  </data>
+  <data name="DiscoverTotalPointsFormat" xml:space="preserve">
+    <value>Gesamtpunkte: {0}</value>
+  </data>
+  <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
+    <value>Höchster Punktestand bei: {0}</value>
+  </data>
 </root>
