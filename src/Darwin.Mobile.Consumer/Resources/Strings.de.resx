@@ -294,6 +294,18 @@
 	<data name="ProfilePushRegistrationLastSyncFormat" xml:space="preserve">
     <value>Letzte Synchronisierung: {0}</value>
   </data>
+
+	<data name="ProfilePushOpenSettingsButton" xml:space="preserve">
+    <value>Benachrichtigungseinstellungen öffnen</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsHint" xml:space="preserve">
+    <value>Wenn Benachrichtigungen blockiert sind, öffnen Sie die Systemeinstellungen und erlauben Sie Benachrichtigungen für Loyan.</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsFailed" xml:space="preserve">
+    <value>Die Benachrichtigungseinstellungen konnten nicht geöffnet werden. Bitte öffnen Sie die App-Einstellungen manuell.</value>
+  </data>
 	<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>

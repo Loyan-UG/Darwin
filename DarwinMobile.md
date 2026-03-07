@@ -474,6 +474,7 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ### Done in current codebase
 - Consumer push-registration baseline is integrated end-to-end (contracts + API + shared service + coordinator + profile manual sync UI).
+- Consumer Profile includes a self-service "Open notification settings" action to recover from denied notification permissions without leaving users blocked.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
