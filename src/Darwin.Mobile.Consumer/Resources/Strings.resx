@@ -294,6 +294,42 @@
 	<data name="ProfilePushRegistrationLastSyncFormat" xml:space="preserve">
     <value>Last sync: {0}</value>
   </data>
+
+	<data name="ProfilePushOpenSettingsButton" xml:space="preserve">
+    <value>Open notification settings</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsHint" xml:space="preserve">
+    <value>If notifications are blocked, open system settings and allow notifications for Loyan.</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsFailed" xml:space="preserve">
+    <value>Could not open notification settings. Please open app settings manually.</value>
+  </data>
+
+	<data name="ProfilePushPermissionEnabled" xml:space="preserve">
+    <value>Notifications permission: enabled</value>
+  </data>
+
+	<data name="ProfilePushPermissionDisabled" xml:space="preserve">
+    <value>Notifications permission: disabled</value>
+  </data>
+
+	<data name="ProfilePushPermissionUnknown" xml:space="preserve">
+    <value>Notifications permission: unknown</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityReady" xml:space="preserve">
+    <value>Push token status: ready</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityMissing" xml:space="preserve">
+    <value>Push token status: missing</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
+    <value>Push token status: unknown</value>
+  </data>
 	<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Change password</value>
   </data>
