@@ -7,6 +7,7 @@ using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
+using Microsoft.Maui.ApplicationModel;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
@@ -50,11 +51,13 @@ public sealed class ProfileViewModel : BaseViewModel
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
         SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);
+        OpenNotificationSettingsCommand = new AsyncCommand(OpenNotificationSettingsAsync);
     }
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand SaveProfileCommand { get; }
     public AsyncCommand SyncPushRegistrationCommand { get; }
+    public AsyncCommand OpenNotificationSettingsCommand { get; }
 
     public string Email
     {
@@ -321,6 +324,23 @@ public sealed class ProfileViewModel : BaseViewModel
         {
             RunOnMain(() => IsPushSyncBusy = false);
         }
+    }
+
+    private Task OpenNotificationSettingsAsync()
+    {
+        RunOnMain(() =>
+        {
+            try
+            {
+                AppInfo.ShowSettingsUI();
+            }
+            catch
+            {
+                PushRegistrationStatus = AppResources.ProfilePushOpenSettingsFailed;
+            }
+        });
+
+        return Task.CompletedTask;
     }
 
     private bool ValidateProfileFields()

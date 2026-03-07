@@ -95,6 +95,9 @@ public static class AppResources
     public static string ProfilePushRegistrationStatusSuccess => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusSuccess), Culture) ?? "Push registration synced successfully.";
     public static string ProfilePushRegistrationStatusFailed => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusFailed), Culture) ?? "Push registration sync failed.";
     public static string ProfilePushRegistrationLastSyncFormat => ResourceManager.GetString(nameof(ProfilePushRegistrationLastSyncFormat), Culture) ?? "Last sync: {0}";
+    public static string ProfilePushOpenSettingsButton => ResourceManager.GetString(nameof(ProfilePushOpenSettingsButton), Culture) ?? "Open notification settings";
+    public static string ProfilePushOpenSettingsHint => ResourceManager.GetString(nameof(ProfilePushOpenSettingsHint), Culture) ?? "If notifications are blocked, open system settings and allow notifications for Loyan.";
+    public static string ProfilePushOpenSettingsFailed => ResourceManager.GetString(nameof(ProfilePushOpenSettingsFailed), Culture) ?? "Could not open notification settings. Please open app settings manually.";
     public static string ChangePasswordTitle => ResourceManager.GetString(nameof(ChangePasswordTitle), Culture) ?? "Change password";
     public static string CurrentPasswordLabel => ResourceManager.GetString(nameof(CurrentPasswordLabel), Culture) ?? "Current password";
     public static string NewPasswordLabel => ResourceManager.GetString(nameof(NewPasswordLabel), Culture) ?? "New password";
