@@ -6,6 +6,7 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     xmlns:contracts="clr-namespace:Darwin.Contracts.Businesses;assembly=Darwin.Contracts"
     xmlns:loyalty="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
+    xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
     x:Class="Darwin.Mobile.Consumer.Views.DiscoverPage"
     x:DataType="vm:DiscoverViewModel"
     Title="{x:Static res:AppResources.DiscoverTitle}">
@@ -34,6 +35,17 @@
             <VerticalStackLayout IsVisible="{Binding IsJoinedTabSelected}" Spacing="12">
                 <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesHeadline}"
                        FontAttributes="Bold" />
+
+                <Border Stroke="{StaticResource BrushGray300}"
+                        StrokeThickness="1"
+                        Padding="10"
+                        IsVisible="{Binding HasJoinedAccounts}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding JoinedBusinessCount, StringFormat='{x:Static res:AppResources.DiscoverJoinedBusinessesCountFormat}'}" FontSize="13" />
+                        <Label Text="{Binding TotalJoinedPointsBalance, StringFormat='{x:Static res:AppResources.DiscoverTotalPointsFormat}'}" FontSize="13" />
+                        <Label Text="{Binding TopJoinedBusinessName, StringFormat='{x:Static res:AppResources.DiscoverTopBalanceBusinessFormat}'}" FontSize="13" />
+                    </VerticalStackLayout>
+                </Border>
 
                 <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesEmpty}"
                        IsVisible="{Binding HasJoinedAccounts, Converter={StaticResource InverseBoolConverter}}" />
@@ -116,6 +128,13 @@
                         </Picker.ItemDisplayBinding>
                     </Picker>
                 </Grid>
+
+
+                <maps:Map x:Name="ExploreMap"
+                          HeightRequest="260"
+                          IsVisible="{Binding HasExploreResults}"
+                          IsShowingUser="{Binding IsNearbyOnly}"
+                          MapType="Street" />
 
                 <Label Text="{x:Static res:AppResources.DiscoverExploreEmpty}"
                        IsVisible="{Binding HasExploreResults, Converter={StaticResource InverseBoolConverter}}" />

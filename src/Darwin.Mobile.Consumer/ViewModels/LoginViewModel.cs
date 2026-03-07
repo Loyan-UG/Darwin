@@ -2,6 +2,7 @@
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.ViewModels;
 using System;
@@ -18,6 +19,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
+    private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
 
     /// <summary>
     /// Raised when the page should reveal the error area (for example: scroll to top).
@@ -31,10 +33,11 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// </summary>
     /// <param name="authService">Service used to authenticate users.</param>
     /// <param name="appRootNavigator">Service that performs window-safe root navigation.</param>
-    public LoginViewModel(IAuthService authService, IAppRootNavigator appRootNavigator)
+    public LoginViewModel(IAuthService authService, IAppRootNavigator appRootNavigator, IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         // TODO [TEST-ONLY][MOBILE-SECURITY]:
         // Remove these default credentials before release builds.
@@ -87,11 +90,14 @@ public sealed partial class LoginViewModel : BaseViewModel
 
             // Attempt login with email/password credentials.
             // DeviceId remains null until a dedicated device identity workflow is added.
-            AppBootstrapResponse _ = await _authService.LoginAsync(
+            _ = await _authService.LoginAsync(
                 Email.Trim(),
                 Password,
                 deviceId: null,
                 CancellationToken.None);
+
+            // Register current installation in backend device registry (best-effort, non-blocking for login).
+            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
 
             // Enter authenticated mode by switching the root page via the window-aware navigator.
             await _appRootNavigator.NavigateToAuthenticatedShellAsync();
@@ -114,21 +120,8 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// </summary>
     private static string ResolveLoginErrorMessage(Exception ex)
     {
-        var raw = ex.Message ?? string.Empty;
-
-        if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("timed out", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("No such host", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("SSL", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("certificate", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
-            raw.Contains("invalid_requesturi", StringComparison.OrdinalIgnoreCase))
-        {
-            return AppResources.ServerUnreachableMessage;
-        }
-
-        // Keep credential failures generic for security.
-        return AppResources.InvalidCredentials;
+        // Keep credential failures generic for security for non-connectivity failures.
+        var mapped = ViewModelErrorMapper.ToUserMessage(ex, AppResources.InvalidCredentials);
+        return mapped;
     }
 }
