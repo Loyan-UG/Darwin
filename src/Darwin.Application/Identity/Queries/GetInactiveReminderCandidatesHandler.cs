@@ -67,24 +67,21 @@ public sealed class GetInactiveReminderCandidatesHandler
         }
 
         var userIds = snapshots.Select(x => x.UserId).Distinct().ToList();
-        var destinations = await _db.Set<UserDevice>()
+        var pushDevices = await _db.Set<UserDevice>()
             .AsNoTracking()
             .Where(x => userIds.Contains(x.UserId)
                         && x.IsActive
                         && x.NotificationsEnabled
                         && x.PushToken != null
                         && x.PushToken != string.Empty)
-            .GroupBy(x => x.UserId)
-            .Select(group => new
-            {
-                UserId = group.Key,
-                DeviceId = group
-                    .OrderByDescending(x => x.LastSeenAtUtc)
-                    .Select(x => x.DeviceId)
-                    .FirstOrDefault()
-            })
-            .ToDictionaryAsync(x => x.UserId, x => x.DeviceId, ct)
+            .OrderByDescending(x => x.LastSeenAtUtc)
+            .ToListAsync(ct)
             .ConfigureAwait(false);
+
+        var destinations = pushDevices
+            .GroupBy(x => x.UserId)
+            .Select(group => group.First())
+            .ToDictionary(x => x.UserId);
 
         var result = new List<InactiveReminderCandidateDto>(capacity: maxItems);
 
@@ -95,8 +92,9 @@ public sealed class GetInactiveReminderCandidatesHandler
                 continue;
             }
 
-            if (!destinations.TryGetValue(snapshot.UserId, out var destinationDeviceId)
-                || string.IsNullOrWhiteSpace(destinationDeviceId))
+            if (!destinations.TryGetValue(snapshot.UserId, out var destination)
+                || string.IsNullOrWhiteSpace(destination.DeviceId)
+                || string.IsNullOrWhiteSpace(destination.PushToken))
             {
                 continue;
             }
@@ -117,7 +115,9 @@ public sealed class GetInactiveReminderCandidatesHandler
                 InactiveDays = inactiveDays,
                 LastReminderSentAtUtc = lastReminderSentAtUtc,
                 CooldownEndsAtUtc = cooldownEndsAtUtc,
-                PushDestinationDeviceId = destinationDeviceId
+                PushDestinationDeviceId = destination.DeviceId,
+                PushToken = destination.PushToken,
+                Platform = destination.Platform.ToString()
             });
 
             if (result.Count >= maxItems)

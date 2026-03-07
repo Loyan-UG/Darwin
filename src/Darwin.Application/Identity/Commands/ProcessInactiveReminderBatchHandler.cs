@@ -59,7 +59,8 @@ public sealed class ProcessInactiveReminderBatchHandler
             ct.ThrowIfCancellationRequested();
             summary.CandidatesEvaluated++;
 
-            if (string.IsNullOrWhiteSpace(candidate.PushDestinationDeviceId))
+            if (string.IsNullOrWhiteSpace(candidate.PushDestinationDeviceId)
+                || string.IsNullOrWhiteSpace(candidate.PushToken))
             {
                 summary.SuppressedCount++;
                 await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
@@ -73,7 +74,7 @@ public sealed class ProcessInactiveReminderBatchHandler
             }
 
             var dispatchResult = await _dispatcher
-                .DispatchAsync(candidate.UserId, candidate.PushDestinationDeviceId, candidate.InactiveDays, ct)
+                .DispatchAsync(candidate.UserId, candidate.PushDestinationDeviceId, candidate.PushToken, candidate.Platform, candidate.InactiveDays, ct)
                 .ConfigureAwait(false);
 
             if (!dispatchResult.Succeeded)

@@ -507,6 +507,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Application now includes inactive-reminder orchestration handlers: candidate selection query (threshold + cooldown + push-enabled device check) and per-outcome recorder that persists `Sent`/`Failed`/`Suppressed` metadata in `UserEngagementSnapshot`.
 - WebApi now includes `InactiveReminderBackgroundService` scaffold (config-gated) that periodically runs reminder batch orchestration and logs evaluated/dispatched/suppressed/failed counters.
 - Reminder batch orchestration now writes measurement counters into snapshot metadata (`inactiveReminderSentCount`, `inactiveReminderFailedCount`, `inactiveReminderSuppressedCount`) for downstream analytics.
+- Inactive reminder dispatch now uses `HttpInactiveReminderDispatcher` (server-side HTTP gateway integration) and sends user/device/token/platform payload with configurable title/body templates.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
@@ -516,7 +517,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
 - Align server-side promotion delivery guardrails with client behavior and expose configurable suppression policy in contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
-- Replace current no-op inactive reminder dispatcher with a real push provider sender and map provider success/failure codes to dispatch outcomes.
+- Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
 
 ## 19) Contributor Checklist
 

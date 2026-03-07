@@ -34,4 +34,6 @@ public sealed class InactiveReminderCandidateDto
     public DateTime? LastReminderSentAtUtc { get; set; }
     public DateTime? CooldownEndsAtUtc { get; set; }
     public string? PushDestinationDeviceId { get; set; }
+    public string? PushToken { get; set; }
+    public string Platform { get; set; } = "Unknown";
 }

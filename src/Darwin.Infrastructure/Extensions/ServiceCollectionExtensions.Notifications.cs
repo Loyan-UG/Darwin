@@ -20,8 +20,11 @@ namespace Darwin.Infrastructure.Extensions
         public static IServiceCollection AddNotificationsInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<SmtpEmailOptions>(configuration.GetSection("Email:Smtp"));
+            services.Configure<InactiveReminderPushGatewayOptions>(configuration.GetSection("Notifications:InactiveReminderPushGateway"));
+
             services.AddSingleton<IEmailSender, SmtpEmailSender>();
-            services.AddSingleton<IInactiveReminderDispatcher, NoopInactiveReminderDispatcher>();
+            services.AddHttpClient<HttpInactiveReminderDispatcher>();
+            services.AddScoped<IInactiveReminderDispatcher, HttpInactiveReminderDispatcher>();
             return services;
         }
     }

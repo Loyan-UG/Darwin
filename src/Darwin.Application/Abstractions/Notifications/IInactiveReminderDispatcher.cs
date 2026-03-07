@@ -16,6 +16,8 @@ public interface IInactiveReminderDispatcher
     Task<Result> DispatchAsync(
         Guid userId,
         string destinationDeviceId,
+        string pushToken,
+        string platform,
         int inactiveDays,
         CancellationToken ct);
 }

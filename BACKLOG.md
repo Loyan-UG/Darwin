@@ -210,6 +210,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added Application handlers for inactive-reminder candidate selection and per-outcome measurement metadata recording (sent/failed/suppressed with cooldown-ready baseline).
 - [x] Added WebApi background worker scaffold for inactive reminders (`InactiveReminderBackgroundService`) with configurable interval/threshold/cooldown and batch observability counters.
 - [x] Inactive reminder batch orchestration now records every attempt outcome (`Sent`, `Failed`, `Suppressed`) in engagement snapshot metadata for measurement dashboards.
+- [x] Replaced no-op reminder dispatcher with HTTP push gateway dispatcher (`HttpInactiveReminderDispatcher`) using push token + platform payload and configurable auth/templates.
 
 ---
 
