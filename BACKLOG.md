@@ -165,7 +165,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
 - [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
 - [x] Promotion campaigns integration in consumer timeline.
-- [ ] Inactive user reminder strategy (triggering + suppression + measurement).
+- [~] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
 - Full analytics module (CSV/PDF export)
@@ -206,6 +206,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Rewards page now includes aggregated multi-business overview metrics and a quick QR action for the selected business context.
 - [x] Feed promotions now support scope switching (selected business vs all joined businesses) with context-aware cards.
 - [x] Feed promotions now enforce initial guardrails in mobile rendering (de-duplication by business/title/CTA, 6-card cap, and 8-hour suppression window with fallback behavior).
+- [x] Device registration heartbeat now updates `UserEngagementSnapshot` baseline fields (`LastActivityAtUtc`, `EventCount`, compact snapshot metadata) to support inactive-reminder triggering and measurement.
 
 ---
 
