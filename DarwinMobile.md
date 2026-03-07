@@ -280,6 +280,55 @@ The project now validates this key during Android build:
 - **Debug/Dev build:** missing key => warning (build continues, map can fail at runtime).
 - **Release build:** missing key => build error (prevents shipping a broken map config).
 
+
+### 7.1.2 Push provider setup (FCM/APNs production integration)
+
+Consumer app now resolves push tokens from native runtime providers:
+- At startup, Android requests Android 13+ `POST_NOTIFICATIONS` permission to align user-consent state with registration payload, with one-time prompt persistence to avoid repeated dialogs after hard deny.
+- **Android**: Firebase Cloud Messaging token (`Xamarin.Firebase.Messaging`, wired only for Android target in `.csproj`).
+- **iOS/MacCatalyst**: APNs device token via `RegisterForRemoteNotifications` with explicit `CodesignEntitlements` binding to platform entitlements files.
+
+Required setup per environment:
+1. **Firebase project**
+   - Create Android app entry with package id `com.loyan.darwin.mobile.consumer`.
+   - Download `google-services.json` and place it at `src/Darwin.Mobile.Consumer/google-services.json` (not committed to source control for private environments).
+   - Android Release builds now fail when `google-services.json` is missing (Debug warns only), to avoid shipping broken FCM configuration.
+
+2. **Apple Push capability**
+   - Enable Push Notifications capability in Apple Developer portal for the app identifier.
+   - Ensure provisioning profile includes push entitlement.
+   - Keep `aps-environment` entitlement aligned with target build (`development` vs `production`). Consumer project now uses separate entitlements for Debug vs Release to enforce this split.
+3. **Runtime permissions**
+   - Android 13+: grant `POST_NOTIFICATIONS` permission at runtime.
+   - iOS/MacCatalyst: allow notifications in system prompt/settings.
+
+Operational note:
+- If permissions are denied, registration still upserts device metadata with `NotificationsEnabled = false`; token can be null until the user enables permissions.
+- Legacy fallback config/noop providers are removed from the Consumer project to avoid environment drift in production builds.
+
+
+### 7.1.3 Push operational readiness checklist (Dev / Staging / Production)
+
+Use this checklist before promoting builds between environments.
+
+| Check | Dev | Staging | Production | Notes |
+|------|-----|---------|------------|-------|
+| Android `google-services.json` present and mapped to correct Firebase project | [ ] | [ ] | [ ] | Release build fails when missing. |
+| Android Firebase package name matches `com.loyan.darwin.mobile.consumer` | [ ] | [ ] | [ ] | Keep package id and Firebase app id aligned. |
+| iOS/MacCatalyst provisioning profile includes Push capability | [ ] | [ ] | [ ] | Validate on Apple Developer portal and CI signing profile. |
+| APNs entitlement environment is correct (`development` for Debug, `production` for Release) | [ ] | [ ] | [ ] | Project uses separate entitlements by configuration. |
+| Runtime permission path verified on fresh install (allow + deny + hard deny) | [ ] | [ ] | [ ] | Confirm one-time prompt behavior and settings recovery path. |
+| Profile push diagnostics labels verified (`permission`, `token availability`) | [ ] | [ ] | [ ] | Should reflect device runtime state without exposing raw token value. |
+| Profile "Open notification settings" action verified | [ ] | [ ] | [ ] | Must route user to app/system settings on device. |
+| Manual push registration sync returns success for authenticated user | [ ] | [ ] | [ ] | Check status text + last sync timestamp in Profile. |
+| WebApi `/api/v1/notifications/devices/register` observed in logs | [ ] | [ ] | [ ] | Confirm no auth/validation failures in API logs. |
+| Token rotation scenario validated (app reinstall or token refresh callback) | [ ] | [ ] | [ ] | Ensure backend receives updated token and old one is superseded. |
+
+Escalation guidance:
+- If diagnostics show `permission: disabled`, direct user to the in-app settings shortcut first.
+- If diagnostics show `token: missing` while permission is enabled, validate Firebase/APNs credentials and registration callbacks.
+- If sync fails with auth issues, validate access token freshness and retry after login refresh.
+
 ### 7.2 Server
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
@@ -448,11 +497,16 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ### Done in current codebase
 - Consumer push-registration baseline is integrated end-to-end (contracts + API + shared service + coordinator + profile manual sync UI).
+- Consumer Profile includes a self-service "Open notification settings" action to recover from denied notification permissions without leaving users blocked.
+- Consumer Profile now shows runtime push diagnostics labels (permission state + token availability) for faster support and troubleshooting.
+- Consumer Profile refreshes push diagnostics on every `OnAppearing` so permission/token changes are reflected after returning from system settings.
+- Rewards tab now includes multi-business overview metrics (joined business count, aggregated points, top business) and a quick action to open selected-business QR.
+- Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
+- Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
 
-### Remaining / follow-up (recommended next chat)
-- Replace fallback/config token provider with production platform providers for FCM/APNs lifecycle handling.
+### Remaining / follow-up
 - Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
 
