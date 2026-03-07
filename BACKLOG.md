@@ -162,7 +162,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Manual push registration sync UX in Consumer Profile (status + last sync timestamp + retry action).
 
 ### Remaining
-- [ ] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
+- [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
 - [ ] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
 - [ ] Promotion campaigns integration in consumer timeline.
 - [ ] Inactive user reminder strategy (triggering + suppression + measurement).
@@ -173,6 +173,7 @@ It is designed as the **single source of truth** for development planning.
 - Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
+- [ ] Push provider operational readiness checklist per environment (Firebase `google-services.json`, Apple Push entitlement/certificate, runtime permission verification, and token rotation monitoring dashboard).
 - [x] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
 - [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
 - [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
@@ -194,7 +195,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
 - [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
 - [ ] Add automated tests around Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior.
-- [ ] Confirm production token-provider strategy (`ConsumerConfigPushTokenProvider` vs real platform providers) and remove any dev-only fallback paths.
+- [x] Confirmed production token-provider strategy (`ConsumerPlatformPushTokenProvider` with Android FCM + iOS/MacCatalyst APNs bridges) and removed fallback registration path from DI.
 
 ---
 
