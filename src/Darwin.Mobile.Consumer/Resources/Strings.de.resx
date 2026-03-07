@@ -276,6 +276,24 @@
 	<data name="SaveProfileButton" xml:space="preserve">
     <value>Profil speichern</value>
   </data>
+	<data name="ProfilePushRegistrationSectionTitle" xml:space="preserve">
+    <value>Push-Registrierung</value>
+  </data>
+	<data name="ProfilePushRegistrationSyncButton" xml:space="preserve">
+    <value>Push-Registrierung synchronisieren</value>
+  </data>
+	<data name="ProfilePushRegistrationStatusIdle" xml:space="preserve">
+    <value>Die Push-Registrierung wurde noch nicht synchronisiert.</value>
+  </data>
+	<data name="ProfilePushRegistrationStatusSuccess" xml:space="preserve">
+    <value>Push-Registrierung erfolgreich synchronisiert.</value>
+  </data>
+	<data name="ProfilePushRegistrationStatusFailed" xml:space="preserve">
+    <value>Synchronisierung der Push-Registrierung fehlgeschlagen.</value>
+  </data>
+	<data name="ProfilePushRegistrationLastSyncFormat" xml:space="preserve">
+    <value>Letzte Synchronisierung: {0}</value>
+  </data>
 	<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>

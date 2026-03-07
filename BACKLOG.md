@@ -172,7 +172,9 @@ It is designed as the **single source of truth** for development planning.
 - [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
 - [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
 - [x] QR countdown UX decision finalized: keep 1s display refresh (smoother UI) with a 5-minute minimum automatic network refresh limit.
+- [x] Consumer Profile push registration self-service sync: added manual sync action with user-visible status and last-sync timestamp.
 
+- [ ] Externalize mobile map API keys (Android Google Maps) to secure secret providers and document iOS/MapKit key requirements per environment.
 
 - [ ] Externalize mobile map API keys (Android Google Maps) to secure secret providers and document iOS/MapKit key requirements per environment.
 

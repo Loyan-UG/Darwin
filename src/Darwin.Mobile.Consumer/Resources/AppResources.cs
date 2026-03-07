@@ -89,6 +89,12 @@ public static class AppResources
     public static string TimezoneLabel => ResourceManager.GetString(nameof(TimezoneLabel), Culture) ?? "Timezone";
     public static string CurrencyLabel => ResourceManager.GetString(nameof(CurrencyLabel), Culture) ?? "Currency";
     public static string SaveProfileButton => ResourceManager.GetString(nameof(SaveProfileButton), Culture) ?? "Save profile";
+    public static string ProfilePushRegistrationSectionTitle => ResourceManager.GetString(nameof(ProfilePushRegistrationSectionTitle), Culture) ?? "Push registration";
+    public static string ProfilePushRegistrationSyncButton => ResourceManager.GetString(nameof(ProfilePushRegistrationSyncButton), Culture) ?? "Sync push registration";
+    public static string ProfilePushRegistrationStatusIdle => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusIdle), Culture) ?? "Push registration has not been synced yet.";
+    public static string ProfilePushRegistrationStatusSuccess => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusSuccess), Culture) ?? "Push registration synced successfully.";
+    public static string ProfilePushRegistrationStatusFailed => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusFailed), Culture) ?? "Push registration sync failed.";
+    public static string ProfilePushRegistrationLastSyncFormat => ResourceManager.GetString(nameof(ProfilePushRegistrationLastSyncFormat), Culture) ?? "Last sync: {0}";
     public static string ChangePasswordTitle => ResourceManager.GetString(nameof(ChangePasswordTitle), Culture) ?? "Change password";
     public static string CurrentPasswordLabel => ResourceManager.GetString(nameof(CurrentPasswordLabel), Culture) ?? "Current password";
     public static string NewPasswordLabel => ResourceManager.GetString(nameof(NewPasswordLabel), Culture) ?? "New password";
