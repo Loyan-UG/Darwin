@@ -1,6 +1,7 @@
 ﻿using Darwin.Mobile.Consumer.ViewModels;
 using Darwin.Mobile.Consumer.Views;
 using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
@@ -27,6 +28,8 @@ public static class ServiceCollectionExtensions
 #endif
             .Build();
 
+        services.AddSingleton<IConfiguration>(config);
+
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
             ?? throw new InvalidOperationException("Missing 'Api' section in appsettings.mobile.json");
 
@@ -47,6 +50,8 @@ public static class ServiceCollectionExtensions
 
         // Root navigation service for window-aware app root switching.
         services.AddSingleton<IAppRootNavigator, AppRootNavigator>();
+        services.AddSingleton<IConsumerPushTokenProvider, ConsumerConfigPushTokenProvider>();
+        services.AddSingleton<IConsumerPushRegistrationCoordinator, ConsumerPushRegistrationCoordinator>();
 
         // Platform services (scanner, location)
         services.AddSingleton<IScanner, Services.Platform.ScannerPlatformService>();
@@ -64,6 +69,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<BusinessDetailViewModel>();
         services.AddTransient<RegisterViewModel>();
         services.AddTransient<ForgotPasswordViewModel>();
+        services.AddTransient<ResetPasswordViewModel>();
 
         // Pages
         services.AddTransient<LoginPage>();
@@ -75,6 +81,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProfilePage>();
         services.AddTransient<RegisterPage>();
         services.AddTransient<ForgotPasswordPage>();
+        services.AddTransient<ResetPasswordPage>();
         services.AddTransient<ChangePasswordPage>();
         services.AddTransient<BusinessDetailPage>();
 

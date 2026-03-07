@@ -255,6 +255,46 @@ namespace Darwin.Mobile.Shared.Api
             }
         }
 
+        /// <inheritdoc />
+        public async Task<Result> PostNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(route))
+                return Result.Fail("Route is required.");
+
+            if (request is null)
+                return Result.Fail("Request payload is required.");
+
+            var normalized = ApiRoutes.Normalize(route);
+
+            try
+            {
+                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+
+                return await _retry.ExecuteAsync(async token =>
+                {
+                    using var response = await _http.PostAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return Result.Ok();
+                    }
+
+                    var errorMessage = await TryReadErrorMessageAsync(response, token).ConfigureAwait(false)
+                                      ?? $"Request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}).";
+
+                    return Result.Fail(errorMessage);
+                }, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail($"Network error: {ex.Message}");
+            }
+        }
+
         private async Task ApplyBearerFromStoreAsync()
         {
             var (accessToken, expiresAtUtc) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
