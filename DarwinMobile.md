@@ -272,10 +272,13 @@ The Consumer project reads map key through MSBuild property `GoogleMapsApiKey`, 
 Where to set it:
 - **Windows / PowerShell (current shell):** `<c>$env:GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
 - **macOS/Linux / bash (current shell):** `<c>export GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
-- **CI/CD:** add secure variable named `GOOGLE_MAPS_API_KEY`.
+- **Alternative env var (Android-only pipelines):** `ANDROID_GOOGLE_MAPS_API_KEY`
+- **CI/CD:** add secure variable named `GOOGLE_MAPS_API_KEY` (preferred) or `ANDROID_GOOGLE_MAPS_API_KEY`.
 - **Local persistent MSBuild override (optional):** set `GoogleMapsApiKey` in `Directory.Build.props` outside source control.
 
-If this value is empty, Android map may fail at runtime even if app compiles.
+The project now validates this key during Android build:
+- **Debug/Dev build:** missing key => warning (build continues, map can fail at runtime).
+- **Release build:** missing key => build error (prevents shipping a broken map config).
 
 ### 7.2 Server
 

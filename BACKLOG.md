@@ -174,9 +174,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] QR countdown UX decision finalized: keep 1s display refresh (smoother UI) with a 5-minute minimum automatic network refresh limit.
 - [x] Consumer Profile push registration self-service sync: added manual sync action with user-visible status and last-sync timestamp.
 
-- [ ] Externalize mobile map API keys (Android Google Maps) to secure secret providers and document iOS/MapKit key requirements per environment.
-
-- [ ] Externalize mobile map API keys (Android Google Maps) to secure secret providers and document iOS/MapKit key requirements per environment.
+- [x] Externalize mobile map API keys (Android Google Maps) to secure secret providers, with Android build-time validation (warn in Debug, fail in Release) and documented iOS/MapKit requirements per environment.
 
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
 - [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
