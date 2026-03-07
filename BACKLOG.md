@@ -157,10 +157,15 @@ It is designed as the **single source of truth** for development planning.
 - [x] Staff roles & permissions
 
 ## 3.4 Mobile Consumer App – Phase 3
-- Push notifications
-- Multi-business loyalty overview
-- Promotion campaigns
-- Inactive user reminders
+### Completed
+- [x] Push registration infrastructure end-to-end baseline (contracts, API endpoint, shared/mobile services, coordinator wiring).
+- [x] Manual push registration sync UX in Consumer Profile (status + last sync timestamp + retry action).
+
+### Remaining
+- [ ] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
+- [ ] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
+- [ ] Promotion campaigns integration in consumer timeline.
+- [ ] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
 - Full analytics module (CSV/PDF export)
@@ -183,6 +188,13 @@ It is designed as the **single source of truth** for development planning.
 - [ ] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
 - [ ] Add tracking events for impression/open/claim to measure conversion.
 - [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+
+
+## 3.8 Quality Findings & Follow-up (for next chat)
+- [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
+- [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
+- [ ] Add automated tests around Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior.
+- [ ] Confirm production token-provider strategy (`ConsumerConfigPushTokenProvider` vs real platform providers) and remove any dev-only fallback paths.
 
 ---
 

@@ -214,6 +214,18 @@ public sealed class ProfileViewModel : BaseViewModel
             return;
         }
 
+        // If identity metadata is missing, attempt one reload before entering busy-save mode.
+        if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
+        {
+            await RefreshAsync();
+        }
+
+        if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.ProfileNotLoadedYet);
+            return;
+        }
+
         RunOnMain(() =>
         {
             IsBusy = true;
@@ -223,18 +235,6 @@ public sealed class ProfileViewModel : BaseViewModel
 
         try
         {
-            // If identity metadata is missing, attempt one reload automatically instead of failing immediately.
-            if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
-            {
-                await RefreshAsync();
-            }
-
-            if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
-            {
-                RunOnMain(() => ErrorMessage = AppResources.ProfileNotLoadedYet);
-                return;
-            }
-
             if (!ValidateProfileFields())
             {
                 RunOnMain(() => ErrorMessage = AppResources.ProfileRequiredFields);
@@ -289,7 +289,7 @@ public sealed class ProfileViewModel : BaseViewModel
             return;
         }
 
-        IsPushSyncBusy = true;
+        RunOnMain(() => IsPushSyncBusy = true);
 
         try
         {
@@ -319,7 +319,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         finally
         {
-            IsPushSyncBusy = false;
+            RunOnMain(() => IsPushSyncBusy = false);
         }
     }
 

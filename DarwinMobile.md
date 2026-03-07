@@ -443,6 +443,19 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ---
 
+
+## 18.1 Current Snapshot (Done vs Remaining)
+
+### Done in current codebase
+- Consumer push-registration baseline is integrated end-to-end (contracts + API + shared service + coordinator + profile manual sync UI).
+- Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
+- Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
+
+### Remaining / follow-up (recommended next chat)
+- Replace fallback/config token provider with production platform providers for FCM/APNs lifecycle handling.
+- Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
+- Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
+
 ## 19) Contributor Checklist
 
 1. Install SDKs (MAUI workloads for target platforms).
@@ -465,8 +478,6 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Loyalty**: `LoyaltyScanMode`, `LoyaltyScanAllowedActions`, `LoyaltyRewardSummary`, `LoyaltyAccountSummary`, `PrepareScanSessionRequest/Response`, `ProcessScanSessionForBusinessRequest/Response`, `ConfirmAccrualRequest/Response`, `ConfirmRedemptionRequest/Response`.
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
 - **Notifications**: `MobileDevicePlatform`, `RegisterPushDeviceRequest`, `RegisterPushDeviceResponse`.
-
-> Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 
 > Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 

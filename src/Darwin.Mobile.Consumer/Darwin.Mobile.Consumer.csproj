@@ -43,16 +43,16 @@
 		<DefaultLanguage>de</DefaultLanguage>
 	</PropertyGroup>
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <!--
-    Google Maps key should come from environment/user-secrets/CI variables.
-    Do not hardcode production keys in source control.
-    Resolution order:
-    1) GoogleMapsApiKey (explicit MSBuild property)
-    2) GOOGLE_MAPS_API_KEY (environment)
-    3) ANDROID_GOOGLE_MAPS_API_KEY (environment)
-    -->
-	  <GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
-	  <GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(ANDROID_GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
+	<!--
+	Google Maps key should come from environment/user-secrets/CI variables.
+	Do not hardcode production keys in source control.
+	Resolution order:
+	1) GoogleMapsApiKey (explicit MSBuild property)
+	2) GOOGLE_MAPS_API_KEY (environment)
+	3) ANDROID_GOOGLE_MAPS_API_KEY (environment)
+	-->
+	<GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
+	<GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(ANDROID_GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
 	<AndroidManifestPlaceholders>$(AndroidManifestPlaceholders);googleMapsApiKey=$(GoogleMapsApiKey)</AndroidManifestPlaceholders>
 </PropertyGroup>
 
