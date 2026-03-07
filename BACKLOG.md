@@ -208,6 +208,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Feed promotions now enforce initial guardrails in mobile rendering (de-duplication by business/title/CTA, 6-card cap, and 8-hour suppression window with fallback behavior).
 - [x] Device registration heartbeat now updates `UserEngagementSnapshot` baseline fields (`LastActivityAtUtc`, `EventCount`, compact snapshot metadata) to support inactive-reminder triggering and measurement.
 - [x] Added Application handlers for inactive-reminder candidate selection and successful-dispatch metadata recording (cooldown-ready baseline).
+- [x] Added WebApi background worker scaffold for inactive reminders (`InactiveReminderBackgroundService`) with configurable interval/threshold/cooldown and batch observability counters.
 
 ---
 
