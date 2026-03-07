@@ -264,6 +264,19 @@ For map providers:
 - **Android (Google Maps)**: provide `GoogleMapsApiKey` via environment/CI secret and pass it to Android manifest placeholder (`googleMapsApiKey`). Avoid committing production API keys in `.csproj` or manifest files.
 - **iOS/MacCatalyst (MapKit)**: no Google Maps key is required for built-in MAUI MapKit rendering, but location/privacy entries (e.g., `NSLocationWhenInUseUsageDescription`) must remain configured.
 
+
+### 7.1.1 Android Google Maps key setup (required for Consumer map on Android)
+
+The Consumer project reads map key through MSBuild property `GoogleMapsApiKey`, with fallback to env var `GOOGLE_MAPS_API_KEY`.
+
+Where to set it:
+- **Windows / PowerShell (current shell):** `<c>$env:GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
+- **macOS/Linux / bash (current shell):** `<c>export GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
+- **CI/CD:** add secure variable named `GOOGLE_MAPS_API_KEY`.
+- **Local persistent MSBuild override (optional):** set `GoogleMapsApiKey` in `Directory.Build.props` outside source control.
+
+If this value is empty, Android map may fail at runtime even if app compiles.
+
 ### 7.2 Server
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
