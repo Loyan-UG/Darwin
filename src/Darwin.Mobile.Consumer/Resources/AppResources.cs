@@ -76,6 +76,12 @@ public static class AppResources
     public static string RewardsJoinedBusinessesLabel => ResourceManager.GetString(nameof(RewardsJoinedBusinessesLabel), Culture) ?? "Joined businesses";
     public static string BusinessCategoryFormat => ResourceManager.GetString(nameof(BusinessCategoryFormat), Culture) ?? "Category: {0}";
 
+    public static string RewardsOverviewTitle => ResourceManager.GetString(nameof(RewardsOverviewTitle), Culture) ?? "Multi-business overview";
+    public static string RewardsOverviewJoinedBusinessesFormat => ResourceManager.GetString(nameof(RewardsOverviewJoinedBusinessesFormat), Culture) ?? "Joined businesses: {0}";
+    public static string RewardsOverviewTotalPointsFormat => ResourceManager.GetString(nameof(RewardsOverviewTotalPointsFormat), Culture) ?? "Total points across businesses: {0}";
+    public static string RewardsOverviewTopBusinessFormat => ResourceManager.GetString(nameof(RewardsOverviewTopBusinessFormat), Culture) ?? "Top business by points: {0}";
+    public static string RewardsOpenSelectedBusinessQrButton => ResourceManager.GetString(nameof(RewardsOpenSelectedBusinessQrButton), Culture) ?? "Open selected business QR";
+
     public static string BusinessDetailsTitle => ResourceManager.GetString(nameof(BusinessDetailsTitle), Culture) ?? "Business";
     public static string BusinessDetailsPlaceholder => ResourceManager.GetString(nameof(BusinessDetailsPlaceholder), Culture) ?? "Additional details coming soon.";
     public static string JoinProgramButton => ResourceManager.GetString(nameof(JoinProgramButton), Culture) ?? "Join Loyalty Program";

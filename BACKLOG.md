@@ -163,7 +163,7 @@ It is designed as the **single source of truth** for development planning.
 
 ### Remaining
 - [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
-- [ ] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
+- [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
 - [ ] Promotion campaigns integration in consumer timeline.
 - [ ] Inactive user reminder strategy (triggering + suppression + measurement).
 
@@ -191,7 +191,7 @@ It is designed as the **single source of truth** for development planning.
 - [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 
-## 3.8 Quality Findings & Follow-up (for next chat)
+## 3.8 Quality Findings & Follow-up
 - [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
 - [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
 - [ ] Add automated tests around Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior.
@@ -203,6 +203,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
 - [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.
 - [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
+- [x] Rewards page now includes aggregated multi-business overview metrics and a quick QR action for the selected business context.
 
 ---
 
