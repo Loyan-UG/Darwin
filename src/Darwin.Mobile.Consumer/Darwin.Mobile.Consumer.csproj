@@ -42,6 +42,19 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 		<DefaultLanguage>de</DefaultLanguage>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' != 'Release'">
+		<CodesignEntitlements>Platforms\iOS\Entitlements.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' == 'Release'">
+		<CodesignEntitlements>Platforms\iOS\Entitlements.Release.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' and '$(Configuration)' != 'Release'">
+		<CodesignEntitlements>Platforms\MacCatalyst\Entitlements.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' and '$(Configuration)' == 'Release'">
+		<CodesignEntitlements>Platforms\MacCatalyst\Entitlements.Release.plist</CodesignEntitlements>
+	</PropertyGroup>
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 	<!--
 	Google Maps key should come from environment/user-secrets/CI variables.
@@ -55,6 +68,15 @@
 	<GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(ANDROID_GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
 	<AndroidManifestPlaceholders>$(AndroidManifestPlaceholders);googleMapsApiKey=$(GoogleMapsApiKey)</AndroidManifestPlaceholders>
 </PropertyGroup>
+
+
+<Target Name="ValidateAndroidPushFirebaseConfig" BeforeTargets="Build"
+        Condition="'$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))' == 'android'">
+	<Warning Condition="!Exists('google-services.json') and '$(Configuration)' != 'Release'"
+	         Text="google-services.json is missing. FCM token/bootstrap can fail at runtime. Add src/Darwin.Mobile.Consumer/google-services.json for your Firebase project." />
+	<Error Condition="!Exists('google-services.json') and '$(Configuration)' == 'Release'"
+	       Text="google-services.json is required for Android Release builds with FCM push integration." />
+</Target>
 
 <Target Name="ValidateAndroidGoogleMapsApiKey" BeforeTargets="Build"
         Condition="'$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))' == 'android'">
@@ -97,6 +119,11 @@
 		<PackageReference Include="UraniumUI.Material" Version="2.14.0" />
 		<PackageReference Include="ZXing.Net.Maui" Version="0.7.4" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.7.4" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.Firebase.Messaging" Version="124.1.0" />
+		<GoogleServicesJson Include="google-services.json" Condition="Exists('google-services.json')" />
 	</ItemGroup>
 
 	<ItemGroup>
