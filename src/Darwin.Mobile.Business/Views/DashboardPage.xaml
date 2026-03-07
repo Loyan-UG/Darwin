@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+             xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+             x:Class="Darwin.Mobile.Business.Views.DashboardPage"
+             x:DataType="vm:DashboardViewModel"
+             Title="{x:Static res:AppResources.DashboardTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Label Text="{x:Static res:AppResources.DashboardTitle}"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="{x:Static res:AppResources.DashboardSubtitle}"
+                   FontSize="13"
+                   Opacity="0.8" />
+
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Label Text="{x:Static res:AppResources.DashboardLookbackLabel}"
+                       VerticalOptions="Center" />
+
+                <Picker Grid.Column="1"
+                        ItemsSource="{Binding LookbackDayOptions}"
+                        SelectedItem="{Binding LookbackDays}" />
+
+                <Button Grid.Column="2"
+                        Text="{x:Static res:AppResources.DashboardRefreshButton}"
+                        Command="{Binding RefreshCommand}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                <Border Grid.Row="0" Grid.Column="0" StrokeThickness="1" Stroke="#555555" Padding="10">
+                    <Label Text="{Binding TotalSessions, StringFormat='Sessions: {0}'}" FontAttributes="Bold" />
+                </Border>
+
+                <Border Grid.Row="0" Grid.Column="1" StrokeThickness="1" Stroke="#555555" Padding="10">
+                    <Label Text="{Binding AccrualCount, StringFormat='Accruals: {0}'}" FontAttributes="Bold" />
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="0" StrokeThickness="1" Stroke="#555555" Padding="10">
+                    <Label Text="{Binding RedemptionCount, StringFormat='Redemptions: {0}'}" FontAttributes="Bold" />
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="1" StrokeThickness="1" Stroke="#555555" Padding="10">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="{Binding TotalAccruedPoints, StringFormat='Accrued points: {0}'}" FontAttributes="Bold" FontSize="13" />
+                        <Label Text="{Binding TotalRedeemedPoints, StringFormat='Redeemed points: {0}'}" FontSize="13" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Label Text="{x:Static res:AppResources.DashboardTopCustomersTitle}" FontAttributes="Bold" />
+            <Label Text="{x:Static res:AppResources.DashboardTopCustomersEmpty}"
+                   IsVisible="{Binding HasTopCustomers, Converter={StaticResource InverseBoolConverter}}" />
+
+            <CollectionView ItemsSource="{Binding TopCustomers}"
+                            IsVisible="{Binding HasTopCustomers}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BusinessTopCustomerItem">
+                        <HorizontalStackLayout Padding="0,4" Spacing="8">
+                            <Label Text="{Binding CustomerDisplayName}" />
+                            <Label Text="{Binding InteractionsCount, StringFormat='({0})'}" Opacity="0.7" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="{x:Static res:AppResources.DashboardRecentActivityTitle}" FontAttributes="Bold" />
+            <Label Text="{x:Static res:AppResources.DashboardRecentActivityEmpty}"
+                   IsVisible="{Binding HasRecentActivities, Converter={StaticResource InverseBoolConverter}}" />
+
+            <CollectionView ItemsSource="{Binding RecentActivities}"
+                            IsVisible="{Binding HasRecentActivities}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BusinessActivityFeedItem">
+                        <Border StrokeThickness="1" Stroke="#444444" Padding="8" Margin="0,3,0,3">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="{Binding ActivityKind}" FontAttributes="Bold" FontSize="13" />
+                                <Label Text="{Binding CustomerDisplayName}" FontSize="13" />
+                                <Label Text="{Binding PointsDelta, StringFormat='Points: {0}'}" FontSize="12" Opacity="0.75" />
+                                <Label Text="{Binding OccurredAtUtc, StringFormat='{0:u}'}" FontSize="11" Opacity="0.6" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding HasError}" />
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

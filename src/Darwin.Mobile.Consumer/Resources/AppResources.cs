@@ -89,6 +89,12 @@ public static class AppResources
     public static string TimezoneLabel => ResourceManager.GetString(nameof(TimezoneLabel), Culture) ?? "Timezone";
     public static string CurrencyLabel => ResourceManager.GetString(nameof(CurrencyLabel), Culture) ?? "Currency";
     public static string SaveProfileButton => ResourceManager.GetString(nameof(SaveProfileButton), Culture) ?? "Save profile";
+    public static string ProfilePushRegistrationSectionTitle => ResourceManager.GetString(nameof(ProfilePushRegistrationSectionTitle), Culture) ?? "Push registration";
+    public static string ProfilePushRegistrationSyncButton => ResourceManager.GetString(nameof(ProfilePushRegistrationSyncButton), Culture) ?? "Sync push registration";
+    public static string ProfilePushRegistrationStatusIdle => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusIdle), Culture) ?? "Push registration has not been synced yet.";
+    public static string ProfilePushRegistrationStatusSuccess => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusSuccess), Culture) ?? "Push registration synced successfully.";
+    public static string ProfilePushRegistrationStatusFailed => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusFailed), Culture) ?? "Push registration sync failed.";
+    public static string ProfilePushRegistrationLastSyncFormat => ResourceManager.GetString(nameof(ProfilePushRegistrationLastSyncFormat), Culture) ?? "Last sync: {0}";
     public static string ChangePasswordTitle => ResourceManager.GetString(nameof(ChangePasswordTitle), Culture) ?? "Change password";
     public static string CurrentPasswordLabel => ResourceManager.GetString(nameof(CurrentPasswordLabel), Culture) ?? "Current password";
     public static string NewPasswordLabel => ResourceManager.GetString(nameof(NewPasswordLabel), Culture) ?? "New password";
@@ -129,6 +135,18 @@ public static class AppResources
     public static string ForgotPasswordSuccess => ResourceManager.GetString(nameof(ForgotPasswordSuccess), Culture) ?? "If the email exists, password reset instructions have been sent.";
     public static string ForgotPasswordFailed => ResourceManager.GetString(nameof(ForgotPasswordFailed), Culture) ?? "Unable to request password reset right now. Please try again.";
 
+
+    public static string ResetPasswordTitle => ResourceManager.GetString(nameof(ResetPasswordTitle), Culture) ?? "Reset password";
+    public static string ResetPasswordDescription => ResourceManager.GetString(nameof(ResetPasswordDescription), Culture) ?? "Enter your email, reset token, and new password to complete the reset.";
+    public static string ResetPasswordTokenLabel => ResourceManager.GetString(nameof(ResetPasswordTokenLabel), Culture) ?? "Reset token";
+    public static string ResetPasswordTokenPlaceholder => ResourceManager.GetString(nameof(ResetPasswordTokenPlaceholder), Culture) ?? "Paste token from your email";
+    public static string ResetPasswordTokenRequired => ResourceManager.GetString(nameof(ResetPasswordTokenRequired), Culture) ?? "Reset token is required.";
+    public static string ResetPasswordActionButton => ResourceManager.GetString(nameof(ResetPasswordActionButton), Culture) ?? "Reset password";
+    public static string ResetPasswordNavigateButton => ResourceManager.GetString(nameof(ResetPasswordNavigateButton), Culture) ?? "Already have a token? Reset password";
+    public static string ResetPasswordSuccess => ResourceManager.GetString(nameof(ResetPasswordSuccess), Culture) ?? "Your password has been reset successfully. Please log in with your new password.";
+    public static string ResetPasswordFailed => ResourceManager.GetString(nameof(ResetPasswordFailed), Culture) ?? "Unable to reset password. Please verify email/token and try again.";
+    public static string ProfileConcurrencyConflict => ResourceManager.GetString(nameof(ProfileConcurrencyConflict), Culture) ?? "Your profile was updated elsewhere. Please refresh and try again.";
+
     public static string RegisterAutoLoginFailed => ResourceManager.GetString(nameof(RegisterAutoLoginFailed), Culture) ?? "Your account was created, but automatic sign-in failed. Please login manually.";
 
     public static string DiscoverMyBusinessesTab => ResourceManager.GetString(nameof(DiscoverMyBusinessesTab), Culture) ?? "My Businesses";
@@ -144,6 +162,9 @@ public static class AppResources
     public static string DiscoverLoadJoinedFailed => ResourceManager.GetString(nameof(DiscoverLoadJoinedFailed), Culture) ?? "Unable to load your joined businesses.";
     public static string DiscoverLoadExploreFailed => ResourceManager.GetString(nameof(DiscoverLoadExploreFailed), Culture) ?? "Unable to load explore businesses.";
 
+    public static string DiscoverJoinedBusinessesCountFormat => ResourceManager.GetString(nameof(DiscoverJoinedBusinessesCountFormat), Culture) ?? "Joined businesses: {0}";
+    public static string DiscoverTotalPointsFormat => ResourceManager.GetString(nameof(DiscoverTotalPointsFormat), Culture) ?? "Total points: {0}";
+    public static string DiscoverTopBalanceBusinessFormat => ResourceManager.GetString(nameof(DiscoverTopBalanceBusinessFormat), Culture) ?? "Top balance at: {0}";
     
     public static string DiscoverCategoryFilterLabel => ResourceManager.GetString(nameof(DiscoverCategoryFilterLabel), Culture) ?? "Category";
     public static string DiscoverSearchButton => ResourceManager.GetString(nameof(DiscoverSearchButton), Culture) ?? "Search";

@@ -28,7 +28,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// - Category filtering.
 /// - Optional nearby mode (location-based query) with graceful fallback.
 ///
-/// All UI-bound collections are updated through <see cref="RunOnMain"/> to keep MAUI thread-safe.
+/// All UI-bound collections are updated through <see cref="BaseViewModel.RunOnMain(System.Action)"/> to keep MAUI thread-safe.
 /// </remarks>
 public sealed class DiscoverViewModel : BaseViewModel
 {
@@ -143,6 +143,24 @@ public sealed class DiscoverViewModel : BaseViewModel
     public bool IsExploreTabSelected => !IsJoinedTabSelected;
 
     public bool HasJoinedAccounts => JoinedAccounts.Count > 0;
+
+    /// <summary>
+    /// Total number of joined loyalty businesses for current member.
+    /// </summary>
+    public int JoinedBusinessCount => JoinedAccounts.Count;
+
+    /// <summary>
+    /// Sum of points across all joined loyalty businesses.
+    /// </summary>
+    public int TotalJoinedPointsBalance => JoinedAccounts.Sum(a => Math.Max(0, a.PointsBalance));
+
+    /// <summary>
+    /// Business with currently highest points balance (if any).
+    /// </summary>
+    public string TopJoinedBusinessName => JoinedAccounts
+        .OrderByDescending(a => a.PointsBalance)
+        .Select(a => a.BusinessName)
+        .FirstOrDefault() ?? "—";
 
     public bool HasExploreResults => ExploreBusinesses.Count > 0;
 
@@ -262,6 +280,9 @@ public sealed class DiscoverViewModel : BaseViewModel
             {
                 JoinedAccounts.Clear();
                 OnPropertyChanged(nameof(HasJoinedAccounts));
+                OnPropertyChanged(nameof(JoinedBusinessCount));
+                OnPropertyChanged(nameof(TotalJoinedPointsBalance));
+                OnPropertyChanged(nameof(TopJoinedBusinessName));
             });
 
             return;
@@ -281,6 +302,9 @@ public sealed class DiscoverViewModel : BaseViewModel
             }
 
             OnPropertyChanged(nameof(HasJoinedAccounts));
+            OnPropertyChanged(nameof(JoinedBusinessCount));
+            OnPropertyChanged(nameof(TotalJoinedPointsBalance));
+            OnPropertyChanged(nameof(TopJoinedBusinessName));
         });
     }
 

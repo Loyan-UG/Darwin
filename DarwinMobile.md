@@ -36,7 +36,7 @@ Key principles for the loyalty flow:
   - Authentication (JWT access + refresh tokens).
   - **Loyalty QR page**: shows a QR built from a server-issued `ScanSessionToken`.
   - Rewards dashboard per business.
-  - Business discovery (map + directory) and business detail.
+  - Business discovery (full in-app map integration + directory) and business detail.
   - Profile (read/update with optimistic concurrency via `RowVersion`).
 - UI binds to **Shared** services (`ILoyaltyService`, `IAuthService`, `IProfileService`, `IBusinessService`) and uses platform services (camera, location) via abstractions in `Darwin.Mobile.Shared`.
 
@@ -50,6 +50,9 @@ Key principles for the loyalty flow:
     - Mode = Redemption → show selected rewards for confirmation.
   - Call `ConfirmAccrual` / `ConfirmRedemption` to complete the operation.
 - Uses the same Shared services; provides the scanner implementation for the device.
+- Phase-2 increment delivered: business-side reward tier editing (load/create/update/delete) backed by loyalty reward-configuration APIs.
+- Phase-2 increment delivered: business dashboard + lightweight reporting cards (sessions/accruals/redemptions/top customers/recent activity).
+- Phase-2 increment delivered: staff role visibility + client-side permission guards for reward edit and redemption/accrual confirmations.
 
 ### 1.3 Darwin.Mobile.Shared (Class Library)
 
@@ -71,7 +74,7 @@ Key principles for the loyalty flow:
 - Current/added areas:
   - **Identity**: login, refresh, logout, logout-all, register, change-password, request-reset, reset-password.
   - **Profile**: member self profile read/update models (`RowVersion` based).
-  - **Loyalty** (session-based scan model; see §4.3).
+  - **Loyalty** (session-based scan model + business reward-configuration contracts for tier CRUD; see §4.3).
   - **Businesses**: discovery filters, map summaries, business details.
   - **Common**: paging, geo coordinates, problem details, sort options.
 
@@ -166,7 +169,7 @@ These Contracts support Phase-1/2 of the mobile roadmap while being extendable (
 
 ### 4.4 Businesses (Discovery)
 
-- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, sort, paging.
+- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, min-rating, active-loyalty-only, sort, paging.
 - `BusinessSummary` – id, name, category, rating, approximate location, open-now.
 - `BusinessDetail` – description, opening hours, phones/links, address, images, loyalty program preview.
 
@@ -187,7 +190,7 @@ These are sufficient for the map, directory and profile pages on Consumer.
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
 - `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
 - `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
-- **Consumer QR auto-refresh policy (current app behavior)**: automatic refresh checks run every ~15 seconds, and the app enforces a **minimum 5-minute interval** between automatic refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
+- **Consumer QR auto-refresh policy (current app behavior)**: the UI countdown check runs every ~1 second for a smooth countdown, while the app enforces a **minimum 5-minute interval** between automatic network refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
 
@@ -257,10 +260,32 @@ These are sufficient for the map, directory and profile pages on Consumer.
 
 Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config class per build configuration) or compile-time constants; pass them into `AddDarwinMobileShared()` during startup.
 
+For map providers:
+- **Android (Google Maps)**: provide `GoogleMapsApiKey` via environment/CI secret and pass it to Android manifest placeholder (`googleMapsApiKey`). Avoid committing production API keys in `.csproj` or manifest files.
+- **iOS/MacCatalyst (MapKit)**: no Google Maps key is required for built-in MAUI MapKit rendering, but location/privacy entries (e.g., `NSLocationWhenInUseUsageDescription`) must remain configured.
+
+
+### 7.1.1 Android Google Maps key setup (required for Consumer map on Android)
+
+The Consumer project reads map key through MSBuild property `GoogleMapsApiKey`, with fallback to env var `GOOGLE_MAPS_API_KEY`.
+
+Where to set it:
+- **Windows / PowerShell (current shell):** `<c>$env:GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
+- **macOS/Linux / bash (current shell):** `<c>export GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
+- **Alternative env var (Android-only pipelines):** `ANDROID_GOOGLE_MAPS_API_KEY`
+- **CI/CD:** add secure variable named `GOOGLE_MAPS_API_KEY` (preferred) or `ANDROID_GOOGLE_MAPS_API_KEY`.
+- **Local persistent MSBuild override (optional):** set `GoogleMapsApiKey` in `Directory.Build.props` outside source control.
+
+The project now validates this key during Android build:
+- **Debug/Dev build:** missing key => warning (build continues, map can fail at runtime).
+- **Release build:** missing key => build error (prevents shipping a broken map config).
+
 ### 7.2 Server
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
 - Infrastructure exposes composition helpers (`AddSharedHostingDataProtection`, `AddPersistence`, `AddIdentityInfrastructure`, `AddNotificationsInfrastructure`, `AddJwtAuthCore`).
+- Password-reset emails are sent through `IEmailSender` (`SmtpEmailSender` by default), bound from `Email:Smtp` configuration. If this section is missing or points to a non-working relay, reset requests still return generic success (anti-enumeration) but no email is delivered.
+- For troubleshooting delivery issues, inspect WebApi logs (`logs/api-log-*.txt`) for `Error processing password reset request` and SMTP send diagnostics.
 
 ---
 
@@ -389,6 +414,7 @@ services.AddDarwinMobileShared(new ApiOptions
 | Auth      | POST /api/v1/auth/password/request-reset     | AllowAnonymous              | Consumer   |
 | Auth      | POST /api/v1/auth/password/reset             | AllowAnonymous              | Consumer   |
 | Auth      | POST /api/v1/auth/password/change            | Authorize                   | Both       |
+| Notifications | POST /api/v1/notifications/devices/register | Authorize                | Both       |
 | Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |
@@ -405,6 +431,7 @@ services.AddDarwinMobileShared(new ApiOptions
 | Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}/with-my-account  | perm:AccessMemberArea       | Consumer   |
+| Businesses | POST /api/v1/businesses/onboarding         | Authorize                   | Both       |
 
 ---
 
@@ -437,6 +464,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.
 - **Loyalty**: `LoyaltyScanMode`, `LoyaltyScanAllowedActions`, `LoyaltyRewardSummary`, `LoyaltyAccountSummary`, `PrepareScanSessionRequest/Response`, `ProcessScanSessionForBusinessRequest/Response`, `ConfirmAccrualRequest/Response`, `ConfirmRedemptionRequest/Response`.
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
+- **Notifications**: `MobileDevicePlatform`, `RegisterPushDeviceRequest`, `RegisterPushDeviceResponse`.
 
 > Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
@@ -11,14 +12,16 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
 /// Handles profile load/update flows for the consumer app.
-///
+/// </summary>
+/// <remarks>
 /// Design choice:
 /// - This screen is profile-only (no password section) to keep UX focused.
 /// - All messages are intended to be shown near the save action, not at page bottom.
-/// </summary>
+/// </remarks>
 public sealed class ProfileViewModel : BaseViewModel
 {
     private readonly IProfileService _profileService;
+    private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
 
     private Guid _profileId;
     private byte[]? _rowVersion;
@@ -33,17 +36,25 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _currency = "EUR";
 
     private string? _successMessage;
+    private string _pushRegistrationStatus = AppResources.ProfilePushRegistrationStatusIdle;
+    private string? _lastPushSyncAtText;
+    private bool _isPushSyncBusy;
 
-    public ProfileViewModel(IProfileService profileService)
+    public ProfileViewModel(
+        IProfileService profileService,
+        IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
+        SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);
     }
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand SaveProfileCommand { get; }
+    public AsyncCommand SyncPushRegistrationCommand { get; }
 
     public string Email
     {
@@ -101,6 +112,38 @@ public sealed class ProfileViewModel : BaseViewModel
 
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
 
+    public string PushRegistrationStatus
+    {
+        get => _pushRegistrationStatus;
+        private set => SetProperty(ref _pushRegistrationStatus, value);
+    }
+
+    public string? LastPushSyncAtText
+    {
+        get => _lastPushSyncAtText;
+        private set
+        {
+            if (SetProperty(ref _lastPushSyncAtText, value))
+            {
+                OnPropertyChanged(nameof(HasLastPushSyncAt));
+            }
+        }
+    }
+
+    public bool HasLastPushSyncAt => !string.IsNullOrWhiteSpace(LastPushSyncAtText);
+
+    public bool IsPushSyncBusy
+    {
+        get => _isPushSyncBusy;
+        private set
+        {
+            if (SetProperty(ref _isPushSyncBusy, value))
+            {
+                SyncPushRegistrationCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
     public override async Task OnAppearingAsync()
     {
         if (_isLoaded)
@@ -151,7 +194,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ex.Message);
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileLoadFailed));
         }
         finally
         {
@@ -226,7 +269,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = ex.Message);
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfileSaveFailed));
         }
         finally
         {
@@ -236,6 +279,47 @@ public sealed class ProfileViewModel : BaseViewModel
                 SaveProfileCommand.RaiseCanExecuteChanged();
                 RefreshCommand.RaiseCanExecuteChanged();
             });
+        }
+    }
+
+    private async Task SyncPushRegistrationAsync()
+    {
+        if (IsPushSyncBusy)
+        {
+            return;
+        }
+
+        IsPushSyncBusy = true;
+
+        try
+        {
+            var result = await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+
+            RunOnMain(() =>
+            {
+                PushRegistrationStatus = result.Succeeded
+                    ? AppResources.ProfilePushRegistrationStatusSuccess
+                    : (result.Error ?? AppResources.ProfilePushRegistrationStatusFailed);
+
+                LastPushSyncAtText = string.Format(
+                    AppResources.ProfilePushRegistrationLastSyncFormat,
+                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm"));
+            });
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() =>
+            {
+                PushRegistrationStatus = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfilePushRegistrationStatusFailed);
+                LastPushSyncAtText = string.Format(
+                    AppResources.ProfilePushRegistrationLastSyncFormat,
+                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm"));
+            });
+        }
+        finally
+        {
+            IsPushSyncBusy = false;
         }
     }
 

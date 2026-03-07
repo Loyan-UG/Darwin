@@ -18,8 +18,8 @@ namespace Darwin.Mobile.Shared.Resilience
     /// - Use a thread-safe RNG for jitter when this policy is registered as a singleton.
     ///
     /// Example usage:
-    /// services.AddSingleton<IRetryPolicy>(_ => new ExponentialBackoffRetryPolicy(maxAttempts:3));
-    /// await policy.ExecuteAsync(async ct =&gt; await httpClient.GetAsync(...), cancellationToken);
+    /// <c>services.AddSingleton&lt;IRetryPolicy&gt;(_ =&gt; new ExponentialBackoffRetryPolicy(maxAttempts:3));</c>
+    /// <c>await policy.ExecuteAsync(async ct =&gt; await httpClient.GetAsync(...), cancellationToken);</c>
     /// </summary>
     public sealed class ExponentialBackoffRetryPolicy : IRetryPolicy
     {
