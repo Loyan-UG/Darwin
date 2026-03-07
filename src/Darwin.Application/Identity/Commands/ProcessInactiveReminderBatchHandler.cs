@@ -10,21 +10,21 @@ namespace Darwin.Application.Identity.Commands;
 
 /// <summary>
 /// Orchestrates one inactive-reminder batch:
-/// select candidates, dispatch reminder, and mark successful sends.
+/// select candidates, dispatch reminders, and persist per-outcome measurement metadata.
 /// </summary>
 public sealed class ProcessInactiveReminderBatchHandler
 {
     private readonly GetInactiveReminderCandidatesHandler _getCandidatesHandler;
-    private readonly MarkInactiveReminderSentHandler _markSentHandler;
+    private readonly MarkInactiveReminderAttemptHandler _markAttemptHandler;
     private readonly IInactiveReminderDispatcher _dispatcher;
 
     public ProcessInactiveReminderBatchHandler(
         GetInactiveReminderCandidatesHandler getCandidatesHandler,
-        MarkInactiveReminderSentHandler markSentHandler,
+        MarkInactiveReminderAttemptHandler markAttemptHandler,
         IInactiveReminderDispatcher dispatcher)
     {
         _getCandidatesHandler = getCandidatesHandler ?? throw new ArgumentNullException(nameof(getCandidatesHandler));
-        _markSentHandler = markSentHandler ?? throw new ArgumentNullException(nameof(markSentHandler));
+        _markAttemptHandler = markAttemptHandler ?? throw new ArgumentNullException(nameof(markAttemptHandler));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
     }
 
@@ -62,6 +62,13 @@ public sealed class ProcessInactiveReminderBatchHandler
             if (string.IsNullOrWhiteSpace(candidate.PushDestinationDeviceId))
             {
                 summary.SuppressedCount++;
+                await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
+                {
+                    UserId = candidate.UserId,
+                    Outcome = "Suppressed",
+                    OutcomeCode = "NoPushDestination"
+                }, ct).ConfigureAwait(false);
+
                 continue;
             }
 
@@ -72,11 +79,22 @@ public sealed class ProcessInactiveReminderBatchHandler
             if (!dispatchResult.Succeeded)
             {
                 summary.FailedCount++;
+                await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
+                {
+                    UserId = candidate.UserId,
+                    Outcome = "Failed",
+                    OutcomeCode = dispatchResult.Error
+                }, ct).ConfigureAwait(false);
+
                 continue;
             }
 
-            var markResult = await _markSentHandler
-                .HandleAsync(new MarkInactiveReminderSentDto { UserId = candidate.UserId }, ct)
+            var markResult = await _markAttemptHandler
+                .HandleAsync(new MarkInactiveReminderAttemptDto
+                {
+                    UserId = candidate.UserId,
+                    Outcome = "Sent"
+                }, ct)
                 .ConfigureAwait(false);
 
             if (!markResult.Succeeded)

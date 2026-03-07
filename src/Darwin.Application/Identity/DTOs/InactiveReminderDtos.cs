@@ -35,12 +35,3 @@ public sealed class InactiveReminderCandidateDto
     public DateTime? CooldownEndsAtUtc { get; set; }
     public string? PushDestinationDeviceId { get; set; }
 }
-
-/// <summary>
-/// Input payload used to record a successful inactive reminder dispatch.
-/// </summary>
-public sealed class MarkInactiveReminderSentDto
-{
-    public Guid UserId { get; set; }
-    public DateTime? SentAtUtc { get; set; }
-}

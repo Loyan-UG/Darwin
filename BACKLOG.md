@@ -207,8 +207,9 @@ It is designed as the **single source of truth** for development planning.
 - [x] Feed promotions now support scope switching (selected business vs all joined businesses) with context-aware cards.
 - [x] Feed promotions now enforce initial guardrails in mobile rendering (de-duplication by business/title/CTA, 6-card cap, and 8-hour suppression window with fallback behavior).
 - [x] Device registration heartbeat now updates `UserEngagementSnapshot` baseline fields (`LastActivityAtUtc`, `EventCount`, compact snapshot metadata) to support inactive-reminder triggering and measurement.
-- [x] Added Application handlers for inactive-reminder candidate selection and successful-dispatch metadata recording (cooldown-ready baseline).
+- [x] Added Application handlers for inactive-reminder candidate selection and per-outcome measurement metadata recording (sent/failed/suppressed with cooldown-ready baseline).
 - [x] Added WebApi background worker scaffold for inactive reminders (`InactiveReminderBackgroundService`) with configurable interval/threshold/cooldown and batch observability counters.
+- [x] Inactive reminder batch orchestration now records every attempt outcome (`Sent`, `Failed`, `Suppressed`) in engagement snapshot metadata for measurement dashboards.
 
 ---
 
