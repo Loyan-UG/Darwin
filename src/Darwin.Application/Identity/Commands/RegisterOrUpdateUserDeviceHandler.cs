@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Identity;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
@@ -136,10 +137,10 @@ public sealed class RegisterOrUpdateUserDeviceHandler
             .ConfigureAwait(false);
 
         var metadata = DeserializeSnapshotMetadata(snapshot?.SnapshotJson);
-        var heartbeatCount = TryGetLong(metadata, SnapshotMetadataKeyDeviceHeartbeatCount) + 1;
+        var heartbeatCount = TryGetLong(metadata, ReminderMetadataKeys.DeviceHeartbeatCount) + 1;
 
-        metadata[SnapshotMetadataKeyDeviceHeartbeatCount] = heartbeatCount;
-        metadata[SnapshotMetadataKeyLastDeviceHeartbeatAtUtc] = nowUtc;
+        metadata[ReminderMetadataKeys.DeviceHeartbeatCount] = heartbeatCount;
+        metadata[ReminderMetadataKeys.LastDeviceHeartbeatAtUtc] = nowUtc;
 
         if (snapshot is null)
         {

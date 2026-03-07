@@ -504,6 +504,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
 - Feed promotions now apply delivery guardrails on the client: de-duplication (business/title/CTA), max 6 cards, and 8-hour suppression window with fallback when everything is suppressed.
 - Device registration now updates `UserEngagementSnapshot` baseline engagement metrics (last activity + heartbeat count metadata) to prepare inactive-reminder targeting and measurement.
+- Application now includes inactive-reminder orchestration handlers: candidate selection query (threshold + cooldown + push-enabled device check) and dispatch-result recorder that persists reminder metadata in `UserEngagementSnapshot`.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
@@ -513,6 +514,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
 - Align server-side promotion delivery guardrails with client behavior and expose configurable suppression policy in contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
+- Integrate a scheduled worker/job to execute candidate selection and call dispatch-result recording after provider success.
 
 ## 19) Contributor Checklist
 
