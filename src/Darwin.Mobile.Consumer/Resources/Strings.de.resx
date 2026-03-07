@@ -306,6 +306,30 @@
 	<data name="ProfilePushOpenSettingsFailed" xml:space="preserve">
     <value>Die Benachrichtigungseinstellungen konnten nicht geöffnet werden. Bitte öffnen Sie die App-Einstellungen manuell.</value>
   </data>
+
+	<data name="ProfilePushPermissionEnabled" xml:space="preserve">
+    <value>Benachrichtigungsberechtigung: aktiviert</value>
+  </data>
+
+	<data name="ProfilePushPermissionDisabled" xml:space="preserve">
+    <value>Benachrichtigungsberechtigung: deaktiviert</value>
+  </data>
+
+	<data name="ProfilePushPermissionUnknown" xml:space="preserve">
+    <value>Benachrichtigungsberechtigung: unbekannt</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityReady" xml:space="preserve">
+    <value>Push-Token-Status: verfügbar</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityMissing" xml:space="preserve">
+    <value>Push-Token-Status: fehlt</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
+    <value>Push-Token-Status: unbekannt</value>
+  </data>
 	<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>

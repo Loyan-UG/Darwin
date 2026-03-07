@@ -98,6 +98,12 @@ public static class AppResources
     public static string ProfilePushOpenSettingsButton => ResourceManager.GetString(nameof(ProfilePushOpenSettingsButton), Culture) ?? "Open notification settings";
     public static string ProfilePushOpenSettingsHint => ResourceManager.GetString(nameof(ProfilePushOpenSettingsHint), Culture) ?? "If notifications are blocked, open system settings and allow notifications for Loyan.";
     public static string ProfilePushOpenSettingsFailed => ResourceManager.GetString(nameof(ProfilePushOpenSettingsFailed), Culture) ?? "Could not open notification settings. Please open app settings manually.";
+    public static string ProfilePushPermissionEnabled => ResourceManager.GetString(nameof(ProfilePushPermissionEnabled), Culture) ?? "Notifications permission: enabled";
+    public static string ProfilePushPermissionDisabled => ResourceManager.GetString(nameof(ProfilePushPermissionDisabled), Culture) ?? "Notifications permission: disabled";
+    public static string ProfilePushPermissionUnknown => ResourceManager.GetString(nameof(ProfilePushPermissionUnknown), Culture) ?? "Notifications permission: unknown";
+    public static string ProfilePushTokenAvailabilityReady => ResourceManager.GetString(nameof(ProfilePushTokenAvailabilityReady), Culture) ?? "Push token status: ready";
+    public static string ProfilePushTokenAvailabilityMissing => ResourceManager.GetString(nameof(ProfilePushTokenAvailabilityMissing), Culture) ?? "Push token status: missing";
+    public static string ProfilePushTokenAvailabilityUnknown => ResourceManager.GetString(nameof(ProfilePushTokenAvailabilityUnknown), Culture) ?? "Push token status: unknown";
     public static string ChangePasswordTitle => ResourceManager.GetString(nameof(ChangePasswordTitle), Culture) ?? "Change password";
     public static string CurrentPasswordLabel => ResourceManager.GetString(nameof(CurrentPasswordLabel), Culture) ?? "Current password";
     public static string NewPasswordLabel => ResourceManager.GetString(nameof(NewPasswordLabel), Culture) ?? "New password";

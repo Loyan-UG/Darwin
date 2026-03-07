@@ -23,6 +23,7 @@ public sealed class ProfileViewModel : BaseViewModel
 {
     private readonly IProfileService _profileService;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
+    private readonly IConsumerPushTokenProvider _pushTokenProvider;
 
     private Guid _profileId;
     private byte[]? _rowVersion;
@@ -40,13 +41,17 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _pushRegistrationStatus = AppResources.ProfilePushRegistrationStatusIdle;
     private string? _lastPushSyncAtText;
     private bool _isPushSyncBusy;
+    private string _pushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
+    private string _pushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
 
     public ProfileViewModel(
         IProfileService profileService,
-        IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
+        IConsumerPushRegistrationCoordinator pushRegistrationCoordinator,
+        IConsumerPushTokenProvider pushTokenProvider)
     {
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
+        _pushTokenProvider = pushTokenProvider ?? throw new ArgumentNullException(nameof(pushTokenProvider));
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
@@ -135,6 +140,18 @@ public sealed class ProfileViewModel : BaseViewModel
 
     public bool HasLastPushSyncAt => !string.IsNullOrWhiteSpace(LastPushSyncAtText);
 
+    public string PushPermissionStateText
+    {
+        get => _pushPermissionStateText;
+        private set => SetProperty(ref _pushPermissionStateText, value);
+    }
+
+    public string PushTokenAvailabilityText
+    {
+        get => _pushTokenAvailabilityText;
+        private set => SetProperty(ref _pushTokenAvailabilityText, value);
+    }
+
     public bool IsPushSyncBusy
     {
         get => _isPushSyncBusy;
@@ -155,6 +172,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
 
         await RefreshAsync();
+        await RefreshPushRuntimeStateAsync();
         _isLoaded = true;
     }
 
@@ -322,7 +340,47 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         finally
         {
+            await RefreshPushRuntimeStateAsync();
             RunOnMain(() => IsPushSyncBusy = false);
+        }
+    }
+
+    private async Task RefreshPushRuntimeStateAsync()
+    {
+        try
+        {
+            var runtimeStateResult = await _pushTokenProvider.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+
+            if (!runtimeStateResult.Succeeded || runtimeStateResult.Value is null)
+            {
+                RunOnMain(() =>
+                {
+                    PushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
+                    PushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
+                });
+
+                return;
+            }
+
+            var runtimeState = runtimeStateResult.Value;
+            RunOnMain(() =>
+            {
+                PushPermissionStateText = runtimeState.NotificationsEnabled
+                    ? AppResources.ProfilePushPermissionEnabled
+                    : AppResources.ProfilePushPermissionDisabled;
+
+                PushTokenAvailabilityText = string.IsNullOrWhiteSpace(runtimeState.PushToken)
+                    ? AppResources.ProfilePushTokenAvailabilityMissing
+                    : AppResources.ProfilePushTokenAvailabilityReady;
+            });
+        }
+        catch
+        {
+            RunOnMain(() =>
+            {
+                PushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
+                PushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
+            });
         }
     }
 
