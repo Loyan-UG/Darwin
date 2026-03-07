@@ -191,7 +191,7 @@ It is designed as the **single source of truth** for development planning.
 - [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 
-## 3.8 Quality Findings & Follow-up (for next chat)
+## 3.8 Quality Findings & Follow-up
 - [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
 - [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
 - [ ] Add automated tests around Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior.
