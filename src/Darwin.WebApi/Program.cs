@@ -14,3 +14,8 @@ app.UseWebApiStartup();
 await app.RunAsync();
 
 
+
+/// <summary>
+/// Entry point marker used by integration tests with WebApplicationFactory.
+/// </summary>
+public partial class Program { }
