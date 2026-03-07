@@ -544,4 +544,43 @@
 	<data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Öffnen</value>
 </data>
+  <data name="ResetPasswordTitle" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="ResetPasswordDescription" xml:space="preserve">
+    <value>Geben Sie Ihre E-Mail, den Reset-Token und ein neues Passwort ein, um den Vorgang abzuschließen.</value>
+  </data>
+  <data name="ResetPasswordTokenLabel" xml:space="preserve">
+    <value>Reset-Token</value>
+  </data>
+  <data name="ResetPasswordTokenPlaceholder" xml:space="preserve">
+    <value>Token aus der E-Mail einfügen</value>
+  </data>
+  <data name="ResetPasswordTokenRequired" xml:space="preserve">
+    <value>Reset-Token ist erforderlich.</value>
+  </data>
+  <data name="ResetPasswordActionButton" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="ResetPasswordNavigateButton" xml:space="preserve">
+    <value>Token bereits vorhanden? Passwort zurücksetzen</value>
+  </data>
+  <data name="ResetPasswordSuccess" xml:space="preserve">
+    <value>Ihr Passwort wurde erfolgreich zurückgesetzt. Bitte melden Sie sich mit dem neuen Passwort an.</value>
+  </data>
+  <data name="ResetPasswordFailed" xml:space="preserve">
+    <value>Passwort konnte nicht zurückgesetzt werden. Bitte E-Mail/Token prüfen und erneut versuchen.</value>
+  </data>
+  <data name="ProfileConcurrencyConflict" xml:space="preserve">
+    <value>Ihr Profil wurde zwischenzeitlich geändert. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
+  <data name="DiscoverJoinedBusinessesCountFormat" xml:space="preserve">
+    <value>Beigetretene Unternehmen: {0}</value>
+  </data>
+  <data name="DiscoverTotalPointsFormat" xml:space="preserve">
+    <value>Gesamtpunkte: {0}</value>
+  </data>
+  <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
+    <value>Höchster Punktestand bei: {0}</value>
+  </data>
 </root>

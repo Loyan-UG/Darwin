@@ -27,6 +27,18 @@ public partial class ScannerPage : ContentPage
         viewModel.FeedbackVisibilityRequested += OnFeedbackVisibilityRequested;
     }
 
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (Vm is null)
+        {
+            return;
+        }
+
+        await Vm.OnAppearingAsync();
+    }
     /// <summary>
     /// Unsubscribes event handlers when page disappears to avoid duplicate subscriptions.
     /// </summary>

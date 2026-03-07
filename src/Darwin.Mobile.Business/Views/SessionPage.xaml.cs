@@ -37,6 +37,7 @@ public partial class SessionPage : ContentPage
         base.OnAppearing();
 
         var viewModel = (SessionViewModel)BindingContext;
+        await viewModel.OnAppearingAsync();
         await viewModel.LoadSessionAsync();
     }
 

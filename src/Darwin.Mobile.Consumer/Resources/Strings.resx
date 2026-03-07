@@ -544,4 +544,43 @@
 	<data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Open</value>
 </data>
+  <data name="ResetPasswordTitle" xml:space="preserve">
+    <value>Reset password</value>
+  </data>
+  <data name="ResetPasswordDescription" xml:space="preserve">
+    <value>Enter your email, reset token, and new password to complete the reset.</value>
+  </data>
+  <data name="ResetPasswordTokenLabel" xml:space="preserve">
+    <value>Reset token</value>
+  </data>
+  <data name="ResetPasswordTokenPlaceholder" xml:space="preserve">
+    <value>Paste token from your email</value>
+  </data>
+  <data name="ResetPasswordTokenRequired" xml:space="preserve">
+    <value>Reset token is required.</value>
+  </data>
+  <data name="ResetPasswordActionButton" xml:space="preserve">
+    <value>Reset password</value>
+  </data>
+  <data name="ResetPasswordNavigateButton" xml:space="preserve">
+    <value>Already have a token? Reset password</value>
+  </data>
+  <data name="ResetPasswordSuccess" xml:space="preserve">
+    <value>Your password has been reset successfully. Please log in with your new password.</value>
+  </data>
+  <data name="ResetPasswordFailed" xml:space="preserve">
+    <value>Unable to reset password. Please verify email/token and try again.</value>
+  </data>
+  <data name="ProfileConcurrencyConflict" xml:space="preserve">
+    <value>Your profile was updated elsewhere. Please refresh and try again.</value>
+  </data>
+  <data name="DiscoverJoinedBusinessesCountFormat" xml:space="preserve">
+    <value>Joined businesses: {0}</value>
+  </data>
+  <data name="DiscoverTotalPointsFormat" xml:space="preserve">
+    <value>Total points: {0}</value>
+  </data>
+  <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
+    <value>Top balance at: {0}</value>
+  </data>
 </root>

@@ -115,6 +115,17 @@
                                TextColor="{StaticResource BrushOnSurface}" />
                     </Grid>
 
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Label Text="Operator role:"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource BrushOnSurface}" />
+                        <Label Grid.Column="1"
+                               Text="{Binding OperatorRole}"
+                               FontSize="13"
+                               TextColor="{StaticResource BrushOnSurface}" />
+                    </Grid>
+
                 </VerticalStackLayout>
             </Border>
 

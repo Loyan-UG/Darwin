@@ -1,5 +1,6 @@
 ﻿using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Consumer.Views;
 using Darwin.Mobile.Shared.Services;
 using Microsoft.Maui.Controls;
@@ -15,12 +16,14 @@ public partial class AppShell : Shell
 {
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
+    private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
 
-    public AppShell(IAuthService authService, IAppRootNavigator appRootNavigator)
+    public AppShell(IAuthService authService, IAppRootNavigator appRootNavigator, IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
     {
         InitializeComponent();
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         Routing.RegisterRoute($"{Routes.BusinessDetail}/{{businessId}}", typeof(BusinessDetailPage));
         Routing.RegisterRoute(Routes.ProfileEdit, typeof(ProfilePage));
@@ -35,6 +38,7 @@ public partial class AppShell : Shell
         }
         finally
         {
+            _pushRegistrationCoordinator.ResetCachedRegistrationState();
             // Always reset to the login flow even if remote logout fails.
             await _appRootNavigator.NavigateToLoginAsync();
         }
