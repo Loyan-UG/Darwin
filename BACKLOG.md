@@ -196,6 +196,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
 - [ ] Add automated tests around Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior.
 - [x] Confirmed production token-provider strategy (`ConsumerPlatformPushTokenProvider` with Android FCM + iOS/MacCatalyst APNs bridges) and removed fallback registration path from DI.
+- [x] Hardened platform build wiring (Android-only Firebase package + explicit iOS/MacCatalyst entitlements binding) to prevent cross-target restore/signing misconfiguration.
 
 ---
 
