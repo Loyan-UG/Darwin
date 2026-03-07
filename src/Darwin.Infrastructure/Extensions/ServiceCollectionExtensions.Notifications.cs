@@ -1,4 +1,5 @@
 ﻿using Darwin.Application.Abstractions.Notifications;
+using Darwin.Infrastructure.Notifications.InactiveReminders;
 using Darwin.Infrastructure.Notifications.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,7 @@ namespace Darwin.Infrastructure.Extensions
         {
             services.Configure<SmtpEmailOptions>(configuration.GetSection("Email:Smtp"));
             services.AddSingleton<IEmailSender, SmtpEmailSender>();
+            services.AddSingleton<IInactiveReminderDispatcher, NoopInactiveReminderDispatcher>();
             return services;
         }
     }

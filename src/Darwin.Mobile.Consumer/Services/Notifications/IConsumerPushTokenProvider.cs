@@ -22,7 +22,7 @@ public sealed class ConsumerPushTokenState
 {
     /// <summary>
     /// Gets or sets platform push token (FCM/APNs).
-    /// Can be null until native push bootstrap is integrated.
+    /// Can be null temporarily when provider initialization failed or permission is denied.
     /// </summary>
     public string? PushToken { get; init; }
 
