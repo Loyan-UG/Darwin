@@ -280,6 +280,30 @@ The project now validates this key during Android build:
 - **Debug/Dev build:** missing key => warning (build continues, map can fail at runtime).
 - **Release build:** missing key => build error (prevents shipping a broken map config).
 
+
+### 7.1.2 Push provider setup (FCM/APNs production integration)
+
+Consumer app now resolves push tokens from native runtime providers:
+- At startup, Android requests Android 13+ `POST_NOTIFICATIONS` permission to align user-consent state with registration payload.
+- **Android**: Firebase Cloud Messaging token (`Xamarin.Firebase.Messaging`, wired only for Android target in `.csproj`).
+- **iOS/MacCatalyst**: APNs device token via `RegisterForRemoteNotifications` with explicit `CodesignEntitlements` binding to platform entitlements files.
+
+Required setup per environment:
+1. **Firebase project**
+   - Create Android app entry with package id `com.loyan.darwin.mobile.consumer`.
+   - Download `google-services.json` and place it at `src/Darwin.Mobile.Consumer/google-services.json` (not committed to source control for private environments).
+2. **Apple Push capability**
+   - Enable Push Notifications capability in Apple Developer portal for the app identifier.
+   - Ensure provisioning profile includes push entitlement.
+   - Keep `aps-environment` entitlement aligned with target build (`development` vs `production`).
+3. **Runtime permissions**
+   - Android 13+: grant `POST_NOTIFICATIONS` permission at runtime.
+   - iOS/MacCatalyst: allow notifications in system prompt/settings.
+
+Operational note:
+- If permissions are denied, registration still upserts device metadata with `NotificationsEnabled = false`; token can be null until the user enables permissions.
+- Legacy fallback config/noop providers are removed from the Consumer project to avoid environment drift in production builds.
+
 ### 7.2 Server
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
@@ -448,11 +472,11 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ### Done in current codebase
 - Consumer push-registration baseline is integrated end-to-end (contracts + API + shared service + coordinator + profile manual sync UI).
+- Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
 
 ### Remaining / follow-up (recommended next chat)
-- Replace fallback/config token provider with production platform providers for FCM/APNs lifecycle handling.
 - Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
 
