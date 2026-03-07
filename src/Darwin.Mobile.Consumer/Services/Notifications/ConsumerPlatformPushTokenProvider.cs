@@ -38,9 +38,9 @@ public sealed class ConsumerPlatformPushTokenProvider : IConsumerPushTokenProvid
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Result<ConsumerPushTokenState>.Fail($"Could not resolve platform push token: {ex.Message}");
+            return Result<ConsumerPushTokenState>.Fail("Could not resolve platform push token state.");
         }
     }
 
