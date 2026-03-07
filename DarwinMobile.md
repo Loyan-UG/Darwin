@@ -292,10 +292,12 @@ Required setup per environment:
 1. **Firebase project**
    - Create Android app entry with package id `com.loyan.darwin.mobile.consumer`.
    - Download `google-services.json` and place it at `src/Darwin.Mobile.Consumer/google-services.json` (not committed to source control for private environments).
+- Android Release builds now fail when `google-services.json` is missing (Debug warns only), to avoid shipping broken FCM configuration.
+
 2. **Apple Push capability**
    - Enable Push Notifications capability in Apple Developer portal for the app identifier.
    - Ensure provisioning profile includes push entitlement.
-   - Keep `aps-environment` entitlement aligned with target build (`development` vs `production`).
+   - Keep `aps-environment` entitlement aligned with target build (`development` vs `production`). Consumer project now uses separate entitlements for Debug vs Release to enforce this split.
 3. **Runtime permissions**
    - Android 13+: grant `POST_NOTIFICATIONS` permission at runtime.
    - iOS/MacCatalyst: allow notifications in system prompt/settings.
