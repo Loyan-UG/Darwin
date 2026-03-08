@@ -41,23 +41,23 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
     {
         if (string.IsNullOrWhiteSpace(destinationDeviceId))
         {
-            return Result.Fail("Destination device id is required.");
+            return Result.Fail("Validation.DestinationDeviceIdRequired");
         }
 
         if (string.IsNullOrWhiteSpace(pushToken))
         {
-            return Result.Fail("Push token is required.");
+            return Result.Fail("Validation.PushTokenRequired");
         }
 
         var options = _optionsMonitor.CurrentValue;
         if (!options.Enabled)
         {
-            return Result.Fail("Inactive reminder gateway dispatch is disabled.");
+            return Result.Fail("Gateway.Disabled");
         }
 
         if (string.IsNullOrWhiteSpace(options.Endpoint))
         {
-            return Result.Fail("Inactive reminder gateway endpoint is not configured.");
+            return Result.Fail("Gateway.EndpointNotConfigured");
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, options.Endpoint)
@@ -92,9 +92,9 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
                 "Inactive reminder gateway rejected dispatch. StatusCode={StatusCode}, UserId={UserId}, Body={Body}",
                 (int)response.StatusCode,
                 userId,
-                responseBody);
+                TruncateForLog(responseBody));
 
-            return Result.Fail($"Inactive reminder gateway rejected dispatch with status {(int)response.StatusCode}.");
+            return Result.Fail(MapGatewayFailureCode((int)response.StatusCode));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -103,7 +103,7 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
         catch (Exception ex)
         {
             _logger.LogError(ex, "Inactive reminder gateway dispatch failed for UserId={UserId}.", userId);
-            return Result.Fail("Inactive reminder gateway request failed.");
+            return Result.Fail("Gateway.TransportError");
         }
     }
 
@@ -117,6 +117,39 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
             : template;
 
         return safeTemplate.Replace("{inactiveDays}", Math.Max(0, inactiveDays).ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    /// <summary>
+    /// Maps gateway HTTP status to stable failure taxonomy codes.
+    /// </summary>
+    private static string MapGatewayFailureCode(int statusCode)
+    {
+        return statusCode switch
+        {
+            400 => "Gateway.BadRequest",
+            401 => "Gateway.Unauthorized",
+            403 => "Gateway.Forbidden",
+            404 => "Gateway.EndpointNotFound",
+            408 => "Gateway.Timeout",
+            409 => "Gateway.Conflict",
+            429 => "Gateway.RateLimited",
+            >= 500 and <= 599 => "Gateway.ServerError",
+            _ => $"Gateway.Http{statusCode}"
+        };
+    }
+
+    /// <summary>
+    /// Truncates long response bodies in logs to avoid oversized log entries.
+    /// </summary>
+    private static string TruncateForLog(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return string.Empty;
+        }
+
+        return body.Length <= 300 ? body : body[..300];
     }
 
     /// <summary>
