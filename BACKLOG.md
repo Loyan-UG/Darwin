@@ -187,7 +187,7 @@ It is designed as the **single source of truth** for development planning.
 - [ ] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
 - [ ] Add eligibility + audience rules (joined members, tier, points threshold, date window).
 - [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
-- [~] Add tracking events for impression/open/claim to measure conversion.
+- [x] Add tracking events for impression/open/claim to measure conversion.
 - [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 
@@ -215,6 +215,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Gateway dispatcher now extracts provider-native reason fields (`providerCode`/`providerReason`/`code`/`reason`) and emits normalized `Gateway.Provider.*` taxonomy codes.
 - [x] Added canonical provider mappings for common FCM/APNs reason codes (token invalid, auth/topic mismatch, rate-limit, service unavailable) to improve remediation signals.
 - [x] Added promotion interaction tracking endpoint + mobile client calls for `Impression` and `Open` events (engagement snapshot metadata updates).
+- [x] Added `Claim` event hook from redemption QR generation flow (`RewardClaimIntent`) to complete promotions conversion funnel telemetry coverage.
 
 ---
 
