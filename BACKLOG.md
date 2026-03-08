@@ -213,6 +213,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Replaced no-op reminder dispatcher with HTTP push gateway dispatcher (`HttpInactiveReminderDispatcher`) using push token + platform payload and configurable auth/templates.
 - [x] Added stable inactive-reminder gateway failure taxonomy codes (`Gateway.*`, `Validation.*`) for cleaner suppression/failure measurement and dashboards.
 - [x] Gateway dispatcher now extracts provider-native reason fields (`providerCode`/`providerReason`/`code`/`reason`) and emits normalized `Gateway.Provider.*` taxonomy codes.
+- [x] Added canonical provider mappings for common FCM/APNs reason codes (token invalid, auth/topic mismatch, rate-limit, service unavailable) to improve remediation signals.
 
 ---
 

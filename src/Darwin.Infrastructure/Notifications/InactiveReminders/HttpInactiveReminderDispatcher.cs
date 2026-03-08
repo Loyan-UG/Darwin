@@ -153,15 +153,145 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
                 return null;
             }
 
+            var rawProvider = TryReadString(root, "provider")
+                ?? TryReadString(root, "vendor")
+                ?? string.Empty;
+
+            var normalizedProvider = NormalizeProviderName(rawProvider);
+            var mapped = MapKnownProviderFailure(normalizedProvider, rawCode);
+            if (!string.IsNullOrWhiteSpace(mapped))
+            {
+                return mapped;
+            }
+
             var normalized = NormalizeProviderCode(rawCode);
-            return string.IsNullOrWhiteSpace(normalized)
-                ? null
-                : $"Gateway.Provider.{normalized}";
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return null;
+            }
+
+            return string.IsNullOrWhiteSpace(normalizedProvider)
+                ? $"Gateway.Provider.{normalized}"
+                : $"Gateway.Provider.{normalizedProvider}.{normalized}";
         }
         catch
         {
             return null;
         }
+    }
+
+
+    /// <summary>
+    /// Normalizes provider name to a compact taxonomy segment.
+    /// </summary>
+    private static string NormalizeProviderName(string? rawProvider)
+    {
+        if (string.IsNullOrWhiteSpace(rawProvider))
+        {
+            return string.Empty;
+        }
+
+        var provider = rawProvider.Trim();
+        if (provider.Equals("fcm", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("firebase", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("firebasecloudmessaging", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Fcm";
+        }
+
+        if (provider.Equals("apns", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("apple", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("applepush", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("applepushnotificationservice", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Apns";
+        }
+
+        return NormalizeProviderCode(provider);
+    }
+
+    /// <summary>
+    /// Maps known provider-specific codes to stable canonical taxonomy values.
+    /// </summary>
+    private static string? MapKnownProviderFailure(string normalizedProvider, string rawCode)
+    {
+        var code = rawCode.Trim();
+
+        if (string.Equals(normalizedProvider, "Fcm", StringComparison.Ordinal))
+        {
+            if (code.Equals("UNREGISTERED", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("registration-token-not-registered", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("notregistered", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.TokenUnregistered";
+            }
+
+            if (code.Equals("INVALID_ARGUMENT", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("invalid-registration-token", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("invalidargument", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.InvalidArgument";
+            }
+
+            if (code.Equals("SENDER_ID_MISMATCH", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("sender-id-mismatch", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.SenderIdMismatch";
+            }
+
+            if (code.Equals("QUOTA_EXCEEDED", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("quota-exceeded", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("messageratelimitexceeded", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("devicemessageratelimitexceeded", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.QuotaExceeded";
+            }
+
+            if (code.Equals("UNAVAILABLE", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("internal", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.ServiceUnavailable";
+            }
+        }
+
+        if (string.Equals(normalizedProvider, "Apns", StringComparison.Ordinal))
+        {
+            if (code.Equals("BadDeviceToken", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("DeviceTokenNotForTopic", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("Unregistered", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.TokenInvalid";
+            }
+
+            if (code.Equals("TopicDisallowed", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("MissingTopic", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("BadTopic", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.TopicInvalid";
+            }
+
+            if (code.Equals("ExpiredProviderToken", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("InvalidProviderToken", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("MissingProviderToken", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.AuthTokenInvalid";
+            }
+
+            if (code.Equals("TooManyRequests", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("TooManyProviderTokenUpdates", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.RateLimited";
+            }
+
+            if (code.Equals("ServiceUnavailable", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("Shutdown", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("InternalServerError", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.ServiceUnavailable";
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
