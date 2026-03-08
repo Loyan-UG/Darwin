@@ -23,6 +23,7 @@ using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.WebApi.Auth;
 using Darwin.WebApi.Security;
+using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -103,6 +104,9 @@ namespace Darwin.WebApi.Extensions
             // ------------------------------------------------------------
             services.AddNotificationsInfrastructure(configuration);
             services.AddMemoryCache();
+
+            services.Configure<InactiveReminderWorkerOptions>(configuration.GetSection("InactiveReminderWorker"));
+            services.AddHostedService<InactiveReminderBackgroundService>();
 
             // Loyalty presentation helpers used by WebApi mapping/presentation layer.
             services.AddLoyaltyPresentationServices();
