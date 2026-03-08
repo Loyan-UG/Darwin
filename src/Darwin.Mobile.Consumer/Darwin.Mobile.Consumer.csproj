@@ -221,6 +221,11 @@
 		<GoogleServicesJson Include="google-services.json" Condition="Exists('google-services.json')" />
 	</ItemGroup>
 
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.Firebase.Messaging" Version="124.1.0" />
+		<GoogleServicesJson Include="google-services.json" Condition="Exists('google-services.json')" />
+	</ItemGroup>
+
 	<ItemGroup>
 	  <ProjectReference Include="..\Darwin.Contracts\Darwin.Contracts.csproj" />
 	  <ProjectReference Include="..\Darwin.Mobile.Shared\Darwin.Mobile.Shared.csproj" />

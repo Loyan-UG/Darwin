@@ -465,6 +465,8 @@ public sealed class FeedViewModel : BaseViewModel
         {
             MarkPromotionAsSeen(item, nowUtc);
         }
+
+        _ = TrackPromotionImpressionsBestEffortAsync(eligible);
     }
 
     /// <summary>
@@ -631,6 +633,8 @@ public sealed class FeedViewModel : BaseViewModel
             ["businessName"] = item.BusinessName
         };
 
+        _ = TrackPromotionInteractionBestEffortAsync(item, PromotionInteractionEventType.Open);
+
         if (string.Equals(item.CtaKind, "OpenQr", StringComparison.OrdinalIgnoreCase))
         {
             await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
@@ -638,6 +642,47 @@ public sealed class FeedViewModel : BaseViewModel
         }
 
         await _navigationService.GoToAsync($"//{Routes.Rewards}", parameters);
+    }
+
+    /// <summary>
+    /// Sends impression events for visible promotion cards (best effort, non-blocking).
+    /// </summary>
+    private async Task TrackPromotionImpressionsBestEffortAsync(IReadOnlyCollection<PromotionFeedItem> items)
+    {
+        foreach (var item in items)
+        {
+            await TrackPromotionInteractionBestEffortAsync(item, PromotionInteractionEventType.Impression)
+                .ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Sends one promotion interaction event to backend analytics endpoint.
+    /// Failures are intentionally ignored to avoid affecting user flow.
+    /// </summary>
+    private async Task TrackPromotionInteractionBestEffortAsync(PromotionFeedItem item, PromotionInteractionEventType eventType)
+    {
+        try
+        {
+            if (item.BusinessId == Guid.Empty || string.IsNullOrWhiteSpace(item.Title))
+            {
+                return;
+            }
+
+            await _loyaltyService.TrackPromotionInteractionAsync(new TrackPromotionInteractionRequest
+            {
+                BusinessId = item.BusinessId,
+                BusinessName = item.BusinessName,
+                Title = item.Title,
+                CtaKind = item.CtaKind,
+                EventType = eventType,
+                OccurredAtUtc = DateTime.UtcNow
+            }, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Intentionally swallow tracking errors.
+        }
     }
 
     /// <summary>

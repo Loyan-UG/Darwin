@@ -105,6 +105,7 @@ namespace Darwin.Mobile.Shared.Api
             public static string Join(Guid businessId) => $"api/v1/loyalty/account/{businessId:D}/join";
             public static string GetNextReward(Guid businessId) => $"api/v1/loyalty/account/{businessId:D}/next-reward";
             public const string GetMyPromotions = "api/v1/loyalty/my/promotions"; // POST
+            public const string TrackPromotionInteraction = "api/v1/loyalty/my/promotions/track"; // POST
             public const string GetBusinessRewardConfiguration = "api/v1/loyalty/business/reward-config";
             public const string CreateBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers";
             public const string UpdateBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers";

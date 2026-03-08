@@ -511,6 +511,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - HTTP gateway dispatcher now maps provider transport/HTTP errors to stable outcome codes (for example `Gateway.Unauthorized`, `Gateway.RateLimited`, `Gateway.ServerError`) to improve reminder analytics quality.
 - When gateway returns provider reason payload, dispatcher now emits normalized `Gateway.Provider.*` codes to preserve APNs/FCM-specific failure semantics in analytics.
 - Dispatcher now canonicalizes common FCM/APNs reasons into stable categories (for example `Gateway.Provider.Fcm.TokenUnregistered`, `Gateway.Provider.Apns.TokenInvalid`) for clearer operational actions.
+- Promotions analytics tracking is now wired end-to-end for `Impression` and `Open` events (mobile feed emits events to WebApi; Application persists counters in `UserEngagementSnapshot` metadata).
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
@@ -518,6 +519,7 @@ services.AddDarwinMobileShared(new ApiOptions
 ### Remaining / follow-up
 - Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
+- Add explicit `Claim` tracking hook from redemption/claim UX path to complete promotion conversion funnel metrics.
 - Align server-side promotion delivery guardrails with client behavior and expose configurable suppression policy in contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
 - Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
