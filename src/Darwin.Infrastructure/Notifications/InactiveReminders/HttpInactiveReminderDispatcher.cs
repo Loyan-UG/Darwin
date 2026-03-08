@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
@@ -94,6 +95,12 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
                 userId,
                 TruncateForLog(responseBody));
 
+            var providerFailureCode = MapProviderFailureCodeFromBody(responseBody);
+            if (!string.IsNullOrWhiteSpace(providerFailureCode))
+            {
+                return Result.Fail(providerFailureCode);
+            }
+
             return Result.Fail(MapGatewayFailureCode((int)response.StatusCode));
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -119,6 +126,87 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
         return safeTemplate.Replace("{inactiveDays}", Math.Max(0, inactiveDays).ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+    /// <summary>
+    /// Attempts to read provider-native failure reason from gateway response body.
+    /// Expected fields: code, reason, providerCode, providerReason.
+    /// </summary>
+    private static string? MapProviderFailureCodeFromBody(string? responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            var root = document.RootElement;
+            var rawCode = TryReadString(root, "providerCode")
+                ?? TryReadString(root, "providerReason")
+                ?? TryReadString(root, "code")
+                ?? TryReadString(root, "reason");
+
+            if (string.IsNullOrWhiteSpace(rawCode))
+            {
+                return null;
+            }
+
+            var normalized = NormalizeProviderCode(rawCode);
+            return string.IsNullOrWhiteSpace(normalized)
+                ? null
+                : $"Gateway.Provider.{normalized}";
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Reads a string field from a JSON object in a safe way.
+    /// </summary>
+    private static string? TryReadString(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var element))
+        {
+            return null;
+        }
+
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Converts provider reason text to a compact taxonomy segment.
+    /// </summary>
+    private static string NormalizeProviderCode(string rawCode)
+    {
+        if (string.IsNullOrWhiteSpace(rawCode))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = rawCode.Trim();
+        var chars = trimmed.ToCharArray();
+        for (var i = 0; i < chars.Length; i++)
+        {
+            var c = chars[i];
+            if (!(char.IsLetterOrDigit(c) || c == '_' || c == '-'))
+            {
+                chars[i] = '_';
+            }
+        }
+
+        return new string(chars);
+    }
 
     /// <summary>
     /// Maps gateway HTTP status to stable failure taxonomy codes.

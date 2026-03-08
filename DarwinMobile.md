@@ -509,6 +509,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Reminder batch orchestration now writes measurement counters into snapshot metadata (`inactiveReminderSentCount`, `inactiveReminderFailedCount`, `inactiveReminderSuppressedCount`) for downstream analytics.
 - Inactive reminder dispatch now uses `HttpInactiveReminderDispatcher` (server-side HTTP gateway integration) and sends user/device/token/platform payload with configurable title/body templates.
 - HTTP gateway dispatcher now maps provider transport/HTTP errors to stable outcome codes (for example `Gateway.Unauthorized`, `Gateway.RateLimited`, `Gateway.ServerError`) to improve reminder analytics quality.
+- When gateway returns provider reason payload, dispatcher now emits normalized `Gateway.Provider.*` codes to preserve APNs/FCM-specific failure semantics in analytics.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
