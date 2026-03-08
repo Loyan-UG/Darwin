@@ -176,6 +176,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
 
         await RefreshAsync();
+        await RefreshPushRuntimeStateAsync();
         _isLoaded = true;
     }
 

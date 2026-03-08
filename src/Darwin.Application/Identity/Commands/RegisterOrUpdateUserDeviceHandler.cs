@@ -19,6 +19,9 @@ namespace Darwin.Application.Identity.Commands;
 /// </summary>
 public sealed class RegisterOrUpdateUserDeviceHandler
 {
+    private const string SnapshotMetadataKeyDeviceHeartbeatCount = "deviceHeartbeatCount";
+    private const string SnapshotMetadataKeyLastDeviceHeartbeatAtUtc = "lastDeviceHeartbeatAtUtc";
+
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
 
