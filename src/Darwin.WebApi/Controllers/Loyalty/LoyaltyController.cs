@@ -47,6 +47,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly ILoyaltyPresentationService _presentationService;
         private readonly ILogger<LoyaltyController> _logger;
         private readonly GetMyPromotionsHandler _getMyPromotionsHandler;
+        private readonly TrackPromotionInteractionHandler _trackPromotionInteractionHandler;
         private readonly GetLoyaltyProgramsPageHandler _getLoyaltyProgramsPageHandler;
         private readonly GetLoyaltyRewardTiersPageHandler _getLoyaltyRewardTiersPageHandler;
         private readonly CreateLoyaltyProgramHandler _createLoyaltyProgramHandler;
@@ -94,6 +95,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
             GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
             GetMyPromotionsHandler getMyPromotionsHandler,
+            TrackPromotionInteractionHandler trackPromotionInteractionHandler,
             GetLoyaltyProgramsPageHandler getLoyaltyProgramsPageHandler,
             GetLoyaltyRewardTiersPageHandler getLoyaltyRewardTiersPageHandler,
             CreateLoyaltyProgramHandler createLoyaltyProgramHandler,
@@ -115,6 +117,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
             _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
             _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
             _getMyPromotionsHandler = getMyPromotionsHandler ?? throw new ArgumentNullException(nameof(getMyPromotionsHandler));
+            _trackPromotionInteractionHandler = trackPromotionInteractionHandler ?? throw new ArgumentNullException(nameof(trackPromotionInteractionHandler));
             _getLoyaltyProgramsPageHandler = getLoyaltyProgramsPageHandler ?? throw new ArgumentNullException(nameof(getLoyaltyProgramsPageHandler));
             _getLoyaltyRewardTiersPageHandler = getLoyaltyRewardTiersPageHandler ?? throw new ArgumentNullException(nameof(getLoyaltyRewardTiersPageHandler));
             _createLoyaltyProgramHandler = createLoyaltyProgramHandler ?? throw new ArgumentNullException(nameof(createLoyaltyProgramHandler));
@@ -1258,9 +1261,51 @@ namespace Darwin.WebApi.Controllers.Loyalty
             return Ok(response);
         }
 
+        /// <summary>
+        /// Tracks a promotions interaction event for analytics and measurement.
+        /// </summary>
+        [HttpPost("my/promotions/track")]
+        [Authorize(Policy = "perm:AccessMemberArea")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> TrackPromotionInteractionAsync(
+            [FromBody] TrackPromotionInteractionRequest? request,
+            CancellationToken ct = default)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
 
+            if (request.BusinessId == Guid.Empty)
+            {
+                return BadRequestProblem("BusinessId is required.");
+            }
 
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                return BadRequestProblem("Title is required.");
+            }
 
+            var result = await _trackPromotionInteractionHandler
+                .HandleAsync(new TrackPromotionInteractionDto
+                {
+                    BusinessId = request.BusinessId,
+                    BusinessName = request.BusinessName,
+                    Title = request.Title,
+                    CtaKind = request.CtaKind,
+                    EventType = request.EventType,
+                    OccurredAtUtc = request.OccurredAtUtc
+                }, ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
+
+            return NoContent();
+        }
 
 
         /// <summary>
