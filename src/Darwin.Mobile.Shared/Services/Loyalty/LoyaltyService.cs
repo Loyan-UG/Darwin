@@ -581,6 +581,42 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         }
 
         /// <inheritdoc />
+        public async Task<Result> TrackPromotionInteractionAsync(TrackPromotionInteractionRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result.Fail("Request body is required.");
+            }
+
+            if (request.BusinessId == Guid.Empty)
+            {
+                return Result.Fail("BusinessId is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                return Result.Fail("Title is required.");
+            }
+
+            try
+            {
+                return await _apiClient
+                    .PostNoContentAsync(
+                        ApiRoutes.Loyalty.TrackPromotionInteraction,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail($"Network error while tracking promotion interaction: {ex.Message}");
+            }
+        }
+
         public async Task<Result<BusinessRewardTierMutationResponse>> CreateBusinessRewardTierAsync(CreateBusinessRewardTierRequest request, CancellationToken cancellationToken)
         {
             if (request is null)
