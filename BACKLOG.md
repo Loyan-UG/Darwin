@@ -226,6 +226,14 @@ It is designed as the **single source of truth** for development planning.
 
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
+## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
+1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
+2. **P1 — Promotions delivery consistency:** align server-side feed guardrails (priority/cap/dedup/frequency) with current mobile client guardrails and expose suppression policy in contracts.
+3. **P1 — Promotions operations:** add minimal business/admin campaign management APIs (CRUD + activation) and minimal management UI.
+4. **P2 — Inactive reminders completion:** extend current reminder baseline with explicit dispatch/suppression workflow (send log + cooldown policy) and provider-native sender integration hardening.
+
+> Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
+
 ---
 
 # 4. 🔒 Identity & Security Roadmap
