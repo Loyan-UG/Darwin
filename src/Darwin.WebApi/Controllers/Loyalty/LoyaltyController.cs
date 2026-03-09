@@ -1234,7 +1234,15 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 .HandleAsync(new MyPromotionsDto
                 {
                     BusinessId = request.BusinessId,
-                    MaxItems = request.MaxItems
+                    MaxItems = request.MaxItems,
+                    Policy = request.Policy is null
+                        ? null
+                        : new PromotionFeedPolicyDto
+                        {
+                            EnableDeduplication = request.Policy.EnableDeduplication,
+                            MaxCards = request.Policy.MaxCards,
+                            SuppressionWindowMinutes = request.Policy.SuppressionWindowMinutes
+                        }
                 }, ct)
                 .ConfigureAwait(false);
 
@@ -1245,6 +1253,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var response = new MyPromotionsResponse
             {
+                AppliedPolicy = new PromotionFeedPolicy
+                {
+                    EnableDeduplication = result.Value.AppliedPolicy.EnableDeduplication,
+                    MaxCards = result.Value.AppliedPolicy.MaxCards,
+                    SuppressionWindowMinutes = result.Value.AppliedPolicy.SuppressionWindowMinutes
+                },
                 Items = result.Value.Items
                     .Select(x => new PromotionFeedItem
                     {
@@ -1253,7 +1267,21 @@ namespace Darwin.WebApi.Controllers.Loyalty
                         Title = x.Title,
                         Description = x.Description,
                         CtaKind = x.CtaKind,
-                        Priority = x.Priority
+                        Priority = x.Priority,
+                        CampaignId = x.CampaignId,
+                        CampaignState = x.CampaignState,
+                        StartsAtUtc = x.StartsAtUtc,
+                        EndsAtUtc = x.EndsAtUtc,
+                        EligibilityRules = x.EligibilityRules
+                            .Select(rule => new PromotionEligibilityRule
+                            {
+                                AudienceKind = rule.AudienceKind,
+                                MinPoints = rule.MinPoints,
+                                MaxPoints = rule.MaxPoints,
+                                TierKey = rule.TierKey,
+                                Note = rule.Note
+                            })
+                            .ToList()
                     })
                     .ToList()
             };
