@@ -152,6 +152,10 @@ public static class AppResources
     public static string RewardsPointsValidation => ResourceManager.GetString(nameof(RewardsPointsValidation), Culture) ?? "Points required must be a number greater than zero.";
     public static string RewardsTypeValidation => ResourceManager.GetString(nameof(RewardsTypeValidation), Culture) ?? "Please select a valid reward type.";
     public static string RewardsValueValidation => ResourceManager.GetString(nameof(RewardsValueValidation), Culture) ?? "Reward value must be a valid number.";
+    public static string RewardsCampaignsLabel => ResourceManager.GetString(nameof(RewardsCampaignsLabel), Culture) ?? "Campaigns";
+    public static string RewardsCampaignActivateButton => ResourceManager.GetString(nameof(RewardsCampaignActivateButton), Culture) ?? "Activate campaign";
+    public static string RewardsCampaignDeactivateButton => ResourceManager.GetString(nameof(RewardsCampaignDeactivateButton), Culture) ?? "Deactivate campaign";
+    public static string RewardsCampaignToggleFailed => ResourceManager.GetString(nameof(RewardsCampaignToggleFailed), Culture) ?? "Unable to change campaign activation state.";
 
 
 }
