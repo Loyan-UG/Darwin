@@ -514,6 +514,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Promotions analytics tracking is now wired end-to-end for `Impression` and `Open` events (mobile feed emits events to WebApi; Application persists counters in `UserEngagementSnapshot` metadata).
 - Promotions `Claim` tracking is now hooked from redemption QR generation (`RewardClaimIntent`) so conversion funnel has event coverage for all three stages.
 - Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
+- Promotions feed query now includes active in-app campaign entities from server-side marketing data and merges them with legacy derived cards to preserve rollout safety.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
