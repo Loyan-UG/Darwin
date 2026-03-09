@@ -18,6 +18,9 @@ namespace Darwin.Application.Loyalty.Queries
     /// </summary>
     public sealed class GetMyPromotionsHandler
     {
+        private const string ActiveCampaignState = "Active";
+        private const string PointsThresholdAudience = "PointsThreshold";
+
         private readonly IAppDbContext _db;
         private readonly ICurrentUserService _currentUser;
 
@@ -30,7 +33,9 @@ namespace Darwin.Application.Loyalty.Queries
         public async Task<Result<MyPromotionsResultDto>> HandleAsync(MyPromotionsDto dto, CancellationToken ct = default)
         {
             if (dto is null)
+            {
                 return Result<MyPromotionsResultDto>.Fail("Request is required.");
+            }
 
             var max = dto.MaxItems <= 0 ? 20 : Math.Min(dto.MaxItems, 100);
             var userId = _currentUser.GetCurrentUserId();
@@ -73,7 +78,11 @@ namespace Darwin.Application.Loyalty.Queries
                     continue;
                 }
 
-                var redeemable = tiers.Where(t => t.PointsRequired <= account.PointsBalance).OrderByDescending(t => t.PointsRequired).FirstOrDefault();
+                var redeemable = tiers
+                    .Where(t => t.PointsRequired <= account.PointsBalance)
+                    .OrderByDescending(t => t.PointsRequired)
+                    .FirstOrDefault();
+
                 if (redeemable is not null)
                 {
                     resultItems.Add(new PromotionFeedItemDto
@@ -83,8 +92,19 @@ namespace Darwin.Application.Loyalty.Queries
                         Title = "Reward available now",
                         Description = $"You can redeem '{redeemable.Description}' with your current points.",
                         CtaKind = "OpenRewards",
-                        Priority = 100
+                        Priority = 100,
+                        CampaignState = ActiveCampaignState,
+                        EligibilityRules = new List<PromotionEligibilityRuleDto>
+                        {
+                            new PromotionEligibilityRuleDto
+                            {
+                                AudienceKind = PointsThresholdAudience,
+                                MinPoints = redeemable.PointsRequired,
+                                Note = "Member currently has enough points for redemption."
+                            }
+                        }
                     });
+
                     continue;
                 }
 
@@ -99,7 +119,18 @@ namespace Darwin.Application.Loyalty.Queries
                         Title = "Close to next reward",
                         Description = $"Only {missing} points left to unlock '{next.Description}'.",
                         CtaKind = "OpenQr",
-                        Priority = 80
+                        Priority = 80,
+                        CampaignState = ActiveCampaignState,
+                        EligibilityRules = new List<PromotionEligibilityRuleDto>
+                        {
+                            new PromotionEligibilityRuleDto
+                            {
+                                AudienceKind = PointsThresholdAudience,
+                                MinPoints = next.PointsRequired,
+                                MaxPoints = Math.Max(next.PointsRequired - 1, 0),
+                                Note = $"Member needs {missing} more points to qualify."
+                            }
+                        }
                     });
                 }
             }

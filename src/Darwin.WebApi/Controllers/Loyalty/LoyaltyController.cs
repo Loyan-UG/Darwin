@@ -1253,7 +1253,21 @@ namespace Darwin.WebApi.Controllers.Loyalty
                         Title = x.Title,
                         Description = x.Description,
                         CtaKind = x.CtaKind,
-                        Priority = x.Priority
+                        Priority = x.Priority,
+                        CampaignId = x.CampaignId,
+                        CampaignState = x.CampaignState,
+                        StartsAtUtc = x.StartsAtUtc,
+                        EndsAtUtc = x.EndsAtUtc,
+                        EligibilityRules = x.EligibilityRules
+                            .Select(rule => new PromotionEligibilityRule
+                            {
+                                AudienceKind = rule.AudienceKind,
+                                MinPoints = rule.MinPoints,
+                                MaxPoints = rule.MaxPoints,
+                                TierKey = rule.TierKey,
+                                Note = rule.Note
+                            })
+                            .ToList()
                     })
                     .ToList()
             };

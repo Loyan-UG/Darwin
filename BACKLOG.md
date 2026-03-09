@@ -183,9 +183,9 @@ It is designed as the **single source of truth** for development planning.
 - [x] Externalize mobile map API keys (Android Google Maps) to secure secret providers, with Android build-time validation (warn in Debug, fail in Release) and documented iOS/MapKit requirements per environment.
 
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
-- [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
-- [ ] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
-- [ ] Add eligibility + audience rules (joined members, tier, points threshold, date window).
+- [~] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
+- [~] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
+- [~] Add eligibility + audience rules (joined members, tier, points threshold, date window).
 - [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
 - [x] Add tracking events for impression/open/claim to measure conversion.
 - [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
@@ -216,6 +216,15 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added canonical provider mappings for common FCM/APNs reason codes (token invalid, auth/topic mismatch, rate-limit, service unavailable) to improve remediation signals.
 - [x] Added promotion interaction tracking endpoint + mobile client calls for `Impression` and `Open` events (engagement snapshot metadata updates).
 - [x] Added `Claim` event hook from redemption QR generation flow (`RewardClaimIntent`) to complete promotions conversion funnel telemetry coverage.
+- [x] Added campaign-foundation promotion payload fields in Contracts/Application/WebApi mapping (`CampaignState`, campaign window, and normalized eligibility rules) while keeping backward-compatible derived cards active.
+
+## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
+1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
+2. **P1 — Promotions delivery consistency:** align server-side feed guardrails (priority/cap/dedup/frequency) with current mobile client guardrails and expose suppression policy in contracts.
+3. **P1 — Promotions operations:** add minimal business/admin campaign management APIs (CRUD + activation) and minimal management UI.
+4. **P2 — Inactive reminders completion:** extend current reminder baseline with explicit dispatch/suppression workflow (send log + cooldown policy) and provider-native sender integration hardening.
+
+> Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
