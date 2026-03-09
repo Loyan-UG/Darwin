@@ -513,13 +513,15 @@ services.AddDarwinMobileShared(new ApiOptions
 - Dispatcher now canonicalizes common FCM/APNs reasons into stable categories (for example `Gateway.Provider.Fcm.TokenUnregistered`, `Gateway.Provider.Apns.TokenInvalid`) for clearer operational actions.
 - Promotions analytics tracking is now wired end-to-end for `Impression` and `Open` events (mobile feed emits events to WebApi; Application persists counters in `UserEngagementSnapshot` metadata).
 - Promotions `Claim` tracking is now hooked from redemption QR generation (`RewardClaimIntent`) so conversion funnel has event coverage for all three stages.
+- Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
+- Promotions feed query now includes active in-app campaign entities from server-side marketing data and merges them with legacy derived cards to preserve rollout safety.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
 
 ### Remaining / follow-up
-- Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
-- Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
+- Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
+- Continue Promotions Phase upgrade: persist campaign entities and expose management APIs on top of the delivered campaign metadata contracts (draft/scheduled/active/expired).
 - Align server-side promotion delivery guardrails with client behavior and expose configurable suppression policy in contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
 - Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
