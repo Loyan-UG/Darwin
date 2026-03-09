@@ -26,6 +26,15 @@ namespace Darwin.Application.Loyalty.DTOs
         public string? Note { get; init; }
     }
 
+    public sealed class PromotionEligibilityRuleDto
+    {
+        public string AudienceKind { get; init; } = "JoinedMembers";
+        public int? MinPoints { get; init; }
+        public int? MaxPoints { get; init; }
+        public string? TierKey { get; init; }
+        public string? Note { get; init; }
+    }
+
     public sealed class PromotionFeedItemDto
     {
         public Guid BusinessId { get; init; }
