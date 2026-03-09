@@ -218,6 +218,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added `Claim` event hook from redemption QR generation flow (`RewardClaimIntent`) to complete promotions conversion funnel telemetry coverage.
 - [x] Added campaign-foundation promotion payload fields in Contracts/Application/WebApi mapping (`CampaignState`, campaign window, and normalized eligibility rules) while keeping backward-compatible derived cards active.
 - [x] Promotions query now reads active in-app `Marketing.Campaign` entities (global + joined-business scoped), resolves lifecycle state, and merges campaign cards with derived loyalty cards for gradual migration.
+- [x] Promotions feed now applies server-side guardrails with contract-exposed policy (`EnableDeduplication`, `MaxCards`, `SuppressionWindowMinutes`) and campaign suppression based on recent in-app delivery attempts.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).

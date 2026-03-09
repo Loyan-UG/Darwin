@@ -7,6 +7,23 @@ namespace Darwin.Application.Loyalty.DTOs
     {
         public Guid? BusinessId { get; init; }
         public int MaxItems { get; init; } = 20;
+        public PromotionFeedPolicyDto? Policy { get; init; }
+    }
+
+    public sealed class PromotionFeedPolicyDto
+    {
+        public bool EnableDeduplication { get; init; } = true;
+        public int MaxCards { get; init; } = 6;
+        public int? SuppressionWindowMinutes { get; init; } = 480;
+    }
+
+    public sealed class PromotionEligibilityRuleDto
+    {
+        public string AudienceKind { get; init; } = "JoinedMembers";
+        public int? MinPoints { get; init; }
+        public int? MaxPoints { get; init; }
+        public string? TierKey { get; init; }
+        public string? Note { get; init; }
     }
 
     public sealed class PromotionEligibilityRuleDto
@@ -36,5 +53,6 @@ namespace Darwin.Application.Loyalty.DTOs
     public sealed class MyPromotionsResultDto
     {
         public List<PromotionFeedItemDto> Items { get; init; } = new();
+        public PromotionFeedPolicyDto AppliedPolicy { get; init; } = new();
     }
 }

@@ -1234,7 +1234,15 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 .HandleAsync(new MyPromotionsDto
                 {
                     BusinessId = request.BusinessId,
-                    MaxItems = request.MaxItems
+                    MaxItems = request.MaxItems,
+                    Policy = request.Policy is null
+                        ? null
+                        : new PromotionFeedPolicyDto
+                        {
+                            EnableDeduplication = request.Policy.EnableDeduplication,
+                            MaxCards = request.Policy.MaxCards,
+                            SuppressionWindowMinutes = request.Policy.SuppressionWindowMinutes
+                        }
                 }, ct)
                 .ConfigureAwait(false);
 
@@ -1245,6 +1253,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var response = new MyPromotionsResponse
             {
+                AppliedPolicy = new PromotionFeedPolicy
+                {
+                    EnableDeduplication = result.Value.AppliedPolicy.EnableDeduplication,
+                    MaxCards = result.Value.AppliedPolicy.MaxCards,
+                    SuppressionWindowMinutes = result.Value.AppliedPolicy.SuppressionWindowMinutes
+                },
                 Items = result.Value.Items
                     .Select(x => new PromotionFeedItem
                     {

@@ -8,6 +8,7 @@ using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
+using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
@@ -19,6 +20,8 @@ namespace Darwin.Application.Loyalty.Queries
     /// Builds personalized promotion cards for the current user from two sources:
     /// 1) Active campaign entities (preferred source for the phase-upgrade model).
     /// 2) Derived reward-distance cards from loyalty tiers (legacy-compatible fallback).
+    ///
+    /// Server-side guardrails are applied before returning response payload.
     /// </summary>
     public sealed class GetMyPromotionsHandler
     {
@@ -46,7 +49,8 @@ namespace Darwin.Application.Loyalty.Queries
                 return Result<MyPromotionsResultDto>.Fail("Request is required.");
             }
 
-            var max = dto.MaxItems <= 0 ? 20 : Math.Min(dto.MaxItems, 100);
+            var baseMax = dto.MaxItems <= 0 ? 20 : Math.Min(dto.MaxItems, 100);
+            var policy = ResolvePolicy(dto.Policy, baseMax);
             var userId = _currentUser.GetCurrentUserId();
 
             var accountsQuery = _db.Set<LoyaltyAccount>()
@@ -58,41 +62,122 @@ namespace Darwin.Application.Loyalty.Queries
                 accountsQuery = accountsQuery.Where(a => a.BusinessId == dto.BusinessId.Value);
             }
 
-            var accounts = await accountsQuery
-                .Select(a => new AccountPromotionContext(
-                    a.BusinessId,
-                    a.PointsBalance,
-                    a.Business != null ? a.Business.Name : string.Empty))
+            var accounts = await (from account in accountsQuery
+                                  join business in _db.Set<Business>().AsNoTracking() on account.BusinessId equals business.Id
+                                  where !business.IsDeleted && business.IsActive
+                                  select new AccountPromotionContext(
+                                      account.BusinessId,
+                                      account.PointsBalance,
+                                      business.Name))
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
             if (accounts.Count == 0)
             {
-                return Result<MyPromotionsResultDto>.Ok(new MyPromotionsResultDto());
+                return Result<MyPromotionsResultDto>.Ok(new MyPromotionsResultDto { AppliedPolicy = policy });
             }
 
             var nowUtc = DateTime.UtcNow;
             var accountLookup = accounts.ToDictionary(x => x.BusinessId);
             var joinedBusinessIds = accountLookup.Keys.ToList();
-            var items = new List<PromotionFeedItemDto>(capacity: max * 2);
+            var items = new List<PromotionFeedItemDto>(capacity: baseMax * 2);
 
-            // Campaign-backed cards are loaded first so the new model gradually becomes the primary signal.
             var campaignCards = await BuildCampaignCardsAsync(dto.BusinessId, nowUtc, joinedBusinessIds, accountLookup, ct)
                 .ConfigureAwait(false);
             items.AddRange(campaignCards);
 
-            // Keep legacy derived cards as fallback until campaign coverage is complete for all businesses.
             var derivedCards = await BuildDerivedCardsAsync(accounts, ct).ConfigureAwait(false);
             items.AddRange(derivedCards);
+
+            items = await ApplyGuardrailsAsync(items, userId, nowUtc, policy, ct).ConfigureAwait(false);
 
             var ordered = items
                 .OrderByDescending(x => x.Priority)
                 .ThenBy(x => x.BusinessName)
                 .ThenBy(x => x.Title)
-                .Take(max)
+                .Take(policy.MaxCards)
                 .ToList();
 
-            return Result<MyPromotionsResultDto>.Ok(new MyPromotionsResultDto { Items = ordered });
+            return Result<MyPromotionsResultDto>.Ok(new MyPromotionsResultDto
+            {
+                Items = ordered,
+                AppliedPolicy = policy
+            });
+        }
+
+        private async Task<List<PromotionFeedItemDto>> ApplyGuardrailsAsync(
+            List<PromotionFeedItemDto> items,
+            Guid userId,
+            DateTime nowUtc,
+            PromotionFeedPolicyDto policy,
+            CancellationToken ct)
+        {
+            if (policy.SuppressionWindowMinutes.HasValue && policy.SuppressionWindowMinutes.Value > 0)
+            {
+                var thresholdUtc = nowUtc.AddMinutes(-policy.SuppressionWindowMinutes.Value);
+                var campaignIds = items
+                    .Where(x => x.CampaignId.HasValue)
+                    .Select(x => x.CampaignId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                if (campaignIds.Count > 0)
+                {
+                    var suppressedCampaigns = await _db.Set<CampaignDelivery>()
+                        .AsNoTracking()
+                        .Where(d => !d.IsDeleted)
+                        .Where(d => d.RecipientUserId == userId)
+                        .Where(d => d.Channel == CampaignDeliveryChannel.InApp)
+                        .Where(d => d.Status == CampaignDeliveryStatus.Succeeded)
+                        .Where(d => d.LastAttemptAtUtc.HasValue && d.LastAttemptAtUtc.Value >= thresholdUtc)
+                        .Where(d => campaignIds.Contains(d.CampaignId))
+                        .Select(d => d.CampaignId)
+                        .Distinct()
+                        .ToListAsync(ct)
+                        .ConfigureAwait(false);
+
+                    if (suppressedCampaigns.Count > 0)
+                    {
+                        var suppressedSet = suppressedCampaigns.ToHashSet();
+                        items = items.Where(i => !i.CampaignId.HasValue || !suppressedSet.Contains(i.CampaignId.Value)).ToList();
+                    }
+                }
+            }
+
+            if (policy.EnableDeduplication)
+            {
+                items = items
+                    .GroupBy(BuildDedupKey, StringComparer.Ordinal)
+                    .Select(g => g.OrderByDescending(x => x.Priority).First())
+                    .ToList();
+            }
+
+            return items;
+        }
+
+        private static string BuildDedupKey(PromotionFeedItemDto item)
+            => $"{item.BusinessId:N}|{item.Title.Trim()}|{item.CtaKind.Trim()}";
+
+        private static PromotionFeedPolicyDto ResolvePolicy(PromotionFeedPolicyDto? requestedPolicy, int baseMax)
+        {
+            var enableDeduplication = requestedPolicy?.EnableDeduplication ?? true;
+            var maxCards = requestedPolicy?.MaxCards ?? 6;
+            var suppressionWindowMinutes = requestedPolicy?.SuppressionWindowMinutes ?? 480;
+
+            if (maxCards <= 0)
+            {
+                maxCards = 6;
+            }
+
+            maxCards = Math.Min(maxCards, baseMax);
+            suppressionWindowMinutes = Math.Clamp(suppressionWindowMinutes, 0, 60 * 24 * 30);
+
+            return new PromotionFeedPolicyDto
+            {
+                EnableDeduplication = enableDeduplication,
+                MaxCards = maxCards,
+                SuppressionWindowMinutes = suppressionWindowMinutes
+            };
         }
 
         /// <summary>
