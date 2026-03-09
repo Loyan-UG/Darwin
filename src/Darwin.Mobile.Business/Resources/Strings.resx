@@ -398,4 +398,16 @@
   <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
     <value>Your account does not have permission to confirm accrual.</value>
   </data>
+  <data name="RewardsCampaignsLabel" xml:space="preserve">
+    <value>Campaigns</value>
+  </data>
+  <data name="RewardsCampaignActivateButton" xml:space="preserve">
+    <value>Activate campaign</value>
+  </data>
+  <data name="RewardsCampaignDeactivateButton" xml:space="preserve">
+    <value>Deactivate campaign</value>
+  </data>
+  <data name="RewardsCampaignToggleFailed" xml:space="preserve">
+    <value>Unable to change campaign activation state.</value>
+  </data>
 </root>

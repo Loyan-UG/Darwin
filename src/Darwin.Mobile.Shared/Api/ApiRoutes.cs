@@ -110,6 +110,9 @@ namespace Darwin.Mobile.Shared.Api
             public const string CreateBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers";
             public const string UpdateBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers";
             public const string DeleteBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers/delete";
+            public const string GetBusinessCampaigns = "api/v1/loyalty/business/campaigns";
+            public static string UpdateBusinessCampaign(Guid campaignId) => $"api/v1/loyalty/business/campaigns/{campaignId:D}";
+            public static string SetBusinessCampaignActivation(Guid campaignId) => $"api/v1/loyalty/business/campaigns/{campaignId:D}/activation";
         }
     }
 }

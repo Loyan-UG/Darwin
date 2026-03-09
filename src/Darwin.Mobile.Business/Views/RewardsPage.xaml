@@ -5,7 +5,8 @@
              xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
              x:Class="Darwin.Mobile.Business.Views.RewardsPage"
              x:DataType="vm:RewardsViewModel"
-             Title="{x:Static res:AppResources.RewardsTitle}">
+             Title="{x:Static res:AppResources.RewardsTitle}"
+             x:Name="PageRoot">
 
     <ScrollView>
         <VerticalStackLayout Padding="16" Spacing="12">
@@ -111,6 +112,35 @@
                                 <Label Text="{Binding AllowSelfRedemption, StringFormat='Self redemption: {0}'}"
                                        FontSize="12"
                                        Opacity="0.7" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+
+            <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
+                   FontAttributes="Bold" />
+
+            <CollectionView ItemsSource="{Binding Campaigns}"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BusinessCampaignEditorItem">
+                        <Border StrokeThickness="1" Stroke="#444444" Padding="10" Margin="0,4,0,4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="{Binding Title}" FontAttributes="Bold" />
+                                <Label Text="{Binding Name}" Opacity="0.8" FontSize="13" />
+                                <Label Text="{Binding CampaignState, StringFormat='State: {0}'}" FontSize="12" Opacity="0.8" />
+                                <Label Text="{Binding StartsAtUtc, StringFormat='Start: {0:yyyy-MM-dd HH:mm}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />
+                                <Label Text="{Binding EndsAtUtc, StringFormat='End: {0:yyyy-MM-dd HH:mm}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding EndsAtUtc, Converter={StaticResource NullCheckConverter}}" />
+                                <Button Text="{Binding ActivationButtonText}"
+                                        Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.ToggleCampaignActivationCommand}"
+                                        CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding Source={x:Reference PageRoot}, Path=BindingContext.CanManageRewards}" />
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>

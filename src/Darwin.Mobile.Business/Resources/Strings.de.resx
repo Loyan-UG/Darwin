@@ -398,4 +398,16 @@
   <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
     <value>Ihr Konto hat keine Berechtigung, Gutschriften zu bestätigen.</value>
   </data>
+  <data name="RewardsCampaignsLabel" xml:space="preserve">
+    <value>Kampagnen</value>
+  </data>
+  <data name="RewardsCampaignActivateButton" xml:space="preserve">
+    <value>Kampagne aktivieren</value>
+  </data>
+  <data name="RewardsCampaignDeactivateButton" xml:space="preserve">
+    <value>Kampagne deaktivieren</value>
+  </data>
+  <data name="RewardsCampaignToggleFailed" xml:space="preserve">
+    <value>Der Aktivierungsstatus der Kampagne konnte nicht geändert werden.</value>
+  </data>
 </root>
