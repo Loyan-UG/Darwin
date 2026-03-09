@@ -1354,7 +1354,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// </summary>
         [HttpPost("business/campaigns")]
         [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(BusinessCampaignMutationResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateBusinessCampaignAsync([FromBody] CreateBusinessCampaignRequest? request, CancellationToken ct = default)
         {
@@ -1389,7 +1389,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 return ProblemFromResult(result);
             }
 
-            return Created($"/api/v1/loyalty/business/campaigns/{result.Value}", new { id = result.Value });
+            return Created($"/api/v1/loyalty/business/campaigns/{result.Value}", new BusinessCampaignMutationResponse { CampaignId = result.Value });
         }
 
         /// <summary>

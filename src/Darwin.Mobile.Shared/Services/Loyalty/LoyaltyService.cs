@@ -718,5 +718,127 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             }
         }
 
+        /// <inheritdoc />
+        public async Task<Result<GetBusinessCampaignsResponse>> GetBusinessCampaignsAsync(int page, int pageSize, CancellationToken cancellationToken)
+        {
+            var normalizedPage = page <= 0 ? 1 : page;
+            var normalizedPageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 100);
+            var route = $"{ApiRoutes.Loyalty.GetBusinessCampaigns}?page={normalizedPage}&pageSize={normalizedPageSize}";
+
+            try
+            {
+                var response = await _apiClient
+                    .GetResultAsync<GetBusinessCampaignsResponse>(route, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<GetBusinessCampaignsResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<GetBusinessCampaignsResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<GetBusinessCampaignsResponse>.Fail($"Network error while retrieving business campaigns: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<BusinessCampaignMutationResponse>> CreateBusinessCampaignAsync(CreateBusinessCampaignRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result<BusinessCampaignMutationResponse>.Fail("Request body is required.");
+            }
+
+            try
+            {
+                var response = await _apiClient
+                    .PostResultAsync<CreateBusinessCampaignRequest, BusinessCampaignMutationResponse>(
+                        ApiRoutes.Loyalty.GetBusinessCampaigns,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<BusinessCampaignMutationResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<BusinessCampaignMutationResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<BusinessCampaignMutationResponse>.Fail($"Network error while creating business campaign: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result> UpdateBusinessCampaignAsync(UpdateBusinessCampaignRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result.Fail("Request body is required.");
+            }
+
+            if (request.Id == Guid.Empty)
+            {
+                return Result.Fail("Campaign Id is required.");
+            }
+
+            try
+            {
+                return await _apiClient
+                    .PutNoContentAsync(ApiRoutes.Loyalty.UpdateBusinessCampaign(request.Id), request, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail($"Network error while updating business campaign: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result> SetBusinessCampaignActivationAsync(SetCampaignActivationRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result.Fail("Request body is required.");
+            }
+
+            if (request.Id == Guid.Empty)
+            {
+                return Result.Fail("Campaign Id is required.");
+            }
+
+            try
+            {
+                return await _apiClient
+                    .PostNoContentAsync(ApiRoutes.Loyalty.SetBusinessCampaignActivation(request.Id), request, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail($"Network error while setting campaign activation: {ex.Message}");
+            }
+        }
+
     }
 }
