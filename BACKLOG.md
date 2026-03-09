@@ -188,7 +188,7 @@ It is designed as the **single source of truth** for development planning.
 - [~] Add eligibility + audience rules (joined members, tier, points threshold, date window).
 - [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
 - [x] Add tracking events for impression/open/claim to measure conversion.
-- [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+- [~] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 
 ## 3.8 Quality Findings & Follow-up
@@ -219,6 +219,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added campaign-foundation promotion payload fields in Contracts/Application/WebApi mapping (`CampaignState`, campaign window, and normalized eligibility rules) while keeping backward-compatible derived cards active.
 - [x] Promotions query now reads active in-app `Marketing.Campaign` entities (global + joined-business scoped), resolves lifecycle state, and merges campaign cards with derived loyalty cards for gradual migration.
 - [x] Promotions feed now applies server-side guardrails with contract-exposed policy (`EnableDeduplication`, `MaxCards`, `SuppressionWindowMinutes`) and campaign suppression based on recent in-app delivery attempts.
+- [x] Added business campaign management WebApi endpoints (list/create/update/activation) with business-scope ownership checks and RowVersion concurrency for update/activation paths.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).

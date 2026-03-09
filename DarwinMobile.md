@@ -476,6 +476,10 @@ services.AddDarwinMobileShared(new ApiOptions
 | Loyalty   | GET /api/v1/loyalty/business/{id}/rewards    | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | GET /api/v1/loyalty/my/businesses            | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | POST /api/v1/loyalty/my/timeline             | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | GET /api/v1/loyalty/business/campaigns      | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | POST /api/v1/loyalty/business/campaigns     | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | PUT /api/v1/loyalty/business/campaigns/{id} | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | POST /api/v1/loyalty/business/campaigns/{id}/activation | perm:AccessLoyaltyBusiness  | Business   |
 | Discovery | POST /api/v1/businesses/list                 | AllowAnonymous              | Consumer   |
 | Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
@@ -516,13 +520,14 @@ services.AddDarwinMobileShared(new ApiOptions
 - Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
 - Promotions feed query now includes active in-app campaign entities from server-side marketing data and merges them with legacy derived cards to preserve rollout safety.
 - Promotions endpoint now returns the server-applied feed policy and enforces server-side guardrails (de-duplication, max-card cap, suppression window) for better client/server consistency.
+- Business campaign operations endpoint set is now available for list/create/update/activation workflows, enabling controlled campaign lifecycle management from business interfaces.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
 
 ### Remaining / follow-up
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
-- Continue Promotions Phase upgrade: persist campaign entities and expose management APIs on top of the delivered campaign metadata contracts (draft/scheduled/active/expired).
+- Continue Promotions Phase upgrade: add minimal management UI and admin-side campaign operations on top of delivered business APIs/contracts.
 - Extend guardrails with frequency-policy controls and expose per-policy diagnostics for operations dashboards.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
 - Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
