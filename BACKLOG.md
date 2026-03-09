@@ -183,18 +183,18 @@ It is designed as the **single source of truth** for development planning.
 - [x] Externalize mobile map API keys (Android Google Maps) to secure secret providers, with Android build-time validation (warn in Debug, fail in Release) and documented iOS/MapKit requirements per environment.
 
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
-- [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
-- [ ] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
-- [ ] Add eligibility + audience rules (joined members, tier, points threshold, date window).
+- [~] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
+- [~] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
+- [~] Add eligibility + audience rules (joined members, tier, points threshold, date window).
 - [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
 - [x] Add tracking events for impression/open/claim to measure conversion.
-- [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+- [~] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 
 ## 3.8 Quality Findings & Follow-up
 - [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
 - [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
-- [ ] Add automated tests around Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior.
+- [↪] Testing coverage for Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior moved to `DarwinTesting.md` (handled in dedicated testing track).
 - [x] Confirmed production token-provider strategy (`ConsumerPlatformPushTokenProvider` with Android FCM + iOS/MacCatalyst APNs bridges) and removed fallback registration path from DI.
 - [x] Hardened platform build wiring (Android-only Firebase package + explicit iOS/MacCatalyst entitlements binding) to prevent cross-target restore/signing misconfiguration.
 - [x] Added Android 13+ startup notification-permission request bootstrap with one-time prompt persistence, and removed legacy fallback push token providers to reduce production ambiguity.
@@ -216,6 +216,19 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added canonical provider mappings for common FCM/APNs reason codes (token invalid, auth/topic mismatch, rate-limit, service unavailable) to improve remediation signals.
 - [x] Added promotion interaction tracking endpoint + mobile client calls for `Impression` and `Open` events (engagement snapshot metadata updates).
 - [x] Added `Claim` event hook from redemption QR generation flow (`RewardClaimIntent`) to complete promotions conversion funnel telemetry coverage.
+- [x] Added campaign-foundation promotion payload fields in Contracts/Application/WebApi mapping (`CampaignState`, campaign window, and normalized eligibility rules) while keeping backward-compatible derived cards active.
+- [x] Promotions query now reads active in-app `Marketing.Campaign` entities (global + joined-business scoped), resolves lifecycle state, and merges campaign cards with derived loyalty cards for gradual migration.
+- [x] Promotions feed now applies server-side guardrails with contract-exposed policy (`EnableDeduplication`, `MaxCards`, `SuppressionWindowMinutes`) and campaign suppression based on recent in-app delivery attempts.
+- [x] Added business campaign management WebApi endpoints (list/create/update/activation) with business-scope ownership checks and RowVersion concurrency for update/activation paths.
+- [x] Wired business campaign management contracts into `Darwin.Mobile.Shared` loyalty facade (list/create/update/activation) so mobile business workflows can consume the new WebApi surface.
+
+## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
+1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
+2. **P1 — Promotions delivery consistency:** align server-side feed guardrails (priority/cap/dedup/frequency) with current mobile client guardrails and expose suppression policy in contracts.
+3. **P1 — Promotions operations:** add minimal business/admin campaign management APIs (CRUD + activation) and minimal management UI.
+4. **P2 — Inactive reminders completion:** extend current reminder baseline with explicit dispatch/suppression workflow (send log + cooldown policy) and provider-native sender integration hardening.
+
+> Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
 ---
 
