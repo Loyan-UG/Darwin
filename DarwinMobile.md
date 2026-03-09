@@ -518,7 +518,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
 
 ### Remaining / follow-up
-- Add automated tests for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior.
+- Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
 - Start Promotions Phase upgrade with campaign model + API contracts (draft/scheduled/active/expired).
 - Align server-side promotion delivery guardrails with client behavior and expose configurable suppression policy in contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.

@@ -6,6 +6,14 @@ Keep this document up-to-date as tests are added and as the CI pipeline evolves.
 
 ---
 
+## 0) Testing scope ownership (important)
+
+- This document is the **single execution tracker** for testing tasks.
+- Main delivery documents (`BACKLOG.md`, `DarwinMobile.md`) intentionally reference testing tasks here instead of duplicating test execution items.
+- When a development backlog item says testing is tracked in `DarwinTesting.md`, update status only in this file to avoid drift.
+
+---
+
 ## Table of contents
 
 1. Goals
@@ -519,6 +527,8 @@ This status is derived from the current repository state and must be refreshed w
 - [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password).
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`).
+- [ ] Add focused tests for Profile save metadata fallback path (especially fallback refresh behavior after optimistic-concurrency related update failures).
+- [ ] Add focused tests for push-sync command reentrancy and busy-state guarding (single-flight behavior + UI-safe completion signaling).
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm).
 - [ ] Add contract serialization compatibility tests for mobile-critical DTOs.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
@@ -535,10 +545,12 @@ Keep this list as the execution tracker for the testing workstream.
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and is committed; deterministic DB reset fixture is the next sub-step |
 | 2 | Identity flow test pack | Pending | Happy/failure tests for login, refresh, request-reset (including 200 empty body behavior), reset, change-password |
 | 3 | Profile concurrency test pack | Pending | Tests prove `RowVersion` success and stale conflict behavior |
-| 4 | Loyalty scan journey test pack | Pending | End-to-end tests for prepare → process → confirm-accrual and prepare → process → confirm-redemption |
-| 5 | Contracts compatibility pack | Pending | Serialization tests protect key DTO JSON shapes consumed by mobile apps |
-| 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
-| 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
+| 4 | Profile metadata fallback test pack | Pending | Tests verify save fallback metadata refresh path under guarded busy-state transitions |
+| 5 | Push-sync reentrancy/busy-state test pack | Pending | Tests verify single-flight command behavior and stable busy-state notifications |
+| 6 | Loyalty scan journey test pack | Pending | End-to-end tests for prepare → process → confirm-accrual and prepare → process → confirm-redemption |
+| 7 | Contracts compatibility pack | Pending | Serialization tests protect key DTO JSON shapes consumed by mobile apps |
+| 8 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
+| 9 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
 
 Backlog update rule:
 
