@@ -524,6 +524,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - `Darwin.Mobile.Shared` now exposes business campaign operations in `ILoyaltyService` to unblock Business app integration without duplicating API plumbing in UI projects.
 - Business app Rewards page now ships minimal campaign operations UI (list + activate/deactivate + create/update editor) for mobile-first campaign lifecycle management.
 - Business campaign editor now includes optional UTC schedule inputs with pre-submit validation for date format and start/end range.
+- Business campaign editor now includes channel selection controls (In-App / In-App+Push) and channel validation before API mutations.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.

@@ -55,6 +55,7 @@ public sealed class RewardsViewModel : BaseViewModel
     private string? _campaignBodyInput;
     private string? _campaignStartsAtInput;
     private string? _campaignEndsAtInput;
+    private CampaignChannelOption? _selectedCampaignChannel;
 
     private const int CampaignListPageSize = 50;
 
@@ -75,6 +76,13 @@ public sealed class RewardsViewModel : BaseViewModel
             RewardTypePercentDiscount,
             RewardTypeAmountDiscount
         };
+
+        CampaignChannelOptions = new ObservableCollection<CampaignChannelOption>
+        {
+            new CampaignChannelOption(1, AppResources.RewardsCampaignChannelInAppOnly),
+            new CampaignChannelOption(3, AppResources.RewardsCampaignChannelInAppAndPush)
+        };
+        _selectedCampaignChannel = CampaignChannelOptions[0];
 
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
@@ -128,6 +136,11 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Picker options for reward type contract values.
     /// </summary>
     public ObservableCollection<string> RewardTypeOptions { get; }
+
+    /// <summary>
+    /// Picker options for campaign channel combinations supported in mobile editor.
+    /// </summary>
+    public ObservableCollection<CampaignChannelOption> CampaignChannelOptions { get; }
 
     /// <summary>
     /// User-entered points required for the reward tier.
@@ -218,6 +231,15 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         get => _campaignEndsAtInput;
         set => SetProperty(ref _campaignEndsAtInput, value);
+    }
+
+    /// <summary>
+    /// Selected campaign channel option used for create/update payloads.
+    /// </summary>
+    public CampaignChannelOption? SelectedCampaignChannel
+    {
+        get => _selectedCampaignChannel;
+        set => SetProperty(ref _selectedCampaignChannel, value);
     }
 
     /// <summary>
@@ -384,6 +406,7 @@ public sealed class RewardsViewModel : BaseViewModel
             _editingCampaignId = campaign.Id;
             _editingCampaignRowVersion = campaign.RowVersion.ToArray();
             _editingCampaignChannels = campaign.Channels;
+            SelectedCampaignChannel = CampaignChannelOptions.FirstOrDefault(x => x.Value == campaign.Channels) ?? CampaignChannelOptions[0];
             _editingCampaignTargetingJson = campaign.TargetingJson;
             _editingCampaignPayloadJson = campaign.PayloadJson;
 
@@ -611,6 +634,14 @@ public sealed class RewardsViewModel : BaseViewModel
             return;
         }
 
+        if (SelectedCampaignChannel is null)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignChannelValidationFailed);
+            return;
+        }
+
+        var selectedChannels = SelectedCampaignChannel.Value;
+
         IsBusy = true;
         RaiseCommandCanExecuteChanged();
 
@@ -627,7 +658,7 @@ public sealed class RewardsViewModel : BaseViewModel
                         Name = CampaignNameInput.Trim(),
                         Title = CampaignTitleInput.Trim(),
                         Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
-                        Channels = _editingCampaignChannels,
+                        Channels = selectedChannels,
                         StartsAtUtc = startsAtUtc,
                         EndsAtUtc = endsAtUtc,
                         TargetingJson = _editingCampaignTargetingJson,
@@ -644,7 +675,7 @@ public sealed class RewardsViewModel : BaseViewModel
                         Name = CampaignNameInput.Trim(),
                         Title = CampaignTitleInput.Trim(),
                         Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
-                        Channels = 1,
+                        Channels = selectedChannels,
                         StartsAtUtc = startsAtUtc,
                         EndsAtUtc = endsAtUtc,
                         TargetingJson = "{}",
@@ -906,6 +937,7 @@ public sealed class RewardsViewModel : BaseViewModel
         CampaignBodyInput = null;
         CampaignStartsAtInput = null;
         CampaignEndsAtInput = null;
+        SelectedCampaignChannel = CampaignChannelOptions.FirstOrDefault();
 
         OnPropertyChanged(nameof(IsCampaignEditMode));
         OnPropertyChanged(nameof(CampaignSaveButtonText));
@@ -953,6 +985,23 @@ public sealed class RewardTierEditorItem
     }
 }
 
+
+/// <summary>
+/// Represents a selectable channel combination in campaign editor UI.
+/// </summary>
+public sealed class CampaignChannelOption
+{
+    public CampaignChannelOption(short value, string label)
+    {
+        Value = value;
+        Label = label;
+    }
+
+    public short Value { get; }
+    public string Label { get; }
+
+    public override string ToString() => Label;
+}
 
 /// <summary>
 /// Lightweight campaign item used by business rewards screen.

@@ -446,4 +446,16 @@
   <data name="RewardsCampaignDateRangeValidationFailed" xml:space="preserve">
     <value>Das Startdatum der Kampagne muss vor dem Enddatum liegen.</value>
   </data>
+  <data name="RewardsCampaignChannelPickerTitle" xml:space="preserve">
+    <value>Auslieferungskanäle</value>
+  </data>
+  <data name="RewardsCampaignChannelInAppOnly" xml:space="preserve">
+    <value>Nur In-App</value>
+  </data>
+  <data name="RewardsCampaignChannelInAppAndPush" xml:space="preserve">
+    <value>In-App + Push</value>
+  </data>
+  <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
+    <value>Bitte wählen Sie einen gültigen Auslieferungskanal für die Kampagne.</value>
+  </data>
 </root>

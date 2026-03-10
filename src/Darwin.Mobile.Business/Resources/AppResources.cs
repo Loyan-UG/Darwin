@@ -168,6 +168,10 @@ public static class AppResources
     public static string RewardsCampaignEndsAtPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignEndsAtPlaceholder), Culture) ?? "End UTC (yyyy-MM-dd HH:mm, optional)";
     public static string RewardsCampaignDateValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignDateValidationFailed), Culture) ?? "Campaign date format is invalid. Use yyyy-MM-dd HH:mm.";
     public static string RewardsCampaignDateRangeValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignDateRangeValidationFailed), Culture) ?? "Campaign start date must be earlier than end date.";
+    public static string RewardsCampaignChannelPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignChannelPickerTitle), Culture) ?? "Delivery channels";
+    public static string RewardsCampaignChannelInAppOnly => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppOnly), Culture) ?? "In-app only";
+    public static string RewardsCampaignChannelInAppAndPush => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppAndPush), Culture) ?? "In-app + Push";
+    public static string RewardsCampaignChannelValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignChannelValidationFailed), Culture) ?? "Please select a valid campaign delivery channel.";
 
 
 }

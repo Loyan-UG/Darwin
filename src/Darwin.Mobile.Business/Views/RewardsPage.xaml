@@ -143,6 +143,10 @@
                     <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignEndsAtPlaceholder}"
                            Text="{Binding CampaignEndsAtInput}" />
 
+                    <Picker Title="{x:Static res:AppResources.RewardsCampaignChannelPickerTitle}"
+                            ItemsSource="{Binding CampaignChannelOptions}"
+                            SelectedItem="{Binding SelectedCampaignChannel}" />
+
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Button Text="{Binding CampaignSaveButtonText}"
                                 Command="{Binding SaveCampaignCommand}"
