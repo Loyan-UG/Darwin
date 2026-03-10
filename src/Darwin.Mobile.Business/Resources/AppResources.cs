@@ -152,6 +152,26 @@ public static class AppResources
     public static string RewardsPointsValidation => ResourceManager.GetString(nameof(RewardsPointsValidation), Culture) ?? "Points required must be a number greater than zero.";
     public static string RewardsTypeValidation => ResourceManager.GetString(nameof(RewardsTypeValidation), Culture) ?? "Please select a valid reward type.";
     public static string RewardsValueValidation => ResourceManager.GetString(nameof(RewardsValueValidation), Culture) ?? "Reward value must be a valid number.";
+    public static string RewardsCampaignsLabel => ResourceManager.GetString(nameof(RewardsCampaignsLabel), Culture) ?? "Campaigns";
+    public static string RewardsCampaignActivateButton => ResourceManager.GetString(nameof(RewardsCampaignActivateButton), Culture) ?? "Activate campaign";
+    public static string RewardsCampaignDeactivateButton => ResourceManager.GetString(nameof(RewardsCampaignDeactivateButton), Culture) ?? "Deactivate campaign";
+    public static string RewardsCampaignToggleFailed => ResourceManager.GetString(nameof(RewardsCampaignToggleFailed), Culture) ?? "Unable to change campaign activation state.";
+    public static string RewardsCampaignNamePlaceholder => ResourceManager.GetString(nameof(RewardsCampaignNamePlaceholder), Culture) ?? "Campaign internal name";
+    public static string RewardsCampaignTitlePlaceholder => ResourceManager.GetString(nameof(RewardsCampaignTitlePlaceholder), Culture) ?? "Campaign title";
+    public static string RewardsCampaignBodyPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignBodyPlaceholder), Culture) ?? "Campaign body (optional)";
+    public static string RewardsCampaignNewButton => ResourceManager.GetString(nameof(RewardsCampaignNewButton), Culture) ?? "New campaign";
+    public static string RewardsCampaignCreateButton => ResourceManager.GetString(nameof(RewardsCampaignCreateButton), Culture) ?? "Create campaign";
+    public static string RewardsCampaignUpdateButton => ResourceManager.GetString(nameof(RewardsCampaignUpdateButton), Culture) ?? "Update campaign";
+    public static string RewardsCampaignSaveFailed => ResourceManager.GetString(nameof(RewardsCampaignSaveFailed), Culture) ?? "Unable to save campaign.";
+    public static string RewardsCampaignValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignValidationFailed), Culture) ?? "Campaign name and title are required.";
+    public static string RewardsCampaignStartsAtPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignStartsAtPlaceholder), Culture) ?? "Start UTC (yyyy-MM-dd HH:mm, optional)";
+    public static string RewardsCampaignEndsAtPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignEndsAtPlaceholder), Culture) ?? "End UTC (yyyy-MM-dd HH:mm, optional)";
+    public static string RewardsCampaignDateValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignDateValidationFailed), Culture) ?? "Campaign date format is invalid. Use yyyy-MM-dd HH:mm.";
+    public static string RewardsCampaignDateRangeValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignDateRangeValidationFailed), Culture) ?? "Campaign start date must be earlier than end date.";
+    public static string RewardsCampaignChannelPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignChannelPickerTitle), Culture) ?? "Delivery channels";
+    public static string RewardsCampaignChannelInAppOnly => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppOnly), Culture) ?? "In-app only";
+    public static string RewardsCampaignChannelInAppAndPush => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppAndPush), Culture) ?? "In-app + Push";
+    public static string RewardsCampaignChannelValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignChannelValidationFailed), Culture) ?? "Please select a valid campaign delivery channel.";
 
 
 }

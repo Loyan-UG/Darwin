@@ -398,4 +398,64 @@
   <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
     <value>Your account does not have permission to confirm accrual.</value>
   </data>
+  <data name="RewardsCampaignsLabel" xml:space="preserve">
+    <value>Campaigns</value>
+  </data>
+  <data name="RewardsCampaignActivateButton" xml:space="preserve">
+    <value>Activate campaign</value>
+  </data>
+  <data name="RewardsCampaignDeactivateButton" xml:space="preserve">
+    <value>Deactivate campaign</value>
+  </data>
+  <data name="RewardsCampaignToggleFailed" xml:space="preserve">
+    <value>Unable to change campaign activation state.</value>
+  </data>
+  <data name="RewardsCampaignNamePlaceholder" xml:space="preserve">
+    <value>Campaign internal name</value>
+  </data>
+  <data name="RewardsCampaignTitlePlaceholder" xml:space="preserve">
+    <value>Campaign title</value>
+  </data>
+  <data name="RewardsCampaignBodyPlaceholder" xml:space="preserve">
+    <value>Campaign body (optional)</value>
+  </data>
+  <data name="RewardsCampaignNewButton" xml:space="preserve">
+    <value>New campaign</value>
+  </data>
+  <data name="RewardsCampaignCreateButton" xml:space="preserve">
+    <value>Create campaign</value>
+  </data>
+  <data name="RewardsCampaignUpdateButton" xml:space="preserve">
+    <value>Update campaign</value>
+  </data>
+  <data name="RewardsCampaignSaveFailed" xml:space="preserve">
+    <value>Unable to save campaign.</value>
+  </data>
+  <data name="RewardsCampaignValidationFailed" xml:space="preserve">
+    <value>Campaign name and title are required.</value>
+  </data>
+  <data name="RewardsCampaignStartsAtPlaceholder" xml:space="preserve">
+    <value>Start UTC (yyyy-MM-dd HH:mm, optional)</value>
+  </data>
+  <data name="RewardsCampaignEndsAtPlaceholder" xml:space="preserve">
+    <value>End UTC (yyyy-MM-dd HH:mm, optional)</value>
+  </data>
+  <data name="RewardsCampaignDateValidationFailed" xml:space="preserve">
+    <value>Campaign date format is invalid. Use yyyy-MM-dd HH:mm.</value>
+  </data>
+  <data name="RewardsCampaignDateRangeValidationFailed" xml:space="preserve">
+    <value>Campaign start date must be earlier than end date.</value>
+  </data>
+  <data name="RewardsCampaignChannelPickerTitle" xml:space="preserve">
+    <value>Delivery channels</value>
+  </data>
+  <data name="RewardsCampaignChannelInAppOnly" xml:space="preserve">
+    <value>In-app only</value>
+  </data>
+  <data name="RewardsCampaignChannelInAppAndPush" xml:space="preserve">
+    <value>In-app + Push</value>
+  </data>
+  <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
+    <value>Please select a valid campaign delivery channel.</value>
+  </data>
 </root>
