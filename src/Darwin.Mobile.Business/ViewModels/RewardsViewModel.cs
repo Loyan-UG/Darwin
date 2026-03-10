@@ -44,6 +44,18 @@ public sealed class RewardsViewModel : BaseViewModel
     private string? _descriptionInput;
     private bool _allowSelfRedemption;
 
+    private Guid _editingCampaignId;
+    private byte[] _editingCampaignRowVersion = Array.Empty<byte>();
+    private short _editingCampaignChannels = 1;
+    private string _editingCampaignTargetingJson = "{}";
+    private string _editingCampaignPayloadJson = "{}";
+
+    private string _campaignNameInput = string.Empty;
+    private string _campaignTitleInput = string.Empty;
+    private string? _campaignBodyInput;
+
+    private const int CampaignListPageSize = 50;
+
     private const string RewardTypeFreeItem = "FreeItem";
     private const string RewardTypePercentDiscount = "PercentDiscount";
     private const string RewardTypeAmountDiscount = "AmountDiscount";
@@ -54,6 +66,7 @@ public sealed class RewardsViewModel : BaseViewModel
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
+        Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
         RewardTypeOptions = new ObservableCollection<string>
         {
             RewardTypeFreeItem,
@@ -65,6 +78,9 @@ public sealed class RewardsViewModel : BaseViewModel
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
         DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && IsEditMode && CanManageRewards);
         CreateNewCommand = new AsyncCommand(CreateNewAsync, () => !IsBusy && CanManageRewards);
+        ToggleCampaignActivationCommand = new AsyncCommand<BusinessCampaignEditorItem>(ToggleCampaignActivationAsync, campaign => !IsBusy && CanManageRewards && campaign is not null);
+        SaveCampaignCommand = new AsyncCommand(SaveCampaignAsync, () => !IsBusy && CanManageRewards);
+        NewCampaignCommand = new AsyncCommand(NewCampaignAsync, () => !IsBusy && CanManageRewards);
     }
 
 
@@ -81,6 +97,8 @@ public sealed class RewardsViewModel : BaseViewModel
                 SaveCommand.RaiseCanExecuteChanged();
                 DeleteCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanDeleteReward));
+                SaveCampaignCommand.RaiseCanExecuteChanged();
+                NewCampaignCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -98,6 +116,11 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Collection of currently configured reward tiers for the business.
     /// </summary>
     public ObservableCollection<RewardTierEditorItem> RewardTiers { get; }
+
+    /// <summary>
+    /// Collection of business campaigns available for quick lifecycle actions.
+    /// </summary>
+    public ObservableCollection<BusinessCampaignEditorItem> Campaigns { get; }
 
     /// <summary>
     /// Picker options for reward type contract values.
@@ -149,6 +172,44 @@ public sealed class RewardsViewModel : BaseViewModel
         set => SetProperty(ref _allowSelfRedemption, value);
     }
 
+
+    /// <summary>
+    /// Campaign internal name input for create/update operations.
+    /// </summary>
+    public string CampaignNameInput
+    {
+        get => _campaignNameInput;
+        set => SetProperty(ref _campaignNameInput, value);
+    }
+
+    /// <summary>
+    /// Campaign title input shown to end users.
+    /// </summary>
+    public string CampaignTitleInput
+    {
+        get => _campaignTitleInput;
+        set => SetProperty(ref _campaignTitleInput, value);
+    }
+
+    /// <summary>
+    /// Campaign body input used as card description.
+    /// </summary>
+    public string? CampaignBodyInput
+    {
+        get => _campaignBodyInput;
+        set => SetProperty(ref _campaignBodyInput, value);
+    }
+
+    /// <summary>
+    /// Gets whether campaign editor is in update mode.
+    /// </summary>
+    public bool IsCampaignEditMode => _editingCampaignId != Guid.Empty;
+
+    /// <summary>
+    /// Gets localized save button text for campaign editor.
+    /// </summary>
+    public string CampaignSaveButtonText => IsCampaignEditMode ? AppResources.RewardsCampaignUpdateButton : AppResources.RewardsCampaignCreateButton;
+
     /// <summary>
     /// True when current editor is bound to an existing tier.
     /// </summary>
@@ -168,6 +229,9 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand SaveCommand { get; }
     public AsyncCommand DeleteCommand { get; }
     public AsyncCommand CreateNewCommand { get; }
+    public AsyncCommand<BusinessCampaignEditorItem> ToggleCampaignActivationCommand { get; }
+    public AsyncCommand SaveCampaignCommand { get; }
+    public AsyncCommand NewCampaignCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -211,6 +275,8 @@ public sealed class RewardsViewModel : BaseViewModel
                 .Select(RewardTierEditorItem.FromContract)
                 .ToList();
 
+            var campaigns = await LoadCampaignItemsAsync().ConfigureAwait(false);
+
             RunOnMain(() =>
             {
                 ErrorMessage = null;
@@ -219,11 +285,22 @@ public sealed class RewardsViewModel : BaseViewModel
                 {
                     RewardTiers.Add(tier);
                 }
+
+                Campaigns.Clear();
+                foreach (var campaign in campaigns)
+                {
+                    Campaigns.Add(campaign);
+                }
             });
 
             if (!IsEditMode)
             {
                 RunOnMain(ClearEditor);
+            }
+
+            if (!IsCampaignEditMode)
+            {
+                RunOnMain(ClearCampaignEditor);
             }
         }
         catch (Exception ex)
@@ -265,6 +342,37 @@ public sealed class RewardsViewModel : BaseViewModel
             OnPropertyChanged(nameof(SaveButtonText));
             OnPropertyChanged(nameof(CanDeleteReward));
             DeleteCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+
+    /// <summary>
+    /// Loads selected campaign values into editor for update flow.
+    /// </summary>
+    public void BeginEditCampaign(BusinessCampaignEditorItem campaign)
+    {
+        ArgumentNullException.ThrowIfNull(campaign);
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            _editingCampaignId = campaign.Id;
+            _editingCampaignRowVersion = campaign.RowVersion.ToArray();
+            _editingCampaignChannels = campaign.Channels;
+            _editingCampaignTargetingJson = campaign.TargetingJson;
+            _editingCampaignPayloadJson = campaign.PayloadJson;
+
+            CampaignNameInput = campaign.Name;
+            CampaignTitleInput = campaign.Title;
+            CampaignBodyInput = campaign.Body;
+
+            OnPropertyChanged(nameof(IsCampaignEditMode));
+            OnPropertyChanged(nameof(CampaignSaveButtonText));
         });
     }
 
@@ -411,6 +519,109 @@ public sealed class RewardsViewModel : BaseViewModel
         }
     }
 
+
+    /// <summary>
+    /// Creates or updates campaign based on editor mode.
+    /// </summary>
+    private async Task SaveCampaignAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CampaignNameInput) || string.IsNullOrWhiteSpace(CampaignTitleInput))
+        {
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignValidationFailed);
+            return;
+        }
+
+        IsBusy = true;
+        RaiseCommandCanExecuteChanged();
+
+        try
+        {
+            Result operationResult;
+
+            if (IsCampaignEditMode)
+            {
+                operationResult = await _loyaltyService
+                    .UpdateBusinessCampaignAsync(new UpdateBusinessCampaignRequest
+                    {
+                        Id = _editingCampaignId,
+                        Name = CampaignNameInput.Trim(),
+                        Title = CampaignTitleInput.Trim(),
+                        Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
+                        Channels = _editingCampaignChannels,
+                        TargetingJson = _editingCampaignTargetingJson,
+                        PayloadJson = _editingCampaignPayloadJson,
+                        RowVersion = _editingCampaignRowVersion
+                    }, CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                var createResult = await _loyaltyService
+                    .CreateBusinessCampaignAsync(new CreateBusinessCampaignRequest
+                    {
+                        Name = CampaignNameInput.Trim(),
+                        Title = CampaignTitleInput.Trim(),
+                        Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
+                        Channels = 1,
+                        TargetingJson = "{}",
+                        PayloadJson = "{}"
+                    }, CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                operationResult = createResult.Succeeded ? Result.Ok() : Result.Fail(createResult.Error ?? AppResources.RewardsCampaignSaveFailed);
+            }
+
+            if (!operationResult.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = operationResult.Error ?? AppResources.RewardsCampaignSaveFailed);
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                ErrorMessage = null;
+                ClearCampaignEditor();
+            });
+
+            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsCampaignSaveFailed} {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
+    /// Clears campaign editor and switches back to create mode.
+    /// </summary>
+    private Task NewCampaignAsync()
+    {
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(ClearCampaignEditor);
+        return Task.CompletedTask;
+    }
+
     /// <summary>
     /// Refreshes authorization snapshot for reward-edit operations.
     /// </summary>
@@ -491,6 +702,8 @@ public sealed class RewardsViewModel : BaseViewModel
             .Select(RewardTierEditorItem.FromContract)
             .ToList();
 
+        var campaigns = await LoadCampaignItemsAsync().ConfigureAwait(false);
+
         RunOnMain(() =>
         {
             RewardTiers.Clear();
@@ -498,7 +711,89 @@ public sealed class RewardsViewModel : BaseViewModel
             {
                 RewardTiers.Add(tier);
             }
+
+            Campaigns.Clear();
+            foreach (var campaign in campaigns)
+            {
+                Campaigns.Add(campaign);
+            }
         });
+    }
+
+    /// <summary>
+    /// Loads business campaigns for lightweight lifecycle controls in Rewards screen.
+    /// </summary>
+    private async Task<List<BusinessCampaignEditorItem>> LoadCampaignItemsAsync()
+    {
+        var campaignsResult = await _loyaltyService
+            .GetBusinessCampaignsAsync(page: 1, pageSize: CampaignListPageSize, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        if (!campaignsResult.Succeeded || campaignsResult.Value is null)
+        {
+            return new List<BusinessCampaignEditorItem>();
+        }
+
+        return campaignsResult.Value.Items
+            .OrderByDescending(x => x.StartsAtUtc)
+            .ThenByDescending(x => x.IsActive)
+            .Select(BusinessCampaignEditorItem.FromContract)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Toggles campaign activation state for selected campaign item.
+    /// </summary>
+    private async Task ToggleCampaignActivationAsync(BusinessCampaignEditorItem? campaign)
+    {
+        if (campaign is null)
+        {
+            return;
+        }
+
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
+        IsBusy = true;
+        RaiseCommandCanExecuteChanged();
+
+        try
+        {
+            var result = await _loyaltyService
+                .SetBusinessCampaignActivationAsync(new SetCampaignActivationRequest
+                {
+                    Id = campaign.Id,
+                    IsActive = !campaign.IsActive,
+                    RowVersion = campaign.RowVersion
+                }, CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = result.Error ?? AppResources.RewardsCampaignToggleFailed);
+                return;
+            }
+
+            RunOnMain(() => ErrorMessage = null);
+            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsCampaignToggleFailed} {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandCanExecuteChanged();
+        }
     }
 
     /// <summary>
@@ -521,12 +816,35 @@ public sealed class RewardsViewModel : BaseViewModel
         DeleteCommand.RaiseCanExecuteChanged();
     }
 
+
+    /// <summary>
+    /// Clears campaign editor state and exits campaign edit mode.
+    /// </summary>
+    private void ClearCampaignEditor()
+    {
+        _editingCampaignId = Guid.Empty;
+        _editingCampaignRowVersion = Array.Empty<byte>();
+        _editingCampaignChannels = 1;
+        _editingCampaignTargetingJson = "{}";
+        _editingCampaignPayloadJson = "{}";
+
+        CampaignNameInput = string.Empty;
+        CampaignTitleInput = string.Empty;
+        CampaignBodyInput = null;
+
+        OnPropertyChanged(nameof(IsCampaignEditMode));
+        OnPropertyChanged(nameof(CampaignSaveButtonText));
+    }
+
     private void RaiseCommandCanExecuteChanged()
     {
         RefreshCommand.RaiseCanExecuteChanged();
         SaveCommand.RaiseCanExecuteChanged();
         DeleteCommand.RaiseCanExecuteChanged();
         CreateNewCommand.RaiseCanExecuteChanged();
+        ToggleCampaignActivationCommand.RaiseCanExecuteChanged();
+        SaveCampaignCommand.RaiseCanExecuteChanged();
+        NewCampaignCommand.RaiseCanExecuteChanged();
     }
 }
 
@@ -555,6 +873,49 @@ public sealed class RewardTierEditorItem
             RewardValue = item.RewardValue,
             Description = item.Description,
             AllowSelfRedemption = item.AllowSelfRedemption,
+            RowVersion = item.RowVersion ?? Array.Empty<byte>()
+        };
+    }
+}
+
+
+/// <summary>
+/// Lightweight campaign item used by business rewards screen.
+/// </summary>
+public sealed class BusinessCampaignEditorItem
+{
+    public Guid Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string CampaignState { get; init; } = PromotionCampaignState.Draft;
+    public bool IsActive { get; init; }
+    public DateTime? StartsAtUtc { get; init; }
+    public DateTime? EndsAtUtc { get; init; }
+    public string? Body { get; init; }
+    public short Channels { get; init; }
+    public string TargetingJson { get; init; } = "{}";
+    public string PayloadJson { get; init; } = "{}";
+    public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+
+    public string ActivationButtonText => IsActive ? AppResources.RewardsCampaignDeactivateButton : AppResources.RewardsCampaignActivateButton;
+
+    public static BusinessCampaignEditorItem FromContract(BusinessCampaignItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        return new BusinessCampaignEditorItem
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Title = item.Title,
+            CampaignState = item.CampaignState,
+            IsActive = item.IsActive,
+            StartsAtUtc = item.StartsAtUtc,
+            EndsAtUtc = item.EndsAtUtc,
+            Body = item.Body,
+            Channels = item.Channels,
+            TargetingJson = item.TargetingJson ?? "{}",
+            PayloadJson = item.PayloadJson ?? "{}",
             RowVersion = item.RowVersion ?? Array.Empty<byte>()
         };
     }
