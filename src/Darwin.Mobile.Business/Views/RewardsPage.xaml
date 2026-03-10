@@ -147,6 +147,14 @@
                             ItemsSource="{Binding CampaignChannelOptions}"
                             SelectedItem="{Binding SelectedCampaignChannel}" />
 
+                    <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignTargetingJsonPlaceholder}"
+                            AutoSize="TextChanges"
+                            Text="{Binding CampaignTargetingJsonInput}" />
+
+                    <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignPayloadJsonPlaceholder}"
+                            AutoSize="TextChanges"
+                            Text="{Binding CampaignPayloadJsonInput}" />
+
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Button Text="{Binding CampaignSaveButtonText}"
                                 Command="{Binding SaveCampaignCommand}"

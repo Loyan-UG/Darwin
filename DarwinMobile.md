@@ -525,13 +525,14 @@ services.AddDarwinMobileShared(new ApiOptions
 - Business app Rewards page now ships minimal campaign operations UI (list + activate/deactivate + create/update editor) for mobile-first campaign lifecycle management.
 - Business campaign editor now includes optional UTC schedule inputs with pre-submit validation for date format and start/end range.
 - Business campaign editor now includes channel selection controls (In-App / In-App+Push) and channel validation before API mutations.
+- Business campaign editor now validates and submits optional `targeting/payload` JSON object fields with localized guardrail errors before API mutations.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
 
 ### Remaining / follow-up
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
-- Continue Promotions Phase upgrade: add richer campaign editing fields (targeting/payload/channels/date validation) and admin-side campaign operations on top of delivered business APIs/contracts.
+- Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
 - Extend guardrails with frequency-policy controls and expose per-policy diagnostics for operations dashboards.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
 - Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.

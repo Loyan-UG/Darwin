@@ -455,6 +455,18 @@
   <data name="RewardsCampaignChannelInAppAndPush" xml:space="preserve">
     <value>In-app + Push</value>
   </data>
+  <data name="RewardsCampaignTargetingJsonPlaceholder" xml:space="preserve">
+    <value>Targeting JSON (optional, object)</value>
+  </data>
+  <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
+    <value>Payload JSON (optional, object)</value>
+  </data>
+  <data name="RewardsCampaignTargetingValidationFailed" xml:space="preserve">
+    <value>Targeting JSON must be a valid JSON object.</value>
+  </data>
+  <data name="RewardsCampaignPayloadValidationFailed" xml:space="preserve">
+    <value>Payload JSON must be a valid JSON object.</value>
+  </data>
   <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
     <value>Please select a valid campaign delivery channel.</value>
   </data>

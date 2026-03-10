@@ -172,6 +172,10 @@ public static class AppResources
     public static string RewardsCampaignChannelInAppOnly => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppOnly), Culture) ?? "In-app only";
     public static string RewardsCampaignChannelInAppAndPush => ResourceManager.GetString(nameof(RewardsCampaignChannelInAppAndPush), Culture) ?? "In-app + Push";
     public static string RewardsCampaignChannelValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignChannelValidationFailed), Culture) ?? "Please select a valid campaign delivery channel.";
+    public static string RewardsCampaignTargetingJsonPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignTargetingJsonPlaceholder), Culture) ?? "Targeting JSON (optional, object)";
+    public static string RewardsCampaignPayloadJsonPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignPayloadJsonPlaceholder), Culture) ?? "Payload JSON (optional, object)";
+    public static string RewardsCampaignTargetingValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignTargetingValidationFailed), Culture) ?? "Targeting JSON must be a valid JSON object.";
+    public static string RewardsCampaignPayloadValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignPayloadValidationFailed), Culture) ?? "Payload JSON must be a valid JSON object.";
 
 
 }

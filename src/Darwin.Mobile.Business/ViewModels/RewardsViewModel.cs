@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
@@ -55,6 +57,8 @@ public sealed class RewardsViewModel : BaseViewModel
     private string? _campaignBodyInput;
     private string? _campaignStartsAtInput;
     private string? _campaignEndsAtInput;
+    private string _campaignTargetingJsonInput = "{}";
+    private string _campaignPayloadJsonInput = "{}";
     private CampaignChannelOption? _selectedCampaignChannel;
 
     private const int CampaignListPageSize = 50;
@@ -231,6 +235,24 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         get => _campaignEndsAtInput;
         set => SetProperty(ref _campaignEndsAtInput, value);
+    }
+
+    /// <summary>
+    /// Optional campaign targeting rules in JSON format.
+    /// </summary>
+    public string CampaignTargetingJsonInput
+    {
+        get => _campaignTargetingJsonInput;
+        set => SetProperty(ref _campaignTargetingJsonInput, value);
+    }
+
+    /// <summary>
+    /// Optional campaign payload in JSON format.
+    /// </summary>
+    public string CampaignPayloadJsonInput
+    {
+        get => _campaignPayloadJsonInput;
+        set => SetProperty(ref _campaignPayloadJsonInput, value);
     }
 
     /// <summary>
@@ -415,6 +437,8 @@ public sealed class RewardsViewModel : BaseViewModel
             CampaignBodyInput = campaign.Body;
             CampaignStartsAtInput = campaign.StartsAtUtc?.ToString("yyyy-MM-dd HH:mm");
             CampaignEndsAtInput = campaign.EndsAtUtc?.ToString("yyyy-MM-dd HH:mm");
+            CampaignTargetingJsonInput = campaign.TargetingJson;
+            CampaignPayloadJsonInput = campaign.PayloadJson;
 
             OnPropertyChanged(nameof(IsCampaignEditMode));
             OnPropertyChanged(nameof(CampaignSaveButtonText));
@@ -578,7 +602,7 @@ public sealed class RewardsViewModel : BaseViewModel
             return true;
         }
 
-        if (!DateTime.TryParse(input, out var parsed))
+        if (!DateTime.TryParseExact(input.Trim(), "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
         {
             error = AppResources.RewardsCampaignDateValidationFailed;
             return false;
@@ -592,6 +616,39 @@ public sealed class RewardsViewModel : BaseViewModel
         };
 
         return true;
+    }
+
+    /// <summary>
+    /// Validates and normalizes campaign JSON fields before API mutations.
+    /// </summary>
+    private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
+    {
+        normalizedJson = "{}";
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(jsonInput))
+        {
+            return true;
+        }
+
+        var trimmed = jsonInput.Trim();
+        try
+        {
+            using var document = JsonDocument.Parse(trimmed);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                error = validationMessage;
+                return false;
+            }
+
+            normalizedJson = trimmed;
+            return true;
+        }
+        catch (JsonException)
+        {
+            error = validationMessage;
+            return false;
+        }
     }
 
     /// <summary>
@@ -642,6 +699,18 @@ public sealed class RewardsViewModel : BaseViewModel
 
         var selectedChannels = SelectedCampaignChannel.Value;
 
+        if (!TryNormalizeCampaignJson(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
+        {
+            RunOnMain(() => ErrorMessage = targetingError ?? AppResources.RewardsCampaignTargetingValidationFailed);
+            return;
+        }
+
+        if (!TryNormalizeCampaignJson(CampaignPayloadJsonInput, AppResources.RewardsCampaignPayloadValidationFailed, out var payloadJson, out var payloadError))
+        {
+            RunOnMain(() => ErrorMessage = payloadError ?? AppResources.RewardsCampaignPayloadValidationFailed);
+            return;
+        }
+
         IsBusy = true;
         RaiseCommandCanExecuteChanged();
 
@@ -661,8 +730,8 @@ public sealed class RewardsViewModel : BaseViewModel
                         Channels = selectedChannels,
                         StartsAtUtc = startsAtUtc,
                         EndsAtUtc = endsAtUtc,
-                        TargetingJson = _editingCampaignTargetingJson,
-                        PayloadJson = _editingCampaignPayloadJson,
+                        TargetingJson = targetingJson,
+                        PayloadJson = payloadJson,
                         RowVersion = _editingCampaignRowVersion
                     }, CancellationToken.None)
                     .ConfigureAwait(false);
@@ -678,8 +747,8 @@ public sealed class RewardsViewModel : BaseViewModel
                         Channels = selectedChannels,
                         StartsAtUtc = startsAtUtc,
                         EndsAtUtc = endsAtUtc,
-                        TargetingJson = "{}",
-                        PayloadJson = "{}"
+                        TargetingJson = targetingJson,
+                        PayloadJson = payloadJson
                     }, CancellationToken.None)
                     .ConfigureAwait(false);
 
@@ -937,6 +1006,8 @@ public sealed class RewardsViewModel : BaseViewModel
         CampaignBodyInput = null;
         CampaignStartsAtInput = null;
         CampaignEndsAtInput = null;
+        CampaignTargetingJsonInput = _editingCampaignTargetingJson;
+        CampaignPayloadJsonInput = _editingCampaignPayloadJson;
         SelectedCampaignChannel = CampaignChannelOptions.FirstOrDefault();
 
         OnPropertyChanged(nameof(IsCampaignEditMode));
