@@ -410,4 +410,28 @@
   <data name="RewardsCampaignToggleFailed" xml:space="preserve">
     <value>Unable to change campaign activation state.</value>
   </data>
+  <data name="RewardsCampaignNamePlaceholder" xml:space="preserve">
+    <value>Campaign internal name</value>
+  </data>
+  <data name="RewardsCampaignTitlePlaceholder" xml:space="preserve">
+    <value>Campaign title</value>
+  </data>
+  <data name="RewardsCampaignBodyPlaceholder" xml:space="preserve">
+    <value>Campaign body (optional)</value>
+  </data>
+  <data name="RewardsCampaignNewButton" xml:space="preserve">
+    <value>New campaign</value>
+  </data>
+  <data name="RewardsCampaignCreateButton" xml:space="preserve">
+    <value>Create campaign</value>
+  </data>
+  <data name="RewardsCampaignUpdateButton" xml:space="preserve">
+    <value>Update campaign</value>
+  </data>
+  <data name="RewardsCampaignSaveFailed" xml:space="preserve">
+    <value>Unable to save campaign.</value>
+  </data>
+  <data name="RewardsCampaignValidationFailed" xml:space="preserve">
+    <value>Campaign name and title are required.</value>
+  </data>
 </root>

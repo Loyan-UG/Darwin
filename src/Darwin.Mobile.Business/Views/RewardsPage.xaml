@@ -119,11 +119,44 @@
             </CollectionView>
 
 
+            <Border StrokeThickness="1" Stroke="#666666" Padding="12">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding CampaignSaveButtonText}" FontAttributes="Bold" />
+
+                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignNamePlaceholder}"
+                           Text="{Binding CampaignNameInput}" />
+
+                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignTitlePlaceholder}"
+                           Text="{Binding CampaignTitleInput}" />
+
+                    <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignBodyPlaceholder}"
+                            AutoSize="TextChanges"
+                            Text="{Binding CampaignBodyInput}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Text="{Binding CampaignSaveButtonText}"
+                                Command="{Binding SaveCampaignCommand}"
+                                IsEnabled="{Binding CanManageRewards}"
+                                Style="{StaticResource PrimaryButtonStyle}" />
+
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.RewardsCampaignNewButton}"
+                                Command="{Binding NewCampaignCommand}"
+                                IsEnabled="{Binding CanManageRewards}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
             <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
                    FontAttributes="Bold" />
 
-            <CollectionView ItemsSource="{Binding Campaigns}"
-                            SelectionMode="None">
+            <CollectionView x:Name="CampaignsCollectionView"
+                            ItemsSource="{Binding Campaigns}"
+                            SelectionMode="Single">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:BusinessCampaignEditorItem">
                         <Border StrokeThickness="1" Stroke="#444444" Padding="10" Margin="0,4,0,4">
