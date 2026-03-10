@@ -53,6 +53,8 @@ public sealed class RewardsViewModel : BaseViewModel
     private string _campaignNameInput = string.Empty;
     private string _campaignTitleInput = string.Empty;
     private string? _campaignBodyInput;
+    private string? _campaignStartsAtInput;
+    private string? _campaignEndsAtInput;
 
     private const int CampaignListPageSize = 50;
 
@@ -198,6 +200,24 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         get => _campaignBodyInput;
         set => SetProperty(ref _campaignBodyInput, value);
+    }
+
+    /// <summary>
+    /// Campaign start UTC input in format yyyy-MM-dd HH:mm (optional).
+    /// </summary>
+    public string? CampaignStartsAtInput
+    {
+        get => _campaignStartsAtInput;
+        set => SetProperty(ref _campaignStartsAtInput, value);
+    }
+
+    /// <summary>
+    /// Campaign end UTC input in format yyyy-MM-dd HH:mm (optional).
+    /// </summary>
+    public string? CampaignEndsAtInput
+    {
+        get => _campaignEndsAtInput;
+        set => SetProperty(ref _campaignEndsAtInput, value);
     }
 
     /// <summary>
@@ -370,6 +390,8 @@ public sealed class RewardsViewModel : BaseViewModel
             CampaignNameInput = campaign.Name;
             CampaignTitleInput = campaign.Title;
             CampaignBodyInput = campaign.Body;
+            CampaignStartsAtInput = campaign.StartsAtUtc?.ToString("yyyy-MM-dd HH:mm");
+            CampaignEndsAtInput = campaign.EndsAtUtc?.ToString("yyyy-MM-dd HH:mm");
 
             OnPropertyChanged(nameof(IsCampaignEditMode));
             OnPropertyChanged(nameof(CampaignSaveButtonText));
@@ -521,6 +543,35 @@ public sealed class RewardsViewModel : BaseViewModel
 
 
     /// <summary>
+    /// Parses optional UTC date input in expected business-editor format.
+    /// </summary>
+    private static bool TryParseCampaignDate(string? input, out DateTime? valueUtc, out string? error)
+    {
+        valueUtc = null;
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return true;
+        }
+
+        if (!DateTime.TryParse(input, out var parsed))
+        {
+            error = AppResources.RewardsCampaignDateValidationFailed;
+            return false;
+        }
+
+        valueUtc = parsed.Kind switch
+        {
+            DateTimeKind.Utc => parsed,
+            DateTimeKind.Local => parsed.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
+        };
+
+        return true;
+    }
+
+    /// <summary>
     /// Creates or updates campaign based on editor mode.
     /// </summary>
     private async Task SaveCampaignAsync()
@@ -542,6 +593,24 @@ public sealed class RewardsViewModel : BaseViewModel
             return;
         }
 
+        if (!TryParseCampaignDate(CampaignStartsAtInput, out var startsAtUtc, out var startsError))
+        {
+            RunOnMain(() => ErrorMessage = startsError ?? AppResources.RewardsCampaignDateValidationFailed);
+            return;
+        }
+
+        if (!TryParseCampaignDate(CampaignEndsAtInput, out var endsAtUtc, out var endsError))
+        {
+            RunOnMain(() => ErrorMessage = endsError ?? AppResources.RewardsCampaignDateValidationFailed);
+            return;
+        }
+
+        if (startsAtUtc.HasValue && endsAtUtc.HasValue && startsAtUtc.Value > endsAtUtc.Value)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignDateRangeValidationFailed);
+            return;
+        }
+
         IsBusy = true;
         RaiseCommandCanExecuteChanged();
 
@@ -559,6 +628,8 @@ public sealed class RewardsViewModel : BaseViewModel
                         Title = CampaignTitleInput.Trim(),
                         Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
                         Channels = _editingCampaignChannels,
+                        StartsAtUtc = startsAtUtc,
+                        EndsAtUtc = endsAtUtc,
                         TargetingJson = _editingCampaignTargetingJson,
                         PayloadJson = _editingCampaignPayloadJson,
                         RowVersion = _editingCampaignRowVersion
@@ -574,6 +645,8 @@ public sealed class RewardsViewModel : BaseViewModel
                         Title = CampaignTitleInput.Trim(),
                         Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
                         Channels = 1,
+                        StartsAtUtc = startsAtUtc,
+                        EndsAtUtc = endsAtUtc,
                         TargetingJson = "{}",
                         PayloadJson = "{}"
                     }, CancellationToken.None)
@@ -831,6 +904,8 @@ public sealed class RewardsViewModel : BaseViewModel
         CampaignNameInput = string.Empty;
         CampaignTitleInput = string.Empty;
         CampaignBodyInput = null;
+        CampaignStartsAtInput = null;
+        CampaignEndsAtInput = null;
 
         OnPropertyChanged(nameof(IsCampaignEditMode));
         OnPropertyChanged(nameof(CampaignSaveButtonText));

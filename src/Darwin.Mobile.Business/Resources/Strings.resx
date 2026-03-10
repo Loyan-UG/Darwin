@@ -434,4 +434,16 @@
   <data name="RewardsCampaignValidationFailed" xml:space="preserve">
     <value>Campaign name and title are required.</value>
   </data>
+  <data name="RewardsCampaignStartsAtPlaceholder" xml:space="preserve">
+    <value>Start UTC (yyyy-MM-dd HH:mm, optional)</value>
+  </data>
+  <data name="RewardsCampaignEndsAtPlaceholder" xml:space="preserve">
+    <value>End UTC (yyyy-MM-dd HH:mm, optional)</value>
+  </data>
+  <data name="RewardsCampaignDateValidationFailed" xml:space="preserve">
+    <value>Campaign date format is invalid. Use yyyy-MM-dd HH:mm.</value>
+  </data>
+  <data name="RewardsCampaignDateRangeValidationFailed" xml:space="preserve">
+    <value>Campaign start date must be earlier than end date.</value>
+  </data>
 </root>

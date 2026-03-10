@@ -137,6 +137,12 @@
                             AutoSize="TextChanges"
                             Text="{Binding CampaignBodyInput}" />
 
+                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignStartsAtPlaceholder}"
+                           Text="{Binding CampaignStartsAtInput}" />
+
+                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignEndsAtPlaceholder}"
+                           Text="{Binding CampaignEndsAtInput}" />
+
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                         <Button Text="{Binding CampaignSaveButtonText}"
                                 Command="{Binding SaveCampaignCommand}"
