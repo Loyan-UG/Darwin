@@ -134,5 +134,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         Task<Result<BusinessRewardTierMutationResponse>> CreateBusinessRewardTierAsync(CreateBusinessRewardTierRequest request, CancellationToken cancellationToken);
         Task<Result<BusinessRewardTierMutationResponse>> UpdateBusinessRewardTierAsync(UpdateBusinessRewardTierRequest request, CancellationToken cancellationToken);
         Task<Result<BusinessRewardTierMutationResponse>> DeleteBusinessRewardTierAsync(DeleteBusinessRewardTierRequest request, CancellationToken cancellationToken);
+
+        // Business campaign management
+        Task<Result<GetBusinessCampaignsResponse>> GetBusinessCampaignsAsync(int page, int pageSize, CancellationToken cancellationToken);
+        Task<Result<BusinessCampaignMutationResponse>> CreateBusinessCampaignAsync(CreateBusinessCampaignRequest request, CancellationToken cancellationToken);
+        Task<Result> UpdateBusinessCampaignAsync(UpdateBusinessCampaignRequest request, CancellationToken cancellationToken);
+        Task<Result> SetBusinessCampaignActivationAsync(SetCampaignActivationRequest request, CancellationToken cancellationToken);
     }
 }

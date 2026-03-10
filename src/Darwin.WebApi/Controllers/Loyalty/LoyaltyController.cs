@@ -1,4 +1,5 @@
-﻿using Darwin.Application.Loyalty.Commands;
+﻿using Darwin.Application.Loyalty.Campaigns;
+using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
 using Darwin.Contracts.Common;
@@ -54,6 +55,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
         private readonly CreateLoyaltyRewardTierHandler _createLoyaltyRewardTierHandler;
         private readonly UpdateLoyaltyRewardTierHandler _updateLoyaltyRewardTierHandler;
         private readonly SoftDeleteLoyaltyRewardTierHandler _softDeleteLoyaltyRewardTierHandler;
+        private readonly GetBusinessCampaignsHandler _getBusinessCampaignsHandler;
+        private readonly CreateBusinessCampaignHandler _createBusinessCampaignHandler;
+        private readonly UpdateBusinessCampaignHandler _updateBusinessCampaignHandler;
+        private readonly SetCampaignActivationHandler _setCampaignActivationHandler;
 
 
 
@@ -102,6 +107,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
             CreateLoyaltyRewardTierHandler createLoyaltyRewardTierHandler,
             UpdateLoyaltyRewardTierHandler updateLoyaltyRewardTierHandler,
             SoftDeleteLoyaltyRewardTierHandler softDeleteLoyaltyRewardTierHandler,
+            GetBusinessCampaignsHandler getBusinessCampaignsHandler,
+            CreateBusinessCampaignHandler createBusinessCampaignHandler,
+            UpdateBusinessCampaignHandler updateBusinessCampaignHandler,
+            SetCampaignActivationHandler setCampaignActivationHandler,
             GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
             CreateLoyaltyAccountHandler createLoyaltyAccountHandler,
             ILoyaltyPresentationService presentationService,
@@ -124,6 +133,10 @@ namespace Darwin.WebApi.Controllers.Loyalty
             _createLoyaltyRewardTierHandler = createLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(createLoyaltyRewardTierHandler));
             _updateLoyaltyRewardTierHandler = updateLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(updateLoyaltyRewardTierHandler));
             _softDeleteLoyaltyRewardTierHandler = softDeleteLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(softDeleteLoyaltyRewardTierHandler));
+            _getBusinessCampaignsHandler = getBusinessCampaignsHandler ?? throw new ArgumentNullException(nameof(getBusinessCampaignsHandler));
+            _createBusinessCampaignHandler = createBusinessCampaignHandler ?? throw new ArgumentNullException(nameof(createBusinessCampaignHandler));
+            _updateBusinessCampaignHandler = updateBusinessCampaignHandler ?? throw new ArgumentNullException(nameof(updateBusinessCampaignHandler));
+            _setCampaignActivationHandler = setCampaignActivationHandler ?? throw new ArgumentNullException(nameof(setCampaignActivationHandler));
             _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
             _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
             _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
@@ -1234,7 +1247,15 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 .HandleAsync(new MyPromotionsDto
                 {
                     BusinessId = request.BusinessId,
-                    MaxItems = request.MaxItems
+                    MaxItems = request.MaxItems,
+                    Policy = request.Policy is null
+                        ? null
+                        : new PromotionFeedPolicyDto
+                        {
+                            EnableDeduplication = request.Policy.EnableDeduplication,
+                            MaxCards = request.Policy.MaxCards,
+                            SuppressionWindowMinutes = request.Policy.SuppressionWindowMinutes
+                        }
                 }, ct)
                 .ConfigureAwait(false);
 
@@ -1245,6 +1266,12 @@ namespace Darwin.WebApi.Controllers.Loyalty
 
             var response = new MyPromotionsResponse
             {
+                AppliedPolicy = new PromotionFeedPolicy
+                {
+                    EnableDeduplication = result.Value.AppliedPolicy.EnableDeduplication,
+                    MaxCards = result.Value.AppliedPolicy.MaxCards,
+                    SuppressionWindowMinutes = result.Value.AppliedPolicy.SuppressionWindowMinutes
+                },
                 Items = result.Value.Items
                     .Select(x => new PromotionFeedItem
                     {
@@ -1253,12 +1280,196 @@ namespace Darwin.WebApi.Controllers.Loyalty
                         Title = x.Title,
                         Description = x.Description,
                         CtaKind = x.CtaKind,
-                        Priority = x.Priority
+                        Priority = x.Priority,
+                        CampaignId = x.CampaignId,
+                        CampaignState = x.CampaignState,
+                        StartsAtUtc = x.StartsAtUtc,
+                        EndsAtUtc = x.EndsAtUtc,
+                        EligibilityRules = x.EligibilityRules
+                            .Select(rule => new PromotionEligibilityRule
+                            {
+                                AudienceKind = rule.AudienceKind,
+                                MinPoints = rule.MinPoints,
+                                MaxPoints = rule.MaxPoints,
+                                TierKey = rule.TierKey,
+                                Note = rule.Note
+                            })
+                            .ToList()
                     })
                     .ToList()
             };
 
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Returns business-owned campaign cards for management screens.
+        /// </summary>
+        [HttpGet("business/campaigns")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(typeof(GetBusinessCampaignsResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetBusinessCampaignsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        {
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult!;
+            }
+
+            var result = await _getBusinessCampaignsHandler.HandleAsync(businessId, page, pageSize, ct).ConfigureAwait(false);
+            if (!result.Succeeded || result.Value is null)
+            {
+                return ProblemFromResult(result);
+            }
+
+            var response = new GetBusinessCampaignsResponse
+            {
+                Total = result.Value.Total,
+                Items = result.Value.Items.Select(x => new BusinessCampaignItem
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    Name = x.Name,
+                    Title = x.Title,
+                    Subtitle = x.Subtitle,
+                    Body = x.Body,
+                    MediaUrl = x.MediaUrl,
+                    LandingUrl = x.LandingUrl,
+                    Channels = x.Channels,
+                    StartsAtUtc = x.StartsAtUtc,
+                    EndsAtUtc = x.EndsAtUtc,
+                    IsActive = x.IsActive,
+                    CampaignState = x.CampaignState,
+                    TargetingJson = x.TargetingJson,
+                    PayloadJson = x.PayloadJson,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Creates a business campaign in draft state.
+        /// </summary>
+        [HttpPost("business/campaigns")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(typeof(BusinessCampaignMutationResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateBusinessCampaignAsync([FromBody] CreateBusinessCampaignRequest? request, CancellationToken ct = default)
+        {
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult!;
+            }
+
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            var result = await _createBusinessCampaignHandler.HandleAsync(new CreateBusinessCampaignDto
+            {
+                BusinessId = businessId,
+                Name = request.Name,
+                Title = request.Title,
+                Subtitle = request.Subtitle,
+                Body = request.Body,
+                MediaUrl = request.MediaUrl,
+                LandingUrl = request.LandingUrl,
+                Channels = request.Channels,
+                StartsAtUtc = request.StartsAtUtc,
+                EndsAtUtc = request.EndsAtUtc,
+                TargetingJson = request.TargetingJson,
+                PayloadJson = request.PayloadJson
+            }, ct).ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value == Guid.Empty)
+            {
+                return ProblemFromResult(result);
+            }
+
+            return Created($"/api/v1/loyalty/business/campaigns/{result.Value}", new BusinessCampaignMutationResponse { CampaignId = result.Value });
+        }
+
+        /// <summary>
+        /// Updates an existing business campaign.
+        /// </summary>
+        [HttpPut("business/campaigns/{id:guid}")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateBusinessCampaignAsync(Guid id, [FromBody] UpdateBusinessCampaignRequest? request, CancellationToken ct = default)
+        {
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult!;
+            }
+
+            if (request is null || request.Id != id)
+            {
+                return BadRequestProblem("Request body is required and route id must match body id.");
+            }
+
+            var result = await _updateBusinessCampaignHandler.HandleAsync(new UpdateBusinessCampaignDto
+            {
+                BusinessId = businessId,
+                Id = request.Id,
+                Name = request.Name,
+                Title = request.Title,
+                Subtitle = request.Subtitle,
+                Body = request.Body,
+                MediaUrl = request.MediaUrl,
+                LandingUrl = request.LandingUrl,
+                Channels = request.Channels,
+                StartsAtUtc = request.StartsAtUtc,
+                EndsAtUtc = request.EndsAtUtc,
+                TargetingJson = request.TargetingJson,
+                PayloadJson = request.PayloadJson,
+                RowVersion = request.RowVersion
+            }, ct).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Activates or deactivates a business campaign.
+        /// </summary>
+        [HttpPost("business/campaigns/{id:guid}/activation")]
+        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> SetBusinessCampaignActivationAsync(Guid id, [FromBody] SetCampaignActivationRequest? request, CancellationToken ct = default)
+        {
+            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+            {
+                return errorResult!;
+            }
+
+            if (request is null || request.Id != id)
+            {
+                return BadRequestProblem("Request body is required and route id must match body id.");
+            }
+
+            var result = await _setCampaignActivationHandler.HandleAsync(new SetCampaignActivationDto
+            {
+                BusinessId = businessId,
+                Id = request.Id,
+                IsActive = request.IsActive,
+                RowVersion = request.RowVersion
+            }, ct).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
+
+            return NoContent();
         }
 
         /// <summary>
