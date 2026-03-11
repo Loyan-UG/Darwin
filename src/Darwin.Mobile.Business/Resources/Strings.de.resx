@@ -398,4 +398,76 @@
   <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
     <value>Ihr Konto hat keine Berechtigung, Gutschriften zu bestätigen.</value>
   </data>
+  <data name="RewardsCampaignsLabel" xml:space="preserve">
+    <value>Kampagnen</value>
+  </data>
+  <data name="RewardsCampaignActivateButton" xml:space="preserve">
+    <value>Kampagne aktivieren</value>
+  </data>
+  <data name="RewardsCampaignDeactivateButton" xml:space="preserve">
+    <value>Kampagne deaktivieren</value>
+  </data>
+  <data name="RewardsCampaignToggleFailed" xml:space="preserve">
+    <value>Der Aktivierungsstatus der Kampagne konnte nicht geändert werden.</value>
+  </data>
+  <data name="RewardsCampaignNamePlaceholder" xml:space="preserve">
+    <value>Interner Kampagnenname</value>
+  </data>
+  <data name="RewardsCampaignTitlePlaceholder" xml:space="preserve">
+    <value>Kampagnentitel</value>
+  </data>
+  <data name="RewardsCampaignBodyPlaceholder" xml:space="preserve">
+    <value>Kampagnentext (optional)</value>
+  </data>
+  <data name="RewardsCampaignNewButton" xml:space="preserve">
+    <value>Neue Kampagne</value>
+  </data>
+  <data name="RewardsCampaignCreateButton" xml:space="preserve">
+    <value>Kampagne erstellen</value>
+  </data>
+  <data name="RewardsCampaignUpdateButton" xml:space="preserve">
+    <value>Kampagne aktualisieren</value>
+  </data>
+  <data name="RewardsCampaignSaveFailed" xml:space="preserve">
+    <value>Kampagne konnte nicht gespeichert werden.</value>
+  </data>
+  <data name="RewardsCampaignValidationFailed" xml:space="preserve">
+    <value>Kampagnenname und Titel sind erforderlich.</value>
+  </data>
+  <data name="RewardsCampaignStartsAtPlaceholder" xml:space="preserve">
+    <value>Start UTC (yyyy-MM-dd HH:mm, optional)</value>
+  </data>
+  <data name="RewardsCampaignEndsAtPlaceholder" xml:space="preserve">
+    <value>Ende UTC (yyyy-MM-dd HH:mm, optional)</value>
+  </data>
+  <data name="RewardsCampaignDateValidationFailed" xml:space="preserve">
+    <value>Datumsformat der Kampagne ist ungültig. Verwenden Sie yyyy-MM-dd HH:mm.</value>
+  </data>
+  <data name="RewardsCampaignDateRangeValidationFailed" xml:space="preserve">
+    <value>Das Startdatum der Kampagne muss vor dem Enddatum liegen.</value>
+  </data>
+  <data name="RewardsCampaignChannelPickerTitle" xml:space="preserve">
+    <value>Auslieferungskanäle</value>
+  </data>
+  <data name="RewardsCampaignChannelInAppOnly" xml:space="preserve">
+    <value>Nur In-App</value>
+  </data>
+  <data name="RewardsCampaignChannelInAppAndPush" xml:space="preserve">
+    <value>In-App + Push</value>
+  </data>
+  <data name="RewardsCampaignTargetingJsonPlaceholder" xml:space="preserve">
+    <value>Targeting-JSON (optional, Objekt)</value>
+  </data>
+  <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
+    <value>Payload-JSON (optional, Objekt)</value>
+  </data>
+  <data name="RewardsCampaignTargetingValidationFailed" xml:space="preserve">
+    <value>Targeting-JSON muss ein gültiges JSON-Objekt sein.</value>
+  </data>
+  <data name="RewardsCampaignPayloadValidationFailed" xml:space="preserve">
+    <value>Payload-JSON muss ein gültiges JSON-Objekt sein.</value>
+  </data>
+  <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
+    <value>Bitte wählen Sie einen gültigen Auslieferungskanal für die Kampagne.</value>
+  </data>
 </root>
