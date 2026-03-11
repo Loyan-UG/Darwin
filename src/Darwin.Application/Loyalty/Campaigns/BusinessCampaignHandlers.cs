@@ -142,7 +142,10 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result.Fail("Campaign not found.");
             }
 
-            _db.Entry(entity).Property(x => x.RowVersion).OriginalValue = dto.RowVersion;
+            if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            {
+                return Result.Fail("Campaign was updated by another user. Refresh and retry.");
+            }
 
             entity.Name = dto.Name.Trim();
             entity.Title = dto.Title.Trim();
@@ -193,7 +196,11 @@ namespace Darwin.Application.Loyalty.Campaigns
                 return Result.Fail("Campaign not found.");
             }
 
-            _db.Entry(entity).Property(x => x.RowVersion).OriginalValue = dto.RowVersion;
+            if (!entity.RowVersion.SequenceEqual(dto.RowVersion ?? Array.Empty<byte>()))
+            {
+                return Result.Fail("Campaign was updated by another user. Refresh and retry.");
+            }
+
             entity.IsActive = dto.IsActive;
 
             try
