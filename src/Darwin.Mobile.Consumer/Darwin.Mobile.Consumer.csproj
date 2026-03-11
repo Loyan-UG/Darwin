@@ -71,7 +71,7 @@
 
 
 <Target Name="ValidateAndroidPushFirebaseConfig" BeforeTargets="Build"
-        Condition="'$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))' == 'android'">
+        Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 	<Warning Condition="!Exists('google-services.json') and '$(Configuration)' != 'Release'"
 	         Text="google-services.json is missing. FCM token/bootstrap can fail at runtime. Add src/Darwin.Mobile.Consumer/google-services.json for your Firebase project." />
 	<Error Condition="!Exists('google-services.json') and '$(Configuration)' == 'Release'"
@@ -79,7 +79,7 @@
 </Target>
 
 <Target Name="ValidateAndroidGoogleMapsApiKey" BeforeTargets="Build"
-        Condition="'$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))' == 'android'">
+        Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
 	<Warning Condition="'$(GoogleMapsApiKey)' == '' and '$(Configuration)' != 'Release'"
 	         Text="GOOGLE_MAPS_API_KEY is not set. Android map tiles may fail at runtime. Set GoogleMapsApiKey or env var GOOGLE_MAPS_API_KEY (or ANDROID_GOOGLE_MAPS_API_KEY)." />
 	<Error Condition="'$(GoogleMapsApiKey)' == '' and '$(Configuration)' == 'Release'"

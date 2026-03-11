@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Android.Gms.Tasks;
 using Firebase.Messaging;
 
 namespace Darwin.Mobile.Consumer.Services.Notifications;
@@ -15,7 +14,7 @@ namespace Darwin.Mobile.Consumer.Services.Notifications;
 /// </remarks>
 internal static class AndroidFcmRuntimeBridge
 {
-    public static async Task<string?> GetTokenAsync(CancellationToken cancellationToken)
+    public static async Task<string?> GetTokenAsync(System.Threading.CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -36,7 +35,7 @@ internal static class AndroidFcmRuntimeBridge
         return token;
     }
 
-    private static Task<string?> AsTask(this Android.Gms.Tasks.Task firebaseTask, CancellationToken cancellationToken)
+    private static Task<string?> AsTask(this Android.Gms.Tasks.Task firebaseTask, System.Threading.CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
