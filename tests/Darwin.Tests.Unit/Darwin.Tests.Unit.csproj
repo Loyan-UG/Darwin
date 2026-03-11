@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Darwin.Application\Darwin.Application.csproj" />
+    <ProjectReference Include="..\..\src\Darwin.Contracts\Darwin.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Darwin.Domain\Darwin.Domain.csproj" />
     <ProjectReference Include="..\..\src\Darwin.Shared\Darwin.Shared.csproj" />
   </ItemGroup>

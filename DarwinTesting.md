@@ -528,7 +528,7 @@ This status is derived from the current repository state and must be refreshed w
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authenticated happy-path matrix is still pending.
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage is implemented; authenticated success + stale row-version matrix is still pending.
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage is implemented; authenticated end-to-end prepare/process/confirm scenarios are still pending.
-- [ ] Add contract serialization compatibility tests for mobile-critical DTOs.
+- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline serialization shape checks are implemented for Identity/Loyalty/Profile core contracts; broaden coverage to additional DTO sets is pending.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
 - [ ] Add CI lane split and coverage publication for unit/integration.
 
@@ -544,7 +544,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 2 | Identity flow test pack | In Progress | Baseline + core negative tests exist (`request-reset` 200, anonymous `password/change` 401, invalid login/refresh/reset 400); next add authenticated happy-path matrix |
 | 3 | Profile concurrency test pack | In Progress | Baseline auth-guard tests exist (`GET/PUT /profile/me` anonymous => 401); next add authenticated success + stale row-version conflict matrix |
 | 4 | Loyalty scan journey test pack | In Progress | Baseline auth-guard tests exist (`my/businesses`, `my/accounts`, `scan/prepare`, `scan/process`, `scan/confirm-accrual` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
-| 5 | Contracts compatibility pack | Pending | Serialization tests protect key DTO JSON shapes consumed by mobile apps |
+| 5 | Contracts compatibility pack | In Progress | Baseline serialization compatibility tests exist for key Identity/Loyalty/Profile contracts; next expand to additional DTO families and versioning scenarios |
 | 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
 | 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
 
@@ -566,6 +566,7 @@ Backlog update rule:
 - Added profile endpoint baseline integration tests to validate anonymous access is rejected for `GET/PUT /api/v1/profile/me`.
 - Added loyalty endpoint baseline integration tests to validate anonymous access is rejected for `GET /api/v1/loyalty/my/businesses` and `POST /api/v1/loyalty/scan/prepare`.
 - Expanded loyalty baseline coverage with additional anonymous-guard checks for `GET /api/v1/loyalty/my/accounts`, `POST /api/v1/loyalty/scan/process`, and `POST /api/v1/loyalty/scan/confirm-accrual`.
+- Added contract serialization compatibility tests for critical `TokenResponse`, `PrepareScanSessionResponse`, and `CustomerProfile` JSON property shapes.
 
 
 ---
