@@ -528,7 +528,7 @@ This status is derived from the current repository state and must be refreshed w
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authenticated happy-path matrix is still pending.
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage is implemented; authenticated success + stale row-version matrix is still pending.
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage is implemented; authenticated end-to-end prepare/process/confirm scenarios are still pending.
-- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline serialization shape checks are implemented for Identity/Loyalty/Profile core contracts; broaden coverage to additional DTO sets is pending.
+- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline serialization shape checks are implemented for Identity/Loyalty/Profile core contracts (including login request and business scan-process response shapes); broaden coverage to additional DTO sets is pending.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
 - [ ] Add CI lane split and coverage publication for unit/integration.
 
@@ -567,6 +567,7 @@ Backlog update rule:
 - Added loyalty endpoint baseline integration tests to validate anonymous access is rejected for `GET /api/v1/loyalty/my/businesses` and `POST /api/v1/loyalty/scan/prepare`.
 - Expanded loyalty baseline coverage with additional anonymous-guard checks for `GET /api/v1/loyalty/my/accounts`, `POST /api/v1/loyalty/scan/process`, and `POST /api/v1/loyalty/scan/confirm-accrual`.
 - Added contract serialization compatibility tests for critical `TokenResponse`, `PrepareScanSessionResponse`, and `CustomerProfile` JSON property shapes.
+- Expanded contract serialization coverage with `PasswordLoginRequest` and `ProcessScanSessionForBusinessResponse` JSON property-shape checks.
 
 
 ---

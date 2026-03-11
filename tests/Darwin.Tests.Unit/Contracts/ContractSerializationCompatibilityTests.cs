@@ -48,6 +48,30 @@ public sealed class ContractSerializationCompatibilityTests
     }
 
     /// <summary>
+    ///     Verifies that login request contract keeps expected camelCase field names.
+    ///     This protects authentication call compatibility across mobile clients.
+    /// </summary>
+    [Fact]
+    public void PasswordLoginRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new PasswordLoginRequest
+        {
+            Email = "member@example.test",
+            Password = "SecurePassword123!",
+            DeviceId = "device-1"
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"email\"");
+        json.Should().Contain("\"password\"");
+        json.Should().Contain("\"deviceId\"");
+    }
+
+    /// <summary>
     ///     Verifies that prepare-scan response keeps the expected field names for session token,
     ///     mode, expiration, current balance, and selected rewards list.
     /// </summary>
@@ -85,6 +109,43 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"expiresAtUtc\"");
         json.Should().Contain("\"currentPointsBalance\"");
         json.Should().Contain("\"selectedRewards\"");
+    }
+
+    /// <summary>
+    ///     Verifies that business-process response contract serializes session mode,
+    ///     account summary, selected rewards and allowed actions with stable names.
+    /// </summary>
+    [Fact]
+    public void ProcessScanSessionForBusinessResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new ProcessScanSessionForBusinessResponse
+        {
+            Mode = LoyaltyScanMode.Accrual,
+            BusinessId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+            BusinessLocationId = Guid.Parse("66666666-6666-6666-6666-666666666666"),
+            CustomerDisplayName = "Member #104",
+            AllowedActions = LoyaltyScanAllowedActions.CanAccruePoints,
+            AccountSummary = new BusinessLoyaltyAccountSummary
+            {
+                LoyaltyAccountId = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                PointsBalance = 200,
+                CustomerDisplayName = "Member #104"
+            },
+            SelectedRewards = []
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"mode\"");
+        json.Should().Contain("\"businessId\"");
+        json.Should().Contain("\"businessLocationId\"");
+        json.Should().Contain("\"accountSummary\"");
+        json.Should().Contain("\"customerDisplayName\"");
+        json.Should().Contain("\"selectedRewards\"");
+        json.Should().Contain("\"allowedActions\"");
     }
 
     /// <summary>
