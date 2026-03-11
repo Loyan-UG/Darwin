@@ -172,6 +172,30 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+
+
+    /// <summary>
+    ///     Verifies that promotions feed endpoint is protected and cannot be
+    ///     queried by anonymous callers.
+    /// </summary>
+    [Fact]
+    public async Task GetMyPromotions_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new MyPromotionsRequest
+        {
+            BusinessId = null,
+            MaxItems = 20
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/my/promotions", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     ///     Creates an HTTPS client so status assertions are not affected by HTTP->HTTPS redirect behavior.
     /// </summary>

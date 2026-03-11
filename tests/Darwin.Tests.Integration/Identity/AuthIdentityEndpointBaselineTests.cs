@@ -152,6 +152,29 @@ public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplica
 
 
 
+
+
+    /// <summary>
+    ///     Verifies that single-device logout endpoint requires authentication and
+    ///     rejects anonymous requests with 401/Unauthorized.
+    /// </summary>
+    [Fact]
+    public async Task Logout_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new LogoutRequest
+        {
+            RefreshToken = $"anonymous-refresh-{Guid.NewGuid():N}"
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/logout", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     ///     Verifies that global logout endpoint requires authentication and rejects
     ///     anonymous requests with 401/Unauthorized.
