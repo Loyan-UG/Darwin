@@ -157,10 +157,15 @@ It is designed as the **single source of truth** for development planning.
 - [x] Staff roles & permissions
 
 ## 3.4 Mobile Consumer App – Phase 3
-- Push notifications
-- Multi-business loyalty overview
-- Promotion campaigns
-- Inactive user reminders
+### Completed
+- [x] Push registration infrastructure end-to-end baseline (contracts, API endpoint, shared/mobile services, coordinator wiring).
+- [x] Manual push registration sync UX in Consumer Profile (status + last sync timestamp + retry action).
+
+### Remaining
+- [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
+- [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
+- [x] Promotion campaigns integration in consumer timeline.
+- [~] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
 - Full analytics module (CSV/PDF export)
@@ -168,19 +173,66 @@ It is designed as the **single source of truth** for development planning.
 - Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
+- [x] Push provider operational readiness checklist per environment (Firebase `google-services.json`, Apple Push entitlement/certificate, runtime permission verification, and token rotation monitoring dashboard).
 - [x] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
 - [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
 - [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
 - [x] QR countdown UX decision finalized: keep 1s display refresh (smoother UI) with a 5-minute minimum automatic network refresh limit.
+- [x] Consumer Profile push registration self-service sync: added manual sync action with user-visible status and last-sync timestamp.
 
+- [x] Externalize mobile map API keys (Android Google Maps) to secure secret providers, with Android build-time validation (warn in Debug, fail in Release) and documented iOS/MapKit requirements per environment.
 
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
-- [ ] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
-- [ ] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
-- [ ] Add eligibility + audience rules (joined members, tier, points threshold, date window).
-- [ ] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
-- [ ] Add tracking events for impression/open/claim to measure conversion.
-- [ ] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+- [~] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
+- [~] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
+- [~] Add eligibility + audience rules (joined members, tier, points threshold, date window).
+- [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
+- [x] Add tracking events for impression/open/claim to measure conversion.
+- [~] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+
+
+## 3.8 Quality Findings & Follow-up
+- [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
+- [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
+- [↪] Testing coverage for Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior moved to `DarwinTesting.md` (handled in dedicated testing track).
+- [x] Confirmed production token-provider strategy (`ConsumerPlatformPushTokenProvider` with Android FCM + iOS/MacCatalyst APNs bridges) and removed fallback registration path from DI.
+- [x] Hardened platform build wiring (Android-only Firebase package + explicit iOS/MacCatalyst entitlements binding) to prevent cross-target restore/signing misconfiguration.
+- [x] Added Android 13+ startup notification-permission request bootstrap with one-time prompt persistence, and removed legacy fallback push token providers to reduce production ambiguity.
+- [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
+- [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
+- [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
+- [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.
+- [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
+- [x] Rewards page now includes aggregated multi-business overview metrics and a quick QR action for the selected business context.
+- [x] Feed promotions now support scope switching (selected business vs all joined businesses) with context-aware cards.
+- [x] Feed promotions now enforce initial guardrails in mobile rendering (de-duplication by business/title/CTA, 6-card cap, and 8-hour suppression window with fallback behavior).
+- [x] Device registration heartbeat now updates `UserEngagementSnapshot` baseline fields (`LastActivityAtUtc`, `EventCount`, compact snapshot metadata) to support inactive-reminder triggering and measurement.
+- [x] Added Application handlers for inactive-reminder candidate selection and per-outcome measurement metadata recording (sent/failed/suppressed with cooldown-ready baseline).
+- [x] Added WebApi background worker scaffold for inactive reminders (`InactiveReminderBackgroundService`) with configurable interval/threshold/cooldown and batch observability counters.
+- [x] Inactive reminder batch orchestration now records every attempt outcome (`Sent`, `Failed`, `Suppressed`) in engagement snapshot metadata for measurement dashboards.
+- [x] Replaced no-op reminder dispatcher with HTTP push gateway dispatcher (`HttpInactiveReminderDispatcher`) using push token + platform payload and configurable auth/templates.
+- [x] Added stable inactive-reminder gateway failure taxonomy codes (`Gateway.*`, `Validation.*`) for cleaner suppression/failure measurement and dashboards.
+- [x] Gateway dispatcher now extracts provider-native reason fields (`providerCode`/`providerReason`/`code`/`reason`) and emits normalized `Gateway.Provider.*` taxonomy codes.
+- [x] Added canonical provider mappings for common FCM/APNs reason codes (token invalid, auth/topic mismatch, rate-limit, service unavailable) to improve remediation signals.
+- [x] Added promotion interaction tracking endpoint + mobile client calls for `Impression` and `Open` events (engagement snapshot metadata updates).
+- [x] Added `Claim` event hook from redemption QR generation flow (`RewardClaimIntent`) to complete promotions conversion funnel telemetry coverage.
+- [x] Added campaign-foundation promotion payload fields in Contracts/Application/WebApi mapping (`CampaignState`, campaign window, and normalized eligibility rules) while keeping backward-compatible derived cards active.
+- [x] Promotions query now reads active in-app `Marketing.Campaign` entities (global + joined-business scoped), resolves lifecycle state, and merges campaign cards with derived loyalty cards for gradual migration.
+- [x] Promotions feed now applies server-side guardrails with contract-exposed policy (`EnableDeduplication`, `MaxCards`, `SuppressionWindowMinutes`) and campaign suppression based on recent in-app delivery attempts.
+- [x] Added business campaign management WebApi endpoints (list/create/update/activation) with business-scope ownership checks and RowVersion concurrency for update/activation paths.
+- [x] Wired business campaign management contracts into `Darwin.Mobile.Shared` loyalty facade (list/create/update/activation) so mobile business workflows can consume the new WebApi surface.
+- [x] Business mobile Rewards screen now includes campaign list, in-app activation toggle, and minimal create/update campaign editor wired to shared campaign APIs.
+- [x] Business campaign editor now supports optional UTC start/end inputs with client-side format/range validation before create/update API calls.
+- [x] Business campaign editor now supports delivery-channel selection (In-App / In-App+Push) with explicit validation and localized labels in mobile UI.
+- [x] Business campaign editor now validates and submits optional `targeting/payload` JSON object fields (with localized validation feedback) to reduce malformed mutation payloads.
+
+## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
+1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
+2. **P1 — Promotions delivery consistency:** align server-side feed guardrails (priority/cap/dedup/frequency) with current mobile client guardrails and expose suppression policy in contracts.
+3. **P1 — Promotions operations:** add minimal business/admin campaign management APIs (CRUD + activation) and minimal management UI.
+4. **P2 — Inactive reminders completion:** extend current reminder baseline with explicit dispatch/suppression workflow (send log + cooldown policy) and provider-native sender integration hardening.
+
+> Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
 ---
 
