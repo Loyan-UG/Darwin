@@ -196,6 +196,30 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+
+
+    /// <summary>
+    ///     Verifies that join-loyalty endpoint requires authentication and rejects
+    ///     anonymous requests attempting to create a loyalty account.
+    /// </summary>
+    [Fact]
+    public async Task JoinLoyaltyAccount_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var businessId = Guid.NewGuid();
+        var request = new JoinLoyaltyRequest
+        {
+            BusinessLocationId = null
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync($"/api/v1/loyalty/account/{businessId}/join", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     ///     Creates an HTTPS client so status assertions are not affected by HTTP->HTTPS redirect behavior.
     /// </summary>

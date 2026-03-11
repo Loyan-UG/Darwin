@@ -210,6 +210,76 @@ public sealed class ContractSerializationCompatibilityTests
 
 
 
+
+
+    /// <summary>
+    ///     Verifies that confirm-accrual response keeps expected field names
+    ///     for success indicators, balance, account snapshot and error details.
+    /// </summary>
+    [Fact]
+    public void ConfirmAccrualResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new ConfirmAccrualResponse
+        {
+            Success = true,
+            NewBalance = 240,
+            UpdatedAccount = new LoyaltyAccountSummary
+            {
+                LoyaltyAccountId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                BusinessId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                BusinessName = "Bakery",
+                PointsBalance = 240,
+                LifetimePoints = 860,
+                Status = "Active",
+                LastAccrualAtUtc = new DateTime(2030, 5, 1, 8, 0, 0, DateTimeKind.Utc),
+                NextRewardTitle = "Free Bread"
+            },
+            ErrorCode = null,
+            ErrorMessage = null
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"success\"");
+        json.Should().Contain("\"newBalance\"");
+        json.Should().Contain("\"updatedAccount\"");
+        json.Should().Contain("\"errorCode\"");
+        json.Should().Contain("\"errorMessage\"");
+    }
+
+    /// <summary>
+    ///     Verifies that confirm-accrual response can be deserialized from
+    ///     a failure payload while preserving error code/message fields.
+    /// </summary>
+    [Fact]
+    public void ConfirmAccrualResponse_Should_Deserialize_WithFailurePayload()
+    {
+        // Arrange
+        const string json = """
+            {
+              "success": false,
+              "newBalance": null,
+              "updatedAccount": null,
+              "errorCode": "ACCOUNT_LOCKED",
+              "errorMessage": "Account is locked."
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<ConfirmAccrualResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Success.Should().BeFalse();
+        dto.NewBalance.Should().BeNull();
+        dto.UpdatedAccount.Should().BeNull();
+        dto.ErrorCode.Should().Be("ACCOUNT_LOCKED");
+        dto.ErrorMessage.Should().Be("Account is locked.");
+    }
+
     /// <summary>
     ///     Verifies that confirm-redemption response keeps expected field names
     ///     for success indicators, balance, account snapshot and error details.
