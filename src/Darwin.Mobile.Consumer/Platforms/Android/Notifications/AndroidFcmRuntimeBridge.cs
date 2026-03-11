@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Firebase.Messaging;
+using Android.Gms.Tasks;
 
 namespace Darwin.Mobile.Consumer.Services.Notifications;
 
@@ -69,6 +70,11 @@ internal static class AndroidFcmRuntimeBridge
         return tcs.Task;
     }
 
+    /// <summary>
+    /// Represents a completion listener for Firebase tasks.  This class implements
+    /// <see cref="Android.Gms.Tasks.IOnCompleteListener"/> and invokes a provided callback
+    /// when the Firebase task finishes.
+    /// </summary>
     private sealed class OnCompleteListener : Java.Lang.Object, IOnCompleteListener
     {
         private readonly Action<Android.Gms.Tasks.Task> _onComplete;
