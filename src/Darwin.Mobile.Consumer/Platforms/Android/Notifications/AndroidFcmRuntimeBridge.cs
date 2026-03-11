@@ -15,7 +15,7 @@ namespace Darwin.Mobile.Consumer.Services.Notifications;
 /// </remarks>
 internal static class AndroidFcmRuntimeBridge
 {
-    public static async Task<string?> GetTokenAsync(CancellationToken cancellationToken)
+    public static async Task<string?> GetTokenAsync(System.Threading.CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -36,7 +36,7 @@ internal static class AndroidFcmRuntimeBridge
         return token;
     }
 
-    private static Task<string?> AsTask(this Android.Gms.Tasks.Task firebaseTask, CancellationToken cancellationToken)
+    private static Task<string?> AsTask(this Android.Gms.Tasks.Task firebaseTask, System.Threading.CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -50,7 +50,11 @@ internal static class AndroidFcmRuntimeBridge
 
             if (!completeTask.IsSuccessful)
             {
-                tcs.TrySetException(completeTask.Exception ?? new InvalidOperationException("FCM token retrieval failed."));
+                var errorMessage = completeTask.Exception?.Message;
+                tcs.TrySetException(new InvalidOperationException(
+                    string.IsNullOrWhiteSpace(errorMessage)
+                        ? "FCM token retrieval failed."
+                        : $"FCM token retrieval failed. {errorMessage}"));
                 return;
             }
 

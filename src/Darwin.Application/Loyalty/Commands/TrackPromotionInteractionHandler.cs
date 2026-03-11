@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Auth;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Loyalty.DTOs;
@@ -55,7 +56,7 @@ public sealed class TrackPromotionInteractionHandler
             return Result.Fail("Title is required.");
         }
 
-        var userId = _currentUser.UserId;
+        var userId = _currentUser.GetCurrentUserId();
         if (userId == Guid.Empty)
         {
             return Result.Fail("Current user id is missing.");
@@ -101,12 +102,12 @@ public sealed class TrackPromotionInteractionHandler
     /// <summary>
     /// Increments interaction counters by event type.
     /// </summary>
-    private static void IncrementInteractionCounter(Dictionary<string, object?> metadata, Darwin.Contracts.Loyalty.PromotionInteractionEventType eventType)
+    private static void IncrementInteractionCounter(Dictionary<string, object?> metadata, PromotionInteractionEventType eventType)
     {
         var key = eventType switch
         {
-            Darwin.Contracts.Loyalty.PromotionInteractionEventType.Open => MetadataKeyPromotionOpenCount,
-            Darwin.Contracts.Loyalty.PromotionInteractionEventType.Claim => MetadataKeyPromotionClaimCount,
+            PromotionInteractionEventType.Open => MetadataKeyPromotionOpenCount,
+            PromotionInteractionEventType.Claim => MetadataKeyPromotionClaimCount,
             _ => MetadataKeyPromotionImpressionCount
         };
 

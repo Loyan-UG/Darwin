@@ -13,8 +13,13 @@ namespace Darwin.Contracts.Loyalty
         public Guid? BusinessId { get; init; }
 
         /// <summary>
-        /// Maximum number of promotion items to return.
+        /// Maximum number of promotion items to return before server guardrails are applied.
         /// </summary>
         public int MaxItems { get; init; } = 20;
+
+        /// <summary>
+        /// Optional policy override used to tune server-side guardrails.
+        /// </summary>
+        public PromotionFeedPolicy? Policy { get; init; }
     }
 }
