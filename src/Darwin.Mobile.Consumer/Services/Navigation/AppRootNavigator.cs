@@ -1,4 +1,5 @@
-﻿using Darwin.Mobile.Consumer.Views;
+﻿using Darwin.Mobile.Consumer.Services.Notifications;
+using Darwin.Mobile.Consumer.Views;
 using Darwin.Mobile.Shared.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
@@ -36,7 +37,8 @@ public sealed class AppRootNavigator : IAppRootNavigator
     public Task NavigateToAuthenticatedShellAsync()
     {
         // Build a fresh shell when entering authenticated mode to ensure clean navigation state.
-        return SwitchRootAsync(new AppShell(_authService, this));
+        var pushCoordinator = _serviceProvider.GetRequiredService<IConsumerPushRegistrationCoordinator>();
+        return SwitchRootAsync(new AppShell(_authService, this, pushCoordinator));
     }
 
     public Task NavigateToLoginAsync()

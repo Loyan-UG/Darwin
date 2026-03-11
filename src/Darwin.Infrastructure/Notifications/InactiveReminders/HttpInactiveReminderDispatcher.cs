@@ -1,0 +1,386 @@
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Notifications;
+using Darwin.Shared.Results;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Darwin.Infrastructure.Notifications.InactiveReminders;
+
+/// <summary>
+/// Dispatches inactive reminders through a configurable HTTP push gateway endpoint.
+/// </summary>
+public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
+{
+    private readonly HttpClient _httpClient;
+    private readonly IOptionsMonitor<InactiveReminderPushGatewayOptions> _optionsMonitor;
+    private readonly ILogger<HttpInactiveReminderDispatcher> _logger;
+
+    public HttpInactiveReminderDispatcher(
+        HttpClient httpClient,
+        IOptionsMonitor<InactiveReminderPushGatewayOptions> optionsMonitor,
+        ILogger<HttpInactiveReminderDispatcher> logger)
+    {
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _optionsMonitor = optionsMonitor ?? throw new ArgumentNullException(nameof(optionsMonitor));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result> DispatchAsync(
+        Guid userId,
+        string destinationDeviceId,
+        string pushToken,
+        string platform,
+        int inactiveDays,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(destinationDeviceId))
+        {
+            return Result.Fail("Validation.DestinationDeviceIdRequired");
+        }
+
+        if (string.IsNullOrWhiteSpace(pushToken))
+        {
+            return Result.Fail("Validation.PushTokenRequired");
+        }
+
+        var options = _optionsMonitor.CurrentValue;
+        if (!options.Enabled)
+        {
+            return Result.Fail("Gateway.Disabled");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Endpoint))
+        {
+            return Result.Fail("Gateway.EndpointNotConfigured");
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, options.Endpoint)
+        {
+            Content = JsonContent.Create(new InactiveReminderPushGatewayRequest
+            {
+                UserId = userId,
+                DeviceId = destinationDeviceId,
+                PushToken = pushToken,
+                Platform = string.IsNullOrWhiteSpace(platform) ? "Unknown" : platform,
+                InactiveDays = Math.Max(0, inactiveDays),
+                Title = ApplyTemplate(options.TitleTemplate, inactiveDays),
+                Body = ApplyTemplate(options.BodyTemplate, inactiveDays)
+            })
+        };
+
+        if (!string.IsNullOrWhiteSpace(options.BearerToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.BearerToken.Trim());
+        }
+
+        try
+        {
+            using var response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode)
+            {
+                return Result.Ok();
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            _logger.LogWarning(
+                "Inactive reminder gateway rejected dispatch. StatusCode={StatusCode}, UserId={UserId}, Body={Body}",
+                (int)response.StatusCode,
+                userId,
+                TruncateForLog(responseBody));
+
+            var providerFailureCode = MapProviderFailureCodeFromBody(responseBody);
+            if (!string.IsNullOrWhiteSpace(providerFailureCode))
+            {
+                return Result.Fail(providerFailureCode);
+            }
+
+            return Result.Fail(MapGatewayFailureCode((int)response.StatusCode));
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Inactive reminder gateway dispatch failed for UserId={UserId}.", userId);
+            return Result.Fail("Gateway.TransportError");
+        }
+    }
+
+    /// <summary>
+    /// Applies simple placeholder replacement in templates.
+    /// </summary>
+    private static string ApplyTemplate(string template, int inactiveDays)
+    {
+        var safeTemplate = string.IsNullOrWhiteSpace(template)
+            ? string.Empty
+            : template;
+
+        return safeTemplate.Replace("{inactiveDays}", Math.Max(0, inactiveDays).ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+    /// <summary>
+    /// Attempts to read provider-native failure reason from gateway response body.
+    /// Expected fields: code, reason, providerCode, providerReason.
+    /// </summary>
+    private static string? MapProviderFailureCodeFromBody(string? responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            var root = document.RootElement;
+            var rawCode = TryReadString(root, "providerCode")
+                ?? TryReadString(root, "providerReason")
+                ?? TryReadString(root, "code")
+                ?? TryReadString(root, "reason");
+
+            if (string.IsNullOrWhiteSpace(rawCode))
+            {
+                return null;
+            }
+
+            var rawProvider = TryReadString(root, "provider")
+                ?? TryReadString(root, "vendor")
+                ?? string.Empty;
+
+            var normalizedProvider = NormalizeProviderName(rawProvider);
+            var mapped = MapKnownProviderFailure(normalizedProvider, rawCode);
+            if (!string.IsNullOrWhiteSpace(mapped))
+            {
+                return mapped;
+            }
+
+            var normalized = NormalizeProviderCode(rawCode);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return null;
+            }
+
+            return string.IsNullOrWhiteSpace(normalizedProvider)
+                ? $"Gateway.Provider.{normalized}"
+                : $"Gateway.Provider.{normalizedProvider}.{normalized}";
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+    /// <summary>
+    /// Normalizes provider name to a compact taxonomy segment.
+    /// </summary>
+    private static string NormalizeProviderName(string? rawProvider)
+    {
+        if (string.IsNullOrWhiteSpace(rawProvider))
+        {
+            return string.Empty;
+        }
+
+        var provider = rawProvider.Trim();
+        if (provider.Equals("fcm", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("firebase", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("firebasecloudmessaging", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Fcm";
+        }
+
+        if (provider.Equals("apns", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("apple", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("applepush", StringComparison.OrdinalIgnoreCase)
+            || provider.Equals("applepushnotificationservice", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Apns";
+        }
+
+        return NormalizeProviderCode(provider);
+    }
+
+    /// <summary>
+    /// Maps known provider-specific codes to stable canonical taxonomy values.
+    /// </summary>
+    private static string? MapKnownProviderFailure(string normalizedProvider, string rawCode)
+    {
+        var code = rawCode.Trim();
+
+        if (string.Equals(normalizedProvider, "Fcm", StringComparison.Ordinal))
+        {
+            if (code.Equals("UNREGISTERED", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("registration-token-not-registered", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("notregistered", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.TokenUnregistered";
+            }
+
+            if (code.Equals("INVALID_ARGUMENT", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("invalid-registration-token", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("invalidargument", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.InvalidArgument";
+            }
+
+            if (code.Equals("SENDER_ID_MISMATCH", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("sender-id-mismatch", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.SenderIdMismatch";
+            }
+
+            if (code.Equals("QUOTA_EXCEEDED", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("quota-exceeded", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("messageratelimitexceeded", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("devicemessageratelimitexceeded", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.QuotaExceeded";
+            }
+
+            if (code.Equals("UNAVAILABLE", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("internal", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Fcm.ServiceUnavailable";
+            }
+        }
+
+        if (string.Equals(normalizedProvider, "Apns", StringComparison.Ordinal))
+        {
+            if (code.Equals("BadDeviceToken", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("DeviceTokenNotForTopic", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("Unregistered", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.TokenInvalid";
+            }
+
+            if (code.Equals("TopicDisallowed", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("MissingTopic", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("BadTopic", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.TopicInvalid";
+            }
+
+            if (code.Equals("ExpiredProviderToken", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("InvalidProviderToken", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("MissingProviderToken", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.AuthTokenInvalid";
+            }
+
+            if (code.Equals("TooManyRequests", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("TooManyProviderTokenUpdates", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.RateLimited";
+            }
+
+            if (code.Equals("ServiceUnavailable", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("Shutdown", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("InternalServerError", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Gateway.Provider.Apns.ServiceUnavailable";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Reads a string field from a JSON object in a safe way.
+    /// </summary>
+    private static string? TryReadString(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var element))
+        {
+            return null;
+        }
+
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Converts provider reason text to a compact taxonomy segment.
+    /// </summary>
+    private static string NormalizeProviderCode(string rawCode)
+    {
+        if (string.IsNullOrWhiteSpace(rawCode))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = rawCode.Trim();
+        var chars = trimmed.ToCharArray();
+        for (var i = 0; i < chars.Length; i++)
+        {
+            var c = chars[i];
+            if (!(char.IsLetterOrDigit(c) || c == '_' || c == '-'))
+            {
+                chars[i] = '_';
+            }
+        }
+
+        return new string(chars);
+    }
+
+    /// <summary>
+    /// Maps gateway HTTP status to stable failure taxonomy codes.
+    /// </summary>
+    private static string MapGatewayFailureCode(int statusCode)
+    {
+        return statusCode switch
+        {
+            400 => "Gateway.BadRequest",
+            401 => "Gateway.Unauthorized",
+            403 => "Gateway.Forbidden",
+            404 => "Gateway.EndpointNotFound",
+            408 => "Gateway.Timeout",
+            409 => "Gateway.Conflict",
+            429 => "Gateway.RateLimited",
+            >= 500 and <= 599 => "Gateway.ServerError",
+            _ => $"Gateway.Http{statusCode}"
+        };
+    }
+
+    /// <summary>
+    /// Truncates long response bodies in logs to avoid oversized log entries.
+    /// </summary>
+    private static string TruncateForLog(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return string.Empty;
+        }
+
+        return body.Length <= 300 ? body : body[..300];
+    }
+
+    /// <summary>
+    /// Outbound gateway payload for one push dispatch request.
+    /// </summary>
+    private sealed class InactiveReminderPushGatewayRequest
+    {
+        public Guid UserId { get; init; }
+        public string DeviceId { get; init; } = string.Empty;
+        public string PushToken { get; init; } = string.Empty;
+        public string Platform { get; init; } = "Unknown";
+        public int InactiveDays { get; init; }
+        public string Title { get; init; } = string.Empty;
+        public string Body { get; init; } = string.Empty;
+    }
+}

@@ -6,6 +6,14 @@ Keep this document up-to-date as tests are added and as the CI pipeline evolves.
 
 ---
 
+## 0) Testing scope ownership (important)
+
+- This document is the **single execution tracker** for testing tasks.
+- Main delivery documents (`BACKLOG.md`, `DarwinMobile.md`) intentionally reference testing tasks here instead of duplicating test execution items.
+- When a development backlog item says testing is tracked in `DarwinTesting.md`, update status only in this file to avoid drift.
+
+---
+
 ## Table of contents
 
 1. Goals

@@ -45,6 +45,22 @@
                    FontAttributes="Bold"
                    IsVisible="{Binding HasPromotions}" />
 
+            <Label Text="{Binding PromotionScopeText}"
+                   FontSize="12"
+                   Opacity="0.8"
+                   IsVisible="{Binding HasPromotions}" />
+
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="8"
+                  IsVisible="{Binding HasAccounts}">
+                <Button Grid.Column="0"
+                        Text="{x:Static res:AppResources.FeedPromotionScopeSelectedBusinessButton}"
+                        Command="{Binding ShowSelectedBusinessPromotionsCommand}" />
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.FeedPromotionScopeAllBusinessesButton}"
+                        Command="{Binding ShowAllBusinessesPromotionsCommand}" />
+            </Grid>
+
             <CollectionView ItemsSource="{Binding PromotionItems}"
                             SelectionMode="None"
                             IsVisible="{Binding HasPromotions}">

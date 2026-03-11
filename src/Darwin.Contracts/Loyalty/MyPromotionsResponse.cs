@@ -8,5 +8,10 @@ namespace Darwin.Contracts.Loyalty
     public sealed class MyPromotionsResponse
     {
         public List<PromotionFeedItem> Items { get; init; } = new();
+
+        /// <summary>
+        /// Effective policy applied by the server for this response.
+        /// </summary>
+        public PromotionFeedPolicy AppliedPolicy { get; init; } = new();
     }
 }
