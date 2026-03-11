@@ -1,7 +1,16 @@
 using System;
-using Darwin.Contracts.Loyalty;
 
 namespace Darwin.Application.Loyalty.DTOs;
+
+/// <summary>
+/// Supported promotion interaction event types captured by analytics.
+/// </summary>
+public enum PromotionInteractionEventType
+{
+    Impression = 0,
+    Open = 1,
+    Claim = 2
+}
 
 /// <summary>
 /// DTO used by WebApi to record promotion interaction analytics.
