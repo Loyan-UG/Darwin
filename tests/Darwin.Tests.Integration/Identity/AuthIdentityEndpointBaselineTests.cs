@@ -1,3 +1,4 @@
+using Darwin.Contracts.Common;
 using Darwin.Contracts.Identity;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -65,6 +66,88 @@ public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplica
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>
+    ///     Verifies that login with clearly invalid credentials fails with a
+    ///     problem-details payload instead of returning a successful token response.
+    /// </summary>
+    [Fact]
+    public async Task Login_Should_ReturnBadRequest_WithProblemDetails_WhenCredentialsAreInvalid()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new PasswordLoginRequest
+        {
+            Email = $"invalid-{Guid.NewGuid():N}@example.test",
+            Password = "WrongPassword123!"
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/login", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
+        problem.Title.Should().NotBeNullOrWhiteSpace();
+    }
+
+    /// <summary>
+    ///     Verifies that refresh with an invalid token is rejected and returned
+    ///     as a problem-details error response.
+    /// </summary>
+    [Fact]
+    public async Task Refresh_Should_ReturnBadRequest_WithProblemDetails_WhenRefreshTokenIsInvalid()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new RefreshTokenRequest
+        {
+            RefreshToken = $"invalid-refresh-{Guid.NewGuid():N}",
+            DeviceId = null
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
+        problem.Title.Should().NotBeNullOrWhiteSpace();
+    }
+
+    /// <summary>
+    ///     Verifies that reset-password rejects fake reset tokens and returns a
+    ///     consistent problem-details payload.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_Should_ReturnBadRequest_WithProblemDetails_WhenTokenIsInvalid()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new ResetPasswordRequest
+        {
+            Email = $"unknown-{Guid.NewGuid():N}@example.test",
+            Token = $"invalid-reset-token-{Guid.NewGuid():N}",
+            NewPassword = "NewPassword123!"
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/password/reset", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        problem.Should().NotBeNull();
+        problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
+        problem.Title.Should().NotBeNullOrWhiteSpace();
     }
 
     /// <summary>

@@ -525,7 +525,7 @@ This status is derived from the current repository state and must be refreshed w
 ### Pending
 
 - [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
-- [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline anti-enumeration and authorization-guard cases are covered; full happy/failure matrix is still pending.
+- [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authenticated happy-path matrix is still pending.
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`).
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm).
 - [ ] Add contract serialization compatibility tests for mobile-critical DTOs.
@@ -541,7 +541,7 @@ Keep this list as the execution tracker for the testing workstream.
 | Order | Work item | Status | Exit criteria |
 |---|---|---|---|
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and is committed; deterministic DB reset fixture is the next sub-step |
-| 2 | Identity flow test pack | In Progress | Baseline tests added for request-reset anti-enumeration (200) and anonymous change-password rejection (401); next add login/refresh/reset happy+failure matrix |
+| 2 | Identity flow test pack | In Progress | Baseline + core negative tests exist (`request-reset` 200, anonymous `password/change` 401, invalid login/refresh/reset 400); next add authenticated happy-path matrix |
 | 3 | Profile concurrency test pack | Pending | Tests prove `RowVersion` success and stale conflict behavior |
 | 4 | Loyalty scan journey test pack | Pending | End-to-end tests for prepare → process → confirm-accrual and prepare → process → confirm-redemption |
 | 5 | Contracts compatibility pack | Pending | Serialization tests protect key DTO JSON shapes consumed by mobile apps |
@@ -562,6 +562,7 @@ Backlog update rule:
 - Added `Program` test host marker (`public partial class Program`) required by `WebApplicationFactory`.
 - Extended integration test project dependencies for host-based API integration testing.
 - Added identity endpoint baseline integration tests for anti-enumeration and auth guard behavior (`request-reset` => 200, anonymous `password/change` => 401).
+- Expanded identity integration baseline with negative-path tests for invalid `login`, `refresh`, and `password/reset` problem-details behavior.
 
 
 ---
