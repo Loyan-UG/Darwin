@@ -22,12 +22,19 @@ public sealed class NoopInactiveReminderDispatcher : IInactiveReminderDispatcher
     }
 
     /// <inheritdoc />
-    public Task<Result> DispatchAsync(Guid userId, string destinationDeviceId, int inactiveDays, CancellationToken ct)
+    public Task<Result> DispatchAsync(
+        Guid userId,
+        string destinationDeviceId,
+        string pushToken,
+        string platform,
+        int inactiveDays,
+        CancellationToken ct)
     {
         _logger.LogInformation(
-            "Inactive reminder dispatch is not configured yet. UserId={UserId}, DeviceId={DeviceId}, InactiveDays={InactiveDays}.",
+            "Inactive reminder dispatch is not configured yet. UserId={UserId}, DeviceId={DeviceId}, Platform={Platform}, InactiveDays={InactiveDays}.",
             userId,
             destinationDeviceId,
+            platform,
             inactiveDays);
 
         return Task.FromResult(Result.Fail("Inactive reminder dispatch provider is not configured."));
