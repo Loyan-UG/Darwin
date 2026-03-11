@@ -144,6 +144,24 @@ public sealed class DiscoverViewModel : BaseViewModel
 
     public bool HasJoinedAccounts => JoinedAccounts.Count > 0;
 
+    /// <summary>
+    /// Total number of joined loyalty businesses for current member.
+    /// </summary>
+    public int JoinedBusinessCount => JoinedAccounts.Count;
+
+    /// <summary>
+    /// Sum of points across all joined loyalty businesses.
+    /// </summary>
+    public int TotalJoinedPointsBalance => JoinedAccounts.Sum(a => Math.Max(0, a.PointsBalance));
+
+    /// <summary>
+    /// Business with currently highest points balance (if any).
+    /// </summary>
+    public string TopJoinedBusinessName => JoinedAccounts
+        .OrderByDescending(a => a.PointsBalance)
+        .Select(a => a.BusinessName)
+        .FirstOrDefault() ?? "—";
+
     public bool HasExploreResults => ExploreBusinesses.Count > 0;
 
     /// <summary>
@@ -262,6 +280,9 @@ public sealed class DiscoverViewModel : BaseViewModel
             {
                 JoinedAccounts.Clear();
                 OnPropertyChanged(nameof(HasJoinedAccounts));
+                OnPropertyChanged(nameof(JoinedBusinessCount));
+                OnPropertyChanged(nameof(TotalJoinedPointsBalance));
+                OnPropertyChanged(nameof(TopJoinedBusinessName));
             });
 
             return;
@@ -281,6 +302,9 @@ public sealed class DiscoverViewModel : BaseViewModel
             }
 
             OnPropertyChanged(nameof(HasJoinedAccounts));
+            OnPropertyChanged(nameof(JoinedBusinessCount));
+            OnPropertyChanged(nameof(TotalJoinedPointsBalance));
+            OnPropertyChanged(nameof(TopJoinedBusinessName));
         });
     }
 
