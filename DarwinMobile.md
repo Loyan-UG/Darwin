@@ -260,6 +260,75 @@ These are sufficient for the map, directory and profile pages on Consumer.
 
 Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config class per build configuration) or compile-time constants; pass them into `AddDarwinMobileShared()` during startup.
 
+For map providers:
+- **Android (Google Maps)**: provide `GoogleMapsApiKey` via environment/CI secret and pass it to Android manifest placeholder (`googleMapsApiKey`). Avoid committing production API keys in `.csproj` or manifest files.
+- **iOS/MacCatalyst (MapKit)**: no Google Maps key is required for built-in MAUI MapKit rendering, but location/privacy entries (e.g., `NSLocationWhenInUseUsageDescription`) must remain configured.
+
+
+### 7.1.1 Android Google Maps key setup (required for Consumer map on Android)
+
+The Consumer project reads map key through MSBuild property `GoogleMapsApiKey`, with fallback to env var `GOOGLE_MAPS_API_KEY`.
+
+Where to set it:
+- **Windows / PowerShell (current shell):** `<c>$env:GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
+- **macOS/Linux / bash (current shell):** `<c>export GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
+- **Alternative env var (Android-only pipelines):** `ANDROID_GOOGLE_MAPS_API_KEY`
+- **CI/CD:** add secure variable named `GOOGLE_MAPS_API_KEY` (preferred) or `ANDROID_GOOGLE_MAPS_API_KEY`.
+- **Local persistent MSBuild override (optional):** set `GoogleMapsApiKey` in `Directory.Build.props` outside source control.
+
+The project now validates this key during Android build:
+- **Debug/Dev build:** missing key => warning (build continues, map can fail at runtime).
+- **Release build:** missing key => build error (prevents shipping a broken map config).
+
+
+### 7.1.2 Push provider setup (FCM/APNs production integration)
+
+Consumer app now resolves push tokens from native runtime providers:
+- At startup, Android requests Android 13+ `POST_NOTIFICATIONS` permission to align user-consent state with registration payload, with one-time prompt persistence to avoid repeated dialogs after hard deny.
+- **Android**: Firebase Cloud Messaging token (`Xamarin.Firebase.Messaging`, wired only for Android target in `.csproj`).
+- **iOS/MacCatalyst**: APNs device token via `RegisterForRemoteNotifications` with explicit `CodesignEntitlements` binding to platform entitlements files.
+
+Required setup per environment:
+1. **Firebase project**
+   - Create Android app entry with package id `com.loyan.darwin.mobile.consumer`.
+   - Download `google-services.json` and place it at `src/Darwin.Mobile.Consumer/google-services.json` (not committed to source control for private environments).
+   - Android Release builds now fail when `google-services.json` is missing (Debug warns only), to avoid shipping broken FCM configuration.
+
+2. **Apple Push capability**
+   - Enable Push Notifications capability in Apple Developer portal for the app identifier.
+   - Ensure provisioning profile includes push entitlement.
+   - Keep `aps-environment` entitlement aligned with target build (`development` vs `production`). Consumer project now uses separate entitlements for Debug vs Release to enforce this split.
+3. **Runtime permissions**
+   - Android 13+: grant `POST_NOTIFICATIONS` permission at runtime.
+   - iOS/MacCatalyst: allow notifications in system prompt/settings.
+
+Operational note:
+- If permissions are denied, registration still upserts device metadata with `NotificationsEnabled = false`; token can be null until the user enables permissions.
+- Legacy fallback config/noop providers are removed from the Consumer project to avoid environment drift in production builds.
+
+
+### 7.1.3 Push operational readiness checklist (Dev / Staging / Production)
+
+Use this checklist before promoting builds between environments.
+
+| Check | Dev | Staging | Production | Notes |
+|------|-----|---------|------------|-------|
+| Android `google-services.json` present and mapped to correct Firebase project | [ ] | [ ] | [ ] | Release build fails when missing. |
+| Android Firebase package name matches `com.loyan.darwin.mobile.consumer` | [ ] | [ ] | [ ] | Keep package id and Firebase app id aligned. |
+| iOS/MacCatalyst provisioning profile includes Push capability | [ ] | [ ] | [ ] | Validate on Apple Developer portal and CI signing profile. |
+| APNs entitlement environment is correct (`development` for Debug, `production` for Release) | [ ] | [ ] | [ ] | Project uses separate entitlements by configuration. |
+| Runtime permission path verified on fresh install (allow + deny + hard deny) | [ ] | [ ] | [ ] | Confirm one-time prompt behavior and settings recovery path. |
+| Profile push diagnostics labels verified (`permission`, `token availability`) | [ ] | [ ] | [ ] | Should reflect device runtime state without exposing raw token value. |
+| Profile "Open notification settings" action verified | [ ] | [ ] | [ ] | Must route user to app/system settings on device. |
+| Manual push registration sync returns success for authenticated user | [ ] | [ ] | [ ] | Check status text + last sync timestamp in Profile. |
+| WebApi `/api/v1/notifications/devices/register` observed in logs | [ ] | [ ] | [ ] | Confirm no auth/validation failures in API logs. |
+| Token rotation scenario validated (app reinstall or token refresh callback) | [ ] | [ ] | [ ] | Ensure backend receives updated token and old one is superseded. |
+
+Escalation guidance:
+- If diagnostics show `permission: disabled`, direct user to the in-app settings shortcut first.
+- If diagnostics show `token: missing` while permission is enabled, validate Firebase/APNs credentials and registration callbacks.
+- If sync fails with auth issues, validate access token freshness and retry after login refresh.
+
 ### 7.2 Server
 
 - DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
@@ -407,6 +476,10 @@ services.AddDarwinMobileShared(new ApiOptions
 | Loyalty   | GET /api/v1/loyalty/business/{id}/rewards    | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | GET /api/v1/loyalty/my/businesses            | perm:AccessMemberArea       | Consumer   |
 | Loyalty   | POST /api/v1/loyalty/my/timeline             | perm:AccessMemberArea       | Consumer   |
+| Loyalty   | GET /api/v1/loyalty/business/campaigns      | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | POST /api/v1/loyalty/business/campaigns     | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | PUT /api/v1/loyalty/business/campaigns/{id} | perm:AccessLoyaltyBusiness  | Business   |
+| Loyalty   | POST /api/v1/loyalty/business/campaigns/{id}/activation | perm:AccessLoyaltyBusiness  | Business   |
 | Discovery | POST /api/v1/businesses/list                 | AllowAnonymous              | Consumer   |
 | Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
 | Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
@@ -422,6 +495,47 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Phase 3**: Subscriptions/analytics/notifications; additive endpoints on top of existing Contracts.
 
 ---
+
+
+## 18.1 Current Snapshot (Done vs Remaining)
+
+### Done in current codebase
+- Consumer push-registration baseline is integrated end-to-end (contracts + API + shared service + coordinator + profile manual sync UI).
+- Consumer Profile includes a self-service "Open notification settings" action to recover from denied notification permissions without leaving users blocked.
+- Consumer Profile now shows runtime push diagnostics labels (permission state + token availability) for faster support and troubleshooting.
+- Consumer Profile refreshes push diagnostics on every `OnAppearing` so permission/token changes are reflected after returning from system settings.
+- Rewards tab now includes multi-business overview metrics (joined business count, aggregated points, top business) and a quick action to open selected-business QR.
+- Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
+- Feed promotions now apply delivery guardrails on the client: de-duplication (business/title/CTA), max 6 cards, and 8-hour suppression window with fallback when everything is suppressed.
+- Device registration now updates `UserEngagementSnapshot` baseline engagement metrics (last activity + heartbeat count metadata) to prepare inactive-reminder targeting and measurement.
+- Application now includes inactive-reminder orchestration handlers: candidate selection query (threshold + cooldown + push-enabled device check) and per-outcome recorder that persists `Sent`/`Failed`/`Suppressed` metadata in `UserEngagementSnapshot`.
+- WebApi now includes `InactiveReminderBackgroundService` scaffold (config-gated) that periodically runs reminder batch orchestration and logs evaluated/dispatched/suppressed/failed counters.
+- Reminder batch orchestration now writes measurement counters into snapshot metadata (`inactiveReminderSentCount`, `inactiveReminderFailedCount`, `inactiveReminderSuppressedCount`) for downstream analytics.
+- Inactive reminder dispatch now uses `HttpInactiveReminderDispatcher` (server-side HTTP gateway integration) and sends user/device/token/platform payload with configurable title/body templates.
+- HTTP gateway dispatcher now maps provider transport/HTTP errors to stable outcome codes (for example `Gateway.Unauthorized`, `Gateway.RateLimited`, `Gateway.ServerError`) to improve reminder analytics quality.
+- When gateway returns provider reason payload, dispatcher now emits normalized `Gateway.Provider.*` codes to preserve APNs/FCM-specific failure semantics in analytics.
+- Dispatcher now canonicalizes common FCM/APNs reasons into stable categories (for example `Gateway.Provider.Fcm.TokenUnregistered`, `Gateway.Provider.Apns.TokenInvalid`) for clearer operational actions.
+- Promotions analytics tracking is now wired end-to-end for `Impression` and `Open` events (mobile feed emits events to WebApi; Application persists counters in `UserEngagementSnapshot` metadata).
+- Promotions `Claim` tracking is now hooked from redemption QR generation (`RewardClaimIntent`) so conversion funnel has event coverage for all three stages.
+- Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
+- Promotions feed query now includes active in-app campaign entities from server-side marketing data and merges them with legacy derived cards to preserve rollout safety.
+- Promotions endpoint now returns the server-applied feed policy and enforces server-side guardrails (de-duplication, max-card cap, suppression window) for better client/server consistency.
+- Business campaign operations endpoint set is now available for list/create/update/activation workflows, enabling controlled campaign lifecycle management from business interfaces.
+- `Darwin.Mobile.Shared` now exposes business campaign operations in `ILoyaltyService` to unblock Business app integration without duplicating API plumbing in UI projects.
+- Business app Rewards page now ships minimal campaign operations UI (list + activate/deactivate + create/update editor) for mobile-first campaign lifecycle management.
+- Business campaign editor now includes optional UTC schedule inputs with pre-submit validation for date format and start/end range.
+- Business campaign editor now includes channel selection controls (In-App / In-App+Push) and channel validation before API mutations.
+- Business campaign editor now validates and submits optional `targeting/payload` JSON object fields with localized guardrail errors before API mutations.
+- Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
+- Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
+- Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
+
+### Remaining / follow-up
+- Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
+- Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
+- Extend guardrails with frequency-policy controls and expose per-policy diagnostics for operations dashboards.
+- Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
+- Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
 
 ## 19) Contributor Checklist
 
@@ -445,8 +559,6 @@ services.AddDarwinMobileShared(new ApiOptions
 - **Loyalty**: `LoyaltyScanMode`, `LoyaltyScanAllowedActions`, `LoyaltyRewardSummary`, `LoyaltyAccountSummary`, `PrepareScanSessionRequest/Response`, `ProcessScanSessionForBusinessRequest/Response`, `ConfirmAccrualRequest/Response`, `ConfirmRedemptionRequest/Response`.
 - **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
 - **Notifications**: `MobileDevicePlatform`, `RegisterPushDeviceRequest`, `RegisterPushDeviceResponse`.
-
-> Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 
 > Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
 
