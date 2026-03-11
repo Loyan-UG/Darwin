@@ -220,6 +220,26 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+
+
+    /// <summary>
+    ///     Verifies that next-reward lookup endpoint is protected and rejects
+    ///     anonymous requests to prevent unauthorized account insight exposure.
+    /// </summary>
+    [Fact]
+    public async Task GetNextReward_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var businessId = Guid.NewGuid();
+
+        // Act
+        using var response = await client.GetAsync($"/api/v1/loyalty/account/{businessId}/next-reward");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     ///     Creates an HTTPS client so status assertions are not affected by HTTP->HTTPS redirect behavior.
     /// </summary>

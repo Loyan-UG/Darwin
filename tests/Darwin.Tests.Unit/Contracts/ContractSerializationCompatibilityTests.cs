@@ -47,6 +47,48 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"scopes\"");
     }
 
+
+
+    /// <summary>
+    ///     Verifies that process-scan request contract serializes the scan token
+    ///     field with expected camelCase name.
+    /// </summary>
+    [Fact]
+    public void ProcessScanSessionForBusinessRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new ProcessScanSessionForBusinessRequest
+        {
+            ScanSessionToken = "opaque-token-value"
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"scanSessionToken\"");
+    }
+
+    /// <summary>
+    ///     Verifies that confirm-redemption request contract serializes the scan token
+    ///     field with expected camelCase name.
+    /// </summary>
+    [Fact]
+    public void ConfirmRedemptionRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new ConfirmRedemptionRequest
+        {
+            ScanSessionToken = "opaque-token-value"
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"scanSessionToken\"");
+    }
+
     /// <summary>
     ///     Verifies that login request contract keeps expected camelCase field names.
     ///     This protects authentication call compatibility across mobile clients.
