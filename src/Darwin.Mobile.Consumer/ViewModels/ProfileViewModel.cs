@@ -3,22 +3,27 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
+using Microsoft.Maui.ApplicationModel;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
 /// Handles profile load/update flows for the consumer app.
-///
+/// </summary>
+/// <remarks>
 /// Design choice:
 /// - This screen is profile-only (no password section) to keep UX focused.
 /// - All messages are intended to be shown near the save action, not at page bottom.
-/// </summary>
+/// </remarks>
 public sealed class ProfileViewModel : BaseViewModel
 {
     private readonly IProfileService _profileService;
+    private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
+    private readonly IConsumerPushTokenProvider _pushTokenProvider;
 
     private Guid _profileId;
     private byte[]? _rowVersion;
@@ -33,17 +38,31 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _currency = "EUR";
 
     private string? _successMessage;
+    private string _pushRegistrationStatus = AppResources.ProfilePushRegistrationStatusIdle;
+    private string? _lastPushSyncAtText;
+    private bool _isPushSyncBusy;
+    private string _pushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
+    private string _pushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
 
-    public ProfileViewModel(IProfileService profileService)
+    public ProfileViewModel(
+        IProfileService profileService,
+        IConsumerPushRegistrationCoordinator pushRegistrationCoordinator,
+        IConsumerPushTokenProvider pushTokenProvider)
     {
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
+        _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
+        _pushTokenProvider = pushTokenProvider ?? throw new ArgumentNullException(nameof(pushTokenProvider));
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
+        SyncPushRegistrationCommand = new AsyncCommand(SyncPushRegistrationAsync, () => !IsPushSyncBusy);
+        OpenNotificationSettingsCommand = new AsyncCommand(OpenNotificationSettingsAsync);
     }
 
     public AsyncCommand RefreshCommand { get; }
     public AsyncCommand SaveProfileCommand { get; }
+    public AsyncCommand SyncPushRegistrationCommand { get; }
+    public AsyncCommand OpenNotificationSettingsCommand { get; }
 
     public string Email
     {
@@ -101,14 +120,63 @@ public sealed class ProfileViewModel : BaseViewModel
 
     public bool HasSuccess => !string.IsNullOrWhiteSpace(SuccessMessage);
 
+    public string PushRegistrationStatus
+    {
+        get => _pushRegistrationStatus;
+        private set => SetProperty(ref _pushRegistrationStatus, value);
+    }
+
+    public string? LastPushSyncAtText
+    {
+        get => _lastPushSyncAtText;
+        private set
+        {
+            if (SetProperty(ref _lastPushSyncAtText, value))
+            {
+                OnPropertyChanged(nameof(HasLastPushSyncAt));
+            }
+        }
+    }
+
+    public bool HasLastPushSyncAt => !string.IsNullOrWhiteSpace(LastPushSyncAtText);
+
+    public string PushPermissionStateText
+    {
+        get => _pushPermissionStateText;
+        private set => SetProperty(ref _pushPermissionStateText, value);
+    }
+
+    public string PushTokenAvailabilityText
+    {
+        get => _pushTokenAvailabilityText;
+        private set => SetProperty(ref _pushTokenAvailabilityText, value);
+    }
+
+    public bool IsPushSyncBusy
+    {
+        get => _isPushSyncBusy;
+        private set
+        {
+            if (SetProperty(ref _isPushSyncBusy, value))
+            {
+                SyncPushRegistrationCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
     public override async Task OnAppearingAsync()
     {
+        // Always refresh push runtime diagnostics because permission/token state can change
+        // while the app was in background or after returning from system settings.
+        await RefreshPushRuntimeStateAsync();
+
         if (_isLoaded)
         {
             return;
         }
 
         await RefreshAsync();
+        await RefreshPushRuntimeStateAsync();
         _isLoaded = true;
     }
 
@@ -171,6 +239,18 @@ public sealed class ProfileViewModel : BaseViewModel
             return;
         }
 
+        // If identity metadata is missing, attempt one reload before entering busy-save mode.
+        if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
+        {
+            await RefreshAsync();
+        }
+
+        if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.ProfileNotLoadedYet);
+            return;
+        }
+
         RunOnMain(() =>
         {
             IsBusy = true;
@@ -180,18 +260,6 @@ public sealed class ProfileViewModel : BaseViewModel
 
         try
         {
-            // If identity metadata is missing, attempt one reload automatically instead of failing immediately.
-            if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
-            {
-                await RefreshAsync();
-            }
-
-            if (_profileId == Guid.Empty || _rowVersion is null || _rowVersion.Length == 0)
-            {
-                RunOnMain(() => ErrorMessage = AppResources.ProfileNotLoadedYet);
-                return;
-            }
-
             if (!ValidateProfileFields())
             {
                 RunOnMain(() => ErrorMessage = AppResources.ProfileRequiredFields);
@@ -237,6 +305,104 @@ public sealed class ProfileViewModel : BaseViewModel
                 RefreshCommand.RaiseCanExecuteChanged();
             });
         }
+    }
+
+    private async Task SyncPushRegistrationAsync()
+    {
+        if (IsPushSyncBusy)
+        {
+            return;
+        }
+
+        RunOnMain(() => IsPushSyncBusy = true);
+
+        try
+        {
+            var result = await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+
+            RunOnMain(() =>
+            {
+                PushRegistrationStatus = result.Succeeded
+                    ? AppResources.ProfilePushRegistrationStatusSuccess
+                    : (result.Error ?? AppResources.ProfilePushRegistrationStatusFailed);
+
+                LastPushSyncAtText = string.Format(
+                    AppResources.ProfilePushRegistrationLastSyncFormat,
+                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm"));
+            });
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() =>
+            {
+                PushRegistrationStatus = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ProfilePushRegistrationStatusFailed);
+                LastPushSyncAtText = string.Format(
+                    AppResources.ProfilePushRegistrationLastSyncFormat,
+                    DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm"));
+            });
+        }
+        finally
+        {
+            await RefreshPushRuntimeStateAsync();
+            RunOnMain(() => IsPushSyncBusy = false);
+        }
+    }
+
+    private async Task RefreshPushRuntimeStateAsync()
+    {
+        try
+        {
+            var runtimeStateResult = await _pushTokenProvider.GetCurrentAsync(CancellationToken.None).ConfigureAwait(false);
+
+            if (!runtimeStateResult.Succeeded || runtimeStateResult.Value is null)
+            {
+                RunOnMain(() =>
+                {
+                    PushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
+                    PushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
+                });
+
+                return;
+            }
+
+            var runtimeState = runtimeStateResult.Value;
+            RunOnMain(() =>
+            {
+                PushPermissionStateText = runtimeState.NotificationsEnabled
+                    ? AppResources.ProfilePushPermissionEnabled
+                    : AppResources.ProfilePushPermissionDisabled;
+
+                PushTokenAvailabilityText = string.IsNullOrWhiteSpace(runtimeState.PushToken)
+                    ? AppResources.ProfilePushTokenAvailabilityMissing
+                    : AppResources.ProfilePushTokenAvailabilityReady;
+            });
+        }
+        catch
+        {
+            RunOnMain(() =>
+            {
+                PushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
+                PushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
+            });
+        }
+    }
+
+    private Task OpenNotificationSettingsAsync()
+    {
+        RunOnMain(() =>
+        {
+            try
+            {
+                AppInfo.ShowSettingsUI();
+            }
+            catch
+            {
+                PushRegistrationStatus = AppResources.ProfilePushOpenSettingsFailed;
+            }
+        });
+
+        return Task.CompletedTask;
     }
 
     private bool ValidateProfileFields()
