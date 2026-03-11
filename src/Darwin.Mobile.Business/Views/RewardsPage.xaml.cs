@@ -77,27 +77,3 @@ public partial class RewardsPage : ContentPage
         }
     }
 }
-
-
-    private void OnCampaignSelected(object? sender, SelectionChangedEventArgs e)
-    {
-        if (e.CurrentSelection.Count == 0)
-        {
-            return;
-        }
-
-        try
-        {
-            if (e.CurrentSelection[0] is BusinessCampaignEditorItem selected)
-            {
-                _viewModel.BeginEditCampaign(selected);
-            }
-        }
-        finally
-        {
-            if (sender is CollectionView collectionView)
-            {
-                collectionView.SelectedItem = null;
-            }
-        }
-    }
