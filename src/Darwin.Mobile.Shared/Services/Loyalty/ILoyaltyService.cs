@@ -126,10 +126,19 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         // Promotions feed (consumer, business-aware POST)
         Task<Result<MyPromotionsResponse>> GetMyPromotionsAsync(MyPromotionsRequest request, CancellationToken cancellationToken);
 
+        // Promotions interaction tracking (consumer)
+        Task<Result> TrackPromotionInteractionAsync(TrackPromotionInteractionRequest request, CancellationToken cancellationToken);
+
         // Business reward configuration management
         Task<Result<BusinessRewardConfigurationResponse>> GetBusinessRewardConfigurationAsync(CancellationToken cancellationToken);
         Task<Result<BusinessRewardTierMutationResponse>> CreateBusinessRewardTierAsync(CreateBusinessRewardTierRequest request, CancellationToken cancellationToken);
         Task<Result<BusinessRewardTierMutationResponse>> UpdateBusinessRewardTierAsync(UpdateBusinessRewardTierRequest request, CancellationToken cancellationToken);
         Task<Result<BusinessRewardTierMutationResponse>> DeleteBusinessRewardTierAsync(DeleteBusinessRewardTierRequest request, CancellationToken cancellationToken);
+
+        // Business campaign management
+        Task<Result<GetBusinessCampaignsResponse>> GetBusinessCampaignsAsync(int page, int pageSize, CancellationToken cancellationToken);
+        Task<Result<BusinessCampaignMutationResponse>> CreateBusinessCampaignAsync(CreateBusinessCampaignRequest request, CancellationToken cancellationToken);
+        Task<Result> UpdateBusinessCampaignAsync(UpdateBusinessCampaignRequest request, CancellationToken cancellationToken);
+        Task<Result> SetBusinessCampaignActivationAsync(SetCampaignActivationRequest request, CancellationToken cancellationToken);
     }
 }
