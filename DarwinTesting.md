@@ -527,7 +527,7 @@ This status is derived from the current repository state and must be refreshed w
 - [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authenticated happy-path matrix is still pending.
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage is implemented; authenticated success + stale row-version matrix is still pending.
-- [ ] Add loyalty scan flow integration tests (prepare/process/confirm).
+- [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage is implemented; authenticated end-to-end prepare/process/confirm scenarios are still pending.
 - [ ] Add contract serialization compatibility tests for mobile-critical DTOs.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
 - [ ] Add CI lane split and coverage publication for unit/integration.
@@ -543,7 +543,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and is committed; deterministic DB reset fixture is the next sub-step |
 | 2 | Identity flow test pack | In Progress | Baseline + core negative tests exist (`request-reset` 200, anonymous `password/change` 401, invalid login/refresh/reset 400); next add authenticated happy-path matrix |
 | 3 | Profile concurrency test pack | In Progress | Baseline auth-guard tests exist (`GET/PUT /profile/me` anonymous => 401); next add authenticated success + stale row-version conflict matrix |
-| 4 | Loyalty scan journey test pack | Pending | End-to-end tests for prepare → process → confirm-accrual and prepare → process → confirm-redemption |
+| 4 | Loyalty scan journey test pack | In Progress | Baseline auth-guard tests exist (`my/businesses` and `scan/prepare` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
 | 5 | Contracts compatibility pack | Pending | Serialization tests protect key DTO JSON shapes consumed by mobile apps |
 | 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
 | 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
@@ -564,6 +564,7 @@ Backlog update rule:
 - Added identity endpoint baseline integration tests for anti-enumeration and auth guard behavior (`request-reset` => 200, anonymous `password/change` => 401).
 - Expanded identity integration baseline with negative-path tests for invalid `login`, `refresh`, and `password/reset` problem-details behavior.
 - Added profile endpoint baseline integration tests to validate anonymous access is rejected for `GET/PUT /api/v1/profile/me`.
+- Added loyalty endpoint baseline integration tests to validate anonymous access is rejected for `GET /api/v1/loyalty/my/businesses` and `POST /api/v1/loyalty/scan/prepare`.
 
 
 ---
