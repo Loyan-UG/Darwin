@@ -42,6 +42,23 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
     }
 
     /// <summary>
+    ///     Verifies that listing loyalty accounts for the current member is protected
+    ///     by authentication and rejects anonymous requests.
+    /// </summary>
+    [Fact]
+    public async Task GetMyAccounts_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+
+        // Act
+        using var response = await client.GetAsync("/api/v1/loyalty/my/accounts");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>
     ///     Verifies that preparing a scan session requires authentication and does
     ///     not allow anonymous requests to enter loyalty session flow.
     /// </summary>
@@ -59,6 +76,50 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
 
         // Act
         using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/prepare", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>
+    ///     Verifies that processing scan sessions in business flow is protected and
+    ///     cannot be accessed anonymously.
+    /// </summary>
+    [Fact]
+    public async Task ProcessScanSession_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new ProcessScanSessionForBusinessRequest
+        {
+            ScanSessionToken = $"anonymous-test-token-{Guid.NewGuid():N}"
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/process", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>
+    ///     Verifies that accrual confirmation endpoint is also guarded by authentication
+    ///     and rejects anonymous requests before handler invocation.
+    /// </summary>
+    [Fact]
+    public async Task ConfirmAccrual_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new ConfirmAccrualRequest
+        {
+            ScanSessionToken = $"anonymous-test-token-{Guid.NewGuid():N}",
+            Points = 1,
+            Note = "anonymous-call-should-fail"
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/confirm-accrual", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);

@@ -543,7 +543,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and is committed; deterministic DB reset fixture is the next sub-step |
 | 2 | Identity flow test pack | In Progress | Baseline + core negative tests exist (`request-reset` 200, anonymous `password/change` 401, invalid login/refresh/reset 400); next add authenticated happy-path matrix |
 | 3 | Profile concurrency test pack | In Progress | Baseline auth-guard tests exist (`GET/PUT /profile/me` anonymous => 401); next add authenticated success + stale row-version conflict matrix |
-| 4 | Loyalty scan journey test pack | In Progress | Baseline auth-guard tests exist (`my/businesses` and `scan/prepare` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
+| 4 | Loyalty scan journey test pack | In Progress | Baseline auth-guard tests exist (`my/businesses`, `my/accounts`, `scan/prepare`, `scan/process`, `scan/confirm-accrual` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
 | 5 | Contracts compatibility pack | Pending | Serialization tests protect key DTO JSON shapes consumed by mobile apps |
 | 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
 | 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
@@ -565,6 +565,7 @@ Backlog update rule:
 - Expanded identity integration baseline with negative-path tests for invalid `login`, `refresh`, and `password/reset` problem-details behavior.
 - Added profile endpoint baseline integration tests to validate anonymous access is rejected for `GET/PUT /api/v1/profile/me`.
 - Added loyalty endpoint baseline integration tests to validate anonymous access is rejected for `GET /api/v1/loyalty/my/businesses` and `POST /api/v1/loyalty/scan/prepare`.
+- Expanded loyalty baseline coverage with additional anonymous-guard checks for `GET /api/v1/loyalty/my/accounts`, `POST /api/v1/loyalty/scan/process`, and `POST /api/v1/loyalty/scan/confirm-accrual`.
 
 
 ---
