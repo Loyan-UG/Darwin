@@ -36,6 +36,17 @@
                 <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesHeadline}"
                        FontAttributes="Bold" />
 
+                <Border Stroke="{StaticResource BrushGray300}"
+                        StrokeThickness="1"
+                        Padding="10"
+                        IsVisible="{Binding HasJoinedAccounts}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding JoinedBusinessCount, StringFormat='{x:Static res:AppResources.DiscoverJoinedBusinessesCountFormat}'}" FontSize="13" />
+                        <Label Text="{Binding TotalJoinedPointsBalance, StringFormat='{x:Static res:AppResources.DiscoverTotalPointsFormat}'}" FontSize="13" />
+                        <Label Text="{Binding TopJoinedBusinessName, StringFormat='{x:Static res:AppResources.DiscoverTopBalanceBusinessFormat}'}" FontSize="13" />
+                    </VerticalStackLayout>
+                </Border>
+
                 <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesEmpty}"
                        IsVisible="{Binding HasJoinedAccounts, Converter={StaticResource InverseBoolConverter}}" />
 

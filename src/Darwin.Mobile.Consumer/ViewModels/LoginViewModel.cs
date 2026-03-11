@@ -90,7 +90,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 
             // Attempt login with email/password credentials.
             // DeviceId remains null until a dedicated device identity workflow is added.
-            AppBootstrapResponse _ = await _authService.LoginAsync(
+            _ = await _authService.LoginAsync(
                 Email.Trim(),
                 Password,
                 deviceId: null,

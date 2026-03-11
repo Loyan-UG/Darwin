@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Notifications;
-using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services.Notifications;
 using Darwin.Shared.Results;
 using Microsoft.Maui.ApplicationModel;
@@ -44,7 +44,8 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var (accessToken, _) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+        var tokenSnapshot = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+        var accessToken = tokenSnapshot.AccessToken;
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             return Result.Fail("No access token is available for push-device registration.");
@@ -96,6 +97,12 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
         return Result.Ok();
     }
 
+
+    public void ResetCachedRegistrationState()
+    {
+        Preferences.Default.Remove(LastRegistrationSignatureStorageKey);
+    }
+
     private static string GetOrCreateDeviceId()
     {
         var existing = Preferences.Default.Get(DeviceIdStorageKey, string.Empty);
@@ -128,12 +135,16 @@ public sealed class ConsumerPushRegistrationCoordinator : IConsumerPushRegistrat
 
     private static MobileDevicePlatform MapPlatform(DevicePlatform platform)
     {
-        return platform switch
+        if (platform == DevicePlatform.Android)
         {
-            DevicePlatform.Android => MobileDevicePlatform.Android,
-            DevicePlatform.iOS => MobileDevicePlatform.Ios,
-            DevicePlatform.MacCatalyst => MobileDevicePlatform.Ios,
-            _ => MobileDevicePlatform.Unknown
-        };
+            return MobileDevicePlatform.Android;
+        }
+
+        if (platform == DevicePlatform.iOS || platform == DevicePlatform.MacCatalyst)
+        {
+            return MobileDevicePlatform.iOS;
+        }
+
+        return MobileDevicePlatform.Unknown;
     }
 }
