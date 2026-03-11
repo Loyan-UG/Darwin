@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
@@ -44,6 +46,23 @@ public sealed class RewardsViewModel : BaseViewModel
     private string? _descriptionInput;
     private bool _allowSelfRedemption;
 
+    private Guid _editingCampaignId;
+    private byte[] _editingCampaignRowVersion = Array.Empty<byte>();
+    private short _editingCampaignChannels = 1;
+    private string _editingCampaignTargetingJson = "{}";
+    private string _editingCampaignPayloadJson = "{}";
+
+    private string _campaignNameInput = string.Empty;
+    private string _campaignTitleInput = string.Empty;
+    private string? _campaignBodyInput;
+    private string? _campaignStartsAtInput;
+    private string? _campaignEndsAtInput;
+    private string _campaignTargetingJsonInput = "{}";
+    private string _campaignPayloadJsonInput = "{}";
+    private CampaignChannelOption? _selectedCampaignChannel;
+
+    private const int CampaignListPageSize = 50;
+
     private const string RewardTypeFreeItem = "FreeItem";
     private const string RewardTypePercentDiscount = "PercentDiscount";
     private const string RewardTypeAmountDiscount = "AmountDiscount";
@@ -54,6 +73,7 @@ public sealed class RewardsViewModel : BaseViewModel
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
+        Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
         RewardTypeOptions = new ObservableCollection<string>
         {
             RewardTypeFreeItem,
@@ -61,10 +81,20 @@ public sealed class RewardsViewModel : BaseViewModel
             RewardTypeAmountDiscount
         };
 
+        CampaignChannelOptions = new ObservableCollection<CampaignChannelOption>
+        {
+            new CampaignChannelOption(1, AppResources.RewardsCampaignChannelInAppOnly),
+            new CampaignChannelOption(3, AppResources.RewardsCampaignChannelInAppAndPush)
+        };
+        _selectedCampaignChannel = CampaignChannelOptions[0];
+
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
         DeleteCommand = new AsyncCommand(DeleteAsync, () => !IsBusy && IsEditMode && CanManageRewards);
         CreateNewCommand = new AsyncCommand(CreateNewAsync, () => !IsBusy && CanManageRewards);
+        ToggleCampaignActivationCommand = new AsyncCommand<BusinessCampaignEditorItem>(ToggleCampaignActivationAsync, campaign => !IsBusy && CanManageRewards && campaign is not null);
+        SaveCampaignCommand = new AsyncCommand(SaveCampaignAsync, () => !IsBusy && CanManageRewards);
+        NewCampaignCommand = new AsyncCommand(NewCampaignAsync, () => !IsBusy && CanManageRewards);
     }
 
 
@@ -81,6 +111,8 @@ public sealed class RewardsViewModel : BaseViewModel
                 SaveCommand.RaiseCanExecuteChanged();
                 DeleteCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanDeleteReward));
+                SaveCampaignCommand.RaiseCanExecuteChanged();
+                NewCampaignCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -100,9 +132,19 @@ public sealed class RewardsViewModel : BaseViewModel
     public ObservableCollection<RewardTierEditorItem> RewardTiers { get; }
 
     /// <summary>
+    /// Collection of business campaigns available for quick lifecycle actions.
+    /// </summary>
+    public ObservableCollection<BusinessCampaignEditorItem> Campaigns { get; }
+
+    /// <summary>
     /// Picker options for reward type contract values.
     /// </summary>
     public ObservableCollection<string> RewardTypeOptions { get; }
+
+    /// <summary>
+    /// Picker options for campaign channel combinations supported in mobile editor.
+    /// </summary>
+    public ObservableCollection<CampaignChannelOption> CampaignChannelOptions { get; }
 
     /// <summary>
     /// User-entered points required for the reward tier.
@@ -149,6 +191,89 @@ public sealed class RewardsViewModel : BaseViewModel
         set => SetProperty(ref _allowSelfRedemption, value);
     }
 
+
+    /// <summary>
+    /// Campaign internal name input for create/update operations.
+    /// </summary>
+    public string CampaignNameInput
+    {
+        get => _campaignNameInput;
+        set => SetProperty(ref _campaignNameInput, value);
+    }
+
+    /// <summary>
+    /// Campaign title input shown to end users.
+    /// </summary>
+    public string CampaignTitleInput
+    {
+        get => _campaignTitleInput;
+        set => SetProperty(ref _campaignTitleInput, value);
+    }
+
+    /// <summary>
+    /// Campaign body input used as card description.
+    /// </summary>
+    public string? CampaignBodyInput
+    {
+        get => _campaignBodyInput;
+        set => SetProperty(ref _campaignBodyInput, value);
+    }
+
+    /// <summary>
+    /// Campaign start UTC input in format yyyy-MM-dd HH:mm (optional).
+    /// </summary>
+    public string? CampaignStartsAtInput
+    {
+        get => _campaignStartsAtInput;
+        set => SetProperty(ref _campaignStartsAtInput, value);
+    }
+
+    /// <summary>
+    /// Campaign end UTC input in format yyyy-MM-dd HH:mm (optional).
+    /// </summary>
+    public string? CampaignEndsAtInput
+    {
+        get => _campaignEndsAtInput;
+        set => SetProperty(ref _campaignEndsAtInput, value);
+    }
+
+    /// <summary>
+    /// Optional campaign targeting rules in JSON format.
+    /// </summary>
+    public string CampaignTargetingJsonInput
+    {
+        get => _campaignTargetingJsonInput;
+        set => SetProperty(ref _campaignTargetingJsonInput, value);
+    }
+
+    /// <summary>
+    /// Optional campaign payload in JSON format.
+    /// </summary>
+    public string CampaignPayloadJsonInput
+    {
+        get => _campaignPayloadJsonInput;
+        set => SetProperty(ref _campaignPayloadJsonInput, value);
+    }
+
+    /// <summary>
+    /// Selected campaign channel option used for create/update payloads.
+    /// </summary>
+    public CampaignChannelOption? SelectedCampaignChannel
+    {
+        get => _selectedCampaignChannel;
+        set => SetProperty(ref _selectedCampaignChannel, value);
+    }
+
+    /// <summary>
+    /// Gets whether campaign editor is in update mode.
+    /// </summary>
+    public bool IsCampaignEditMode => _editingCampaignId != Guid.Empty;
+
+    /// <summary>
+    /// Gets localized save button text for campaign editor.
+    /// </summary>
+    public string CampaignSaveButtonText => IsCampaignEditMode ? AppResources.RewardsCampaignUpdateButton : AppResources.RewardsCampaignCreateButton;
+
     /// <summary>
     /// True when current editor is bound to an existing tier.
     /// </summary>
@@ -168,6 +293,9 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand SaveCommand { get; }
     public AsyncCommand DeleteCommand { get; }
     public AsyncCommand CreateNewCommand { get; }
+    public AsyncCommand<BusinessCampaignEditorItem> ToggleCampaignActivationCommand { get; }
+    public AsyncCommand SaveCampaignCommand { get; }
+    public AsyncCommand NewCampaignCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -211,6 +339,8 @@ public sealed class RewardsViewModel : BaseViewModel
                 .Select(RewardTierEditorItem.FromContract)
                 .ToList();
 
+            var campaigns = await LoadCampaignItemsAsync().ConfigureAwait(false);
+
             RunOnMain(() =>
             {
                 ErrorMessage = null;
@@ -219,11 +349,22 @@ public sealed class RewardsViewModel : BaseViewModel
                 {
                     RewardTiers.Add(tier);
                 }
+
+                Campaigns.Clear();
+                foreach (var campaign in campaigns)
+                {
+                    Campaigns.Add(campaign);
+                }
             });
 
             if (!IsEditMode)
             {
                 RunOnMain(ClearEditor);
+            }
+
+            if (!IsCampaignEditMode)
+            {
+                RunOnMain(ClearCampaignEditor);
             }
         }
         catch (Exception ex)
@@ -265,6 +406,42 @@ public sealed class RewardsViewModel : BaseViewModel
             OnPropertyChanged(nameof(SaveButtonText));
             OnPropertyChanged(nameof(CanDeleteReward));
             DeleteCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+
+    /// <summary>
+    /// Loads selected campaign values into editor for update flow.
+    /// </summary>
+    public void BeginEditCampaign(BusinessCampaignEditorItem campaign)
+    {
+        ArgumentNullException.ThrowIfNull(campaign);
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            _editingCampaignId = campaign.Id;
+            _editingCampaignRowVersion = campaign.RowVersion.ToArray();
+            _editingCampaignChannels = campaign.Channels;
+            SelectedCampaignChannel = CampaignChannelOptions.FirstOrDefault(x => x.Value == campaign.Channels) ?? CampaignChannelOptions[0];
+            _editingCampaignTargetingJson = campaign.TargetingJson;
+            _editingCampaignPayloadJson = campaign.PayloadJson;
+
+            CampaignNameInput = campaign.Name;
+            CampaignTitleInput = campaign.Title;
+            CampaignBodyInput = campaign.Body;
+            CampaignStartsAtInput = campaign.StartsAtUtc?.ToString("yyyy-MM-dd HH:mm");
+            CampaignEndsAtInput = campaign.EndsAtUtc?.ToString("yyyy-MM-dd HH:mm");
+            CampaignTargetingJsonInput = campaign.TargetingJson;
+            CampaignPayloadJsonInput = campaign.PayloadJson;
+
+            OnPropertyChanged(nameof(IsCampaignEditMode));
+            OnPropertyChanged(nameof(CampaignSaveButtonText));
         });
     }
 
@@ -411,6 +588,213 @@ public sealed class RewardsViewModel : BaseViewModel
         }
     }
 
+
+    /// <summary>
+    /// Parses optional UTC date input in expected business-editor format.
+    /// </summary>
+    private static bool TryParseCampaignDate(string? input, out DateTime? valueUtc, out string? error)
+    {
+        valueUtc = null;
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return true;
+        }
+
+        if (!DateTime.TryParseExact(input.Trim(), "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
+        {
+            error = AppResources.RewardsCampaignDateValidationFailed;
+            return false;
+        }
+
+        valueUtc = parsed.Kind switch
+        {
+            DateTimeKind.Utc => parsed,
+            DateTimeKind.Local => parsed.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
+        };
+
+        return true;
+    }
+
+    /// <summary>
+    /// Validates and normalizes campaign JSON fields before API mutations.
+    /// </summary>
+    private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
+    {
+        normalizedJson = "{}";
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(jsonInput))
+        {
+            return true;
+        }
+
+        var trimmed = jsonInput.Trim();
+        try
+        {
+            using var document = JsonDocument.Parse(trimmed);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                error = validationMessage;
+                return false;
+            }
+
+            normalizedJson = trimmed;
+            return true;
+        }
+        catch (JsonException)
+        {
+            error = validationMessage;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Creates or updates campaign based on editor mode.
+    /// </summary>
+    private async Task SaveCampaignAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CampaignNameInput) || string.IsNullOrWhiteSpace(CampaignTitleInput))
+        {
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignValidationFailed);
+            return;
+        }
+
+        if (!TryParseCampaignDate(CampaignStartsAtInput, out var startsAtUtc, out var startsError))
+        {
+            RunOnMain(() => ErrorMessage = startsError ?? AppResources.RewardsCampaignDateValidationFailed);
+            return;
+        }
+
+        if (!TryParseCampaignDate(CampaignEndsAtInput, out var endsAtUtc, out var endsError))
+        {
+            RunOnMain(() => ErrorMessage = endsError ?? AppResources.RewardsCampaignDateValidationFailed);
+            return;
+        }
+
+        if (startsAtUtc.HasValue && endsAtUtc.HasValue && startsAtUtc.Value > endsAtUtc.Value)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignDateRangeValidationFailed);
+            return;
+        }
+
+        if (SelectedCampaignChannel is null)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignChannelValidationFailed);
+            return;
+        }
+
+        var selectedChannels = SelectedCampaignChannel.Value;
+
+        if (!TryNormalizeCampaignJson(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
+        {
+            RunOnMain(() => ErrorMessage = targetingError ?? AppResources.RewardsCampaignTargetingValidationFailed);
+            return;
+        }
+
+        if (!TryNormalizeCampaignJson(CampaignPayloadJsonInput, AppResources.RewardsCampaignPayloadValidationFailed, out var payloadJson, out var payloadError))
+        {
+            RunOnMain(() => ErrorMessage = payloadError ?? AppResources.RewardsCampaignPayloadValidationFailed);
+            return;
+        }
+
+        IsBusy = true;
+        RaiseCommandCanExecuteChanged();
+
+        try
+        {
+            Result operationResult;
+
+            if (IsCampaignEditMode)
+            {
+                operationResult = await _loyaltyService
+                    .UpdateBusinessCampaignAsync(new UpdateBusinessCampaignRequest
+                    {
+                        Id = _editingCampaignId,
+                        Name = CampaignNameInput.Trim(),
+                        Title = CampaignTitleInput.Trim(),
+                        Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
+                        Channels = selectedChannels,
+                        StartsAtUtc = startsAtUtc,
+                        EndsAtUtc = endsAtUtc,
+                        TargetingJson = targetingJson,
+                        PayloadJson = payloadJson,
+                        RowVersion = _editingCampaignRowVersion
+                    }, CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                var createResult = await _loyaltyService
+                    .CreateBusinessCampaignAsync(new CreateBusinessCampaignRequest
+                    {
+                        Name = CampaignNameInput.Trim(),
+                        Title = CampaignTitleInput.Trim(),
+                        Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
+                        Channels = selectedChannels,
+                        StartsAtUtc = startsAtUtc,
+                        EndsAtUtc = endsAtUtc,
+                        TargetingJson = targetingJson,
+                        PayloadJson = payloadJson
+                    }, CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                operationResult = createResult.Succeeded ? Result.Ok() : Result.Fail(createResult.Error ?? AppResources.RewardsCampaignSaveFailed);
+            }
+
+            if (!operationResult.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = operationResult.Error ?? AppResources.RewardsCampaignSaveFailed);
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                ErrorMessage = null;
+                ClearCampaignEditor();
+            });
+
+            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsCampaignSaveFailed} {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
+    /// Clears campaign editor and switches back to create mode.
+    /// </summary>
+    private Task NewCampaignAsync()
+    {
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(ClearCampaignEditor);
+        return Task.CompletedTask;
+    }
+
     /// <summary>
     /// Refreshes authorization snapshot for reward-edit operations.
     /// </summary>
@@ -491,6 +875,8 @@ public sealed class RewardsViewModel : BaseViewModel
             .Select(RewardTierEditorItem.FromContract)
             .ToList();
 
+        var campaigns = await LoadCampaignItemsAsync().ConfigureAwait(false);
+
         RunOnMain(() =>
         {
             RewardTiers.Clear();
@@ -498,7 +884,89 @@ public sealed class RewardsViewModel : BaseViewModel
             {
                 RewardTiers.Add(tier);
             }
+
+            Campaigns.Clear();
+            foreach (var campaign in campaigns)
+            {
+                Campaigns.Add(campaign);
+            }
         });
+    }
+
+    /// <summary>
+    /// Loads business campaigns for lightweight lifecycle controls in Rewards screen.
+    /// </summary>
+    private async Task<List<BusinessCampaignEditorItem>> LoadCampaignItemsAsync()
+    {
+        var campaignsResult = await _loyaltyService
+            .GetBusinessCampaignsAsync(page: 1, pageSize: CampaignListPageSize, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        if (!campaignsResult.Succeeded || campaignsResult.Value is null)
+        {
+            return new List<BusinessCampaignEditorItem>();
+        }
+
+        return campaignsResult.Value.Items
+            .OrderByDescending(x => x.StartsAtUtc)
+            .ThenByDescending(x => x.IsActive)
+            .Select(BusinessCampaignEditorItem.FromContract)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Toggles campaign activation state for selected campaign item.
+    /// </summary>
+    private async Task ToggleCampaignActivationAsync(BusinessCampaignEditorItem? campaign)
+    {
+        if (campaign is null)
+        {
+            return;
+        }
+
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (!CanManageRewards)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
+            return;
+        }
+
+        IsBusy = true;
+        RaiseCommandCanExecuteChanged();
+
+        try
+        {
+            var result = await _loyaltyService
+                .SetBusinessCampaignActivationAsync(new SetCampaignActivationRequest
+                {
+                    Id = campaign.Id,
+                    IsActive = !campaign.IsActive,
+                    RowVersion = campaign.RowVersion
+                }, CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                RunOnMain(() => ErrorMessage = result.Error ?? AppResources.RewardsCampaignToggleFailed);
+                return;
+            }
+
+            RunOnMain(() => ErrorMessage = null);
+            await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsCampaignToggleFailed} {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandCanExecuteChanged();
+        }
     }
 
     /// <summary>
@@ -521,12 +989,40 @@ public sealed class RewardsViewModel : BaseViewModel
         DeleteCommand.RaiseCanExecuteChanged();
     }
 
+
+    /// <summary>
+    /// Clears campaign editor state and exits campaign edit mode.
+    /// </summary>
+    private void ClearCampaignEditor()
+    {
+        _editingCampaignId = Guid.Empty;
+        _editingCampaignRowVersion = Array.Empty<byte>();
+        _editingCampaignChannels = 1;
+        _editingCampaignTargetingJson = "{}";
+        _editingCampaignPayloadJson = "{}";
+
+        CampaignNameInput = string.Empty;
+        CampaignTitleInput = string.Empty;
+        CampaignBodyInput = null;
+        CampaignStartsAtInput = null;
+        CampaignEndsAtInput = null;
+        CampaignTargetingJsonInput = _editingCampaignTargetingJson;
+        CampaignPayloadJsonInput = _editingCampaignPayloadJson;
+        SelectedCampaignChannel = CampaignChannelOptions.FirstOrDefault();
+
+        OnPropertyChanged(nameof(IsCampaignEditMode));
+        OnPropertyChanged(nameof(CampaignSaveButtonText));
+    }
+
     private void RaiseCommandCanExecuteChanged()
     {
         RefreshCommand.RaiseCanExecuteChanged();
         SaveCommand.RaiseCanExecuteChanged();
         DeleteCommand.RaiseCanExecuteChanged();
         CreateNewCommand.RaiseCanExecuteChanged();
+        ToggleCampaignActivationCommand.RaiseCanExecuteChanged();
+        SaveCampaignCommand.RaiseCanExecuteChanged();
+        NewCampaignCommand.RaiseCanExecuteChanged();
     }
 }
 
@@ -555,6 +1051,66 @@ public sealed class RewardTierEditorItem
             RewardValue = item.RewardValue,
             Description = item.Description,
             AllowSelfRedemption = item.AllowSelfRedemption,
+            RowVersion = item.RowVersion ?? Array.Empty<byte>()
+        };
+    }
+}
+
+
+/// <summary>
+/// Represents a selectable channel combination in campaign editor UI.
+/// </summary>
+public sealed class CampaignChannelOption
+{
+    public CampaignChannelOption(short value, string label)
+    {
+        Value = value;
+        Label = label;
+    }
+
+    public short Value { get; }
+    public string Label { get; }
+
+    public override string ToString() => Label;
+}
+
+/// <summary>
+/// Lightweight campaign item used by business rewards screen.
+/// </summary>
+public sealed class BusinessCampaignEditorItem
+{
+    public Guid Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string CampaignState { get; init; } = PromotionCampaignState.Draft;
+    public bool IsActive { get; init; }
+    public DateTime? StartsAtUtc { get; init; }
+    public DateTime? EndsAtUtc { get; init; }
+    public string? Body { get; init; }
+    public short Channels { get; init; }
+    public string TargetingJson { get; init; } = "{}";
+    public string PayloadJson { get; init; } = "{}";
+    public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+
+    public string ActivationButtonText => IsActive ? AppResources.RewardsCampaignDeactivateButton : AppResources.RewardsCampaignActivateButton;
+
+    public static BusinessCampaignEditorItem FromContract(BusinessCampaignItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        return new BusinessCampaignEditorItem
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Title = item.Title,
+            CampaignState = item.CampaignState,
+            IsActive = item.IsActive,
+            StartsAtUtc = item.StartsAtUtc,
+            EndsAtUtc = item.EndsAtUtc,
+            Body = item.Body,
+            Channels = item.Channels,
+            TargetingJson = item.TargetingJson ?? "{}",
+            PayloadJson = item.PayloadJson ?? "{}",
             RowVersion = item.RowVersion ?? Array.Empty<byte>()
         };
     }

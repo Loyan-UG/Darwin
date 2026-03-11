@@ -264,8 +264,42 @@ public sealed class QrViewModel : BaseViewModel
         ExpiresAtUtc = session.ExpiresAtUtc;
         _lastSuccessfulSessionRefreshUtc = DateTimeOffset.UtcNow;
 
+        if (session.Mode == LoyaltyScanMode.Redemption)
+        {
+            _ = TrackClaimIntentBestEffortAsync();
+        }
+
         UpdateGuidanceMessage();
         UpdateExpiresInText();
+    }
+
+    /// <summary>
+    /// Tracks a best-effort claim intent event when redemption QR is generated.
+    /// This is used to complete promotions conversion funnel measurement.
+    /// </summary>
+    private async Task TrackClaimIntentBestEffortAsync()
+    {
+        try
+        {
+            if (_businessId == Guid.Empty)
+            {
+                return;
+            }
+
+            await _loyaltyService.TrackPromotionInteractionAsync(new TrackPromotionInteractionRequest
+            {
+                BusinessId = _businessId,
+                BusinessName = string.IsNullOrWhiteSpace(BusinessDisplayName) ? "Unknown" : BusinessDisplayName,
+                Title = "RewardClaimIntent",
+                CtaKind = "OpenRedemptionQr",
+                EventType = PromotionInteractionEventType.Claim,
+                OccurredAtUtc = DateTime.UtcNow
+            }, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Intentionally ignore tracking failures to keep QR flow uninterrupted.
+        }
     }
 
     private void GenerateQrImage()

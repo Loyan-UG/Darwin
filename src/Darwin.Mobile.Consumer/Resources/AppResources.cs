@@ -76,6 +76,12 @@ public static class AppResources
     public static string RewardsJoinedBusinessesLabel => ResourceManager.GetString(nameof(RewardsJoinedBusinessesLabel), Culture) ?? "Joined businesses";
     public static string BusinessCategoryFormat => ResourceManager.GetString(nameof(BusinessCategoryFormat), Culture) ?? "Category: {0}";
 
+    public static string RewardsOverviewTitle => ResourceManager.GetString(nameof(RewardsOverviewTitle), Culture) ?? "Multi-business overview";
+    public static string RewardsOverviewJoinedBusinessesFormat => ResourceManager.GetString(nameof(RewardsOverviewJoinedBusinessesFormat), Culture) ?? "Joined businesses: {0}";
+    public static string RewardsOverviewTotalPointsFormat => ResourceManager.GetString(nameof(RewardsOverviewTotalPointsFormat), Culture) ?? "Total points across businesses: {0}";
+    public static string RewardsOverviewTopBusinessFormat => ResourceManager.GetString(nameof(RewardsOverviewTopBusinessFormat), Culture) ?? "Top business by points: {0}";
+    public static string RewardsOpenSelectedBusinessQrButton => ResourceManager.GetString(nameof(RewardsOpenSelectedBusinessQrButton), Culture) ?? "Open selected business QR";
+
     public static string BusinessDetailsTitle => ResourceManager.GetString(nameof(BusinessDetailsTitle), Culture) ?? "Business";
     public static string BusinessDetailsPlaceholder => ResourceManager.GetString(nameof(BusinessDetailsPlaceholder), Culture) ?? "Additional details coming soon.";
     public static string JoinProgramButton => ResourceManager.GetString(nameof(JoinProgramButton), Culture) ?? "Join Loyalty Program";
@@ -89,6 +95,21 @@ public static class AppResources
     public static string TimezoneLabel => ResourceManager.GetString(nameof(TimezoneLabel), Culture) ?? "Timezone";
     public static string CurrencyLabel => ResourceManager.GetString(nameof(CurrencyLabel), Culture) ?? "Currency";
     public static string SaveProfileButton => ResourceManager.GetString(nameof(SaveProfileButton), Culture) ?? "Save profile";
+    public static string ProfilePushRegistrationSectionTitle => ResourceManager.GetString(nameof(ProfilePushRegistrationSectionTitle), Culture) ?? "Push registration";
+    public static string ProfilePushRegistrationSyncButton => ResourceManager.GetString(nameof(ProfilePushRegistrationSyncButton), Culture) ?? "Sync push registration";
+    public static string ProfilePushRegistrationStatusIdle => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusIdle), Culture) ?? "Push registration has not been synced yet.";
+    public static string ProfilePushRegistrationStatusSuccess => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusSuccess), Culture) ?? "Push registration synced successfully.";
+    public static string ProfilePushRegistrationStatusFailed => ResourceManager.GetString(nameof(ProfilePushRegistrationStatusFailed), Culture) ?? "Push registration sync failed.";
+    public static string ProfilePushRegistrationLastSyncFormat => ResourceManager.GetString(nameof(ProfilePushRegistrationLastSyncFormat), Culture) ?? "Last sync: {0}";
+    public static string ProfilePushOpenSettingsButton => ResourceManager.GetString(nameof(ProfilePushOpenSettingsButton), Culture) ?? "Open notification settings";
+    public static string ProfilePushOpenSettingsHint => ResourceManager.GetString(nameof(ProfilePushOpenSettingsHint), Culture) ?? "If notifications are blocked, open system settings and allow notifications for Loyan.";
+    public static string ProfilePushOpenSettingsFailed => ResourceManager.GetString(nameof(ProfilePushOpenSettingsFailed), Culture) ?? "Could not open notification settings. Please open app settings manually.";
+    public static string ProfilePushPermissionEnabled => ResourceManager.GetString(nameof(ProfilePushPermissionEnabled), Culture) ?? "Notifications permission: enabled";
+    public static string ProfilePushPermissionDisabled => ResourceManager.GetString(nameof(ProfilePushPermissionDisabled), Culture) ?? "Notifications permission: disabled";
+    public static string ProfilePushPermissionUnknown => ResourceManager.GetString(nameof(ProfilePushPermissionUnknown), Culture) ?? "Notifications permission: unknown";
+    public static string ProfilePushTokenAvailabilityReady => ResourceManager.GetString(nameof(ProfilePushTokenAvailabilityReady), Culture) ?? "Push token status: ready";
+    public static string ProfilePushTokenAvailabilityMissing => ResourceManager.GetString(nameof(ProfilePushTokenAvailabilityMissing), Culture) ?? "Push token status: missing";
+    public static string ProfilePushTokenAvailabilityUnknown => ResourceManager.GetString(nameof(ProfilePushTokenAvailabilityUnknown), Culture) ?? "Push token status: unknown";
     public static string ChangePasswordTitle => ResourceManager.GetString(nameof(ChangePasswordTitle), Culture) ?? "Change password";
     public static string CurrentPasswordLabel => ResourceManager.GetString(nameof(CurrentPasswordLabel), Culture) ?? "Current password";
     public static string NewPasswordLabel => ResourceManager.GetString(nameof(NewPasswordLabel), Culture) ?? "New password";
@@ -156,6 +177,9 @@ public static class AppResources
     public static string DiscoverLoadJoinedFailed => ResourceManager.GetString(nameof(DiscoverLoadJoinedFailed), Culture) ?? "Unable to load your joined businesses.";
     public static string DiscoverLoadExploreFailed => ResourceManager.GetString(nameof(DiscoverLoadExploreFailed), Culture) ?? "Unable to load explore businesses.";
 
+    public static string DiscoverJoinedBusinessesCountFormat => ResourceManager.GetString(nameof(DiscoverJoinedBusinessesCountFormat), Culture) ?? "Joined businesses: {0}";
+    public static string DiscoverTotalPointsFormat => ResourceManager.GetString(nameof(DiscoverTotalPointsFormat), Culture) ?? "Total points: {0}";
+    public static string DiscoverTopBalanceBusinessFormat => ResourceManager.GetString(nameof(DiscoverTopBalanceBusinessFormat), Culture) ?? "Top balance at: {0}";
     
     public static string DiscoverCategoryFilterLabel => ResourceManager.GetString(nameof(DiscoverCategoryFilterLabel), Culture) ?? "Category";
     public static string DiscoverSearchButton => ResourceManager.GetString(nameof(DiscoverSearchButton), Culture) ?? "Search";
@@ -208,5 +232,9 @@ public static class AppResources
     public static string FeedBusinessPickerLabel => ResourceManager.GetString(nameof(FeedBusinessPickerLabel), Culture) ?? "Business";
     public static string FeedRefreshButton => ResourceManager.GetString(nameof(FeedRefreshButton), Culture) ?? "Refresh feed";
     public static string FeedOpenPromotionButton => ResourceManager.GetString(nameof(FeedOpenPromotionButton), Culture) ?? "Open";
+    public static string FeedPromotionScopeSelectedBusinessButton => ResourceManager.GetString(nameof(FeedPromotionScopeSelectedBusinessButton), Culture) ?? "Selected business promotions";
+    public static string FeedPromotionScopeAllBusinessesButton => ResourceManager.GetString(nameof(FeedPromotionScopeAllBusinessesButton), Culture) ?? "All businesses promotions";
+    public static string FeedPromotionScopeSelectedBusiness => ResourceManager.GetString(nameof(FeedPromotionScopeSelectedBusiness), Culture) ?? "Promotion scope: selected business";
+    public static string FeedPromotionScopeAllBusinesses => ResourceManager.GetString(nameof(FeedPromotionScopeAllBusinesses), Culture) ?? "Promotion scope: all joined businesses";
 
 }

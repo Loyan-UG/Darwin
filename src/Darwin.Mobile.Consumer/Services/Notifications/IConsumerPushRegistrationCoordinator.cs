@@ -13,4 +13,9 @@ public interface IConsumerPushRegistrationCoordinator
     /// Attempts to register/update the current installation in backend device registry.
     /// </summary>
     Task<Result> TryRegisterCurrentDeviceAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Clears local registration cache so next successful login/refresh forces re-registration.
+    /// </summary>
+    void ResetCachedRegistrationState();
 }
