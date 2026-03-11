@@ -208,6 +208,76 @@ public sealed class ContractSerializationCompatibilityTests
         dto.RowVersion.Should().HaveCount(4);
     }
 
+
+
+    /// <summary>
+    ///     Verifies that confirm-redemption response keeps expected field names
+    ///     for success indicators, balance, account snapshot and error details.
+    /// </summary>
+    [Fact]
+    public void ConfirmRedemptionResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new ConfirmRedemptionResponse
+        {
+            Success = true,
+            NewBalance = 120,
+            UpdatedAccount = new LoyaltyAccountSummary
+            {
+                LoyaltyAccountId = Guid.Parse("88888888-8888-8888-8888-888888888888"),
+                BusinessId = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                BusinessName = "Coffee Shop",
+                PointsBalance = 120,
+                LifetimePoints = 480,
+                Status = "Active",
+                LastAccrualAtUtc = null,
+                NextRewardTitle = null
+            },
+            ErrorCode = null,
+            ErrorMessage = null
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain(""success"");
+        json.Should().Contain(""newBalance"");
+        json.Should().Contain(""updatedAccount"");
+        json.Should().Contain(""errorCode"");
+        json.Should().Contain(""errorMessage"");
+    }
+
+    /// <summary>
+    ///     Verifies that confirm-redemption response can be deserialized from
+    ///     a failure payload while preserving error code/message fields.
+    /// </summary>
+    [Fact]
+    public void ConfirmRedemptionResponse_Should_Deserialize_WithFailurePayload()
+    {
+        // Arrange
+        const string json = """
+            {
+              "success": false,
+              "newBalance": null,
+              "updatedAccount": null,
+              "errorCode": "SESSION_EXPIRED",
+              "errorMessage": "Session has expired."
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<ConfirmRedemptionResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Success.Should().BeFalse();
+        dto.NewBalance.Should().BeNull();
+        dto.UpdatedAccount.Should().BeNull();
+        dto.ErrorCode.Should().Be("SESSION_EXPIRED");
+        dto.ErrorMessage.Should().Be("Session has expired.");
+    }
+
     /// <summary>
     ///     Verifies that customer profile contract serializes optimistic-concurrency and
     ///     culture fields with stable names expected by mobile profile forms.

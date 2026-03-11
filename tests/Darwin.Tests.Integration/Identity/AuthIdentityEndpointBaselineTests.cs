@@ -150,6 +150,25 @@ public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplica
         problem.Title.Should().NotBeNullOrWhiteSpace();
     }
 
+
+
+    /// <summary>
+    ///     Verifies that global logout endpoint requires authentication and rejects
+    ///     anonymous requests with 401/Unauthorized.
+    /// </summary>
+    [Fact]
+    public async Task LogoutAll_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+
+        // Act
+        using var response = await client.PostAsync("/api/v1/auth/logout-all", content: null);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     ///     Creates a test client using HTTPS base address so middleware behavior
     ///     remains deterministic without redirect side effects.
