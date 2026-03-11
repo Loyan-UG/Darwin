@@ -22,6 +22,7 @@ public partial class RewardsPage : ContentPage
         BindingContext = _viewModel;
 
         RewardTiersCollectionView.SelectionChanged += OnRewardTierSelected;
+        CampaignsCollectionView.SelectionChanged += OnCampaignSelected;
     }
 
     protected override async void OnAppearing()
@@ -42,6 +43,29 @@ public partial class RewardsPage : ContentPage
             if (e.CurrentSelection[0] is RewardTierEditorItem selected)
             {
                 _viewModel.BeginEdit(selected);
+            }
+        }
+        finally
+        {
+            if (sender is CollectionView collectionView)
+            {
+                collectionView.SelectedItem = null;
+            }
+        }
+    }
+
+    private void OnCampaignSelected(object? sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            if (e.CurrentSelection[0] is BusinessCampaignEditorItem selected)
+            {
+                _viewModel.BeginEditCampaign(selected);
             }
         }
         finally

@@ -123,6 +123,26 @@
 	<data name="AccrueButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>
+
+	<data name="RewardsOverviewTitle" xml:space="preserve">
+    <value>Multi-business overview</value>
+  </data>
+
+	<data name="RewardsOverviewJoinedBusinessesFormat" xml:space="preserve">
+    <value>Joined businesses: {0}</value>
+  </data>
+
+	<data name="RewardsOverviewTotalPointsFormat" xml:space="preserve">
+    <value>Total points across businesses: {0}</value>
+  </data>
+
+	<data name="RewardsOverviewTopBusinessFormat" xml:space="preserve">
+    <value>Top business by points: {0}</value>
+  </data>
+
+	<data name="RewardsOpenSelectedBusinessQrButton" xml:space="preserve">
+    <value>Open selected business QR</value>
+  </data>
 	<data name="BusinessCategoryFormat" xml:space="preserve">
     <value>Category: {0}</value>
   </data>
@@ -275,6 +295,60 @@
   </data>
 	<data name="SaveProfileButton" xml:space="preserve">
     <value>Save profile</value>
+  </data>
+	<data name="ProfilePushRegistrationSectionTitle" xml:space="preserve">
+    <value>Push registration</value>
+  </data>
+	<data name="ProfilePushRegistrationSyncButton" xml:space="preserve">
+    <value>Sync push registration</value>
+  </data>
+	<data name="ProfilePushRegistrationStatusIdle" xml:space="preserve">
+    <value>Push registration has not been synced yet.</value>
+  </data>
+	<data name="ProfilePushRegistrationStatusSuccess" xml:space="preserve">
+    <value>Push registration synced successfully.</value>
+  </data>
+	<data name="ProfilePushRegistrationStatusFailed" xml:space="preserve">
+    <value>Push registration sync failed.</value>
+  </data>
+	<data name="ProfilePushRegistrationLastSyncFormat" xml:space="preserve">
+    <value>Last sync: {0}</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsButton" xml:space="preserve">
+    <value>Open notification settings</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsHint" xml:space="preserve">
+    <value>If notifications are blocked, open system settings and allow notifications for Loyan.</value>
+  </data>
+
+	<data name="ProfilePushOpenSettingsFailed" xml:space="preserve">
+    <value>Could not open notification settings. Please open app settings manually.</value>
+  </data>
+
+	<data name="ProfilePushPermissionEnabled" xml:space="preserve">
+    <value>Notifications permission: enabled</value>
+  </data>
+
+	<data name="ProfilePushPermissionDisabled" xml:space="preserve">
+    <value>Notifications permission: disabled</value>
+  </data>
+
+	<data name="ProfilePushPermissionUnknown" xml:space="preserve">
+    <value>Notifications permission: unknown</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityReady" xml:space="preserve">
+    <value>Push token status: ready</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityMissing" xml:space="preserve">
+    <value>Push token status: missing</value>
+  </data>
+
+	<data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
+    <value>Push token status: unknown</value>
   </data>
 	<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Change password</value>
@@ -541,6 +615,22 @@
 	<data name="FeedBusinessPickerLabel" xml:space="preserve">
   <value>Business</value>
 </data>
+
+	<data name="FeedPromotionScopeSelectedBusinessButton" xml:space="preserve">
+    <value>Selected business promotions</value>
+  </data>
+
+	<data name="FeedPromotionScopeAllBusinessesButton" xml:space="preserve">
+    <value>All businesses promotions</value>
+  </data>
+
+	<data name="FeedPromotionScopeSelectedBusiness" xml:space="preserve">
+    <value>Promotion scope: selected business</value>
+  </data>
+
+	<data name="FeedPromotionScopeAllBusinesses" xml:space="preserve">
+    <value>Promotion scope: all joined businesses</value>
+  </data>
 	<data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Open</value>
 </data>
@@ -573,5 +663,14 @@
   </data>
   <data name="ProfileConcurrencyConflict" xml:space="preserve">
     <value>Your profile was updated elsewhere. Please refresh and try again.</value>
+  </data>
+  <data name="DiscoverJoinedBusinessesCountFormat" xml:space="preserve">
+    <value>Joined businesses: {0}</value>
+  </data>
+  <data name="DiscoverTotalPointsFormat" xml:space="preserve">
+    <value>Total points: {0}</value>
+  </data>
+  <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
+    <value>Top balance at: {0}</value>
   </data>
 </root>
