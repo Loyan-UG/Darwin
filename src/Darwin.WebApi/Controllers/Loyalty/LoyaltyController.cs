@@ -1505,7 +1505,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                     BusinessName = request.BusinessName,
                     Title = request.Title,
                     CtaKind = request.CtaKind,
-                    EventType = request.EventType,
+                    EventType = MapPromotionInteractionEventType(request.EventType),
                     OccurredAtUtc = request.OccurredAtUtc
                 }, ct)
                 .ConfigureAwait(false);
@@ -1516,6 +1516,17 @@ namespace Darwin.WebApi.Controllers.Loyalty
             }
 
             return NoContent();
+        }
+
+        private static Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType MapPromotionInteractionEventType(
+            Darwin.Contracts.Loyalty.PromotionInteractionEventType eventType)
+        {
+            return eventType switch
+            {
+                Darwin.Contracts.Loyalty.PromotionInteractionEventType.Open => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Open,
+                Darwin.Contracts.Loyalty.PromotionInteractionEventType.Claim => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Claim,
+                _ => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Impression
+            };
         }
 
 
