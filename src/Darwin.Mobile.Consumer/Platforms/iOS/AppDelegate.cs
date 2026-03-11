@@ -20,16 +20,15 @@ public class AppDelegate : MauiUIApplicationDelegate
 
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 
-    public override void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)
+    [Export("application:didRegisterForRemoteNotificationsWithDeviceToken:")]
+    public void DidRegisterForRemoteNotifications(UIApplication application, NSData deviceToken)
     {
-        base.RegisteredForRemoteNotifications(application, deviceToken);
         ApplePushRuntimeBridge.SetDeviceToken(deviceToken);
     }
 
-    public override void FailedToRegisterForRemoteNotifications(UIApplication application, NSError error)
+    [Export("application:didFailToRegisterForRemoteNotificationsWithError:")]
+    public void DidFailToRegisterForRemoteNotifications(UIApplication application, NSError error)
     {
-        base.FailedToRegisterForRemoteNotifications(application, error);
-
         // Clear stale token when APNs registration fails to avoid sending invalid token to backend.
         PushTokenRuntimeState.SetPushToken(null);
     }
