@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
+using Darwin.Application.Identity;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Shared.Results;
@@ -16,6 +19,9 @@ namespace Darwin.Application.Identity.Commands;
 /// </summary>
 public sealed class RegisterOrUpdateUserDeviceHandler
 {
+    private const string SnapshotMetadataKeyDeviceHeartbeatCount = "deviceHeartbeatCount";
+    private const string SnapshotMetadataKeyLastDeviceHeartbeatAtUtc = "lastDeviceHeartbeatAtUtc";
+
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
 
@@ -109,6 +115,8 @@ public sealed class RegisterOrUpdateUserDeviceHandler
             existing.IsActive = true;
         }
 
+        await UpsertEngagementSnapshotAsync(dto.UserId, now, ct).ConfigureAwait(false);
+
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
 
         return Result<RegisterUserDeviceResultDto>.Ok(new RegisterUserDeviceResultDto
@@ -116,5 +124,131 @@ public sealed class RegisterOrUpdateUserDeviceHandler
             DeviceId = normalizedDeviceId,
             RegisteredAtUtc = now
         });
+    }
+
+    /// <summary>
+    /// Maintains minimal engagement projection on each authenticated device heartbeat.
+    /// This provides a reliable trigger/measurement baseline for inactive-reminder workflows.
+    /// </summary>
+    private async Task UpsertEngagementSnapshotAsync(Guid userId, DateTime nowUtc, CancellationToken ct)
+    {
+        var snapshot = await _db.Set<UserEngagementSnapshot>()
+            .FirstOrDefaultAsync(x => x.UserId == userId, ct)
+            .ConfigureAwait(false);
+
+        var metadata = DeserializeSnapshotMetadata(snapshot?.SnapshotJson);
+        var heartbeatCount = TryGetLong(metadata, ReminderMetadataKeys.DeviceHeartbeatCount) + 1;
+
+        metadata[ReminderMetadataKeys.DeviceHeartbeatCount] = heartbeatCount;
+        metadata[ReminderMetadataKeys.LastDeviceHeartbeatAtUtc] = nowUtc;
+
+        if (snapshot is null)
+        {
+            snapshot = new UserEngagementSnapshot
+            {
+                UserId = userId,
+                LastActivityAtUtc = nowUtc,
+                EventCount = 1,
+                EngagementScore30d = 1,
+                CalculatedAtUtc = nowUtc,
+                SnapshotJson = SerializeSnapshotMetadata(metadata)
+            };
+
+            _db.Set<UserEngagementSnapshot>().Add(snapshot);
+            return;
+        }
+
+        snapshot.LastActivityAtUtc = nowUtc;
+        snapshot.CalculatedAtUtc = nowUtc;
+        snapshot.EventCount = Math.Max(0, snapshot.EventCount) + 1;
+        snapshot.EngagementScore30d = ComputeEngagementScore(snapshot.EventCount, snapshot.LastLoginAtUtc, nowUtc);
+        snapshot.SnapshotJson = SerializeSnapshotMetadata(metadata);
+    }
+
+    /// <summary>
+    /// Computes a lightweight engagement score with recency bias for segmentation.
+    /// </summary>
+    private static int ComputeEngagementScore(long eventCount, DateTime? lastLoginAtUtc, DateTime nowUtc)
+    {
+        var cappedEventScore = (int)Math.Min(80, Math.Max(0, eventCount));
+
+        if (!lastLoginAtUtc.HasValue)
+        {
+            return cappedEventScore;
+        }
+
+        var inactiveDays = Math.Max(0, (int)(nowUtc - lastLoginAtUtc.Value).TotalDays);
+        var recencyBonus = Math.Max(0, 20 - inactiveDays);
+        return Math.Clamp(cappedEventScore + recencyBonus, 0, 100);
+    }
+
+    /// <summary>
+    /// Deserializes snapshot metadata JSON safely and normalizes to mutable dictionary.
+    /// </summary>
+    private static Dictionary<string, object?> DeserializeSnapshotMetadata(string? snapshotJson)
+    {
+        if (string.IsNullOrWhiteSpace(snapshotJson))
+        {
+            return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        try
+        {
+            var payload = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(snapshotJson);
+            var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            if (payload is null)
+            {
+                return result;
+            }
+
+            foreach (var entry in payload)
+            {
+                result[entry.Key] = entry.Value.ValueKind switch
+                {
+                    JsonValueKind.String => entry.Value.GetString(),
+                    JsonValueKind.Number when entry.Value.TryGetInt64(out var longValue) => longValue,
+                    JsonValueKind.Number when entry.Value.TryGetDouble(out var doubleValue) => doubleValue,
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    _ => entry.Value.GetRawText()
+                };
+            }
+
+            return result;
+        }
+        catch
+        {
+            return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>
+    /// Serializes snapshot metadata with relaxed escaping for compact, readable payloads.
+    /// </summary>
+    private static string SerializeSnapshotMetadata(Dictionary<string, object?> metadata)
+    {
+        return JsonSerializer.Serialize(metadata, new JsonSerializerOptions
+        {
+            WriteIndented = false
+        });
+    }
+
+    /// <summary>
+    /// Parses a metadata value as <see cref="long"/> with safe fallback.
+    /// </summary>
+    private static long TryGetLong(IReadOnlyDictionary<string, object?> metadata, string key)
+    {
+        if (!metadata.TryGetValue(key, out var value) || value is null)
+        {
+            return 0;
+        }
+
+        return value switch
+        {
+            long longValue => longValue,
+            int intValue => intValue,
+            string text when long.TryParse(text, out var parsed) => parsed,
+            _ => 0
+        };
     }
 }

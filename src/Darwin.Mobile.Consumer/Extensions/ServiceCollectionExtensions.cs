@@ -28,6 +28,8 @@ public static class ServiceCollectionExtensions
 #endif
             .Build();
 
+        services.AddSingleton<IConfiguration>(config);
+
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
             ?? throw new InvalidOperationException("Missing 'Api' section in appsettings.mobile.json");
 
@@ -48,7 +50,7 @@ public static class ServiceCollectionExtensions
 
         // Root navigation service for window-aware app root switching.
         services.AddSingleton<IAppRootNavigator, AppRootNavigator>();
-        services.AddSingleton<IConsumerPushTokenProvider, ConsumerNoopPushTokenProvider>();
+        services.AddSingleton<IConsumerPushTokenProvider, ConsumerPlatformPushTokenProvider>();
         services.AddSingleton<IConsumerPushRegistrationCoordinator, ConsumerPushRegistrationCoordinator>();
 
         // Platform services (scanner, location)
