@@ -49,7 +49,11 @@ internal static class AndroidFcmRuntimeBridge
 
             if (!completeTask.IsSuccessful)
             {
-                tcs.TrySetException(completeTask.Exception ?? new InvalidOperationException("FCM token retrieval failed."));
+                var errorMessage = completeTask.Exception?.Message;
+                tcs.TrySetException(new InvalidOperationException(
+                    string.IsNullOrWhiteSpace(errorMessage)
+                        ? "FCM token retrieval failed."
+                        : $"FCM token retrieval failed. {errorMessage}"));
                 return;
             }
 
