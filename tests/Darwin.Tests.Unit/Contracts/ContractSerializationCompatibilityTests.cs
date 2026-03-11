@@ -241,11 +241,11 @@ public sealed class ContractSerializationCompatibilityTests
         var json = JsonSerializer.Serialize(dto, JsonOptions);
 
         // Assert
-        json.Should().Contain(""success"");
-        json.Should().Contain(""newBalance"");
-        json.Should().Contain(""updatedAccount"");
-        json.Should().Contain(""errorCode"");
-        json.Should().Contain(""errorMessage"");
+        json.Should().Contain("\"success\"");
+        json.Should().Contain("\"newBalance\"");
+        json.Should().Contain("\"updatedAccount\"");
+        json.Should().Contain("\"errorCode\"");
+        json.Should().Contain("\"errorMessage\"");
     }
 
     /// <summary>

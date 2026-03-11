@@ -125,6 +125,53 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+
+
+    /// <summary>
+    ///     Verifies that redemption confirmation endpoint is protected by authentication
+    ///     and rejects anonymous requests before business rules are evaluated.
+    /// </summary>
+    [Fact]
+    public async Task ConfirmRedemption_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new ConfirmRedemptionRequest
+        {
+            ScanSessionToken = $"anonymous-test-token-{Guid.NewGuid():N}"
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/confirm-redemption", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>
+    ///     Verifies that timeline endpoint is protected and rejects anonymous requests,
+    ///     preventing unauthenticated access to loyalty activity history.
+    /// </summary>
+    [Fact]
+    public async Task GetMyTimeline_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var request = new GetMyLoyaltyTimelinePageRequest
+        {
+            BusinessId = null,
+            PageSize = 20,
+            BeforeAtUtc = null,
+            BeforeId = null
+        };
+
+        // Act
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/my/timeline", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     ///     Creates an HTTPS client so status assertions are not affected by HTTP->HTTPS redirect behavior.
     /// </summary>

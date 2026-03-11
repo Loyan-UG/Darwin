@@ -543,7 +543,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and is committed; deterministic DB reset fixture is the next sub-step |
 | 2 | Identity flow test pack | In Progress | Baseline + core negative tests exist (`request-reset` 200, anonymous `password/change` and `logout-all` 401, invalid login/refresh/reset 400); next add authenticated happy-path matrix |
 | 3 | Profile concurrency test pack | In Progress | Baseline auth-guard tests exist (`GET/PUT /profile/me` anonymous => 401); next add authenticated success + stale row-version conflict matrix |
-| 4 | Loyalty scan journey test pack | In Progress | Baseline auth-guard tests exist (`my/businesses`, `my/accounts`, `scan/prepare`, `scan/process`, `scan/confirm-accrual` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
+| 4 | Loyalty scan journey test pack | In Progress | Baseline auth-guard tests exist (`my/businesses`, `my/accounts`, `my/timeline`, `scan/prepare`, `scan/process`, `scan/confirm-accrual`, `scan/confirm-redemption` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
 | 5 | Contracts compatibility pack | In Progress | Baseline serialization + deserialization compatibility tests exist for key Identity/Loyalty/Profile contracts; next expand to additional DTO families and explicit versioning scenarios |
 | 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
 | 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
@@ -566,6 +566,7 @@ Backlog update rule:
 - Added profile endpoint baseline integration tests to validate anonymous access is rejected for `GET/PUT /api/v1/profile/me`.
 - Added loyalty endpoint baseline integration tests to validate anonymous access is rejected for `GET /api/v1/loyalty/my/businesses` and `POST /api/v1/loyalty/scan/prepare`.
 - Expanded loyalty baseline coverage with additional anonymous-guard checks for `GET /api/v1/loyalty/my/accounts`, `POST /api/v1/loyalty/scan/process`, and `POST /api/v1/loyalty/scan/confirm-accrual`.
+- Expanded loyalty baseline again with anonymous-guard checks for `POST /api/v1/loyalty/scan/confirm-redemption` and `POST /api/v1/loyalty/my/timeline`.
 - Added contract serialization compatibility tests for critical `TokenResponse`, `PrepareScanSessionResponse`, and `CustomerProfile` JSON property shapes.
 - Expanded contract serialization coverage with `PasswordLoginRequest` and `ProcessScanSessionForBusinessResponse` JSON property-shape checks.
 - Expanded contract compatibility checks with deserialization tests (unknown-field tolerance and minimal payload support) for critical identity/profile contracts.
