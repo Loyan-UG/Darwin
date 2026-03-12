@@ -556,6 +556,7 @@ Backlog update rule:
 
 ### Latest progress log
 
+- Fixed integration test compile alignment with current contracts/framework imports (`UseEnvironment` extension usings, `ReadFromJsonAsync` usings, and `PrepareScanSessionRequest.SelectedRewardTierIds`).
 - Added the first integration smoke test for `GET /api/v1/meta/health` using `WebApplicationFactory<Program>`.
 - Added a second integration smoke test for `GET /api/v1/meta/info` to validate baseline diagnostics payload shape.
 - Migrated current test projects from xUnit v2 packages to xUnit v3 (`3.2.2`) package line.

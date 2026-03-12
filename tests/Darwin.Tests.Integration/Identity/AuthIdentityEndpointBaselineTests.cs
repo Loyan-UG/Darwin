@@ -1,6 +1,7 @@
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Identity;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;

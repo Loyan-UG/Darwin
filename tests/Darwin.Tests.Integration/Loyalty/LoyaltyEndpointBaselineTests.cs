@@ -1,5 +1,6 @@
 using Darwin.Contracts.Loyalty;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
@@ -71,7 +72,7 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         {
             BusinessId = Guid.NewGuid(),
             Mode = LoyaltyScanMode.Accrual,
-            SelectedRewardIds = []
+            SelectedRewardTierIds = []
         };
 
         // Act
