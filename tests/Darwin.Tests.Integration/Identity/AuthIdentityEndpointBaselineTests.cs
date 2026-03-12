@@ -1,10 +1,12 @@
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Identity;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Identity;
 
@@ -12,17 +14,15 @@ namespace Darwin.Tests.Integration.Identity;
 ///     Provides baseline integration coverage for authentication endpoints that
 ///     must remain stable regardless of surrounding feature growth.
 /// </summary>
-public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Initializes the test fixture with a host configured for testing environment.
     /// </summary>
     /// <param name="factory">Shared WebApplicationFactory instance.</param>
     public AuthIdentityEndpointBaselineTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
     }
 
     /// <summary>
@@ -200,9 +200,6 @@ public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplica
     /// <returns>Configured HttpClient instance.</returns>
     private HttpClient CreateHttpsClient()
     {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        return CreateHttpsClient();
     }
 }

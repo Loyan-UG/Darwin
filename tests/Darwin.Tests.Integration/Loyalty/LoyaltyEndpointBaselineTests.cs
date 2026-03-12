@@ -1,9 +1,11 @@
 using Darwin.Contracts.Loyalty;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Loyalty;
 
@@ -12,17 +14,15 @@ namespace Darwin.Tests.Integration.Loyalty;
 ///     These tests ensure anonymous callers are blocked before any business logic
 ///     handlers are executed.
 /// </summary>
-public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Initializes the test suite with a host configured for Testing environment.
     /// </summary>
     /// <param name="factory">Shared host factory used to create isolated clients.</param>
     public LoyaltyEndpointBaselineTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
     }
 
     /// <summary>
@@ -287,9 +287,6 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
     /// <returns>Configured HttpClient instance.</returns>
     private HttpClient CreateHttpsClient()
     {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        return CreateHttpsClient();
     }
 }
