@@ -134,9 +134,10 @@ namespace Darwin.Application.Loyalty.Queries
             var suppressedByFrequency = 0;
             var deduplicated = 0;
 
-            if (policy.SuppressionWindowMinutes.HasValue && policy.SuppressionWindowMinutes.Value > 0)
+            var frequencyWindowMinutes = policy.FrequencyWindowMinutes ?? policy.SuppressionWindowMinutes;
+            if (frequencyWindowMinutes.HasValue && frequencyWindowMinutes.Value > 0)
             {
-                var thresholdUtc = nowUtc.AddMinutes(-policy.SuppressionWindowMinutes.Value);
+                var thresholdUtc = nowUtc.AddMinutes(-frequencyWindowMinutes.Value);
                 var campaignIds = items
                     .Where(x => x.CampaignId.HasValue)
                     .Select(x => x.CampaignId!.Value)
@@ -195,8 +196,16 @@ namespace Darwin.Application.Loyalty.Queries
         {
             var enableDeduplication = requestedPolicy?.EnableDeduplication ?? true;
             var maxCards = requestedPolicy?.MaxCards ?? 6;
-            var frequencyWindowMinutes = requestedPolicy?.FrequencyWindowMinutes;
-            var suppressionWindowMinutes = frequencyWindowMinutes ?? requestedPolicy?.SuppressionWindowMinutes ?? 480;
+
+            var requestedFrequencyWindow = requestedPolicy?.FrequencyWindowMinutes;
+            var normalizedFrequencyWindow = requestedFrequencyWindow.HasValue
+                ? Math.Clamp(requestedFrequencyWindow.Value, 0, 60 * 24 * 30)
+                : (int?)null;
+
+            var requestedSuppressionWindow = requestedPolicy?.SuppressionWindowMinutes;
+            var normalizedSuppressionWindow = requestedSuppressionWindow.HasValue
+                ? Math.Clamp(requestedSuppressionWindow.Value, 0, 60 * 24 * 30)
+                : 480;
 
             if (maxCards <= 0)
             {
@@ -204,14 +213,12 @@ namespace Darwin.Application.Loyalty.Queries
             }
 
             maxCards = Math.Min(maxCards, baseMax);
-            suppressionWindowMinutes = Math.Clamp(suppressionWindowMinutes, 0, 60 * 24 * 30);
-
             return new PromotionFeedPolicyDto
             {
                 EnableDeduplication = enableDeduplication,
                 MaxCards = maxCards,
-                FrequencyWindowMinutes = suppressionWindowMinutes,
-                SuppressionWindowMinutes = suppressionWindowMinutes
+                FrequencyWindowMinutes = normalizedFrequencyWindow,
+                SuppressionWindowMinutes = normalizedSuppressionWindow
             };
         }
 
