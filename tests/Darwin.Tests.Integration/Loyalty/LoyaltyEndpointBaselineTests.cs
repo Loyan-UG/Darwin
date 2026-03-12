@@ -1,9 +1,10 @@
 using Darwin.Contracts.Loyalty;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Loyalty;
 
@@ -22,7 +23,7 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
     /// <param name="factory">Shared host factory used to create isolated clients.</param>
     public LoyaltyEndpointBaselineTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -287,9 +288,6 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
     /// <returns>Configured HttpClient instance.</returns>
     private HttpClient CreateHttpsClient()
     {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        return IntegrationTestClientFactory.CreateHttpsClient(_factory);
     }
 }
