@@ -7,7 +7,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
-using Darwin.Tests.Integration.TestInfrastructure;
+using Darwin.Tests.Common.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Profile;
 

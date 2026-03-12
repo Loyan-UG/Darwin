@@ -574,8 +574,8 @@ Backlog update rule:
   - `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointBaselineTests.cs`
   - `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`
 - Integration helper assets:
-  - `tests/Darwin.Tests.Integration/TestInfrastructure/IntegrationTestClientFactory.cs`
-  - `tests/Darwin.Tests.Integration/TestInfrastructure/IdentityFlowTestHelper.cs`
+  - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestClientFactory.cs`
+  - `tests/Darwin.Tests.Common/TestInfrastructure/IdentityFlowTestHelper.cs`
 - Unit contract compatibility suite:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
 

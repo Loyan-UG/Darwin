@@ -9,7 +9,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
-using Darwin.Tests.Integration.TestInfrastructure;
+using Darwin.Tests.Common.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Loyalty;
 
