@@ -13,7 +13,7 @@ namespace Darwin.Tests.Integration.Loyalty;
 ///     These tests ensure anonymous callers are blocked before any business logic
 ///     handlers are executed.
 /// </summary>
-public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -25,6 +25,18 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
     {
         _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
+
+    /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Verifies that listing the current user's loyalty businesses requires an

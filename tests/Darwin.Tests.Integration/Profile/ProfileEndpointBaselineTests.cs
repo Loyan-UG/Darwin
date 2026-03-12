@@ -12,7 +12,7 @@ namespace Darwin.Tests.Integration.Profile;
 ///     Provides baseline integration tests for profile endpoints that are expected
 ///     to be protected by authentication in all environments.
 /// </summary>
-public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -24,6 +24,18 @@ public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationF
     {
         _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
+
+    /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Verifies that anonymous calls to the profile read endpoint are rejected.

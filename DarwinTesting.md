@@ -548,7 +548,7 @@ Keep this list as the execution tracker for the testing workstream.
 
 | Order | Work item | Status | Exit criteria |
 |---|---|---|---|
-| 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and reusable integration helper utilities are now committed; deterministic DB reset fixture remains the next sub-step. |
+| 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress (Implemented, pending CLI/CI run) | Smoke suites now run with deterministic DB reset+seed in `IAsyncLifetime`; finalize after CLI/CI evidence confirms stability and runtime overhead is acceptable. |
 | 2 | Identity flow test pack | In Progress (Implemented, pending CLI/CI run) | Baseline + core negative tests and authorized happy-path matrix are implemented (`register/login`, `refresh`, `password/change`, `logout`, `logout-all`); finalize after passing CLI/CI evidence. |
 | 3 | Profile concurrency test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
 | 4 | Loyalty scan journey test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
@@ -608,8 +608,8 @@ Backlog update rule:
 
 Use this list as the immediate continuation plan:
 
-1. **Test infrastructure stabilization — current top priority**
-   - Integrate deterministic DB reset helper (`IntegrationTestDatabaseReset`) into suite lifecycle (`IAsyncLifetime`) where isolation is required.
+1. **Test infrastructure hardening — current top priority**
+   - Validate class-level reset overhead in CI and adjust isolation strategy if run time regresses.
    - Consolidate additional reusable helpers as needed.
 2. **CI quality gates activation**
    - Split unit/integration lanes and publish coverage for newly implemented suites.

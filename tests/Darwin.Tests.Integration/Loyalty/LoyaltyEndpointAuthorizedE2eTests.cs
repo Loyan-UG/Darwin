@@ -17,7 +17,7 @@ namespace Darwin.Tests.Integration.Loyalty;
 ///     These tests exercise real multi-step journeys across consumer and business roles:
 ///     prepare, process, and confirm for both accrual and redemption modes.
 /// </summary>
-public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -29,6 +29,18 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
     {
         _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
+
+    /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Verifies the full authorized accrual journey:

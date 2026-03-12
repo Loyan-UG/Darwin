@@ -15,7 +15,7 @@ namespace Darwin.Tests.Integration.Identity;
 ///     The suite validates end-user token lifecycle operations that mobile apps rely on:
 ///     register/login, refresh, change-password, logout, and global logout.
 /// </summary>
-public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -27,6 +27,18 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     {
         _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
+
+    /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Verifies that a freshly registered member can login and receive a complete token response.

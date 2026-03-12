@@ -52,6 +52,7 @@ public static class IntegrationTestDatabaseReset
         }
 
         await db.Database.EnsureDeletedAsync(ct).ConfigureAwait(false);
+        await db.Database.MigrateAsync(ct).ConfigureAwait(false);
 
         var seeder = services.GetRequiredService<DataSeeder>();
         await seeder.SeedAsync(ct).ConfigureAwait(false);
