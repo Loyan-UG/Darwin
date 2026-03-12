@@ -199,6 +199,26 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
 
 
 
+
+
+    /// <summary>
+    ///     Verifies that business-specific loyalty account snapshot endpoint is protected
+    ///     and rejects anonymous requests.
+    /// </summary>
+    [Fact]
+    public async Task GetAccountForBusiness_Should_ReturnUnauthorized_WhenAnonymous()
+    {
+        // Arrange
+        using var client = CreateHttpsClient();
+        var businessId = Guid.NewGuid();
+
+        // Act
+        using var response = await client.GetAsync($"/api/v1/loyalty/account/{businessId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>
     ///     Verifies that join-loyalty endpoint requires authentication and rejects
     ///     anonymous requests attempting to create a loyalty account.
