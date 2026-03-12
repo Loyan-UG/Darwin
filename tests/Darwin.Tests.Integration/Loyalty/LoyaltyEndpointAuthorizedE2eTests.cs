@@ -1,5 +1,4 @@
 using Darwin.Contracts.Common;
-using Darwin.Contracts.Identity;
 using Darwin.Contracts.Loyalty;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
@@ -9,6 +8,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Loyalty;
 
@@ -41,11 +42,11 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
     public async Task PrepareProcessConfirmAccrual_Should_Succeed_EndToEnd_WhenAuthorized()
     {
         // Arrange
-        using var consumerClient = CreateHttpsClient();
-        using var businessClient = CreateHttpsClient();
+        using var consumerClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var businessClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
 
-        var consumerToken = await LoginExpectSuccessAsync(consumerClient, SeedConsumerEmail, SeedConsumerPassword, SeedConsumerDeviceId);
-        var businessToken = await LoginExpectSuccessAsync(businessClient, SeedBusinessEmail, SeedBusinessPassword, SeedBusinessDeviceId);
+        var consumerToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(consumerClient, SeedConsumerEmail, SeedConsumerPassword, SeedConsumerDeviceId);
+        var businessToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(businessClient, SeedBusinessEmail, SeedBusinessPassword, SeedBusinessDeviceId);
 
         var businessId = ExtractBusinessIdFromAccessToken(businessToken.AccessToken);
         businessId.Should().NotBe(Guid.Empty);
@@ -113,11 +114,11 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
     public async Task PrepareProcessConfirmRedemption_Should_Succeed_EndToEnd_WhenAuthorized()
     {
         // Arrange
-        using var consumerClient = CreateHttpsClient();
-        using var businessClient = CreateHttpsClient();
+        using var consumerClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var businessClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
 
-        var consumerToken = await LoginExpectSuccessAsync(consumerClient, SeedConsumerEmail, SeedConsumerPassword, SeedConsumerDeviceId);
-        var businessToken = await LoginExpectSuccessAsync(businessClient, SeedBusinessEmail, SeedBusinessPassword, SeedBusinessDeviceId);
+        var consumerToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(consumerClient, SeedConsumerEmail, SeedConsumerPassword, SeedConsumerDeviceId);
+        var businessToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(businessClient, SeedBusinessEmail, SeedBusinessPassword, SeedBusinessDeviceId);
 
         var businessId = ExtractBusinessIdFromAccessToken(businessToken.AccessToken);
         businessId.Should().NotBe(Guid.Empty);
@@ -173,32 +174,6 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
         var confirmBody = await confirmResponse.Content.ReadFromJsonAsync<ConfirmRedemptionResponse>();
         confirmBody.Should().NotBeNull();
         confirmBody!.Success.Should().BeTrue();
-    }
-
-    /// <summary>
-    ///     Performs password login and returns validated token response.
-    /// </summary>
-    /// <param name="client">HTTP client used against the test host.</param>
-    /// <param name="email">Seeded account email.</param>
-    /// <param name="password">Seeded account password.</param>
-    /// <param name="deviceId">Device identifier used for refresh binding policies.</param>
-    /// <returns>Validated token response payload.</returns>
-    private static async Task<TokenResponse> LoginExpectSuccessAsync(HttpClient client, string email, string password, string deviceId)
-    {
-        using var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new PasswordLoginRequest
-        {
-            Email = email,
-            Password = password,
-            DeviceId = deviceId
-        });
-
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var token = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>();
-        token.Should().NotBeNull();
-        token!.AccessToken.Should().NotBeNullOrWhiteSpace();
-        token.RefreshToken.Should().NotBeNullOrWhiteSpace();
-        return token;
     }
 
     /// <summary>
@@ -320,18 +295,6 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
         var businessIdText = businessIdProp.GetString();
         Guid.TryParse(businessIdText, out var businessId).Should().BeTrue();
         return businessId;
-    }
-
-    /// <summary>
-    ///     Creates an HTTPS client so status assertions are stable and not affected by redirect behavior.
-    /// </summary>
-    /// <returns>Configured HttpClient instance.</returns>
-    private HttpClient CreateHttpsClient()
-    {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
     }
 
     private const string SeedConsumerEmail = "cons1@darwin.de";

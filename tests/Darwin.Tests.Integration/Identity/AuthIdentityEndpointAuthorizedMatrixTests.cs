@@ -7,6 +7,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
+using Darwin.Tests.Integration.TestInfrastructure;
+
 namespace Darwin.Tests.Integration.Identity;
 
 /// <summary>
@@ -34,9 +36,9 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task Login_Should_ReturnTokenResponse_WhenRegisteredUserCredentialsAreValid()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
 
         // Act
         using var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new PasswordLoginRequest
@@ -65,10 +67,10 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task Refresh_Should_ReturnNewTokenPair_WhenRefreshTokenIsValid()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
-        var loginToken = await LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
+        var loginToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
 
         // Act
         using var refreshResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshTokenRequest
@@ -94,10 +96,10 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task ChangePassword_Should_Succeed_AndInvalidateOldPassword_WhenAuthorized()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
-        var token = await LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
         var newPassword = "N3wP@ssw0rd!Bb2";
@@ -142,10 +144,10 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task Logout_Should_Succeed_AndRevokeSubmittedRefreshToken_WhenAuthorized()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
-        var token = await LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
@@ -175,12 +177,12 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task LogoutAll_Should_Succeed_AndRevokeAllRefreshTokens_WhenAuthorized()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
 
-        var firstSession = await LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
-        var secondSession = await LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, $"{credentials.DeviceId}-second");
+        var firstSession = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        var secondSession = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, $"{credentials.DeviceId}-second");
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", secondSession.AccessToken);
 
@@ -208,50 +210,6 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     }
 
     /// <summary>
-    ///     Registers a fresh member account and asserts successful completion.
-    /// </summary>
-    /// <param name="client">HTTP client used against the test host.</param>
-    /// <param name="credentials">Unique credentials for the registration flow.</param>
-    private static async Task RegisterUserAsync(HttpClient client, TestCredentials credentials)
-    {
-        using var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest
-        {
-            FirstName = "Integration",
-            LastName = "Tester",
-            Email = credentials.Email,
-            Password = credentials.Password
-        });
-
-        registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    /// <summary>
-    ///     Logs in and returns a validated token response.
-    /// </summary>
-    /// <param name="client">HTTP client used against the test host.</param>
-    /// <param name="email">User email.</param>
-    /// <param name="password">User password.</param>
-    /// <param name="deviceId">Optional device identifier for refresh binding policy.</param>
-    /// <returns>Valid token response from login endpoint.</returns>
-    private static async Task<TokenResponse> LoginExpectSuccessAsync(HttpClient client, string email, string password, string? deviceId)
-    {
-        using var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new PasswordLoginRequest
-        {
-            Email = email,
-            Password = password,
-            DeviceId = deviceId
-        });
-
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var token = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>();
-        token.Should().NotBeNull();
-        token!.AccessToken.Should().NotBeNullOrWhiteSpace();
-        token.RefreshToken.Should().NotBeNullOrWhiteSpace();
-        return token;
-    }
-
-    /// <summary>
     ///     Creates unique credentials for isolation between integration test runs.
     /// </summary>
     /// <returns>Unique email/password/device-id tuple.</returns>
@@ -262,18 +220,6 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
             Email: $"integration-{suffix}@example.test",
             Password: "P@ssw0rd!Aa1",
             DeviceId: $"device-{suffix}");
-    }
-
-    /// <summary>
-    ///     Creates an HTTPS test client so assertions are not affected by HTTP-to-HTTPS redirects.
-    /// </summary>
-    /// <returns>Configured HttpClient instance.</returns>
-    private HttpClient CreateHttpsClient()
-    {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
     }
 
     /// <summary>

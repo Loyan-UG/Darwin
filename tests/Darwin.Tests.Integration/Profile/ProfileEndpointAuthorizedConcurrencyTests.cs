@@ -1,5 +1,4 @@
 using Darwin.Contracts.Common;
-using Darwin.Contracts.Identity;
 using Darwin.Contracts.Profile;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
@@ -7,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Profile;
 
@@ -35,10 +36,10 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
     public async Task GetMe_Should_ReturnCurrentProfile_WithRowVersion_WhenAuthorized()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
-        var token = await LoginExpectSuccessAsync(client, credentials);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         // Act
@@ -62,10 +63,10 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
     public async Task UpdateMe_Should_ReturnNoContent_WhenIdAndRowVersionAreValid()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
-        var token = await LoginExpectSuccessAsync(client, credentials);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         var currentProfile = await GetCurrentProfileAsync(client);
@@ -108,10 +109,10 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
     public async Task UpdateMe_Should_ReturnBadRequestProblem_WhenRowVersionIsStale()
     {
         // Arrange
-        using var client = CreateHttpsClient();
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
         var credentials = CreateUniqueCredentials();
-        await RegisterUserAsync(client, credentials);
-        var token = await LoginExpectSuccessAsync(client, credentials);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         var initialProfile = await GetCurrentProfileAsync(client);
@@ -175,47 +176,6 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
     }
 
     /// <summary>
-    ///     Registers a new user account for isolation between integration tests.
-    /// </summary>
-    /// <param name="client">HTTP client used against the test host.</param>
-    /// <param name="credentials">Unique credentials for the registration flow.</param>
-    private static async Task RegisterUserAsync(HttpClient client, TestCredentials credentials)
-    {
-        using var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest
-        {
-            FirstName = "Integration",
-            LastName = "ProfileTester",
-            Email = credentials.Email,
-            Password = credentials.Password
-        });
-
-        registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    /// <summary>
-    ///     Performs login with known credentials and returns a validated token response.
-    /// </summary>
-    /// <param name="client">HTTP client used against the test host.</param>
-    /// <param name="credentials">Credentials used for authentication.</param>
-    /// <returns>Token response required for authorized profile calls.</returns>
-    private static async Task<TokenResponse> LoginExpectSuccessAsync(HttpClient client, TestCredentials credentials)
-    {
-        using var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new PasswordLoginRequest
-        {
-            Email = credentials.Email,
-            Password = credentials.Password,
-            DeviceId = credentials.DeviceId
-        });
-
-        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var token = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>();
-        token.Should().NotBeNull();
-        token!.AccessToken.Should().NotBeNullOrWhiteSpace();
-        return token;
-    }
-
-    /// <summary>
     ///     Creates unique credentials to keep test data isolated and deterministic.
     /// </summary>
     /// <returns>Unique credential tuple for each test run.</returns>
@@ -226,18 +186,6 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
             Email: $"profile-{suffix}@example.test",
             Password: "P@ssw0rd!Aa1",
             DeviceId: $"profile-device-{suffix}");
-    }
-
-    /// <summary>
-    ///     Creates an HTTPS test client to avoid redirect side-effects in status assertions.
-    /// </summary>
-    /// <returns>Configured HttpClient instance.</returns>
-    private HttpClient CreateHttpsClient()
-    {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
     }
 
     /// <summary>
