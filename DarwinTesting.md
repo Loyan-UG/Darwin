@@ -536,7 +536,7 @@ This status is derived from the current repository state and must be refreshed w
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authorized happy-path matrix is implemented in code and pending CLI/CI execution evidence.
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage and authorized success/stale-rowversion matrix are implemented in code; pending CLI/CI execution evidence.
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage and authorized end-to-end prepare/process/confirm scenarios are implemented in code; pending CLI/CI execution evidence.
-- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline serialization/deserialization checks are implemented for Identity/Loyalty/Profile core contracts (including scan/request-response and accrual/redemption envelopes); broaden coverage to additional DTO sets is pending.
+- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented in code; pending CLI/CI execution evidence and further DTO-family expansion.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
 - [ ] Add CI lane split and coverage publication for unit/integration.
 
@@ -552,7 +552,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 2 | Identity flow test pack | In Progress (Implemented, pending CLI/CI run) | Baseline + core negative tests and authorized happy-path matrix are implemented (`register/login`, `refresh`, `password/change`, `logout`, `logout-all`); finalize after passing CLI/CI evidence. |
 | 3 | Profile concurrency test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
 | 4 | Loyalty scan journey test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
-| 5 | Contracts compatibility pack | In Progress | Baseline serialization + deserialization compatibility tests exist for key Identity/Loyalty/Profile contracts; next expand to additional DTO families and explicit versioning scenarios |
+| 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
 | 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
 | 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
 
