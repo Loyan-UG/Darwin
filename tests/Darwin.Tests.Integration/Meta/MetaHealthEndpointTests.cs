@@ -1,7 +1,8 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Meta;
 
@@ -10,7 +11,7 @@ namespace Darwin.Tests.Integration.Meta;
 ///     ASP.NET Core pipeline. This smoke test is the first integration baseline
 ///     and proves that the WebApi host can boot inside the test process.
 /// </summary>
-public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -20,8 +21,20 @@ public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactor
     /// <param name="factory">The host factory used to create test clients.</param>
     public MetaHealthEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
+
+    /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Ensures the health endpoint returns HTTP 200 and includes the expected
@@ -31,10 +44,7 @@ public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactor
     public async Task GetHealth_Should_ReturnOk_WithHealthyStatus()
     {
         // Arrange: use HTTPS base address to avoid redirection noise from middleware.
-        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
 
         // Act
         using var response = await client.GetAsync("/api/v1/meta/health");

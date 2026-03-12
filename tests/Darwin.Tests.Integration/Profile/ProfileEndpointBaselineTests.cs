@@ -1,9 +1,10 @@
 using Darwin.Contracts.Profile;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Profile;
 
@@ -11,7 +12,7 @@ namespace Darwin.Tests.Integration.Profile;
 ///     Provides baseline integration tests for profile endpoints that are expected
 ///     to be protected by authentication in all environments.
 /// </summary>
-public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -21,8 +22,20 @@ public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationF
     /// <param name="factory">Shared WebApplicationFactory instance for host creation.</param>
     public ProfileEndpointBaselineTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
+
+    /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Verifies that anonymous calls to the profile read endpoint are rejected.
@@ -76,9 +89,6 @@ public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationF
     /// <returns>Configured HttpClient instance.</returns>
     private HttpClient CreateHttpsClient()
     {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        return IntegrationTestClientFactory.CreateHttpsClient(_factory);
     }
 }
