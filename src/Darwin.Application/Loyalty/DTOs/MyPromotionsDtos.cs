@@ -12,18 +12,44 @@ namespace Darwin.Application.Loyalty.DTOs
 
     public sealed class PromotionFeedPolicyDto
     {
+        /// <summary>
+        /// Enables deterministic de-duplication of cards by a stable business/title/cta key.
+        /// </summary>
         public bool EnableDeduplication { get; init; } = true;
+
+        /// <summary>
+        /// Maximum number of cards allowed in the final response after sorting and guardrails.
+        /// </summary>
         public int MaxCards { get; init; } = 6;
+
+        /// <summary>
+        /// Optional explicit frequency window for campaign-card suppression.
+        /// When present, runtime suppression uses this value before considering <see cref="SuppressionWindowMinutes"/>.
+        /// </summary>
         public int? FrequencyWindowMinutes { get; init; }
+
+        /// <summary>
+        /// Legacy suppression window kept for backward compatibility with older clients.
+        /// Runtime suppression uses this value only when <see cref="FrequencyWindowMinutes"/> is not provided.
+        /// </summary>
         public int? SuppressionWindowMinutes { get; init; } = 480;
     }
 
     public sealed class PromotionFeedDiagnosticsDto
     {
+        /// <summary>Number of candidate cards before any guardrail filtering starts.</summary>
         public int InitialCandidates { get; init; }
+
+        /// <summary>Number of campaign cards removed by frequency/suppression checks.</summary>
         public int SuppressedByFrequency { get; init; }
+
+        /// <summary>Number of cards removed by de-duplication logic.</summary>
         public int Deduplicated { get; init; }
+
+        /// <summary>Number of cards removed by the final max-card cap.</summary>
         public int TrimmedByCap { get; init; }
+
+        /// <summary>Final number of cards returned to clients.</summary>
         public int FinalCount { get; init; }
     }
 

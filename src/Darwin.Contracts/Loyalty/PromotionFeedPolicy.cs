@@ -17,7 +17,14 @@ namespace Darwin.Contracts.Loyalty
 
         /// <summary>
         /// Optional frequency-cap window in minutes for campaign cards that were already delivered recently.
-        /// When provided, this value overrides <see cref="SuppressionWindowMinutes"/> to keep legacy clients compatible.
+        ///
+        /// Precedence rule:
+        /// - When this field is provided by the client, server-side campaign suppression uses this value first.
+        /// - When omitted, the server falls back to <see cref="SuppressionWindowMinutes"/>.
+        ///
+        /// Compatibility rule:
+        /// - Legacy clients that only send <see cref="SuppressionWindowMinutes"/> keep existing behavior.
+        /// - New clients can gradually migrate to this explicit field without breaking older integrations.
         /// </summary>
         public int? FrequencyWindowMinutes { get; init; }
             = null;

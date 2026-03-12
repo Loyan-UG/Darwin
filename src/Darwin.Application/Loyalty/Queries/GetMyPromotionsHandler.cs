@@ -134,6 +134,10 @@ namespace Darwin.Application.Loyalty.Queries
             var suppressedByFrequency = 0;
             var deduplicated = 0;
 
+            // Frequency precedence is intentional:
+            // 1) New explicit frequency window
+            // 2) Legacy suppression window fallback
+            // This keeps old clients compatible while letting new clients tune repeat-delivery control explicitly.
             var frequencyWindowMinutes = policy.FrequencyWindowMinutes ?? policy.SuppressionWindowMinutes;
             if (frequencyWindowMinutes.HasValue && frequencyWindowMinutes.Value > 0)
             {
@@ -197,11 +201,14 @@ namespace Darwin.Application.Loyalty.Queries
             var enableDeduplication = requestedPolicy?.EnableDeduplication ?? true;
             var maxCards = requestedPolicy?.MaxCards ?? 6;
 
+            // Normalize inputs defensively to prevent negative or extreme values from leaking into DB query filters.
             var requestedFrequencyWindow = requestedPolicy?.FrequencyWindowMinutes;
             var normalizedFrequencyWindow = requestedFrequencyWindow.HasValue
                 ? Math.Clamp(requestedFrequencyWindow.Value, 0, 60 * 24 * 30)
                 : (int?)null;
 
+            // Suppression is retained as a backward-compatible legacy field.
+            // Runtime suppression uses this value only when FrequencyWindowMinutes is not provided.
             var requestedSuppressionWindow = requestedPolicy?.SuppressionWindowMinutes;
             var normalizedSuppressionWindow = requestedSuppressionWindow.HasValue
                 ? Math.Clamp(requestedSuppressionWindow.Value, 0, 60 * 24 * 30)
