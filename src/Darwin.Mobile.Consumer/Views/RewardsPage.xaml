@@ -46,6 +46,31 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
+
+            <!-- Multi-business overview: aggregated metrics across all joined memberships. -->
+            <Border Stroke="{StaticResource BrushGray300}"
+                    StrokeThickness="1"
+                    Padding="12"
+                    IsVisible="{Binding HasAccounts}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static res:AppResources.RewardsOverviewTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding TotalJoinedBusinesses, StringFormat='{x:Static res:AppResources.RewardsOverviewJoinedBusinessesFormat}'}"
+                           FontSize="13" />
+
+                    <Label Text="{Binding TotalPointsAcrossBusinesses, StringFormat='{x:Static res:AppResources.RewardsOverviewTotalPointsFormat}'}"
+                           FontSize="13" />
+
+                    <Label Text="{Binding TopBusinessByPoints, StringFormat='{x:Static res:AppResources.RewardsOverviewTopBusinessFormat}'}"
+                           FontSize="13" />
+
+                    <Button Text="{x:Static res:AppResources.RewardsOpenSelectedBusinessQrButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding OpenSelectedBusinessQrCommand}" />
+                </VerticalStackLayout>
+            </Border>
             <!-- Explicit selector for active business context used by rewards/history sections. -->
             <Label Text="{x:Static res:AppResources.RewardsBusinessPickerLabel}"
                    IsVisible="{Binding HasAccounts}" />
