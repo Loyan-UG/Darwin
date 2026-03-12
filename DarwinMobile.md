@@ -506,7 +506,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Consumer Profile refreshes push diagnostics on every `OnAppearing` so permission/token changes are reflected after returning from system settings.
 - Rewards tab now includes multi-business overview metrics (joined business count, aggregated points, top business) and a quick action to open selected-business QR.
 - Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
-- Feed promotions now apply delivery guardrails on the client: de-duplication (business/title/CTA), max 6 cards, and 8-hour suppression window with fallback when everything is suppressed.
+- Feed promotions keep lightweight client fallback guardrails for resilience, while primary guardrail enforcement now runs server-side with applied-policy + diagnostics returned by the promotions endpoint.
 - Device registration now updates `UserEngagementSnapshot` baseline engagement metrics (last activity + heartbeat count metadata) to prepare inactive-reminder targeting and measurement.
 - Application now includes inactive-reminder orchestration handlers: candidate selection query (threshold + cooldown + push-enabled device check) and per-outcome recorder that persists `Sent`/`Failed`/`Suppressed` metadata in `UserEngagementSnapshot`.
 - WebApi now includes `InactiveReminderBackgroundService` scaffold (config-gated) that periodically runs reminder batch orchestration and logs evaluated/dispatched/suppressed/failed counters.

@@ -1224,6 +1224,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// <summary>
         /// Returns personalized promotion cards for the current consumer user.
         /// Promotions are generated from joined loyalty programs and reward tiers.
+        /// Response includes:
+        /// - applied guardrail policy snapshot,
+        /// - diagnostics counters describing suppression, de-duplication, and max-cap trimming outcomes.
         /// </summary>
         [HttpPost("my/promotions")]
         [Authorize(Policy = "perm:AccessMemberArea")]
