@@ -20,8 +20,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="HtmlSanitizer" Version="9.0.892" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.41" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.4" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.50" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
 	</ItemGroup>
 
