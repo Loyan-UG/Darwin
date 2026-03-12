@@ -14,7 +14,17 @@ namespace Darwin.Application.Loyalty.DTOs
     {
         public bool EnableDeduplication { get; init; } = true;
         public int MaxCards { get; init; } = 6;
+        public int? FrequencyWindowMinutes { get; init; }
         public int? SuppressionWindowMinutes { get; init; } = 480;
+    }
+
+    public sealed class PromotionFeedDiagnosticsDto
+    {
+        public int InitialCandidates { get; init; }
+        public int SuppressedByFrequency { get; init; }
+        public int Deduplicated { get; init; }
+        public int TrimmedByCap { get; init; }
+        public int FinalCount { get; init; }
     }
 
     public sealed class PromotionEligibilityRuleDto
@@ -45,5 +55,6 @@ namespace Darwin.Application.Loyalty.DTOs
     {
         public List<PromotionFeedItemDto> Items { get; init; } = new();
         public PromotionFeedPolicyDto AppliedPolicy { get; init; } = new();
+        public PromotionFeedDiagnosticsDto Diagnostics { get; init; } = new();
     }
 }
