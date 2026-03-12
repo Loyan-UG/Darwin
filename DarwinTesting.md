@@ -537,7 +537,7 @@ This status is derived from the current repository state and must be refreshed w
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage and authorized success/stale-rowversion matrix are implemented in code; pending CLI/CI execution evidence.
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage and authorized end-to-end prepare/process/confirm scenarios are implemented in code; pending CLI/CI execution evidence.
 - [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented in code; pending CLI/CI execution evidence and further DTO-family expansion.
-- [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
+- [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization). Implemented in code (`ApiClientReliabilityTests`), pending CLI/CI execution evidence.
 - [ ] Add CI lane split and coverage publication for unit/integration.
 
 ---
@@ -553,7 +553,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 3 | Profile concurrency test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
 | 4 | Loyalty scan journey test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
 | 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
-| 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
+| 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
 | 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
 
 Backlog update rule:
@@ -582,6 +582,8 @@ Backlog update rule:
   - `tests/Darwin.Tests.Integration/TestInfrastructure/DeterministicIntegrationTestBase.cs` (shared `IAsyncLifetime` + host/client lifecycle to remove per-suite duplication)
 - Unit contract compatibility suite:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
+- Mobile shared reliability suite:
+  - `tests/Darwin.Mobile.Shared.Tests/Api/ApiClientReliabilityTests.cs`
 
 ### Promotions policy/diagnostics test backlog (tracked here by design)
 
@@ -610,11 +612,12 @@ Backlog update rule:
 
 Use this list as the immediate continuation plan:
 
-1. **Test infrastructure hardening — current top priority**
+1. **CI quality gates activation — current top priority**
+   - Split unit/integration lanes and publish coverage for newly implemented suites.
+   - Add `Darwin.Mobile.Shared.Tests` execution to CI lanes and publish pass/fail evidence.
+2. **Test infrastructure hardening**
    - Validate class-level reset overhead in CI and adjust isolation strategy if run time regresses.
    - Consolidate additional reusable helpers as needed.
-2. **CI quality gates activation**
-   - Split unit/integration lanes and publish coverage for newly implemented suites.
 3. **Contracts compatibility expansion (next wave)**
    - Continue adding tests for remaining mobile-critical DTO families and explicit versioning scenarios
 
