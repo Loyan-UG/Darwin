@@ -74,7 +74,11 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (accounts.Count == 0)
             {
-                return Result<MyPromotionsResultDto>.Ok(new MyPromotionsResultDto { AppliedPolicy = policy });
+                return Result<MyPromotionsResultDto>.Ok(new MyPromotionsResultDto
+                {
+                    AppliedPolicy = policy,
+                    Diagnostics = new PromotionFeedDiagnosticsDto { FinalCount = 0 }
+                });
             }
 
             var nowUtc = DateTime.UtcNow;
@@ -89,29 +93,47 @@ namespace Darwin.Application.Loyalty.Queries
             var derivedCards = await BuildDerivedCardsAsync(accounts, ct).ConfigureAwait(false);
             items.AddRange(derivedCards);
 
-            items = await ApplyGuardrailsAsync(items, userId, nowUtc, policy, ct).ConfigureAwait(false);
+            var guardrailResult = await ApplyGuardrailsAsync(items, userId, nowUtc, policy, ct).ConfigureAwait(false);
+            items = guardrailResult.Items;
 
-            var ordered = items
+            var orderedBeforeCap = items
                 .OrderByDescending(x => x.Priority)
                 .ThenBy(x => x.BusinessName)
                 .ThenBy(x => x.Title)
+                .ToList();
+
+            var ordered = orderedBeforeCap
                 .Take(policy.MaxCards)
                 .ToList();
+
+            var trimmedByCap = Math.Max(0, orderedBeforeCap.Count - ordered.Count);
 
             return Result<MyPromotionsResultDto>.Ok(new MyPromotionsResultDto
             {
                 Items = ordered,
-                AppliedPolicy = policy
+                AppliedPolicy = policy,
+                Diagnostics = new PromotionFeedDiagnosticsDto
+                {
+                    InitialCandidates = guardrailResult.InitialCandidates,
+                    SuppressedByFrequency = guardrailResult.SuppressedByFrequency,
+                    Deduplicated = guardrailResult.Deduplicated,
+                    TrimmedByCap = trimmedByCap,
+                    FinalCount = ordered.Count
+                }
             });
         }
 
-        private async Task<List<PromotionFeedItemDto>> ApplyGuardrailsAsync(
+        private async Task<GuardrailProcessingResult> ApplyGuardrailsAsync(
             List<PromotionFeedItemDto> items,
             Guid userId,
             DateTime nowUtc,
             PromotionFeedPolicyDto policy,
             CancellationToken ct)
         {
+            var initialCandidates = items.Count;
+            var suppressedByFrequency = 0;
+            var deduplicated = 0;
+
             if (policy.SuppressionWindowMinutes.HasValue && policy.SuppressionWindowMinutes.Value > 0)
             {
                 var thresholdUtc = nowUtc.AddMinutes(-policy.SuppressionWindowMinutes.Value);
@@ -139,20 +161,31 @@ namespace Darwin.Application.Loyalty.Queries
                     if (suppressedCampaigns.Count > 0)
                     {
                         var suppressedSet = suppressedCampaigns.ToHashSet();
+                        var beforeSuppressionCount = items.Count;
                         items = items.Where(i => !i.CampaignId.HasValue || !suppressedSet.Contains(i.CampaignId.Value)).ToList();
+                        suppressedByFrequency += Math.Max(0, beforeSuppressionCount - items.Count);
                     }
                 }
             }
 
             if (policy.EnableDeduplication)
             {
+                var beforeDeduplicationCount = items.Count;
                 items = items
                     .GroupBy(BuildDedupKey, StringComparer.Ordinal)
                     .Select(g => g.OrderByDescending(x => x.Priority).First())
                     .ToList();
+
+                deduplicated = Math.Max(0, beforeDeduplicationCount - items.Count);
             }
 
-            return items;
+            return new GuardrailProcessingResult
+            {
+                Items = items,
+                InitialCandidates = initialCandidates,
+                SuppressedByFrequency = suppressedByFrequency,
+                Deduplicated = deduplicated
+            };
         }
 
         private static string BuildDedupKey(PromotionFeedItemDto item)
@@ -162,7 +195,8 @@ namespace Darwin.Application.Loyalty.Queries
         {
             var enableDeduplication = requestedPolicy?.EnableDeduplication ?? true;
             var maxCards = requestedPolicy?.MaxCards ?? 6;
-            var suppressionWindowMinutes = requestedPolicy?.SuppressionWindowMinutes ?? 480;
+            var frequencyWindowMinutes = requestedPolicy?.FrequencyWindowMinutes;
+            var suppressionWindowMinutes = frequencyWindowMinutes ?? requestedPolicy?.SuppressionWindowMinutes ?? 480;
 
             if (maxCards <= 0)
             {
@@ -176,8 +210,20 @@ namespace Darwin.Application.Loyalty.Queries
             {
                 EnableDeduplication = enableDeduplication,
                 MaxCards = maxCards,
+                FrequencyWindowMinutes = suppressionWindowMinutes,
                 SuppressionWindowMinutes = suppressionWindowMinutes
             };
+        }
+
+        /// <summary>
+        /// Encapsulates intermediate counts captured while server-side guardrails are applied.
+        /// </summary>
+        private sealed class GuardrailProcessingResult
+        {
+            public List<PromotionFeedItemDto> Items { get; init; } = new();
+            public int InitialCandidates { get; init; }
+            public int SuppressedByFrequency { get; init; }
+            public int Deduplicated { get; init; }
         }
 
         /// <summary>
