@@ -1,10 +1,11 @@
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Identity;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Identity;
 
@@ -12,7 +13,7 @@ namespace Darwin.Tests.Integration.Identity;
 ///     Provides baseline integration coverage for authentication endpoints that
 ///     must remain stable regardless of surrounding feature growth.
 /// </summary>
-public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -22,8 +23,20 @@ public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplica
     /// <param name="factory">Shared WebApplicationFactory instance.</param>
     public AuthIdentityEndpointBaselineTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
+
+    /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Verifies anti-enumeration behavior for password reset request endpoint.
@@ -200,9 +213,6 @@ public sealed class AuthIdentityEndpointBaselineTests : IClassFixture<WebApplica
     /// <returns>Configured HttpClient instance.</returns>
     private HttpClient CreateHttpsClient()
     {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        return IntegrationTestClientFactory.CreateHttpsClient(_factory);
     }
 }
