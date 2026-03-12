@@ -15,6 +15,12 @@ namespace Darwin.Tests.Common.TestInfrastructure;
 public static class IntegrationTestDatabaseReset
 {
     /// <summary>
+    ///     Serializes destructive reset operations across integration suites,
+    ///     preventing concurrent class initialization from racing on the same database.
+    /// </summary>
+    private static readonly SemaphoreSlim ResetGate = new(1, 1);
+
+    /// <summary>
     ///     Recreates schema and executes the idempotent seed pipeline for deterministic
     ///     integration test state.
     /// </summary>
@@ -30,32 +36,41 @@ public static class IntegrationTestDatabaseReset
             throw new ArgumentNullException(nameof(factory));
         }
 
-        using var scope = factory.Services.CreateScope();
-        var services = scope.ServiceProvider;
+        await ResetGate.WaitAsync(ct).ConfigureAwait(false);
 
-        var hostEnv = services.GetRequiredService<IHostEnvironment>();
-        if (!string.Equals(hostEnv.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+        try
         {
-            throw new InvalidOperationException(
-                $"Refusing database reset outside Testing environment. Current environment: '{hostEnv.EnvironmentName}'.");
+            using var scope = factory.Services.CreateScope();
+            var services = scope.ServiceProvider;
+
+            var hostEnv = services.GetRequiredService<IHostEnvironment>();
+            if (!string.Equals(hostEnv.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Refusing database reset outside Testing environment. Current environment: '{hostEnv.EnvironmentName}'.");
+            }
+
+            var db = services.GetRequiredService<DarwinDbContext>();
+            var connectionString = db.Database.GetConnectionString() ?? string.Empty;
+
+            // Guardrail: only allow destructive reset on clearly test-scoped databases.
+            // This protects local/dev/prod data from accidental truncation.
+            if (!IsSafeTestConnectionString(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Refusing database reset because connection string does not look test-scoped.");
+            }
+
+            await db.Database.EnsureDeletedAsync(ct).ConfigureAwait(false);
+            await db.Database.MigrateAsync(ct).ConfigureAwait(false);
+
+            var seeder = services.GetRequiredService<DataSeeder>();
+            await seeder.SeedAsync(ct).ConfigureAwait(false);
         }
-
-        var db = services.GetRequiredService<DarwinDbContext>();
-        var connectionString = db.Database.GetConnectionString() ?? string.Empty;
-
-        // Guardrail: only allow destructive reset on clearly test-scoped databases.
-        // This protects local/dev/prod data from accidental truncation.
-        if (!IsSafeTestConnectionString(connectionString))
+        finally
         {
-            throw new InvalidOperationException(
-                "Refusing database reset because connection string does not look test-scoped.");
+            ResetGate.Release();
         }
-
-        await db.Database.EnsureDeletedAsync(ct).ConfigureAwait(false);
-        await db.Database.MigrateAsync(ct).ConfigureAwait(false);
-
-        var seeder = services.GetRequiredService<DataSeeder>();
-        await seeder.SeedAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>
