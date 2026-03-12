@@ -538,7 +538,7 @@ This status is derived from the current repository state and must be refreshed w
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage and authorized end-to-end prepare/process/confirm scenarios are implemented in code; pending CLI/CI execution evidence.
 - [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented in code; pending CLI/CI execution evidence and further DTO-family expansion.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization). Implemented in code (`ApiClientReliabilityTests`), pending CLI/CI execution evidence.
-- [ ] Add CI lane split and coverage publication for unit/integration.
+- [ ] Add CI lane split and coverage publication for unit/integration. Implemented in code via GitHub Actions quality-gates workflow (pending CI execution evidence).
 
 ---
 
@@ -554,7 +554,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 4 | Loyalty scan journey test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
 | 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
 | 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
-| 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
+| 7 | CI quality gates | In Progress (Implemented, pending CI run) | Workflow includes separate unit/integration/mobile-shared jobs, artifact publication, and coverage threshold gate; finalize after successful CI evidence. |
 
 Backlog update rule:
 
@@ -584,12 +584,9 @@ Backlog update rule:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
 - Mobile shared reliability suite:
   - `tests/Darwin.Mobile.Shared.Tests/Api/ApiClientReliabilityTests.cs`
-
-### Promotions policy/diagnostics test backlog (tracked here by design)
-
-- [ ] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
-- [ ] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream.
-- [ ] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows.
+- CI quality gate assets:
+  - `.github/workflows/tests-quality-gates.yml`
+  - `scripts/ci/verify_coverage.py`
 
 ---
 
@@ -613,8 +610,8 @@ Backlog update rule:
 Use this list as the immediate continuation plan:
 
 1. **CI quality gates activation — current top priority**
-   - Split unit/integration lanes and publish coverage for newly implemented suites.
-   - Add `Darwin.Mobile.Shared.Tests` execution to CI lanes and publish pass/fail evidence.
+   - Run the new workflow and capture green evidence for unit/integration/mobile-shared lanes.
+   - Tune coverage thresholds only if initial CI evidence shows justified baseline mismatch.
 2. **Test infrastructure hardening**
    - Validate class-level reset overhead in CI and adjust isolation strategy if run time regresses.
    - Consolidate additional reusable helpers as needed.
