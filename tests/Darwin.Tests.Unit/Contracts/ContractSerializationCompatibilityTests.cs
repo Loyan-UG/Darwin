@@ -1,4 +1,5 @@
 using Darwin.Contracts.Identity;
+using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Loyalty;
 using Darwin.Contracts.Profile;
 using FluentAssertions;
@@ -424,5 +425,194 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"timezone\"");
         json.Should().Contain("\"currency\"");
         json.Should().Contain("\"rowVersion\"");
+    }
+
+    /// <summary>
+    ///     Verifies that promotions feed response serializes campaign-oriented fields
+    ///     with expected camelCase names used by mobile feed rendering.
+    /// </summary>
+    [Fact]
+    public void MyPromotionsResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new MyPromotionsResponse
+        {
+            AppliedPolicy = new PromotionFeedPolicy
+            {
+                EnableDeduplication = true,
+                MaxCards = 6,
+                SuppressionWindowMinutes = 480
+            },
+            Items =
+            [
+                new PromotionFeedItem
+                {
+                    BusinessId = Guid.Parse("aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb"),
+                    BusinessName = "Demo Coffee",
+                    Title = "Morning Bonus",
+                    Description = "Earn extra points before noon.",
+                    CtaKind = "OpenRewards",
+                    Priority = 20,
+                    CampaignId = Guid.Parse("cccccccc-1111-2222-3333-dddddddddddd"),
+                    CampaignState = PromotionCampaignState.Active,
+                    StartsAtUtc = new DateTime(2030, 6, 1, 8, 0, 0, DateTimeKind.Utc),
+                    EndsAtUtc = new DateTime(2030, 6, 1, 12, 0, 0, DateTimeKind.Utc),
+                    EligibilityRules =
+                    [
+                        new PromotionEligibilityRule
+                        {
+                            AudienceKind = PromotionAudienceKind.PointsThreshold,
+                            MinPoints = 100,
+                            MaxPoints = null,
+                            TierKey = null,
+                            Note = "Available for members with at least 100 points."
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"items\"");
+        json.Should().Contain("\"appliedPolicy\"");
+        json.Should().Contain("\"enableDeduplication\"");
+        json.Should().Contain("\"maxCards\"");
+        json.Should().Contain("\"suppressionWindowMinutes\"");
+        json.Should().Contain("\"campaignId\"");
+        json.Should().Contain("\"campaignState\"");
+        json.Should().Contain("\"startsAtUtc\"");
+        json.Should().Contain("\"endsAtUtc\"");
+        json.Should().Contain("\"eligibilityRules\"");
+        json.Should().Contain("\"audienceKind\"");
+        json.Should().Contain("\"minPoints\"");
+    }
+
+    /// <summary>
+    ///     Verifies that loyalty timeline response serializes cursor fields and nested
+    ///     entries with expected property names for mobile infinite-scroll UX.
+    /// </summary>
+    [Fact]
+    public void GetMyLoyaltyTimelinePageResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new GetMyLoyaltyTimelinePageResponse
+        {
+            NextBeforeAtUtc = new DateTime(2030, 7, 20, 10, 30, 0, DateTimeKind.Utc),
+            NextBeforeId = Guid.Parse("10101010-2020-3030-4040-505050505050"),
+            Items =
+            [
+                new LoyaltyTimelineEntry
+                {
+                    Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                    Kind = LoyaltyTimelineEntryKind.PointsTransaction,
+                    LoyaltyAccountId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                    BusinessId = Guid.Parse("99999999-8888-7777-6666-555555555555"),
+                    OccurredAtUtc = new DateTime(2030, 7, 20, 11, 0, 0, DateTimeKind.Utc),
+                    PointsDelta = 5,
+                    PointsSpent = null,
+                    RewardTierId = null,
+                    Reference = "Accrual",
+                    Note = "Seed timeline entry"
+                }
+            ]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"items\"");
+        json.Should().Contain("\"nextBeforeAtUtc\"");
+        json.Should().Contain("\"nextBeforeId\"");
+        json.Should().Contain("\"occurredAtUtc\"");
+        json.Should().Contain("\"pointsDelta\"");
+        json.Should().Contain("\"pointsSpent\"");
+        json.Should().Contain("\"reference\"");
+    }
+
+    /// <summary>
+    ///     Verifies that map discovery request serializes viewport bounds and filters
+    ///     with expected camelCase names consumed by discovery endpoints.
+    /// </summary>
+    [Fact]
+    public void BusinessMapDiscoveryRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new BusinessMapDiscoveryRequest
+        {
+            Bounds = new Darwin.Contracts.Common.GeoBoundsModel
+            {
+                NorthLat = 52.6,
+                SouthLat = 52.4,
+                EastLon = 13.5,
+                WestLon = 13.2
+            },
+            Page = 1,
+            PageSize = 50,
+            Category = "Cafe",
+            Query = "coffee",
+            CountryCode = "DE"
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"bounds\"");
+        json.Should().Contain("\"northLat\"");
+        json.Should().Contain("\"southLat\"");
+        json.Should().Contain("\"eastLon\"");
+        json.Should().Contain("\"westLon\"");
+        json.Should().Contain("\"page\"");
+        json.Should().Contain("\"pageSize\"");
+        json.Should().Contain("\"category\"");
+        json.Should().Contain("\"query\"");
+        json.Should().Contain("\"countryCode\"");
+    }
+
+    /// <summary>
+    ///     Verifies that business summary contract deserializes from payload containing
+    ///     proximity fields used by mobile explore/discovery screens.
+    /// </summary>
+    [Fact]
+    public void BusinessSummary_Should_Deserialize_WithLocationAndDistanceFields()
+    {
+        // Arrange
+        const string json = """
+            {
+              "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+              "name": "Coffee Hub",
+              "category": "Cafe",
+              "rating": 4.7,
+              "ratingCount": 132,
+              "location": {
+                "latitude": 52.520008,
+                "longitude": 13.404954,
+                "altitudeMeters": null
+              },
+              "city": "Berlin",
+              "isOpenNow": true,
+              "isActive": true,
+              "distanceMeters": 380,
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<BusinessSummary>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Id.Should().Be(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+        dto.Name.Should().Be("Coffee Hub");
+        dto.Category.Should().Be("Cafe");
+        dto.Location.Should().NotBeNull();
+        dto.Location!.Latitude.Should().Be(52.520008);
+        dto.Location.Longitude.Should().Be(13.404954);
+        dto.DistanceMeters.Should().Be(380);
+        dto.IsOpenNow.Should().BeTrue();
     }
 }

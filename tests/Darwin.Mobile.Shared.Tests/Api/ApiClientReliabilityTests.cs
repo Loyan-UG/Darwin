@@ -1,0 +1,243 @@
+using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Resilience;
+using Darwin.Mobile.Shared.Security;
+using FluentAssertions;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+
+namespace Darwin.Mobile.Shared.Tests.Api;
+
+/// <summary>
+///     Covers mobile-critical reliability behaviors in <see cref="ApiClient"/>:
+///     retry execution, bearer-header synchronization with token storage,
+///     and no-content endpoint normalization.
+/// </summary>
+public sealed class ApiClientReliabilityTests
+{
+    /// <summary>
+    ///     Verifies that a non-expired access token stored in <see cref="ITokenStore"/>
+    ///     is injected as a Bearer header before sending a request.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_ApplyBearerHeader_WhenStoredTokenIsValid()
+    {
+        // Arrange
+        var tokenStore = new FakeTokenStore(
+            accessToken: "valid-access-token",
+            accessExpiresUtc: DateTime.UtcNow.AddMinutes(20));
+
+        AuthenticationHeaderValue? observedAuthorization = null;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            observedAuthorization = _.Headers.Authorization;
+            return CreateJsonResponse(HttpStatusCode.OK, new { name = "darwin" });
+        });
+
+        var client = CreateApiClient(handler, tokenStore);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/meta/info", CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+        observedAuthorization.Should().NotBeNull();
+        observedAuthorization!.Scheme.Should().Be("Bearer");
+        observedAuthorization.Parameter.Should().Be("valid-access-token");
+    }
+
+    /// <summary>
+    ///     Verifies that an expired access token is not sent to the server.
+    ///     The client must clear Authorization header to prevent stale-token usage.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_ClearBearerHeader_WhenStoredTokenIsExpired()
+    {
+        // Arrange
+        var tokenStore = new FakeTokenStore(
+            accessToken: "expired-access-token",
+            accessExpiresUtc: DateTime.UtcNow.AddMinutes(-1));
+
+        AuthenticationHeaderValue? observedAuthorization = new("Bearer", "placeholder");
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            observedAuthorization = request.Headers.Authorization;
+            return CreateJsonResponse(HttpStatusCode.OK, new { ok = true });
+        });
+
+        var client = CreateApiClient(handler, tokenStore);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, bool>>("/api/v1/meta/health", CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+        observedAuthorization.Should().BeNull();
+    }
+
+    /// <summary>
+    ///     Verifies that generic GET requests receiving HTTP 204 return a failed result
+    ///     with the well-known <see cref="ApiClient.NoContentResultMessage"/> marker.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_ReturnNoContentFailureMarker_WhenServerReturns204()
+    {
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/empty", CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be(ApiClient.NoContentResultMessage);
+    }
+
+    /// <summary>
+    ///     Verifies that command-style PUT endpoints returning HTTP 204 are normalized
+    ///     to <c>Result.Ok()</c> by <see cref="ApiClient.PutNoContentAsync{TRequest}"/>.
+    /// </summary>
+    [Fact]
+    public async Task PutNoContentAsync_Should_ReturnSuccess_WhenServerReturns204()
+    {
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PutNoContentAsync("/api/v1/profile/me", new { firstName = "Ada" }, CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Verifies that command-style POST endpoints returning HTTP 204 are normalized
+    ///     to <c>Result.Ok()</c> by <see cref="ApiClient.PostNoContentAsync{TRequest}"/>.
+    /// </summary>
+    [Fact]
+    public async Task PostNoContentAsync_Should_ReturnSuccess_WhenServerReturns204()
+    {
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PostNoContentAsync("/api/v1/auth/password/request-reset", new { email = "x@y.z" }, CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Verifies that transient transport failures are retried by
+    ///     <see cref="ExponentialBackoffRetryPolicy"/> and eventually succeed when
+    ///     a subsequent attempt returns a valid response.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_RetryTransientFailure_AndSucceedOnNextAttempt()
+    {
+        // Arrange
+        var attempts = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            attempts++;
+
+            if (attempts == 1)
+            {
+                throw new HttpRequestException("Transient network glitch.");
+            }
+
+            return CreateJsonResponse(HttpStatusCode.OK, new { value = 42 });
+        });
+
+        var retryPolicy = new ExponentialBackoffRetryPolicy(maxAttempts: 3, baseDelay: TimeSpan.FromMilliseconds(1));
+        var client = CreateApiClient(handler, retryPolicy: retryPolicy);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, int>>("/api/v1/retry-test", CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!["value"].Should().Be(42);
+        attempts.Should().Be(2);
+    }
+
+    /// <summary>
+    ///     Creates an <see cref="ApiClient"/> with deterministic test doubles.
+    /// </summary>
+    private static ApiClient CreateApiClient(
+        HttpMessageHandler handler,
+        ITokenStore? tokenStore = null,
+        IRetryPolicy? retryPolicy = null)
+    {
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost")
+        };
+
+        return new ApiClient(
+            httpClient,
+            retryPolicy ?? new ExponentialBackoffRetryPolicy(maxAttempts: 1, baseDelay: TimeSpan.FromMilliseconds(1)),
+            tokenStore ?? new FakeTokenStore());
+    }
+
+    /// <summary>
+    ///     Serializes a small anonymous object payload into a JSON response.
+    /// </summary>
+    private static HttpResponseMessage CreateJsonResponse<T>(HttpStatusCode statusCode, T payload)
+    {
+        var json = JsonSerializer.Serialize(payload);
+
+        return new HttpResponseMessage(statusCode)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+    }
+
+    /// <summary>
+    ///     Minimal token store test double with deterministic values.
+    /// </summary>
+    private sealed class FakeTokenStore : ITokenStore
+    {
+        private readonly string? _accessToken;
+        private readonly DateTime? _accessExpiresUtc;
+
+        public FakeTokenStore(string? accessToken = null, DateTime? accessExpiresUtc = null)
+        {
+            _accessToken = accessToken;
+            _accessExpiresUtc = accessExpiresUtc;
+        }
+
+        public Task SaveAsync(string accessToken, DateTime accessExpiresUtc, string refreshToken, DateTime refreshExpiresUtc)
+            => Task.CompletedTask;
+
+        public Task<(string? AccessToken, DateTime? AccessExpiresUtc)> GetAccessAsync()
+            => Task.FromResult((_accessToken, _accessExpiresUtc));
+
+        public Task<(string? RefreshToken, DateTime? RefreshExpiresUtc)> GetRefreshAsync()
+            => Task.FromResult<(string?, DateTime?)>((null, null));
+
+        public Task ClearAsync() => Task.CompletedTask;
+    }
+
+    /// <summary>
+    ///     Delegates HTTP response creation to a function, allowing deterministic
+    ///     per-request behavior in unit tests without external mocking frameworks.
+    /// </summary>
+    private sealed class StubHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, HttpResponseMessage> _responseFactory;
+
+        public StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
+        {
+            _responseFactory = responseFactory;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(_responseFactory(request));
+    }
+}
