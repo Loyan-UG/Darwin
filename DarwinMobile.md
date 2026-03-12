@@ -519,7 +519,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Promotions `Claim` tracking is now hooked from redemption QR generation (`RewardClaimIntent`) so conversion funnel has event coverage for all three stages.
 - Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
 - Promotions feed query now includes active in-app campaign entities from server-side marketing data and merges them with legacy derived cards to preserve rollout safety.
-- Promotions endpoint now returns the server-applied feed policy and enforces server-side guardrails (de-duplication, max-card cap, suppression window) for better client/server consistency.
+- Promotions endpoint now returns the server-applied feed policy and enforces server-side guardrails (de-duplication, max-card cap, suppression/frequency windows) for better client/server consistency.
 - Business campaign operations endpoint set is now available for list/create/update/activation workflows, enabling controlled campaign lifecycle management from business interfaces.
 - `Darwin.Mobile.Shared` now exposes business campaign operations in `ILoyaltyService` to unblock Business app integration without duplicating API plumbing in UI projects.
 - Business app Rewards page now ships minimal campaign operations UI (list + activate/deactivate + create/update editor) for mobile-first campaign lifecycle management.
