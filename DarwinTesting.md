@@ -528,7 +528,7 @@ This status is derived from the current repository state and must be refreshed w
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authenticated happy-path matrix is still pending.
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage is implemented; authenticated success + stale row-version matrix is still pending.
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage is implemented; authenticated end-to-end prepare/process/confirm scenarios are still pending.
-- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline serialization shape checks are implemented for Identity/Loyalty/Profile core contracts (including login request and business scan-process response shapes); broaden coverage to additional DTO sets is pending.
+- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline serialization/deserialization checks are implemented for Identity/Loyalty/Profile core contracts (including scan/request-response and accrual/redemption envelopes); broaden coverage to additional DTO sets is pending.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
 - [ ] Add CI lane split and coverage publication for unit/integration.
 
@@ -566,6 +566,42 @@ Backlog update rule:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
 
 ---
+
+
+## 16) Solution/Test project consistency checklist
+
+- `Darwin.sln` currently includes exactly two test projects:
+  - `tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj`
+  - `tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj`
+- `Test.slnf` matches the same two test projects and excludes MAUI app projects.
+- Current implemented suites on disk also match this layout.
+
+## 17) Handoff for next chat
+
+Use this list as the immediate continuation plan:
+
+1. **Identity happy-path matrix (authenticated)**
+   - Login success
+   - Refresh success
+   - Change password success (authorized)
+   - Logout and logout-all success (authorized)
+2. **Profile optimistic concurrency pack**
+   - Authorized `GET /profile/me` success
+   - Authorized `PUT /profile/me` success with valid `RowVersion`
+   - Conflict/stale `RowVersion` failure behavior
+3. **Loyalty end-to-end pack (authenticated)**
+   - Prepare -> Process -> Confirm accrual
+   - Prepare -> Process -> Confirm redemption
+4. **Contracts compatibility expansion**
+   - Add tests for remaining mobile-critical DTOs in loyalty timeline/promotions/business discovery
+5. **Test infrastructure stabilization**
+   - Add `tests/Tests.Common` helpers (`WebApiTestFactory`, auth helper, deterministic DB reset)
+
+Important context to carry into the next chat:
+
+- Keep `PackageReference` versions untouched unless explicitly requested.
+- Keep test comments in English with complete XML summaries.
+- Environment here does not provide `dotnet` CLI, so execution evidence must come from CI/local machine.
 
 ## Closing notes & recommended next steps
 
