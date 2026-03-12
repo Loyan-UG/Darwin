@@ -1,7 +1,8 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Meta;
 
@@ -20,7 +21,7 @@ public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactor
     /// <param name="factory">The host factory used to create test clients.</param>
     public MetaHealthEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -31,10 +32,7 @@ public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactor
     public async Task GetHealth_Should_ReturnOk_WithHealthyStatus()
     {
         // Arrange: use HTTPS base address to avoid redirection noise from middleware.
-        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
 
         // Act
         using var response = await client.GetAsync("/api/v1/meta/health");

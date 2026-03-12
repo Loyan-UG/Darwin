@@ -1,7 +1,6 @@
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Headers;
@@ -28,7 +27,7 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
     /// <param name="factory">Shared WebApplicationFactory instance.</param>
     public LoyaltyEndpointAuthorizedE2eTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
