@@ -16,6 +16,13 @@ namespace Darwin.Contracts.Loyalty
         public int MaxCards { get; init; } = 6;
 
         /// <summary>
+        /// Optional frequency-cap window in minutes for campaign cards that were already delivered recently.
+        /// When provided, this value overrides <see cref="SuppressionWindowMinutes"/> to keep legacy clients compatible.
+        /// </summary>
+        public int? FrequencyWindowMinutes { get; init; }
+            = null;
+
+        /// <summary>
         /// Optional suppression window in minutes for recently delivered campaign cards.
         /// Null keeps server default behavior.
         /// </summary>
