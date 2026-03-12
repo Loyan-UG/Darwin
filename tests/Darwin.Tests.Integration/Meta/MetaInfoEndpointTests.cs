@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Meta;
 
@@ -11,17 +12,15 @@ namespace Darwin.Tests.Integration.Meta;
 ///     diagnostics payload shape. This test protects mobile diagnostics screens
 ///     and operations tooling that read basic app metadata.
 /// </summary>
-public sealed class MetaInfoEndpointTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
+public sealed class MetaInfoEndpointTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Creates a test instance bound to a WebApi host running in testing environment.
     /// </summary>
     /// <param name="factory">The shared web host factory.</param>
     public MetaInfoEndpointTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -44,7 +43,7 @@ public sealed class MetaInfoEndpointTests : IClassFixture<WebApplicationFactory<
     public async Task GetInfo_Should_ReturnOk_WithBasicDiagnosticsFields()
     {
         // Arrange: use HTTPS base address to keep middleware behavior deterministic.
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
 
         // Act
         using var response = await client.GetAsync("/api/v1/meta/info");
@@ -65,7 +64,7 @@ public sealed class MetaInfoEndpointTests : IClassFixture<WebApplicationFactory<
     /// </summary>
     private sealed class MetaInfoResponse
     {
-        /// <summary>
+    /// <summary>
         ///     Logical application name.
         /// </summary>
         public string Application { get; init; } = string.Empty;

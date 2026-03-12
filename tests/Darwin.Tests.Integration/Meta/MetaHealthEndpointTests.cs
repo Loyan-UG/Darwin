@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Meta;
 
@@ -11,17 +12,15 @@ namespace Darwin.Tests.Integration.Meta;
 ///     ASP.NET Core pipeline. This smoke test is the first integration baseline
 ///     and proves that the WebApi host can boot inside the test process.
 /// </summary>
-public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
+public sealed class MetaHealthEndpointTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Creates a new test class instance with a shared WebApplicationFactory.
     /// </summary>
     /// <param name="factory">The host factory used to create test clients.</param>
     public MetaHealthEndpointTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -44,7 +43,7 @@ public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactor
     public async Task GetHealth_Should_ReturnOk_WithHealthyStatus()
     {
         // Arrange: use HTTPS base address to avoid redirection noise from middleware.
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
 
         // Act
         using var response = await client.GetAsync("/api/v1/meta/health");
@@ -62,7 +61,7 @@ public sealed class MetaHealthEndpointTests : IClassFixture<WebApplicationFactor
     /// </summary>
     private sealed class HealthResponse
     {
-        /// <summary>
+    /// <summary>
         ///     The health state string returned by the API.
         /// </summary>
         public string Status { get; init; } = string.Empty;

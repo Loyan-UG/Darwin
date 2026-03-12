@@ -579,6 +579,7 @@ Backlog update rule:
   - `tests/Darwin.Tests.Common/TestInfrastructure/IdentityFlowTestHelper.cs`
   - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestDatabaseReset.cs` (includes migration + reset gate for concurrency safety)
   - `tests/Darwin.Tests.Integration/IntegrationTestAssemblyConfiguration.cs` (disables integration assembly parallelization to avoid DB reset races)
+  - `tests/Darwin.Tests.Integration/TestInfrastructure/DeterministicIntegrationTestBase.cs` (shared `IAsyncLifetime` + host/client lifecycle to remove per-suite duplication)
 - Unit contract compatibility suite:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
 
