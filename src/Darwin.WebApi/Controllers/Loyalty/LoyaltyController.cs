@@ -1224,6 +1224,9 @@ namespace Darwin.WebApi.Controllers.Loyalty
         /// <summary>
         /// Returns personalized promotion cards for the current consumer user.
         /// Promotions are generated from joined loyalty programs and reward tiers.
+        /// Response includes:
+        /// - applied guardrail policy snapshot,
+        /// - diagnostics counters describing suppression, de-duplication, and max-cap trimming outcomes.
         /// </summary>
         [HttpPost("my/promotions")]
         [Authorize(Policy = "perm:AccessMemberArea")]
@@ -1254,6 +1257,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                         {
                             EnableDeduplication = request.Policy.EnableDeduplication,
                             MaxCards = request.Policy.MaxCards,
+                            FrequencyWindowMinutes = request.Policy.FrequencyWindowMinutes,
                             SuppressionWindowMinutes = request.Policy.SuppressionWindowMinutes
                         }
                 }, ct)
@@ -1270,7 +1274,16 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 {
                     EnableDeduplication = result.Value.AppliedPolicy.EnableDeduplication,
                     MaxCards = result.Value.AppliedPolicy.MaxCards,
+                    FrequencyWindowMinutes = result.Value.AppliedPolicy.FrequencyWindowMinutes,
                     SuppressionWindowMinutes = result.Value.AppliedPolicy.SuppressionWindowMinutes
+                },
+                Diagnostics = new PromotionFeedDiagnostics
+                {
+                    InitialCandidates = result.Value.Diagnostics.InitialCandidates,
+                    SuppressedByFrequency = result.Value.Diagnostics.SuppressedByFrequency,
+                    Deduplicated = result.Value.Diagnostics.Deduplicated,
+                    TrimmedByCap = result.Value.Diagnostics.TrimmedByCap,
+                    FinalCount = result.Value.Diagnostics.FinalCount
                 },
                 Items = result.Value.Items
                     .Select(x => new PromotionFeedItem
