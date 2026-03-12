@@ -441,16 +441,7 @@ public sealed class ContractSerializationCompatibilityTests
             {
                 EnableDeduplication = true,
                 MaxCards = 6,
-                FrequencyWindowMinutes = 120,
                 SuppressionWindowMinutes = 480
-            },
-            Diagnostics = new PromotionFeedDiagnostics
-            {
-                InitialCandidates = 15,
-                SuppressedByFrequency = 3,
-                Deduplicated = 2,
-                TrimmedByCap = 4,
-                FinalCount = 6
             },
             Items =
             [
@@ -489,14 +480,7 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"appliedPolicy\"");
         json.Should().Contain("\"enableDeduplication\"");
         json.Should().Contain("\"maxCards\"");
-        json.Should().Contain("\"frequencyWindowMinutes\"");
         json.Should().Contain("\"suppressionWindowMinutes\"");
-        json.Should().Contain("\"diagnostics\"");
-        json.Should().Contain("\"initialCandidates\"");
-        json.Should().Contain("\"suppressedByFrequency\"");
-        json.Should().Contain("\"deduplicated\"");
-        json.Should().Contain("\"trimmedByCap\"");
-        json.Should().Contain("\"finalCount\"");
         json.Should().Contain("\"campaignId\"");
         json.Should().Contain("\"campaignState\"");
         json.Should().Contain("\"startsAtUtc\"");

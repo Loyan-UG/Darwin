@@ -577,6 +577,7 @@ Backlog update rule:
   - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestHostFactory.cs`
   - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestClientFactory.cs`
   - `tests/Darwin.Tests.Common/TestInfrastructure/IdentityFlowTestHelper.cs`
+  - `tests/Darwin.Tests.Common/TestInfrastructure/IntegrationTestDatabaseReset.cs`
 - Unit contract compatibility suite:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
 
@@ -608,7 +609,7 @@ Backlog update rule:
 Use this list as the immediate continuation plan:
 
 1. **Test infrastructure stabilization — current top priority**
-   - Add deterministic DB reset fixture for integration host foundation.
+   - Integrate deterministic DB reset helper (`IntegrationTestDatabaseReset`) into suite lifecycle (`IAsyncLifetime`) where isolation is required.
    - Consolidate additional reusable helpers as needed.
 2. **CI quality gates activation**
    - Split unit/integration lanes and publish coverage for newly implemented suites.
@@ -623,7 +624,7 @@ Important context to carry into the next chat:
 
 ## Closing notes & recommended next steps
 
-1. Add `tests/Tests.Common` with the `WebApiTestFactory`, `TestDbFactory`, `TestAuthHelper`, and `TestClock`. These helpers will greatly reduce boilerplate in the integration tests.
+1. Extend `Darwin.Tests.Common` with a dedicated `WebApiTestFactory` wrapper that composes `IntegrationTestHostFactory` + `IntegrationTestDatabaseReset` for reusable class-level lifecycle setup.
 2. Execute the newly implemented identity/profile/loyalty integration suites in CI and persist passing evidence before marking packs as completed.
 3. Add mapping unit tests (BusinessContractsMapper & LoyaltyContractsMapper) immediately — mapping mismatches are frequent causes of runtime errors.
 4. Add contract serialization tests to protect mobile clients from accidental breaking changes.
