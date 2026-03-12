@@ -24,6 +24,18 @@ public sealed class MetaHealthEndpointTests : DeterministicIntegrationTestBase, 
     }
 
     /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    /// <summary>
     ///     Ensures the health endpoint returns HTTP 200 and includes the expected
     ///     status payload value. This protects against startup regressions.
     /// </summary>
