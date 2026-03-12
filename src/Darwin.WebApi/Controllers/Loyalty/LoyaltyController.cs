@@ -1254,6 +1254,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                         {
                             EnableDeduplication = request.Policy.EnableDeduplication,
                             MaxCards = request.Policy.MaxCards,
+                            FrequencyWindowMinutes = request.Policy.FrequencyWindowMinutes,
                             SuppressionWindowMinutes = request.Policy.SuppressionWindowMinutes
                         }
                 }, ct)
@@ -1270,7 +1271,16 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 {
                     EnableDeduplication = result.Value.AppliedPolicy.EnableDeduplication,
                     MaxCards = result.Value.AppliedPolicy.MaxCards,
+                    FrequencyWindowMinutes = result.Value.AppliedPolicy.FrequencyWindowMinutes,
                     SuppressionWindowMinutes = result.Value.AppliedPolicy.SuppressionWindowMinutes
+                },
+                Diagnostics = new PromotionFeedDiagnostics
+                {
+                    InitialCandidates = result.Value.Diagnostics.InitialCandidates,
+                    SuppressedByFrequency = result.Value.Diagnostics.SuppressedByFrequency,
+                    Deduplicated = result.Value.Diagnostics.Deduplicated,
+                    TrimmedByCap = result.Value.Diagnostics.TrimmedByCap,
+                    FinalCount = result.Value.Diagnostics.FinalCount
                 },
                 Items = result.Value.Items
                     .Select(x => new PromotionFeedItem
