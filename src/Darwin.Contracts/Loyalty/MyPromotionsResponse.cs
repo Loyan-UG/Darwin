@@ -13,5 +13,10 @@ namespace Darwin.Contracts.Loyalty
         /// Effective policy applied by the server for this response.
         /// </summary>
         public PromotionFeedPolicy AppliedPolicy { get; init; } = new();
+
+        /// <summary>
+        /// Optional diagnostics snapshot describing how feed guardrails changed candidate counts.
+        /// </summary>
+        public PromotionFeedDiagnostics Diagnostics { get; init; } = new();
     }
 }
