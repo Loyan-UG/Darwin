@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Shared.Results;
 
