@@ -51,9 +51,17 @@ Keep this document up-to-date as tests are added and as the CI pipeline evolves.
 
 Current repository status first:
 
-- Existing projects are `tests/Darwin.Tests.Unit` and `tests/Darwin.Tests.Integration`.
-- Unit tests currently cover slug validators and sanitizer helper behavior.
-- Integration project exists but is not yet wired for WebApi end-to-end scenarios.
+- Active suites with implemented test files:
+  - `tests/Darwin.Tests.Unit`
+  - `tests/Darwin.Tests.Integration`
+- Scaffolded test projects currently present in the solution (currently no test classes committed yet):
+  - `tests/Darwin.WebApi.Tests`
+  - `tests/Darwin.Infrastructure.Tests`
+  - `tests/Darwin.Contracts.Tests`
+  - `tests/Darwin.Mobile.Shared.Tests`
+  - `tests/Darwin.Tests.Common` (helper library placeholder)
+- Unit tests currently cover slug validators, sanitizer helper behavior, and baseline contract serialization compatibility.
+- Integration tests are wired to `Darwin.WebApi` with `WebApplicationFactory<Program>` baseline coverage in Identity/Profile/Loyalty/Meta areas.
 
 Recommended target structure (incremental evolution):
 
@@ -525,9 +533,9 @@ This status is derived from the current repository state and must be refreshed w
 ### Pending
 
 - [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
-- [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authenticated happy-path matrix is still pending.
-- [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage is implemented; authenticated success + stale row-version matrix is still pending.
-- [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage is implemented; authenticated end-to-end prepare/process/confirm scenarios are still pending.
+- [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; **next priority is authenticated happy-path matrix**.
+- [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage is implemented; **next priority is authenticated success + stale row-version matrix**.
+- [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage is implemented; **next priority is authenticated end-to-end prepare/process/confirm scenarios**.
 - [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline serialization/deserialization checks are implemented for Identity/Loyalty/Profile core contracts (including scan/request-response and accrual/redemption envelopes); broaden coverage to additional DTO sets is pending.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization).
 - [ ] Add CI lane split and coverage publication for unit/integration.
@@ -541,9 +549,9 @@ Keep this list as the execution tracker for the testing workstream.
 | Order | Work item | Status | Exit criteria |
 |---|---|---|---|
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress | Smoke test exists and is committed; deterministic DB reset fixture is the next sub-step |
-| 2 | Identity flow test pack | In Progress | Baseline + core negative tests exist (`request-reset` 200, anonymous `password/change`, `logout`, and `logout-all` 401, invalid login/refresh/reset 400); next add authenticated happy-path matrix |
-| 3 | Profile concurrency test pack | In Progress | Baseline auth-guard tests exist (`GET/PUT /profile/me` anonymous => 401); next add authenticated success + stale row-version conflict matrix |
-| 4 | Loyalty scan journey test pack | In Progress | Baseline auth-guard tests exist (`my/businesses`, `my/accounts`, `my/history/{businessId}`, `my/promotions`, `my/timeline`, `account/{businessId}`, `account/{businessId}/join`, `account/{businessId}/next-reward`, `scan/prepare`, `scan/process`, `scan/confirm-accrual`, `scan/confirm-redemption` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
+| 2 | Identity flow test pack | In Progress (P0) | Baseline + core negative tests exist (`request-reset` 200, anonymous `password/change`, `logout`, and `logout-all` 401, invalid login/refresh/reset 400); next add authenticated happy-path matrix |
+| 3 | Profile concurrency test pack | In Progress (P1) | Baseline auth-guard tests exist (`GET/PUT /profile/me` anonymous => 401); next add authenticated success + stale row-version conflict matrix |
+| 4 | Loyalty scan journey test pack | In Progress (P2) | Baseline auth-guard tests exist (`my/businesses`, `my/accounts`, `my/history/{businessId}`, `my/promotions`, `my/timeline`, `account/{businessId}`, `account/{businessId}/join`, `account/{businessId}/next-reward`, `scan/prepare`, `scan/process`, `scan/confirm-accrual`, `scan/confirm-redemption` anonymous => 401); next add authenticated end-to-end prepare/process/confirm flows |
 | 5 | Contracts compatibility pack | In Progress | Baseline serialization + deserialization compatibility tests exist for key Identity/Loyalty/Profile contracts; next expand to additional DTO families and explicit versioning scenarios |
 | 6 | Mobile.Shared reliability pack | Pending | Tests cover retry policy, auth header injection, and no-content success cases |
 | 7 | CI quality gates | Pending | Separate unit/integration jobs + published coverage + baseline threshold checks |
@@ -570,26 +578,32 @@ Backlog update rule:
 
 ## 16) Solution/Test project consistency checklist
 
-- `Darwin.sln` currently includes exactly two test projects:
+- `Darwin.sln` currently includes these test projects:
   - `tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj`
   - `tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj`
-- `Test.slnf` matches the same two test projects and excludes MAUI app projects.
-- Current implemented suites on disk also match this layout.
+  - `tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj`
+  - `tests/Darwin.Infrastructure.Tests/Darwin.Infrastructure.Tests.csproj`
+  - `tests/Darwin.Contracts.Tests/Darwin.Contracts.Tests.csproj`
+  - `tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj`
+- `Test.slnf` currently includes only:
+  - `tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj`
+  - `tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj`
+- Current implemented test suites on disk are still concentrated in the two projects included in `Test.slnf`; remaining projects are scaffolded and should be activated as coverage expands.
 
 ## 17) Handoff for next chat
 
 Use this list as the immediate continuation plan:
 
-1. **Identity happy-path matrix (authenticated)**
+1. **Identity happy-path matrix (authorized) — current top priority**
    - Login success
    - Refresh success
    - Change password success (authorized)
    - Logout and logout-all success (authorized)
-2. **Profile optimistic concurrency pack**
+2. **Profile optimistic concurrency matrix with RowVersion — next priority**
    - Authorized `GET /profile/me` success
    - Authorized `PUT /profile/me` success with valid `RowVersion`
    - Conflict/stale `RowVersion` failure behavior
-3. **Loyalty end-to-end pack (authenticated)**
+3. **Loyalty E2E prepare/process/confirm — third priority**
    - Prepare -> Process -> Confirm accrual
    - Prepare -> Process -> Confirm redemption
 4. **Contracts compatibility expansion**
