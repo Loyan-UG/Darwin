@@ -1,10 +1,13 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Shared.Commands;
+using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 
@@ -23,6 +26,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// 1) Load all joined loyalty accounts.
 /// 2) Let the user choose one business account explicitly.
 /// 3) Show points/rewards/history for that selected business only.
+/// 4) Provide multi-business overview metrics and quick actions.
 /// </para>
 /// <para>
 /// Threading note:
@@ -33,6 +37,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class RewardsViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
+    private readonly INavigationService _navigationService;
 
     private Guid _businessId;
     private bool _loaded;
@@ -40,15 +45,17 @@ public sealed class RewardsViewModel : BaseViewModel
     private LoyaltyAccountSummary? _selectedAccount;
     private bool _suppressSelectedAccountRefresh;
 
-    public RewardsViewModel(ILoyaltyService loyaltyService)
+    public RewardsViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         AvailableRewards = new ObservableCollection<LoyaltyRewardSummary>();
         RewardHistory = new ObservableCollection<PointsTransaction>();
         Accounts = new ObservableCollection<LoyaltyAccountSummary>();
 
         RefreshCommand = new AsyncCommand(RefreshAsync);
+        OpenSelectedBusinessQrCommand = new AsyncCommand(OpenSelectedBusinessQrAsync, () => CanOpenSelectedBusinessQr);
     }
 
     /// <summary>
@@ -96,14 +103,42 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand RefreshCommand { get; }
 
     /// <summary>
+    /// Quick action command that opens QR tab for the currently selected business account.
+    /// </summary>
+    public AsyncCommand OpenSelectedBusinessQrCommand { get; }
+
+    /// <summary>
     /// Gets whether any joined business accounts are currently available.
     /// </summary>
     public bool HasAccounts => Accounts.Count > 0;
 
     /// <summary>
+    /// Gets total joined loyalty businesses count for multi-business overview.
+    /// </summary>
+    public int TotalJoinedBusinesses => Accounts.Count;
+
+    /// <summary>
+    /// Gets aggregated points balance across all joined businesses.
+    /// </summary>
+    public int TotalPointsAcrossBusinesses => Accounts.Sum(x => Math.Max(0, x.PointsBalance));
+
+    /// <summary>
+    /// Gets the top business name by current points balance.
+    /// </summary>
+    public string TopBusinessByPoints => Accounts
+        .OrderByDescending(x => x.PointsBalance)
+        .Select(x => x.BusinessName)
+        .FirstOrDefault() ?? "—";
+
+    /// <summary>
     /// Gets whether the selected account has any history entries to show.
     /// </summary>
     public bool HasHistory => RewardHistory.Count > 0;
+
+    /// <summary>
+    /// Gets whether quick QR navigation can execute for selected account.
+    /// </summary>
+    public bool CanOpenSelectedBusinessQr => SelectedAccount is not null && SelectedAccount.BusinessId != Guid.Empty && !IsBusy;
 
     /// <summary>
     /// Gets or sets the currently selected loyalty account.
@@ -122,6 +157,9 @@ public sealed class RewardsViewModel : BaseViewModel
             {
                 return;
             }
+
+            OnPropertyChanged(nameof(CanOpenSelectedBusinessQr));
+            OpenSelectedBusinessQrCommand.RaiseCanExecuteChanged();
 
             if (value is null || value.BusinessId == Guid.Empty)
             {
@@ -143,7 +181,9 @@ public sealed class RewardsViewModel : BaseViewModel
     public void SetBusiness(Guid businessId)
     {
         if (businessId == Guid.Empty)
+        {
             throw new ArgumentException("Business id must not be empty.", nameof(businessId));
+        }
 
         BusinessId = businessId;
     }
@@ -177,6 +217,7 @@ public sealed class RewardsViewModel : BaseViewModel
 
         IsBusy = true;
         ErrorMessage = null;
+        RaiseOverviewChanged();
 
         try
         {
@@ -202,7 +243,7 @@ public sealed class RewardsViewModel : BaseViewModel
                     Accounts.Add(account);
                 }
 
-                OnPropertyChanged(nameof(HasAccounts));
+                RaiseOverviewChanged();
             });
 
             if (orderedAccounts.Count == 0)
@@ -240,6 +281,7 @@ public sealed class RewardsViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            RaiseOverviewChanged();
         }
     }
 
@@ -275,6 +317,7 @@ public sealed class RewardsViewModel : BaseViewModel
 
         IsBusy = true;
         ErrorMessage = null;
+        RaiseOverviewChanged();
 
         try
         {
@@ -283,6 +326,7 @@ public sealed class RewardsViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            RaiseOverviewChanged();
         }
     }
 
@@ -349,5 +393,36 @@ public sealed class RewardsViewModel : BaseViewModel
             ErrorMessage = Resources.AppResources.RewardsLoadHistoryFailed;
             RunOnMain(() => OnPropertyChanged(nameof(HasHistory)));
         }
+    }
+
+    /// <summary>
+    /// Opens QR tab for the currently selected account business context.
+    /// </summary>
+    private async Task OpenSelectedBusinessQrAsync()
+    {
+        if (!CanOpenSelectedBusinessQr || SelectedAccount is null)
+        {
+            return;
+        }
+
+        var parameters = new Dictionary<string, object>
+        {
+            ["businessId"] = SelectedAccount.BusinessId
+        };
+
+        await _navigationService.GoToAsync($"//{Routes.Qr}", parameters);
+    }
+
+    /// <summary>
+    /// Raises change notifications for aggregate overview and quick-action state.
+    /// </summary>
+    private void RaiseOverviewChanged()
+    {
+        OnPropertyChanged(nameof(HasAccounts));
+        OnPropertyChanged(nameof(TotalJoinedBusinesses));
+        OnPropertyChanged(nameof(TotalPointsAcrossBusinesses));
+        OnPropertyChanged(nameof(TopBusinessByPoints));
+        OnPropertyChanged(nameof(CanOpenSelectedBusinessQr));
+        OpenSelectedBusinessQrCommand.RaiseCanExecuteChanged();
     }
 }

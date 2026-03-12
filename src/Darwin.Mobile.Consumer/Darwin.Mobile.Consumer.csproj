@@ -43,6 +43,43 @@
 		<DefaultLanguage>de</DefaultLanguage>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' != 'Release'">
+		<CodesignEntitlements>Platforms\iOS\Entitlements.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' == 'Release'">
+		<CodesignEntitlements>Platforms\iOS\Entitlements.Release.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' and '$(Configuration)' != 'Release'">
+		<CodesignEntitlements>Platforms\MacCatalyst\Entitlements.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' and '$(Configuration)' == 'Release'">
+		<CodesignEntitlements>Platforms\MacCatalyst\Entitlements.Release.plist</CodesignEntitlements>
+	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+	<!--
+	Google Maps key should come from environment/user-secrets/CI variables.
+	Do not hardcode production keys in source control.
+	Resolution order:
+	1) GoogleMapsApiKey (explicit MSBuild property)
+	2) GOOGLE_MAPS_API_KEY (environment)
+	3) ANDROID_GOOGLE_MAPS_API_KEY (environment)
+	-->
+	<GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
+	<GoogleMapsApiKey Condition="'$(GoogleMapsApiKey)' == ''">$(ANDROID_GOOGLE_MAPS_API_KEY)</GoogleMapsApiKey>
+	<AndroidManifestPlaceholders>$(AndroidManifestPlaceholders);googleMapsApiKey=$(GoogleMapsApiKey)</AndroidManifestPlaceholders>
+</PropertyGroup>
+
+
+<Target Name="ValidateAndroidPushFirebaseConfig" BeforeTargets="Build" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+	<Warning Condition="!Exists('google-services.json') and '$(Configuration)' != 'Release'" Text="google-services.json is missing. FCM token/bootstrap can fail at runtime. Add src/Darwin.Mobile.Consumer/google-services.json for your Firebase project." />
+	<Error Condition="!Exists('google-services.json') and '$(Configuration)' == 'Release'" Text="google-services.json is required for Android Release builds with FCM push integration." />
+</Target>
+
+<Target Name="ValidateAndroidGoogleMapsApiKey" BeforeTargets="Build" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+	<Warning Condition="'$(GoogleMapsApiKey)' == '' and '$(Configuration)' != 'Release'" Text="GOOGLE_MAPS_API_KEY is not set. Android map tiles may fail at runtime. Set GoogleMapsApiKey or env var GOOGLE_MAPS_API_KEY (or ANDROID_GOOGLE_MAPS_API_KEY)." />
+	<Error Condition="'$(GoogleMapsApiKey)' == '' and '$(Configuration)' == 'Release'" Text="GOOGLE_MAPS_API_KEY is required for Android Release builds. Set GoogleMapsApiKey or env var GOOGLE_MAPS_API_KEY (or ANDROID_GOOGLE_MAPS_API_KEY)." />
+</Target>
+
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
@@ -65,10 +102,10 @@
 		<PackageReference Include="CommunityToolkit.Maui" Version="14.0.1" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="HtmlSanitizer" Version="9.0.892" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.31" />
-		<PackageReference Include="Microsoft.Maui.Controls.Maps" Version="10.0.31" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.4" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.50" />
+		<PackageReference Include="Microsoft.Maui.Controls.Maps" Version="10.0.50" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.4" />
 		<PackageReference Include="QRCoder" Version="1.7.0" />
 		<PackageReference Include="UraniumUI" Version="2.14.0" />
 		<PackageReference Include="UraniumUI.Icons.FontAwesome" Version="2.14.0" />
@@ -76,6 +113,12 @@
 		<PackageReference Include="UraniumUI.Material" Version="2.14.0" />
 		<PackageReference Include="ZXing.Net.Maui" Version="0.7.4" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.7.4" />
+		<!--<PackageReference Include="Xamarin.Firebase.Messaging" Version="125.0.1.2" />-->
+	</ItemGroup>
+
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<PackageReference Include="Xamarin.Firebase.Messaging" Version="125.0.1.2" />
+		<GoogleServicesJson Include="google-services.json" Condition="Exists('google-services.json')" />
 	</ItemGroup>
 
 	<ItemGroup>
