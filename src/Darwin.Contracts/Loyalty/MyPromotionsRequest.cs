@@ -19,6 +19,13 @@ namespace Darwin.Contracts.Loyalty
 
         /// <summary>
         /// Optional policy override used to tune server-side guardrails.
+        ///
+        /// Precedence behavior for suppression controls:
+        /// - When <see cref="PromotionFeedPolicy.FrequencyWindowMinutes"/> is provided,
+        ///   campaign suppression uses it first.
+        /// - Otherwise, server falls back to <see cref="PromotionFeedPolicy.SuppressionWindowMinutes"/>.
+        ///
+        /// Clients can safely omit this property to use server defaults.
         /// </summary>
         public PromotionFeedPolicy? Policy { get; init; }
     }
