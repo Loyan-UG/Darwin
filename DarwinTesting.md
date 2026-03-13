@@ -563,7 +563,7 @@ Keep this list as the execution tracker for the testing workstream.
 - [x] Identity authorized happy-path matrix tests authored (`AuthIdentityEndpointAuthorizedMatrixTests`).
 - [x] Profile optimistic concurrency matrix tests authored (`ProfileEndpointAuthorizedConcurrencyTests`).
 - [x] Loyalty E2E prepare/process/confirm tests authored (`LoyaltyEndpointAuthorizedE2eTests`).
-- [x] Contracts compatibility authoring expanded for mobile-critical DTOs (identity/profile/loyalty/promotions/push/business payloads).
+- [x] Contracts compatibility authoring expanded for mobile-critical DTOs (identity/profile/loyalty/promotions/push/business payloads, including campaign and reward-configuration management shapes).
 - [x] Mobile.Shared reliability tests authored (`ApiClientReliabilityTests`).
 
 

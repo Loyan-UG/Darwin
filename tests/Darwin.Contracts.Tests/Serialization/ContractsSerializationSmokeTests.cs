@@ -459,4 +459,160 @@ public sealed class ContractsSerializationSmokeTests
         resetRoundTrip!.Token.Should().Be("reset-token");
     }
 
+    /// <summary>
+    ///     Verifies business campaign management contracts round-trip mutable fields,
+    ///     concurrency tokens, and paging payload used by mobile business workflows.
+    /// </summary>
+    [Fact]
+    public void BusinessCampaignContracts_Should_RoundTripMutationAndListPayloads()
+    {
+        // Arrange
+        var createRequest = new CreateBusinessCampaignRequest
+        {
+            Name = "Weekend Boost",
+            Title = "Double Points Weekend",
+            Subtitle = "Fri-Sun",
+            Body = "Collect double points this weekend.",
+            MediaUrl = "https://cdn.example.test/campaign.png",
+            LandingUrl = "https://example.test/rewards",
+            Channels = 3,
+            StartsAtUtc = DateTime.UtcNow,
+            EndsAtUtc = DateTime.UtcNow.AddDays(2),
+            TargetingJson = "{\"joined\":true}",
+            PayloadJson = "{\"kind\":\"boost\"}"
+        };
+
+        var updateRequest = new UpdateBusinessCampaignRequest
+        {
+            Id = Guid.NewGuid(),
+            Name = "Weekend Boost v2",
+            Title = "Triple Points Weekend",
+            Subtitle = "Limited",
+            Body = "Collect triple points today.",
+            MediaUrl = null,
+            LandingUrl = "https://example.test/rewards",
+            Channels = 1,
+            StartsAtUtc = DateTime.UtcNow,
+            EndsAtUtc = DateTime.UtcNow.AddDays(1),
+            TargetingJson = "{\"tier\":\"gold\"}",
+            PayloadJson = "{\"kind\":\"boost-v2\"}",
+            RowVersion = [1, 2, 3]
+        };
+
+        var listResponse = new GetBusinessCampaignsResponse
+        {
+            Items =
+            [
+                new BusinessCampaignItem
+                {
+                    Id = Guid.NewGuid(),
+                    BusinessId = Guid.NewGuid(),
+                    Name = "Weekend Boost",
+                    Title = "Double Points Weekend",
+                    Subtitle = "Fri-Sun",
+                    Body = "Collect double points this weekend.",
+                    MediaUrl = "https://cdn.example.test/campaign.png",
+                    LandingUrl = "https://example.test/rewards",
+                    Channels = 3,
+                    StartsAtUtc = DateTime.UtcNow,
+                    EndsAtUtc = DateTime.UtcNow.AddDays(2),
+                    IsActive = true,
+                    CampaignState = PromotionCampaignState.Active,
+                    TargetingJson = "{\"joined\":true}",
+                    PayloadJson = "{\"kind\":\"boost\"}",
+                    RowVersion = [4, 5, 6]
+                }
+            ],
+            Total = 1
+        };
+
+        var mutationResponse = new BusinessCampaignMutationResponse
+        {
+            CampaignId = Guid.NewGuid()
+        };
+
+        var activationRequest = new SetCampaignActivationRequest
+        {
+            Id = Guid.NewGuid(),
+            IsActive = true,
+            RowVersion = [7, 8]
+        };
+
+        // Act
+        var createRoundTrip = JsonSerializer.Deserialize<CreateBusinessCampaignRequest>(JsonSerializer.Serialize(createRequest, JsonOptions), JsonOptions);
+        var updateRoundTrip = JsonSerializer.Deserialize<UpdateBusinessCampaignRequest>(JsonSerializer.Serialize(updateRequest, JsonOptions), JsonOptions);
+        var listRoundTrip = JsonSerializer.Deserialize<GetBusinessCampaignsResponse>(JsonSerializer.Serialize(listResponse, JsonOptions), JsonOptions);
+        var mutationRoundTrip = JsonSerializer.Deserialize<BusinessCampaignMutationResponse>(JsonSerializer.Serialize(mutationResponse, JsonOptions), JsonOptions);
+        var activationRoundTrip = JsonSerializer.Deserialize<SetCampaignActivationRequest>(JsonSerializer.Serialize(activationRequest, JsonOptions), JsonOptions);
+
+        // Assert
+        createRoundTrip.Should().NotBeNull();
+        createRoundTrip!.Name.Should().Be("Weekend Boost");
+        createRoundTrip.TargetingJson.Should().Contain("joined");
+
+        updateRoundTrip.Should().NotBeNull();
+        updateRoundTrip!.RowVersion.Should().Equal([1, 2, 3]);
+
+        listRoundTrip.Should().NotBeNull();
+        listRoundTrip!.Items.Should().HaveCount(1);
+        listRoundTrip.Items[0].CampaignState.Should().Be(PromotionCampaignState.Active);
+        listRoundTrip.Total.Should().Be(1);
+
+        mutationRoundTrip.Should().NotBeNull();
+        mutationRoundTrip!.CampaignId.Should().NotBe(Guid.Empty);
+
+        activationRoundTrip.Should().NotBeNull();
+        activationRoundTrip!.IsActive.Should().BeTrue();
+        activationRoundTrip.RowVersion.Should().Equal([7, 8]);
+    }
+
+    /// <summary>
+    ///     Verifies business reward-configuration contracts round-trip reward tiers,
+    ///     mutation responses, and RowVersion fields for optimistic-concurrency updates.
+    /// </summary>
+    [Fact]
+    public void BusinessRewardConfigurationContracts_Should_RoundTripWithRewardTierConcurrencyPayloads()
+    {
+        // Arrange
+        var configResponse = new BusinessRewardConfigurationResponse
+        {
+            LoyaltyProgramId = Guid.NewGuid(),
+            ProgramName = "Cafe Rewards",
+            IsProgramActive = true,
+            RewardTiers =
+            [
+                new BusinessRewardTierConfigItem
+                {
+                    RewardTierId = Guid.NewGuid(),
+                    PointsRequired = 120,
+                    RewardType = "FreeDrink",
+                    RewardValue = null,
+                    Description = "One small coffee",
+                    AllowSelfRedemption = true,
+                    RowVersion = [3, 2, 1]
+                }
+            ]
+        };
+
+        var mutationResponse = new BusinessRewardTierMutationResponse
+        {
+            RewardTierId = Guid.NewGuid(),
+            Success = true
+        };
+
+        // Act
+        var configRoundTrip = JsonSerializer.Deserialize<BusinessRewardConfigurationResponse>(JsonSerializer.Serialize(configResponse, JsonOptions), JsonOptions);
+        var mutationRoundTrip = JsonSerializer.Deserialize<BusinessRewardTierMutationResponse>(JsonSerializer.Serialize(mutationResponse, JsonOptions), JsonOptions);
+
+        // Assert
+        configRoundTrip.Should().NotBeNull();
+        configRoundTrip!.IsProgramActive.Should().BeTrue();
+        configRoundTrip.RewardTiers.Should().HaveCount(1);
+        configRoundTrip.RewardTiers[0].RowVersion.Should().Equal([3, 2, 1]);
+
+        mutationRoundTrip.Should().NotBeNull();
+        mutationRoundTrip!.Success.Should().BeTrue();
+        mutationRoundTrip.RewardTierId.Should().NotBe(Guid.Empty);
+    }
+
 }
