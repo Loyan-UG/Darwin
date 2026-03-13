@@ -19,6 +19,8 @@ class LaneCoverage:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate lane coverage thresholds from Cobertura reports.")
     parser.add_argument("--unit-threshold", type=float, required=True)
+    parser.add_argument("--contracts-threshold", type=float, required=True)
+    parser.add_argument("--infrastructure-threshold", type=float, required=True)
     parser.add_argument("--webapi-threshold", type=float, required=True)
     parser.add_argument("--integration-threshold", type=float, required=True)
     parser.add_argument("--mobile-shared-threshold", type=float, required=True)
@@ -60,6 +62,8 @@ def main() -> int:
 
     lanes = [
         ("unit", "TestResults/unit", args.unit_threshold),
+        ("contracts", "TestResults/contracts", args.contracts_threshold),
+        ("infrastructure", "TestResults/infrastructure", args.infrastructure_threshold),
         ("webapi", "TestResults/webapi", args.webapi_threshold),
         ("integration", "TestResults/integration", args.integration_threshold),
         ("mobile-shared", "TestResults/mobile-shared", args.mobile_shared_threshold),
