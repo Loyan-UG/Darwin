@@ -142,4 +142,154 @@ public sealed class ContractsSerializationSmokeTests
         roundTrip.NextBeforeAtUtc.Should().NotBeNull();
         roundTrip.NextBeforeId.Should().NotBeNull();
     }
+
+    /// <summary>
+    ///     Verifies that the member profile contract round-trips optimistic-concurrency
+    ///     payload fields (<c>Id</c> + <c>RowVersion</c>) required by mobile update flows.
+    /// </summary>
+    [Fact]
+    public void CustomerProfile_Should_RoundTripWithRowVersionAndIdentityFields()
+    {
+        // Arrange
+        var profile = new Darwin.Contracts.Profile.CustomerProfile
+        {
+            Id = Guid.NewGuid(),
+            Email = "profile@example.test",
+            FirstName = "Ada",
+            LastName = "Lovelace",
+            PhoneE164 = "+491701234567",
+            Locale = "de-DE",
+            Timezone = "Europe/Berlin",
+            Currency = "EUR",
+            RowVersion = [1, 2, 3, 4]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(profile, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<Darwin.Contracts.Profile.CustomerProfile>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.Id.Should().Be(profile.Id);
+        roundTrip.Email.Should().Be("profile@example.test");
+        roundTrip.RowVersion.Should().Equal([1, 2, 3, 4]);
+    }
+
+    /// <summary>
+    ///     Verifies promotion feed contracts preserve policy diagnostics and campaign-aware
+    ///     payload fields used by mobile feed rendering and suppression behavior.
+    /// </summary>
+    [Fact]
+    public void MyPromotionsResponse_Should_RoundTripWithPolicyAndCampaignFields()
+    {
+        // Arrange
+        var response = new MyPromotionsResponse
+        {
+            Items =
+            [
+                new PromotionFeedItem
+                {
+                    Id = Guid.NewGuid(),
+                    BusinessId = Guid.NewGuid(),
+                    BusinessName = "Darwin Cafe",
+                    Title = "Double points weekend",
+                    Body = "Collect 2x points on all orders.",
+                    Kind = "Campaign",
+                    Priority = 5,
+                    CtaText = "Open rewards",
+                    CtaRoute = "/rewards",
+                    CtaPayloadJson = "{\"businessId\":\"demo\"}",
+                    IsDismissible = true,
+                    HasBeenSeen = false,
+                    CreatedAtUtc = DateTime.UtcNow,
+                    CampaignState = PromotionCampaignState.Active,
+                    CampaignStartsAtUtc = DateTime.UtcNow.AddHours(-1),
+                    CampaignEndsAtUtc = DateTime.UtcNow.AddDays(1),
+                    EligibilityRules = [new PromotionEligibilityRule { Key = "JoinedBusiness", Value = "true" }]
+                }
+            ],
+            Policy = new PromotionFeedPolicy
+            {
+                EnableDeduplication = true,
+                MaxCards = 6,
+                SuppressionWindowMinutes = 480,
+                FrequencyWindowMinutes = 120
+            },
+            Diagnostics = new PromotionFeedDiagnostics
+            {
+                EvaluatedCards = 4,
+                ReturnedCards = 1,
+                SuppressedByDeduplication = 2,
+                SuppressedByWindow = 1,
+                SuppressedByFrequency = 0,
+                SuppressedByInactive = 0,
+                SuppressedByActivationWindow = 0,
+                SuppressedByCap = 0,
+                SuppressedByInvalidPayload = 0
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(response, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<MyPromotionsResponse>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.Items.Should().HaveCount(1);
+        roundTrip.Items[0].CampaignState.Should().Be(PromotionCampaignState.Active);
+        roundTrip.Items[0].EligibilityRules.Should().HaveCount(1);
+        roundTrip.Policy.Should().NotBeNull();
+        roundTrip.Policy!.FrequencyWindowMinutes.Should().Be(120);
+        roundTrip.Diagnostics.Should().NotBeNull();
+        roundTrip.Diagnostics!.SuppressedByDeduplication.Should().Be(2);
+    }
+
+    /// <summary>
+    ///     Verifies that push-device registration contracts keep platform, token, and
+    ///     permission metadata stable across serialization boundaries.
+    /// </summary>
+    [Fact]
+    public void RegisterPushDeviceContracts_Should_RoundTripPlatformAndPermissionFields()
+    {
+        // Arrange
+        var request = new Darwin.Contracts.Notifications.RegisterPushDeviceRequest
+        {
+            Platform = Darwin.Contracts.Notifications.MobileDevicePlatform.Android,
+            DeviceId = "android-device-1",
+            PushToken = "fcm-token",
+            AppVersion = "1.2.3",
+            OsVersion = "Android 15",
+            Locale = "de-DE",
+            Timezone = "Europe/Berlin",
+            NotificationsEnabled = true,
+            PushPermissionState = "Granted"
+        };
+
+        var response = new Darwin.Contracts.Notifications.RegisterPushDeviceResponse
+        {
+            Registered = true,
+            DeviceId = "android-device-1",
+            RegisteredAtUtc = DateTime.UtcNow,
+            LastSeenAtUtc = DateTime.UtcNow,
+            Message = "ok"
+        };
+
+        // Act
+        var requestJson = JsonSerializer.Serialize(request, JsonOptions);
+        var responseJson = JsonSerializer.Serialize(response, JsonOptions);
+
+        var requestRoundTrip = JsonSerializer.Deserialize<Darwin.Contracts.Notifications.RegisterPushDeviceRequest>(requestJson, JsonOptions);
+        var responseRoundTrip = JsonSerializer.Deserialize<Darwin.Contracts.Notifications.RegisterPushDeviceResponse>(responseJson, JsonOptions);
+
+        // Assert
+        requestRoundTrip.Should().NotBeNull();
+        requestRoundTrip!.Platform.Should().Be(Darwin.Contracts.Notifications.MobileDevicePlatform.Android);
+        requestRoundTrip.NotificationsEnabled.Should().BeTrue();
+        requestRoundTrip.PushPermissionState.Should().Be("Granted");
+
+        responseRoundTrip.Should().NotBeNull();
+        responseRoundTrip!.Registered.Should().BeTrue();
+        responseRoundTrip.DeviceId.Should().Be("android-device-1");
+    }
+
 }
