@@ -533,9 +533,9 @@ This status is derived from the current repository state and must be refreshed w
 ### Pending
 
 - [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
-- [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authorized happy-path matrix is implemented in code and pending CLI/CI execution evidence.
-- [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage and authorized success/stale-rowversion matrix are implemented in code; pending CLI/CI execution evidence.
-- [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage and authorized end-to-end prepare/process/confirm scenarios are implemented in code; pending CLI/CI execution evidence.
+- [ ] **P1 — Identity happy-path matrix (authorized):** baseline + core negative-path coverage and authorized matrix are implemented in code; pending CLI/CI execution evidence.
+- [ ] **P2 — Profile optimistic concurrency matrix (`Id` + `RowVersion`):** baseline auth-guard coverage and authorized success/stale-rowversion matrix are implemented in code; pending CLI/CI execution evidence.
+- [ ] **P3 — Loyalty E2E prepare/process/confirm:** baseline auth-guard coverage and authorized end-to-end scenarios are implemented in code; pending CLI/CI execution evidence.
 - [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented in code; additional contract smoke tests are implemented in `Darwin.Contracts.Tests`, mapper stability tests for `BusinessContractsMapper`/`LoyaltyContractsMapper` are implemented in `Darwin.WebApi.Tests`, pending CLI/CI execution evidence and further DTO-family expansion.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization). Implemented in code (`ApiClientReliabilityTests`), pending CLI/CI execution evidence.
 - [ ] Add CI lane split and coverage publication for unit/integration. Implemented in code via GitHub Actions quality-gates workflow with lanes for unit/contracts/infrastructure/webapi/integration/mobile-shared (pending CI execution evidence).
@@ -549,12 +549,23 @@ Keep this list as the execution tracker for the testing workstream.
 | Order | Work item | Status | Exit criteria |
 |---|---|---|---|
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress (Implemented, pending CLI/CI run) | Smoke suites now run with deterministic DB reset+seed in `IAsyncLifetime`; finalize after CLI/CI evidence confirms stability and runtime overhead is acceptable. |
-| 2 | Identity flow test pack | In Progress (Implemented, pending CLI/CI run) | Baseline + core negative tests and authorized happy-path matrix are implemented (`register/login`, `refresh`, `password/change`, `logout`, `logout-all`); finalize after passing CLI/CI evidence. |
-| 3 | Profile concurrency test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
-| 4 | Loyalty scan journey test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
+| 2 | **P1** Identity flow test pack (authorized matrix first) | In Progress (Implemented, pending CLI/CI run) | Baseline + core negative tests and authorized happy-path matrix are implemented (`register/login`, `refresh`, `password/change`, `logout`, `logout-all`); finalize after passing CLI/CI evidence. |
+| 3 | **P2** Profile concurrency test pack (`RowVersion`) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
+| 4 | **P3** Loyalty scan journey test pack (prepare/process/confirm) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
 | 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; additional contract smoke tests in `Darwin.Contracts.Tests` and mapper stability tests in `Darwin.WebApi.Tests` are added; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
 | 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
 | 7 | CI quality gates | In Progress (Implemented, pending CI run) | Workflow includes separate unit/contracts/infrastructure/webapi/integration/mobile-shared jobs, artifact publication, and coverage threshold gate; finalize after successful CI evidence. |
+
+
+### Latest local verification snapshot
+
+- Attempted to execute the three prioritized integration matrices directly from CLI:
+  - `dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj --filter "FullyQualifiedName~AuthIdentityEndpointAuthorizedMatrixTests|FullyQualifiedName~ProfileEndpointAuthorizedConcurrencyTests|FullyQualifiedName~LoyaltyEndpointAuthorizedE2eTests"`
+- Initial result: execution blocked because `dotnet` CLI was unavailable (`bash: command not found: dotnet`).
+- Follow-up remediation attempts in this environment:
+  - Script install via `curl https://dotnet.microsoft.com/.../dotnet-install.sh` (blocked by outbound proxy HTTP 403).
+  - Package install via `apt-get update && apt-get install dotnet-sdk-10.0` (blocked by repository/proxy HTTP 403).
+- Tracking decision: keep backlog items in **In Progress (Implemented, pending CLI/CI run)** state until local or CI evidence is attached.
 
 Backlog update rule:
 
