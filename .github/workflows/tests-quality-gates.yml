@@ -14,14 +14,26 @@ jobs:
   soft-gate-status:
     name: Soft-gate mode status
     runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.mode.outputs.mode }}
     steps:
-      - name: Report PR gate mode
+      - name: Detect gate mode
+        id: mode
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ vars.DARWIN_PR_SOFT_GATE }}" != "false" ]; then
+            echo "mode=soft" >> "$GITHUB_OUTPUT"
             echo "::warning::PR soft-gate mode is ACTIVE (DARWIN_PR_SOFT_GATE != false). Failing test jobs are non-blocking in this PR run."
           else
+            echo "mode=strict" >> "$GITHUB_OUTPUT"
             echo "PR gate mode is STRICT for this run."
           fi
+
+      - name: Publish gate mode summary
+        run: |
+          echo "## Darwin test gate mode" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Event: \`${{ github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: \`${{ steps.mode.outputs.mode }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Switch variable: \`DARWIN_PR_SOFT_GATE\` (set to \`false\` to force strict PR runs)" >> "$GITHUB_STEP_SUMMARY"
 
   unit-tests:
     name: Unit tests + coverage
