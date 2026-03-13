@@ -564,7 +564,7 @@ Keep this list as the execution tracker for the testing workstream.
 - [x] Profile optimistic concurrency matrix tests authored (`ProfileEndpointAuthorizedConcurrencyTests`).
 - [x] Loyalty E2E prepare/process/confirm tests authored (`LoyaltyEndpointAuthorizedE2eTests`).
 - [x] Contracts compatibility authoring expanded for mobile-critical DTOs (identity/profile/loyalty/promotions/push/business payloads, campaign/reward-configuration management shapes, and WebApi mapper stability scenarios).
-- [x] Mobile.Shared reliability tests authored (`ApiClientReliabilityTests`).
+- [x] Mobile.Shared reliability tests authored (`ApiClientReliabilityTests`) including guard-clause and invalid-JSON normalization scenarios.
 
 
 ### Latest local verification snapshot

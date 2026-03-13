@@ -166,6 +166,82 @@ public sealed class ApiClientReliabilityTests
         attempts.Should().Be(2);
     }
 
+
+    /// <summary>
+    ///     Verifies guard clause behavior: an empty route should fail fast without
+    ///     issuing an HTTP request in <see cref="ApiClient.GetResultAsync{TResponse}"/>.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_FailFast_WhenRouteIsEmpty()
+    {
+        // Arrange
+        var sendCount = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            sendCount++;
+            return CreateJsonResponse(HttpStatusCode.OK, new { ok = true });
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, bool>>(string.Empty, CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("Route is required.");
+        sendCount.Should().Be(0);
+    }
+
+    /// <summary>
+    ///     Verifies guard clause behavior for command APIs: null request payload
+    ///     must return a failed result without issuing an HTTP request.
+    /// </summary>
+    [Fact]
+    public async Task PostResultAsync_Should_FailFast_WhenRequestPayloadIsNull()
+    {
+        // Arrange
+        var sendCount = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            sendCount++;
+            return CreateJsonResponse(HttpStatusCode.OK, new { ok = true });
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PostResultAsync<object, Dictionary<string, bool>>("/api/v1/test", request: null!, CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Be("Request payload is required.");
+        sendCount.Should().Be(0);
+    }
+
+    /// <summary>
+    ///     Verifies success-status responses with malformed JSON are converted to
+    ///     a deterministic failure result instead of throwing to callers.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_ReturnFailure_WhenSuccessPayloadJsonIsInvalid()
+    {
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{invalid-json", Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/invalid-json", CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().StartWith("Invalid JSON payload:");
+    }
+
     /// <summary>
     ///     Creates an <see cref="ApiClient"/> with deterministic test doubles.
     /// </summary>
