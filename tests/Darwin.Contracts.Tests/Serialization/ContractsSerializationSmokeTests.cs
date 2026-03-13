@@ -189,26 +189,20 @@ public sealed class ContractsSerializationSmokeTests
             [
                 new PromotionFeedItem
                 {
-                    Id = Guid.NewGuid(),
                     BusinessId = Guid.NewGuid(),
                     BusinessName = "Darwin Cafe",
                     Title = "Double points weekend",
-                    Body = "Collect 2x points on all orders.",
-                    Kind = "Campaign",
+                    Description = "Collect 2x points on all orders.",
+                    CtaKind = "OpenRewards",
                     Priority = 5,
-                    CtaText = "Open rewards",
-                    CtaRoute = "/rewards",
-                    CtaPayloadJson = "{\"businessId\":\"demo\"}",
-                    IsDismissible = true,
-                    HasBeenSeen = false,
-                    CreatedAtUtc = DateTime.UtcNow,
+                    CampaignId = Guid.NewGuid(),
                     CampaignState = PromotionCampaignState.Active,
-                    CampaignStartsAtUtc = DateTime.UtcNow.AddHours(-1),
-                    CampaignEndsAtUtc = DateTime.UtcNow.AddDays(1),
+                    StartsAtUtc = DateTime.UtcNow.AddHours(-1),
+                    EndsAtUtc = DateTime.UtcNow.AddDays(1),
                     EligibilityRules = [new PromotionEligibilityRule { Key = "JoinedBusiness", Value = "true" }]
                 }
             ],
-            Policy = new PromotionFeedPolicy
+            AppliedPolicy = new PromotionFeedPolicy
             {
                 EnableDeduplication = true,
                 MaxCards = 6,
@@ -217,15 +211,11 @@ public sealed class ContractsSerializationSmokeTests
             },
             Diagnostics = new PromotionFeedDiagnostics
             {
-                EvaluatedCards = 4,
-                ReturnedCards = 1,
-                SuppressedByDeduplication = 2,
-                SuppressedByWindow = 1,
-                SuppressedByFrequency = 0,
-                SuppressedByInactive = 0,
-                SuppressedByActivationWindow = 0,
-                SuppressedByCap = 0,
-                SuppressedByInvalidPayload = 0
+                InitialCandidates = 4,
+                SuppressedByFrequency = 1,
+                Deduplicated = 2,
+                TrimmedByCap = 0,
+                FinalCount = 1
             }
         };
 
@@ -238,10 +228,10 @@ public sealed class ContractsSerializationSmokeTests
         roundTrip!.Items.Should().HaveCount(1);
         roundTrip.Items[0].CampaignState.Should().Be(PromotionCampaignState.Active);
         roundTrip.Items[0].EligibilityRules.Should().HaveCount(1);
-        roundTrip.Policy.Should().NotBeNull();
-        roundTrip.Policy!.FrequencyWindowMinutes.Should().Be(120);
+        roundTrip.AppliedPolicy.Should().NotBeNull();
+        roundTrip.AppliedPolicy!.FrequencyWindowMinutes.Should().Be(120);
         roundTrip.Diagnostics.Should().NotBeNull();
-        roundTrip.Diagnostics!.SuppressedByDeduplication.Should().Be(2);
+        roundTrip.Diagnostics!.Deduplicated.Should().Be(2);
     }
 
     /// <summary>
@@ -258,20 +248,14 @@ public sealed class ContractsSerializationSmokeTests
             DeviceId = "android-device-1",
             PushToken = "fcm-token",
             AppVersion = "1.2.3",
-            OsVersion = "Android 15",
-            Locale = "de-DE",
-            Timezone = "Europe/Berlin",
-            NotificationsEnabled = true,
-            PushPermissionState = "Granted"
+            DeviceModel = "Pixel 9",
+            NotificationsEnabled = true
         };
 
         var response = new Darwin.Contracts.Notifications.RegisterPushDeviceResponse
         {
-            Registered = true,
             DeviceId = "android-device-1",
-            RegisteredAtUtc = DateTime.UtcNow,
-            LastSeenAtUtc = DateTime.UtcNow,
-            Message = "ok"
+            RegisteredAtUtc = DateTime.UtcNow
         };
 
         // Act
@@ -285,11 +269,194 @@ public sealed class ContractsSerializationSmokeTests
         requestRoundTrip.Should().NotBeNull();
         requestRoundTrip!.Platform.Should().Be(Darwin.Contracts.Notifications.MobileDevicePlatform.Android);
         requestRoundTrip.NotificationsEnabled.Should().BeTrue();
-        requestRoundTrip.PushPermissionState.Should().Be("Granted");
+        requestRoundTrip.DeviceModel.Should().Be("Pixel 9");
 
         responseRoundTrip.Should().NotBeNull();
-        responseRoundTrip!.Registered.Should().BeTrue();
-        responseRoundTrip.DeviceId.Should().Be("android-device-1");
+        responseRoundTrip!.DeviceId.Should().Be("android-device-1");
+    }
+
+    /// <summary>
+    ///     Verifies that scan-session contracts round-trip fields needed by both
+    ///     Consumer and Business apps during prepare/process/confirm flow.
+    /// </summary>
+    [Fact]
+    public void ScanSessionContracts_Should_RoundTripPrepareAndProcessPayloads()
+    {
+        // Arrange
+        var prepare = new PrepareScanSessionResponse
+        {
+            ScanSessionToken = "scan-token-123",
+            Mode = LoyaltyScanMode.Redemption,
+            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(4),
+            CurrentPointsBalance = 140,
+            SelectedRewards =
+            [
+                new LoyaltyRewardSummary
+                {
+                    LoyaltyRewardTierId = Guid.NewGuid(),
+                    BusinessId = Guid.NewGuid(),
+                    Name = "Free Coffee",
+                    RequiredPoints = 120,
+                    Description = "One small coffee.",
+                    IsActive = true,
+                    IsSelectable = true
+                }
+            ]
+        };
+
+        var process = new ProcessScanSessionForBusinessResponse
+        {
+            Mode = LoyaltyScanMode.Redemption,
+            BusinessId = Guid.NewGuid(),
+            AllowedActions = LoyaltyScanAllowedActions.CanConfirmRedemption,
+            AccountSummary = new BusinessLoyaltyAccountSummary
+            {
+                LoyaltyAccountId = Guid.NewGuid(),
+                PointsBalance = 140,
+                CustomerDisplayName = "Customer #1001"
+            },
+            SelectedRewards =
+            [
+                new LoyaltyRewardSummary
+                {
+                    LoyaltyRewardTierId = Guid.NewGuid(),
+                    BusinessId = Guid.NewGuid(),
+                    Name = "Free Coffee",
+                    RequiredPoints = 120,
+                    Description = "One small coffee.",
+                    IsActive = true,
+                    IsSelectable = true
+                }
+            ]
+        };
+
+        // Act
+        var prepareJson = JsonSerializer.Serialize(prepare, JsonOptions);
+        var processJson = JsonSerializer.Serialize(process, JsonOptions);
+
+        var prepareRoundTrip = JsonSerializer.Deserialize<PrepareScanSessionResponse>(prepareJson, JsonOptions);
+        var processRoundTrip = JsonSerializer.Deserialize<ProcessScanSessionForBusinessResponse>(processJson, JsonOptions);
+
+        // Assert
+        prepareRoundTrip.Should().NotBeNull();
+        prepareRoundTrip!.ScanSessionToken.Should().Be("scan-token-123");
+        prepareRoundTrip.Mode.Should().Be(LoyaltyScanMode.Redemption);
+        prepareRoundTrip.SelectedRewards.Should().HaveCount(1);
+
+        processRoundTrip.Should().NotBeNull();
+        processRoundTrip!.AllowedActions.Should().Be(LoyaltyScanAllowedActions.CanConfirmRedemption);
+        processRoundTrip.AccountSummary.Should().NotBeNull();
+        processRoundTrip.SelectedRewards.Should().HaveCount(1);
+    }
+
+    /// <summary>
+    ///     Verifies business-detail contracts preserve nested loyalty and account
+    ///     snapshots needed by mobile business-detail and rewards screens.
+    /// </summary>
+    [Fact]
+    public void BusinessDetailWithMyAccount_Should_RoundTripNestedLoyaltyPayload()
+    {
+        // Arrange
+        var model = new BusinessDetailWithMyAccount
+        {
+            Business = new BusinessDetail
+            {
+                Id = Guid.NewGuid(),
+                Name = "Darwin Market",
+                Category = "Grocery",
+                ShortDescription = "Healthy food",
+                Description = "Healthy food and daily essentials.",
+                City = "Berlin",
+                Coordinate = new GeoCoordinateModel { Latitude = 52.5, Longitude = 13.4 },
+                DefaultCurrency = "EUR",
+                DefaultCulture = "de-DE"
+            },
+            HasAccount = true,
+            MyAccount = new LoyaltyAccountSummary
+            {
+                LoyaltyAccountId = Guid.NewGuid(),
+                BusinessId = Guid.NewGuid(),
+                BusinessName = "Darwin Market",
+                PointsBalance = 75,
+                LifetimePoints = 300,
+                LastAccrualAtUtc = DateTime.UtcNow.AddDays(-2),
+                NextRewardTitle = "Free delivery voucher",
+                Status = "Active"
+            }
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(model, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<BusinessDetailWithMyAccount>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.Business.Should().NotBeNull();
+        roundTrip.Business!.Name.Should().Be("Darwin Market");
+        roundTrip.MyAccount.Should().NotBeNull();
+        roundTrip.MyAccount!.PointsBalance.Should().Be(75);
+        roundTrip.HasAccount.Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Verifies that identity request contracts round-trip mobile-auth payloads
+    ///     used in register, login, refresh and password-reset flows.
+    /// </summary>
+    [Fact]
+    public void IdentityRequestContracts_Should_RoundTripCoreMobileAuthPayloads()
+    {
+        // Arrange
+        var register = new RegisterRequest
+        {
+            FirstName = "Test",
+            LastName = "User",
+            Email = "register@example.test",
+            Password = "P@ssw0rd!Aa1"
+        };
+
+        var login = new PasswordLoginRequest
+        {
+            Email = "register@example.test",
+            Password = "P@ssw0rd!Aa1",
+            DeviceId = "device-1"
+        };
+
+        var refresh = new RefreshTokenRequest
+        {
+            RefreshToken = "refresh-token",
+            DeviceId = "device-1"
+        };
+
+        var requestReset = new RequestPasswordResetRequest
+        {
+            Email = "register@example.test"
+        };
+
+        var reset = new ResetPasswordRequest
+        {
+            Email = "register@example.test",
+            Token = "reset-token",
+            NewPassword = "N3wP@ssw0rd!Bb2"
+        };
+
+        // Act
+        var registerRoundTrip = JsonSerializer.Deserialize<RegisterRequest>(JsonSerializer.Serialize(register, JsonOptions), JsonOptions);
+        var loginRoundTrip = JsonSerializer.Deserialize<PasswordLoginRequest>(JsonSerializer.Serialize(login, JsonOptions), JsonOptions);
+        var refreshRoundTrip = JsonSerializer.Deserialize<RefreshTokenRequest>(JsonSerializer.Serialize(refresh, JsonOptions), JsonOptions);
+        var requestResetRoundTrip = JsonSerializer.Deserialize<RequestPasswordResetRequest>(JsonSerializer.Serialize(requestReset, JsonOptions), JsonOptions);
+        var resetRoundTrip = JsonSerializer.Deserialize<ResetPasswordRequest>(JsonSerializer.Serialize(reset, JsonOptions), JsonOptions);
+
+        // Assert
+        registerRoundTrip.Should().NotBeNull();
+        registerRoundTrip!.Email.Should().Be("register@example.test");
+        loginRoundTrip.Should().NotBeNull();
+        loginRoundTrip!.DeviceId.Should().Be("device-1");
+        refreshRoundTrip.Should().NotBeNull();
+        refreshRoundTrip!.RefreshToken.Should().Be("refresh-token");
+        requestResetRoundTrip.Should().NotBeNull();
+        requestResetRoundTrip!.Email.Should().Be("register@example.test");
+        resetRoundTrip.Should().NotBeNull();
+        resetRoundTrip!.Token.Should().Be("reset-token");
     }
 
 }
