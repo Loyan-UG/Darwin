@@ -561,7 +561,10 @@ Keep this list as the execution tracker for the testing workstream.
 
 - Attempted to execute the three prioritized integration matrices directly from CLI:
   - `dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj --filter "FullyQualifiedName~AuthIdentityEndpointAuthorizedMatrixTests|FullyQualifiedName~ProfileEndpointAuthorizedConcurrencyTests|FullyQualifiedName~LoyaltyEndpointAuthorizedE2eTests"`
-- Result: execution is currently blocked in this environment because `dotnet` CLI is not installed (`bash: command not found: dotnet`).
+- Initial result: execution blocked because `dotnet` CLI was unavailable (`bash: command not found: dotnet`).
+- Follow-up remediation attempts in this environment:
+  - Script install via `curl https://dotnet.microsoft.com/.../dotnet-install.sh` (blocked by outbound proxy HTTP 403).
+  - Package install via `apt-get update && apt-get install dotnet-sdk-10.0` (blocked by repository/proxy HTTP 403).
 - Tracking decision: keep backlog items in **In Progress (Implemented, pending CLI/CI run)** state until local or CI evidence is attached.
 
 Backlog update rule:
