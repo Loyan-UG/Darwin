@@ -108,4 +108,60 @@ public sealed class LoyaltyContractsMapperTests
             AltitudeMeters = 112.3
         });
     }
+
+    /// <summary>
+    ///     Ensures business scan-session account summary mapping keeps points and
+    ///     customer display alias fields required by the Business app scanner flow.
+    /// </summary>
+    [Fact]
+    public void ToContractBusinessAccountSummary_Should_MapPointsAndDisplayName()
+    {
+        // Arrange
+        var dto = new ScanSessionBusinessViewDto
+        {
+            LoyaltyAccountId = Guid.NewGuid(),
+            CurrentPointsBalance = 155,
+            CustomerDisplayName = "Customer #A12"
+        };
+
+        // Act
+        var contract = LoyaltyContractsMapper.ToContractBusinessAccountSummary(dto);
+
+        // Assert
+        contract.LoyaltyAccountId.Should().Be(dto.LoyaltyAccountId);
+        contract.PointsBalance.Should().Be(155);
+        contract.CustomerDisplayName.Should().Be("Customer #A12");
+    }
+
+    /// <summary>
+    ///     Ensures reward summary mapping preserves identifiers and selection flags
+    ///     that drive redemption eligibility in mobile clients.
+    /// </summary>
+    [Fact]
+    public void ToContract_RewardSummary_Should_MapIdentifiersAndFlags()
+    {
+        // Arrange
+        var dto = new LoyaltyRewardSummaryDto
+        {
+            LoyaltyRewardTierId = Guid.NewGuid(),
+            BusinessId = Guid.NewGuid(),
+            Name = "Free Espresso",
+            Description = "Single shot",
+            RequiredPoints = 90,
+            IsActive = true,
+            IsSelectable = false
+        };
+
+        // Act
+        var contract = LoyaltyContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.LoyaltyRewardTierId.Should().Be(dto.LoyaltyRewardTierId);
+        contract.BusinessId.Should().Be(dto.BusinessId);
+        contract.Name.Should().Be("Free Espresso");
+        contract.RequiredPoints.Should().Be(90);
+        contract.IsActive.Should().BeTrue();
+        contract.IsSelectable.Should().BeFalse();
+    }
+
 }
