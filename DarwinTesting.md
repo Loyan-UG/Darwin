@@ -565,6 +565,7 @@ Keep this list as the execution tracker for the testing workstream.
 - [x] Loyalty E2E prepare/process/confirm tests authored (`LoyaltyEndpointAuthorizedE2eTests`).
 - [x] Contracts compatibility authoring expanded for mobile-critical DTOs (identity/profile/loyalty/promotions/push/business payloads, campaign/reward-configuration management shapes, and WebApi mapper stability scenarios including enum/ledger/business-list mappings).
 - [x] Mobile.Shared reliability tests authored (`ApiClientReliabilityTests`) including guard-clause and invalid-JSON normalization scenarios.
+- [x] Infrastructure design-time DbContext tests authored (`DesignTimeDbContextFactoryTests`) including no-config fallback path coverage.
 
 
 ### Latest local verification snapshot
