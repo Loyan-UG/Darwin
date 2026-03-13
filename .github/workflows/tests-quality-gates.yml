@@ -1,0 +1,207 @@
+name: tests-quality-gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+      - work
+
+jobs:
+  unit-tests:
+    name: Unit tests + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore unit test project
+        run: dotnet restore tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj
+      - name: Execute unit tests with coverage
+        run: >
+          dotnet test tests/Darwin.Tests.Unit/Darwin.Tests.Unit.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/unit
+      - name: Upload unit test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: TestResults/unit
+
+  contracts-tests:
+    name: Contracts tests + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore contracts test project
+        run: dotnet restore tests/Darwin.Contracts.Tests/Darwin.Contracts.Tests.csproj
+      - name: Execute contracts tests with coverage
+        run: >
+          dotnet test tests/Darwin.Contracts.Tests/Darwin.Contracts.Tests.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/contracts
+      - name: Upload contracts test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts-test-results
+          path: TestResults/contracts
+
+  infrastructure-tests:
+    name: Infrastructure tests + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore infrastructure test project
+        run: dotnet restore tests/Darwin.Infrastructure.Tests/Darwin.Infrastructure.Tests.csproj
+      - name: Execute infrastructure tests with coverage
+        run: >
+          dotnet test tests/Darwin.Infrastructure.Tests/Darwin.Infrastructure.Tests.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/infrastructure
+      - name: Upload infrastructure test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-test-results
+          path: TestResults/infrastructure
+
+  webapi-tests:
+    name: WebApi tests + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore WebApi test project
+        run: dotnet restore tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj
+      - name: Execute WebApi tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webapi
+      - name: Upload WebApi test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapi-test-results
+          path: TestResults/webapi
+
+  integration-tests:
+    name: Integration tests + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore integration test project
+        run: dotnet restore tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj
+      - name: Execute integration tests with coverage
+        run: >
+          dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/integration
+      - name: Upload integration test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: TestResults/integration
+
+  mobile-shared-tests:
+    name: Mobile.Shared tests + coverage
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore mobile shared test project
+        run: dotnet restore tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj
+      - name: Execute mobile shared tests with coverage
+        run: >
+          dotnet test tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/mobile-shared
+      - name: Upload mobile shared test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-shared-test-results
+          path: TestResults/mobile-shared
+
+  coverage-gate:
+    name: Coverage threshold gate
+    needs:
+      - unit-tests
+      - contracts-tests
+      - infrastructure-tests
+      - webapi-tests
+      - integration-tests
+      - mobile-shared-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download unit artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-results
+          path: TestResults/unit
+      - name: Download contracts artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: contracts-test-results
+          path: TestResults/contracts
+      - name: Download infrastructure artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: infrastructure-test-results
+          path: TestResults/infrastructure
+      - name: Download WebApi artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webapi-test-results
+          path: TestResults/webapi
+      - name: Download integration artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: integration-test-results
+          path: TestResults/integration
+      - name: Download mobile shared artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mobile-shared-test-results
+          path: TestResults/mobile-shared
+      - name: Enforce coverage thresholds
+        run: >
+          python scripts/ci/verify_coverage.py
+          --unit-threshold 35
+          --contracts-threshold 20
+          --infrastructure-threshold 20
+          --webapi-threshold 20
+          --integration-threshold 20
+          --mobile-shared-threshold 20
