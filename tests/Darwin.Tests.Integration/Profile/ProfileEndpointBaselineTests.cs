@@ -1,9 +1,11 @@
 using Darwin.Contracts.Profile;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
+
+using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Profile;
 
@@ -11,17 +13,15 @@ namespace Darwin.Tests.Integration.Profile;
 ///     Provides baseline integration tests for profile endpoints that are expected
 ///     to be protected by authentication in all environments.
 /// </summary>
-public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ProfileEndpointBaselineTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Initializes the test suite with a testing-environment host instance.
     /// </summary>
     /// <param name="factory">Shared WebApplicationFactory instance for host creation.</param>
     public ProfileEndpointBaselineTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
     }
 
     /// <summary>
@@ -76,9 +76,6 @@ public sealed class ProfileEndpointBaselineTests : IClassFixture<WebApplicationF
     /// <returns>Configured HttpClient instance.</returns>
     private HttpClient CreateHttpsClient()
     {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost")
-        });
+        return CreateHttpsClient();
     }
 }
