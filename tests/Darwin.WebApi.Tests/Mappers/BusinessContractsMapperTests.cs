@@ -113,4 +113,58 @@ public sealed class BusinessContractsMapperTests
             "https://cdn.example/gallery-a.jpg",
             "https://cdn.example/gallery-b.jpg");
     }
+
+    /// <summary>
+    ///     Ensures combined business-detail/account mapping preserves HasAccount flag
+    ///     and maps nested loyalty account snapshot using contract field names.
+    /// </summary>
+    [Fact]
+    public void ToContract_BusinessDetailWithMyAccount_Should_MapNestedAccountSnapshot()
+    {
+        // Arrange
+        var dto = new BusinessPublicDetailWithMyAccountDto
+        {
+            Business = new BusinessPublicDetailDto
+            {
+                Id = Guid.NewGuid(),
+                Name = "Darwin Market",
+                Category = BusinessCategoryKind.Grocery,
+                DefaultCurrency = "EUR",
+                DefaultCulture = "de-DE",
+                Locations =
+                [
+                    new BusinessPublicLocationDto
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Primary",
+                        IsPrimary = true,
+                        City = "Berlin",
+                        Coordinate = new GeoCoordinateDto { Latitude = 52.5, Longitude = 13.4 }
+                    }
+                ]
+            },
+            HasAccount = true,
+            MyAccount = new LoyaltyAccountSummaryDto
+            {
+                Id = Guid.NewGuid(),
+                BusinessId = Guid.NewGuid(),
+                BusinessName = "Darwin Market",
+                PointsBalance = 88,
+                LifetimePoints = 220,
+                Status = Darwin.Domain.Enums.LoyaltyAccountStatus.Active,
+                LastAccrualAtUtc = DateTime.UtcNow.AddHours(-6)
+            }
+        };
+
+        // Act
+        var contract = BusinessContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.HasAccount.Should().BeTrue();
+        contract.Business.Name.Should().Be("Darwin Market");
+        contract.MyAccount.Should().NotBeNull();
+        contract.MyAccount!.PointsBalance.Should().Be(88);
+        contract.MyAccount.BusinessName.Should().Be("Darwin Market");
+    }
+
 }
