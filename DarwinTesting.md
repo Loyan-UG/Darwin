@@ -570,6 +570,7 @@ Keep this list as the execution tracker for the testing workstream.
 Temporary policy note:
 
 - Current phase intentionally uses a **non-blocking PR test gate** to avoid merge deadlocks while unstable suites are being stabilized.
+- CI now includes an explicit `soft-gate-status` job that emits a warning annotation when soft-gate mode is active for PR runs, so non-blocking behavior is always visible in build logs.
 - This is temporary and must be reverted to hard-gate mode once the prioritized matrix suites are consistently green in CI.
 
 ### Soft-gate rollback checklist (must be completed before re-enabling hard-gate)
