@@ -26,6 +26,18 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
     }
 
     /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    /// <summary>
     ///     Verifies anti-enumeration behavior for password reset request endpoint.
     ///     The endpoint must return 200/OK even when the email is not found or
     ///     internal processing fails, to avoid leaking user existence signals.

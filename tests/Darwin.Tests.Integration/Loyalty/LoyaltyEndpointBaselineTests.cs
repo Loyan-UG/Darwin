@@ -26,6 +26,18 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
     }
 
     /// <summary>
+    ///     Recreates and seeds the test database before each test class to guarantee
+    ///     deterministic state regardless of execution order across integration suites.
+    /// </summary>
+    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
+
+    /// <summary>
+    ///     No asynchronous class-level cleanup is required because each test class
+    ///     uses isolated clients and reset logic runs during initialization.
+    /// </summary>
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    /// <summary>
     ///     Verifies that listing the current user's loyalty businesses requires an
     ///     authenticated caller and rejects anonymous requests.
     /// </summary>
