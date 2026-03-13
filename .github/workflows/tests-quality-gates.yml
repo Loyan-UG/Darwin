@@ -38,6 +38,35 @@ jobs:
           name: unit-test-results
           path: TestResults/unit
 
+  webapi-tests:
+    name: WebApi tests + coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore WebApi test project
+        run: dotnet restore tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj
+
+      - name: Execute WebApi tests with coverage
+        run: >
+          dotnet test tests/Darwin.WebApi.Tests/Darwin.WebApi.Tests.csproj
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/webapi
+
+      - name: Upload WebApi test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapi-test-results
+          path: TestResults/webapi
+
   integration-tests:
     name: Integration tests + coverage
     runs-on: ubuntu-latest
@@ -100,6 +129,7 @@ jobs:
     name: Coverage threshold gate
     needs:
       - unit-tests
+      - webapi-tests
       - integration-tests
       - mobile-shared-tests
     runs-on: ubuntu-latest
@@ -113,6 +143,12 @@ jobs:
         with:
           name: unit-test-results
           path: TestResults/unit
+
+      - name: Download WebApi artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webapi-test-results
+          path: TestResults/webapi
 
       - name: Download integration artifacts
         uses: actions/download-artifact@v4
@@ -130,5 +166,6 @@ jobs:
         run: >
           python scripts/ci/verify_coverage.py
           --unit-threshold 35
+          --webapi-threshold 20
           --integration-threshold 20
           --mobile-shared-threshold 20

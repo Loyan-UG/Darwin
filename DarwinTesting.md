@@ -536,7 +536,7 @@ This status is derived from the current repository state and must be refreshed w
 - [ ] Add integration tests for identity flows (login/refresh/change-password/request-reset/reset-password). Baseline and core negative-path coverage are implemented; authorized happy-path matrix is implemented in code and pending CLI/CI execution evidence.
 - [ ] Add profile API integration tests including optimistic concurrency (`Id` + `RowVersion`). Baseline auth-guard coverage and authorized success/stale-rowversion matrix are implemented in code; pending CLI/CI execution evidence.
 - [ ] Add loyalty scan flow integration tests (prepare/process/confirm). Baseline auth-guard coverage and authorized end-to-end prepare/process/confirm scenarios are implemented in code; pending CLI/CI execution evidence.
-- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented in code; pending CLI/CI execution evidence and further DTO-family expansion.
+- [ ] Add contract serialization compatibility tests for mobile-critical DTOs. Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented in code; mapper stability tests for `BusinessContractsMapper`/`LoyaltyContractsMapper` are also implemented in `Darwin.WebApi.Tests`, pending CLI/CI execution evidence and further DTO-family expansion.
 - [ ] Add `Darwin.Mobile.Shared` reliability tests (retry/bearer/no-content normalization). Implemented in code (`ApiClientReliabilityTests`), pending CLI/CI execution evidence.
 - [ ] Add CI lane split and coverage publication for unit/integration. Implemented in code via GitHub Actions quality-gates workflow (pending CI execution evidence).
 
@@ -552,9 +552,9 @@ Keep this list as the execution tracker for the testing workstream.
 | 2 | Identity flow test pack | In Progress (Implemented, pending CLI/CI run) | Baseline + core negative tests and authorized happy-path matrix are implemented (`register/login`, `refresh`, `password/change`, `logout`, `logout-all`); finalize after passing CLI/CI evidence. |
 | 3 | Profile concurrency test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
 | 4 | Loyalty scan journey test pack | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
-| 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
+| 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; mapper stability tests in `Darwin.WebApi.Tests` are added; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
 | 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
-| 7 | CI quality gates | In Progress (Implemented, pending CI run) | Workflow includes separate unit/integration/mobile-shared jobs, artifact publication, and coverage threshold gate; finalize after successful CI evidence. |
+| 7 | CI quality gates | In Progress (Implemented, pending CI run) | Workflow includes separate unit/webapi/integration/mobile-shared jobs, artifact publication, and coverage threshold gate; finalize after successful CI evidence. |
 
 Backlog update rule:
 
@@ -582,17 +582,14 @@ Backlog update rule:
   - `tests/Darwin.Tests.Integration/TestInfrastructure/DeterministicIntegrationTestBase.cs` (shared `IAsyncLifetime` + host/client lifecycle to remove per-suite duplication)
 - Unit contract compatibility suite:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
+- WebApi mapper stability suite:
+  - `tests/Darwin.WebApi.Tests/Mappers/BusinessContractsMapperTests.cs`
+  - `tests/Darwin.WebApi.Tests/Mappers/LoyaltyContractsMapperTests.cs`
 - Mobile shared reliability suite:
   - `tests/Darwin.Mobile.Shared.Tests/Api/ApiClientReliabilityTests.cs`
 - CI quality gate assets:
   - `.github/workflows/tests-quality-gates.yml`
   - `scripts/ci/verify_coverage.py`
-
-### Promotions policy/diagnostics test backlog (tracked here by design)
-
-- [ ] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
-- [ ] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream.
-- [ ] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows.
 
 ---
 
@@ -616,7 +613,7 @@ Backlog update rule:
 Use this list as the immediate continuation plan:
 
 1. **CI quality gates activation — current top priority**
-   - Run the new workflow and capture green evidence for unit/integration/mobile-shared lanes.
+   - Run the new workflow and capture green evidence for unit/webapi/integration/mobile-shared lanes.
    - Tune coverage thresholds only if initial CI evidence shows justified baseline mismatch.
 2. **Test infrastructure hardening**
    - Validate class-level reset overhead in CI and adjust isolation strategy if run time regresses.
@@ -632,7 +629,6 @@ Important context to carry into the next chat:
 
 ## Closing notes & recommended next steps
 
-1. Extend `Darwin.Tests.Common` with a dedicated `WebApiTestFactory` wrapper that composes `IntegrationTestHostFactory` + `IntegrationTestDatabaseReset` for reusable class-level lifecycle setup.
-2. Execute the newly implemented identity/profile/loyalty integration suites in CI and persist passing evidence before marking packs as completed.
-3. Add mapping unit tests (BusinessContractsMapper & LoyaltyContractsMapper) immediately — mapping mismatches are frequent causes of runtime errors.
-4. Add contract serialization tests to protect mobile clients from accidental breaking changes.
+1. Execute the newly implemented identity/profile/loyalty/webapi/mobile integration and unit suites in CI and persist passing evidence before marking packs as completed.
+2. Keep mapper and contract compatibility tests expanding with each new mobile-facing DTO/change.
+3. Tune lane coverage thresholds based on first green baseline only when justified by CI evidence.

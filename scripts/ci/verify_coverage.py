@@ -8,7 +8,6 @@ import glob
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -20,6 +19,7 @@ class LaneCoverage:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate lane coverage thresholds from Cobertura reports.")
     parser.add_argument("--unit-threshold", type=float, required=True)
+    parser.add_argument("--webapi-threshold", type=float, required=True)
     parser.add_argument("--integration-threshold", type=float, required=True)
     parser.add_argument("--mobile-shared-threshold", type=float, required=True)
     return parser.parse_args()
@@ -60,6 +60,7 @@ def main() -> int:
 
     lanes = [
         ("unit", "TestResults/unit", args.unit_threshold),
+        ("webapi", "TestResults/webapi", args.webapi_threshold),
         ("integration", "TestResults/integration", args.integration_threshold),
         ("mobile-shared", "TestResults/mobile-shared", args.mobile_shared_threshold),
     ]
