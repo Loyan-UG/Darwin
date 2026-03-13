@@ -164,4 +164,96 @@ public sealed class LoyaltyContractsMapperTests
         contract.IsSelectable.Should().BeFalse();
     }
 
+
+    /// <summary>
+    ///     Ensures scan-mode conversion is symmetric for known values and uses
+    ///     deterministic accrual fallback for unknown enum inputs.
+    /// </summary>
+    [Fact]
+    public void ScanModeMapping_Should_BeSymmetric_AndFallbackToAccrualForUnknownValues()
+    {
+        // Arrange
+        const Darwin.Contracts.Loyalty.LoyaltyScanMode contractAccrual = Darwin.Contracts.Loyalty.LoyaltyScanMode.Accrual;
+        const Darwin.Contracts.Loyalty.LoyaltyScanMode contractRedemption = Darwin.Contracts.Loyalty.LoyaltyScanMode.Redemption;
+
+        // Act
+        var domainAccrual = LoyaltyContractsMapper.ToDomain(contractAccrual);
+        var domainRedemption = LoyaltyContractsMapper.ToDomain(contractRedemption);
+        var contractFromDomainAccrual = LoyaltyContractsMapper.ToContract(domainAccrual);
+        var contractFromDomainRedemption = LoyaltyContractsMapper.ToContract(domainRedemption);
+        var fallbackFromUnknownContract = LoyaltyContractsMapper.ToDomain((Darwin.Contracts.Loyalty.LoyaltyScanMode)99);
+        var fallbackFromUnknownDomain = LoyaltyContractsMapper.ToContract((Darwin.Domain.Enums.LoyaltyScanMode)99);
+
+        // Assert
+        domainAccrual.Should().Be(Darwin.Domain.Enums.LoyaltyScanMode.Accrual);
+        domainRedemption.Should().Be(Darwin.Domain.Enums.LoyaltyScanMode.Redemption);
+        contractFromDomainAccrual.Should().Be(Darwin.Contracts.Loyalty.LoyaltyScanMode.Accrual);
+        contractFromDomainRedemption.Should().Be(Darwin.Contracts.Loyalty.LoyaltyScanMode.Redemption);
+        fallbackFromUnknownContract.Should().Be(Darwin.Domain.Enums.LoyaltyScanMode.Accrual);
+        fallbackFromUnknownDomain.Should().Be(Darwin.Contracts.Loyalty.LoyaltyScanMode.Accrual);
+    }
+
+    /// <summary>
+    ///     Ensures loyalty points transaction mapping keeps date/type/notes values
+    ///     stable for mobile history and ledger rendering.
+    /// </summary>
+    [Fact]
+    public void ToContract_PointsTransaction_Should_MapLedgerFields()
+    {
+        // Arrange
+        var occurredAt = DateTime.UtcNow.AddHours(-2);
+        var dto = new LoyaltyPointsTransactionDto
+        {
+            CreatedAtUtc = occurredAt,
+            Type = Darwin.Domain.Enums.LoyaltyPointsTransactionType.Accrual,
+            PointsDelta = 15,
+            Reference = "txn-501",
+            Notes = "In-store purchase"
+        };
+
+        // Act
+        var contract = LoyaltyContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.OccurredAtUtc.Should().Be(occurredAt);
+        contract.Type.Should().Be(Darwin.Domain.Enums.LoyaltyPointsTransactionType.Accrual.ToString());
+        contract.Delta.Should().Be(15);
+        contract.Reference.Should().Be("txn-501");
+        contract.Notes.Should().Be("In-store purchase");
+    }
+
+    /// <summary>
+    ///     Ensures "My businesses" list mapping keeps geo/location and account
+    ///     snapshot values stable for consumer discovery shortcuts.
+    /// </summary>
+    [Fact]
+    public void ToContract_MyLoyaltyBusinessSummary_Should_MapGeoAndAccountFields()
+    {
+        // Arrange
+        var dto = new MyLoyaltyBusinessListItemDto
+        {
+            BusinessId = Guid.NewGuid(),
+            BusinessName = "Darwin Bakery",
+            Category = Darwin.Domain.Enums.BusinessCategoryKind.Bakery,
+            City = "Cologne",
+            Coordinate = new GeoCoordinateDto { Latitude = 50.9375, Longitude = 6.9603, AltitudeMeters = 53.2 },
+            PrimaryImageUrl = "https://cdn.example/bakery.png",
+            PointsBalance = 41,
+            LifetimePoints = 320,
+            AccountStatus = Darwin.Domain.Enums.LoyaltyAccountStatus.Active,
+            LastAccrualAtUtc = DateTime.UtcNow.AddDays(-3)
+        };
+
+        // Act
+        var contract = LoyaltyContractsMapper.ToContract(dto);
+
+        // Assert
+        contract.BusinessName.Should().Be("Darwin Bakery");
+        contract.Category.Should().Be(Darwin.Domain.Enums.BusinessCategoryKind.Bakery.ToString());
+        contract.Location.Should().NotBeNull();
+        contract.Location!.Latitude.Should().Be(50.9375);
+        contract.PointsBalance.Should().Be(41);
+        contract.Status.Should().Be(Darwin.Domain.Enums.LoyaltyAccountStatus.Active.ToString());
+    }
+
 }
