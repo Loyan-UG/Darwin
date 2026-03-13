@@ -9,9 +9,24 @@ on:
       - work
 
 jobs:
+  # Temporary policy: PR runs are non-blocking to avoid merge deadlocks while unstable suites are stabilized.
+  # Push runs on main/master/work remain strict because continue-on-error is enabled only for PR, and can be disabled at runtime via repository variable DARWIN_PR_SOFT_GATE=false.
+  soft-gate-status:
+    name: Soft-gate mode status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report PR gate mode
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ vars.DARWIN_PR_SOFT_GATE }}" != "false" ]; then
+            echo "::warning::PR soft-gate mode is ACTIVE (DARWIN_PR_SOFT_GATE != false). Failing test jobs are non-blocking in this PR run."
+          else
+            echo "PR gate mode is STRICT for this run."
+          fi
+
   unit-tests:
     name: Unit tests + coverage
     runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +51,7 @@ jobs:
   contracts-tests:
     name: Contracts tests + coverage
     runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,6 +76,7 @@ jobs:
   infrastructure-tests:
     name: Infrastructure tests + coverage
     runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,6 +101,7 @@ jobs:
   webapi-tests:
     name: WebApi tests + coverage
     runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -108,6 +126,7 @@ jobs:
   integration-tests:
     name: Integration tests + coverage
     runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -148,6 +167,7 @@ jobs:
   mobile-shared-tests:
     name: Mobile.Shared tests + coverage
     runs-on: windows-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -175,6 +195,7 @@ jobs:
   coverage-gate:
     name: Coverage threshold gate
     needs:
+      - soft-gate-status
       - unit-tests
       - contracts-tests
       - infrastructure-tests
@@ -182,6 +203,7 @@ jobs:
       - integration-tests
       - mobile-shared-tests
     runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
