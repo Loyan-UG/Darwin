@@ -554,7 +554,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 4 | **P3** Loyalty scan journey test pack (prepare/process/confirm) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
 | 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; additional contract smoke tests in `Darwin.Contracts.Tests` and mapper stability tests in `Darwin.WebApi.Tests` are added; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
 | 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
-| 7 | CI quality gates | In Progress (Temporary PR soft-gate active) | Workflow keeps all test lanes running, but PR jobs are temporarily `continue-on-error` so failing suites do not block merge. Soft-gate can be disabled immediately by setting repository variable `DARWIN_PR_SOFT_GATE=false`; restore hard-gate mode in code after completing the rollback checklist and attaching CI evidence. |
+| 7 | CI quality gates | In Progress (Temporary PR soft-gate active) | Workflow keeps all test lanes running, but PR jobs are temporarily `continue-on-error` so failing suites do not block merge. Soft-gate can be disabled immediately by setting repository variable `DARWIN_PR_SOFT_GATE=false`, or per manual run via workflow input `force_strict=true`; restore hard-gate mode in code after completing the rollback checklist and attaching CI evidence. |
 
 
 ### Latest local verification snapshot
@@ -570,14 +570,14 @@ Keep this list as the execution tracker for the testing workstream.
 Temporary policy note:
 
 - Current phase intentionally uses a **non-blocking PR test gate** to avoid merge deadlocks while unstable suites are being stabilized.
-- CI now includes an explicit `soft-gate-status` job that emits a warning annotation when soft-gate mode is active for PR runs, and also writes run-level summary details (`event`, `mode`, and switch variable) to `GITHUB_STEP_SUMMARY`.
+- CI now includes an explicit `soft-gate-status` job that emits a warning annotation when soft-gate mode is active for PR runs, and also writes run-level summary details (`event`, `mode`, switch variable, and manual `force_strict` input) to `GITHUB_STEP_SUMMARY`.
 - This is temporary and must be reverted to hard-gate mode once the prioritized matrix suites are consistently green in CI.
 
 ### Soft-gate rollback checklist (must be completed before re-enabling hard-gate)
 
 - [ ] Collect at least 5 consecutive green PR runs for P1/P2/P3 matrix suites in CI artifacts.
 - [ ] Confirm flakiness root-cause notes are documented for previously failing suites.
-- [ ] Set repository variable `DARWIN_PR_SOFT_GATE=false` and verify one PR run is strict (no soft-gate behavior).
+- [ ] Set repository variable `DARWIN_PR_SOFT_GATE=false` (or run `workflow_dispatch` with `force_strict=true`) and verify one PR run is strict (no soft-gate behavior).
 - [ ] Remove PR `continue-on-error` policy from `tests-quality-gates.yml` (code-level cleanup after successful strict verification).
 - [ ] Re-run one full strict CI cycle on PR and one strict push cycle on `work` branch.
 - [ ] Update this document status from **Temporary PR soft-gate active** to **Hard-gate restored** with links to CI evidence.

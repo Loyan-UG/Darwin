@@ -7,6 +7,16 @@ on:
       - master
       - main
       - work
+  workflow_dispatch:
+    inputs:
+      force_strict:
+        description: "Force strict mode (disable PR soft-gate for this run)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   # Temporary policy: PR runs are non-blocking to avoid merge deadlocks while unstable suites are stabilized.
@@ -20,9 +30,9 @@ jobs:
       - name: Detect gate mode
         id: mode
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ vars.DARWIN_PR_SOFT_GATE }}" != "false" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ vars.DARWIN_PR_SOFT_GATE }}" != "false" ] && [ "${{ github.event.inputs.force_strict }}" != "true" ]; then
             echo "mode=soft" >> "$GITHUB_OUTPUT"
-            echo "::warning::PR soft-gate mode is ACTIVE (DARWIN_PR_SOFT_GATE != false). Failing test jobs are non-blocking in this PR run."
+            echo "::warning::PR soft-gate mode is ACTIVE (DARWIN_PR_SOFT_GATE != false and force_strict != true). Failing test jobs are non-blocking in this PR run."
           else
             echo "mode=strict" >> "$GITHUB_OUTPUT"
             echo "PR gate mode is STRICT for this run."
@@ -34,11 +44,12 @@ jobs:
           echo "- Event: \`${{ github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Mode: \`${{ steps.mode.outputs.mode }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Switch variable: \`DARWIN_PR_SOFT_GATE\` (set to \`false\` to force strict PR runs)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Manual override input: \`force_strict\` (set to \`true\` in workflow_dispatch to force strict mode)" >> "$GITHUB_STEP_SUMMARY"
 
   unit-tests:
     name: Unit tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,7 +74,7 @@ jobs:
   contracts-tests:
     name: Contracts tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,7 +99,7 @@ jobs:
   infrastructure-tests:
     name: Infrastructure tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -113,7 +124,7 @@ jobs:
   webapi-tests:
     name: WebApi tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -138,7 +149,7 @@ jobs:
   integration-tests:
     name: Integration tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -179,7 +190,7 @@ jobs:
   mobile-shared-tests:
     name: Mobile.Shared tests + coverage
     runs-on: windows-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -215,7 +226,7 @@ jobs:
       - integration-tests
       - mobile-shared-tests
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' && github.event.inputs.force_strict != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
