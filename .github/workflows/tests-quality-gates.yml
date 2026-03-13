@@ -10,11 +10,11 @@ on:
 
 jobs:
   # Temporary policy: PR runs are non-blocking to avoid merge deadlocks while unstable suites are stabilized.
-  # Push runs on main/master/work remain strict because continue-on-error is enabled only for pull_request events.
+  # Push runs on main/master/work remain strict because continue-on-error is enabled only for PR, and can be disabled at runtime via repository variable DARWIN_PR_SOFT_GATE=false.
   unit-tests:
     name: Unit tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
   contracts-tests:
     name: Contracts tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,7 +64,7 @@ jobs:
   infrastructure-tests:
     name: Infrastructure tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,7 +89,7 @@ jobs:
   webapi-tests:
     name: WebApi tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -114,7 +114,7 @@ jobs:
   integration-tests:
     name: Integration tests + coverage
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -155,7 +155,7 @@ jobs:
   mobile-shared-tests:
     name: Mobile.Shared tests + coverage
     runs-on: windows-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -190,7 +190,7 @@ jobs:
       - integration-tests
       - mobile-shared-tests
     runs-on: ubuntu-latest
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: ${{ github.event_name == 'pull_request' && vars.DARWIN_PR_SOFT_GATE != 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
