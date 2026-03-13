@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
 
-using Darwin.Tests.Common.TestInfrastructure;
 using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Profile;
@@ -23,18 +22,6 @@ public sealed class ProfileEndpointBaselineTests : DeterministicIntegrationTestB
         : base(factory)
     {
     }
-
-    /// <summary>
-    ///     Recreates and seeds the test database before each test class to guarantee
-    ///     deterministic state regardless of execution order across integration suites.
-    /// </summary>
-    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
-
-    /// <summary>
-    ///     No asynchronous class-level cleanup is required because each test class
-    ///     uses isolated clients and reset logic runs during initialization.
-    /// </summary>
-    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Verifies that anonymous calls to the profile read endpoint are rejected.
@@ -79,15 +66,5 @@ public sealed class ProfileEndpointBaselineTests : DeterministicIntegrationTestB
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    /// <summary>
-    ///     Creates an HTTPS client to keep pipeline behavior deterministic and to
-    ///     avoid redirects that may change expected status assertions.
-    /// </summary>
-    /// <returns>Configured HttpClient instance.</returns>
-    private HttpClient CreateHttpsClient()
-    {
-        return CreateHttpsClient();
     }
 }
