@@ -636,3 +636,22 @@ Important context to carry into the next chat:
 1. Execute the newly implemented identity/profile/loyalty/webapi/mobile/contracts/infrastructure suites in CI and persist passing evidence before marking packs as completed.
 2. Keep mapper and contract compatibility tests expanding with each new mobile-facing DTO/change.
 3. Tune lane coverage thresholds based on first green baseline only when justified by CI evidence.
+
+
+## 18) CI troubleshooting notes (copy to next chat)
+
+Use these notes when CI lanes fail before merge:
+
+- **Integration lane requires SQL Server availability.**
+  - The integration test host uses `AddPersistence(...UseSqlServer...)` and deterministic DB reset/migrate/seed.
+  - CI must provide a reachable SQL Server and set `ConnectionStrings__DefaultConnection` to a test-scoped DB.
+  - Keep `ASPNETCORE_ENVIRONMENT=Testing` for integration jobs so reset guardrails allow destructive reset.
+
+- **Mobile.Shared lane requires MAUI workload on CI agents.**
+  - `Darwin.Mobile.Shared` is a MAUI project (`<UseMaui>true</UseMaui>`).
+  - Before restoring/running `Darwin.Mobile.Shared.Tests`, install MAUI workload (for example `dotnet workload install maui --skip-manifest-update`).
+
+- **Coverage gate script expects all lane artifacts.**
+  - If one lane does not upload `coverage.cobertura.xml`, coverage gate will fail by design.
+  - Verify each lane writes to its own `TestResults/<lane>` directory and uploads that directory.
+

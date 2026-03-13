@@ -108,6 +108,22 @@ jobs:
   integration-tests:
     name: Integration tests + coverage
     runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: "P@ssw0rd1234!"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P P@ssw0rd1234! -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=DarwinIntegrationTestDb;User Id=sa;Password=P@ssw0rd1234!;TrustServerCertificate=True;Encrypt=False;"
+      ASPNETCORE_ENVIRONMENT: Testing
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -139,6 +155,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - name: Install MAUI workload
+        run: dotnet workload install maui --skip-manifest-update
+
       - name: Restore mobile shared test project
         run: dotnet restore tests/Darwin.Mobile.Shared.Tests/Darwin.Mobile.Shared.Tests.csproj
       - name: Execute mobile shared tests with coverage
