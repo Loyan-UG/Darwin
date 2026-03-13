@@ -554,7 +554,7 @@ Keep this list as the execution tracker for the testing workstream.
 | 4 | **P3** Loyalty scan journey test pack (prepare/process/confirm) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
 | 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions and Business discovery compatibility checks are implemented; additional contract smoke tests in `Darwin.Contracts.Tests` and mapper stability tests in `Darwin.WebApi.Tests` are added; finalize after passing CLI/CI evidence and continue explicit versioning scenarios. |
 | 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
-| 7 | CI quality gates | In Progress (Temporary PR soft-gate active) | Workflow keeps all test lanes running, but PR jobs are temporarily `continue-on-error` so failing suites do not block merge; restore hard-gate mode after stabilization and evidence collection. |
+| 7 | CI quality gates | In Progress (Temporary PR soft-gate active) | Workflow keeps all test lanes running, but PR jobs are temporarily `continue-on-error` so failing suites do not block merge; restore hard-gate mode only after completing the soft-gate rollback checklist and attaching CI evidence. |
 
 
 ### Latest local verification snapshot
@@ -572,16 +572,13 @@ Temporary policy note:
 - Current phase intentionally uses a **non-blocking PR test gate** to avoid merge deadlocks while unstable suites are being stabilized.
 - This is temporary and must be reverted to hard-gate mode once the prioritized matrix suites are consistently green in CI.
 
+### Soft-gate rollback checklist (must be completed before re-enabling hard-gate)
 
-### Latest local verification snapshot
-
-- Attempted to execute the three prioritized integration matrices directly from CLI:
-  - `dotnet test tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj --filter "FullyQualifiedName~AuthIdentityEndpointAuthorizedMatrixTests|FullyQualifiedName~ProfileEndpointAuthorizedConcurrencyTests|FullyQualifiedName~LoyaltyEndpointAuthorizedE2eTests"`
-- Initial result: execution blocked because `dotnet` CLI was unavailable (`bash: command not found: dotnet`).
-- Follow-up remediation attempts in this environment:
-  - Script install via `curl https://dotnet.microsoft.com/.../dotnet-install.sh` (blocked by outbound proxy HTTP 403).
-  - Package install via `apt-get update && apt-get install dotnet-sdk-10.0` (blocked by repository/proxy HTTP 403).
-- Tracking decision: keep backlog items in **In Progress (Implemented, pending CLI/CI run)** state until local or CI evidence is attached.
+- [ ] Collect at least 5 consecutive green PR runs for P1/P2/P3 matrix suites in CI artifacts.
+- [ ] Confirm flakiness root-cause notes are documented for previously failing suites.
+- [ ] Remove PR `continue-on-error` policy from `tests-quality-gates.yml`.
+- [ ] Re-run one full strict CI cycle on PR and one strict push cycle on `work` branch.
+- [ ] Update this document status from **Temporary PR soft-gate active** to **Hard-gate restored** with links to CI evidence.
 
 Backlog update rule:
 
