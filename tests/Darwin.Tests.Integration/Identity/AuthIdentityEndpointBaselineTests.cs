@@ -150,10 +150,6 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         problem.Title.Should().NotBeNullOrWhiteSpace();
     }
 
-
-
-
-
     /// <summary>
     ///     Verifies that single-device logout endpoint requires authentication and
     ///     rejects anonymous requests with 401/Unauthorized.

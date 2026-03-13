@@ -125,8 +125,6 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-
-
     /// <summary>
     ///     Verifies that redemption confirmation endpoint is protected by authentication
     ///     and rejects anonymous requests before business rules are evaluated.
@@ -172,8 +170,6 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-
-
     /// <summary>
     ///     Verifies that promotions feed endpoint is protected and cannot be
     ///     queried by anonymous callers.
@@ -195,10 +191,6 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
-
-
-
-
 
     /// <summary>
     ///     Verifies that business-specific loyalty account snapshot endpoint is protected
@@ -240,8 +232,6 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-
-
     /// <summary>
     ///     Verifies that next-reward lookup endpoint is protected and rejects
     ///     anonymous requests to prevent unauthorized account insight exposure.
@@ -259,8 +249,6 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
-
-
 
     /// <summary>
     ///     Verifies that per-business loyalty history endpoint is protected and
