@@ -656,6 +656,10 @@ public sealed class ContractSerializationCompatibilityTests
         // Assert
         createJson.Should().Contain("\"name\"");
         createJson.Should().Contain("\"title\"");
+        createJson.Should().Contain("\"subtitle\"");
+        createJson.Should().Contain("\"body\"");
+        createJson.Should().Contain("\"mediaUrl\"");
+        createJson.Should().Contain("\"landingUrl\"");
         createJson.Should().Contain("\"channels\"");
         createJson.Should().Contain("\"targetingJson\"");
         createJson.Should().Contain("\"payloadJson\"");
@@ -663,6 +667,10 @@ public sealed class ContractSerializationCompatibilityTests
         createJson.Should().Contain("\"endsAtUtc\"");
 
         updateJson.Should().Contain("\"id\"");
+        updateJson.Should().Contain("\"subtitle\"");
+        updateJson.Should().Contain("\"body\"");
+        updateJson.Should().Contain("\"mediaUrl\"");
+        updateJson.Should().Contain("\"landingUrl\"");
         updateJson.Should().Contain("\"rowVersion\"");
     }
 
