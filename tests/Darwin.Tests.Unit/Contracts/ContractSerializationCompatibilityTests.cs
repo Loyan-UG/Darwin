@@ -671,6 +671,11 @@ public sealed class ContractSerializationCompatibilityTests
         updateJson.Should().Contain("\"body\"");
         updateJson.Should().Contain("\"mediaUrl\"");
         updateJson.Should().Contain("\"landingUrl\"");
+        updateJson.Should().Contain("\"channels\"");
+        updateJson.Should().Contain("\"startsAtUtc\"");
+        updateJson.Should().Contain("\"endsAtUtc\"");
+        updateJson.Should().Contain("\"targetingJson\"");
+        updateJson.Should().Contain("\"payloadJson\"");
         updateJson.Should().Contain("\"rowVersion\"");
     }
 
