@@ -915,4 +915,71 @@ public sealed class ContractSerializationCompatibilityTests
         dto.RowVersion.Should().Equal(1, 2, 3);
     }
 
+
+    /// <summary>
+    ///     Verifies that business reward configuration response deserializes reward-tier
+    ///     entries and concurrency tokens from camelCase payloads.
+    /// </summary>
+    [Fact]
+    public void BusinessRewardConfigurationResponse_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "loyaltyProgramId": "abababab-abab-abab-abab-abababababab",
+              "programName": "Cafe Rewards",
+              "isProgramActive": true,
+              "rewardTiers": [
+                {
+                  "rewardTierId": "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd",
+                  "pointsRequired": 120,
+                  "rewardType": "FreeDrink",
+                  "rewardValue": "small",
+                  "description": "One small coffee",
+                  "allowSelfRedemption": true,
+                  "rowVersion": "CQkJ"
+                }
+              ],
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<BusinessRewardConfigurationResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.LoyaltyProgramId.Should().Be(Guid.Parse("abababab-abab-abab-abab-abababababab"));
+        dto.ProgramName.Should().Be("Cafe Rewards");
+        dto.IsProgramActive.Should().BeTrue();
+        dto.RewardTiers.Should().HaveCount(1);
+        dto.RewardTiers[0].RewardTierId.Should().Be(Guid.Parse("cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd"));
+        dto.RewardTiers[0].RowVersion.Should().Equal(9, 9, 9);
+    }
+
+    /// <summary>
+    ///     Verifies that reward-tier mutation response deserializes identity and status
+    ///     fields from camelCase payload names.
+    /// </summary>
+    [Fact]
+    public void BusinessRewardTierMutationResponse_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "rewardTierId": "efefefef-efef-efef-efef-efefefefefef",
+              "success": true,
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<BusinessRewardTierMutationResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.RewardTierId.Should().Be(Guid.Parse("efefefef-efef-efef-efef-efefefefefef"));
+        dto.Success.Should().BeTrue();
+    }
+
 }
