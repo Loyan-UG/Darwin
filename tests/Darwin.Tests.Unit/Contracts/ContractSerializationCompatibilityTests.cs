@@ -886,6 +886,10 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Should().NotBeNull();
         dto!.Name.Should().Be("Weekend Boost");
         dto.Title.Should().Be("Double Points");
+        dto.Subtitle.Should().Be("Fri-Sun");
+        dto.Body.Should().Be("Earn 2x points.");
+        dto.MediaUrl.Should().Be("https://cdn.example/campaign.jpg");
+        dto.LandingUrl.Should().Be("https://example.test/rewards");
         dto.Channels.Should().Be(3);
         dto.StartsAtUtc.Should().Be(new DateTime(2030, 8, 1, 8, 0, 0, DateTimeKind.Utc));
         dto.EndsAtUtc.Should().Be(new DateTime(2030, 8, 3, 20, 0, 0, DateTimeKind.Utc));
@@ -906,6 +910,10 @@ public sealed class ContractSerializationCompatibilityTests
               "id": "12121212-3434-5656-7878-909090909090",
               "name": "Weekend Boost v2",
               "title": "Triple Points",
+              "subtitle": "Mon-Wed",
+              "body": "Earn 3x points.",
+              "mediaUrl": "https://cdn.example/campaign-v2.jpg",
+              "landingUrl": "https://example.test/rewards/v2",
               "channels": 1,
               "startsAtUtc": "2030-08-10T09:00:00Z",
               "endsAtUtc": "2030-08-12T19:30:00Z",
@@ -924,6 +932,10 @@ public sealed class ContractSerializationCompatibilityTests
         dto!.Id.Should().Be(Guid.Parse("12121212-3434-5656-7878-909090909090"));
         dto.Name.Should().Be("Weekend Boost v2");
         dto.Title.Should().Be("Triple Points");
+        dto.Subtitle.Should().Be("Mon-Wed");
+        dto.Body.Should().Be("Earn 3x points.");
+        dto.MediaUrl.Should().Be("https://cdn.example/campaign-v2.jpg");
+        dto.LandingUrl.Should().Be("https://example.test/rewards/v2");
         dto.Channels.Should().Be(1);
         dto.StartsAtUtc.Should().Be(new DateTime(2030, 8, 10, 9, 0, 0, DateTimeKind.Utc));
         dto.EndsAtUtc.Should().Be(new DateTime(2030, 8, 12, 19, 30, 0, DateTimeKind.Utc));
