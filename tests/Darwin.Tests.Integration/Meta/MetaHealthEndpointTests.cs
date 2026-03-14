@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 
-using Darwin.Tests.Common.TestInfrastructure;
 using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Meta;
@@ -22,18 +21,6 @@ public sealed class MetaHealthEndpointTests : DeterministicIntegrationTestBase, 
         : base(factory)
     {
     }
-
-    /// <summary>
-    ///     Recreates and seeds the test database before each test class to guarantee
-    ///     deterministic state regardless of execution order across integration suites.
-    /// </summary>
-    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
-
-    /// <summary>
-    ///     No asynchronous class-level cleanup is required because each test class
-    ///     uses isolated clients and reset logic runs during initialization.
-    /// </summary>
-    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Ensures the health endpoint returns HTTP 200 and includes the expected
@@ -61,7 +48,7 @@ public sealed class MetaHealthEndpointTests : DeterministicIntegrationTestBase, 
     /// </summary>
     private sealed class HealthResponse
     {
-    /// <summary>
+        /// <summary>
         ///     The health state string returned by the API.
         /// </summary>
         public string Status { get; init; } = string.Empty;
