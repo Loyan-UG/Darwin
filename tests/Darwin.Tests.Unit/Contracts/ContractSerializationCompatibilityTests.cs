@@ -132,7 +132,7 @@ public sealed class ContractSerializationCompatibilityTests
             [
                 new LoyaltyRewardSummary
                 {
-                    Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    LoyaltyRewardTierId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
                     BusinessId = Guid.Parse("33333333-3333-3333-3333-333333333333"),
                     Name = "Free Coffee",
                     Description = "One medium cup",
@@ -615,4 +615,104 @@ public sealed class ContractSerializationCompatibilityTests
         dto.DistanceMeters.Should().Be(380);
         dto.IsOpenNow.Should().BeTrue();
     }
+    /// <summary>
+    ///     Verifies that business campaign create/update contracts serialize mutable
+    ///     payload fields and optimistic-concurrency token with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void BusinessCampaignRequests_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var create = new CreateBusinessCampaignRequest
+        {
+            Name = "Weekend Boost",
+            Title = "Double Points",
+            Subtitle = "Fri-Sun",
+            Body = "Earn 2x points.",
+            MediaUrl = "https://cdn.example/campaign.jpg",
+            LandingUrl = "https://example.test/rewards",
+            Channels = 3,
+            StartsAtUtc = new DateTime(2030, 8, 1, 8, 0, 0, DateTimeKind.Utc),
+            EndsAtUtc = new DateTime(2030, 8, 3, 20, 0, 0, DateTimeKind.Utc),
+            TargetingJson = "{\"joined\":true}",
+            PayloadJson = "{\"kind\":\"boost\"}"
+        };
+
+        var update = new UpdateBusinessCampaignRequest
+        {
+            Id = Guid.Parse("12121212-3434-5656-7878-909090909090"),
+            Name = "Weekend Boost v2",
+            Title = "Triple Points",
+            Channels = 1,
+            TargetingJson = "{\"tier\":\"gold\"}",
+            PayloadJson = "{\"kind\":\"boost-v2\"}",
+            RowVersion = [1, 2, 3]
+        };
+
+        // Act
+        var createJson = JsonSerializer.Serialize(create, JsonOptions);
+        var updateJson = JsonSerializer.Serialize(update, JsonOptions);
+
+        // Assert
+        createJson.Should().Contain("\"name\"");
+        createJson.Should().Contain("\"title\"");
+        createJson.Should().Contain("\"channels\"");
+        createJson.Should().Contain("\"targetingJson\"");
+        createJson.Should().Contain("\"payloadJson\"");
+        createJson.Should().Contain("\"startsAtUtc\"");
+        createJson.Should().Contain("\"endsAtUtc\"");
+
+        updateJson.Should().Contain("\"id\"");
+        updateJson.Should().Contain("\"rowVersion\"");
+    }
+
+    /// <summary>
+    ///     Verifies that business reward-configuration contracts serialize tier and
+    ///     mutation payload fields with expected camelCase names.
+    /// </summary>
+    [Fact]
+    public void BusinessRewardConfigurationContracts_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var config = new BusinessRewardConfigurationResponse
+        {
+            LoyaltyProgramId = Guid.Parse("abababab-abab-abab-abab-abababababab"),
+            ProgramName = "Cafe Rewards",
+            IsProgramActive = true,
+            RewardTiers =
+            [
+                new BusinessRewardTierConfigItem
+                {
+                    RewardTierId = Guid.Parse("cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd"),
+                    PointsRequired = 120,
+                    RewardType = "FreeDrink",
+                    RewardValue = null,
+                    Description = "One small coffee",
+                    AllowSelfRedemption = true,
+                    RowVersion = [9, 9, 9]
+                }
+            ]
+        };
+
+        var mutation = new BusinessRewardTierMutationResponse
+        {
+            RewardTierId = Guid.Parse("efefefef-efef-efef-efef-efefefefefef"),
+            Success = true
+        };
+
+        // Act
+        var configJson = JsonSerializer.Serialize(config, JsonOptions);
+        var mutationJson = JsonSerializer.Serialize(mutation, JsonOptions);
+
+        // Assert
+        configJson.Should().Contain("\"loyaltyProgramId\"");
+        configJson.Should().Contain("\"programName\"");
+        configJson.Should().Contain("\"isProgramActive\"");
+        configJson.Should().Contain("\"rewardTiers\"");
+        configJson.Should().Contain("\"rowVersion\"");
+
+        mutationJson.Should().Contain("\"rewardTierId\"");
+        mutationJson.Should().Contain("\"success\"");
+    }
+
 }
