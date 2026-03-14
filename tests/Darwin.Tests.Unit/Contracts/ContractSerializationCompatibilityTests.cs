@@ -782,4 +782,67 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"rowVersion\"");
     }
 
+
+    /// <summary>
+    ///     Verifies that campaign listing response serializes collection wrapper and
+    ///     nested campaign fields with stable camelCase names expected by clients.
+    /// </summary>
+    [Fact]
+    public void GetBusinessCampaignsResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new GetBusinessCampaignsResponse
+        {
+            Items =
+            [
+                new BusinessCampaignItem
+                {
+                    Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                    BusinessId = Guid.Parse("99999999-8888-7777-6666-555555555555"),
+                    Name = "Weekend Boost",
+                    Title = "Double Points",
+                    Channels = 3,
+                    CampaignState = "Active",
+                    RowVersion = [1, 2, 3, 4]
+                }
+            ],
+            Total = 1
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"items\"");
+        json.Should().Contain("\"total\"");
+        json.Should().Contain("\"businessId\"");
+        json.Should().Contain("\"campaignState\"");
+        json.Should().Contain("\"rowVersion\"");
+    }
+
+    /// <summary>
+    ///     Verifies that reward-tier delete request deserializes identifier and
+    ///     concurrency token from a standard camelCase payload.
+    /// </summary>
+    [Fact]
+    public void DeleteBusinessRewardTierRequest_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "rewardTierId": "11111111-2222-3333-4444-555555555555",
+              "rowVersion": "BAQDAg==",
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<DeleteBusinessRewardTierRequest>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.RewardTierId.Should().Be(Guid.Parse("11111111-2222-3333-4444-555555555555"));
+        dto.RowVersion.Should().Equal(4, 4, 3, 2);
+    }
+
 }
