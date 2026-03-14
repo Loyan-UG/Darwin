@@ -132,7 +132,7 @@ public sealed class ContractSerializationCompatibilityTests
             [
                 new LoyaltyRewardSummary
                 {
-                    Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    LoyaltyRewardTierId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
                     BusinessId = Guid.Parse("33333333-3333-3333-3333-333333333333"),
                     Name = "Free Coffee",
                     Description = "One medium cup",
@@ -615,4 +615,304 @@ public sealed class ContractSerializationCompatibilityTests
         dto.DistanceMeters.Should().Be(380);
         dto.IsOpenNow.Should().BeTrue();
     }
+    /// <summary>
+    ///     Verifies that business campaign create/update contracts serialize mutable
+    ///     payload fields and optimistic-concurrency token with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void BusinessCampaignRequests_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var create = new CreateBusinessCampaignRequest
+        {
+            Name = "Weekend Boost",
+            Title = "Double Points",
+            Subtitle = "Fri-Sun",
+            Body = "Earn 2x points.",
+            MediaUrl = "https://cdn.example/campaign.jpg",
+            LandingUrl = "https://example.test/rewards",
+            Channels = 3,
+            StartsAtUtc = new DateTime(2030, 8, 1, 8, 0, 0, DateTimeKind.Utc),
+            EndsAtUtc = new DateTime(2030, 8, 3, 20, 0, 0, DateTimeKind.Utc),
+            TargetingJson = "{\"joined\":true}",
+            PayloadJson = "{\"kind\":\"boost\"}"
+        };
+
+        var update = new UpdateBusinessCampaignRequest
+        {
+            Id = Guid.Parse("12121212-3434-5656-7878-909090909090"),
+            Name = "Weekend Boost v2",
+            Title = "Triple Points",
+            Channels = 1,
+            TargetingJson = "{\"tier\":\"gold\"}",
+            PayloadJson = "{\"kind\":\"boost-v2\"}",
+            RowVersion = [1, 2, 3]
+        };
+
+        // Act
+        var createJson = JsonSerializer.Serialize(create, JsonOptions);
+        var updateJson = JsonSerializer.Serialize(update, JsonOptions);
+
+        // Assert
+        createJson.Should().Contain("\"name\"");
+        createJson.Should().Contain("\"title\"");
+        createJson.Should().Contain("\"channels\"");
+        createJson.Should().Contain("\"targetingJson\"");
+        createJson.Should().Contain("\"payloadJson\"");
+        createJson.Should().Contain("\"startsAtUtc\"");
+        createJson.Should().Contain("\"endsAtUtc\"");
+
+        updateJson.Should().Contain("\"id\"");
+        updateJson.Should().Contain("\"rowVersion\"");
+    }
+
+    /// <summary>
+    ///     Verifies that business reward-configuration contracts serialize tier and
+    ///     mutation payload fields with expected camelCase names.
+    /// </summary>
+    [Fact]
+    public void BusinessRewardConfigurationContracts_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var config = new BusinessRewardConfigurationResponse
+        {
+            LoyaltyProgramId = Guid.Parse("abababab-abab-abab-abab-abababababab"),
+            ProgramName = "Cafe Rewards",
+            IsProgramActive = true,
+            RewardTiers =
+            [
+                new BusinessRewardTierConfigItem
+                {
+                    RewardTierId = Guid.Parse("cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd"),
+                    PointsRequired = 120,
+                    RewardType = "FreeDrink",
+                    RewardValue = null,
+                    Description = "One small coffee",
+                    AllowSelfRedemption = true,
+                    RowVersion = [9, 9, 9]
+                }
+            ]
+        };
+
+        var mutation = new BusinessRewardTierMutationResponse
+        {
+            RewardTierId = Guid.Parse("efefefef-efef-efef-efef-efefefefefef"),
+            Success = true
+        };
+
+        // Act
+        var configJson = JsonSerializer.Serialize(config, JsonOptions);
+        var mutationJson = JsonSerializer.Serialize(mutation, JsonOptions);
+
+        // Assert
+        configJson.Should().Contain("\"loyaltyProgramId\"");
+        configJson.Should().Contain("\"programName\"");
+        configJson.Should().Contain("\"isProgramActive\"");
+        configJson.Should().Contain("\"rewardTiers\"");
+        configJson.Should().Contain("\"rowVersion\"");
+
+        mutationJson.Should().Contain("\"rewardTierId\"");
+        mutationJson.Should().Contain("\"success\"");
+    }
+
+
+    /// <summary>
+    ///     Verifies that campaign listing response deserializes nested items while tolerating
+    ///     unknown future fields used for non-breaking API expansion.
+    /// </summary>
+    [Fact]
+    public void GetBusinessCampaignsResponse_Should_Deserialize_WithNestedItemsAndUnknownFields()
+    {
+        // Arrange
+        const string json = """
+            {
+              "items": [
+                {
+                  "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                  "businessId": "99999999-8888-7777-6666-555555555555",
+                  "name": "Weekend Boost",
+                  "title": "Double Points",
+                  "subtitle": "Fri-Sun",
+                  "body": "Earn 2x points.",
+                  "mediaUrl": "https://cdn.example/campaign.jpg",
+                  "landingUrl": "https://example.test/rewards",
+                  "channels": 3,
+                  "startsAtUtc": "2030-08-01T08:00:00Z",
+                  "endsAtUtc": "2030-08-03T20:00:00Z",
+                  "campaignState": "Active",
+                  "futureField": "ignored"
+                }
+              ],
+              "total": 1,
+              "unknownTopLevel": true
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<GetBusinessCampaignsResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Total.Should().Be(1);
+        dto.Items.Should().HaveCount(1);
+        dto.Items[0].Id.Should().Be(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+        dto.Items[0].Name.Should().Be("Weekend Boost");
+        dto.Items[0].Channels.Should().Be(3);
+    }
+
+    /// <summary>
+    ///     Verifies that reward-tier delete request serializes concurrency-sensitive fields
+    ///     with stable camelCase names consumed by business management screens.
+    /// </summary>
+    [Fact]
+    public void DeleteBusinessRewardTierRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new DeleteBusinessRewardTierRequest
+        {
+            RewardTierId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            RowVersion = [4, 3, 2, 1]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"rewardTierId\"");
+        json.Should().Contain("\"rowVersion\"");
+    }
+
+
+    /// <summary>
+    ///     Verifies that campaign listing response serializes collection wrapper and
+    ///     nested campaign fields with stable camelCase names expected by clients.
+    /// </summary>
+    [Fact]
+    public void GetBusinessCampaignsResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new GetBusinessCampaignsResponse
+        {
+            Items =
+            [
+                new BusinessCampaignItem
+                {
+                    Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                    BusinessId = Guid.Parse("99999999-8888-7777-6666-555555555555"),
+                    Name = "Weekend Boost",
+                    Title = "Double Points",
+                    Channels = 3,
+                    CampaignState = "Active",
+                    RowVersion = [1, 2, 3, 4]
+                }
+            ],
+            Total = 1
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"items\"");
+        json.Should().Contain("\"total\"");
+        json.Should().Contain("\"businessId\"");
+        json.Should().Contain("\"campaignState\"");
+        json.Should().Contain("\"rowVersion\"");
+    }
+
+    /// <summary>
+    ///     Verifies that reward-tier delete request deserializes identifier and
+    ///     concurrency token from a standard camelCase payload.
+    /// </summary>
+    [Fact]
+    public void DeleteBusinessRewardTierRequest_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "rewardTierId": "11111111-2222-3333-4444-555555555555",
+              "rowVersion": "BAQDAg==",
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<DeleteBusinessRewardTierRequest>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.RewardTierId.Should().Be(Guid.Parse("11111111-2222-3333-4444-555555555555"));
+        dto.RowVersion.Should().Equal(4, 4, 3, 2);
+    }
+
+
+    /// <summary>
+    ///     Verifies that campaign create request deserializes mutable payload fields
+    ///     from camelCase JSON for client/server compatibility.
+    /// </summary>
+    [Fact]
+    public void CreateBusinessCampaignRequest_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "name": "Weekend Boost",
+              "title": "Double Points",
+              "subtitle": "Fri-Sun",
+              "body": "Earn 2x points.",
+              "mediaUrl": "https://cdn.example/campaign.jpg",
+              "landingUrl": "https://example.test/rewards",
+              "channels": 3,
+              "startsAtUtc": "2030-08-01T08:00:00Z",
+              "endsAtUtc": "2030-08-03T20:00:00Z",
+              "targetingJson": "{\"tier\":\"gold\"}",
+              "payloadJson": "{\"kind\":\"boost\"}",
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<CreateBusinessCampaignRequest>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Name.Should().Be("Weekend Boost");
+        dto.Title.Should().Be("Double Points");
+        dto.Channels.Should().Be(3);
+        dto.TargetingJson.Should().Contain("tier");
+        dto.PayloadJson.Should().Contain("kind");
+    }
+
+    /// <summary>
+    ///     Verifies that campaign update request deserializes identity/concurrency fields
+    ///     and mutable payload content from camelCase JSON.
+    /// </summary>
+    [Fact]
+    public void UpdateBusinessCampaignRequest_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "id": "12121212-3434-5656-7878-909090909090",
+              "name": "Weekend Boost v2",
+              "title": "Triple Points",
+              "channels": 1,
+              "targetingJson": "{\"tier\":\"platinum\"}",
+              "payloadJson": "{\"kind\":\"boost-v2\"}",
+              "rowVersion": "AQID",
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<UpdateBusinessCampaignRequest>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Id.Should().Be(Guid.Parse("12121212-3434-5656-7878-909090909090"));
+        dto.Name.Should().Be("Weekend Boost v2");
+        dto.Title.Should().Be("Triple Points");
+        dto.RowVersion.Should().Equal(1, 2, 3);
+    }
+
 }
