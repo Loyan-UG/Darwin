@@ -889,8 +889,8 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Channels.Should().Be(3);
         dto.StartsAtUtc.Should().Be(new DateTime(2030, 8, 1, 8, 0, 0, DateTimeKind.Utc));
         dto.EndsAtUtc.Should().Be(new DateTime(2030, 8, 3, 20, 0, 0, DateTimeKind.Utc));
-        dto.TargetingJson.Should().Contain("tier");
-        dto.PayloadJson.Should().Contain("kind");
+        dto.TargetingJson.Should().Be("{\"tier\":\"gold\"}");
+        dto.PayloadJson.Should().Be("{\"kind\":\"boost\"}");
     }
 
     /// <summary>
@@ -927,6 +927,8 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Channels.Should().Be(1);
         dto.StartsAtUtc.Should().Be(new DateTime(2030, 8, 10, 9, 0, 0, DateTimeKind.Utc));
         dto.EndsAtUtc.Should().Be(new DateTime(2030, 8, 12, 19, 30, 0, DateTimeKind.Utc));
+        dto.TargetingJson.Should().Be("{\"tier\":\"platinum\"}");
+        dto.PayloadJson.Should().Be("{\"kind\":\"boost-v2\"}");
         dto.RowVersion.Should().Equal(1, 2, 3);
     }
 
