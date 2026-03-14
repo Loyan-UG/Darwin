@@ -1040,4 +1040,29 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Items[0].RowVersion.Should().Equal(1, 2, 3, 4);
     }
 
+
+    /// <summary>
+    ///     Verifies that reward-tier mutation response deserializes negative status
+    ///     payloads without defaulting the success flag to true.
+    /// </summary>
+    [Fact]
+    public void BusinessRewardTierMutationResponse_Should_Deserialize_FailureStatus()
+    {
+        // Arrange
+        const string json = """
+            {
+              "rewardTierId": "efefefef-efef-efef-efef-efefefefefef",
+              "success": false
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<BusinessRewardTierMutationResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.RewardTierId.Should().Be(Guid.Parse("efefefef-efef-efef-efef-efefefefefef"));
+        dto.Success.Should().BeFalse();
+    }
+
 }
