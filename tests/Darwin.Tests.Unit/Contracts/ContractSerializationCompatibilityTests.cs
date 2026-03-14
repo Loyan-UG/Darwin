@@ -879,6 +879,8 @@ public sealed class ContractSerializationCompatibilityTests
         dto!.Name.Should().Be("Weekend Boost");
         dto.Title.Should().Be("Double Points");
         dto.Channels.Should().Be(3);
+        dto.StartsAtUtc.Should().Be(new DateTime(2030, 8, 1, 8, 0, 0, DateTimeKind.Utc));
+        dto.EndsAtUtc.Should().Be(new DateTime(2030, 8, 3, 20, 0, 0, DateTimeKind.Utc));
         dto.TargetingJson.Should().Contain("tier");
         dto.PayloadJson.Should().Contain("kind");
     }
@@ -912,6 +914,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto!.Id.Should().Be(Guid.Parse("12121212-3434-5656-7878-909090909090"));
         dto.Name.Should().Be("Weekend Boost v2");
         dto.Title.Should().Be("Triple Points");
+        dto.Channels.Should().Be(1);
         dto.RowVersion.Should().Equal(1, 2, 3);
     }
 
