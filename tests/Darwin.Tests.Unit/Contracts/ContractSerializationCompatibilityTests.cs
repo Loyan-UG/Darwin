@@ -748,6 +748,8 @@ public sealed class ContractSerializationCompatibilityTests
                   "startsAtUtc": "2030-08-01T08:00:00Z",
                   "endsAtUtc": "2030-08-03T20:00:00Z",
                   "campaignState": "Active",
+                  "targetingJson": "{\"tier\":\"gold\"}",
+                  "payloadJson": "{\"kind\":\"boost\"}",
                   "futureField": "ignored"
                 }
               ],
@@ -769,6 +771,8 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Items[0].Body.Should().Be("Earn 2x points.");
         dto.Items[0].MediaUrl.Should().Be("https://cdn.example/campaign.jpg");
         dto.Items[0].LandingUrl.Should().Be("https://example.test/rewards");
+        dto.Items[0].TargetingJson.Should().Be("{\"tier\":\"gold\"}");
+        dto.Items[0].PayloadJson.Should().Be("{\"kind\":\"boost\"}");
         dto.Items[0].Channels.Should().Be(3);
     }
 
