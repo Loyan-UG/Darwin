@@ -765,6 +765,10 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Items.Should().HaveCount(1);
         dto.Items[0].Id.Should().Be(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
         dto.Items[0].Name.Should().Be("Weekend Boost");
+        dto.Items[0].Subtitle.Should().Be("Fri-Sun");
+        dto.Items[0].Body.Should().Be("Earn 2x points.");
+        dto.Items[0].MediaUrl.Should().Be("https://cdn.example/campaign.jpg");
+        dto.Items[0].LandingUrl.Should().Be("https://example.test/rewards");
         dto.Items[0].Channels.Should().Be(3);
     }
 
