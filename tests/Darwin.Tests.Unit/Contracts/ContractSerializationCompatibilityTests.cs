@@ -778,6 +778,9 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Items[0].LandingUrl.Should().Be("https://example.test/rewards");
         dto.Items[0].TargetingJson.Should().Be("{\"tier\":\"gold\"}");
         dto.Items[0].PayloadJson.Should().Be("{\"kind\":\"boost\"}");
+        dto.Items[0].CampaignState.Should().Be("Active");
+        dto.Items[0].StartsAtUtc.Should().Be(new DateTime(2030, 8, 1, 8, 0, 0, DateTimeKind.Utc));
+        dto.Items[0].EndsAtUtc.Should().Be(new DateTime(2030, 8, 3, 20, 0, 0, DateTimeKind.Utc));
         dto.Items[0].Channels.Should().Be(3);
     }
 
