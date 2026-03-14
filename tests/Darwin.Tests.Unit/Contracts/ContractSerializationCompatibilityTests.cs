@@ -845,4 +845,74 @@ public sealed class ContractSerializationCompatibilityTests
         dto.RowVersion.Should().Equal(4, 4, 3, 2);
     }
 
+
+    /// <summary>
+    ///     Verifies that campaign create request deserializes mutable payload fields
+    ///     from camelCase JSON for client/server compatibility.
+    /// </summary>
+    [Fact]
+    public void CreateBusinessCampaignRequest_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "name": "Weekend Boost",
+              "title": "Double Points",
+              "subtitle": "Fri-Sun",
+              "body": "Earn 2x points.",
+              "mediaUrl": "https://cdn.example/campaign.jpg",
+              "landingUrl": "https://example.test/rewards",
+              "channels": 3,
+              "startsAtUtc": "2030-08-01T08:00:00Z",
+              "endsAtUtc": "2030-08-03T20:00:00Z",
+              "targetingJson": "{\"tier\":\"gold\"}",
+              "payloadJson": "{\"kind\":\"boost\"}",
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<CreateBusinessCampaignRequest>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Name.Should().Be("Weekend Boost");
+        dto.Title.Should().Be("Double Points");
+        dto.Channels.Should().Be(3);
+        dto.TargetingJson.Should().Contain("tier");
+        dto.PayloadJson.Should().Contain("kind");
+    }
+
+    /// <summary>
+    ///     Verifies that campaign update request deserializes identity/concurrency fields
+    ///     and mutable payload content from camelCase JSON.
+    /// </summary>
+    [Fact]
+    public void UpdateBusinessCampaignRequest_Should_Deserialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        const string json = """
+            {
+              "id": "12121212-3434-5656-7878-909090909090",
+              "name": "Weekend Boost v2",
+              "title": "Triple Points",
+              "channels": 1,
+              "targetingJson": "{\"tier\":\"platinum\"}",
+              "payloadJson": "{\"kind\":\"boost-v2\"}",
+              "rowVersion": "AQID",
+              "futureField": "ignored"
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<UpdateBusinessCampaignRequest>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Id.Should().Be(Guid.Parse("12121212-3434-5656-7878-909090909090"));
+        dto.Name.Should().Be("Weekend Boost v2");
+        dto.Title.Should().Be("Triple Points");
+        dto.RowVersion.Should().Equal(1, 2, 3);
+    }
+
 }
