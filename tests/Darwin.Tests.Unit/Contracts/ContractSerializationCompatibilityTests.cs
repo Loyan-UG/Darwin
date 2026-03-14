@@ -982,4 +982,41 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Success.Should().BeTrue();
     }
 
+
+    /// <summary>
+    ///     Verifies that campaign listing deserialization preserves business identifier
+    ///     and rowVersion concurrency token for nested campaign items.
+    /// </summary>
+    [Fact]
+    public void GetBusinessCampaignsResponse_Should_Deserialize_BusinessIdAndRowVersionFields()
+    {
+        // Arrange
+        const string json = """
+            {
+              "items": [
+                {
+                  "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                  "businessId": "99999999-8888-7777-6666-555555555555",
+                  "name": "Weekend Boost",
+                  "title": "Double Points",
+                  "channels": 3,
+                  "campaignState": "Active",
+                  "rowVersion": "AQIDBA=="
+                }
+              ],
+              "total": 1
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<GetBusinessCampaignsResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Items.Should().HaveCount(1);
+        dto.Items[0].BusinessId.Should().Be(Guid.Parse("99999999-8888-7777-6666-555555555555"));
+        dto.Items[0].CampaignState.Should().Be("Active");
+        dto.Items[0].RowVersion.Should().Equal(1, 2, 3, 4);
+    }
+
 }
