@@ -804,6 +804,10 @@ public sealed class ContractSerializationCompatibilityTests
         // Assert
         json.Should().Contain("\"rewardTierId\"");
         json.Should().Contain("\"rowVersion\"");
+
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("rewardTierId").GetString().Should().Be("11111111-2222-3333-4444-555555555555");
+        doc.RootElement.GetProperty("rowVersion").GetString().Should().Be("BAQDAg==");
     }
 
 
