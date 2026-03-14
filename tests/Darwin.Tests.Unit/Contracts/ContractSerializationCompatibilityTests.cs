@@ -971,6 +971,10 @@ public sealed class ContractSerializationCompatibilityTests
         dto.IsProgramActive.Should().BeTrue();
         dto.RewardTiers.Should().HaveCount(1);
         dto.RewardTiers[0].RewardTierId.Should().Be(Guid.Parse("cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd"));
+        dto.RewardTiers[0].PointsRequired.Should().Be(120);
+        dto.RewardTiers[0].RewardType.Should().Be("FreeDrink");
+        dto.RewardTiers[0].RewardValue.Should().Be("small");
+        dto.RewardTiers[0].AllowSelfRedemption.Should().BeTrue();
         dto.RewardTiers[0].RowVersion.Should().Equal(9, 9, 9);
     }
 
