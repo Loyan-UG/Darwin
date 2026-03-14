@@ -649,7 +649,7 @@ Backlog update rule:
   - `tests/Darwin.Tests.Integration/Darwin.Tests.Integration.csproj`
 - Current implemented test suites on disk are still concentrated in the two projects included in `Test.slnf`; remaining projects are scaffolded and should be activated as coverage expands.
 
-## 17) Handoff for next chat
+## 17) Execution handoff and next actions
 
 Use this list as the immediate continuation plan:
 
@@ -662,7 +662,7 @@ Use this list as the immediate continuation plan:
 3. **Contracts compatibility expansion (next wave)**
    - Continue adding tests for remaining mobile-critical DTO families and explicit versioning scenarios
 
-Important context to carry into the next chat:
+Operational context and constraints:
 
 - Keep `PackageReference` versions untouched unless explicitly requested.
 - Keep test comments in English with complete XML summaries.
@@ -675,9 +675,9 @@ Important context to carry into the next chat:
 3. Tune lane coverage thresholds based on first green baseline only when justified by CI evidence.
 
 
-## 18) CI troubleshooting notes (copy to next chat)
+## 18) CI troubleshooting notes
 
-Use these notes when CI lanes fail before merge:
+Use these notes when CI lanes fail before merge or during gate restoration:
 
 - **Integration lane requires SQL Server availability.**
   - The integration test host uses `AddPersistence(...UseSqlServer...)` and deterministic DB reset/migrate/seed.
