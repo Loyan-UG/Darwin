@@ -899,6 +899,8 @@ public sealed class ContractSerializationCompatibilityTests
               "name": "Weekend Boost v2",
               "title": "Triple Points",
               "channels": 1,
+              "startsAtUtc": "2030-08-10T09:00:00Z",
+              "endsAtUtc": "2030-08-12T19:30:00Z",
               "targetingJson": "{\"tier\":\"platinum\"}",
               "payloadJson": "{\"kind\":\"boost-v2\"}",
               "rowVersion": "AQID",
@@ -915,6 +917,8 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Name.Should().Be("Weekend Boost v2");
         dto.Title.Should().Be("Triple Points");
         dto.Channels.Should().Be(1);
+        dto.StartsAtUtc.Should().Be(new DateTime(2030, 8, 10, 9, 0, 0, DateTimeKind.Utc));
+        dto.EndsAtUtc.Should().Be(new DateTime(2030, 8, 12, 19, 30, 0, DateTimeKind.Utc));
         dto.RowVersion.Should().Equal(1, 2, 3);
     }
 
