@@ -825,8 +825,16 @@ public sealed class ContractSerializationCompatibilityTests
                     BusinessId = Guid.Parse("99999999-8888-7777-6666-555555555555"),
                     Name = "Weekend Boost",
                     Title = "Double Points",
+                    Subtitle = "Fri-Sun",
+                    Body = "Earn 2x points.",
+                    MediaUrl = "https://cdn.example/campaign.jpg",
+                    LandingUrl = "https://example.test/rewards",
                     Channels = 3,
+                    StartsAtUtc = new DateTime(2030, 8, 1, 8, 0, 0, DateTimeKind.Utc),
+                    EndsAtUtc = new DateTime(2030, 8, 3, 20, 0, 0, DateTimeKind.Utc),
                     CampaignState = "Active",
+                    TargetingJson = "{\"tier\":\"gold\"}",
+                    PayloadJson = "{\"kind\":\"boost\"}",
                     RowVersion = [1, 2, 3, 4]
                 }
             ],
@@ -840,7 +848,15 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"items\"");
         json.Should().Contain("\"total\"");
         json.Should().Contain("\"businessId\"");
+        json.Should().Contain("\"subtitle\"");
+        json.Should().Contain("\"body\"");
+        json.Should().Contain("\"mediaUrl\"");
+        json.Should().Contain("\"landingUrl\"");
+        json.Should().Contain("\"startsAtUtc\"");
+        json.Should().Contain("\"endsAtUtc\"");
         json.Should().Contain("\"campaignState\"");
+        json.Should().Contain("\"targetingJson\"");
+        json.Should().Contain("\"payloadJson\"");
         json.Should().Contain("\"rowVersion\"");
     }
 
