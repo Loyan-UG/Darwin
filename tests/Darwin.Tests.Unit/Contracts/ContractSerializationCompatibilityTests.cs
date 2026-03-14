@@ -715,4 +715,71 @@ public sealed class ContractSerializationCompatibilityTests
         mutationJson.Should().Contain("\"success\"");
     }
 
+
+    /// <summary>
+    ///     Verifies that campaign listing response deserializes nested items while tolerating
+    ///     unknown future fields used for non-breaking API expansion.
+    /// </summary>
+    [Fact]
+    public void GetBusinessCampaignsResponse_Should_Deserialize_WithNestedItemsAndUnknownFields()
+    {
+        // Arrange
+        const string json = """
+            {
+              "items": [
+                {
+                  "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                  "businessId": "99999999-8888-7777-6666-555555555555",
+                  "name": "Weekend Boost",
+                  "title": "Double Points",
+                  "subtitle": "Fri-Sun",
+                  "body": "Earn 2x points.",
+                  "mediaUrl": "https://cdn.example/campaign.jpg",
+                  "landingUrl": "https://example.test/rewards",
+                  "channels": 3,
+                  "startsAtUtc": "2030-08-01T08:00:00Z",
+                  "endsAtUtc": "2030-08-03T20:00:00Z",
+                  "campaignState": "Active",
+                  "futureField": "ignored"
+                }
+              ],
+              "total": 1,
+              "unknownTopLevel": true
+            }
+            """;
+
+        // Act
+        var dto = JsonSerializer.Deserialize<GetBusinessCampaignsResponse>(json, JsonOptions);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.Total.Should().Be(1);
+        dto.Items.Should().HaveCount(1);
+        dto.Items[0].Id.Should().Be(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
+        dto.Items[0].Name.Should().Be("Weekend Boost");
+        dto.Items[0].Channels.Should().Be(3);
+    }
+
+    /// <summary>
+    ///     Verifies that reward-tier delete request serializes concurrency-sensitive fields
+    ///     with stable camelCase names consumed by business management screens.
+    /// </summary>
+    [Fact]
+    public void DeleteBusinessRewardTierRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        // Arrange
+        var dto = new DeleteBusinessRewardTierRequest
+        {
+            RewardTierId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            RowVersion = [4, 3, 2, 1]
+        };
+
+        // Act
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        // Assert
+        json.Should().Contain("\"rewardTierId\"");
+        json.Should().Contain("\"rowVersion\"");
+    }
+
 }
