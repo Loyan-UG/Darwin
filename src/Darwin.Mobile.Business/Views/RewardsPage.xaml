@@ -204,7 +204,8 @@
 
             <HorizontalStackLayout Spacing="6">
                 <Button Text="{Binding AllCampaignMetricText}"
-                        Command="{Binding ClearCampaignFiltersCommand}"
+                        Command="{Binding ApplyCampaignStateFilterCommand}"
+                        CommandParameter=""
                         FontSize="12" />
                 <Button Text="{Binding DraftCampaignMetricText}"
                         Command="{Binding ApplyCampaignStateFilterCommand}"

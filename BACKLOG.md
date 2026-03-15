@@ -235,6 +235,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business campaign operations list now surfaces lifecycle KPI counters (Draft/Scheduled/Active/Expired) to give operators a fast health snapshot before drilling into details.
 - [x] Business campaign lifecycle KPI counters are now actionable chips that apply state filter in one tap for faster drill-down workflows.
 - [x] Business campaign lifecycle KPI chips now support toggle behavior (tap active chip again to clear state filter) and include an "All" chip for one-tap reset.
+- [x] "All" KPI chip now resets only lifecycle-state filter (preserving active search/sort context) for faster iterative campaign triage.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
