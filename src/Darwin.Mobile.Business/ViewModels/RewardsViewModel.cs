@@ -310,6 +310,11 @@ public sealed class RewardsViewModel : BaseViewModel
     public string ExpiredCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterExpired, ExpiredCampaignCount);
 
     /// <summary>
+    /// KPI chip text for all campaigns regardless of lifecycle state.
+    /// </summary>
+    public string AllCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterAll, TotalCampaignCount);
+
+    /// <summary>
     /// User-entered points required for the reward tier.
     /// </summary>
     public string PointsRequiredInput
@@ -1073,6 +1078,136 @@ public sealed class RewardsViewModel : BaseViewModel
 
             ReplaceCampaigns(campaigns);
         });
+    }
+
+    /// <summary>
+    /// Replaces internal campaign cache and applies the active UI filters.
+    /// </summary>
+    /// <param name="campaigns">Latest campaigns from API.</param>
+    private void ReplaceCampaigns(IReadOnlyCollection<BusinessCampaignEditorItem> campaigns)
+    {
+        _allCampaigns.Clear();
+        _allCampaigns.AddRange(campaigns);
+        ApplyCampaignFilter();
+    }
+
+    /// <summary>
+    /// Applies state/query filters to the cached campaign list and updates visible list.
+    /// </summary>
+    private void ApplyCampaignFilter()
+    {
+        var stateKey = SelectedCampaignStateFilter?.StateKey;
+        var query = CampaignSearchQuery?.Trim();
+
+        var filteredQuery = _allCampaigns.Where(campaign =>
+            (string.IsNullOrWhiteSpace(stateKey) || string.Equals(campaign.CampaignState, stateKey, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(query) ||
+             campaign.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+             campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase)));
+
+        var sortMode = SelectedCampaignSortOption?.Mode ?? CampaignSortMode.StartDateDesc;
+        var filtered = sortMode switch
+        {
+            CampaignSortMode.StartDateAsc => filteredQuery
+                .OrderBy(x => x.StartsAtUtc)
+                .ThenBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            CampaignSortMode.TitleAsc => filteredQuery
+                .OrderBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(x => x.StartsAtUtc)
+                .ToList(),
+            CampaignSortMode.TitleDesc => filteredQuery
+                .OrderByDescending(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(x => x.StartsAtUtc)
+                .ToList(),
+            _ => filteredQuery
+                .OrderByDescending(x => x.StartsAtUtc)
+                .ThenByDescending(x => x.IsActive)
+                .ToList()
+        };
+
+        Campaigns.Clear();
+        foreach (var campaign in filtered)
+        {
+            Campaigns.Add(campaign);
+        }
+
+        OnPropertyChanged(nameof(HasCampaigns));
+        OnPropertyChanged(nameof(TotalCampaignCount));
+        OnPropertyChanged(nameof(FilteredCampaignCount));
+        OnPropertyChanged(nameof(CampaignFilterSummary));
+        OnPropertyChanged(nameof(DraftCampaignCount));
+        OnPropertyChanged(nameof(ScheduledCampaignCount));
+        OnPropertyChanged(nameof(ActiveCampaignCount));
+        OnPropertyChanged(nameof(ExpiredCampaignCount));
+        OnPropertyChanged(nameof(CampaignStateMetricsSummary));
+        OnPropertyChanged(nameof(AllCampaignMetricText));
+        OnPropertyChanged(nameof(DraftCampaignMetricText));
+        OnPropertyChanged(nameof(ScheduledCampaignMetricText));
+        OnPropertyChanged(nameof(ActiveCampaignMetricText));
+        OnPropertyChanged(nameof(ExpiredCampaignMetricText));
+        OnPropertyChanged(nameof(HasActiveCampaignFilters));
+        ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
+        ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Counts campaigns by state key in a case-insensitive manner.
+    /// </summary>
+    /// <param name="state">Lifecycle state key.</param>
+    /// <returns>Number of campaigns with the requested state.</returns>
+    private int CountCampaignsByState(string state)
+    {
+        return _allCampaigns.Count(c => string.Equals(c.CampaignState, state, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Clears campaign search/state filters and re-displays full campaign list.
+    /// </summary>
+    private Task ClearCampaignFiltersAsync()
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            CampaignSearchQuery = string.Empty;
+            SelectedCampaignStateFilter = CampaignStateFilterOptions.FirstOrDefault();
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Applies the requested lifecycle state directly from KPI action chips.
+    /// </summary>
+    /// <param name="state">Target lifecycle state key.</param>
+    private Task ApplyCampaignStateFilterAsync(string? state)
+    {
+        if (IsBusy || string.IsNullOrWhiteSpace(state))
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            // Toggle behavior for KPI chips.
+            // Re-tapping the currently active state removes that state filter and
+            // returns to the "all states" view.
+            if (string.Equals(SelectedCampaignStateFilter?.StateKey, state, StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedCampaignStateFilter = CampaignStateFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            SelectedCampaignStateFilter = CampaignStateFilterOptions
+                .FirstOrDefault(option => string.Equals(option.StateKey, state, StringComparison.OrdinalIgnoreCase))
+                ?? SelectedCampaignStateFilter;
+        });
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

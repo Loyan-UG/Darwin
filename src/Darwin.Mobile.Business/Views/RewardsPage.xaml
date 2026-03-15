@@ -203,6 +203,9 @@
                    Opacity="0.75" />
 
             <HorizontalStackLayout Spacing="6">
+                <Button Text="{Binding AllCampaignMetricText}"
+                        Command="{Binding ClearCampaignFiltersCommand}"
+                        FontSize="12" />
                 <Button Text="{Binding DraftCampaignMetricText}"
                         Command="{Binding ApplyCampaignStateFilterCommand}"
                         CommandParameter="Draft"
