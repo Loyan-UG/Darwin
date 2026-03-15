@@ -414,6 +414,15 @@
   <data name="DashboardExportCsvFailed" xml:space="preserve">
     <value>Unable to export dashboard CSV.</value>
   </data>
+  <data name="DashboardExportPdfButton" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="DashboardExportPdfShareTitle" xml:space="preserve">
+    <value>Share dashboard PDF</value>
+  </data>
+  <data name="DashboardExportPdfFailed" xml:space="preserve">
+    <value>Unable to export dashboard PDF.</value>
+  </data>
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Unable to load dashboard report.</value>
   </data>

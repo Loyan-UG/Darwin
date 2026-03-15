@@ -138,6 +138,9 @@ public static class AppResources
     public static string DashboardExportCsvButton => ResourceManager.GetString(nameof(DashboardExportCsvButton), Culture) ?? "Export CSV";
     public static string DashboardExportCsvShareTitle => ResourceManager.GetString(nameof(DashboardExportCsvShareTitle), Culture) ?? "Share dashboard CSV";
     public static string DashboardExportCsvFailed => ResourceManager.GetString(nameof(DashboardExportCsvFailed), Culture) ?? "Unable to export dashboard CSV.";
+    public static string DashboardExportPdfButton => ResourceManager.GetString(nameof(DashboardExportPdfButton), Culture) ?? "Export PDF";
+    public static string DashboardExportPdfShareTitle => ResourceManager.GetString(nameof(DashboardExportPdfShareTitle), Culture) ?? "Share dashboard PDF";
+    public static string DashboardExportPdfFailed => ResourceManager.GetString(nameof(DashboardExportPdfFailed), Culture) ?? "Unable to export dashboard PDF.";
     public static string DashboardLoadFailed => ResourceManager.GetString(nameof(DashboardLoadFailed), Culture) ?? "Unable to load dashboard report.";
     public static string DashboardTopCustomersTitle => ResourceManager.GetString(nameof(DashboardTopCustomersTitle), Culture) ?? "Top customers";
     public static string DashboardTopCustomersEmpty => ResourceManager.GetString(nameof(DashboardTopCustomersEmpty), Culture) ?? "No customer interactions were recorded in the selected window.";

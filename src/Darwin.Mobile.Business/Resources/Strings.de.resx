@@ -414,6 +414,15 @@
   <data name="DashboardExportCsvFailed" xml:space="preserve">
     <value>Dashboard-CSV konnte nicht exportiert werden.</value>
   </data>
+  <data name="DashboardExportPdfButton" xml:space="preserve">
+    <value>PDF exportieren</value>
+  </data>
+  <data name="DashboardExportPdfShareTitle" xml:space="preserve">
+    <value>Dashboard-PDF teilen</value>
+  </data>
+  <data name="DashboardExportPdfFailed" xml:space="preserve">
+    <value>Dashboard-PDF konnte nicht exportiert werden.</value>
+  </data>
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Dashboard-Bericht konnte nicht geladen werden.</value>
   </data>
