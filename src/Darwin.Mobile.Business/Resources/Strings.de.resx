@@ -414,6 +414,15 @@
   <data name="DashboardExportCsvFailed" xml:space="preserve">
     <value>Dashboard-CSV konnte nicht exportiert werden.</value>
   </data>
+  <data name="DashboardExportPdfButton" xml:space="preserve">
+    <value>PDF exportieren</value>
+  </data>
+  <data name="DashboardExportPdfShareTitle" xml:space="preserve">
+    <value>Dashboard-PDF teilen</value>
+  </data>
+  <data name="DashboardExportPdfFailed" xml:space="preserve">
+    <value>Dashboard-PDF konnte nicht exportiert werden.</value>
+  </data>
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Dashboard-Bericht konnte nicht geladen werden.</value>
   </data>
@@ -474,6 +483,9 @@
   <data name="RewardsCampaignValidationFailed" xml:space="preserve">
     <value>Kampagnenname und Titel sind erforderlich.</value>
   </data>
+  <data name="RewardsCampaignNameDuplicateValidationFailed" xml:space="preserve">
+    <value>Eine Kampagne mit diesem internen Namen existiert bereits.</value>
+  </data>
   <data name="RewardsCampaignStartsAtPlaceholder" xml:space="preserve">
     <value>Start UTC (yyyy-MM-dd HH:mm, optional)</value>
   </data>
@@ -509,5 +521,29 @@
   </data>
   <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
     <value>Bitte wählen Sie einen gültigen Auslieferungskanal für die Kampagne.</value>
+  </data>
+  <data name="RewardsCampaignSearchPlaceholder" xml:space="preserve">
+    <value>Kampagnen nach Name oder Titel suchen</value>
+  </data>
+  <data name="RewardsCampaignStateFilterPickerTitle" xml:space="preserve">
+    <value>Statusfilter</value>
+  </data>
+  <data name="RewardsCampaignStateFilterAll" xml:space="preserve">
+    <value>Alle Status</value>
+  </data>
+  <data name="RewardsCampaignStateFilterDraft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="RewardsCampaignStateFilterScheduled" xml:space="preserve">
+    <value>Geplant</value>
+  </data>
+  <data name="RewardsCampaignStateFilterActive" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
+    <value>Abgelaufen</value>
+  </data>
+  <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
+    <value>Keine Kampagnen entsprechen der aktuellen Suche/Filterung.</value>
   </data>
 </root>

@@ -70,6 +70,19 @@ namespace Darwin.Mobile.Shared.Extensions
             })
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
+                // Release hardening:
+                // accepting any certificate must never be enabled for production artifacts.
+                // We fail fast at startup if this unsafe option is accidentally turned on
+                // in non-debug builds.
+#if !DEBUG
+                if (options.UnsafeTrustAnyServerCertificate)
+                {
+                    throw new InvalidOperationException(
+                        "UnsafeTrustAnyServerCertificate is allowed only in DEBUG builds. " +
+                        "Disable it for Release/production environments.");
+                }
+#endif
+
                 //#if DEBUG
                 //                // Development: accept any server certificate (trust all).
                 //                // WARNING: Unsafe for production. Keep inside #if DEBUG or guard with config flag.
@@ -83,9 +96,7 @@ namespace Darwin.Mobile.Shared.Extensions
 
                 if (options.UnsafeTrustAnyServerCertificate)
                 {
-                    // TODO [SECURITY][MOBILE-RELEASE]:
-                    // This is temporary for test environments (e.g., ngrok/dev tunnels).
-                    // Remove before production and restore strict certificate validation.
+                    // Debug-only dev convenience for local tunnels/self-signed certs.
                     return new HttpClientHandler
                     {
                         ServerCertificateCustomValidationCallback =
