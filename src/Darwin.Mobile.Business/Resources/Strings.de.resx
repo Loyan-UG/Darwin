@@ -522,4 +522,28 @@
   <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
     <value>Bitte wählen Sie einen gültigen Auslieferungskanal für die Kampagne.</value>
   </data>
+  <data name="RewardsCampaignSearchPlaceholder" xml:space="preserve">
+    <value>Kampagnen nach Name oder Titel suchen</value>
+  </data>
+  <data name="RewardsCampaignStateFilterPickerTitle" xml:space="preserve">
+    <value>Statusfilter</value>
+  </data>
+  <data name="RewardsCampaignStateFilterAll" xml:space="preserve">
+    <value>Alle Status</value>
+  </data>
+  <data name="RewardsCampaignStateFilterDraft" xml:space="preserve">
+    <value>Entwurf</value>
+  </data>
+  <data name="RewardsCampaignStateFilterScheduled" xml:space="preserve">
+    <value>Geplant</value>
+  </data>
+  <data name="RewardsCampaignStateFilterActive" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
+    <value>Abgelaufen</value>
+  </data>
+  <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
+    <value>Keine Kampagnen entsprechen der aktuellen Suche/Filterung.</value>
+  </data>
 </root>

@@ -172,9 +172,24 @@
             <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
                    FontAttributes="Bold" />
 
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignSearchPlaceholder}"
+                       Text="{Binding CampaignSearchQuery}" />
+
+                <Picker Grid.Column="1"
+                        Title="{x:Static res:AppResources.RewardsCampaignStateFilterPickerTitle}"
+                        ItemsSource="{Binding CampaignStateFilterOptions}"
+                        SelectedItem="{Binding SelectedCampaignStateFilter}" />
+            </Grid>
+
+            <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyFiltered}"
+                   Opacity="0.8"
+                   IsVisible="{Binding HasCampaigns, Converter={StaticResource InverseBoolConverter}}" />
+
             <CollectionView x:Name="CampaignsCollectionView"
                             ItemsSource="{Binding Campaigns}"
-                            SelectionMode="Single">
+                            SelectionMode="Single"
+                            IsVisible="{Binding HasCampaigns}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:BusinessCampaignEditorItem">
                         <Border StrokeThickness="1" Stroke="#444444" Padding="10" Margin="0,4,0,4">

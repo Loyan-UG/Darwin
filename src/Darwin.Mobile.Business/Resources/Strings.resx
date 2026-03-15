@@ -522,4 +522,28 @@
   <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
     <value>Please select a valid campaign delivery channel.</value>
   </data>
+  <data name="RewardsCampaignSearchPlaceholder" xml:space="preserve">
+    <value>Search campaigns by name or title</value>
+  </data>
+  <data name="RewardsCampaignStateFilterPickerTitle" xml:space="preserve">
+    <value>State filter</value>
+  </data>
+  <data name="RewardsCampaignStateFilterAll" xml:space="preserve">
+    <value>All states</value>
+  </data>
+  <data name="RewardsCampaignStateFilterDraft" xml:space="preserve">
+    <value>Draft</value>
+  </data>
+  <data name="RewardsCampaignStateFilterScheduled" xml:space="preserve">
+    <value>Scheduled</value>
+  </data>
+  <data name="RewardsCampaignStateFilterActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
+  <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
+    <value>No campaigns match the current search/filter.</value>
+  </data>
 </root>

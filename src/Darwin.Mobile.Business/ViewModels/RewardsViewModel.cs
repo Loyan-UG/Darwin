@@ -33,6 +33,7 @@ public sealed class RewardsViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
     private readonly IBusinessAuthorizationService _authorizationService;
+    private readonly List<BusinessCampaignEditorItem> _allCampaigns = new();
 
     private bool _loadedOnce;
     private bool _canManageRewards = true;
@@ -60,6 +61,8 @@ public sealed class RewardsViewModel : BaseViewModel
     private string _campaignTargetingJsonInput = "{}";
     private string _campaignPayloadJsonInput = "{}";
     private CampaignChannelOption? _selectedCampaignChannel;
+    private string _campaignSearchQuery = string.Empty;
+    private CampaignStateFilterOption? _selectedCampaignStateFilter;
 
     private const int CampaignListPageSize = 50;
 
@@ -86,7 +89,18 @@ public sealed class RewardsViewModel : BaseViewModel
             new CampaignChannelOption(1, AppResources.RewardsCampaignChannelInAppOnly),
             new CampaignChannelOption(3, AppResources.RewardsCampaignChannelInAppAndPush)
         };
+
+        CampaignStateFilterOptions = new ObservableCollection<CampaignStateFilterOption>
+        {
+            new CampaignStateFilterOption(string.Empty, AppResources.RewardsCampaignStateFilterAll),
+            new CampaignStateFilterOption(PromotionCampaignState.Draft, AppResources.RewardsCampaignStateFilterDraft),
+            new CampaignStateFilterOption(PromotionCampaignState.Scheduled, AppResources.RewardsCampaignStateFilterScheduled),
+            new CampaignStateFilterOption(PromotionCampaignState.Active, AppResources.RewardsCampaignStateFilterActive),
+            new CampaignStateFilterOption(PromotionCampaignState.Expired, AppResources.RewardsCampaignStateFilterExpired)
+        };
+
         _selectedCampaignChannel = CampaignChannelOptions[0];
+        _selectedCampaignStateFilter = CampaignStateFilterOptions[0];
 
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
@@ -145,6 +159,46 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Picker options for campaign channel combinations supported in mobile editor.
     /// </summary>
     public ObservableCollection<CampaignChannelOption> CampaignChannelOptions { get; }
+
+    /// <summary>
+    /// Picker options for campaign lifecycle state filtering in the management list.
+    /// </summary>
+    public ObservableCollection<CampaignStateFilterOption> CampaignStateFilterOptions { get; }
+
+    /// <summary>
+    /// Search query used to filter campaign list by internal name/title.
+    /// </summary>
+    public string CampaignSearchQuery
+    {
+        get => _campaignSearchQuery;
+        set
+        {
+            if (SetProperty(ref _campaignSearchQuery, value))
+            {
+                ApplyCampaignFilter();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Currently selected lifecycle state filter for campaign list.
+    /// </summary>
+    public CampaignStateFilterOption? SelectedCampaignStateFilter
+    {
+        get => _selectedCampaignStateFilter;
+        set
+        {
+            if (SetProperty(ref _selectedCampaignStateFilter, value))
+            {
+                ApplyCampaignFilter();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether there are campaigns visible after applying current filter criteria.
+    /// </summary>
+    public bool HasCampaigns => Campaigns.Count > 0;
 
     /// <summary>
     /// User-entered points required for the reward tier.
@@ -350,11 +404,7 @@ public sealed class RewardsViewModel : BaseViewModel
                     RewardTiers.Add(tier);
                 }
 
-                Campaigns.Clear();
-                foreach (var campaign in campaigns)
-                {
-                    Campaigns.Add(campaign);
-                }
+                ReplaceCampaigns(campaigns);
             });
 
             if (!IsEditMode)
@@ -800,7 +850,7 @@ public sealed class RewardsViewModel : BaseViewModel
             return false;
         }
 
-        return Campaigns.Any(campaign =>
+        return _allCampaigns.Any(campaign =>
             campaign.Id != editingCampaignId &&
             string.Equals(campaign.Name?.Trim(), candidateName, StringComparison.OrdinalIgnoreCase));
     }
@@ -910,12 +960,45 @@ public sealed class RewardsViewModel : BaseViewModel
                 RewardTiers.Add(tier);
             }
 
-            Campaigns.Clear();
-            foreach (var campaign in campaigns)
-            {
-                Campaigns.Add(campaign);
-            }
+            ReplaceCampaigns(campaigns);
         });
+    }
+
+    /// <summary>
+    /// Replaces internal campaign cache and applies the active UI filters.
+    /// </summary>
+    /// <param name="campaigns">Latest campaigns from API.</param>
+    private void ReplaceCampaigns(IReadOnlyCollection<BusinessCampaignEditorItem> campaigns)
+    {
+        _allCampaigns.Clear();
+        _allCampaigns.AddRange(campaigns);
+        ApplyCampaignFilter();
+    }
+
+    /// <summary>
+    /// Applies state/query filters to the cached campaign list and updates visible list.
+    /// </summary>
+    private void ApplyCampaignFilter()
+    {
+        var stateKey = SelectedCampaignStateFilter?.StateKey;
+        var query = CampaignSearchQuery?.Trim();
+
+        var filtered = _allCampaigns.Where(campaign =>
+            (string.IsNullOrWhiteSpace(stateKey) || string.Equals(campaign.CampaignState, stateKey, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(query) ||
+             campaign.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+             campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .OrderByDescending(x => x.StartsAtUtc)
+            .ThenByDescending(x => x.IsActive)
+            .ToList();
+
+        Campaigns.Clear();
+        foreach (var campaign in filtered)
+        {
+            Campaigns.Add(campaign);
+        }
+
+        OnPropertyChanged(nameof(HasCampaigns));
     }
 
     /// <summary>
@@ -1094,6 +1177,30 @@ public sealed class CampaignChannelOption
     }
 
     public short Value { get; }
+    public string Label { get; }
+
+    public override string ToString() => Label;
+}
+
+/// <summary>
+/// Represents a selectable lifecycle-state filter option for campaign list.
+/// </summary>
+public sealed class CampaignStateFilterOption
+{
+    public CampaignStateFilterOption(string stateKey, string label)
+    {
+        StateKey = stateKey;
+        Label = label;
+    }
+
+    /// <summary>
+    /// Contract state key; empty means "all states".
+    /// </summary>
+    public string StateKey { get; }
+
+    /// <summary>
+    /// Localized display label.
+    /// </summary>
     public string Label { get; }
 
     public override string ToString() => Label;
