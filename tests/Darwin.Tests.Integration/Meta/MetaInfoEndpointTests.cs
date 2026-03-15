@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 
-using Darwin.Tests.Common.TestInfrastructure;
 using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Meta;
@@ -22,18 +21,6 @@ public sealed class MetaInfoEndpointTests : DeterministicIntegrationTestBase, IC
         : base(factory)
     {
     }
-
-    /// <summary>
-    ///     Recreates and seeds the test database before each test class to guarantee
-    ///     deterministic state regardless of execution order across integration suites.
-    /// </summary>
-    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(_factory);
-
-    /// <summary>
-    ///     No asynchronous class-level cleanup is required because each test class
-    ///     uses isolated clients and reset logic runs during initialization.
-    /// </summary>
-    public Task DisposeAsync() => Task.CompletedTask;
 
     /// <summary>
     ///     Ensures the endpoint responds with HTTP 200 and includes non-empty application
@@ -64,7 +51,7 @@ public sealed class MetaInfoEndpointTests : DeterministicIntegrationTestBase, IC
     /// </summary>
     private sealed class MetaInfoResponse
     {
-    /// <summary>
+        /// <summary>
         ///     Logical application name.
         /// </summary>
         public string Application { get; init; } = string.Empty;
