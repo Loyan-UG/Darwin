@@ -451,40 +451,12 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ---
 
-## 17) Mobile API Matrix (Consumer/Business)
+## 17) API Dependencies (Mobile-facing View)
 
-| Area      | Endpoint                                     | Policy                      | Client     |
-|-----------|----------------------------------------------|-----------------------------|------------|
-| Auth      | POST /api/v1/auth/login                      | AllowAnonymous              | Both       |
-| Auth      | POST /api/v1/auth/refresh                    | AllowAnonymous              | Both       |
-| Auth      | POST /api/v1/auth/logout                     | Authorize                   | Both       |
-| Auth      | POST /api/v1/auth/logout-all                 | Authorize                   | Both       |
-| Auth      | POST /api/v1/auth/register                   | AllowAnonymous              | Consumer   |
-| Auth      | POST /api/v1/auth/password/request-reset     | AllowAnonymous              | Consumer   |
-| Auth      | POST /api/v1/auth/password/reset             | AllowAnonymous              | Consumer   |
-| Auth      | POST /api/v1/auth/password/change            | Authorize                   | Both       |
-| Notifications | POST /api/v1/notifications/devices/register | Authorize                | Both       |
-| Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
-| Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | POST /api/v1/loyalty/scan/process            | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/scan/confirm-accrual    | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/scan/confirm-redemption | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | GET /api/v1/loyalty/my/accounts              | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/my/history/{businessId}  | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/account/{businessId}     | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/business/{id}/rewards    | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/my/businesses            | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | POST /api/v1/loyalty/my/timeline             | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/business/campaigns      | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/business/campaigns     | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | PUT /api/v1/loyalty/business/campaigns/{id} | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/business/campaigns/{id}/activation | perm:AccessLoyaltyBusiness  | Business   |
-| Discovery | POST /api/v1/businesses/list                 | AllowAnonymous              | Consumer   |
-| Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
-| Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
-| Discovery | GET /api/v1/businesses/{id}/with-my-account  | perm:AccessMemberArea       | Consumer   |
-| Businesses | POST /api/v1/businesses/onboarding         | Authorize                   | Both       |
+Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and consume endpoints through `Darwin.Mobile.Shared` service facades.
+
+- For complete endpoint inventory, policies, request/response contracts, and troubleshooting playbooks, use **`DarwinWebApi.md`**.
+- Keep this mobile guide focused on app-side behavior, UX rules, threading, platform integration, and mobile roadmap status.
 
 ---
 
@@ -594,97 +566,12 @@ If login succeeds (for example `cons1@darwin.de`) but no businesses are shown in
 
 ---
 
-## Postman verification guide (WebApi)
+## WebApi Verification
 
-Use this flow to confirm whether the backend is healthy independently from the mobile app.
+WebApi endpoint verification and Postman walkthroughs were moved to **`DarwinWebApi.md`**.
+Use that document as the source of truth for:
 
-- **Important:** In this environment `JwtRequireDeviceBinding = true`, so `deviceId` must be sent on login and refresh calls.
-
-### 1) Login and capture tokens
-
-- **POST** `{{baseUrl}}/api/v1/auth/login`
-- Body:
-
-```json
-{
-  "email": "cons1@darwin.de",
-  "password": "Consumer123!",
-  "deviceId": "postman-consumer-device"
-}
-```
-
-- Save `accessToken` and `refreshToken` from response.
-
-### 2) List businesses (discover endpoint)
-
-- **POST** `{{baseUrl}}/api/v1/businesses/list`
-- Authorization: `Bearer {{accessToken}}`
-- Body:
-
-```json
-{
-  "page": 1,
-  "pageSize": 20,
-  "query": null,
-  "city": null,
-  "countryCode": null,
-  "addressQuery": null,
-  "categoryKindKey": null,
-  "near": null,
-  "radiusMeters": null
-}
-```
-
-- Expected: `items` contains seeded businesses (e.g., Café Aurora, Bäckerei König, ...).
-
-### 3) Get business detail
-
-- **GET** `{{baseUrl}}/api/v1/businesses/{{businessId}}`
-- Authorization: `Bearer {{accessToken}}`
-
-### 4) Join loyalty program
-
-- **POST** `{{baseUrl}}/api/v1/loyalty/account/{{businessId}}/join`
-- Authorization: `Bearer {{accessToken}}`
-- Body:
-
-```json
-{
-  "businessLocationId": null
-}
-```
-
-### 5) Prepare scan session (QR token)
-
-- **POST** `{{baseUrl}}/api/v1/loyalty/scan/prepare`
-- Authorization: `Bearer {{accessToken}}`
-- Body:
-
-```json
-{
-  "businessId": "{{businessId}}",
-  "mode": "Accrual",
-  "selectedRewardTierIds": [],
-  "businessLocationId": null,
-  "deviceId": "postman-consumer-device"
-}
-```
-
-- Expected: response includes session token used by consumer QR.
-
-### 6) Business-side processing test (requires business account token)
-
-1. Login as business user (`biz1@darwin.de` / `Business123!`).
-2. Call process endpoint with token from step 5.
-
-- **POST** `{{baseUrl}}/api/v1/loyalty/scan/process`
-
-```json
-{
-  "scanSessionToken": "{{scanSessionToken}}"
-}
-```
-
-Then confirm accrual/redemption with corresponding endpoints.
-
-> If Postman works but app does not, the issue is inside mobile UI/data-binding flow, not backend contracts or handlers.
+- auth/device-binding preconditions,
+- endpoint-specific request/response examples,
+- role/policy requirements,
+- and operational diagnostics/troubleshooting.

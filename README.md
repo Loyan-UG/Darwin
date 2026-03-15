@@ -1,288 +1,149 @@
-﻿# 🛒 Darwin CMS + E-Commerce Platform
+# Darwin Platform — CMS + Commerce + CRM + WebApi + Mobile
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
 [![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
 [![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
 [![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
-[![Build](https://img.shields.io/github/actions/workflow/status/shahramvafadar/Darwin/build.yml?branch=master&logo=githubactions&label=CI)](../../actions)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+Darwin is an integrated product platform for SMBs that combines:
 
-Darwin is a **modern CMS + e-commerce solution** designed for **European SMBs** who need a
-flexible, future-proof platform that runs even on **shared hosting**.
-
-It combines **content management (CMS)** and **full e-commerce features** such as catalog, pricing, inventory, cart, checkout, orders, shipping, and payments — all built with **clean architecture** and extensibility in mind.
-
----
-
-## ✨ Features
-
-- 📝 **CMS**: Pages, rich text editor (Quill), SEO meta, menus, media library.
-- 🛍️ **Catalog**: Brands, categories, products, variants, attributes.
-- 📦 **Inventory**: Stock tracking, reserved qty, reorder levels, warehouses (future).
-- 💶 **Pricing & Tax**: EU VAT (DE by default), promotions, coupons.
-- 🛒 **Cart & Checkout**: Guest carts, min/max qty rules, VAT calculations.
-- 📑 **Orders**: Full lifecycle (Created → Paid → Shipped → Refunded).
-- 🚚 **Shipping**: DHL (DE first), extensible provider model.
-- 💳 **Payments**: PayPal, Klarna/Sofort, SEPA (future Stripe).
-- 🌍 **Localization**: Multi-culture content via normalized translations.
-- 🔍 **SEO**: Unique slugs per culture, canonical, hreflang, sitemap, robots.
-- 🧩 **Extensibility**: Feature flags, outgoing webhooks, modular architecture.
-- 🛡️ **Security**: XSS sanitization, upload hardening, GDPR consent & privacy pages.
-  - **Argon2id** password hashing
-  - **Passkeys/WebAuthn** (FIDO2 via fido2-net-lib v4) for login/registration
-  - **TOTP 2FA** (RFC 6238)
-  - **Data Protection** key ring persisted for shared hosting
-- 📊 **Analytics**: Google Analytics, Tag Manager, Search Console (via settings).
-- 🧪 **Testing**: Unit + Integration tests, GitHub Actions CI.
-- 📱 **Mobile (MAUI)**: Consumer + Business apps with shared HTTP/auth/scanner abstractions.
-- 🔗 **API & Contracts**: Public **Darwin.WebApi** (JWT, Swagger) using **Darwin.Contracts** as the single source of request/response models for both Web and Mobile.
+- **CMS** (pages, menus, content management)
+- **Commerce** (catalog, pricing, checkout, orders)
+- **CRM foundation** (profiles, loyalty interactions, consent-ready architecture)
+- **WebApi** (contracts-first REST surface)
+- **Mobile suite** (Consumer + Business MAUI apps)
 
 ---
 
-## 🏗️ Architecture
+## 1) Documentation Hub (Start Here)
 
-Darwin follows a **clean architecture** with clear separation of concerns:
+Use this README as the entry point and navigate to the focused guide you need:
+
+- **Roadmap / delivery status** → [`BACKLOG.md`](BACKLOG.md)
+- **Mobile architecture and app behavior** → [`DarwinMobile.md`](DarwinMobile.md)
+- **WebApi architecture, endpoint matrix, policies, API troubleshooting** → [`DarwinWebApi.md`](DarwinWebApi.md)
+- **Identity & access model (admin + member)** → [`howto-identity-access.md`](howto-identity-access.md)
+- **Testing workstream tracker** → [`DarwinTesting.md`](DarwinTesting.md)
+- **Contribution process** → [`CONTRIBUTING.md`](CONTRIBUTING.md)
+
+---
+
+## 2) Current System Scope
+
+### 2.1 Web (CMS + Commerce + CRM-oriented back-office)
+
+- CMS pages/menus/content operations
+- catalog and pricing foundations
+- identity, security, and settings management
+- CRM-aligned data surfaces (profiles, loyalty-linked customer context, engagement lifecycle readiness)
+
+### 2.2 WebApi (contracts-first)
+
+- JWT auth and policy-protected endpoints
+- loyalty scan/session workflows
+- discovery/business endpoints
+- profile and notification device registration
+- business campaign operations and promotions feed policy diagnostics
+
+> Full API details are maintained in `DarwinWebApi.md`.
+
+### 2.3 Mobile Suite
+
+- `Darwin.Mobile.Consumer`: member-side QR/discovery/rewards/profile journeys
+- `Darwin.Mobile.Business`: scanner/session confirmation, dashboard/reporting, campaign operations
+- shared runtime: `Darwin.Mobile.Shared`
+
+> Mobile behavior and operational rules are maintained in `DarwinMobile.md`.
+
+---
+
+## 3) Solution Architecture
 
 ```
 src/
-├─ Darwin.Domain           → Entities, ValueObjects, Enums, BaseEntity
-├─ Darwin.Application      → Use cases, DTOs, Handlers, Validators
-├─ Darwin.Infrastructure   → EF Core, DbContext, Migrations, DataSeeder
-├─ Darwin.Web              → MVC + Razor (Admin + Public), DI, Middleware
-├─ Darwin.WebApi           → REST API
-├─ Darwin.Shared           → Result wrappers, constants, helpers
-├─ Darwin.Contracts        → Shared DTOs for WebApi + Mobile (request/response contracts)
-├─ Darwin.Mobile.Shared    → Mobile shared services (HTTP client, retry, auth, scanner/location abstractions)
-├─ Darwin.Mobile.Consumer  → .NET MAUI consumer app (QR, discover, rewards, profile)
-└─ Darwin.Mobile.Business  → .NET MAUI business app (scan, accrue, redeem)
+├─ Darwin.Domain           → domain model and core entities
+├─ Darwin.Application      → use-cases, handlers, validators, DTO mapping
+├─ Darwin.Infrastructure   → EF Core, persistence, identity/security infra
+├─ Darwin.Web              → MVC/Razor host (admin + web surface)
+├─ Darwin.WebApi           → REST API host
+├─ Darwin.Shared           → shared utility/result types
+├─ Darwin.Contracts        → public request/response contracts
+├─ Darwin.Mobile.Shared    → shared mobile API/client/runtime services
+├─ Darwin.Mobile.Consumer  → consumer MAUI app
+└─ Darwin.Mobile.Business  → business MAUI app
 ```
 
-### Key Principles
-- **SOLID** applied consistently.
-- **Minor units for money** (`long` cents) to avoid floating-point errors.
-- **Audit fields** (`CreatedAtUtc`, `ModifiedAtUtc`, `CreatedByUserId`, `ModifiedByUserId`).
-- **Soft delete** with `IsDeleted`.
-- **Optimistic concurrency** via `RowVersion`.
-- **Normalized translation tables** for multilingual content.
+Key engineering principles:
 
-### Composition
-
-- **Web composition root**: `src/Darwin.Web/Extensions/DependencyInjection.cs`
-  - `AddSharedHostingDataProtection(configuration)`
-  - `AddPersistence(configuration)`
-  - `AddIdentityInfrastructure()`
-  - `AddNotificationsInfrastructure(configuration)`
-- **WebApi composition root**: `src/Darwin.WebApi/Extensions/DependencyInjection.cs`
-  - Adds Application, Persistence, JWT auth core, HttpContextAccessor, `ICurrentUserService`, Swagger (dev), RateLimiter, Controllers.
-  - Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
+- clean architecture boundaries
+- contracts-first integration for clients
+- optimistic concurrency (`RowVersion`) where required
+- secure-by-default auth/session patterns
+- mobile UI thread safety for UI-bound state updates
 
 ---
 
-## 📱 Mobile Overview
-
-The mobile suite consists of two .NET MAUI apps:
-
-- **Darwin.Mobile.Consumer**: end-user app with authentication, a **short-lived scan session QR** (Accrual/Redemption), discover/map, rewards dashboard, profile.
-- **Darwin.Mobile.Business**: tablet app for partners to **scan the consumer QR**, load the server-side scan session, and then **accrue points** or **confirm reward redemptions**.
-
-Shared libraries and contracts:
-
-- **Darwin.Mobile.Shared**: typed HTTP client (System.Text.Json), retry policy, token storage helpers, abstractions for camera scanning (`IScanner`) and geolocation (`ILocation`). Registered via `AddDarwinMobileShared(ApiOptions)` (requires `Microsoft.Extensions.Http`).
-- **Darwin.Contracts**: single source of **request/response DTOs** used by both WebApi and the mobile apps (identity tokens, loyalty scan flows, discovery, paging/sorting, problem details).
-
-Security highlights:
-
-- **No internal user IDs in QR**; QR is an opaque, short-lived ScanSessionToken. Short expiry and one-time semantics limit replay risk.
-- **JWT + refresh tokens** for app authentication; server uses Data Protection and Argon2/WebAuthn/TOTP.
-
-### Mobile/WebApi Quick Start (Contracts-first)
-
-Darwin.WebApi is the public surface for mobile. All payloads/errors use `Darwin.Contracts`.
-
-**Auth & Bootstrap**
-- `GET /api/v1/meta/bootstrap` — mobile bootstrap (JWT audience, QR refresh seconds, outbox limits). **AllowAnonymous**
-- `POST /api/v1/auth/login` — password login → `TokenResponse`. **AllowAnonymous**
-- `POST /api/v1/auth/refresh` — refresh token → `TokenResponse`. **AllowAnonymous**
-- `POST /api/v1/auth/logout` — revoke refresh token (per device). **Authorize**
-- `POST /api/v1/auth/logout-all` — revoke all refresh tokens. **Authorize**
-- `POST /api/v1/auth/password/change` — change password (current → new). **Authorize**
-- `POST /api/v1/auth/password/request-reset` — request reset (always 200). **AllowAnonymous**
-- `POST /api/v1/auth/password/reset` — complete reset. **AllowAnonymous**
-- `POST /api/v1/auth/register` — consumer self-registration. **AllowAnonymous**
-- Access token policies:
-  - Consumer: `perm:AccessMemberArea`
-  - Business: `perm:AccessLoyaltyBusiness`
-- Required claim for business endpoints: `business_id` (GUID). Business id is **never** accepted from body.
-
-**Profile (Consumer)**
-- `GET /api/v1/profile/me` — profile (RowVersion). **perm:AccessMemberArea**
-- `PUT /api/v1/profile/me` — update profile (RowVersion). **perm:AccessMemberArea**
-
-**Loyalty (Consumer + Business)**
-- Consumer:
-  - `POST /api/v1/loyalty/scan/prepare` → `ScanSessionToken`. **perm:AccessMemberArea**
-  - `GET /api/v1/loyalty/my/accounts` — list my accounts. **perm:AccessMemberArea**
-  - `GET /api/v1/loyalty/my/history/{businessId}` — points history. **perm:AccessMemberArea**
-  - `GET /api/v1/loyalty/account/{businessId}` — account summary (404 if none). **perm:AccessMemberArea**
-  - `GET /api/v1/loyalty/business/{businessId}/rewards` — rewards (consumer). **perm:AccessMemberArea**
-  - `GET /api/v1/loyalty/my/businesses` — “My places” (paged). **perm:AccessMemberArea**
-  - `POST /api/v1/loyalty/my/timeline` — unified timeline (cursor paging). **perm:AccessMemberArea**
-- Business:
-  - `POST /api/v1/loyalty/scan/process` — process scanned token → session view. **perm:AccessLoyaltyBusiness** (business_id from JWT)
-  - `POST /api/v1/loyalty/scan/confirm-accrual` — confirm accrual. **perm:AccessLoyaltyBusiness**
-  - `POST /api/v1/loyalty/scan/confirm-redemption` — confirm redemption. **perm:AccessLoyaltyBusiness**
-
-**Business Discovery (Consumer)**
-- `POST /api/v1/businesses/list` — paged discovery (query/search, category, city, proximity). **AllowAnonymous**
-- `POST /api/v1/businesses/map` — map viewport discovery. **AllowAnonymous**
-- `GET /api/v1/businesses/{id}` — public detail. **AllowAnonymous**
-- `GET /api/v1/businesses/{id}/with-my-account` — detail + my account summary. **perm:AccessMemberArea**
-
-**Error & Result Shape**
-- Errors: `Darwin.Contracts.Common.ProblemDetails`.
-- Handlers return `Result/Result<T>`; controllers convert failures to `ProblemDetails`.
-
-**Security (WebApi)**
-- JWT bearer auth (`JwtTokenService`); rate limiting on login/refresh (`EnableRateLimiting` policies).
-- Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
-- `ICurrentUserService` resolved from claims (no admin fallback).
-
----
-
-## 🔐 Security Overview
-
-- **Passwords**: Argon2id hasher with sane defaults.
-- **Passkeys/WebAuthn**: FIDO2 ceremonies via `fido2-net-lib` v4 (registration + assertion); credentials stored in `UserWebAuthnCredential`.
-- **TOTP 2FA**: RFC 6238 (30s step, 6 digits, default ±1 step window).
-- **Data Protection**: Key ring persisted on disk (shared-host friendly). Configure `DataProtection:KeysPath` to a writable, persistent folder.
-
----
-
-## 🚀 Getting Started
+## 4) Build & Run Quick Start
 
 ### Prerequisites
-- [.NET 10 SDK](https://dotnet.microsoft.com/)
-- SQL Server (local or hosted; LocalDB works for dev)
-- Node/npm (optional, for front-end tooling)
 
-### Local Setup
+- .NET 10 SDK
+- SQL Server / LocalDB
+- MAUI workloads (for mobile)
+
+### Web setup (quick)
 
 ```bash
-# clone the repo
 git clone https://github.com/shahramvafadar/Darwin.git
 cd Darwin
-```
-
-Configure connection string in `appsettings.Development.json`:
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=Darwin;Trusted_Connection=True;"
-}
-```
-
-Sample `appsettings.Development.json`:
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=Darwin;Trusted_Connection=True;"
-  },
-  "DataProtection": {
-    "KeysPath": "C:\\\\_shared\\\\DarwinKeys"
-  },
-  "Email": {
-    "Smtp": {
-      "Host": "smtp.example.com",
-      "Port": 587,
-      "EnableSsl": true,
-      "User": "no-reply@example.com",
-      "Password": "YOUR_STRONG_PASSWORD",
-      "From": "no-reply@example.com",
-      "FromName": "Darwin"
-    }
-  },
-  "WebAuthn": {
-    "RelyingPartyId": "localhost",
-    "RelyingPartyName": "Darwin",
-    "AllowedOriginsCsv": "https://localhost:5001,https://localhost:7170",
-    "RequireUserVerification": false
-  }
-}
-```
-
-> For production: set a persistent `DataProtection:KeysPath` (disk/share), configure SMTP, WebAuthn origins, culture/currency defaults (also editable from SiteSettings in Admin).
-
-Run migrations & seed:
-```bash
 dotnet ef database update --project src/Darwin.Infrastructure
-```
-
-Start the app:
-```bash
 dotnet run --project src/Darwin.Web
 ```
 
-Then open `https://localhost:7170/admin`
-(default admin user is seeded — change password on first login).
+### Solution filters
+
+- `Darwin.WebOnly.slnf` → Web + WebApi focused work
+- `Darwin.MobileOnly.slnf` → Mobile focused work
 
 ---
 
-## 🗺️ Roadmap
+## 5) CRM Focus (Why it matters here)
 
-See `BACKLOG.md` for the full backlog and feature roadmap.
+CRM is a core direction of this platform, not a side topic.
 
-High-level milestones:
-- Skeleton solution with clean architecture
-- Core entities (Domain)
-- Products, Categories, Pages (Admin)
-- ✅ Full SiteSettings (culture, units, SEO, feature flags)
-- SEO features (canonical, hreflang, sitemap, robots)
-- Cart & Checkout flows
-- Orders lifecycle + payments + shipping
-- Webhooks (outgoing & incoming)
-- Public storefront UI (after Admin completion)
-- API v1 (REST with Swagger)
-- Minimal CRM (user profiles, consents)
-- Mobile suite: Darwin.Mobile.Shared, Darwin.Mobile.Consumer, Darwin.Mobile.Business
-- Loyalty QR flow: session-based consumer QR (ScanSessionToken), secure scan session endpoints (prepare/process/confirm accrual & redemption)
-- Discovery on mobile: map + directory + business details
-- Contracts-first WebApi: expand Darwin.Contracts without breaking existing clients
+Current foundation already present in the system:
+
+- customer profile lifecycle (`/profile/me`, concurrency-safe updates)
+- loyalty/account interactions as structured customer engagement signals
+- campaign/promotions operations with delivery diagnostics
+- push-device registration and engagement-ready telemetry surfaces
+
+Planned CRM deepening (tracked in backlog):
+
+- richer segmentation/audience rules
+- campaign operations maturity
+- engagement automation hardening and observability
+
+Use `BACKLOG.md` as the source of truth for CRM delivery status.
 
 ---
 
-## 📚 Documentation
+## 6) Security Snapshot
 
-- Setup Guide
-- Architecture Decisions
-- Styleguide & Conventions
-- Backlog & Roadmap
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/myfeature`
-3. Commit your changes: `git commit -m "Add feature"`
-4. Push to the branch: `git push origin feature/myfeature`
-5. Open a Pull Request
+- Argon2id password hashing
+- WebAuthn/passkey and TOTP foundations
+- JWT with policy-based authorization in WebApi
+- data protection key persistence support for shared hosting
 
 ---
 
-## 📜 License
+## 7) Contribution Rules
 
-This project is licensed under the MIT License.
+- Keep docs synchronized with code changes in every meaningful PR.
+- If endpoint/contracts/policies change:
+  1. update Contracts + server mapping
+  2. update `DarwinWebApi.md`
+  3. update mobile docs only for app-side impact
+  4. update backlog status (`BACKLOG.md`)
 
----
-
-## 🏢 About
-
-Darwin is built to support small and medium businesses in Germany/EU with a system that is:
-- Easy to host (shared hosting compatible)
-- Legally compliant (GDPR, VAT rules, Impressum/Privacy pages)
-- Extensible for growth (CRM, webhooks, API, integrations)
-
-💡 The vision: One platform to manage content + commerce, future-proof, open-source, developer-friendly.
