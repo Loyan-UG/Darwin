@@ -567,4 +567,7 @@
   <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
     <value>{0} von {1} Kampagnen werden angezeigt</value>
   </data>
+  <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
+    <value>Entwurf: {0} · Geplant: {1} · Aktiv: {2} · Abgelaufen: {3}</value>
+  </data>
 </root>

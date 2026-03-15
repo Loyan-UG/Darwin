@@ -198,6 +198,10 @@
                         IsEnabled="{Binding HasActiveCampaignFilters}" />
             </Grid>
 
+            <Label Text="{Binding CampaignStateMetricsSummary}"
+                   FontSize="12"
+                   Opacity="0.75" />
+
             <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyFiltered}"
                    Opacity="0.8"
                    IsVisible="{Binding HasCampaigns, Converter={StaticResource InverseBoolConverter}}" />
