@@ -525,6 +525,9 @@
   <data name="RewardsCampaignSearchPlaceholder" xml:space="preserve">
     <value>Kampagnen nach Name oder Titel suchen</value>
   </data>
+  <data name="RewardsCampaignClearSearchButton" xml:space="preserve">
+    <value>Suche löschen</value>
+  </data>
   <data name="RewardsCampaignStateFilterPickerTitle" xml:space="preserve">
     <value>Statusfilter</value>
   </data>

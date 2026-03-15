@@ -120,6 +120,7 @@ public sealed class RewardsViewModel : BaseViewModel
         SaveCampaignCommand = new AsyncCommand(SaveCampaignAsync, () => !IsBusy && CanManageRewards);
         NewCampaignCommand = new AsyncCommand(NewCampaignAsync, () => !IsBusy && CanManageRewards);
         ClearCampaignFiltersCommand = new AsyncCommand(ClearCampaignFiltersAsync, () => !IsBusy && HasActiveCampaignFilters);
+        ClearCampaignSearchCommand = new AsyncCommand(ClearCampaignSearchAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(CampaignSearchQuery));
         ApplyCampaignStateFilterCommand = new AsyncCommand<string>(ApplyCampaignStateFilterAsync, _ => !IsBusy);
     }
 
@@ -248,6 +249,11 @@ public sealed class RewardsViewModel : BaseViewModel
     public bool HasActiveCampaignFilters =>
         !string.IsNullOrWhiteSpace(CampaignSearchQuery) ||
         !string.IsNullOrWhiteSpace(SelectedCampaignStateFilter?.StateKey);
+
+    /// <summary>
+    /// Gets whether campaign search query currently contains a value.
+    /// </summary>
+    public bool HasCampaignSearchQuery => !string.IsNullOrWhiteSpace(CampaignSearchQuery);
 
     /// <summary>
     /// Human-readable summary for filtered campaign count.
@@ -465,6 +471,7 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand SaveCampaignCommand { get; }
     public AsyncCommand NewCampaignCommand { get; }
     public AsyncCommand ClearCampaignFiltersCommand { get; }
+    public AsyncCommand ClearCampaignSearchCommand { get; }
     public AsyncCommand<string> ApplyCampaignStateFilterCommand { get; }
 
     public override async Task OnAppearingAsync()
@@ -1147,7 +1154,9 @@ public sealed class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(ActiveCampaignMetricText));
         OnPropertyChanged(nameof(ExpiredCampaignMetricText));
         OnPropertyChanged(nameof(HasActiveCampaignFilters));
+        OnPropertyChanged(nameof(HasCampaignSearchQuery));
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
+        ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
     }
 
@@ -1177,6 +1186,20 @@ public sealed class RewardsViewModel : BaseViewModel
             SelectedCampaignStateFilter = CampaignStateFilterOptions.FirstOrDefault();
         });
 
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Clears only campaign search query while preserving state/sort filters.
+    /// </summary>
+    private Task ClearCampaignSearchAsync()
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() => CampaignSearchQuery = string.Empty);
         return Task.CompletedTask;
     }
 
@@ -1349,6 +1372,7 @@ public sealed class RewardsViewModel : BaseViewModel
         SaveCampaignCommand.RaiseCanExecuteChanged();
         NewCampaignCommand.RaiseCanExecuteChanged();
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
+        ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
     }
 }

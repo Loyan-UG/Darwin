@@ -195,6 +195,7 @@ public static class AppResources
     public static string RewardsCampaignTargetingValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignTargetingValidationFailed), Culture) ?? "Targeting JSON must be a valid JSON object.";
     public static string RewardsCampaignPayloadValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignPayloadValidationFailed), Culture) ?? "Payload JSON must be a valid JSON object.";
     public static string RewardsCampaignSearchPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignSearchPlaceholder), Culture) ?? "Search campaigns by name or title";
+    public static string RewardsCampaignClearSearchButton => ResourceManager.GetString(nameof(RewardsCampaignClearSearchButton), Culture) ?? "Clear search";
     public static string RewardsCampaignStateFilterPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignStateFilterPickerTitle), Culture) ?? "State filter";
     public static string RewardsCampaignStateFilterAll => ResourceManager.GetString(nameof(RewardsCampaignStateFilterAll), Culture) ?? "All states";
     public static string RewardsCampaignStateFilterDraft => ResourceManager.GetString(nameof(RewardsCampaignStateFilterDraft), Culture) ?? "Draft";
