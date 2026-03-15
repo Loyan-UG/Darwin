@@ -168,9 +168,9 @@ It is designed as the **single source of truth** for development planning.
 - [~] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
-- Full analytics module (CSV/PDF export)
-- Business subscription management (Stripe)
-- Staff QR codes for internal access
+- [~] Full analytics module (CSV/PDF export)
+- [ ] Business subscription management (Stripe)
+- [x] Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
 - [x] Push provider operational readiness checklist per environment (Firebase `google-services.json`, Apple Push entitlement/certificate, runtime permission verification, and token rotation monitoring dashboard).
@@ -199,6 +199,8 @@ It is designed as the **single source of truth** for development planning.
 - [x] Hardened platform build wiring (Android-only Firebase package + explicit iOS/MacCatalyst entitlements binding) to prevent cross-target restore/signing misconfiguration.
 - [x] Added Android 13+ startup notification-permission request bootstrap with one-time prompt persistence, and removed legacy fallback push token providers to reduce production ambiguity.
 - [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
+- [x] Business dashboard now supports CSV export (summary KPIs + top customers + recent activities) through native share flow for lightweight operator reporting.
+- [x] Business settings now include a rotating staff access badge page that emits short-lived internal QR payloads with expiry countdown and manual refresh.
 - [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
 - [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
 - [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.
@@ -218,13 +220,14 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added `Claim` event hook from redemption QR generation flow (`RewardClaimIntent`) to complete promotions conversion funnel telemetry coverage.
 - [x] Added campaign-foundation promotion payload fields in Contracts/Application/WebApi mapping (`CampaignState`, campaign window, and normalized eligibility rules) while keeping backward-compatible derived cards active.
 - [x] Promotions query now reads active in-app `Marketing.Campaign` entities (global + joined-business scoped), resolves lifecycle state, and merges campaign cards with derived loyalty cards for gradual migration.
-- [x] Promotions feed now applies server-side guardrails with contract-exposed policy (`EnableDeduplication`, `MaxCards`, `SuppressionWindowMinutes`) and campaign suppression based on recent in-app delivery attempts.
+- [x] Promotions feed now applies server-side guardrails with contract-exposed policy (`EnableDeduplication`, `MaxCards`, `SuppressionWindowMinutes`, `FrequencyWindowMinutes`) and campaign suppression/frequency controls based on recent in-app delivery attempts.
 - [x] Added business campaign management WebApi endpoints (list/create/update/activation) with business-scope ownership checks and RowVersion concurrency for update/activation paths.
 - [x] Wired business campaign management contracts into `Darwin.Mobile.Shared` loyalty facade (list/create/update/activation) so mobile business workflows can consume the new WebApi surface.
 - [x] Business mobile Rewards screen now includes campaign list, in-app activation toggle, and minimal create/update campaign editor wired to shared campaign APIs.
 - [x] Business campaign editor now supports optional UTC start/end inputs with client-side format/range validation before create/update API calls.
 - [x] Business campaign editor now supports delivery-channel selection (In-App / In-App+Push) with explicit validation and localized labels in mobile UI.
 - [x] Business campaign editor now validates and submits optional `targeting/payload` JSON object fields (with localized validation feedback) to reduce malformed mutation payloads.
+- [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).

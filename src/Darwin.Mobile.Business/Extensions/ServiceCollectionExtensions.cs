@@ -80,6 +80,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.ChangePasswordViewModel>();
         services.AddTransient<Views.ChangePasswordPage>();
 
+        services.AddTransient<ViewModels.StaffAccessBadgeViewModel>();
+        services.AddTransient<Views.StaffAccessBadgePage>();
+
         return services;
     }
 

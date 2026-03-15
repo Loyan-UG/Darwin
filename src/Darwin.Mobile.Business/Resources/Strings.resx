@@ -231,6 +231,37 @@
 	<data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Change password</value>
   </data>
+	<data name="SettingsStaffAccessBadgeButton" xml:space="preserve">
+    <value>Staff access badge</value>
+  </data>
+	<data name="StaffAccessBadgeTitle" xml:space="preserve">
+    <value>Staff access badge</value>
+  </data>
+	<data name="StaffAccessBadgeDescription" xml:space="preserve">
+    <value>Use this short-lived QR for internal staff checkpoints and controlled business operations.</value>
+  </data>
+	<data name="StaffAccessBadgeSummaryFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+	<data name="StaffAccessBadgeRoleFormat" xml:space="preserve">
+    <value>Role: {0}</value>
+  </data>
+	<data name="StaffAccessBadgeExpiresInFormat" xml:space="preserve">
+    <value>Expires in {0}</value>
+  </data>
+	<data name="StaffAccessBadgeExpired" xml:space="preserve">
+    <value>Badge expired. Refreshing…</value>
+  </data>
+	<data name="StaffAccessBadgeRefreshButton" xml:space="preserve">
+    <value>Refresh badge</value>
+  </data>
+	<data name="StaffAccessBadgeLoadFailed" xml:space="preserve">
+    <value>Unable to prepare staff badge right now.</value>
+  </data>
+	<data name="StaffAccessBadgeUnknownRole" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+
 
 	<data name="ProfileTitle" xml:space="preserve">
     <value>Profile</value>
@@ -373,6 +404,15 @@
   </data>
   <data name="DashboardRefreshButton" xml:space="preserve">
     <value>Refresh</value>
+  </data>
+  <data name="DashboardExportCsvButton" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
+  <data name="DashboardExportCsvShareTitle" xml:space="preserve">
+    <value>Share dashboard CSV</value>
+  </data>
+  <data name="DashboardExportCsvFailed" xml:space="preserve">
+    <value>Unable to export dashboard CSV.</value>
   </data>
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Unable to load dashboard report.</value>

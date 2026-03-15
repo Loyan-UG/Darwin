@@ -86,6 +86,17 @@ public static class AppResources
     public static string SettingsSubtitle => ResourceManager.GetString(nameof(SettingsSubtitle), Culture) ?? "Manage your account preferences.";
     public static string SettingsProfileButton => ResourceManager.GetString(nameof(SettingsProfileButton), Culture) ?? "Profile";
     public static string SettingsChangePasswordButton => ResourceManager.GetString(nameof(SettingsChangePasswordButton), Culture) ?? "Change password";
+    public static string SettingsStaffAccessBadgeButton => ResourceManager.GetString(nameof(SettingsStaffAccessBadgeButton), Culture) ?? "Staff access badge";
+
+    public static string StaffAccessBadgeTitle => ResourceManager.GetString(nameof(StaffAccessBadgeTitle), Culture) ?? "Staff access badge";
+    public static string StaffAccessBadgeDescription => ResourceManager.GetString(nameof(StaffAccessBadgeDescription), Culture) ?? "Use this short-lived QR for internal staff checkpoints and controlled business operations.";
+    public static string StaffAccessBadgeSummaryFormat => ResourceManager.GetString(nameof(StaffAccessBadgeSummaryFormat), Culture) ?? "{0} · {1}";
+    public static string StaffAccessBadgeRoleFormat => ResourceManager.GetString(nameof(StaffAccessBadgeRoleFormat), Culture) ?? "Role: {0}";
+    public static string StaffAccessBadgeExpiresInFormat => ResourceManager.GetString(nameof(StaffAccessBadgeExpiresInFormat), Culture) ?? "Expires in {0}";
+    public static string StaffAccessBadgeExpired => ResourceManager.GetString(nameof(StaffAccessBadgeExpired), Culture) ?? "Badge expired. Refreshing…";
+    public static string StaffAccessBadgeRefreshButton => ResourceManager.GetString(nameof(StaffAccessBadgeRefreshButton), Culture) ?? "Refresh badge";
+    public static string StaffAccessBadgeLoadFailed => ResourceManager.GetString(nameof(StaffAccessBadgeLoadFailed), Culture) ?? "Unable to prepare staff badge right now.";
+    public static string StaffAccessBadgeUnknownRole => ResourceManager.GetString(nameof(StaffAccessBadgeUnknownRole), Culture) ?? "Unknown";
 
     public static string ProfileTitle => ResourceManager.GetString(nameof(ProfileTitle), Culture) ?? "Profile";
     public static string ProfileSectionTitle => ResourceManager.GetString(nameof(ProfileSectionTitle), Culture) ?? "My profile";
@@ -124,6 +135,9 @@ public static class AppResources
     public static string DashboardSubtitle => ResourceManager.GetString(nameof(DashboardSubtitle), Culture) ?? "Operational snapshot for recent scanner activity.";
     public static string DashboardLookbackLabel => ResourceManager.GetString(nameof(DashboardLookbackLabel), Culture) ?? "Window";
     public static string DashboardRefreshButton => ResourceManager.GetString(nameof(DashboardRefreshButton), Culture) ?? "Refresh";
+    public static string DashboardExportCsvButton => ResourceManager.GetString(nameof(DashboardExportCsvButton), Culture) ?? "Export CSV";
+    public static string DashboardExportCsvShareTitle => ResourceManager.GetString(nameof(DashboardExportCsvShareTitle), Culture) ?? "Share dashboard CSV";
+    public static string DashboardExportCsvFailed => ResourceManager.GetString(nameof(DashboardExportCsvFailed), Culture) ?? "Unable to export dashboard CSV.";
     public static string DashboardLoadFailed => ResourceManager.GetString(nameof(DashboardLoadFailed), Culture) ?? "Unable to load dashboard report.";
     public static string DashboardTopCustomersTitle => ResourceManager.GetString(nameof(DashboardTopCustomersTitle), Culture) ?? "Top customers";
     public static string DashboardTopCustomersEmpty => ResourceManager.GetString(nameof(DashboardTopCustomersEmpty), Culture) ?? "No customer interactions were recorded in the selected window.";

@@ -451,40 +451,12 @@ services.AddDarwinMobileShared(new ApiOptions
 
 ---
 
-## 17) Mobile API Matrix (Consumer/Business)
+## 17) API Dependencies (Mobile-facing View)
 
-| Area      | Endpoint                                     | Policy                      | Client     |
-|-----------|----------------------------------------------|-----------------------------|------------|
-| Auth      | POST /api/v1/auth/login                      | AllowAnonymous              | Both       |
-| Auth      | POST /api/v1/auth/refresh                    | AllowAnonymous              | Both       |
-| Auth      | POST /api/v1/auth/logout                     | Authorize                   | Both       |
-| Auth      | POST /api/v1/auth/logout-all                 | Authorize                   | Both       |
-| Auth      | POST /api/v1/auth/register                   | AllowAnonymous              | Consumer   |
-| Auth      | POST /api/v1/auth/password/request-reset     | AllowAnonymous              | Consumer   |
-| Auth      | POST /api/v1/auth/password/reset             | AllowAnonymous              | Consumer   |
-| Auth      | POST /api/v1/auth/password/change            | Authorize                   | Both       |
-| Notifications | POST /api/v1/notifications/devices/register | Authorize                | Both       |
-| Profile   | GET /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
-| Profile   | PUT /api/v1/profile/me                       | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | POST /api/v1/loyalty/scan/prepare            | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | POST /api/v1/loyalty/scan/process            | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/scan/confirm-accrual    | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/scan/confirm-redemption | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | GET /api/v1/loyalty/my/accounts              | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/my/history/{businessId}  | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/account/{businessId}     | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/business/{id}/rewards    | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/my/businesses            | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | POST /api/v1/loyalty/my/timeline             | perm:AccessMemberArea       | Consumer   |
-| Loyalty   | GET /api/v1/loyalty/business/campaigns      | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/business/campaigns     | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | PUT /api/v1/loyalty/business/campaigns/{id} | perm:AccessLoyaltyBusiness  | Business   |
-| Loyalty   | POST /api/v1/loyalty/business/campaigns/{id}/activation | perm:AccessLoyaltyBusiness  | Business   |
-| Discovery | POST /api/v1/businesses/list                 | AllowAnonymous              | Consumer   |
-| Discovery | POST /api/v1/businesses/map                  | AllowAnonymous              | Consumer   |
-| Discovery | GET /api/v1/businesses/{id}                  | AllowAnonymous              | Consumer   |
-| Discovery | GET /api/v1/businesses/{id}/with-my-account  | perm:AccessMemberArea       | Consumer   |
-| Businesses | POST /api/v1/businesses/onboarding         | Authorize                   | Both       |
+Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and consume endpoints through `Darwin.Mobile.Shared` service facades.
+
+- For complete endpoint inventory, policies, request/response contracts, and troubleshooting playbooks, use **`DarwinWebApi.md`**.
+- Keep this mobile guide focused on app-side behavior, UX rules, threading, platform integration, and mobile roadmap status.
 
 ---
 
@@ -506,7 +478,7 @@ services.AddDarwinMobileShared(new ApiOptions
 - Consumer Profile refreshes push diagnostics on every `OnAppearing` so permission/token changes are reflected after returning from system settings.
 - Rewards tab now includes multi-business overview metrics (joined business count, aggregated points, top business) and a quick action to open selected-business QR.
 - Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
-- Feed promotions now apply delivery guardrails on the client: de-duplication (business/title/CTA), max 6 cards, and 8-hour suppression window with fallback when everything is suppressed.
+- Feed promotions keep lightweight client fallback guardrails for resilience, while primary guardrail enforcement now runs server-side with applied-policy + diagnostics returned by the promotions endpoint.
 - Device registration now updates `UserEngagementSnapshot` baseline engagement metrics (last activity + heartbeat count metadata) to prepare inactive-reminder targeting and measurement.
 - Application now includes inactive-reminder orchestration handlers: candidate selection query (threshold + cooldown + push-enabled device check) and per-outcome recorder that persists `Sent`/`Failed`/`Suppressed` metadata in `UserEngagementSnapshot`.
 - WebApi now includes `InactiveReminderBackgroundService` scaffold (config-gated) that periodically runs reminder batch orchestration and logs evaluated/dispatched/suppressed/failed counters.
@@ -519,21 +491,24 @@ services.AddDarwinMobileShared(new ApiOptions
 - Promotions `Claim` tracking is now hooked from redemption QR generation (`RewardClaimIntent`) so conversion funnel has event coverage for all three stages.
 - Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
 - Promotions feed query now includes active in-app campaign entities from server-side marketing data and merges them with legacy derived cards to preserve rollout safety.
-- Promotions endpoint now returns the server-applied feed policy and enforces server-side guardrails (de-duplication, max-card cap, suppression window) for better client/server consistency.
+- Promotions endpoint now returns the server-applied feed policy and enforces server-side guardrails (de-duplication, max-card cap, suppression/frequency windows) for better client/server consistency.
 - Business campaign operations endpoint set is now available for list/create/update/activation workflows, enabling controlled campaign lifecycle management from business interfaces.
 - `Darwin.Mobile.Shared` now exposes business campaign operations in `ILoyaltyService` to unblock Business app integration without duplicating API plumbing in UI projects.
 - Business app Rewards page now ships minimal campaign operations UI (list + activate/deactivate + create/update editor) for mobile-first campaign lifecycle management.
 - Business campaign editor now includes optional UTC schedule inputs with pre-submit validation for date format and start/end range.
 - Business campaign editor now includes channel selection controls (In-App / In-App+Push) and channel validation before API mutations.
 - Business campaign editor now validates and submits optional `targeting/payload` JSON object fields with localized guardrail errors before API mutations.
+- Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
+- Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
+- Business Dashboard now includes CSV export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
+- Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
 - Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
-- Extend guardrails with frequency-policy controls and expose per-policy diagnostics for operations dashboards.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
 - Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
 
@@ -592,97 +567,12 @@ If login succeeds (for example `cons1@darwin.de`) but no businesses are shown in
 
 ---
 
-## Postman verification guide (WebApi)
+## WebApi Verification
 
-Use this flow to confirm whether the backend is healthy independently from the mobile app.
+WebApi endpoint verification and Postman walkthroughs were moved to **`DarwinWebApi.md`**.
+Use that document as the source of truth for:
 
-- **Important:** In this environment `JwtRequireDeviceBinding = true`, so `deviceId` must be sent on login and refresh calls.
-
-### 1) Login and capture tokens
-
-- **POST** `{{baseUrl}}/api/v1/auth/login`
-- Body:
-
-```json
-{
-  "email": "cons1@darwin.de",
-  "password": "Consumer123!",
-  "deviceId": "postman-consumer-device"
-}
-```
-
-- Save `accessToken` and `refreshToken` from response.
-
-### 2) List businesses (discover endpoint)
-
-- **POST** `{{baseUrl}}/api/v1/businesses/list`
-- Authorization: `Bearer {{accessToken}}`
-- Body:
-
-```json
-{
-  "page": 1,
-  "pageSize": 20,
-  "query": null,
-  "city": null,
-  "countryCode": null,
-  "addressQuery": null,
-  "categoryKindKey": null,
-  "near": null,
-  "radiusMeters": null
-}
-```
-
-- Expected: `items` contains seeded businesses (e.g., Café Aurora, Bäckerei König, ...).
-
-### 3) Get business detail
-
-- **GET** `{{baseUrl}}/api/v1/businesses/{{businessId}}`
-- Authorization: `Bearer {{accessToken}}`
-
-### 4) Join loyalty program
-
-- **POST** `{{baseUrl}}/api/v1/loyalty/account/{{businessId}}/join`
-- Authorization: `Bearer {{accessToken}}`
-- Body:
-
-```json
-{
-  "businessLocationId": null
-}
-```
-
-### 5) Prepare scan session (QR token)
-
-- **POST** `{{baseUrl}}/api/v1/loyalty/scan/prepare`
-- Authorization: `Bearer {{accessToken}}`
-- Body:
-
-```json
-{
-  "businessId": "{{businessId}}",
-  "mode": "Accrual",
-  "selectedRewardTierIds": [],
-  "businessLocationId": null,
-  "deviceId": "postman-consumer-device"
-}
-```
-
-- Expected: response includes session token used by consumer QR.
-
-### 6) Business-side processing test (requires business account token)
-
-1. Login as business user (`biz1@darwin.de` / `Business123!`).
-2. Call process endpoint with token from step 5.
-
-- **POST** `{{baseUrl}}/api/v1/loyalty/scan/process`
-
-```json
-{
-  "scanSessionToken": "{{scanSessionToken}}"
-}
-```
-
-Then confirm accrual/redemption with corresponding endpoints.
-
-> If Postman works but app does not, the issue is inside mobile UI/data-binding flow, not backend contracts or handlers.
+- auth/device-binding preconditions,
+- endpoint-specific request/response examples,
+- role/policy requirements,
+- and operational diagnostics/troubleshooting.
