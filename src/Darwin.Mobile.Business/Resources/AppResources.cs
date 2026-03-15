@@ -210,6 +210,7 @@ public static class AppResources
     public static string RewardsCampaignClearFiltersButton => ResourceManager.GetString(nameof(RewardsCampaignClearFiltersButton), Culture) ?? "Clear filters";
     public static string RewardsCampaignFilterSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignFilterSummaryFormat), Culture) ?? "Showing {0} of {1} campaigns";
     public static string RewardsCampaignStateMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricsFormat), Culture) ?? "Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}";
+    public static string RewardsCampaignStateMetricChipFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricChipFormat), Culture) ?? "{0} ({1})";
 
 
 }

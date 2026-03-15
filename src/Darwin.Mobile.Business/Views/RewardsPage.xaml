@@ -202,6 +202,25 @@
                    FontSize="12"
                    Opacity="0.75" />
 
+            <HorizontalStackLayout Spacing="6">
+                <Button Text="{Binding DraftCampaignMetricText}"
+                        Command="{Binding ApplyCampaignStateFilterCommand}"
+                        CommandParameter="Draft"
+                        FontSize="12" />
+                <Button Text="{Binding ScheduledCampaignMetricText}"
+                        Command="{Binding ApplyCampaignStateFilterCommand}"
+                        CommandParameter="Scheduled"
+                        FontSize="12" />
+                <Button Text="{Binding ActiveCampaignMetricText}"
+                        Command="{Binding ApplyCampaignStateFilterCommand}"
+                        CommandParameter="Active"
+                        FontSize="12" />
+                <Button Text="{Binding ExpiredCampaignMetricText}"
+                        Command="{Binding ApplyCampaignStateFilterCommand}"
+                        CommandParameter="Expired"
+                        FontSize="12" />
+            </HorizontalStackLayout>
+
             <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyFiltered}"
                    Opacity="0.8"
                    IsVisible="{Binding HasCampaigns, Converter={StaticResource InverseBoolConverter}}" />

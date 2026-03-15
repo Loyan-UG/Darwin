@@ -570,4 +570,7 @@
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Entwurf: {0} · Geplant: {1} · Aktiv: {2} · Abgelaufen: {3}</value>
   </data>
+  <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
 </root>

@@ -120,6 +120,7 @@ public sealed class RewardsViewModel : BaseViewModel
         SaveCampaignCommand = new AsyncCommand(SaveCampaignAsync, () => !IsBusy && CanManageRewards);
         NewCampaignCommand = new AsyncCommand(NewCampaignAsync, () => !IsBusy && CanManageRewards);
         ClearCampaignFiltersCommand = new AsyncCommand(ClearCampaignFiltersAsync, () => !IsBusy && HasActiveCampaignFilters);
+        ApplyCampaignStateFilterCommand = new AsyncCommand<string>(ApplyCampaignStateFilterAsync, state => !IsBusy && !string.IsNullOrWhiteSpace(state));
     }
 
 
@@ -289,6 +290,26 @@ public sealed class RewardsViewModel : BaseViewModel
         ExpiredCampaignCount);
 
     /// <summary>
+    /// KPI chip text for Draft campaigns.
+    /// </summary>
+    public string DraftCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterDraft, DraftCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for Scheduled campaigns.
+    /// </summary>
+    public string ScheduledCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterScheduled, ScheduledCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for Active campaigns.
+    /// </summary>
+    public string ActiveCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterActive, ActiveCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for Expired campaigns.
+    /// </summary>
+    public string ExpiredCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterExpired, ExpiredCampaignCount);
+
+    /// <summary>
     /// User-entered points required for the reward tier.
     /// </summary>
     public string PointsRequiredInput
@@ -439,6 +460,7 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand SaveCampaignCommand { get; }
     public AsyncCommand NewCampaignCommand { get; }
     public AsyncCommand ClearCampaignFiltersCommand { get; }
+    public AsyncCommand<string> ApplyCampaignStateFilterCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -1114,6 +1136,126 @@ public sealed class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(ActiveCampaignCount));
         OnPropertyChanged(nameof(ExpiredCampaignCount));
         OnPropertyChanged(nameof(CampaignStateMetricsSummary));
+        OnPropertyChanged(nameof(DraftCampaignMetricText));
+        OnPropertyChanged(nameof(ScheduledCampaignMetricText));
+        OnPropertyChanged(nameof(ActiveCampaignMetricText));
+        OnPropertyChanged(nameof(ExpiredCampaignMetricText));
+        OnPropertyChanged(nameof(HasActiveCampaignFilters));
+        ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
+        ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Counts campaigns by state key in a case-insensitive manner.
+    /// </summary>
+    /// <param name="state">Lifecycle state key.</param>
+    /// <returns>Number of campaigns with the requested state.</returns>
+    private int CountCampaignsByState(string state)
+    {
+        return _allCampaigns.Count(c => string.Equals(c.CampaignState, state, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Clears campaign search/state filters and re-displays full campaign list.
+    /// </summary>
+    private Task ClearCampaignFiltersAsync()
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            CampaignSearchQuery = string.Empty;
+            SelectedCampaignStateFilter = CampaignStateFilterOptions.FirstOrDefault();
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Applies the requested lifecycle state directly from KPI action chips.
+    /// </summary>
+    /// <param name="state">Target lifecycle state key.</param>
+    private Task ApplyCampaignStateFilterAsync(string? state)
+    {
+        if (IsBusy || string.IsNullOrWhiteSpace(state))
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            SelectedCampaignStateFilter = CampaignStateFilterOptions
+                .FirstOrDefault(option => string.Equals(option.StateKey, state, StringComparison.OrdinalIgnoreCase))
+                ?? SelectedCampaignStateFilter;
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Replaces internal campaign cache and applies the active UI filters.
+    /// </summary>
+    /// <param name="campaigns">Latest campaigns from API.</param>
+    private void ReplaceCampaigns(IReadOnlyCollection<BusinessCampaignEditorItem> campaigns)
+    {
+        _allCampaigns.Clear();
+        _allCampaigns.AddRange(campaigns);
+        ApplyCampaignFilter();
+    }
+
+    /// <summary>
+    /// Applies state/query filters to the cached campaign list and updates visible list.
+    /// </summary>
+    private void ApplyCampaignFilter()
+    {
+        var stateKey = SelectedCampaignStateFilter?.StateKey;
+        var query = CampaignSearchQuery?.Trim();
+
+        var filteredQuery = _allCampaigns.Where(campaign =>
+            (string.IsNullOrWhiteSpace(stateKey) || string.Equals(campaign.CampaignState, stateKey, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(query) ||
+             campaign.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+             campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase)));
+
+        var sortMode = SelectedCampaignSortOption?.Mode ?? CampaignSortMode.StartDateDesc;
+        var filtered = sortMode switch
+        {
+            CampaignSortMode.StartDateAsc => filteredQuery
+                .OrderBy(x => x.StartsAtUtc)
+                .ThenBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            CampaignSortMode.TitleAsc => filteredQuery
+                .OrderBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(x => x.StartsAtUtc)
+                .ToList(),
+            CampaignSortMode.TitleDesc => filteredQuery
+                .OrderByDescending(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(x => x.StartsAtUtc)
+                .ToList(),
+            _ => filteredQuery
+                .OrderByDescending(x => x.StartsAtUtc)
+                .ThenByDescending(x => x.IsActive)
+                .ToList()
+        };
+
+        Campaigns.Clear();
+        foreach (var campaign in filtered)
+        {
+            Campaigns.Add(campaign);
+        }
+
+        OnPropertyChanged(nameof(HasCampaigns));
+        OnPropertyChanged(nameof(TotalCampaignCount));
+        OnPropertyChanged(nameof(FilteredCampaignCount));
+        OnPropertyChanged(nameof(CampaignFilterSummary));
+        OnPropertyChanged(nameof(DraftCampaignCount));
+        OnPropertyChanged(nameof(ScheduledCampaignCount));
+        OnPropertyChanged(nameof(ActiveCampaignCount));
+        OnPropertyChanged(nameof(ExpiredCampaignCount));
+        OnPropertyChanged(nameof(CampaignStateMetricsSummary));
         OnPropertyChanged(nameof(HasActiveCampaignFilters));
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
     }
@@ -1357,6 +1499,7 @@ public sealed class RewardsViewModel : BaseViewModel
         SaveCampaignCommand.RaiseCanExecuteChanged();
         NewCampaignCommand.RaiseCanExecuteChanged();
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
+        ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
     }
 }
 
