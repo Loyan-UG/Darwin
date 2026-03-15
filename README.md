@@ -1,4 +1,4 @@
-# Darwin Platform — CMS + Commerce + CRM + WebApi + Mobile
+# 🛒 Darwin CMS + E-Commerce Platform
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)

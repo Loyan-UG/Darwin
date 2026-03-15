@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
 
-using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Loyalty;
 
@@ -13,17 +13,15 @@ namespace Darwin.Tests.Integration.Loyalty;
 ///     These tests ensure anonymous callers are blocked before any business logic
 ///     handlers are executed.
 /// </summary>
-public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Initializes the test suite with a host configured for Testing environment.
     /// </summary>
     /// <param name="factory">Shared host factory used to create isolated clients.</param>
     public LoyaltyEndpointBaselineTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -127,8 +125,6 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-
-
     /// <summary>
     ///     Verifies that redemption confirmation endpoint is protected by authentication
     ///     and rejects anonymous requests before business rules are evaluated.
@@ -174,8 +170,6 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-
-
     /// <summary>
     ///     Verifies that promotions feed endpoint is protected and cannot be
     ///     queried by anonymous callers.
@@ -197,10 +191,6 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
-
-
-
-
 
     /// <summary>
     ///     Verifies that business-specific loyalty account snapshot endpoint is protected
@@ -242,8 +232,6 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-
-
     /// <summary>
     ///     Verifies that next-reward lookup endpoint is protected and rejects
     ///     anonymous requests to prevent unauthorized account insight exposure.
@@ -262,8 +250,6 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-
-
     /// <summary>
     ///     Verifies that per-business loyalty history endpoint is protected and
     ///     rejects anonymous requests.
@@ -280,14 +266,5 @@ public sealed class LoyaltyEndpointBaselineTests : IClassFixture<WebApplicationF
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    /// <summary>
-    ///     Creates an HTTPS client so status assertions are not affected by HTTP->HTTPS redirect behavior.
-    /// </summary>
-    /// <returns>Configured HttpClient instance.</returns>
-    private HttpClient CreateHttpsClient()
-    {
-        return IntegrationTestClientFactory.CreateHttpsClient(_factory);
     }
 }

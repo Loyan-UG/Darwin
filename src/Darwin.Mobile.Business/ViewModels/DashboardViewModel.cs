@@ -258,4 +258,61 @@ public sealed class DashboardViewModel : BaseViewModel
 
         return "\"" + value.Replace("\"", "\"\"") + "\"";
     }
+
+    /// <summary>
+    /// Creates a stable CSV payload containing KPI summary, top customers, and recent activity rows.
+    /// </summary>
+    private static string BuildDashboardCsv(BusinessDashboardSnapshot snapshot, int lookbackDays)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Section,Metric,Value");
+        builder.AppendLine($"Summary,LookbackDays,{lookbackDays}");
+        builder.AppendLine($"Summary,TotalSessions,{snapshot.TotalSessions}");
+        builder.AppendLine($"Summary,AccrualCount,{snapshot.AccrualCount}");
+        builder.AppendLine($"Summary,RedemptionCount,{snapshot.RedemptionCount}");
+        builder.AppendLine($"Summary,TotalAccruedPoints,{snapshot.TotalAccruedPoints}");
+        builder.AppendLine($"Summary,TotalRedeemedPoints,{snapshot.TotalRedeemedPoints}");
+
+        builder.AppendLine();
+        builder.AppendLine("TopCustomers,CustomerDisplayName,InteractionsCount");
+        foreach (var customer in snapshot.TopCustomers)
+        {
+            builder.Append("TopCustomers,")
+                .Append(EscapeCsv(customer.CustomerDisplayName)).Append(',')
+                .Append(customer.InteractionsCount.ToString(CultureInfo.InvariantCulture))
+                .AppendLine();
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("RecentActivities,OccurredAtUtc,ActivityKind,CustomerDisplayName,PointsDelta");
+        foreach (var activity in snapshot.RecentActivities.OrderByDescending(x => x.OccurredAtUtc))
+        {
+            builder.Append("RecentActivities,")
+                .Append(EscapeCsv(activity.OccurredAtUtc.ToString("O", CultureInfo.InvariantCulture))).Append(',')
+                .Append(EscapeCsv(activity.ActivityKind)).Append(',')
+                .Append(EscapeCsv(activity.CustomerDisplayName)).Append(',')
+                .Append(activity.PointsDelta.ToString(CultureInfo.InvariantCulture))
+                .AppendLine();
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Escapes CSV values according to RFC4180-compatible rules.
+    /// </summary>
+    private static string EscapeCsv(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        if (!value.Contains(',') && !value.Contains('"') && !value.Contains('\n') && !value.Contains('\r'))
+        {
+            return value;
+        }
+
+        return "\"" + value.Replace("\"", "\"\"") + "\"";
+    }
 }
