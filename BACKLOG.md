@@ -168,7 +168,7 @@ It is designed as the **single source of truth** for development planning.
 - [~] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
-- Full analytics module (CSV/PDF export)
+- [~] Full analytics module (CSV/PDF export)
 - Business subscription management (Stripe)
 - Staff QR codes for internal access
 
@@ -199,6 +199,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Hardened platform build wiring (Android-only Firebase package + explicit iOS/MacCatalyst entitlements binding) to prevent cross-target restore/signing misconfiguration.
 - [x] Added Android 13+ startup notification-permission request bootstrap with one-time prompt persistence, and removed legacy fallback push token providers to reduce production ambiguity.
 - [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
+- [x] Business dashboard now supports CSV export (summary KPIs + top customers + recent activities) through native share flow for lightweight operator reporting.
 - [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
 - [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
 - [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.

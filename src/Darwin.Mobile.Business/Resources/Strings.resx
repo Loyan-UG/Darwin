@@ -374,6 +374,15 @@
   <data name="DashboardRefreshButton" xml:space="preserve">
     <value>Refresh</value>
   </data>
+  <data name="DashboardExportCsvButton" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
+  <data name="DashboardExportCsvShareTitle" xml:space="preserve">
+    <value>Share dashboard CSV</value>
+  </data>
+  <data name="DashboardExportCsvFailed" xml:space="preserve">
+    <value>Unable to export dashboard CSV.</value>
+  </data>
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Unable to load dashboard report.</value>
   </data>
