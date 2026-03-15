@@ -498,12 +498,13 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business campaign editor now includes optional UTC schedule inputs with pre-submit validation for date format and start/end range.
 - Business campaign editor now includes channel selection controls (In-App / In-App+Push) and channel validation before API mutations.
 - Business campaign editor now validates and submits optional `targeting/payload` JSON object fields with localized guardrail errors before API mutations.
+- Business campaign editor now blocks duplicate internal campaign names on the client before API mutations, reducing avoidable retry loops for operators.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
-- Business Dashboard now includes CSV export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
+- Business Dashboard now includes CSV + PDF export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
