@@ -851,6 +851,7 @@ public sealed class ContractSerializationCompatibilityTests
         // Assert
         json.Should().Contain("\"items\"");
         json.Should().Contain("\"total\"");
+        json.Should().Contain("\"id\"");
         json.Should().Contain("\"businessId\"");
         json.Should().Contain("\"name\"");
         json.Should().Contain("\"title\"");

@@ -532,6 +532,10 @@ This status is derived from the current repository state and must be refreshed w
 
 ### Pending
 
+**Status summary (clear split):**
+- **Implemented in code:** all currently scoped test packs have authored tests committed in repository.
+- **Still remaining:** CLI/CI execution evidence, stabilization, and soft-gate rollback completion.
+
 - [x] Wire `Darwin.Tests.Integration` to `Darwin.WebApi` with `WebApplicationFactory<Program>` (initial smoke-test baseline completed).
 - [ ] **P1 — Identity happy-path matrix (authorized):** baseline + core negative-path coverage and authorized matrix are implemented in code; pending CLI/CI execution evidence.
 - [ ] **P2 — Profile optimistic concurrency matrix (`Id` + `RowVersion`):** baseline auth-guard coverage and authorized success/stale-rowversion matrix are implemented in code; pending CLI/CI execution evidence.
