@@ -483,6 +483,9 @@
   <data name="RewardsCampaignValidationFailed" xml:space="preserve">
     <value>Kampagnenname und Titel sind erforderlich.</value>
   </data>
+  <data name="RewardsCampaignNameDuplicateValidationFailed" xml:space="preserve">
+    <value>Eine Kampagne mit diesem internen Namen existiert bereits.</value>
+  </data>
   <data name="RewardsCampaignStartsAtPlaceholder" xml:space="preserve">
     <value>Start UTC (yyyy-MM-dd HH:mm, optional)</value>
   </data>

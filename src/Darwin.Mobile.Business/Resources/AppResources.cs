@@ -181,6 +181,7 @@ public static class AppResources
     public static string RewardsCampaignUpdateButton => ResourceManager.GetString(nameof(RewardsCampaignUpdateButton), Culture) ?? "Update campaign";
     public static string RewardsCampaignSaveFailed => ResourceManager.GetString(nameof(RewardsCampaignSaveFailed), Culture) ?? "Unable to save campaign.";
     public static string RewardsCampaignValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignValidationFailed), Culture) ?? "Campaign name and title are required.";
+    public static string RewardsCampaignNameDuplicateValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignNameDuplicateValidationFailed), Culture) ?? "A campaign with this internal name already exists.";
     public static string RewardsCampaignStartsAtPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignStartsAtPlaceholder), Culture) ?? "Start UTC (yyyy-MM-dd HH:mm, optional)";
     public static string RewardsCampaignEndsAtPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignEndsAtPlaceholder), Culture) ?? "End UTC (yyyy-MM-dd HH:mm, optional)";
     public static string RewardsCampaignDateValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignDateValidationFailed), Culture) ?? "Campaign date format is invalid. Use yyyy-MM-dd HH:mm.";

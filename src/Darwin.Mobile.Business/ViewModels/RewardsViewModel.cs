@@ -673,6 +673,13 @@ public sealed class RewardsViewModel : BaseViewModel
             return;
         }
 
+        var normalizedCampaignName = CampaignNameInput.Trim();
+        if (HasConflictingCampaignName(normalizedCampaignName, _editingCampaignId))
+        {
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignNameDuplicateValidationFailed);
+            return;
+        }
+
         if (!TryParseCampaignDate(CampaignStartsAtInput, out var startsAtUtc, out var startsError))
         {
             RunOnMain(() => ErrorMessage = startsError ?? AppResources.RewardsCampaignDateValidationFailed);
@@ -724,7 +731,7 @@ public sealed class RewardsViewModel : BaseViewModel
                     .UpdateBusinessCampaignAsync(new UpdateBusinessCampaignRequest
                     {
                         Id = _editingCampaignId,
-                        Name = CampaignNameInput.Trim(),
+                        Name = normalizedCampaignName,
                         Title = CampaignTitleInput.Trim(),
                         Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
                         Channels = selectedChannels,
@@ -741,7 +748,7 @@ public sealed class RewardsViewModel : BaseViewModel
                 var createResult = await _loyaltyService
                     .CreateBusinessCampaignAsync(new CreateBusinessCampaignRequest
                     {
-                        Name = CampaignNameInput.Trim(),
+                        Name = normalizedCampaignName,
                         Title = CampaignTitleInput.Trim(),
                         Body = string.IsNullOrWhiteSpace(CampaignBodyInput) ? null : CampaignBodyInput.Trim(),
                         Channels = selectedChannels,
@@ -778,6 +785,24 @@ public sealed class RewardsViewModel : BaseViewModel
             IsBusy = false;
             RaiseCommandCanExecuteChanged();
         }
+    }
+
+    /// <summary>
+    /// Determines whether the entered campaign name conflicts with an existing campaign item in current list.
+    /// </summary>
+    /// <param name="candidateName">Normalized candidate campaign name.</param>
+    /// <param name="editingCampaignId">Current edit target id; ignored during duplicate check.</param>
+    /// <returns><c>true</c> when another campaign already uses the same name.</returns>
+    private bool HasConflictingCampaignName(string candidateName, Guid editingCampaignId)
+    {
+        if (string.IsNullOrWhiteSpace(candidateName))
+        {
+            return false;
+        }
+
+        return Campaigns.Any(campaign =>
+            campaign.Id != editingCampaignId &&
+            string.Equals(campaign.Name?.Trim(), candidateName, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
