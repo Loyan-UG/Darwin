@@ -503,7 +503,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
-- Business Dashboard now includes CSV export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
+- Business Dashboard now includes CSV + PDF export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
