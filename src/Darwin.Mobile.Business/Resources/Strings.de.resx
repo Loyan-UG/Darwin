@@ -374,6 +374,15 @@
   <data name="DashboardRefreshButton" xml:space="preserve">
     <value>Aktualisieren</value>
   </data>
+  <data name="DashboardExportCsvButton" xml:space="preserve">
+    <value>CSV exportieren</value>
+  </data>
+  <data name="DashboardExportCsvShareTitle" xml:space="preserve">
+    <value>Dashboard-CSV teilen</value>
+  </data>
+  <data name="DashboardExportCsvFailed" xml:space="preserve">
+    <value>Dashboard-CSV konnte nicht exportiert werden.</value>
+  </data>
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Dashboard-Bericht konnte nicht geladen werden.</value>
   </data>
