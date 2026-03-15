@@ -29,6 +29,7 @@ public sealed partial class HomeViewModel : ObservableObject
 
     private void OnStart()
     {
-        // TODO: Navigate to the first functional feature of phase 1.
+        // Home page currently serves as a lightweight welcome surface.
+        // Navigation entry points are provided by AppShell tabs.
     }
 }

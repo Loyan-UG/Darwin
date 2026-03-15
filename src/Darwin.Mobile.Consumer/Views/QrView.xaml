@@ -2,8 +2,26 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Darwin.Mobile.Consumer.Views.QrView">
-    <!-- TODO: Bind to QrViewModel Token Text; render QR using ZXing.NET.MAUI view -->
-    <Grid Padding="24">
-        <Label Text="QR Placeholder" />
+    <Grid Padding="24"
+          RowDefinitions="Auto,Auto"
+          RowSpacing="12">
+        <!--
+            Reusable QR presenter for consumer flows.
+            BindingContext is inherited from the parent page (typically QrViewModel).
+        -->
+        <Image Grid.Row="0"
+               Source="{Binding QrImage}"
+               HeightRequest="200"
+               WidthRequest="200"
+               HorizontalOptions="Center"
+               IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
+
+        <Label Grid.Row="1"
+               Text="{Binding QrToken}"
+               FontSize="12"
+               Opacity="0.6"
+               HorizontalOptions="Center"
+               HorizontalTextAlignment="Center"
+               IsVisible="{Binding QrToken, Converter={StaticResource NullCheckConverter}}" />
     </Grid>
 </ContentView>
