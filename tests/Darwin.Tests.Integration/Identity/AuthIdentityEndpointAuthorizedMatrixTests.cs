@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Identity;
 
@@ -15,17 +16,15 @@ namespace Darwin.Tests.Integration.Identity;
 ///     The suite validates end-user token lifecycle operations that mobile apps rely on:
 ///     register/login, refresh, change-password, logout, and global logout.
 /// </summary>
-public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Initializes the test fixture with a host configured for Testing environment.
     /// </summary>
     /// <param name="factory">Shared WebApplicationFactory instance.</param>
     public AuthIdentityEndpointAuthorizedMatrixTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -35,7 +34,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task Login_Should_ReturnTokenResponse_WhenRegisteredUserCredentialsAreValid()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
 
@@ -66,7 +65,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task Refresh_Should_ReturnNewTokenPair_WhenRefreshTokenIsValid()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
         var loginToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
@@ -95,7 +94,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task ChangePassword_Should_Succeed_AndInvalidateOldPassword_WhenAuthorized()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
         var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
@@ -143,7 +142,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task Logout_Should_Succeed_AndRevokeSubmittedRefreshToken_WhenAuthorized()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
         var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
@@ -176,7 +175,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : IClassFixture<We
     public async Task LogoutAll_Should_Succeed_AndRevokeAllRefreshTokens_WhenAuthorized()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
 

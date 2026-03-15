@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Loyalty;
 
@@ -17,17 +18,15 @@ namespace Darwin.Tests.Integration.Loyalty;
 ///     These tests exercise real multi-step journeys across consumer and business roles:
 ///     prepare, process, and confirm for both accrual and redemption modes.
 /// </summary>
-public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class LoyaltyEndpointAuthorizedE2eTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Initializes the test fixture with a host configured for Testing environment.
     /// </summary>
     /// <param name="factory">Shared WebApplicationFactory instance.</param>
     public LoyaltyEndpointAuthorizedE2eTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -41,8 +40,8 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
     public async Task PrepareProcessConfirmAccrual_Should_Succeed_EndToEnd_WhenAuthorized()
     {
         // Arrange
-        using var consumerClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
-        using var businessClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var consumerClient = CreateHttpsClient();
+        using var businessClient = CreateHttpsClient();
 
         var consumerToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(consumerClient, SeedConsumerEmail, SeedConsumerPassword, SeedConsumerDeviceId);
         var businessToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(businessClient, SeedBusinessEmail, SeedBusinessPassword, SeedBusinessDeviceId);
@@ -113,8 +112,8 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : IClassFixture<WebApplica
     public async Task PrepareProcessConfirmRedemption_Should_Succeed_EndToEnd_WhenAuthorized()
     {
         // Arrange
-        using var consumerClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
-        using var businessClient = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var consumerClient = CreateHttpsClient();
+        using var businessClient = CreateHttpsClient();
 
         var consumerToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(consumerClient, SeedConsumerEmail, SeedConsumerPassword, SeedConsumerDeviceId);
         var businessToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(businessClient, SeedBusinessEmail, SeedBusinessPassword, SeedBusinessDeviceId);

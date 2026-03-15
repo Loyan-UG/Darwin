@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
+using Darwin.Tests.Integration.TestInfrastructure;
 
 namespace Darwin.Tests.Integration.Profile;
 
@@ -14,17 +15,15 @@ namespace Darwin.Tests.Integration.Profile;
 ///     Provides authorized integration coverage for profile read/update endpoints,
 ///     including optimistic concurrency behavior based on RowVersion.
 /// </summary>
-public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicIntegrationTestBase, IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
     /// <summary>
     ///     Initializes the test fixture with a host configured for Testing environment.
     /// </summary>
     /// <param name="factory">Shared WebApplicationFactory instance.</param>
     public ProfileEndpointAuthorizedConcurrencyTests(WebApplicationFactory<Program> factory)
+        : base(factory)
     {
-        _factory = IntegrationTestHostFactory.CreateTestingFactory(factory);
     }
 
     /// <summary>
@@ -35,7 +34,7 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
     public async Task GetMe_Should_ReturnCurrentProfile_WithRowVersion_WhenAuthorized()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
         var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
@@ -62,7 +61,7 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
     public async Task UpdateMe_Should_ReturnNoContent_WhenIdAndRowVersionAreValid()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
         var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
@@ -108,7 +107,7 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : IClassFixture<We
     public async Task UpdateMe_Should_ReturnBadRequestProblem_WhenRowVersionIsStale()
     {
         // Arrange
-        using var client = IntegrationTestClientFactory.CreateHttpsClient(_factory);
+        using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
         await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
         var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
