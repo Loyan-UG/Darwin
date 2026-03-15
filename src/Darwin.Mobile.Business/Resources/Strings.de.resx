@@ -523,7 +523,7 @@
     <value>Bitte wählen Sie einen gültigen Auslieferungskanal für die Kampagne.</value>
   </data>
   <data name="RewardsCampaignSearchPlaceholder" xml:space="preserve">
-    <value>Kampagnen nach Name oder Titel suchen</value>
+    <value>Kampagnen nach Name, Titel oder Inhalt durchsuchen</value>
   </data>
   <data name="RewardsCampaignClearSearchButton" xml:space="preserve">
     <value>Suche löschen</value>

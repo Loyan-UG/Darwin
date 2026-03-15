@@ -237,6 +237,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business campaign lifecycle KPI chips now support toggle behavior (tap active chip again to clear state filter) and include an "All" chip for one-tap reset.
 - [x] "All" KPI chip now resets only lifecycle-state filter (preserving active search/sort context) for faster iterative campaign triage.
 - [x] Campaign toolbar now includes a dedicated "Clear search" action that resets only search query while preserving state/sort context.
+- [x] Business campaign local search now also matches campaign body text (in addition to internal name/title) for better operator discovery in dense lists.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)

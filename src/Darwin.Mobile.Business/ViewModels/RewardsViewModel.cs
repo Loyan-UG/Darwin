@@ -1110,7 +1110,8 @@ public sealed class RewardsViewModel : BaseViewModel
             (string.IsNullOrWhiteSpace(stateKey) || string.Equals(campaign.CampaignState, stateKey, StringComparison.OrdinalIgnoreCase)) &&
             (string.IsNullOrWhiteSpace(query) ||
              campaign.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-             campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase)));
+             campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+             (!string.IsNullOrWhiteSpace(campaign.Body) && campaign.Body.Contains(query, StringComparison.OrdinalIgnoreCase))));
 
         var sortMode = SelectedCampaignSortOption?.Mode ?? CampaignSortMode.StartDateDesc;
         var filtered = sortMode switch
