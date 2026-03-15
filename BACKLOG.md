@@ -246,6 +246,11 @@ It is designed as the **single source of truth** for development planning.
 3. **P1 — Promotions operations:** add minimal business/admin campaign management APIs (CRUD + activation) and minimal management UI.
 4. **P2 — Inactive reminders completion:** extend current reminder baseline with explicit dispatch/suppression workflow (send log + cooldown policy) and provider-native sender integration hardening.
 
+### 3.9.1 Handoff Status (Prepared for next chat)
+- Current iteration status: **Paused intentionally** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
+- Last delivered increment: campaign local search now matches `Name` + `Title` + `Body` (Business mobile Rewards list).
+- Next recommended starting point in new chat: continue from item **3.9 / P0 Promotions foundation** and keep backlog/docs updated per increment.
+
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
 ---

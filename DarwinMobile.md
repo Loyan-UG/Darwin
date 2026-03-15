@@ -517,6 +517,8 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
+- **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign search across name/title/body with docs/backlog synchronized.
+- **Recommended next step (new chat):** resume with Promotions foundation backlog item (contracts/lifecycle refinement), then continue incremental delivery with per-step docs/backlog updates.
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
 - Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
