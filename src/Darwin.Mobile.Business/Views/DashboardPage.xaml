@@ -17,7 +17,7 @@
                    FontSize="13"
                    Opacity="0.8" />
 
-            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
                 <Label Text="{x:Static res:AppResources.DashboardLookbackLabel}"
                        VerticalOptions="Center" />
 
@@ -32,6 +32,10 @@
                 <Button Grid.Column="3"
                         Text="{x:Static res:AppResources.DashboardExportCsvButton}"
                         Command="{Binding ExportCsvCommand}" />
+
+                <Button Grid.Column="4"
+                        Text="{x:Static res:AppResources.DashboardExportPdfButton}"
+                        Command="{Binding ExportPdfCommand}" />
             </Grid>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">

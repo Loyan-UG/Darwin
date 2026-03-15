@@ -362,7 +362,8 @@ namespace Darwin.Mobile.Shared.Api
             }
             catch
             {
-                // TODO: Best effort
+                // Best-effort parser: ignore payload parsing issues and let caller
+                // fallback to generic HTTP status based messaging.
             }
 
             return null;
