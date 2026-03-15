@@ -182,6 +182,17 @@
                         SelectedItem="{Binding SelectedCampaignStateFilter}" />
             </Grid>
 
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Label Text="{Binding CampaignFilterSummary}"
+                       VerticalOptions="Center"
+                       Opacity="0.8" />
+
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.RewardsCampaignClearFiltersButton}"
+                        Command="{Binding ClearCampaignFiltersCommand}"
+                        IsEnabled="{Binding HasActiveCampaignFilters}" />
+            </Grid>
+
             <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyFiltered}"
                    Opacity="0.8"
                    IsVisible="{Binding HasCampaigns, Converter={StaticResource InverseBoolConverter}}" />

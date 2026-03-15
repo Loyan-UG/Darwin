@@ -546,4 +546,10 @@
   <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
     <value>No campaigns match the current search/filter.</value>
   </data>
+  <data name="RewardsCampaignClearFiltersButton" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+  <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
+    <value>Showing {0} of {1} campaigns</value>
+  </data>
 </root>

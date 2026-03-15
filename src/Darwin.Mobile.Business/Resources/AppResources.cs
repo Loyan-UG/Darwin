@@ -202,6 +202,8 @@ public static class AppResources
     public static string RewardsCampaignStateFilterActive => ResourceManager.GetString(nameof(RewardsCampaignStateFilterActive), Culture) ?? "Active";
     public static string RewardsCampaignStateFilterExpired => ResourceManager.GetString(nameof(RewardsCampaignStateFilterExpired), Culture) ?? "Expired";
     public static string RewardsCampaignsEmptyFiltered => ResourceManager.GetString(nameof(RewardsCampaignsEmptyFiltered), Culture) ?? "No campaigns match the current search/filter.";
+    public static string RewardsCampaignClearFiltersButton => ResourceManager.GetString(nameof(RewardsCampaignClearFiltersButton), Culture) ?? "Clear filters";
+    public static string RewardsCampaignFilterSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignFilterSummaryFormat), Culture) ?? "Showing {0} of {1} campaigns";
 
 
 }

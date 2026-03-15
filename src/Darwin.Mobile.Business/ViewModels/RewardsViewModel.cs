@@ -109,6 +109,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ToggleCampaignActivationCommand = new AsyncCommand<BusinessCampaignEditorItem>(ToggleCampaignActivationAsync, campaign => !IsBusy && CanManageRewards && campaign is not null);
         SaveCampaignCommand = new AsyncCommand(SaveCampaignAsync, () => !IsBusy && CanManageRewards);
         NewCampaignCommand = new AsyncCommand(NewCampaignAsync, () => !IsBusy && CanManageRewards);
+        ClearCampaignFiltersCommand = new AsyncCommand(ClearCampaignFiltersAsync, () => !IsBusy && HasActiveCampaignFilters);
     }
 
 
@@ -199,6 +200,32 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Indicates whether there are campaigns visible after applying current filter criteria.
     /// </summary>
     public bool HasCampaigns => Campaigns.Count > 0;
+
+    /// <summary>
+    /// Gets total campaign count returned from server before filters are applied.
+    /// </summary>
+    public int TotalCampaignCount => _allCampaigns.Count;
+
+    /// <summary>
+    /// Gets campaign count currently visible after active filters are applied.
+    /// </summary>
+    public int FilteredCampaignCount => Campaigns.Count;
+
+    /// <summary>
+    /// Gets whether any campaign filter/search criteria are currently active.
+    /// </summary>
+    public bool HasActiveCampaignFilters =>
+        !string.IsNullOrWhiteSpace(CampaignSearchQuery) ||
+        !string.IsNullOrWhiteSpace(SelectedCampaignStateFilter?.StateKey);
+
+    /// <summary>
+    /// Human-readable summary for filtered campaign count.
+    /// </summary>
+    public string CampaignFilterSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignFilterSummaryFormat,
+        FilteredCampaignCount,
+        TotalCampaignCount);
 
     /// <summary>
     /// User-entered points required for the reward tier.
@@ -350,6 +377,7 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand<BusinessCampaignEditorItem> ToggleCampaignActivationCommand { get; }
     public AsyncCommand SaveCampaignCommand { get; }
     public AsyncCommand NewCampaignCommand { get; }
+    public AsyncCommand ClearCampaignFiltersCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -999,6 +1027,30 @@ public sealed class RewardsViewModel : BaseViewModel
         }
 
         OnPropertyChanged(nameof(HasCampaigns));
+        OnPropertyChanged(nameof(TotalCampaignCount));
+        OnPropertyChanged(nameof(FilteredCampaignCount));
+        OnPropertyChanged(nameof(CampaignFilterSummary));
+        OnPropertyChanged(nameof(HasActiveCampaignFilters));
+        ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Clears campaign search/state filters and re-displays full campaign list.
+    /// </summary>
+    private Task ClearCampaignFiltersAsync()
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            CampaignSearchQuery = string.Empty;
+            SelectedCampaignStateFilter = CampaignStateFilterOptions.FirstOrDefault();
+        });
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -1131,6 +1183,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ToggleCampaignActivationCommand.RaiseCanExecuteChanged();
         SaveCampaignCommand.RaiseCanExecuteChanged();
         NewCampaignCommand.RaiseCanExecuteChanged();
+        ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
     }
 }
 
