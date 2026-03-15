@@ -39,6 +39,7 @@ public sealed partial class AppShell : Shell
         // Settings leaf routes
         Routing.RegisterRoute(Routes.SettingsProfile, typeof(ProfilePage));
         Routing.RegisterRoute(Routes.SettingsChangePassword, typeof(ChangePasswordPage));
+        Routing.RegisterRoute(Routes.SettingsStaffAccessBadge, typeof(StaffAccessBadgePage));
 
         Navigated += OnShellNavigated;
     }

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    x:Class="Darwin.Mobile.Business.Views.StaffAccessBadgePage"
+    x:DataType="vm:StaffAccessBadgeViewModel"
+    Title="{x:Static res:AppResources.StaffAccessBadgeTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="14">
+            <Label Text="{x:Static res:AppResources.StaffAccessBadgeTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.StaffAccessBadgeDescription}"
+                   FontSize="14"
+                   Opacity="0.8" />
+
+            <Border StrokeThickness="1" Padding="16">
+                <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                    <Image Source="{Binding BadgeImage}"
+                           HeightRequest="240"
+                           WidthRequest="240"
+                           Aspect="AspectFit" />
+
+                    <Label Text="{Binding BadgeSummary}"
+                           HorizontalTextAlignment="Center"
+                           FontAttributes="Bold" />
+
+                    <Label Text="{Binding OperatorRoleDisplay}"
+                           HorizontalTextAlignment="Center" />
+
+                    <Label Text="{Binding ExpiresInText}"
+                           HorizontalTextAlignment="Center" />
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="Red"
+                           IsVisible="{Binding HasError}"
+                           HorizontalTextAlignment="Center" />
+
+                    <Button Text="{x:Static res:AppResources.StaffAccessBadgeRefreshButton}"
+                            Command="{Binding RefreshBadgeCommand}" />
+
+                    <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                       IsRunning="{Binding IsBusy}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

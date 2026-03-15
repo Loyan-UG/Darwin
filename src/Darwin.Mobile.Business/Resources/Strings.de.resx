@@ -231,6 +231,37 @@
 	<data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>
+	<data name="SettingsStaffAccessBadgeButton" xml:space="preserve">
+    <value>Mitarbeiterzugangs-Badge</value>
+  </data>
+	<data name="StaffAccessBadgeTitle" xml:space="preserve">
+    <value>Mitarbeiterzugangs-Badge</value>
+  </data>
+	<data name="StaffAccessBadgeDescription" xml:space="preserve">
+    <value>Verwenden Sie diesen kurzlebigen QR-Code für interne Mitarbeiter-Checkpoints und kontrollierte Betriebsabläufe.</value>
+  </data>
+	<data name="StaffAccessBadgeSummaryFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+	<data name="StaffAccessBadgeRoleFormat" xml:space="preserve">
+    <value>Rolle: {0}</value>
+  </data>
+	<data name="StaffAccessBadgeExpiresInFormat" xml:space="preserve">
+    <value>Läuft ab in {0}</value>
+  </data>
+	<data name="StaffAccessBadgeExpired" xml:space="preserve">
+    <value>Badge abgelaufen. Wird aktualisiert…</value>
+  </data>
+	<data name="StaffAccessBadgeRefreshButton" xml:space="preserve">
+    <value>Badge aktualisieren</value>
+  </data>
+	<data name="StaffAccessBadgeLoadFailed" xml:space="preserve">
+    <value>Mitarbeiter-Badge kann derzeit nicht vorbereitet werden.</value>
+  </data>
+	<data name="StaffAccessBadgeUnknownRole" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+
 
 	<data name="ProfileTitle" xml:space="preserve">
     <value>Profil</value>

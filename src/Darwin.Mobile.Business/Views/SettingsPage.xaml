@@ -22,6 +22,9 @@
 
             <Button Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
                     Command="{Binding OpenChangePasswordCommand}" />
+
+            <Button Text="{x:Static res:AppResources.SettingsStaffAccessBadgeButton}"
+                    Command="{Binding OpenStaffAccessBadgeCommand}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

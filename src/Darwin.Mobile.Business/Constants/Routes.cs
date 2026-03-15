@@ -22,6 +22,7 @@ public static class Routes
     // Settings leaf routes
     public const string SettingsProfile = "SettingsProfile";
     public const string SettingsChangePassword = "SettingsChangePassword";
+    public const string SettingsStaffAccessBadge = "SettingsStaffAccessBadge";
 
     // Future tabs (currently Coming Soon placeholders)
     public const string Dashboard = "Dashboard";
