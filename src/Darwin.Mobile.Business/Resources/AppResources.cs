@@ -138,6 +138,9 @@ public static class AppResources
     public static string DashboardExportCsvButton => ResourceManager.GetString(nameof(DashboardExportCsvButton), Culture) ?? "Export CSV";
     public static string DashboardExportCsvShareTitle => ResourceManager.GetString(nameof(DashboardExportCsvShareTitle), Culture) ?? "Share dashboard CSV";
     public static string DashboardExportCsvFailed => ResourceManager.GetString(nameof(DashboardExportCsvFailed), Culture) ?? "Unable to export dashboard CSV.";
+    public static string DashboardExportPdfButton => ResourceManager.GetString(nameof(DashboardExportPdfButton), Culture) ?? "Export PDF";
+    public static string DashboardExportPdfShareTitle => ResourceManager.GetString(nameof(DashboardExportPdfShareTitle), Culture) ?? "Share dashboard PDF";
+    public static string DashboardExportPdfFailed => ResourceManager.GetString(nameof(DashboardExportPdfFailed), Culture) ?? "Unable to export dashboard PDF.";
     public static string DashboardLoadFailed => ResourceManager.GetString(nameof(DashboardLoadFailed), Culture) ?? "Unable to load dashboard report.";
     public static string DashboardTopCustomersTitle => ResourceManager.GetString(nameof(DashboardTopCustomersTitle), Culture) ?? "Top customers";
     public static string DashboardTopCustomersEmpty => ResourceManager.GetString(nameof(DashboardTopCustomersEmpty), Culture) ?? "No customer interactions were recorded in the selected window.";
@@ -178,6 +181,7 @@ public static class AppResources
     public static string RewardsCampaignUpdateButton => ResourceManager.GetString(nameof(RewardsCampaignUpdateButton), Culture) ?? "Update campaign";
     public static string RewardsCampaignSaveFailed => ResourceManager.GetString(nameof(RewardsCampaignSaveFailed), Culture) ?? "Unable to save campaign.";
     public static string RewardsCampaignValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignValidationFailed), Culture) ?? "Campaign name and title are required.";
+    public static string RewardsCampaignNameDuplicateValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignNameDuplicateValidationFailed), Culture) ?? "A campaign with this internal name already exists.";
     public static string RewardsCampaignStartsAtPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignStartsAtPlaceholder), Culture) ?? "Start UTC (yyyy-MM-dd HH:mm, optional)";
     public static string RewardsCampaignEndsAtPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignEndsAtPlaceholder), Culture) ?? "End UTC (yyyy-MM-dd HH:mm, optional)";
     public static string RewardsCampaignDateValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignDateValidationFailed), Culture) ?? "Campaign date format is invalid. Use yyyy-MM-dd HH:mm.";
@@ -190,6 +194,22 @@ public static class AppResources
     public static string RewardsCampaignPayloadJsonPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignPayloadJsonPlaceholder), Culture) ?? "Payload JSON (optional, object)";
     public static string RewardsCampaignTargetingValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignTargetingValidationFailed), Culture) ?? "Targeting JSON must be a valid JSON object.";
     public static string RewardsCampaignPayloadValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignPayloadValidationFailed), Culture) ?? "Payload JSON must be a valid JSON object.";
+    public static string RewardsCampaignSearchPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignSearchPlaceholder), Culture) ?? "Search campaigns by name or title";
+    public static string RewardsCampaignStateFilterPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignStateFilterPickerTitle), Culture) ?? "State filter";
+    public static string RewardsCampaignStateFilterAll => ResourceManager.GetString(nameof(RewardsCampaignStateFilterAll), Culture) ?? "All states";
+    public static string RewardsCampaignStateFilterDraft => ResourceManager.GetString(nameof(RewardsCampaignStateFilterDraft), Culture) ?? "Draft";
+    public static string RewardsCampaignStateFilterScheduled => ResourceManager.GetString(nameof(RewardsCampaignStateFilterScheduled), Culture) ?? "Scheduled";
+    public static string RewardsCampaignStateFilterActive => ResourceManager.GetString(nameof(RewardsCampaignStateFilterActive), Culture) ?? "Active";
+    public static string RewardsCampaignStateFilterExpired => ResourceManager.GetString(nameof(RewardsCampaignStateFilterExpired), Culture) ?? "Expired";
+    public static string RewardsCampaignSortPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignSortPickerTitle), Culture) ?? "Sort by";
+    public static string RewardsCampaignSortStartDateDesc => ResourceManager.GetString(nameof(RewardsCampaignSortStartDateDesc), Culture) ?? "Start date (newest first)";
+    public static string RewardsCampaignSortStartDateAsc => ResourceManager.GetString(nameof(RewardsCampaignSortStartDateAsc), Culture) ?? "Start date (oldest first)";
+    public static string RewardsCampaignSortTitleAsc => ResourceManager.GetString(nameof(RewardsCampaignSortTitleAsc), Culture) ?? "Title (A-Z)";
+    public static string RewardsCampaignSortTitleDesc => ResourceManager.GetString(nameof(RewardsCampaignSortTitleDesc), Culture) ?? "Title (Z-A)";
+    public static string RewardsCampaignsEmptyFiltered => ResourceManager.GetString(nameof(RewardsCampaignsEmptyFiltered), Culture) ?? "No campaigns match the current search/filter.";
+    public static string RewardsCampaignClearFiltersButton => ResourceManager.GetString(nameof(RewardsCampaignClearFiltersButton), Culture) ?? "Clear filters";
+    public static string RewardsCampaignFilterSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignFilterSummaryFormat), Culture) ?? "Showing {0} of {1} campaigns";
+    public static string RewardsCampaignStateMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricsFormat), Culture) ?? "Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}";
 
 
 }

@@ -414,6 +414,15 @@
   <data name="DashboardExportCsvFailed" xml:space="preserve">
     <value>Unable to export dashboard CSV.</value>
   </data>
+  <data name="DashboardExportPdfButton" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="DashboardExportPdfShareTitle" xml:space="preserve">
+    <value>Share dashboard PDF</value>
+  </data>
+  <data name="DashboardExportPdfFailed" xml:space="preserve">
+    <value>Unable to export dashboard PDF.</value>
+  </data>
   <data name="DashboardLoadFailed" xml:space="preserve">
     <value>Unable to load dashboard report.</value>
   </data>
@@ -474,6 +483,9 @@
   <data name="RewardsCampaignValidationFailed" xml:space="preserve">
     <value>Campaign name and title are required.</value>
   </data>
+  <data name="RewardsCampaignNameDuplicateValidationFailed" xml:space="preserve">
+    <value>A campaign with this internal name already exists.</value>
+  </data>
   <data name="RewardsCampaignStartsAtPlaceholder" xml:space="preserve">
     <value>Start UTC (yyyy-MM-dd HH:mm, optional)</value>
   </data>
@@ -509,5 +521,53 @@
   </data>
   <data name="RewardsCampaignChannelValidationFailed" xml:space="preserve">
     <value>Please select a valid campaign delivery channel.</value>
+  </data>
+  <data name="RewardsCampaignSearchPlaceholder" xml:space="preserve">
+    <value>Search campaigns by name or title</value>
+  </data>
+  <data name="RewardsCampaignStateFilterPickerTitle" xml:space="preserve">
+    <value>State filter</value>
+  </data>
+  <data name="RewardsCampaignStateFilterAll" xml:space="preserve">
+    <value>All states</value>
+  </data>
+  <data name="RewardsCampaignStateFilterDraft" xml:space="preserve">
+    <value>Draft</value>
+  </data>
+  <data name="RewardsCampaignStateFilterScheduled" xml:space="preserve">
+    <value>Scheduled</value>
+  </data>
+  <data name="RewardsCampaignStateFilterActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
+  <data name="RewardsCampaignSortPickerTitle" xml:space="preserve">
+    <value>Sort by</value>
+  </data>
+  <data name="RewardsCampaignSortStartDateDesc" xml:space="preserve">
+    <value>Start date (newest first)</value>
+  </data>
+  <data name="RewardsCampaignSortStartDateAsc" xml:space="preserve">
+    <value>Start date (oldest first)</value>
+  </data>
+  <data name="RewardsCampaignSortTitleAsc" xml:space="preserve">
+    <value>Title (A-Z)</value>
+  </data>
+  <data name="RewardsCampaignSortTitleDesc" xml:space="preserve">
+    <value>Title (Z-A)</value>
+  </data>
+  <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
+    <value>No campaigns match the current search/filter.</value>
+  </data>
+  <data name="RewardsCampaignClearFiltersButton" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+  <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
+    <value>Showing {0} of {1} campaigns</value>
+  </data>
+  <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
+    <value>Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}</value>
   </data>
 </root>
