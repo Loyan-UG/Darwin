@@ -63,6 +63,7 @@ public sealed class RewardsViewModel : BaseViewModel
     private CampaignChannelOption? _selectedCampaignChannel;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
+    private CampaignSortOption? _selectedCampaignSortOption;
 
     private const int CampaignListPageSize = 50;
 
@@ -99,8 +100,17 @@ public sealed class RewardsViewModel : BaseViewModel
             new CampaignStateFilterOption(PromotionCampaignState.Expired, AppResources.RewardsCampaignStateFilterExpired)
         };
 
+        CampaignSortOptions = new ObservableCollection<CampaignSortOption>
+        {
+            new CampaignSortOption(CampaignSortMode.StartDateDesc, AppResources.RewardsCampaignSortStartDateDesc),
+            new CampaignSortOption(CampaignSortMode.StartDateAsc, AppResources.RewardsCampaignSortStartDateAsc),
+            new CampaignSortOption(CampaignSortMode.TitleAsc, AppResources.RewardsCampaignSortTitleAsc),
+            new CampaignSortOption(CampaignSortMode.TitleDesc, AppResources.RewardsCampaignSortTitleDesc)
+        };
+
         _selectedCampaignChannel = CampaignChannelOptions[0];
         _selectedCampaignStateFilter = CampaignStateFilterOptions[0];
+        _selectedCampaignSortOption = CampaignSortOptions[0];
 
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
@@ -167,6 +177,11 @@ public sealed class RewardsViewModel : BaseViewModel
     public ObservableCollection<CampaignStateFilterOption> CampaignStateFilterOptions { get; }
 
     /// <summary>
+    /// Picker options for campaign list ordering in management UI.
+    /// </summary>
+    public ObservableCollection<CampaignSortOption> CampaignSortOptions { get; }
+
+    /// <summary>
     /// Search query used to filter campaign list by internal name/title.
     /// </summary>
     public string CampaignSearchQuery
@@ -190,6 +205,21 @@ public sealed class RewardsViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref _selectedCampaignStateFilter, value))
+            {
+                ApplyCampaignFilter();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Currently selected ordering option for campaign list.
+    /// </summary>
+    public CampaignSortOption? SelectedCampaignSortOption
+    {
+        get => _selectedCampaignSortOption;
+        set
+        {
+            if (SetProperty(ref _selectedCampaignSortOption, value))
             {
                 ApplyCampaignFilter();
             }
@@ -1011,14 +1041,32 @@ public sealed class RewardsViewModel : BaseViewModel
         var stateKey = SelectedCampaignStateFilter?.StateKey;
         var query = CampaignSearchQuery?.Trim();
 
-        var filtered = _allCampaigns.Where(campaign =>
+        var filteredQuery = _allCampaigns.Where(campaign =>
             (string.IsNullOrWhiteSpace(stateKey) || string.Equals(campaign.CampaignState, stateKey, StringComparison.OrdinalIgnoreCase)) &&
             (string.IsNullOrWhiteSpace(query) ||
              campaign.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-             campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase)))
-            .OrderByDescending(x => x.StartsAtUtc)
-            .ThenByDescending(x => x.IsActive)
-            .ToList();
+             campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase)));
+
+        var sortMode = SelectedCampaignSortOption?.Mode ?? CampaignSortMode.StartDateDesc;
+        var filtered = sortMode switch
+        {
+            CampaignSortMode.StartDateAsc => filteredQuery
+                .OrderBy(x => x.StartsAtUtc)
+                .ThenBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            CampaignSortMode.TitleAsc => filteredQuery
+                .OrderBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(x => x.StartsAtUtc)
+                .ToList(),
+            CampaignSortMode.TitleDesc => filteredQuery
+                .OrderByDescending(x => x.Title, StringComparer.OrdinalIgnoreCase)
+                .ThenByDescending(x => x.StartsAtUtc)
+                .ToList(),
+            _ => filteredQuery
+                .OrderByDescending(x => x.StartsAtUtc)
+                .ThenByDescending(x => x.IsActive)
+                .ToList()
+        };
 
         Campaigns.Clear();
         foreach (var campaign in filtered)
@@ -1250,6 +1298,41 @@ public sealed class CampaignStateFilterOption
     /// Contract state key; empty means "all states".
     /// </summary>
     public string StateKey { get; }
+
+    /// <summary>
+    /// Localized display label.
+    /// </summary>
+    public string Label { get; }
+
+    public override string ToString() => Label;
+}
+
+/// <summary>
+/// Supported sort modes for campaign list projection in mobile business UI.
+/// </summary>
+public enum CampaignSortMode
+{
+    StartDateDesc = 0,
+    StartDateAsc = 1,
+    TitleAsc = 2,
+    TitleDesc = 3
+}
+
+/// <summary>
+/// Represents a selectable campaign sort option.
+/// </summary>
+public sealed class CampaignSortOption
+{
+    public CampaignSortOption(CampaignSortMode mode, string label)
+    {
+        Mode = mode;
+        Label = label;
+    }
+
+    /// <summary>
+    /// Internal sort mode.
+    /// </summary>
+    public CampaignSortMode Mode { get; }
 
     /// <summary>
     /// Localized display label.

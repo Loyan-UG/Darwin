@@ -172,7 +172,7 @@
             <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
                    FontAttributes="Bold" />
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                 <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignSearchPlaceholder}"
                        Text="{Binding CampaignSearchQuery}" />
 
@@ -180,6 +180,11 @@
                         Title="{x:Static res:AppResources.RewardsCampaignStateFilterPickerTitle}"
                         ItemsSource="{Binding CampaignStateFilterOptions}"
                         SelectedItem="{Binding SelectedCampaignStateFilter}" />
+
+                <Picker Grid.Column="2"
+                        Title="{x:Static res:AppResources.RewardsCampaignSortPickerTitle}"
+                        ItemsSource="{Binding CampaignSortOptions}"
+                        SelectedItem="{Binding SelectedCampaignSortOption}" />
             </Grid>
 
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">

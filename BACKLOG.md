@@ -231,6 +231,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business campaign editor now performs client-side duplicate internal-name guardrails before create/update API calls to reduce avoidable round-trips and operator confusion.
 - [x] Business campaign operations list now supports local search + lifecycle-state filtering (Draft/Scheduled/Active/Expired) to improve operator navigation in larger campaign sets.
 - [x] Business campaign operations list now shows filter-result summary (visible/total) and includes one-tap filter reset for faster operator recovery in dense campaign sets.
+- [x] Business campaign operations list now supports configurable client-side sort options (start date and title asc/desc) for faster operator triage workflows.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)

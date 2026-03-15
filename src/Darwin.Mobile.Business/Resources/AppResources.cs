@@ -201,6 +201,11 @@ public static class AppResources
     public static string RewardsCampaignStateFilterScheduled => ResourceManager.GetString(nameof(RewardsCampaignStateFilterScheduled), Culture) ?? "Scheduled";
     public static string RewardsCampaignStateFilterActive => ResourceManager.GetString(nameof(RewardsCampaignStateFilterActive), Culture) ?? "Active";
     public static string RewardsCampaignStateFilterExpired => ResourceManager.GetString(nameof(RewardsCampaignStateFilterExpired), Culture) ?? "Expired";
+    public static string RewardsCampaignSortPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignSortPickerTitle), Culture) ?? "Sort by";
+    public static string RewardsCampaignSortStartDateDesc => ResourceManager.GetString(nameof(RewardsCampaignSortStartDateDesc), Culture) ?? "Start date (newest first)";
+    public static string RewardsCampaignSortStartDateAsc => ResourceManager.GetString(nameof(RewardsCampaignSortStartDateAsc), Culture) ?? "Start date (oldest first)";
+    public static string RewardsCampaignSortTitleAsc => ResourceManager.GetString(nameof(RewardsCampaignSortTitleAsc), Culture) ?? "Title (A-Z)";
+    public static string RewardsCampaignSortTitleDesc => ResourceManager.GetString(nameof(RewardsCampaignSortTitleDesc), Culture) ?? "Title (Z-A)";
     public static string RewardsCampaignsEmptyFiltered => ResourceManager.GetString(nameof(RewardsCampaignsEmptyFiltered), Culture) ?? "No campaigns match the current search/filter.";
     public static string RewardsCampaignClearFiltersButton => ResourceManager.GetString(nameof(RewardsCampaignClearFiltersButton), Culture) ?? "Clear filters";
     public static string RewardsCampaignFilterSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignFilterSummaryFormat), Culture) ?? "Showing {0} of {1} campaigns";

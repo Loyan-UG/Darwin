@@ -501,6 +501,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business campaign editor now blocks duplicate internal campaign names on the client before API mutations, reducing avoidable retry loops for operators.
 - Business campaign list now supports local search + lifecycle-state filtering to keep large campaign sets manageable on tablet screens.
 - Business campaign list now shows visible/total result summary and supports one-tap filter reset to reduce operator friction during frequent context switching.
+- Business campaign list now supports operator-selectable sort modes (start date and title ascending/descending) for faster review in high-volume campaign inventories.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).

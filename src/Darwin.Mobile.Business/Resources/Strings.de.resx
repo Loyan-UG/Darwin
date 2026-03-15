@@ -543,6 +543,21 @@
   <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
     <value>Abgelaufen</value>
   </data>
+  <data name="RewardsCampaignSortPickerTitle" xml:space="preserve">
+    <value>Sortieren nach</value>
+  </data>
+  <data name="RewardsCampaignSortStartDateDesc" xml:space="preserve">
+    <value>Startdatum (neueste zuerst)</value>
+  </data>
+  <data name="RewardsCampaignSortStartDateAsc" xml:space="preserve">
+    <value>Startdatum (älteste zuerst)</value>
+  </data>
+  <data name="RewardsCampaignSortTitleAsc" xml:space="preserve">
+    <value>Titel (A-Z)</value>
+  </data>
+  <data name="RewardsCampaignSortTitleDesc" xml:space="preserve">
+    <value>Titel (Z-A)</value>
+  </data>
   <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
     <value>Keine Kampagnen entsprechen der aktuellen Suche/Filterung.</value>
   </data>
