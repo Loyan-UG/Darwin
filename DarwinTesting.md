@@ -682,6 +682,13 @@ Backlog update rule:
 
 Use this list as the immediate continuation plan:
 
+### Immediate continuation checklist (next session start)
+
+1. Run one CI cycle with current soft-gate defaults and collect lane artifacts.
+2. Run one strict cycle (`DARWIN_PR_SOFT_GATE=false` or `force_strict=true`) and capture failures by lane.
+3. Convert any red lane into concrete fix tasks in this document before implementing code changes.
+4. Update each backlog row status/evidence links in the same commit that changes status.
+
 1. **CI quality gates activation — current top priority**
    - Run the new workflow and capture green evidence for unit/contracts/infrastructure/webapi/integration/mobile-shared lanes.
    - Tune coverage thresholds only if initial CI evidence shows justified baseline mismatch.
@@ -720,4 +727,3 @@ Use these notes when CI lanes fail before merge or during gate restoration:
 - **Coverage gate script expects all lane artifacts.**
   - If one lane does not upload `coverage.cobertura.xml`, coverage gate will fail by design.
   - Verify each lane writes to its own `TestResults/<lane>` directory and uploads that directory.
-
