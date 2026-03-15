@@ -866,6 +866,9 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"targetingJson\"");
         json.Should().Contain("\"payloadJson\"");
         json.Should().Contain("\"rowVersion\"");
+
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("total").GetInt32().Should().Be(1);
     }
 
     /// <summary>

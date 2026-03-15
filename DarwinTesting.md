@@ -550,13 +550,20 @@ This status is derived from the current repository state and must be refreshed w
 
 Keep this list as the execution tracker for the testing workstream.
 
+
+**Completed implementation scope:**
+- All scoped test packs have authored test code committed (identity/profile/loyalty matrices, contracts compatibility, mobile reliability, infrastructure fallback, mapper stability).
+
+**Remaining scope:**
+- Collect CLI/CI execution evidence, stabilize flaky suites, and complete soft-gate rollback to restore hard-gate behavior.
+
 | Order | Work item | Status | Exit criteria |
 |---|---|---|---|
 | 1 | Integration test host foundation (`WebApplicationFactory`, deterministic DB reset, test environment config) | In Progress (Implemented, pending CLI/CI run) | Smoke suites now run with deterministic DB reset+seed in `IAsyncLifetime`; finalize after CLI/CI evidence confirms stability and runtime overhead is acceptable. |
 | 2 | **P1** Identity flow test pack (authorized matrix first) | In Progress (Implemented, pending CLI/CI run) | Baseline + core negative tests and authorized happy-path matrix are implemented (`register/login`, `refresh`, `password/change`, `logout`, `logout-all`); finalize after passing CLI/CI evidence. |
 | 3 | **P2** Profile concurrency test pack (`RowVersion`) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized success/stale row-version matrix are implemented; finalize after passing CLI/CI evidence. |
 | 4 | **P3** Loyalty scan journey test pack (prepare/process/confirm) | In Progress (Implemented, pending CLI/CI run) | Baseline auth-guard tests and authorized end-to-end prepare/process/confirm scenarios are implemented; finalize after passing CLI/CI evidence. |
-| 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions, Profile concurrency payload, Push registration payloads, and Business discovery compatibility checks are implemented; contract smoke tests in `Darwin.Contracts.Tests` and mapper stability tests in `Darwin.WebApi.Tests` are added; finalize after passing CLI/CI evidence. |
+| 5 | Contracts compatibility pack | In Progress (Implemented, pending CLI/CI run) | Baseline coverage plus expanded Loyalty timeline/promotions, Profile concurrency payload, Push registration payloads, Business discovery compatibility checks, and campaign/reward compatibility matrices (including list-item and rowVersion/base64 assertions) are implemented; contract smoke tests in `Darwin.Contracts.Tests` and mapper stability tests in `Darwin.WebApi.Tests` are added; finalize after passing CLI/CI evidence. |
 | 6 | Mobile.Shared reliability pack | In Progress (Implemented, pending CLI/CI run) | Reliability matrix is implemented (`retry`, `auth header injection`, `no-content normalization`) in `ApiClientReliabilityTests`; finalize after passing CLI/CI evidence. |
 | 7 | CI quality gates | In Progress (Temporary PR soft-gate active) | Workflow keeps all test lanes running, but PR jobs are temporarily `continue-on-error` so failing suites do not block merge. Soft-gate can be disabled immediately by setting repository variable `DARWIN_PR_SOFT_GATE=false`, or per manual run via workflow input `force_strict=true`; restore hard-gate mode in code after completing the rollback checklist and attaching CI evidence. |
 
