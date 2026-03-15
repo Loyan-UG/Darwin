@@ -166,9 +166,12 @@ public sealed class DashboardViewModel : BaseViewModel
         }
         finally
         {
-            IsBusy = false;
-            RefreshCommand.RaiseCanExecuteChanged();
-            ExportCsvCommand.RaiseCanExecuteChanged();
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RefreshCommand.RaiseCanExecuteChanged();
+                ExportCsvCommand.RaiseCanExecuteChanged();
+            });
         }
     }
 
