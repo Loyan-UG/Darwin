@@ -869,6 +869,9 @@ public sealed class ContractSerializationCompatibilityTests
 
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("total").GetInt32().Should().Be(1);
+        var firstItem = doc.RootElement.GetProperty("items")[0];
+        firstItem.GetProperty("id").GetString().Should().Be("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        firstItem.GetProperty("rowVersion").GetString().Should().Be("AQIDBA==");
     }
 
     /// <summary>
