@@ -234,7 +234,31 @@
 	<data name="SettingsStaffAccessBadgeButton" xml:space="preserve">
     <value>Staff access badge</value>
   </data>
-	<data name="StaffAccessBadgeTitle" xml:space="preserve">
+	  <data name="SettingsSubscriptionButton" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="SubscriptionTitle" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="SubscriptionDescription" xml:space="preserve">
+    <value>Manage your billing plan and payment methods via secure portal access.</value>
+  </data>
+  <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
+    <value>Billing portal</value>
+  </data>
+  <data name="SubscriptionPortalReadyHint" xml:space="preserve">
+    <value>Billing portal is configured for this environment. Open it to manage plan and payment details.</value>
+  </data>
+  <data name="SubscriptionPortalMissingHint" xml:space="preserve">
+    <value>Billing portal is not configured for this environment yet. Contact your admin team.</value>
+  </data>
+  <data name="SubscriptionPortalOpenFailed" xml:space="preserve">
+    <value>Unable to open billing portal right now. Please try again shortly.</value>
+  </data>
+  <data name="SubscriptionOpenPortalButton" xml:space="preserve">
+    <value>Open billing portal</value>
+  </data>
+<data name="StaffAccessBadgeTitle" xml:space="preserve">
     <value>Staff access badge</value>
   </data>
 	<data name="StaffAccessBadgeDescription" xml:space="preserve">

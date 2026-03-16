@@ -83,6 +83,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.StaffAccessBadgeViewModel>();
         services.AddTransient<Views.StaffAccessBadgePage>();
 
+        services.AddTransient<ViewModels.SubscriptionViewModel>();
+        services.AddTransient<Views.SubscriptionPage>();
+
         return services;
     }
 

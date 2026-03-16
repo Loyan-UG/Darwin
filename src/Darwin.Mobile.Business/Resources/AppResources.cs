@@ -87,6 +87,15 @@ public static class AppResources
     public static string SettingsProfileButton => ResourceManager.GetString(nameof(SettingsProfileButton), Culture) ?? "Profile";
     public static string SettingsChangePasswordButton => ResourceManager.GetString(nameof(SettingsChangePasswordButton), Culture) ?? "Change password";
     public static string SettingsStaffAccessBadgeButton => ResourceManager.GetString(nameof(SettingsStaffAccessBadgeButton), Culture) ?? "Staff access badge";
+    public static string SettingsSubscriptionButton => ResourceManager.GetString(nameof(SettingsSubscriptionButton), Culture) ?? "Subscription";
+
+    public static string SubscriptionTitle => ResourceManager.GetString(nameof(SubscriptionTitle), Culture) ?? "Subscription";
+    public static string SubscriptionDescription => ResourceManager.GetString(nameof(SubscriptionDescription), Culture) ?? "Manage your billing plan and payment methods via secure portal access.";
+    public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";
+    public static string SubscriptionPortalReadyHint => ResourceManager.GetString(nameof(SubscriptionPortalReadyHint), Culture) ?? "Billing portal is configured for this environment. Open it to manage plan and payment details.";
+    public static string SubscriptionPortalMissingHint => ResourceManager.GetString(nameof(SubscriptionPortalMissingHint), Culture) ?? "Billing portal is not configured for this environment yet. Contact your admin team.";
+    public static string SubscriptionPortalOpenFailed => ResourceManager.GetString(nameof(SubscriptionPortalOpenFailed), Culture) ?? "Unable to open billing portal right now. Please try again shortly.";
+    public static string SubscriptionOpenPortalButton => ResourceManager.GetString(nameof(SubscriptionOpenPortalButton), Culture) ?? "Open billing portal";
 
     public static string StaffAccessBadgeTitle => ResourceManager.GetString(nameof(StaffAccessBadgeTitle), Culture) ?? "Staff access badge";
     public static string StaffAccessBadgeDescription => ResourceManager.GetString(nameof(StaffAccessBadgeDescription), Culture) ?? "Use this short-lived QR for internal staff checkpoints and controlled business operations.";
