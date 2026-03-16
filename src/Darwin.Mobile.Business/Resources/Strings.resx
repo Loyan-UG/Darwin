@@ -288,6 +288,15 @@
   <data name="SubscriptionCancelAtPeriodEndUpdateFailed" xml:space="preserve">
     <value>Unable to update cancellation preference. Please refresh and try again.</value>
   </data>
+  <data name="SubscriptionPlansSectionTitle" xml:space="preserve">
+    <value>Available plans</value>
+  </data>
+  <data name="SubscriptionPlansUnavailable" xml:space="preserve">
+    <value>No billing plans are currently available.</value>
+  </data>
+  <data name="SubscriptionPlanLineFormat" xml:space="preserve">
+    <value>{0}: {1} {2} every {3} {4}</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Billing portal</value>
   </data>

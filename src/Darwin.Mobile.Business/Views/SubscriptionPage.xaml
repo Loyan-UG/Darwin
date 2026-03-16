@@ -38,6 +38,15 @@
                     <Button Text="{Binding ToggleCancelAtPeriodEndButtonText}"
                             Command="{Binding ToggleCancelAtPeriodEndCommand}"
                             IsVisible="{Binding HasSubscriptionStatus}" />
+
+                    <Label Text="{x:Static res:AppResources.SubscriptionPlansSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding AvailablePlansText}"
+                           FontSize="12"
+                           Opacity="0.8"
+                           LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
             </Border>
 

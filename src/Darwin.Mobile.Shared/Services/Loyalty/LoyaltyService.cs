@@ -906,5 +906,33 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 return Result<SetCancelAtPeriodEndResponse>.Fail($"Network error while updating cancellation preference: {ex.Message}");
             }
         }
+
+        /// <inheritdoc />
+        public async Task<Result<GetBillingPlansResponse>> GetBillingPlansAsync(bool activeOnly, CancellationToken cancellationToken)
+        {
+            var route = $"{ApiRoutes.Billing.GetPlans}?activeOnly={activeOnly.ToString().ToLowerInvariant()}";
+
+            try
+            {
+                var response = await _apiClient
+                    .GetResultAsync<GetBillingPlansResponse>(route, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<GetBillingPlansResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<GetBillingPlansResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<GetBillingPlansResponse>.Fail($"Network error while retrieving billing plans: {ex.Message}");
+            }
+        }
     }
 }

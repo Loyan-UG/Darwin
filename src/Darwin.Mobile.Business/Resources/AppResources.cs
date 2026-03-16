@@ -106,6 +106,9 @@ public static class AppResources
     public static string SubscriptionCancelAtPeriodEndScheduled => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndScheduled), Culture) ?? "Cancellation was scheduled for the end of current period.";
     public static string SubscriptionCancelAtPeriodEndCleared => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndCleared), Culture) ?? "Cancellation schedule was removed.";
     public static string SubscriptionCancelAtPeriodEndUpdateFailed => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndUpdateFailed), Culture) ?? "Unable to update cancellation preference. Please refresh and try again.";
+    public static string SubscriptionPlansSectionTitle => ResourceManager.GetString(nameof(SubscriptionPlansSectionTitle), Culture) ?? "Available plans";
+    public static string SubscriptionPlansUnavailable => ResourceManager.GetString(nameof(SubscriptionPlansUnavailable), Culture) ?? "No billing plans are currently available.";
+    public static string SubscriptionPlanLineFormat => ResourceManager.GetString(nameof(SubscriptionPlanLineFormat), Culture) ?? "{0}: {1} {2} every {3} {4}";
     public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";
     public static string SubscriptionPortalUrlLabel => ResourceManager.GetString(nameof(SubscriptionPortalUrlLabel), Culture) ?? "Portal URL";
     public static string SubscriptionPortalReadyHint => ResourceManager.GetString(nameof(SubscriptionPortalReadyHint), Culture) ?? "Billing portal is configured for this environment. Open it to manage plan and payment details.";

@@ -288,6 +288,15 @@
   <data name="SubscriptionCancelAtPeriodEndUpdateFailed" xml:space="preserve">
     <value>Die Kündigungseinstellung konnte nicht aktualisiert werden. Bitte aktualisieren und erneut versuchen.</value>
   </data>
+  <data name="SubscriptionPlansSectionTitle" xml:space="preserve">
+    <value>Verfügbare Tarife</value>
+  </data>
+  <data name="SubscriptionPlansUnavailable" xml:space="preserve">
+    <value>Derzeit sind keine Abrechnungstarife verfügbar.</value>
+  </data>
+  <data name="SubscriptionPlanLineFormat" xml:space="preserve">
+    <value>{0}: {1} {2} alle {3} {4}</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Abrechnungsportal</value>
   </data>

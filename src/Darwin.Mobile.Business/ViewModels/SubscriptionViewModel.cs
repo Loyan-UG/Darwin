@@ -35,6 +35,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private string _subscriptionSummaryText = string.Empty;
     private string _subscriptionDatesText = string.Empty;
     private bool _cancelAtPeriodEnd;
+    private string _availablePlansText = string.Empty;
 
     private Guid _subscriptionId;
     private byte[] _subscriptionRowVersion = Array.Empty<byte>();
@@ -106,6 +107,15 @@ public sealed class SubscriptionViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets compact list of available plans for upgrade/checkout decision support.
+    /// </summary>
+    public string AvailablePlansText
+    {
+        get => _availablePlansText;
+        private set => SetProperty(ref _availablePlansText, value);
+    }
+
+    /// <summary>
     /// Gets current button label for cancel-at-period-end action.
     /// </summary>
     public string ToggleCancelAtPeriodEndButtonText
@@ -163,12 +173,14 @@ public sealed class SubscriptionViewModel : BaseViewModel
                     HasSubscriptionStatus = false;
                     SubscriptionSummaryText = AppResources.SubscriptionStatusUnavailable;
                     SubscriptionDatesText = string.Empty;
+                    AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
                     ErrorMessage = result.Error ?? AppResources.SubscriptionStatusUnavailable;
                 });
                 return;
             }
 
             RunOnMain(() => ApplySubscriptionStatus(result.Value));
+            await LoadBillingPlansAsync().ConfigureAwait(false);
         }
         finally
         {

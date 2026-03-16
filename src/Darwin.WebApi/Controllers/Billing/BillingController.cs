@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,13 +21,16 @@ public sealed class BillingController : ApiControllerBase
 {
     private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatusHandler;
     private readonly SetCancelAtPeriodEndHandler _setCancelAtPeriodEndHandler;
+    private readonly GetBillingPlansHandler _getBillingPlansHandler;
 
     public BillingController(
         GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatusHandler,
-        SetCancelAtPeriodEndHandler setCancelAtPeriodEndHandler)
+        SetCancelAtPeriodEndHandler setCancelAtPeriodEndHandler,
+        GetBillingPlansHandler getBillingPlansHandler)
     {
         _getBusinessSubscriptionStatusHandler = getBusinessSubscriptionStatusHandler ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionStatusHandler));
         _setCancelAtPeriodEndHandler = setCancelAtPeriodEndHandler ?? throw new ArgumentNullException(nameof(setCancelAtPeriodEndHandler));
+        _getBillingPlansHandler = getBillingPlansHandler ?? throw new ArgumentNullException(nameof(getBillingPlansHandler));
     }
 
     /// <summary>
@@ -96,6 +100,48 @@ public sealed class BillingController : ApiControllerBase
             CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd,
             RowVersion = result.Value.RowVersion
         });
+    }
+
+
+    /// <summary>
+    /// Returns available billing plans for subscription upgrade/checkout decisions.
+    /// </summary>
+    [HttpGet("plans")]
+    [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+    [ProducesResponseType(typeof(GetBillingPlansResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetBillingPlansAsync([FromQuery] bool activeOnly = true, CancellationToken ct = default)
+    {
+        // Business claim gate remains explicit to keep endpoint visibility consistent with other business billing operations.
+        if (!TryGetCurrentBusinessId(out _, out var errorResult))
+        {
+            return errorResult ?? Forbid();
+        }
+
+        var dto = await _getBillingPlansHandler
+            .HandleAsync(activeOnly, ct)
+            .ConfigureAwait(false);
+
+        var response = new GetBillingPlansResponse
+        {
+            Items = dto.Items
+                .Select(x => new BillingPlanSummary
+                {
+                    Id = x.Id,
+                    Code = x.Code,
+                    Name = x.Name,
+                    Description = x.Description,
+                    PriceMinor = x.PriceMinor,
+                    Currency = x.Currency,
+                    Interval = x.Interval,
+                    IntervalCount = x.IntervalCount,
+                    TrialDays = x.TrialDays,
+                    IsActive = x.IsActive
+                })
+                .ToList()
+        };
+
+        return Ok(response);
     }
 
     private static BusinessSubscriptionStatusResponse MapStatus(BusinessSubscriptionStatusDto dto)
