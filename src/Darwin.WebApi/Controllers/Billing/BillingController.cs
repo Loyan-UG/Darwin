@@ -4,6 +4,7 @@ using Darwin.WebApi.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Threading;
@@ -22,15 +23,21 @@ public sealed class BillingController : ApiControllerBase
     private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatusHandler;
     private readonly SetCancelAtPeriodEndHandler _setCancelAtPeriodEndHandler;
     private readonly GetBillingPlansHandler _getBillingPlansHandler;
+    private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntentHandler;
+    private readonly IConfiguration _configuration;
 
     public BillingController(
         GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatusHandler,
         SetCancelAtPeriodEndHandler setCancelAtPeriodEndHandler,
-        GetBillingPlansHandler getBillingPlansHandler)
+        GetBillingPlansHandler getBillingPlansHandler,
+        CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntentHandler,
+        IConfiguration configuration)
     {
         _getBusinessSubscriptionStatusHandler = getBusinessSubscriptionStatusHandler ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionStatusHandler));
         _setCancelAtPeriodEndHandler = setCancelAtPeriodEndHandler ?? throw new ArgumentNullException(nameof(setCancelAtPeriodEndHandler));
         _getBillingPlansHandler = getBillingPlansHandler ?? throw new ArgumentNullException(nameof(getBillingPlansHandler));
+        _createSubscriptionCheckoutIntentHandler = createSubscriptionCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createSubscriptionCheckoutIntentHandler));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     /// <summary>
@@ -142,6 +149,53 @@ public sealed class BillingController : ApiControllerBase
         };
 
         return Ok(response);
+    }
+
+
+    /// <summary>
+    /// Creates a checkout-intent URL for subscription upgrade/checkout.
+    /// </summary>
+    [HttpPost("business/subscription/checkout-intent")]
+    [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+    [ProducesResponseType(typeof(CreateSubscriptionCheckoutIntentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CreateSubscriptionCheckoutIntentAsync([FromBody] CreateSubscriptionCheckoutIntentRequest request, CancellationToken ct = default)
+    {
+        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        {
+            return errorResult ?? Forbid();
+        }
+
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        var validation = await _createSubscriptionCheckoutIntentHandler
+            .ValidateAsync(businessId, request.PlanId, ct)
+            .ConfigureAwait(false);
+
+        if (!validation.Succeeded)
+        {
+            return ProblemFromResult(validation, "Unable to create checkout intent.");
+        }
+
+        var checkoutBaseUrl = _configuration["Billing:CheckoutBaseUrl"];
+        if (string.IsNullOrWhiteSpace(checkoutBaseUrl) || !Uri.TryCreate(checkoutBaseUrl, UriKind.Absolute, out var baseUri))
+        {
+            return BadRequestProblem("Billing checkout endpoint is not configured.");
+        }
+
+        // Keep generated URL simple and deterministic for current phase.
+        var checkoutUrl = $"{baseUri.AbsoluteUri.TrimEnd('/')}?businessId={businessId:D}&planId={request.PlanId:D}";
+
+        return Ok(new CreateSubscriptionCheckoutIntentResponse
+        {
+            CheckoutUrl = checkoutUrl,
+            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(15),
+            Provider = "Stripe"
+        });
     }
 
     private static BusinessSubscriptionStatusResponse MapStatus(BusinessSubscriptionStatusDto dto)

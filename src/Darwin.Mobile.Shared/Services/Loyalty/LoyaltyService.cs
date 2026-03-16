@@ -934,5 +934,44 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 return Result<GetBillingPlansResponse>.Fail($"Network error while retrieving billing plans: {ex.Message}");
             }
         }
+
+        /// <inheritdoc />
+        public async Task<Result<CreateSubscriptionCheckoutIntentResponse>> CreateSubscriptionCheckoutIntentAsync(CreateSubscriptionCheckoutIntentRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result<CreateSubscriptionCheckoutIntentResponse>.Fail("Request body is required.");
+            }
+
+            if (request.PlanId == Guid.Empty)
+            {
+                return Result<CreateSubscriptionCheckoutIntentResponse>.Fail("Plan Id is required.");
+            }
+
+            try
+            {
+                var response = await _apiClient
+                    .PostResultAsync<CreateSubscriptionCheckoutIntentRequest, CreateSubscriptionCheckoutIntentResponse>(
+                        ApiRoutes.Billing.CreateCheckoutIntent,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<CreateSubscriptionCheckoutIntentResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<CreateSubscriptionCheckoutIntentResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<CreateSubscriptionCheckoutIntentResponse>.Fail($"Network error while creating checkout intent: {ex.Message}");
+            }
+        }
     }
 }

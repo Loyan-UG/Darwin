@@ -6,6 +6,7 @@ using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 using Microsoft.Maui.ApplicationModel;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,6 +37,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private string _subscriptionDatesText = string.Empty;
     private bool _cancelAtPeriodEnd;
     private string _availablePlansText = string.Empty;
+    private readonly List<BillingPlanSummary> _availablePlans = new();
 
     private Guid _subscriptionId;
     private byte[] _subscriptionRowVersion = Array.Empty<byte>();
@@ -47,6 +49,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         RefreshSubscriptionStatusCommand = new AsyncCommand(RefreshSubscriptionStatusAsync, () => !IsBusy);
         ToggleCancelAtPeriodEndCommand = new AsyncCommand(ToggleCancelAtPeriodEndAsync, () => !IsBusy && HasSubscriptionStatus);
+        StartUpgradeCheckoutCommand = new AsyncCommand(StartUpgradeCheckoutAsync, () => !IsBusy && _availablePlans.Count > 0);
         OpenBillingPortalCommand = new AsyncCommand(OpenBillingPortalAsync, () => !IsBusy && IsPortalConfigured);
         CopyBillingPortalUrlCommand = new AsyncCommand(CopyBillingPortalUrlAsync, () => !IsBusy && IsPortalConfigured);
     }
@@ -137,6 +140,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
     public AsyncCommand RefreshSubscriptionStatusCommand { get; }
     public AsyncCommand ToggleCancelAtPeriodEndCommand { get; }
+    public AsyncCommand StartUpgradeCheckoutCommand { get; }
     public AsyncCommand OpenBillingPortalCommand { get; }
     public AsyncCommand CopyBillingPortalUrlCommand { get; }
 
@@ -238,6 +242,95 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
             // Reload full snapshot to keep date/status fields in sync with server-side business rules.
             await RefreshSubscriptionStatusAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
+        }
+    }
+
+    private async Task LoadBillingPlansAsync()
+    {
+        var plansResult = await _loyaltyService
+            .GetBillingPlansAsync(activeOnly: true, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        if (!plansResult.Succeeded || plansResult.Value?.Items is null)
+        {
+            RunOnMain(() =>
+            {
+                _availablePlans.Clear();
+                AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
+                StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
+            });
+            return;
+        }
+
+        var plans = plansResult.Value.Items
+            .Where(static x => x.IsActive && x.Id != Guid.Empty)
+            .OrderBy(static x => x.PriceMinor)
+            .ThenBy(static x => x.Name)
+            .ToList();
+
+        RunOnMain(() =>
+        {
+            _availablePlans.Clear();
+            _availablePlans.AddRange(plans);
+
+            AvailablePlansText = plans.Count == 0
+                ? AppResources.SubscriptionPlansUnavailable
+                : string.Join(Environment.NewLine,
+                    plans.Select(p => $"• {(!string.IsNullOrWhiteSpace(p.Name) ? p.Name : p.Code)} — {FormatMoney(p.PriceMinor, p.Currency)} / {p.Interval}"));
+
+            StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
+        });
+    }
+
+    private async Task StartUpgradeCheckoutAsync()
+    {
+        if (IsBusy || _availablePlans.Count == 0)
+        {
+            return;
+        }
+
+        var selectedPlan = _availablePlans[0];
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseCommandStates();
+        });
+
+        try
+        {
+            var result = await _loyaltyService
+                .CreateSubscriptionCheckoutIntentAsync(
+                    new CreateSubscriptionCheckoutIntentRequest { PlanId = selectedPlan.Id },
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value is null || string.IsNullOrWhiteSpace(result.Value.CheckoutUrl))
+            {
+                RunOnMain(() => ErrorMessage = result.Error ?? AppResources.SubscriptionPlansUnavailable);
+                return;
+            }
+
+            if (!Uri.TryCreate(result.Value.CheckoutUrl, UriKind.Absolute, out var checkoutUri))
+            {
+                RunOnMain(() => ErrorMessage = "Checkout URL is invalid.");
+                return;
+            }
+
+            await Browser.OpenAsync(checkoutUri, BrowserLaunchMode.SystemPreferred);
+        }
+        catch
+        {
+            RunOnMain(() => ErrorMessage = "Unable to start checkout.");
         }
         finally
         {
@@ -427,6 +520,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
     {
         RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
         ToggleCancelAtPeriodEndCommand.RaiseCanExecuteChanged();
+        StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
         OpenBillingPortalCommand.RaiseCanExecuteChanged();
         CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
     }
