@@ -23,6 +23,7 @@ public static class Routes
     public const string SettingsProfile = "SettingsProfile";
     public const string SettingsChangePassword = "SettingsChangePassword";
     public const string SettingsStaffAccessBadge = "SettingsStaffAccessBadge";
+    public const string SettingsSubscription = "SettingsSubscription";
 
     // Future tabs (currently Coming Soon placeholders)
     public const string Dashboard = "Dashboard";
