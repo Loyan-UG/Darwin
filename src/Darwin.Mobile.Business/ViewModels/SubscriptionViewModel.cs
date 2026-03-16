@@ -38,6 +38,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private bool _cancelAtPeriodEnd;
     private string _availablePlansText = string.Empty;
     private readonly List<BillingPlanSummary> _availablePlans = new();
+    private BillingPlanSummary? _selectedPlan;
+    private string _selectedPlanSummaryText = string.Empty;
 
     private Guid _subscriptionId;
     private byte[] _subscriptionRowVersion = Array.Empty<byte>();
@@ -116,6 +118,12 @@ public sealed class SubscriptionViewModel : BaseViewModel
     {
         get => _availablePlansText;
         private set => SetProperty(ref _availablePlansText, value);
+    }
+
+    public string SelectedPlanSummaryText
+    {
+        get => _selectedPlanSummaryText;
+        private set => SetProperty(ref _selectedPlanSummaryText, value);
     }
 
     /// <summary>
@@ -264,7 +272,9 @@ public sealed class SubscriptionViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 _availablePlans.Clear();
+                _selectedPlan = null;
                 AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
+                SelectedPlanSummaryText = AppResources.SubscriptionCheckoutNoPlanSelected;
                 StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
             });
             return;
@@ -280,11 +290,25 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             _availablePlans.Clear();
             _availablePlans.AddRange(plans);
+            _selectedPlan = _availablePlans.FirstOrDefault();
 
             AvailablePlansText = plans.Count == 0
                 ? AppResources.SubscriptionPlansUnavailable
                 : string.Join(Environment.NewLine,
-                    plans.Select(p => $"• {(!string.IsNullOrWhiteSpace(p.Name) ? p.Name : p.Code)} — {FormatMoney(p.PriceMinor, p.Currency)} / {p.Interval}"));
+                    plans.Select(p => string.Format(
+                        AppResources.SubscriptionPlanLineFormat,
+                        !string.IsNullOrWhiteSpace(p.Name) ? p.Name : p.Code,
+                        (p.PriceMinor / 100m).ToString("0.00"),
+                        string.IsNullOrWhiteSpace(p.Currency) ? "EUR" : p.Currency.Trim().ToUpperInvariant(),
+                        p.IntervalCount,
+                        string.IsNullOrWhiteSpace(p.Interval) ? "period" : p.Interval)));
+
+            SelectedPlanSummaryText = _selectedPlan is null
+                ? AppResources.SubscriptionCheckoutNoPlanSelected
+                : string.Format(
+                    AppResources.SubscriptionCheckoutSelectedPlanFormat,
+                    !string.IsNullOrWhiteSpace(_selectedPlan.Name) ? _selectedPlan.Name : _selectedPlan.Code,
+                    FormatMoney(_selectedPlan.PriceMinor, _selectedPlan.Currency));
 
             StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
         });
@@ -292,12 +316,10 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
     private async Task StartUpgradeCheckoutAsync()
     {
-        if (IsBusy || _availablePlans.Count == 0)
+        if (IsBusy || _selectedPlan is null)
         {
             return;
         }
-
-        var selectedPlan = _availablePlans[0];
 
         RunOnMain(() =>
         {
@@ -310,7 +332,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             var result = await _loyaltyService
                 .CreateSubscriptionCheckoutIntentAsync(
-                    new CreateSubscriptionCheckoutIntentRequest { PlanId = selectedPlan.Id },
+                    new CreateSubscriptionCheckoutIntentRequest { PlanId = _selectedPlan.Id },
                     CancellationToken.None)
                 .ConfigureAwait(false);
 
@@ -322,7 +344,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
             if (!Uri.TryCreate(result.Value.CheckoutUrl, UriKind.Absolute, out var checkoutUri))
             {
-                RunOnMain(() => ErrorMessage = "Checkout URL is invalid.");
+                RunOnMain(() => ErrorMessage = AppResources.SubscriptionCheckoutUrlInvalid);
                 return;
             }
 
@@ -330,7 +352,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         }
         catch
         {
-            RunOnMain(() => ErrorMessage = "Unable to start checkout.");
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionCheckoutStartFailed);
         }
         finally
         {

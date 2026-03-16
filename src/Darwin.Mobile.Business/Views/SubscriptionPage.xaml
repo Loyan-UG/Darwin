@@ -47,6 +47,14 @@
                            FontSize="12"
                            Opacity="0.8"
                            LineBreakMode="WordWrap" />
+
+                    <Label Text="{Binding SelectedPlanSummaryText}"
+                           FontSize="12"
+                           Opacity="0.75"
+                           LineBreakMode="WordWrap" />
+
+                    <Button Text="{x:Static res:AppResources.SubscriptionStartCheckoutButton}"
+                            Command="{Binding StartUpgradeCheckoutCommand}" />
                 </VerticalStackLayout>
             </Border>
 

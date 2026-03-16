@@ -109,6 +109,11 @@ public static class AppResources
     public static string SubscriptionPlansSectionTitle => ResourceManager.GetString(nameof(SubscriptionPlansSectionTitle), Culture) ?? "Available plans";
     public static string SubscriptionPlansUnavailable => ResourceManager.GetString(nameof(SubscriptionPlansUnavailable), Culture) ?? "No billing plans are currently available.";
     public static string SubscriptionPlanLineFormat => ResourceManager.GetString(nameof(SubscriptionPlanLineFormat), Culture) ?? "{0}: {1} {2} every {3} {4}";
+    public static string SubscriptionCheckoutNoPlanSelected => ResourceManager.GetString(nameof(SubscriptionCheckoutNoPlanSelected), Culture) ?? "Select a plan to continue checkout.";
+    public static string SubscriptionCheckoutSelectedPlanFormat => ResourceManager.GetString(nameof(SubscriptionCheckoutSelectedPlanFormat), Culture) ?? "Checkout target: {0} ({1})";
+    public static string SubscriptionStartCheckoutButton => ResourceManager.GetString(nameof(SubscriptionStartCheckoutButton), Culture) ?? "Continue to checkout";
+    public static string SubscriptionCheckoutUrlInvalid => ResourceManager.GetString(nameof(SubscriptionCheckoutUrlInvalid), Culture) ?? "Checkout URL is invalid. Please refresh and try again.";
+    public static string SubscriptionCheckoutStartFailed => ResourceManager.GetString(nameof(SubscriptionCheckoutStartFailed), Culture) ?? "Unable to start checkout right now. Please try again.";
     public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";
     public static string SubscriptionPortalUrlLabel => ResourceManager.GetString(nameof(SubscriptionPortalUrlLabel), Culture) ?? "Portal URL";
     public static string SubscriptionPortalReadyHint => ResourceManager.GetString(nameof(SubscriptionPortalReadyHint), Culture) ?? "Billing portal is configured for this environment. Open it to manage plan and payment details.";
@@ -119,7 +124,7 @@ public static class AppResources
     public static string SubscriptionPortalValidationMissingUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationMissingUrl), Culture) ?? "Billing portal URL is not configured.";
     public static string SubscriptionPortalValidationInvalidUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationInvalidUrl), Culture) ?? "Billing portal URL is invalid. Configure an absolute URL.";
     public static string SubscriptionPortalValidationRequiresHttps => ResourceManager.GetString(nameof(SubscriptionPortalValidationRequiresHttps), Culture) ?? "Billing portal URL must use HTTPS.";
-    public static string SubscriptionPortalValidationHostNotAllowedFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationHostNotAllowedFormat), Culture) ?? "Billing portal host "{0}" is not allowed for this environment.";
+    public static string SubscriptionPortalValidationHostNotAllowedFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationHostNotAllowedFormat), Culture) ?? "Billing portal host \"{0}\" is not allowed for this environment.";
     public static string SubscriptionPortalValidationReadyFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationReadyFormat), Culture) ?? "Configured host: {0}";
     public static string SubscriptionOpenPortalButton => ResourceManager.GetString(nameof(SubscriptionOpenPortalButton), Culture) ?? "Open billing portal";
     public static string SubscriptionCopyPortalUrlButton => ResourceManager.GetString(nameof(SubscriptionCopyPortalUrlButton), Culture) ?? "Copy portal URL";

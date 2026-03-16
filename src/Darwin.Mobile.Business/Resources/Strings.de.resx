@@ -297,6 +297,21 @@
   <data name="SubscriptionPlanLineFormat" xml:space="preserve">
     <value>{0}: {1} {2} alle {3} {4}</value>
   </data>
+  <data name="SubscriptionCheckoutNoPlanSelected" xml:space="preserve">
+    <value>Wählen Sie einen Tarif aus, um mit dem Checkout fortzufahren.</value>
+  </data>
+  <data name="SubscriptionCheckoutSelectedPlanFormat" xml:space="preserve">
+    <value>Checkout-Ziel: {0} ({1})</value>
+  </data>
+  <data name="SubscriptionStartCheckoutButton" xml:space="preserve">
+    <value>Zum Checkout</value>
+  </data>
+  <data name="SubscriptionCheckoutUrlInvalid" xml:space="preserve">
+    <value>Checkout-URL ist ungültig. Bitte aktualisieren Sie und versuchen Sie es erneut.</value>
+  </data>
+  <data name="SubscriptionCheckoutStartFailed" xml:space="preserve">
+    <value>Checkout kann momentan nicht gestartet werden. Bitte versuchen Sie es erneut.</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Abrechnungsportal</value>
   </data>

@@ -297,6 +297,21 @@
   <data name="SubscriptionPlanLineFormat" xml:space="preserve">
     <value>{0}: {1} {2} every {3} {4}</value>
   </data>
+  <data name="SubscriptionCheckoutNoPlanSelected" xml:space="preserve">
+    <value>Select a plan to continue checkout.</value>
+  </data>
+  <data name="SubscriptionCheckoutSelectedPlanFormat" xml:space="preserve">
+    <value>Checkout target: {0} ({1})</value>
+  </data>
+  <data name="SubscriptionStartCheckoutButton" xml:space="preserve">
+    <value>Continue to checkout</value>
+  </data>
+  <data name="SubscriptionCheckoutUrlInvalid" xml:space="preserve">
+    <value>Checkout URL is invalid. Please refresh and try again.</value>
+  </data>
+  <data name="SubscriptionCheckoutStartFailed" xml:space="preserve">
+    <value>Unable to start checkout right now. Please try again.</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Billing portal</value>
   </data>
