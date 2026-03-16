@@ -25,6 +25,9 @@
 
             <Button Text="{x:Static res:AppResources.SettingsStaffAccessBadgeButton}"
                     Command="{Binding OpenStaffAccessBadgeCommand}" />
+
+            <Button Text="{x:Static res:AppResources.SettingsSubscriptionButton}"
+                    Command="{Binding OpenSubscriptionCommand}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

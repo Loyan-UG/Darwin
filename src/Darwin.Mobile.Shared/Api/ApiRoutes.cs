@@ -89,6 +89,14 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string RegisterDevice = "api/v1/notifications/devices/register";
         }
+        public static class Billing
+        {
+            public const string GetCurrentBusinessSubscription = "api/v1/billing/business/subscription/current";
+            public const string SetCancelAtPeriodEnd = "api/v1/billing/business/subscription/cancel-at-period-end";
+            public const string CreateCheckoutIntent = "api/v1/billing/business/subscription/checkout-intent";
+            public const string GetPlans = "api/v1/billing/plans";
+        }
+
         public static class Loyalty
         {
             public const string PrepareScanSession = "api/v1/loyalty/scan/prepare";
