@@ -33,6 +33,13 @@ public sealed class ApiOptions
     /// </summary>
     public MobileAppRole AppRole { get; set; } = MobileAppRole.Unknown;
 
+
+    /// <summary>
+    /// Optional business billing portal URL (typically Stripe customer portal) opened by
+    /// the Business app settings screen for subscription self-service.
+    /// </summary>
+    public string? BusinessBillingPortalUrl { get; set; }
+
     /// <summary>
     /// TEST-ONLY switch:
     /// When true, mobile client bypasses TLS certificate validation.
