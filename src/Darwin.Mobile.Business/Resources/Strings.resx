@@ -273,6 +273,9 @@
   <data name="SubscriptionPortalValidationRequiresHttps" xml:space="preserve">
     <value>Billing portal URL must use HTTPS.</value>
   </data>
+  <data name="SubscriptionPortalValidationHostNotAllowedFormat" xml:space="preserve">
+    <value>Billing portal host "{0}" is not allowed for this environment.</value>
+  </data>
   <data name="SubscriptionPortalValidationReadyFormat" xml:space="preserve">
     <value>Configured host: {0}</value>
   </data>

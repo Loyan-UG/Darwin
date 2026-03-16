@@ -41,6 +41,14 @@ public sealed class ApiOptions
     public string? BusinessBillingPortalUrl { get; set; }
 
     /// <summary>
+    /// Optional allowlist for billing portal host names.
+    /// When provided, subscription portal actions are enabled only if the configured
+    /// <see cref="BusinessBillingPortalUrl"/> host matches one of these values.
+    /// Host checks are case-insensitive and exact-match based.
+    /// </summary>
+    public string[]? BusinessBillingPortalAllowedHosts { get; set; }
+
+    /// <summary>
     /// TEST-ONLY switch:
     /// When true, mobile client bypasses TLS certificate validation.
     /// This is only for temporary test tunnels (e.g. ngrok).

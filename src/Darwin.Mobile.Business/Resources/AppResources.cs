@@ -101,6 +101,7 @@ public static class AppResources
     public static string SubscriptionPortalValidationMissingUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationMissingUrl), Culture) ?? "Billing portal URL is not configured.";
     public static string SubscriptionPortalValidationInvalidUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationInvalidUrl), Culture) ?? "Billing portal URL is invalid. Configure an absolute URL.";
     public static string SubscriptionPortalValidationRequiresHttps => ResourceManager.GetString(nameof(SubscriptionPortalValidationRequiresHttps), Culture) ?? "Billing portal URL must use HTTPS.";
+    public static string SubscriptionPortalValidationHostNotAllowedFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationHostNotAllowedFormat), Culture) ?? "Billing portal host "{0}" is not allowed for this environment.";
     public static string SubscriptionPortalValidationReadyFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationReadyFormat), Culture) ?? "Configured host: {0}";
     public static string SubscriptionOpenPortalButton => ResourceManager.GetString(nameof(SubscriptionOpenPortalButton), Culture) ?? "Open billing portal";
     public static string SubscriptionCopyPortalUrlButton => ResourceManager.GetString(nameof(SubscriptionCopyPortalUrlButton), Culture) ?? "Copy portal URL";

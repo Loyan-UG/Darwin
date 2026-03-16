@@ -273,6 +273,9 @@
   <data name="SubscriptionPortalValidationRequiresHttps" xml:space="preserve">
     <value>Die URL des Abrechnungsportals muss HTTPS verwenden.</value>
   </data>
+  <data name="SubscriptionPortalValidationHostNotAllowedFormat" xml:space="preserve">
+    <value>Der Host des Abrechnungsportals "{0}" ist für diese Umgebung nicht zugelassen.</value>
+  </data>
   <data name="SubscriptionPortalValidationReadyFormat" xml:space="preserve">
     <value>Konfigurierter Host: {0}</value>
   </data>

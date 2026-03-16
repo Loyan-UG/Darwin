@@ -4,6 +4,7 @@ using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.ViewModels;
 using Microsoft.Maui.ApplicationModel;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Darwin.Mobile.Business.ViewModels;
@@ -219,6 +220,19 @@ public sealed class SubscriptionViewModel : BaseViewModel
             return new PortalValidationResult(
                 PortalUri: null,
                 Details: AppResources.SubscriptionPortalValidationRequiresHttps);
+        }
+
+        var allowedHosts = _apiOptions.BusinessBillingPortalAllowedHosts?
+            .Where(static host => !string.IsNullOrWhiteSpace(host))
+            .Select(static host => host.Trim())
+            .ToArray();
+
+        if (allowedHosts is { Length: > 0 } &&
+            !allowedHosts.Any(host => string.Equals(host, portalUri.Host, StringComparison.OrdinalIgnoreCase)))
+        {
+            return new PortalValidationResult(
+                PortalUri: null,
+                Details: string.Format(AppResources.SubscriptionPortalValidationHostNotAllowedFormat, portalUri.Host));
         }
 
         var details = string.Format(AppResources.SubscriptionPortalValidationReadyFormat, portalUri.Host);
