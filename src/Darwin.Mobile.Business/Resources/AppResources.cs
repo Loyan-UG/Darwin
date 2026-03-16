@@ -87,6 +87,24 @@ public static class AppResources
     public static string SettingsProfileButton => ResourceManager.GetString(nameof(SettingsProfileButton), Culture) ?? "Profile";
     public static string SettingsChangePasswordButton => ResourceManager.GetString(nameof(SettingsChangePasswordButton), Culture) ?? "Change password";
     public static string SettingsStaffAccessBadgeButton => ResourceManager.GetString(nameof(SettingsStaffAccessBadgeButton), Culture) ?? "Staff access badge";
+    public static string SettingsSubscriptionButton => ResourceManager.GetString(nameof(SettingsSubscriptionButton), Culture) ?? "Subscription";
+
+    public static string SubscriptionTitle => ResourceManager.GetString(nameof(SubscriptionTitle), Culture) ?? "Subscription";
+    public static string SubscriptionDescription => ResourceManager.GetString(nameof(SubscriptionDescription), Culture) ?? "Manage your billing plan and payment methods via secure portal access.";
+    public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";
+    public static string SubscriptionPortalUrlLabel => ResourceManager.GetString(nameof(SubscriptionPortalUrlLabel), Culture) ?? "Portal URL";
+    public static string SubscriptionPortalReadyHint => ResourceManager.GetString(nameof(SubscriptionPortalReadyHint), Culture) ?? "Billing portal is configured for this environment. Open it to manage plan and payment details.";
+    public static string SubscriptionPortalMissingHint => ResourceManager.GetString(nameof(SubscriptionPortalMissingHint), Culture) ?? "Billing portal is not configured for this environment yet. Contact your admin team.";
+    public static string SubscriptionPortalCopiedHint => ResourceManager.GetString(nameof(SubscriptionPortalCopiedHint), Culture) ?? "Billing portal URL copied to clipboard.";
+    public static string SubscriptionPortalOpenFailed => ResourceManager.GetString(nameof(SubscriptionPortalOpenFailed), Culture) ?? "Unable to open billing portal right now. Please try again shortly.";
+    public static string SubscriptionPortalCopyFailed => ResourceManager.GetString(nameof(SubscriptionPortalCopyFailed), Culture) ?? "Unable to copy billing portal URL right now. Please try again.";
+    public static string SubscriptionPortalValidationMissingUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationMissingUrl), Culture) ?? "Billing portal URL is not configured.";
+    public static string SubscriptionPortalValidationInvalidUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationInvalidUrl), Culture) ?? "Billing portal URL is invalid. Configure an absolute URL.";
+    public static string SubscriptionPortalValidationRequiresHttps => ResourceManager.GetString(nameof(SubscriptionPortalValidationRequiresHttps), Culture) ?? "Billing portal URL must use HTTPS.";
+    public static string SubscriptionPortalValidationHostNotAllowedFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationHostNotAllowedFormat), Culture) ?? "Billing portal host "{0}" is not allowed for this environment.";
+    public static string SubscriptionPortalValidationReadyFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationReadyFormat), Culture) ?? "Configured host: {0}";
+    public static string SubscriptionOpenPortalButton => ResourceManager.GetString(nameof(SubscriptionOpenPortalButton), Culture) ?? "Open billing portal";
+    public static string SubscriptionCopyPortalUrlButton => ResourceManager.GetString(nameof(SubscriptionCopyPortalUrlButton), Culture) ?? "Copy portal URL";
 
     public static string StaffAccessBadgeTitle => ResourceManager.GetString(nameof(StaffAccessBadgeTitle), Culture) ?? "Staff access badge";
     public static string StaffAccessBadgeDescription => ResourceManager.GetString(nameof(StaffAccessBadgeDescription), Culture) ?? "Use this short-lived QR for internal staff checkpoints and controlled business operations.";

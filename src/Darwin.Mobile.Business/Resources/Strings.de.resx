@@ -234,7 +234,58 @@
 	<data name="SettingsStaffAccessBadgeButton" xml:space="preserve">
     <value>Mitarbeiterzugangs-Badge</value>
   </data>
-	<data name="StaffAccessBadgeTitle" xml:space="preserve">
+	  <data name="SettingsSubscriptionButton" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="SubscriptionTitle" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="SubscriptionDescription" xml:space="preserve">
+    <value>Verwalten Sie Tarif und Zahlungsarten über den sicheren Zugriff auf das Abrechnungsportal.</value>
+  </data>
+  <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
+    <value>Abrechnungsportal</value>
+  </data>
+  <data name="SubscriptionPortalUrlLabel" xml:space="preserve">
+    <value>Portal-URL</value>
+  </data>
+  <data name="SubscriptionPortalReadyHint" xml:space="preserve">
+    <value>Das Abrechnungsportal ist für diese Umgebung konfiguriert. Öffnen Sie es, um Tarif- und Zahlungsdaten zu verwalten.</value>
+  </data>
+  <data name="SubscriptionPortalMissingHint" xml:space="preserve">
+    <value>Das Abrechnungsportal ist für diese Umgebung noch nicht konfiguriert. Bitte kontaktieren Sie Ihr Admin-Team.</value>
+  </data>
+  <data name="SubscriptionPortalCopiedHint" xml:space="preserve">
+    <value>Die Abrechnungsportal-URL wurde in die Zwischenablage kopiert.</value>
+  </data>
+  <data name="SubscriptionPortalOpenFailed" xml:space="preserve">
+    <value>Das Abrechnungsportal kann derzeit nicht geöffnet werden. Bitte versuchen Sie es in Kürze erneut.</value>
+  </data>
+  <data name="SubscriptionPortalCopyFailed" xml:space="preserve">
+    <value>Die Abrechnungsportal-URL kann derzeit nicht kopiert werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="SubscriptionPortalValidationMissingUrl" xml:space="preserve">
+    <value>Die URL des Abrechnungsportals ist nicht konfiguriert.</value>
+  </data>
+  <data name="SubscriptionPortalValidationInvalidUrl" xml:space="preserve">
+    <value>Die URL des Abrechnungsportals ist ungültig. Bitte eine absolute URL konfigurieren.</value>
+  </data>
+  <data name="SubscriptionPortalValidationRequiresHttps" xml:space="preserve">
+    <value>Die URL des Abrechnungsportals muss HTTPS verwenden.</value>
+  </data>
+  <data name="SubscriptionPortalValidationHostNotAllowedFormat" xml:space="preserve">
+    <value>Der Host des Abrechnungsportals "{0}" ist für diese Umgebung nicht zugelassen.</value>
+  </data>
+  <data name="SubscriptionPortalValidationReadyFormat" xml:space="preserve">
+    <value>Konfigurierter Host: {0}</value>
+  </data>
+  <data name="SubscriptionOpenPortalButton" xml:space="preserve">
+    <value>Abrechnungsportal öffnen</value>
+  </data>
+  <data name="SubscriptionCopyPortalUrlButton" xml:space="preserve">
+    <value>Portal-URL kopieren</value>
+  </data>
+<data name="StaffAccessBadgeTitle" xml:space="preserve">
     <value>Mitarbeiterzugangs-Badge</value>
   </data>
 	<data name="StaffAccessBadgeDescription" xml:space="preserve">
