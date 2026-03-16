@@ -14,6 +14,7 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// - Profile action goes to a dedicated profile edit page.
 /// - Password action goes to a dedicated password change page.
 /// - Staff badge action opens a rotating QR code for internal access workflows.
+/// - Subscription action opens billing management entry page for plan/payment operations.
 /// </summary>
 public sealed class SettingsViewModel : BaseViewModel
 {
@@ -26,6 +27,7 @@ public sealed class SettingsViewModel : BaseViewModel
         OpenProfileCommand = new AsyncCommand(OpenProfileAsync, () => !IsBusy);
         OpenChangePasswordCommand = new AsyncCommand(OpenChangePasswordAsync, () => !IsBusy);
         OpenStaffAccessBadgeCommand = new AsyncCommand(OpenStaffAccessBadgeAsync, () => !IsBusy);
+        OpenSubscriptionCommand = new AsyncCommand(OpenSubscriptionAsync, () => !IsBusy);
     }
 
     public AsyncCommand OpenProfileCommand { get; }
@@ -33,6 +35,8 @@ public sealed class SettingsViewModel : BaseViewModel
     public AsyncCommand OpenChangePasswordCommand { get; }
 
     public AsyncCommand OpenStaffAccessBadgeCommand { get; }
+
+    public AsyncCommand OpenSubscriptionCommand { get; }
 
     private async Task OpenProfileAsync()
     {
@@ -81,6 +85,24 @@ public sealed class SettingsViewModel : BaseViewModel
         try
         {
             await _navigationService.GoToAsync(Routes.SettingsStaffAccessBadge);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task OpenSubscriptionAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            await _navigationService.GoToAsync(Routes.SettingsSubscription);
         }
         finally
         {
