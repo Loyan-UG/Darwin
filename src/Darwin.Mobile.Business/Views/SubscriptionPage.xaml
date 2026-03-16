@@ -58,8 +58,9 @@
                            FontSize="13"
                            IsVisible="{Binding HasPlanOptions}" />
 
-                    <Picker ItemsSource="{Binding PlanOptionLabels}"
-                            SelectedItem="{Binding SelectedPlanLabel, Mode=TwoWay}"
+                    <Picker ItemsSource="{Binding PlanOptions}"
+                            SelectedItem="{Binding SelectedPlan, Mode=TwoWay}"
+                            ItemDisplayBinding="{Binding Name}"
                             Title="{x:Static res:AppResources.SubscriptionCheckoutPlanPickerTitle}"
                             IsVisible="{Binding HasPlanOptions}" />
 

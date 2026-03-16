@@ -38,10 +38,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private string _subscriptionDatesText = string.Empty;
     private bool _cancelAtPeriodEnd;
     private string _availablePlansText = string.Empty;
-    private readonly List<BillingPlanSummary> _availablePlans = new();
-    private readonly ObservableCollection<string> _planOptionLabels = new();
+    private readonly ObservableCollection<BillingPlanSummary> _planOptions = new();
     private BillingPlanSummary? _selectedPlan;
-    private string? _selectedPlanLabel;
     private string _selectedPlanSummaryText = string.Empty;
 
     private Guid _subscriptionId;
@@ -129,25 +127,24 @@ public sealed class SubscriptionViewModel : BaseViewModel
         private set => SetProperty(ref _selectedPlanSummaryText, value);
     }
 
-    public IReadOnlyList<string> PlanOptionLabels => _planOptionLabels;
+    public IReadOnlyList<BillingPlanSummary> PlanOptions => _planOptions;
 
-    public string? SelectedPlanLabel
+    public BillingPlanSummary? SelectedPlan
     {
-        get => _selectedPlanLabel;
+        get => _selectedPlan;
         set
         {
-            if (!SetProperty(ref _selectedPlanLabel, value))
+            if (!SetProperty(ref _selectedPlan, value))
             {
                 return;
             }
 
-            _selectedPlan = ResolveSelectedPlan(value);
             UpdateSelectedPlanSummary();
             StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
         }
     }
 
-    public bool HasPlanOptions => _planOptionLabels.Count > 0;
+    public bool HasPlanOptions => _planOptions.Count > 0;
 
     /// <summary>
     /// Gets current button label for cancel-at-period-end action.
@@ -294,10 +291,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             RunOnMain(() =>
             {
-                _availablePlans.Clear();
-                _planOptionLabels.Clear();
-                _selectedPlan = null;
-                SelectedPlanLabel = null;
+                _planOptions.Clear();
+                SelectedPlan = null;
                 AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
                 UpdateSelectedPlanSummary();
                 OnPropertyChanged(nameof(HasPlanOptions));
@@ -314,26 +309,17 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
-            _availablePlans.Clear();
-            _availablePlans.AddRange(plans);
-            _planOptionLabels.Clear();
-
+            _planOptions.Clear();
             foreach (var plan in plans)
             {
-                _planOptionLabels.Add(string.Format(
-                    AppResources.SubscriptionPlanLineFormat,
-                    !string.IsNullOrWhiteSpace(plan.Name) ? plan.Name : plan.Code,
-                    (plan.PriceMinor / 100m).ToString("0.00"),
-                    string.IsNullOrWhiteSpace(plan.Currency) ? "EUR" : plan.Currency.Trim().ToUpperInvariant(),
-                    plan.IntervalCount,
-                    string.IsNullOrWhiteSpace(plan.Interval) ? "period" : plan.Interval));
+                _planOptions.Add(plan);
             }
 
-            SelectedPlanLabel = _planOptionLabels.FirstOrDefault();
+            SelectedPlan = _planOptions.FirstOrDefault();
 
             AvailablePlansText = plans.Count == 0
                 ? AppResources.SubscriptionPlansUnavailable
-                : string.Join(Environment.NewLine, _planOptionLabels.Select(x => $"• {x}"));
+                : string.Join(Environment.NewLine, plans.Select(p => $"• {FormatPlanOption(p)}"));
 
             UpdateSelectedPlanSummary();
             OnPropertyChanged(nameof(HasPlanOptions));
@@ -576,20 +562,15 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
     private sealed record PortalValidationResult(Uri? PortalUri, string Details);
 
-    private BillingPlanSummary? ResolveSelectedPlan(string? selectedLabel)
+    private static string FormatPlanOption(BillingPlanSummary plan)
     {
-        if (string.IsNullOrWhiteSpace(selectedLabel))
-        {
-            return null;
-        }
-
-        var selectedIndex = _planOptionLabels.IndexOf(selectedLabel);
-        if (selectedIndex < 0 || selectedIndex >= _availablePlans.Count)
-        {
-            return null;
-        }
-
-        return _availablePlans[selectedIndex];
+        return string.Format(
+            AppResources.SubscriptionPlanLineFormat,
+            !string.IsNullOrWhiteSpace(plan.Name) ? plan.Name : plan.Code,
+            (plan.PriceMinor / 100m).ToString("0.00"),
+            string.IsNullOrWhiteSpace(plan.Currency) ? "EUR" : plan.Currency.Trim().ToUpperInvariant(),
+            plan.IntervalCount,
+            string.IsNullOrWhiteSpace(plan.Interval) ? "period" : plan.Interval);
     }
 
     private void UpdateSelectedPlanSummary()
