@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    x:Class="Darwin.Mobile.Business.Views.SubscriptionPage"
+    x:DataType="vm:SubscriptionViewModel"
+    Title="{x:Static res:AppResources.SubscriptionTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="14">
+            <Label Text="{x:Static res:AppResources.SubscriptionTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.SubscriptionDescription}"
+                   FontSize="14"
+                   Opacity="0.85" />
+
+            <Border StrokeThickness="1" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.SubscriptionStatusSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding SubscriptionSummaryText}"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{Binding SubscriptionDatesText}"
+                           FontSize="12"
+                           Opacity="0.75"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding HasSubscriptionStatus}" />
+
+                    <Button Text="{x:Static res:AppResources.SubscriptionRefreshStatusButton}"
+                            Command="{Binding RefreshSubscriptionStatusCommand}" />
+
+                    <Button Text="{Binding ToggleCancelAtPeriodEndButtonText}"
+                            Command="{Binding ToggleCancelAtPeriodEndCommand}"
+                            IsVisible="{Binding HasSubscriptionStatus}" />
+
+                    <Label Text="{x:Static res:AppResources.SubscriptionPlansSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding AvailablePlansText}"
+                           FontSize="12"
+                           Opacity="0.8"
+                           LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border StrokeThickness="1" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.SubscriptionPortalSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding PortalHint}"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{Binding PortalConfigurationDetails}"
+                           FontSize="12"
+                           Opacity="0.75"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{x:Static res:AppResources.SubscriptionPortalUrlLabel}"
+                           FontAttributes="Bold"
+                           FontSize="13"
+                           IsVisible="{Binding IsPortalConfigured}" />
+
+                    <Label Text="{Binding PortalUrlText}"
+                           FontSize="12"
+                           Opacity="0.75"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding IsPortalConfigured}" />
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="Red"
+                           IsVisible="{Binding HasError}" />
+
+                    <Button Text="{x:Static res:AppResources.SubscriptionOpenPortalButton}"
+                            Command="{Binding OpenBillingPortalCommand}"
+                            IsEnabled="{Binding IsPortalConfigured}" />
+
+                    <Button Text="{x:Static res:AppResources.SubscriptionCopyPortalUrlButton}"
+                            Command="{Binding CopyBillingPortalUrlCommand}"
+                            IsEnabled="{Binding IsPortalConfigured}" />
+
+                    <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                       IsRunning="{Binding IsBusy}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

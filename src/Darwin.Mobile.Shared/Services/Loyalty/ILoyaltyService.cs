@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Contracts.Billing;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Shared.Models.Loyalty;
 using Darwin.Shared.Results;
@@ -140,5 +141,10 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         Task<Result<BusinessCampaignMutationResponse>> CreateBusinessCampaignAsync(CreateBusinessCampaignRequest request, CancellationToken cancellationToken);
         Task<Result> UpdateBusinessCampaignAsync(UpdateBusinessCampaignRequest request, CancellationToken cancellationToken);
         Task<Result> SetBusinessCampaignActivationAsync(SetCampaignActivationRequest request, CancellationToken cancellationToken);
+
+        // Business subscription
+        Task<Result<BusinessSubscriptionStatusResponse>> GetCurrentBusinessSubscriptionStatusAsync(CancellationToken cancellationToken);
+        Task<Result<SetCancelAtPeriodEndResponse>> SetCancelAtPeriodEndAsync(SetCancelAtPeriodEndRequest request, CancellationToken cancellationToken);
+        Task<Result<GetBillingPlansResponse>> GetBillingPlansAsync(bool activeOnly, CancellationToken cancellationToken);
     }
 }
