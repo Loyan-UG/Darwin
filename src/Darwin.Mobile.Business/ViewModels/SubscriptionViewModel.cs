@@ -127,8 +127,16 @@ public sealed class SubscriptionViewModel : BaseViewModel
         private set => SetProperty(ref _selectedPlanSummaryText, value);
     }
 
+    /// <summary>
+    /// Gets strongly-typed plan options for picker binding.
+    /// Each option carries both the underlying <see cref="BillingPlanSummary"/> payload
+    /// and a user-friendly display text to avoid ambiguous name-only rendering.
+    /// </summary>
     public IReadOnlyList<PlanOptionItem> PlanOptions => _planOptions;
 
+    /// <summary>
+    /// Gets or sets the currently selected plan option used for checkout intent creation.
+    /// </summary>
     public PlanOptionItem? SelectedPlanOption
     {
         get => _selectedPlanOption;
@@ -144,6 +152,9 @@ public sealed class SubscriptionViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether at least one checkout plan option is available.
+    /// </summary>
     public bool HasPlanOptions => _planOptions.Count > 0;
 
     /// <summary>
@@ -312,9 +323,11 @@ public sealed class SubscriptionViewModel : BaseViewModel
             _planOptions.Clear();
             foreach (var plan in plans)
             {
+                // Keep display text precomputed for predictable picker UI rendering and localization.
                 _planOptions.Add(new PlanOptionItem(plan, FormatPlanOption(plan)));
             }
 
+            // Auto-select cheapest plan (already sorted by price/name) for a low-friction default path.
             SelectedPlanOption = _planOptions.FirstOrDefault();
 
             AvailablePlansText = plans.Count == 0
@@ -575,13 +588,25 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
     public sealed class PlanOptionItem
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PlanOptionItem"/> class.
+        /// </summary>
+        /// <param name="plan">Underlying contract payload used for checkout API calls.</param>
+        /// <param name="displayText">Localized UI label used in picker rows.</param>
         public PlanOptionItem(BillingPlanSummary plan, string displayText)
         {
             Plan = plan ?? throw new ArgumentNullException(nameof(plan));
             DisplayText = string.IsNullOrWhiteSpace(displayText) ? plan.Code : displayText;
         }
 
+        /// <summary>
+        /// Gets the raw billing plan payload used by checkout intent request.
+        /// </summary>
         public BillingPlanSummary Plan { get; }
+
+        /// <summary>
+        /// Gets formatted display text for UI picker rendering.
+        /// </summary>
         public string DisplayText { get; }
     }
 
