@@ -37,6 +37,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private string _subscriptionSummaryText = string.Empty;
     private string _subscriptionDatesText = string.Empty;
     private bool _cancelAtPeriodEnd;
+    private string _currentPlanCodeNormalized = string.Empty;
     private string _availablePlansText = string.Empty;
     private readonly ObservableCollection<PlanOptionItem> _planOptions = new();
     private PlanOptionItem? _selectedPlanOption;
@@ -309,6 +310,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         var plans = plansResult.Value.Items
             .Where(static x => x.IsActive && x.Id != Guid.Empty)
+            .Where(x => !IsCurrentPlanCode(x.Code))
             .OrderBy(static x => x.PriceMinor)
             .ThenBy(static x => x.Name)
             .ToList();
@@ -389,11 +391,15 @@ public sealed class SubscriptionViewModel : BaseViewModel
     {
         _subscriptionId = status.SubscriptionId;
         _subscriptionRowVersion = status.RowVersion ?? Array.Empty<byte>();
+        _currentPlanCodeNormalized = string.IsNullOrWhiteSpace(status.PlanCode)
+            ? string.Empty
+            : status.PlanCode.Trim().ToUpperInvariant();
 
         if (!status.HasSubscription)
         {
             HasSubscriptionStatus = false;
             CancelAtPeriodEnd = false;
+            _currentPlanCodeNormalized = string.Empty;
             SubscriptionSummaryText = AppResources.SubscriptionNoActivePlan;
             SubscriptionDatesText = string.Empty;
             return;
@@ -629,5 +635,22 @@ public sealed class SubscriptionViewModel : BaseViewModel
         UpdateSelectedPlanSummary();
         OnPropertyChanged(nameof(HasPlanOptions));
         StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Returns whether candidate code points to currently active subscription plan.
+    /// Used to keep checkout options focused on alternative plans only.
+    /// </summary>
+    private bool IsCurrentPlanCode(string? candidateCode)
+    {
+        if (string.IsNullOrWhiteSpace(_currentPlanCodeNormalized) || string.IsNullOrWhiteSpace(candidateCode))
+        {
+            return false;
+        }
+
+        return string.Equals(
+            _currentPlanCodeNormalized,
+            candidateCode.Trim().ToUpperInvariant(),
+            StringComparison.Ordinal);
     }
 }
