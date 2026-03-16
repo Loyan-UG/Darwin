@@ -64,6 +64,9 @@ public sealed class BusinessDashboardSnapshot
     public int TotalSessions { get; init; }
     public int AccrualCount { get; init; }
     public int RedemptionCount { get; init; }
+    public int SubscriptionStatusRefreshFailures { get; init; }
+    public int SubscriptionCheckoutStarts { get; init; }
+    public int SubscriptionCheckoutFailures { get; init; }
     public int TotalAccruedPoints { get; init; }
     public int TotalRedeemedPoints { get; init; }
     public IReadOnlyList<BusinessTopCustomerItem> TopCustomers { get; init; } = Array.Empty<BusinessTopCustomerItem>();

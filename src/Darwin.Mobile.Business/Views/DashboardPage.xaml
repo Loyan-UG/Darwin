@@ -38,7 +38,7 @@
                         Command="{Binding ExportPdfCommand}" />
             </Grid>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
                 <Border Grid.Row="0" Grid.Column="0" StrokeThickness="1" Stroke="#555555" Padding="10">
                     <Label Text="{Binding TotalSessions, StringFormat='Sessions: {0}'}" FontAttributes="Bold" />
                 </Border>
@@ -55,6 +55,17 @@
                     <VerticalStackLayout Spacing="2">
                         <Label Text="{Binding TotalAccruedPoints, StringFormat='Accrued points: {0}'}" FontAttributes="Bold" FontSize="13" />
                         <Label Text="{Binding TotalRedeemedPoints, StringFormat='Redeemed points: {0}'}" FontSize="13" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Row="2" Grid.Column="0" StrokeThickness="1" Stroke="#555555" Padding="10">
+                    <Label Text="{Binding SubscriptionStatusRefreshFailures, StringFormat='Subscription refresh failures: {0}'}" FontAttributes="Bold" FontSize="13" />
+                </Border>
+
+                <Border Grid.Row="2" Grid.Column="1" StrokeThickness="1" Stroke="#555555" Padding="10">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="{Binding SubscriptionCheckoutStarts, StringFormat='Checkout starts: {0}'}" FontAttributes="Bold" FontSize="13" />
+                        <Label Text="{Binding SubscriptionCheckoutFailures, StringFormat='Checkout failures: {0}'}" FontSize="13" />
                     </VerticalStackLayout>
                 </Border>
             </Grid>

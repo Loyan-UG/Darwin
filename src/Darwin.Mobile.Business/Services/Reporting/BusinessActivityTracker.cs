@@ -88,6 +88,9 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         var totalSessions = entries.Count(x => x.Kind == BusinessActivityKind.SessionLoaded);
         var accrualEntries = entries.Where(x => x.Kind == BusinessActivityKind.AccrualConfirmed).ToList();
         var redemptionEntries = entries.Where(x => x.Kind == BusinessActivityKind.RedemptionConfirmed).ToList();
+        var subscriptionRefreshFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionStatusRefreshFailed);
+        var subscriptionCheckoutStarts = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutStarted);
+        var subscriptionCheckoutFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutFailed);
 
         var topCustomers = entries
             .GroupBy(x => NormalizeCustomer(x.CustomerDisplayName))
@@ -117,6 +120,9 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             TotalSessions = totalSessions,
             AccrualCount = accrualEntries.Count,
             RedemptionCount = redemptionEntries.Count,
+            SubscriptionStatusRefreshFailures = subscriptionRefreshFailures,
+            SubscriptionCheckoutStarts = subscriptionCheckoutStarts,
+            SubscriptionCheckoutFailures = subscriptionCheckoutFailures,
             TotalAccruedPoints = accrualEntries.Sum(x => x.PointsDelta),
             TotalRedeemedPoints = redemptionEntries.Sum(x => x.PointsDelta),
             TopCustomers = topCustomers,
