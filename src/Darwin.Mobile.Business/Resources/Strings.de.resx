@@ -234,7 +234,31 @@
 	<data name="SettingsStaffAccessBadgeButton" xml:space="preserve">
     <value>Mitarbeiterzugangs-Badge</value>
   </data>
-	<data name="StaffAccessBadgeTitle" xml:space="preserve">
+	  <data name="SettingsSubscriptionButton" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="SubscriptionTitle" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="SubscriptionDescription" xml:space="preserve">
+    <value>Verwalten Sie Tarif und Zahlungsarten über den sicheren Zugriff auf das Abrechnungsportal.</value>
+  </data>
+  <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
+    <value>Abrechnungsportal</value>
+  </data>
+  <data name="SubscriptionPortalReadyHint" xml:space="preserve">
+    <value>Das Abrechnungsportal ist für diese Umgebung konfiguriert. Öffnen Sie es, um Tarif- und Zahlungsdaten zu verwalten.</value>
+  </data>
+  <data name="SubscriptionPortalMissingHint" xml:space="preserve">
+    <value>Das Abrechnungsportal ist für diese Umgebung noch nicht konfiguriert. Bitte kontaktieren Sie Ihr Admin-Team.</value>
+  </data>
+  <data name="SubscriptionPortalOpenFailed" xml:space="preserve">
+    <value>Das Abrechnungsportal kann derzeit nicht geöffnet werden. Bitte versuchen Sie es in Kürze erneut.</value>
+  </data>
+  <data name="SubscriptionOpenPortalButton" xml:space="preserve">
+    <value>Abrechnungsportal öffnen</value>
+  </data>
+<data name="StaffAccessBadgeTitle" xml:space="preserve">
     <value>Mitarbeiterzugangs-Badge</value>
   </data>
 	<data name="StaffAccessBadgeDescription" xml:space="preserve">
