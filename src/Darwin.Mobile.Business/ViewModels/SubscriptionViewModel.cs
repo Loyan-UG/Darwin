@@ -13,7 +13,9 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// 
 /// Current scope (Phase 1 of subscription UX):
 /// - Display whether a billing portal URL is configured for this environment.
+/// - Enforce HTTPS portal URL requirement before enabling actions.
 /// - Open the configured billing portal in system browser for plan/payment management.
+/// - Allow operators to copy portal URL for troubleshooting and secure sharing.
 /// 
 /// Notes:
 /// - This ViewModel does not persist or mutate subscription data directly.
@@ -26,15 +28,18 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
     private bool _isPortalConfigured;
     private string _portalHint = string.Empty;
+    private string _portalUrlText = string.Empty;
 
     public SubscriptionViewModel(ApiOptions apiOptions)
     {
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
+
         OpenBillingPortalCommand = new AsyncCommand(OpenBillingPortalAsync, () => !IsBusy && IsPortalConfigured);
+        CopyBillingPortalUrlCommand = new AsyncCommand(CopyBillingPortalUrlAsync, () => !IsBusy && IsPortalConfigured);
     }
 
     /// <summary>
-    /// Gets a value indicating whether a billing portal URL is configured.
+    /// Gets a value indicating whether a billing portal URL is configured and valid.
     /// </summary>
     public bool IsPortalConfigured
     {
@@ -44,6 +49,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             if (SetProperty(ref _isPortalConfigured, value))
             {
                 OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -58,16 +64,31 @@ public sealed class SubscriptionViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets a normalized billing portal URL text for display and copy actions.
+    /// </summary>
+    public string PortalUrlText
+    {
+        get => _portalUrlText;
+        private set => SetProperty(ref _portalUrlText, value);
+    }
+
+    /// <summary>
     /// Opens Stripe/customer billing portal URL in external browser.
     /// </summary>
     public AsyncCommand OpenBillingPortalCommand { get; }
+
+    /// <summary>
+    /// Copies configured billing portal URL to clipboard for operator troubleshooting.
+    /// </summary>
+    public AsyncCommand CopyBillingPortalUrlCommand { get; }
 
     public override Task OnAppearingAsync()
     {
         RunOnMain(() =>
         {
-            var url = _apiOptions.BusinessBillingPortalUrl?.Trim();
-            IsPortalConfigured = Uri.TryCreate(url, UriKind.Absolute, out _);
+            var portalUri = GetValidatedPortalUri();
+            IsPortalConfigured = portalUri is not null;
+            PortalUrlText = portalUri?.AbsoluteUri ?? string.Empty;
 
             PortalHint = IsPortalConfigured
                 ? AppResources.SubscriptionPortalReadyHint
@@ -86,8 +107,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
             return;
         }
 
-        var url = _apiOptions.BusinessBillingPortalUrl?.Trim();
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var portalUri))
+        var portalUri = GetValidatedPortalUri();
+        if (portalUri is null)
         {
             RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
             return;
@@ -115,7 +136,68 @@ public sealed class SubscriptionViewModel : BaseViewModel
             {
                 IsBusy = false;
                 OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
             });
         }
+    }
+
+    private async Task CopyBillingPortalUrlAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var portalUri = GetValidatedPortalUri();
+        if (portalUri is null)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+        });
+
+        try
+        {
+            await Clipboard.SetTextAsync(portalUri.AbsoluteUri);
+            RunOnMain(() => PortalHint = AppResources.SubscriptionPortalCopiedHint);
+        }
+        catch
+        {
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalCopyFailed);
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    /// <summary>
+    /// Resolves and validates configured billing portal URL.
+    /// Only HTTPS absolute URIs are accepted to prevent insecure redirects.
+    /// </summary>
+    private Uri? GetValidatedPortalUri()
+    {
+        var rawUrl = _apiOptions.BusinessBillingPortalUrl?.Trim();
+        if (!Uri.TryCreate(rawUrl, UriKind.Absolute, out var portalUri))
+        {
+            return null;
+        }
+
+        if (!string.Equals(portalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return portalUri;
     }
 }
