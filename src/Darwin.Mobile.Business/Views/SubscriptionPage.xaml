@@ -53,6 +53,16 @@
                            Opacity="0.75"
                            LineBreakMode="WordWrap" />
 
+                    <Label Text="{x:Static res:AppResources.SubscriptionCheckoutPlanPickerLabel}"
+                           FontAttributes="Bold"
+                           FontSize="13"
+                           IsVisible="{Binding HasPlanOptions}" />
+
+                    <Picker ItemsSource="{Binding PlanOptionLabels}"
+                            SelectedItem="{Binding SelectedPlanLabel, Mode=TwoWay}"
+                            Title="{x:Static res:AppResources.SubscriptionCheckoutPlanPickerTitle}"
+                            IsVisible="{Binding HasPlanOptions}" />
+
                     <Button Text="{x:Static res:AppResources.SubscriptionStartCheckoutButton}"
                             Command="{Binding StartUpgradeCheckoutCommand}" />
                 </VerticalStackLayout>

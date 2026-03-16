@@ -112,6 +112,8 @@ public static class AppResources
     public static string SubscriptionCheckoutNoPlanSelected => ResourceManager.GetString(nameof(SubscriptionCheckoutNoPlanSelected), Culture) ?? "Select a plan to continue checkout.";
     public static string SubscriptionCheckoutSelectedPlanFormat => ResourceManager.GetString(nameof(SubscriptionCheckoutSelectedPlanFormat), Culture) ?? "Checkout target: {0} ({1})";
     public static string SubscriptionStartCheckoutButton => ResourceManager.GetString(nameof(SubscriptionStartCheckoutButton), Culture) ?? "Continue to checkout";
+    public static string SubscriptionCheckoutPlanPickerLabel => ResourceManager.GetString(nameof(SubscriptionCheckoutPlanPickerLabel), Culture) ?? "Checkout plan";
+    public static string SubscriptionCheckoutPlanPickerTitle => ResourceManager.GetString(nameof(SubscriptionCheckoutPlanPickerTitle), Culture) ?? "Select a plan";
     public static string SubscriptionCheckoutUrlInvalid => ResourceManager.GetString(nameof(SubscriptionCheckoutUrlInvalid), Culture) ?? "Checkout URL is invalid. Please refresh and try again.";
     public static string SubscriptionCheckoutStartFailed => ResourceManager.GetString(nameof(SubscriptionCheckoutStartFailed), Culture) ?? "Unable to start checkout right now. Please try again.";
     public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";

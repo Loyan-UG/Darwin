@@ -306,6 +306,12 @@
   <data name="SubscriptionStartCheckoutButton" xml:space="preserve">
     <value>Zum Checkout</value>
   </data>
+  <data name="SubscriptionCheckoutPlanPickerLabel" xml:space="preserve">
+    <value>Checkout-Tarif</value>
+  </data>
+  <data name="SubscriptionCheckoutPlanPickerTitle" xml:space="preserve">
+    <value>Tarif auswählen</value>
+  </data>
   <data name="SubscriptionCheckoutUrlInvalid" xml:space="preserve">
     <value>Checkout-URL ist ungültig. Bitte aktualisieren Sie und versuchen Sie es erneut.</value>
   </data>
