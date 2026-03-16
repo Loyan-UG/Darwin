@@ -31,6 +31,9 @@ public sealed class DashboardViewModel : BaseViewModel
     private int _totalSessions;
     private int _accrualCount;
     private int _redemptionCount;
+    private int _subscriptionStatusRefreshFailures;
+    private int _subscriptionCheckoutStarts;
+    private int _subscriptionCheckoutFailures;
     private int _totalAccruedPoints;
     private int _totalRedeemedPoints;
 
@@ -75,6 +78,24 @@ public sealed class DashboardViewModel : BaseViewModel
     {
         get => _redemptionCount;
         private set => SetProperty(ref _redemptionCount, value);
+    }
+
+    public int SubscriptionStatusRefreshFailures
+    {
+        get => _subscriptionStatusRefreshFailures;
+        private set => SetProperty(ref _subscriptionStatusRefreshFailures, value);
+    }
+
+    public int SubscriptionCheckoutStarts
+    {
+        get => _subscriptionCheckoutStarts;
+        private set => SetProperty(ref _subscriptionCheckoutStarts, value);
+    }
+
+    public int SubscriptionCheckoutFailures
+    {
+        get => _subscriptionCheckoutFailures;
+        private set => SetProperty(ref _subscriptionCheckoutFailures, value);
     }
 
     public int TotalAccruedPoints
@@ -147,6 +168,9 @@ public sealed class DashboardViewModel : BaseViewModel
                 TotalSessions = snapshot.TotalSessions;
                 AccrualCount = snapshot.AccrualCount;
                 RedemptionCount = snapshot.RedemptionCount;
+                SubscriptionStatusRefreshFailures = snapshot.SubscriptionStatusRefreshFailures;
+                SubscriptionCheckoutStarts = snapshot.SubscriptionCheckoutStarts;
+                SubscriptionCheckoutFailures = snapshot.SubscriptionCheckoutFailures;
                 TotalAccruedPoints = snapshot.TotalAccruedPoints;
                 TotalRedeemedPoints = snapshot.TotalRedeemedPoints;
 
@@ -253,6 +277,9 @@ public sealed class DashboardViewModel : BaseViewModel
         builder.AppendLine($"Summary,TotalSessions,{snapshot.TotalSessions}");
         builder.AppendLine($"Summary,AccrualCount,{snapshot.AccrualCount}");
         builder.AppendLine($"Summary,RedemptionCount,{snapshot.RedemptionCount}");
+        builder.AppendLine($"Summary,SubscriptionStatusRefreshFailures,{snapshot.SubscriptionStatusRefreshFailures}");
+        builder.AppendLine($"Summary,SubscriptionCheckoutStarts,{snapshot.SubscriptionCheckoutStarts}");
+        builder.AppendLine($"Summary,SubscriptionCheckoutFailures,{snapshot.SubscriptionCheckoutFailures}");
         builder.AppendLine($"Summary,TotalAccruedPoints,{snapshot.TotalAccruedPoints}");
         builder.AppendLine($"Summary,TotalRedeemedPoints,{snapshot.TotalRedeemedPoints}");
 
@@ -342,6 +369,9 @@ public sealed class DashboardViewModel : BaseViewModel
             $"- Total sessions: {snapshot.TotalSessions}",
             $"- Accrual count: {snapshot.AccrualCount}",
             $"- Redemption count: {snapshot.RedemptionCount}",
+            $"- Subscription refresh failures: {snapshot.SubscriptionStatusRefreshFailures}",
+            $"- Subscription checkout starts: {snapshot.SubscriptionCheckoutStarts}",
+            $"- Subscription checkout failures: {snapshot.SubscriptionCheckoutFailures}",
             $"- Total accrued points: {snapshot.TotalAccruedPoints}",
             $"- Total redeemed points: {snapshot.TotalRedeemedPoints}",
             string.Empty,

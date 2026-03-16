@@ -36,6 +36,43 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     public Task RecordRedemptionConfirmedAsync(string? customerDisplayName, int pointsRedeemed, CancellationToken cancellationToken)
         => AppendAsync(BusinessActivityKind.RedemptionConfirmed, customerDisplayName, Math.Max(0, pointsRedeemed), cancellationToken);
 
+    public Task RecordSubscriptionStatusRefreshAsync(bool succeeded, CancellationToken cancellationToken)
+        => AppendAsync(
+            succeeded ? BusinessActivityKind.SubscriptionStatusRefreshSucceeded : BusinessActivityKind.SubscriptionStatusRefreshFailed,
+            customerDisplayName: "Subscription settings",
+            pointsDelta: 0,
+            cancellationToken);
+
+    public Task RecordSubscriptionPlansLoadedAsync(int availablePlansCount, CancellationToken cancellationToken)
+        => AppendAsync(
+            BusinessActivityKind.SubscriptionPlansLoaded,
+            customerDisplayName: "Subscription settings",
+            pointsDelta: Math.Max(0, availablePlansCount),
+            cancellationToken);
+
+    public Task RecordSubscriptionCheckoutStartedAsync(string? targetPlanCode, CancellationToken cancellationToken)
+        => AppendAsync(
+            BusinessActivityKind.SubscriptionCheckoutStarted,
+            customerDisplayName: string.IsNullOrWhiteSpace(targetPlanCode) ? "Subscription checkout" : targetPlanCode,
+            pointsDelta: 0,
+            cancellationToken);
+
+    public Task RecordSubscriptionCheckoutFailedAsync(string? targetPlanCode, CancellationToken cancellationToken)
+        => AppendAsync(
+            BusinessActivityKind.SubscriptionCheckoutFailed,
+            customerDisplayName: string.IsNullOrWhiteSpace(targetPlanCode) ? "Subscription checkout" : targetPlanCode,
+            pointsDelta: 0,
+            cancellationToken);
+
+    public Task RecordSubscriptionCancelPreferenceChangedAsync(bool cancelAtPeriodEnd, CancellationToken cancellationToken)
+        => AppendAsync(
+            cancelAtPeriodEnd
+                ? BusinessActivityKind.SubscriptionCancelAtPeriodEndEnabled
+                : BusinessActivityKind.SubscriptionCancelAtPeriodEndDisabled,
+            customerDisplayName: "Subscription settings",
+            pointsDelta: 0,
+            cancellationToken);
+
     public Task<BusinessDashboardSnapshot> GetDashboardSnapshotAsync(TimeSpan lookbackWindow, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -51,6 +88,9 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         var totalSessions = entries.Count(x => x.Kind == BusinessActivityKind.SessionLoaded);
         var accrualEntries = entries.Where(x => x.Kind == BusinessActivityKind.AccrualConfirmed).ToList();
         var redemptionEntries = entries.Where(x => x.Kind == BusinessActivityKind.RedemptionConfirmed).ToList();
+        var subscriptionRefreshFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionStatusRefreshFailed);
+        var subscriptionCheckoutStarts = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutStarted);
+        var subscriptionCheckoutFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutFailed);
 
         var topCustomers = entries
             .GroupBy(x => NormalizeCustomer(x.CustomerDisplayName))
@@ -80,6 +120,9 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             TotalSessions = totalSessions,
             AccrualCount = accrualEntries.Count,
             RedemptionCount = redemptionEntries.Count,
+            SubscriptionStatusRefreshFailures = subscriptionRefreshFailures,
+            SubscriptionCheckoutStarts = subscriptionCheckoutStarts,
+            SubscriptionCheckoutFailures = subscriptionCheckoutFailures,
             TotalAccruedPoints = accrualEntries.Sum(x => x.PointsDelta),
             TotalRedeemedPoints = redemptionEntries.Sum(x => x.PointsDelta),
             TopCustomers = topCustomers,
@@ -164,5 +207,12 @@ internal enum BusinessActivityKind
 {
     SessionLoaded = 0,
     AccrualConfirmed = 1,
-    RedemptionConfirmed = 2
+    RedemptionConfirmed = 2,
+    SubscriptionStatusRefreshSucceeded = 3,
+    SubscriptionStatusRefreshFailed = 4,
+    SubscriptionPlansLoaded = 5,
+    SubscriptionCheckoutStarted = 6,
+    SubscriptionCheckoutFailed = 7,
+    SubscriptionCancelAtPeriodEndEnabled = 8,
+    SubscriptionCancelAtPeriodEndDisabled = 9
 }
