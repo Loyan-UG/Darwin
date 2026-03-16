@@ -1,5 +1,6 @@
 ﻿using Darwin.Contracts.Billing;
 using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -27,6 +28,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 {
     private readonly ApiOptions _apiOptions;
     private readonly ILoyaltyService _loyaltyService;
+    private readonly IBusinessActivityTracker _activityTracker;
 
     private bool _isPortalConfigured;
     private string _portalHint = string.Empty;
@@ -46,10 +48,11 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private Guid _subscriptionId;
     private byte[] _subscriptionRowVersion = Array.Empty<byte>();
 
-    public SubscriptionViewModel(ApiOptions apiOptions, ILoyaltyService loyaltyService)
+    public SubscriptionViewModel(ApiOptions apiOptions, ILoyaltyService loyaltyService, IBusinessActivityTracker activityTracker)
     {
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
 
         RefreshSubscriptionStatusCommand = new AsyncCommand(RefreshSubscriptionStatusAsync, () => !IsBusy);
         ToggleCancelAtPeriodEndCommand = new AsyncCommand(ToggleCancelAtPeriodEndAsync, () => !IsBusy && HasSubscriptionStatus);
@@ -212,6 +215,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
             if (!result.Succeeded || result.Value is null)
             {
+                await TrackSubscriptionStatusRefreshAsync(succeeded: false).ConfigureAwait(false);
+
                 RunOnMain(() =>
                 {
                     HasSubscriptionStatus = false;
@@ -223,6 +228,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
                 return;
             }
 
+            await TrackSubscriptionStatusRefreshAsync(succeeded: true).ConfigureAwait(false);
             RunOnMain(() => ApplySubscriptionStatus(result.Value));
             await LoadBillingPlansAsync().ConfigureAwait(false);
         }
@@ -271,6 +277,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
                 return;
             }
 
+            await TrackCancelPreferenceChangedAsync(result.Value.CancelAtPeriodEnd).ConfigureAwait(false);
+
             RunOnMain(() =>
             {
                 CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd;
@@ -301,6 +309,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         if (!plansResult.Succeeded || plansResult.Value?.Items is null)
         {
+            await TrackPlansLoadedAsync(availableCount: 0).ConfigureAwait(false);
+
             RunOnMain(() =>
             {
                 ResetPlanOptionsState();
@@ -314,6 +324,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
             .OrderBy(static x => x.PriceMinor)
             .ThenBy(static x => x.Name)
             .ToList();
+
+        await TrackPlansLoadedAsync(plans.Count).ConfigureAwait(false);
 
         RunOnMain(() =>
         {
@@ -353,6 +365,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         try
         {
+            await TrackCheckoutStartedAsync(_selectedPlanOption.Plan.Code).ConfigureAwait(false);
+
             var result = await _loyaltyService
                 .CreateSubscriptionCheckoutIntentAsync(
                     new CreateSubscriptionCheckoutIntentRequest { PlanId = _selectedPlanOption.Plan.Id },
@@ -361,12 +375,14 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
             if (!result.Succeeded || result.Value is null || string.IsNullOrWhiteSpace(result.Value.CheckoutUrl))
             {
+                await TrackCheckoutFailedAsync(_selectedPlanOption.Plan.Code).ConfigureAwait(false);
                 RunOnMain(() => ErrorMessage = result.Error ?? AppResources.SubscriptionPlansUnavailable);
                 return;
             }
 
             if (!Uri.TryCreate(result.Value.CheckoutUrl, UriKind.Absolute, out var checkoutUri))
             {
+                await TrackCheckoutFailedAsync(_selectedPlanOption.Plan.Code).ConfigureAwait(false);
                 RunOnMain(() => ErrorMessage = AppResources.SubscriptionCheckoutUrlInvalid);
                 return;
             }
@@ -375,6 +391,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         }
         catch
         {
+            await TrackCheckoutFailedAsync(_selectedPlanOption?.Plan.Code).ConfigureAwait(false);
             RunOnMain(() => ErrorMessage = AppResources.SubscriptionCheckoutStartFailed);
         }
         finally
@@ -662,5 +679,65 @@ public sealed class SubscriptionViewModel : BaseViewModel
             _currentPlanCodeNormalized,
             candidateCode.Trim().ToUpperInvariant(),
             StringComparison.Ordinal);
+    }
+
+    private async Task TrackSubscriptionStatusRefreshAsync(bool succeeded)
+    {
+        try
+        {
+            await _activityTracker.RecordSubscriptionStatusRefreshAsync(succeeded, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Telemetry should not impact user-facing subscription operations.
+        }
+    }
+
+    private async Task TrackPlansLoadedAsync(int availableCount)
+    {
+        try
+        {
+            await _activityTracker.RecordSubscriptionPlansLoadedAsync(availableCount, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Telemetry should not impact user-facing subscription operations.
+        }
+    }
+
+    private async Task TrackCheckoutStartedAsync(string? targetPlanCode)
+    {
+        try
+        {
+            await _activityTracker.RecordSubscriptionCheckoutStartedAsync(targetPlanCode, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Telemetry should not impact user-facing subscription operations.
+        }
+    }
+
+    private async Task TrackCheckoutFailedAsync(string? targetPlanCode)
+    {
+        try
+        {
+            await _activityTracker.RecordSubscriptionCheckoutFailedAsync(targetPlanCode, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Telemetry should not impact user-facing subscription operations.
+        }
+    }
+
+    private async Task TrackCancelPreferenceChangedAsync(bool cancelAtPeriodEnd)
+    {
+        try
+        {
+            await _activityTracker.RecordSubscriptionCancelPreferenceChangedAsync(cancelAtPeriodEnd, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Telemetry should not impact user-facing subscription operations.
+        }
     }
 }
