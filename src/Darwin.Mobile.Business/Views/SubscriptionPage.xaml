@@ -59,8 +59,8 @@
                            IsVisible="{Binding HasPlanOptions}" />
 
                     <Picker ItemsSource="{Binding PlanOptions}"
-                            SelectedItem="{Binding SelectedPlan, Mode=TwoWay}"
-                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedPlanOption, Mode=TwoWay}"
+                            ItemDisplayBinding="{Binding DisplayText}"
                             Title="{x:Static res:AppResources.SubscriptionCheckoutPlanPickerTitle}"
                             IsVisible="{Binding HasPlanOptions}" />
 

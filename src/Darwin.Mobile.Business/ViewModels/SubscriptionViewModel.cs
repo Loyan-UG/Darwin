@@ -38,8 +38,8 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private string _subscriptionDatesText = string.Empty;
     private bool _cancelAtPeriodEnd;
     private string _availablePlansText = string.Empty;
-    private readonly ObservableCollection<BillingPlanSummary> _planOptions = new();
-    private BillingPlanSummary? _selectedPlan;
+    private readonly ObservableCollection<PlanOptionItem> _planOptions = new();
+    private PlanOptionItem? _selectedPlanOption;
     private string _selectedPlanSummaryText = string.Empty;
 
     private Guid _subscriptionId;
@@ -52,7 +52,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         RefreshSubscriptionStatusCommand = new AsyncCommand(RefreshSubscriptionStatusAsync, () => !IsBusy);
         ToggleCancelAtPeriodEndCommand = new AsyncCommand(ToggleCancelAtPeriodEndAsync, () => !IsBusy && HasSubscriptionStatus);
-        StartUpgradeCheckoutCommand = new AsyncCommand(StartUpgradeCheckoutAsync, () => !IsBusy && _selectedPlan is not null);
+        StartUpgradeCheckoutCommand = new AsyncCommand(StartUpgradeCheckoutAsync, () => !IsBusy && _selectedPlanOption is not null);
         OpenBillingPortalCommand = new AsyncCommand(OpenBillingPortalAsync, () => !IsBusy && IsPortalConfigured);
         CopyBillingPortalUrlCommand = new AsyncCommand(CopyBillingPortalUrlAsync, () => !IsBusy && IsPortalConfigured);
     }
@@ -127,14 +127,14 @@ public sealed class SubscriptionViewModel : BaseViewModel
         private set => SetProperty(ref _selectedPlanSummaryText, value);
     }
 
-    public IReadOnlyList<BillingPlanSummary> PlanOptions => _planOptions;
+    public IReadOnlyList<PlanOptionItem> PlanOptions => _planOptions;
 
-    public BillingPlanSummary? SelectedPlan
+    public PlanOptionItem? SelectedPlanOption
     {
-        get => _selectedPlan;
+        get => _selectedPlanOption;
         set
         {
-            if (!SetProperty(ref _selectedPlan, value))
+            if (!SetProperty(ref _selectedPlanOption, value))
             {
                 return;
             }
@@ -292,7 +292,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 _planOptions.Clear();
-                SelectedPlan = null;
+                SelectedPlanOption = null;
                 AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
                 UpdateSelectedPlanSummary();
                 OnPropertyChanged(nameof(HasPlanOptions));
@@ -312,10 +312,10 @@ public sealed class SubscriptionViewModel : BaseViewModel
             _planOptions.Clear();
             foreach (var plan in plans)
             {
-                _planOptions.Add(plan);
+                _planOptions.Add(new PlanOptionItem(plan, FormatPlanOption(plan)));
             }
 
-            SelectedPlan = _planOptions.FirstOrDefault();
+            SelectedPlanOption = _planOptions.FirstOrDefault();
 
             AvailablePlansText = plans.Count == 0
                 ? AppResources.SubscriptionPlansUnavailable
@@ -329,7 +329,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
     private async Task StartUpgradeCheckoutAsync()
     {
-        if (IsBusy || _selectedPlan is null)
+        if (IsBusy || _selectedPlanOption?.Plan is null)
         {
             return;
         }
@@ -345,7 +345,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             var result = await _loyaltyService
                 .CreateSubscriptionCheckoutIntentAsync(
-                    new CreateSubscriptionCheckoutIntentRequest { PlanId = _selectedPlan.Id },
+                    new CreateSubscriptionCheckoutIntentRequest { PlanId = _selectedPlanOption.Plan.Id },
                     CancellationToken.None)
                 .ConfigureAwait(false);
 
@@ -573,13 +573,27 @@ public sealed class SubscriptionViewModel : BaseViewModel
             string.IsNullOrWhiteSpace(plan.Interval) ? "period" : plan.Interval);
     }
 
+    public sealed class PlanOptionItem
+    {
+        public PlanOptionItem(BillingPlanSummary plan, string displayText)
+        {
+            Plan = plan ?? throw new ArgumentNullException(nameof(plan));
+            DisplayText = string.IsNullOrWhiteSpace(displayText) ? plan.Code : displayText;
+        }
+
+        public BillingPlanSummary Plan { get; }
+        public string DisplayText { get; }
+    }
+
     private void UpdateSelectedPlanSummary()
     {
-        SelectedPlanSummaryText = _selectedPlan is null
+        var selectedPlan = _selectedPlanOption?.Plan;
+
+        SelectedPlanSummaryText = selectedPlan is null
             ? AppResources.SubscriptionCheckoutNoPlanSelected
             : string.Format(
                 AppResources.SubscriptionCheckoutSelectedPlanFormat,
-                !string.IsNullOrWhiteSpace(_selectedPlan.Name) ? _selectedPlan.Name : _selectedPlan.Code,
-                FormatMoney(_selectedPlan.PriceMinor, _selectedPlan.Currency));
+                !string.IsNullOrWhiteSpace(selectedPlan.Name) ? selectedPlan.Name : selectedPlan.Code,
+                FormatMoney(selectedPlan.PriceMinor, selectedPlan.Currency));
     }
 }
