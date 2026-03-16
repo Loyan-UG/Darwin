@@ -3,6 +3,7 @@ using Darwin.Contracts.Billing;
 using Darwin.WebApi.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -187,8 +188,18 @@ public sealed class BillingController : ApiControllerBase
             return BadRequestProblem("Billing checkout endpoint is not configured.");
         }
 
-        // Keep generated URL simple and deterministic for current phase.
-        var checkoutUrl = $"{baseUri.AbsoluteUri.TrimEnd('/')}?businessId={businessId:D}&planId={request.PlanId:D}";
+        // Build query string via framework helpers so URL composition remains safe
+        // when base URL already contains path/query components.
+        var queryBuilder = new QueryBuilder
+        {
+            { "businessId", businessId.ToString("D") },
+            { "planId", request.PlanId.ToString("D") }
+        };
+
+        var checkoutUrl = new UriBuilder(baseUri)
+        {
+            Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
+        }.Uri.AbsoluteUri;
 
         return Ok(new CreateSubscriptionCheckoutIntentResponse
         {
