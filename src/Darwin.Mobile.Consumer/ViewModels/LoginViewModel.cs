@@ -40,11 +40,15 @@ public sealed partial class LoginViewModel : BaseViewModel
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
         // TESTING PHASE NOTE:
-        // Keep QA credentials prefilled while integration tests are still in progress.
-        // This temporary setup speeds up repeated manual verification cycles.
-        // Remove these defaults before production release / store submission.
+        // Keep QA credentials prefilled only in DEBUG builds to speed repeated integration checks.
+        // In non-DEBUG builds we intentionally keep credentials empty to reduce accidental exposure risk.
+#if DEBUG
         Email = "cons1@darwin.de";
         Password = "Consumer123!";
+#else
+        Email = string.Empty;
+        Password = string.Empty;
+#endif
     }
 
     /// <summary>

@@ -239,7 +239,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Campaign toolbar now includes a dedicated "Clear search" action that resets only search query while preserving state/sort context.
 - [x] Business campaign local search now also matches campaign body text (in addition to internal name/title) for better operator discovery in dense lists.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
-- [x] Testing-phase exception documented: keep prefilled QA login credentials in Consumer/Business mobile login view models until integration testing is completed; remove them as a mandatory pre-release hardening task before customer rollout.
+- [x] Testing-phase login acceleration hardened: QA credentials remain prefilled only in DEBUG mobile builds (Consumer/Business), while non-DEBUG builds default to empty credentials; full removal remains mandatory before customer rollout.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).

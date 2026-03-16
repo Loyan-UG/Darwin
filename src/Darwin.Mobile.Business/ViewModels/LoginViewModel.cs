@@ -55,11 +55,15 @@ public sealed partial class LoginViewModel : BaseViewModel
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
 
         // TESTING PHASE NOTE:
-        // Keep QA credentials prefilled while integration tests are still in progress.
-        // This temporary setup shortens regression loops on shared QA devices.
-        // Remove these defaults before production release / customer rollout.
+        // Keep QA credentials prefilled only in DEBUG builds to shorten regression loops.
+        // In non-DEBUG builds we intentionally keep credentials empty for safer release posture.
+#if DEBUG
         Email = "biz1@darwin.de";
         Password = "Business123!";
+#else
+        Email = string.Empty;
+        Password = string.Empty;
+#endif
 
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
     }
