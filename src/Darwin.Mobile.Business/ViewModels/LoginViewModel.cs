@@ -54,9 +54,10 @@ public sealed partial class LoginViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
 
-        // TODO [TEST-ONLY][MOBILE-SECURITY]:
-        // Remove these default credentials before release builds.
-        // They are intentionally set for rapid QA loops in local/dev environments only.
+        // TESTING PHASE NOTE:
+        // Keep QA credentials prefilled while integration tests are still in progress.
+        // This temporary setup shortens regression loops on shared QA devices.
+        // Remove these defaults before production release / customer rollout.
         Email = "biz1@darwin.de";
         Password = "Business123!";
 
