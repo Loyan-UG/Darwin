@@ -1,10 +1,13 @@
-﻿using Darwin.Mobile.Business.Resources;
+﻿using Darwin.Contracts.Billing;
+using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Common;
+using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 using Microsoft.Maui.ApplicationModel;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Darwin.Mobile.Business.ViewModels;
@@ -12,37 +15,35 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// <summary>
 /// Coordinates business subscription self-service actions from mobile settings.
 /// 
-/// Current scope (Phase 1 of subscription UX):
-/// - Display whether a billing portal URL is configured for this environment.
-/// - Enforce HTTPS portal URL requirement before enabling actions.
-/// - Open the configured billing portal in system browser for plan/payment management.
-/// - Allow operators to copy portal URL for troubleshooting and secure sharing.
-/// 
-/// Notes:
-/// - This ViewModel does not persist or mutate subscription data directly.
-/// - Billing authority remains server-side (Stripe + backend ownership).
-/// - Mobile acts as an operator entry point that forwards users to managed billing UI.
+/// Current scope:
+/// - Display subscription status snapshot from server (plan/status/renewal fields).
+/// - Validate portal URL policy (absolute + HTTPS + optional host allowlist).
+/// - Open/copy billing portal URL for secure provider-managed operations.
 /// </summary>
 public sealed class SubscriptionViewModel : BaseViewModel
 {
     private readonly ApiOptions _apiOptions;
+    private readonly ILoyaltyService _loyaltyService;
 
     private bool _isPortalConfigured;
     private string _portalHint = string.Empty;
     private string _portalUrlText = string.Empty;
     private string _portalConfigurationDetails = string.Empty;
 
-    public SubscriptionViewModel(ApiOptions apiOptions)
+    private bool _hasSubscriptionStatus;
+    private string _subscriptionSummaryText = string.Empty;
+    private string _subscriptionDatesText = string.Empty;
+
+    public SubscriptionViewModel(ApiOptions apiOptions, ILoyaltyService loyaltyService)
     {
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
+        _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
 
+        RefreshSubscriptionStatusCommand = new AsyncCommand(RefreshSubscriptionStatusAsync, () => !IsBusy);
         OpenBillingPortalCommand = new AsyncCommand(OpenBillingPortalAsync, () => !IsBusy && IsPortalConfigured);
         CopyBillingPortalUrlCommand = new AsyncCommand(CopyBillingPortalUrlAsync, () => !IsBusy && IsPortalConfigured);
     }
 
-    /// <summary>
-    /// Gets a value indicating whether a billing portal URL is configured and valid.
-    /// </summary>
     public bool IsPortalConfigured
     {
         get => _isPortalConfigured;
@@ -56,28 +57,18 @@ public sealed class SubscriptionViewModel : BaseViewModel
         }
     }
 
-    /// <summary>
-    /// Gets a user-facing hint that explains subscription action availability.
-    /// </summary>
     public string PortalHint
     {
         get => _portalHint;
         private set => SetProperty(ref _portalHint, value);
     }
 
-    /// <summary>
-    /// Gets a normalized billing portal URL text for display and copy actions.
-    /// </summary>
     public string PortalUrlText
     {
         get => _portalUrlText;
         private set => SetProperty(ref _portalUrlText, value);
     }
 
-    /// <summary>
-    /// Gets configuration diagnostics describing why billing portal is or is not available.
-    /// This helps operators quickly route environment issues to the correct team.
-    /// </summary>
     public string PortalConfigurationDetails
     {
         get => _portalConfigurationDetails;
@@ -85,16 +76,132 @@ public sealed class SubscriptionViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Opens Stripe/customer billing portal URL in external browser.
+    /// Gets a value indicating whether server-side subscription data is currently available.
     /// </summary>
-    public AsyncCommand OpenBillingPortalCommand { get; }
+    public bool HasSubscriptionStatus
+    {
+        get => _hasSubscriptionStatus;
+        private set => SetProperty(ref _hasSubscriptionStatus, value);
+    }
 
     /// <summary>
-    /// Copies configured billing portal URL to clipboard for operator troubleshooting.
+    /// Gets compact status/plan/provider summary for operators.
     /// </summary>
+    public string SubscriptionSummaryText
+    {
+        get => _subscriptionSummaryText;
+        private set => SetProperty(ref _subscriptionSummaryText, value);
+    }
+
+    /// <summary>
+    /// Gets compact lifecycle date summary for operators.
+    /// </summary>
+    public string SubscriptionDatesText
+    {
+        get => _subscriptionDatesText;
+        private set => SetProperty(ref _subscriptionDatesText, value);
+    }
+
+    public AsyncCommand RefreshSubscriptionStatusCommand { get; }
+    public AsyncCommand OpenBillingPortalCommand { get; }
     public AsyncCommand CopyBillingPortalUrlCommand { get; }
 
-    public override Task OnAppearingAsync()
+    public override async Task OnAppearingAsync()
+    {
+        ApplyPortalValidationState();
+        await RefreshSubscriptionStatusAsync().ConfigureAwait(false);
+    }
+
+    private async Task RefreshSubscriptionStatusAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
+            OpenBillingPortalCommand.RaiseCanExecuteChanged();
+            CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+        });
+
+        try
+        {
+            var result = await _loyaltyService
+                .GetCurrentBusinessSubscriptionStatusAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value is null)
+            {
+                RunOnMain(() =>
+                {
+                    HasSubscriptionStatus = false;
+                    SubscriptionSummaryText = AppResources.SubscriptionStatusUnavailable;
+                    SubscriptionDatesText = string.Empty;
+                    ErrorMessage = result.Error ?? AppResources.SubscriptionStatusUnavailable;
+                });
+                return;
+            }
+
+            var status = result.Value;
+            RunOnMain(() => ApplySubscriptionStatus(status));
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
+                OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    private void ApplySubscriptionStatus(BusinessSubscriptionStatusResponse status)
+    {
+        if (!status.HasSubscription)
+        {
+            HasSubscriptionStatus = false;
+            SubscriptionSummaryText = AppResources.SubscriptionNoActivePlan;
+            SubscriptionDatesText = string.Empty;
+            return;
+        }
+
+        HasSubscriptionStatus = true;
+
+        var planName = string.IsNullOrWhiteSpace(status.PlanName) ? status.PlanCode : status.PlanName;
+        if (string.IsNullOrWhiteSpace(planName))
+        {
+            planName = AppResources.SubscriptionUnknownPlan;
+        }
+
+        var provider = string.IsNullOrWhiteSpace(status.Provider) ? AppResources.SubscriptionUnknownProvider : status.Provider;
+        var statusName = string.IsNullOrWhiteSpace(status.Status) ? AppResources.SubscriptionUnknownStatus : status.Status;
+
+        SubscriptionSummaryText = string.Format(
+            AppResources.SubscriptionStatusSummaryFormat,
+            planName,
+            statusName,
+            provider,
+            FormatMoney(status.UnitPriceMinor, status.Currency));
+
+        var periodEnd = status.CurrentPeriodEndUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? AppResources.SubscriptionDateUnknown;
+        var trialEnd = status.TrialEndsAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? AppResources.SubscriptionDateUnknown;
+        SubscriptionDatesText = string.Format(AppResources.SubscriptionStatusDatesFormat, periodEnd, trialEnd);
+    }
+
+    private static string FormatMoney(long minor, string? currency)
+    {
+        var c = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency.Trim().ToUpperInvariant();
+        var major = minor / 100m;
+        return $"{major:0.00} {c}";
+    }
+
+    private void ApplyPortalValidationState()
     {
         RunOnMain(() =>
         {
@@ -106,11 +213,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             PortalHint = IsPortalConfigured
                 ? AppResources.SubscriptionPortalReadyHint
                 : AppResources.SubscriptionPortalMissingHint;
-
-            ErrorMessage = null;
         });
-
-        return Task.CompletedTask;
     }
 
     private async Task OpenBillingPortalAsync()
@@ -135,12 +238,10 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         try
         {
-            // Open system browser so payment screens remain in the provider-controlled secure surface.
             await Browser.OpenAsync(portalUri, BrowserLaunchMode.SystemPreferred);
         }
         catch
         {
-            // Keep messaging generic and user-facing (no raw technical details).
             RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalOpenFailed);
         }
         finally
@@ -148,6 +249,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
+                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
                 OpenBillingPortalCommand.RaiseCanExecuteChanged();
                 CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
             });
@@ -188,38 +290,29 @@ public sealed class SubscriptionViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
+                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
                 OpenBillingPortalCommand.RaiseCanExecuteChanged();
                 CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
             });
         }
     }
 
-    /// <summary>
-    /// Resolves and validates configured billing portal URL.
-    /// Only HTTPS absolute URIs are accepted to prevent insecure redirects.
-    /// </summary>
     private PortalValidationResult ValidatePortalConfiguration()
     {
         var rawUrl = _apiOptions.BusinessBillingPortalUrl?.Trim();
         if (string.IsNullOrWhiteSpace(rawUrl))
         {
-            return new PortalValidationResult(
-                PortalUri: null,
-                Details: AppResources.SubscriptionPortalValidationMissingUrl);
+            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationMissingUrl);
         }
 
         if (!Uri.TryCreate(rawUrl, UriKind.Absolute, out var portalUri))
         {
-            return new PortalValidationResult(
-                PortalUri: null,
-                Details: AppResources.SubscriptionPortalValidationInvalidUrl);
+            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationInvalidUrl);
         }
 
         if (!string.Equals(portalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
-            return new PortalValidationResult(
-                PortalUri: null,
-                Details: AppResources.SubscriptionPortalValidationRequiresHttps);
+            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationRequiresHttps);
         }
 
         var allowedHosts = _apiOptions.BusinessBillingPortalAllowedHosts?
@@ -231,18 +324,13 @@ public sealed class SubscriptionViewModel : BaseViewModel
             !allowedHosts.Any(host => string.Equals(host, portalUri.Host, StringComparison.OrdinalIgnoreCase)))
         {
             return new PortalValidationResult(
-                PortalUri: null,
-                Details: string.Format(AppResources.SubscriptionPortalValidationHostNotAllowedFormat, portalUri.Host));
+                null,
+                string.Format(AppResources.SubscriptionPortalValidationHostNotAllowedFormat, portalUri.Host));
         }
 
         var details = string.Format(AppResources.SubscriptionPortalValidationReadyFormat, portalUri.Host);
-        return new PortalValidationResult(
-            PortalUri: portalUri,
-            Details: details);
+        return new PortalValidationResult(portalUri, details);
     }
 
-    /// <summary>
-    /// Immutable validation result for billing portal configuration checks.
-    /// </summary>
     private sealed record PortalValidationResult(Uri? PortalUri, string Details);
 }

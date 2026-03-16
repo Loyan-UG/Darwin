@@ -243,6 +243,36 @@
   <data name="SubscriptionDescription" xml:space="preserve">
     <value>Verwalten Sie Tarif und Zahlungsarten über den sicheren Zugriff auf das Abrechnungsportal.</value>
   </data>
+  <data name="SubscriptionStatusSectionTitle" xml:space="preserve">
+    <value>Aktueller Tarif</value>
+  </data>
+  <data name="SubscriptionRefreshStatusButton" xml:space="preserve">
+    <value>Abonnementstatus aktualisieren</value>
+  </data>
+  <data name="SubscriptionStatusUnavailable" xml:space="preserve">
+    <value>Der Abonnementstatus ist derzeit nicht verfügbar.</value>
+  </data>
+  <data name="SubscriptionNoActivePlan" xml:space="preserve">
+    <value>Für dieses Unternehmen wurde kein aktives Abonnement gefunden.</value>
+  </data>
+  <data name="SubscriptionUnknownPlan" xml:space="preserve">
+    <value>Unbekannter Tarif</value>
+  </data>
+  <data name="SubscriptionUnknownProvider" xml:space="preserve">
+    <value>Unbekannter Anbieter</value>
+  </data>
+  <data name="SubscriptionUnknownStatus" xml:space="preserve">
+    <value>Unbekannter Status</value>
+  </data>
+  <data name="SubscriptionDateUnknown" xml:space="preserve">
+    <value>k. A.</value>
+  </data>
+  <data name="SubscriptionStatusSummaryFormat" xml:space="preserve">
+    <value>Tarif: {0} · Status: {1} · Anbieter: {2} · Preis: {3}</value>
+  </data>
+  <data name="SubscriptionStatusDatesFormat" xml:space="preserve">
+    <value>Periodenende: {0} · Testphase bis: {1}</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Abrechnungsportal</value>
   </data>

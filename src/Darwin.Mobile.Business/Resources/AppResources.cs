@@ -91,6 +91,16 @@ public static class AppResources
 
     public static string SubscriptionTitle => ResourceManager.GetString(nameof(SubscriptionTitle), Culture) ?? "Subscription";
     public static string SubscriptionDescription => ResourceManager.GetString(nameof(SubscriptionDescription), Culture) ?? "Manage your billing plan and payment methods via secure portal access.";
+    public static string SubscriptionStatusSectionTitle => ResourceManager.GetString(nameof(SubscriptionStatusSectionTitle), Culture) ?? "Current plan";
+    public static string SubscriptionRefreshStatusButton => ResourceManager.GetString(nameof(SubscriptionRefreshStatusButton), Culture) ?? "Refresh subscription status";
+    public static string SubscriptionStatusUnavailable => ResourceManager.GetString(nameof(SubscriptionStatusUnavailable), Culture) ?? "Subscription status is currently unavailable.";
+    public static string SubscriptionNoActivePlan => ResourceManager.GetString(nameof(SubscriptionNoActivePlan), Culture) ?? "No active subscription found for this business.";
+    public static string SubscriptionUnknownPlan => ResourceManager.GetString(nameof(SubscriptionUnknownPlan), Culture) ?? "Unknown plan";
+    public static string SubscriptionUnknownProvider => ResourceManager.GetString(nameof(SubscriptionUnknownProvider), Culture) ?? "Unknown provider";
+    public static string SubscriptionUnknownStatus => ResourceManager.GetString(nameof(SubscriptionUnknownStatus), Culture) ?? "Unknown status";
+    public static string SubscriptionDateUnknown => ResourceManager.GetString(nameof(SubscriptionDateUnknown), Culture) ?? "N/A";
+    public static string SubscriptionStatusSummaryFormat => ResourceManager.GetString(nameof(SubscriptionStatusSummaryFormat), Culture) ?? "Plan: {0} · Status: {1} · Provider: {2} · Price: {3}";
+    public static string SubscriptionStatusDatesFormat => ResourceManager.GetString(nameof(SubscriptionStatusDatesFormat), Culture) ?? "Period end: {0} · Trial end: {1}";
     public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";
     public static string SubscriptionPortalUrlLabel => ResourceManager.GetString(nameof(SubscriptionPortalUrlLabel), Culture) ?? "Portal URL";
     public static string SubscriptionPortalReadyHint => ResourceManager.GetString(nameof(SubscriptionPortalReadyHint), Culture) ?? "Billing portal is configured for this environment. Open it to manage plan and payment details.";

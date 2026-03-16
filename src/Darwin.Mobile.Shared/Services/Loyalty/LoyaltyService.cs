@@ -1,4 +1,5 @@
-﻿using Darwin.Contracts.Loyalty;
+﻿using Darwin.Contracts.Billing;
+using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Models.Loyalty;
 using Darwin.Shared.Results;
@@ -840,5 +841,31 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             }
         }
 
+
+        /// <inheritdoc />
+        public async Task<Result<BusinessSubscriptionStatusResponse>> GetCurrentBusinessSubscriptionStatusAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _apiClient
+                    .GetResultAsync<BusinessSubscriptionStatusResponse>(ApiRoutes.Billing.GetCurrentBusinessSubscription, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<BusinessSubscriptionStatusResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<BusinessSubscriptionStatusResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<BusinessSubscriptionStatusResponse>.Fail($"Network error while loading subscription status: {ex.Message}");
+            }
+        }
     }
 }

@@ -243,6 +243,36 @@
   <data name="SubscriptionDescription" xml:space="preserve">
     <value>Manage your billing plan and payment methods via secure portal access.</value>
   </data>
+  <data name="SubscriptionStatusSectionTitle" xml:space="preserve">
+    <value>Current plan</value>
+  </data>
+  <data name="SubscriptionRefreshStatusButton" xml:space="preserve">
+    <value>Refresh subscription status</value>
+  </data>
+  <data name="SubscriptionStatusUnavailable" xml:space="preserve">
+    <value>Subscription status is currently unavailable.</value>
+  </data>
+  <data name="SubscriptionNoActivePlan" xml:space="preserve">
+    <value>No active subscription found for this business.</value>
+  </data>
+  <data name="SubscriptionUnknownPlan" xml:space="preserve">
+    <value>Unknown plan</value>
+  </data>
+  <data name="SubscriptionUnknownProvider" xml:space="preserve">
+    <value>Unknown provider</value>
+  </data>
+  <data name="SubscriptionUnknownStatus" xml:space="preserve">
+    <value>Unknown status</value>
+  </data>
+  <data name="SubscriptionDateUnknown" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="SubscriptionStatusSummaryFormat" xml:space="preserve">
+    <value>Plan: {0} · Status: {1} · Provider: {2} · Price: {3}</value>
+  </data>
+  <data name="SubscriptionStatusDatesFormat" xml:space="preserve">
+    <value>Period end: {0} · Trial end: {1}</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Billing portal</value>
   </data>

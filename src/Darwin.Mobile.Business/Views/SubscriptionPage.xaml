@@ -19,6 +19,26 @@
 
             <Border StrokeThickness="1" Padding="16">
                 <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.SubscriptionStatusSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding SubscriptionSummaryText}"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{Binding SubscriptionDatesText}"
+                           FontSize="12"
+                           Opacity="0.75"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding HasSubscriptionStatus}" />
+
+                    <Button Text="{x:Static res:AppResources.SubscriptionRefreshStatusButton}"
+                            Command="{Binding RefreshSubscriptionStatusCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border StrokeThickness="1" Padding="16">
+                <VerticalStackLayout Spacing="10">
                     <Label Text="{x:Static res:AppResources.SubscriptionPortalSectionTitle}"
                            FontAttributes="Bold"
                            FontSize="16" />
