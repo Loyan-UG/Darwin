@@ -216,7 +216,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
                     HasSubscriptionStatus = false;
                     SubscriptionSummaryText = AppResources.SubscriptionStatusUnavailable;
                     SubscriptionDatesText = string.Empty;
-                    AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
+                    ResetPlanOptionsState();
                     ErrorMessage = result.Error ?? AppResources.SubscriptionStatusUnavailable;
                 });
                 return;
@@ -302,12 +302,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             RunOnMain(() =>
             {
-                _planOptions.Clear();
-                SelectedPlanOption = null;
-                AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
-                UpdateSelectedPlanSummary();
-                OnPropertyChanged(nameof(HasPlanOptions));
-                StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
+                ResetPlanOptionsState();
             });
             return;
         }
@@ -620,5 +615,19 @@ public sealed class SubscriptionViewModel : BaseViewModel
                 AppResources.SubscriptionCheckoutSelectedPlanFormat,
                 !string.IsNullOrWhiteSpace(selectedPlan.Name) ? selectedPlan.Name : selectedPlan.Code,
                 FormatMoney(selectedPlan.PriceMinor, selectedPlan.Currency));
+    }
+
+    /// <summary>
+    /// Clears plan options and checkout selection after failed status/plan refresh
+    /// to prevent stale upgrade actions in the UI.
+    /// </summary>
+    private void ResetPlanOptionsState()
+    {
+        _planOptions.Clear();
+        SelectedPlanOption = null;
+        AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
+        UpdateSelectedPlanSummary();
+        OnPropertyChanged(nameof(HasPlanOptions));
+        StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
     }
 }
