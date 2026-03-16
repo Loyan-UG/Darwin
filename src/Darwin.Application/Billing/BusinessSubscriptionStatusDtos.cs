@@ -8,6 +8,8 @@ namespace Darwin.Application.Billing;
 public sealed class BusinessSubscriptionStatusDto
 {
     public bool HasSubscription { get; init; }
+    public Guid SubscriptionId { get; init; }
+    public byte[] RowVersion { get; init; } = Array.Empty<byte>();
     public string Status { get; init; } = string.Empty;
     public string Provider { get; init; } = string.Empty;
     public string PlanCode { get; init; } = string.Empty;

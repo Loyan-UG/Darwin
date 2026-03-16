@@ -35,6 +35,8 @@ public sealed class GetBusinessSubscriptionStatusHandler
                               select new BusinessSubscriptionStatusDto
                               {
                                   HasSubscription = true,
+                                  SubscriptionId = subscription.Id,
+                                  RowVersion = subscription.RowVersion,
                                   Status = subscription.Status.ToString(),
                                   Provider = subscription.Provider,
                                   PlanCode = plan.Code,

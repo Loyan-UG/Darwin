@@ -19,10 +19,14 @@ namespace Darwin.WebApi.Controllers.Billing;
 public sealed class BillingController : ApiControllerBase
 {
     private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatusHandler;
+    private readonly SetCancelAtPeriodEndHandler _setCancelAtPeriodEndHandler;
 
-    public BillingController(GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatusHandler)
+    public BillingController(
+        GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatusHandler,
+        SetCancelAtPeriodEndHandler setCancelAtPeriodEndHandler)
     {
         _getBusinessSubscriptionStatusHandler = getBusinessSubscriptionStatusHandler ?? throw new ArgumentNullException(nameof(getBusinessSubscriptionStatusHandler));
+        _setCancelAtPeriodEndHandler = setCancelAtPeriodEndHandler ?? throw new ArgumentNullException(nameof(setCancelAtPeriodEndHandler));
     }
 
     /// <summary>
@@ -49,10 +53,57 @@ public sealed class BillingController : ApiControllerBase
             return ProblemFromResult(result, "Failed to retrieve business subscription status.");
         }
 
-        var dto = result.Value;
-        return Ok(new BusinessSubscriptionStatusResponse
+        return Ok(MapStatus(result.Value));
+    }
+
+    /// <summary>
+    /// Updates cancel-at-period-end preference for authenticated business subscription.
+    /// </summary>
+    [HttpPost("business/subscription/cancel-at-period-end")]
+    [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
+    [ProducesResponseType(typeof(SetCancelAtPeriodEndResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SetCancelAtPeriodEndAsync([FromBody] SetCancelAtPeriodEndRequest request, CancellationToken ct = default)
+    {
+        if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
+        {
+            return errorResult ?? Forbid();
+        }
+
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        var result = await _setCancelAtPeriodEndHandler
+            .HandleAsync(
+                businessId,
+                request.SubscriptionId,
+                request.CancelAtPeriodEnd,
+                request.RowVersion,
+                ct)
+            .ConfigureAwait(false);
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result, "Failed to update subscription cancellation preference.");
+        }
+
+        return Ok(new SetCancelAtPeriodEndResponse
+        {
+            SubscriptionId = result.Value.SubscriptionId,
+            CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd,
+            RowVersion = result.Value.RowVersion
+        });
+    }
+
+    private static BusinessSubscriptionStatusResponse MapStatus(BusinessSubscriptionStatusDto dto)
+        => new()
         {
             HasSubscription = dto.HasSubscription,
+            SubscriptionId = dto.SubscriptionId,
+            RowVersion = dto.RowVersion,
             Status = dto.Status,
             Provider = dto.Provider,
             PlanCode = dto.PlanCode,
@@ -64,8 +115,7 @@ public sealed class BillingController : ApiControllerBase
             TrialEndsAtUtc = dto.TrialEndsAtUtc,
             CanceledAtUtc = dto.CanceledAtUtc,
             CancelAtPeriodEnd = dto.CancelAtPeriodEnd
-        });
-    }
+        };
 
     private bool TryGetCurrentBusinessId(out Guid businessId, out IActionResult? errorResult)
     {

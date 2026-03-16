@@ -144,5 +144,6 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
         // Business subscription
         Task<Result<BusinessSubscriptionStatusResponse>> GetCurrentBusinessSubscriptionStatusAsync(CancellationToken cancellationToken);
+        Task<Result<SetCancelAtPeriodEndResponse>> SetCancelAtPeriodEndAsync(SetCancelAtPeriodEndRequest request, CancellationToken cancellationToken);
     }
 }

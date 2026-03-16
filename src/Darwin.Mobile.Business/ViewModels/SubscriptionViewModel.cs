@@ -17,6 +17,7 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// 
 /// Current scope:
 /// - Display subscription status snapshot from server (plan/status/renewal fields).
+/// - Let business operators toggle cancel-at-period-end intent with optimistic concurrency.
 /// - Validate portal URL policy (absolute + HTTPS + optional host allowlist).
 /// - Open/copy billing portal URL for secure provider-managed operations.
 /// </summary>
@@ -33,6 +34,10 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private bool _hasSubscriptionStatus;
     private string _subscriptionSummaryText = string.Empty;
     private string _subscriptionDatesText = string.Empty;
+    private bool _cancelAtPeriodEnd;
+
+    private Guid _subscriptionId;
+    private byte[] _subscriptionRowVersion = Array.Empty<byte>();
 
     public SubscriptionViewModel(ApiOptions apiOptions, ILoyaltyService loyaltyService)
     {
@@ -40,6 +45,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
 
         RefreshSubscriptionStatusCommand = new AsyncCommand(RefreshSubscriptionStatusAsync, () => !IsBusy);
+        ToggleCancelAtPeriodEndCommand = new AsyncCommand(ToggleCancelAtPeriodEndAsync, () => !IsBusy && HasSubscriptionStatus);
         OpenBillingPortalCommand = new AsyncCommand(OpenBillingPortalAsync, () => !IsBusy && IsPortalConfigured);
         CopyBillingPortalUrlCommand = new AsyncCommand(CopyBillingPortalUrlAsync, () => !IsBusy && IsPortalConfigured);
     }
@@ -75,34 +81,52 @@ public sealed class SubscriptionViewModel : BaseViewModel
         private set => SetProperty(ref _portalConfigurationDetails, value);
     }
 
-    /// <summary>
-    /// Gets a value indicating whether server-side subscription data is currently available.
-    /// </summary>
     public bool HasSubscriptionStatus
     {
         get => _hasSubscriptionStatus;
-        private set => SetProperty(ref _hasSubscriptionStatus, value);
+        private set
+        {
+            if (SetProperty(ref _hasSubscriptionStatus, value))
+            {
+                ToggleCancelAtPeriodEndCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
 
-    /// <summary>
-    /// Gets compact status/plan/provider summary for operators.
-    /// </summary>
     public string SubscriptionSummaryText
     {
         get => _subscriptionSummaryText;
         private set => SetProperty(ref _subscriptionSummaryText, value);
     }
 
-    /// <summary>
-    /// Gets compact lifecycle date summary for operators.
-    /// </summary>
     public string SubscriptionDatesText
     {
         get => _subscriptionDatesText;
         private set => SetProperty(ref _subscriptionDatesText, value);
     }
 
+    /// <summary>
+    /// Gets current button label for cancel-at-period-end action.
+    /// </summary>
+    public string ToggleCancelAtPeriodEndButtonText
+        => CancelAtPeriodEnd
+            ? AppResources.SubscriptionUndoCancelAtPeriodEndButton
+            : AppResources.SubscriptionSetCancelAtPeriodEndButton;
+
+    private bool CancelAtPeriodEnd
+    {
+        get => _cancelAtPeriodEnd;
+        set
+        {
+            if (SetProperty(ref _cancelAtPeriodEnd, value))
+            {
+                OnPropertyChanged(nameof(ToggleCancelAtPeriodEndButtonText));
+            }
+        }
+    }
+
     public AsyncCommand RefreshSubscriptionStatusCommand { get; }
+    public AsyncCommand ToggleCancelAtPeriodEndCommand { get; }
     public AsyncCommand OpenBillingPortalCommand { get; }
     public AsyncCommand CopyBillingPortalUrlCommand { get; }
 
@@ -123,9 +147,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
-            RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
-            OpenBillingPortalCommand.RaiseCanExecuteChanged();
-            CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+            RaiseCommandStates();
         });
 
         try
@@ -146,32 +168,91 @@ public sealed class SubscriptionViewModel : BaseViewModel
                 return;
             }
 
-            var status = result.Value;
-            RunOnMain(() => ApplySubscriptionStatus(status));
+            RunOnMain(() => ApplySubscriptionStatus(result.Value));
         }
         finally
         {
             RunOnMain(() =>
             {
                 IsBusy = false;
-                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
-                OpenBillingPortalCommand.RaiseCanExecuteChanged();
-                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+                RaiseCommandStates();
+            });
+        }
+    }
+
+    private async Task ToggleCancelAtPeriodEndAsync()
+    {
+        if (IsBusy || !HasSubscriptionStatus || _subscriptionId == Guid.Empty || _subscriptionRowVersion.Length == 0)
+        {
+            return;
+        }
+
+        var requestedValue = !CancelAtPeriodEnd;
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RaiseCommandStates();
+        });
+
+        try
+        {
+            var result = await _loyaltyService
+                .SetCancelAtPeriodEndAsync(
+                    new SetCancelAtPeriodEndRequest
+                    {
+                        SubscriptionId = _subscriptionId,
+                        CancelAtPeriodEnd = requestedValue,
+                        RowVersion = _subscriptionRowVersion
+                    },
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value is null)
+            {
+                RunOnMain(() => ErrorMessage = result.Error ?? AppResources.SubscriptionCancelAtPeriodEndUpdateFailed);
+                return;
+            }
+
+            RunOnMain(() =>
+            {
+                CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd;
+                _subscriptionRowVersion = result.Value.RowVersion ?? Array.Empty<byte>();
+                PortalHint = result.Value.CancelAtPeriodEnd
+                    ? AppResources.SubscriptionCancelAtPeriodEndScheduled
+                    : AppResources.SubscriptionCancelAtPeriodEndCleared;
+            });
+
+            // Reload full snapshot to keep date/status fields in sync with server-side business rules.
+            await RefreshSubscriptionStatusAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
             });
         }
     }
 
     private void ApplySubscriptionStatus(BusinessSubscriptionStatusResponse status)
     {
+        _subscriptionId = status.SubscriptionId;
+        _subscriptionRowVersion = status.RowVersion ?? Array.Empty<byte>();
+
         if (!status.HasSubscription)
         {
             HasSubscriptionStatus = false;
+            CancelAtPeriodEnd = false;
             SubscriptionSummaryText = AppResources.SubscriptionNoActivePlan;
             SubscriptionDatesText = string.Empty;
             return;
         }
 
         HasSubscriptionStatus = true;
+        CancelAtPeriodEnd = status.CancelAtPeriodEnd;
 
         var planName = string.IsNullOrWhiteSpace(status.PlanName) ? status.PlanCode : status.PlanName;
         if (string.IsNullOrWhiteSpace(planName))
@@ -234,6 +315,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
+            RaiseCommandStates();
         });
 
         try
@@ -249,9 +331,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
-                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
-                OpenBillingPortalCommand.RaiseCanExecuteChanged();
-                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+                RaiseCommandStates();
             });
         }
     }
@@ -274,6 +354,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
         {
             IsBusy = true;
             ErrorMessage = null;
+            RaiseCommandStates();
         });
 
         try
@@ -290,9 +371,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
-                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
-                OpenBillingPortalCommand.RaiseCanExecuteChanged();
-                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+                RaiseCommandStates();
             });
         }
     }
@@ -330,6 +409,14 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         var details = string.Format(AppResources.SubscriptionPortalValidationReadyFormat, portalUri.Host);
         return new PortalValidationResult(portalUri, details);
+    }
+
+    private void RaiseCommandStates()
+    {
+        RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
+        ToggleCancelAtPeriodEndCommand.RaiseCanExecuteChanged();
+        OpenBillingPortalCommand.RaiseCanExecuteChanged();
+        CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
     }
 
     private sealed record PortalValidationResult(Uri? PortalUri, string Details);

@@ -273,6 +273,21 @@
   <data name="SubscriptionStatusDatesFormat" xml:space="preserve">
     <value>Period end: {0} · Trial end: {1}</value>
   </data>
+  <data name="SubscriptionSetCancelAtPeriodEndButton" xml:space="preserve">
+    <value>Schedule cancellation at period end</value>
+  </data>
+  <data name="SubscriptionUndoCancelAtPeriodEndButton" xml:space="preserve">
+    <value>Keep subscription active</value>
+  </data>
+  <data name="SubscriptionCancelAtPeriodEndScheduled" xml:space="preserve">
+    <value>Cancellation was scheduled for the end of current period.</value>
+  </data>
+  <data name="SubscriptionCancelAtPeriodEndCleared" xml:space="preserve">
+    <value>Cancellation schedule was removed.</value>
+  </data>
+  <data name="SubscriptionCancelAtPeriodEndUpdateFailed" xml:space="preserve">
+    <value>Unable to update cancellation preference. Please refresh and try again.</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Billing portal</value>
   </data>

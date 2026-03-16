@@ -92,6 +92,7 @@ namespace Darwin.Mobile.Shared.Api
         public static class Billing
         {
             public const string GetCurrentBusinessSubscription = "api/v1/billing/business/subscription/current";
+            public const string SetCancelAtPeriodEnd = "api/v1/billing/business/subscription/cancel-at-period-end";
         }
 
         public static class Loyalty

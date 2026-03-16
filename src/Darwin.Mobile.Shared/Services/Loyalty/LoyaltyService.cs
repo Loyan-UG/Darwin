@@ -867,5 +867,44 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
                 return Result<BusinessSubscriptionStatusResponse>.Fail($"Network error while loading subscription status: {ex.Message}");
             }
         }
+
+        /// <inheritdoc />
+        public async Task<Result<SetCancelAtPeriodEndResponse>> SetCancelAtPeriodEndAsync(SetCancelAtPeriodEndRequest request, CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                return Result<SetCancelAtPeriodEndResponse>.Fail("Request body is required.");
+            }
+
+            if (request.SubscriptionId == Guid.Empty)
+            {
+                return Result<SetCancelAtPeriodEndResponse>.Fail("Subscription Id is required.");
+            }
+
+            try
+            {
+                var response = await _apiClient
+                    .PostResultAsync<SetCancelAtPeriodEndRequest, SetCancelAtPeriodEndResponse>(
+                        ApiRoutes.Billing.SetCancelAtPeriodEnd,
+                        request,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                {
+                    return Result<SetCancelAtPeriodEndResponse>.Fail(response.Error ?? "Request failed.");
+                }
+
+                return Result<SetCancelAtPeriodEndResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<SetCancelAtPeriodEndResponse>.Fail($"Network error while updating cancellation preference: {ex.Message}");
+            }
+        }
     }
 }

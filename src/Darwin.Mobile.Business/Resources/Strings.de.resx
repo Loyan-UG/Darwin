@@ -273,6 +273,21 @@
   <data name="SubscriptionStatusDatesFormat" xml:space="preserve">
     <value>Periodenende: {0} · Testphase bis: {1}</value>
   </data>
+  <data name="SubscriptionSetCancelAtPeriodEndButton" xml:space="preserve">
+    <value>Kündigung zum Periodenende planen</value>
+  </data>
+  <data name="SubscriptionUndoCancelAtPeriodEndButton" xml:space="preserve">
+    <value>Abonnement aktiv behalten</value>
+  </data>
+  <data name="SubscriptionCancelAtPeriodEndScheduled" xml:space="preserve">
+    <value>Die Kündigung wurde zum Ende der aktuellen Periode eingeplant.</value>
+  </data>
+  <data name="SubscriptionCancelAtPeriodEndCleared" xml:space="preserve">
+    <value>Die geplante Kündigung wurde entfernt.</value>
+  </data>
+  <data name="SubscriptionCancelAtPeriodEndUpdateFailed" xml:space="preserve">
+    <value>Die Kündigungseinstellung konnte nicht aktualisiert werden. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
   <data name="SubscriptionPortalSectionTitle" xml:space="preserve">
     <value>Abrechnungsportal</value>
   </data>

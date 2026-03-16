@@ -101,6 +101,11 @@ public static class AppResources
     public static string SubscriptionDateUnknown => ResourceManager.GetString(nameof(SubscriptionDateUnknown), Culture) ?? "N/A";
     public static string SubscriptionStatusSummaryFormat => ResourceManager.GetString(nameof(SubscriptionStatusSummaryFormat), Culture) ?? "Plan: {0} · Status: {1} · Provider: {2} · Price: {3}";
     public static string SubscriptionStatusDatesFormat => ResourceManager.GetString(nameof(SubscriptionStatusDatesFormat), Culture) ?? "Period end: {0} · Trial end: {1}";
+    public static string SubscriptionSetCancelAtPeriodEndButton => ResourceManager.GetString(nameof(SubscriptionSetCancelAtPeriodEndButton), Culture) ?? "Schedule cancellation at period end";
+    public static string SubscriptionUndoCancelAtPeriodEndButton => ResourceManager.GetString(nameof(SubscriptionUndoCancelAtPeriodEndButton), Culture) ?? "Keep subscription active";
+    public static string SubscriptionCancelAtPeriodEndScheduled => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndScheduled), Culture) ?? "Cancellation was scheduled for the end of current period.";
+    public static string SubscriptionCancelAtPeriodEndCleared => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndCleared), Culture) ?? "Cancellation schedule was removed.";
+    public static string SubscriptionCancelAtPeriodEndUpdateFailed => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndUpdateFailed), Culture) ?? "Unable to update cancellation preference. Please refresh and try again.";
     public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";
     public static string SubscriptionPortalUrlLabel => ResourceManager.GetString(nameof(SubscriptionPortalUrlLabel), Culture) ?? "Portal URL";
     public static string SubscriptionPortalReadyHint => ResourceManager.GetString(nameof(SubscriptionPortalReadyHint), Culture) ?? "Billing portal is configured for this environment. Open it to manage plan and payment details.";
