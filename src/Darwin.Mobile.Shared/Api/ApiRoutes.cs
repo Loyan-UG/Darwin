@@ -89,6 +89,11 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string RegisterDevice = "api/v1/notifications/devices/register";
         }
+        public static class Billing
+        {
+            public const string GetCurrentBusinessSubscription = "api/v1/billing/business/subscription/current";
+        }
+
         public static class Loyalty
         {
             public const string PrepareScanSession = "api/v1/loyalty/scan/prepare";

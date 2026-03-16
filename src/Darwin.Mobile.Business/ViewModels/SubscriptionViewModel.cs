@@ -1,0 +1,336 @@
+﻿using Darwin.Contracts.Billing;
+using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Shared.Commands;
+using Darwin.Mobile.Shared.Common;
+using Darwin.Mobile.Shared.Services.Loyalty;
+using Darwin.Mobile.Shared.ViewModels;
+using Microsoft.Maui.ApplicationModel;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Darwin.Mobile.Business.ViewModels;
+
+/// <summary>
+/// Coordinates business subscription self-service actions from mobile settings.
+/// 
+/// Current scope:
+/// - Display subscription status snapshot from server (plan/status/renewal fields).
+/// - Validate portal URL policy (absolute + HTTPS + optional host allowlist).
+/// - Open/copy billing portal URL for secure provider-managed operations.
+/// </summary>
+public sealed class SubscriptionViewModel : BaseViewModel
+{
+    private readonly ApiOptions _apiOptions;
+    private readonly ILoyaltyService _loyaltyService;
+
+    private bool _isPortalConfigured;
+    private string _portalHint = string.Empty;
+    private string _portalUrlText = string.Empty;
+    private string _portalConfigurationDetails = string.Empty;
+
+    private bool _hasSubscriptionStatus;
+    private string _subscriptionSummaryText = string.Empty;
+    private string _subscriptionDatesText = string.Empty;
+
+    public SubscriptionViewModel(ApiOptions apiOptions, ILoyaltyService loyaltyService)
+    {
+        _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
+        _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+
+        RefreshSubscriptionStatusCommand = new AsyncCommand(RefreshSubscriptionStatusAsync, () => !IsBusy);
+        OpenBillingPortalCommand = new AsyncCommand(OpenBillingPortalAsync, () => !IsBusy && IsPortalConfigured);
+        CopyBillingPortalUrlCommand = new AsyncCommand(CopyBillingPortalUrlAsync, () => !IsBusy && IsPortalConfigured);
+    }
+
+    public bool IsPortalConfigured
+    {
+        get => _isPortalConfigured;
+        private set
+        {
+            if (SetProperty(ref _isPortalConfigured, value))
+            {
+                OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string PortalHint
+    {
+        get => _portalHint;
+        private set => SetProperty(ref _portalHint, value);
+    }
+
+    public string PortalUrlText
+    {
+        get => _portalUrlText;
+        private set => SetProperty(ref _portalUrlText, value);
+    }
+
+    public string PortalConfigurationDetails
+    {
+        get => _portalConfigurationDetails;
+        private set => SetProperty(ref _portalConfigurationDetails, value);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether server-side subscription data is currently available.
+    /// </summary>
+    public bool HasSubscriptionStatus
+    {
+        get => _hasSubscriptionStatus;
+        private set => SetProperty(ref _hasSubscriptionStatus, value);
+    }
+
+    /// <summary>
+    /// Gets compact status/plan/provider summary for operators.
+    /// </summary>
+    public string SubscriptionSummaryText
+    {
+        get => _subscriptionSummaryText;
+        private set => SetProperty(ref _subscriptionSummaryText, value);
+    }
+
+    /// <summary>
+    /// Gets compact lifecycle date summary for operators.
+    /// </summary>
+    public string SubscriptionDatesText
+    {
+        get => _subscriptionDatesText;
+        private set => SetProperty(ref _subscriptionDatesText, value);
+    }
+
+    public AsyncCommand RefreshSubscriptionStatusCommand { get; }
+    public AsyncCommand OpenBillingPortalCommand { get; }
+    public AsyncCommand CopyBillingPortalUrlCommand { get; }
+
+    public override async Task OnAppearingAsync()
+    {
+        ApplyPortalValidationState();
+        await RefreshSubscriptionStatusAsync().ConfigureAwait(false);
+    }
+
+    private async Task RefreshSubscriptionStatusAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+            RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
+            OpenBillingPortalCommand.RaiseCanExecuteChanged();
+            CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+        });
+
+        try
+        {
+            var result = await _loyaltyService
+                .GetCurrentBusinessSubscriptionStatusAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded || result.Value is null)
+            {
+                RunOnMain(() =>
+                {
+                    HasSubscriptionStatus = false;
+                    SubscriptionSummaryText = AppResources.SubscriptionStatusUnavailable;
+                    SubscriptionDatesText = string.Empty;
+                    ErrorMessage = result.Error ?? AppResources.SubscriptionStatusUnavailable;
+                });
+                return;
+            }
+
+            var status = result.Value;
+            RunOnMain(() => ApplySubscriptionStatus(status));
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
+                OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    private void ApplySubscriptionStatus(BusinessSubscriptionStatusResponse status)
+    {
+        if (!status.HasSubscription)
+        {
+            HasSubscriptionStatus = false;
+            SubscriptionSummaryText = AppResources.SubscriptionNoActivePlan;
+            SubscriptionDatesText = string.Empty;
+            return;
+        }
+
+        HasSubscriptionStatus = true;
+
+        var planName = string.IsNullOrWhiteSpace(status.PlanName) ? status.PlanCode : status.PlanName;
+        if (string.IsNullOrWhiteSpace(planName))
+        {
+            planName = AppResources.SubscriptionUnknownPlan;
+        }
+
+        var provider = string.IsNullOrWhiteSpace(status.Provider) ? AppResources.SubscriptionUnknownProvider : status.Provider;
+        var statusName = string.IsNullOrWhiteSpace(status.Status) ? AppResources.SubscriptionUnknownStatus : status.Status;
+
+        SubscriptionSummaryText = string.Format(
+            AppResources.SubscriptionStatusSummaryFormat,
+            planName,
+            statusName,
+            provider,
+            FormatMoney(status.UnitPriceMinor, status.Currency));
+
+        var periodEnd = status.CurrentPeriodEndUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? AppResources.SubscriptionDateUnknown;
+        var trialEnd = status.TrialEndsAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? AppResources.SubscriptionDateUnknown;
+        SubscriptionDatesText = string.Format(AppResources.SubscriptionStatusDatesFormat, periodEnd, trialEnd);
+    }
+
+    private static string FormatMoney(long minor, string? currency)
+    {
+        var c = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency.Trim().ToUpperInvariant();
+        var major = minor / 100m;
+        return $"{major:0.00} {c}";
+    }
+
+    private void ApplyPortalValidationState()
+    {
+        RunOnMain(() =>
+        {
+            var portalValidation = ValidatePortalConfiguration();
+            IsPortalConfigured = portalValidation.PortalUri is not null;
+            PortalUrlText = portalValidation.PortalUri?.AbsoluteUri ?? string.Empty;
+            PortalConfigurationDetails = portalValidation.Details;
+
+            PortalHint = IsPortalConfigured
+                ? AppResources.SubscriptionPortalReadyHint
+                : AppResources.SubscriptionPortalMissingHint;
+        });
+    }
+
+    private async Task OpenBillingPortalAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var portalUri = ValidatePortalConfiguration().PortalUri;
+        if (portalUri is null)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+        });
+
+        try
+        {
+            await Browser.OpenAsync(portalUri, BrowserLaunchMode.SystemPreferred);
+        }
+        catch
+        {
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalOpenFailed);
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
+                OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    private async Task CopyBillingPortalUrlAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var portalUri = ValidatePortalConfiguration().PortalUri;
+        if (portalUri is null)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            IsBusy = true;
+            ErrorMessage = null;
+        });
+
+        try
+        {
+            await Clipboard.SetTextAsync(portalUri.AbsoluteUri);
+            RunOnMain(() => PortalHint = AppResources.SubscriptionPortalCopiedHint);
+        }
+        catch
+        {
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalCopyFailed);
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
+                OpenBillingPortalCommand.RaiseCanExecuteChanged();
+                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
+            });
+        }
+    }
+
+    private PortalValidationResult ValidatePortalConfiguration()
+    {
+        var rawUrl = _apiOptions.BusinessBillingPortalUrl?.Trim();
+        if (string.IsNullOrWhiteSpace(rawUrl))
+        {
+            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationMissingUrl);
+        }
+
+        if (!Uri.TryCreate(rawUrl, UriKind.Absolute, out var portalUri))
+        {
+            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationInvalidUrl);
+        }
+
+        if (!string.Equals(portalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationRequiresHttps);
+        }
+
+        var allowedHosts = _apiOptions.BusinessBillingPortalAllowedHosts?
+            .Where(static host => !string.IsNullOrWhiteSpace(host))
+            .Select(static host => host.Trim())
+            .ToArray();
+
+        if (allowedHosts is { Length: > 0 } &&
+            !allowedHosts.Any(host => string.Equals(host, portalUri.Host, StringComparison.OrdinalIgnoreCase)))
+        {
+            return new PortalValidationResult(
+                null,
+                string.Format(AppResources.SubscriptionPortalValidationHostNotAllowedFormat, portalUri.Host));
+        }
+
+        var details = string.Format(AppResources.SubscriptionPortalValidationReadyFormat, portalUri.Host);
+        return new PortalValidationResult(portalUri, details);
+    }
+
+    private sealed record PortalValidationResult(Uri? PortalUri, string Details);
+}

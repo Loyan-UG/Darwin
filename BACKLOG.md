@@ -169,7 +169,7 @@ It is designed as the **single source of truth** for development planning.
 
 ## 3.5 Mobile Business App – Phase 3
 - [x] Full analytics module (CSV/PDF export)
-- [ ] Business subscription management (Stripe)
+- [~] Business subscription management (Stripe) — mobile settings entry point + read-only subscription status snapshot delivered; mutation workflow (upgrade/cancel/checkout) pending.
 - [x] Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
@@ -239,6 +239,8 @@ It is designed as the **single source of truth** for development planning.
 - [x] Campaign toolbar now includes a dedicated "Clear search" action that resets only search query while preserving state/sort context.
 - [x] Business campaign local search now also matches campaign body text (in addition to internal name/title) for better operator discovery in dense lists.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
+- [x] Business Settings subscription flow now includes environment diagnostics (missing/invalid/non-HTTPS/host-allowlist), secure portal launch, copy-url support, and server-backed read-only status snapshot for operator visibility.
+- [x] Testing-phase login acceleration hardened: QA credentials remain prefilled only in DEBUG mobile builds (Consumer/Business), while non-DEBUG builds default to empty credentials; full removal remains mandatory before customer rollout.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).

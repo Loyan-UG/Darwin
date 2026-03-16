@@ -89,6 +89,7 @@ If device binding is enabled in your environment, login/refresh must carry devic
 | Discovery | `GET /api/v1/businesses/{id}` | AllowAnonymous | Consumer |
 | Discovery | `GET /api/v1/businesses/{id}/with-my-account` | `perm:AccessMemberArea` | Consumer |
 | Business | `POST /api/v1/businesses/onboarding` | Authorize | Both |
+| Billing | `GET /api/v1/billing/business/subscription/current` | `perm:AccessLoyaltyBusiness` | Business |
 
 ---
 

@@ -53,6 +53,7 @@ Key principles for the loyalty flow:
 - Phase-2 increment delivered: business-side reward tier editing (load/create/update/delete) backed by loyalty reward-configuration APIs.
 - Phase-2 increment delivered: business dashboard + lightweight reporting cards (sessions/accruals/redemptions/top customers/recent activity).
 - Phase-2 increment delivered: staff role visibility + client-side permission guards for reward edit and redemption/accrual confirmations.
+- Phase-3 increment delivered: subscription settings entry point with portal configuration diagnostics (missing/invalid/non-HTTPS/host-allowlist), HTTPS-validated launch, copy-url support, and server-backed read-only subscription status snapshot for operator self-service/troubleshooting.
 
 ### 1.3 Darwin.Mobile.Shared (Class Library)
 
@@ -190,6 +191,7 @@ These are sufficient for the map, directory and profile pages on Consumer.
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
 - `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
 - `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
+- During active integration testing, login view models in both mobile apps prefill QA credentials only for DEBUG builds to speed manual verification loops; non-DEBUG builds keep credentials empty. This remains a temporary exception and must be fully removed during final pre-release hardening before customer rollout.
 - **Consumer QR auto-refresh policy (current app behavior)**: the UI countdown check runs every ~1 second for a smooth countdown, while the app enforces a **minimum 5-minute interval** between automatic network refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
