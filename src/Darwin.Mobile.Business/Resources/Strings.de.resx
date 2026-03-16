@@ -264,6 +264,18 @@
   <data name="SubscriptionPortalCopyFailed" xml:space="preserve">
     <value>Die Abrechnungsportal-URL kann derzeit nicht kopiert werden. Bitte versuchen Sie es erneut.</value>
   </data>
+  <data name="SubscriptionPortalValidationMissingUrl" xml:space="preserve">
+    <value>Die URL des Abrechnungsportals ist nicht konfiguriert.</value>
+  </data>
+  <data name="SubscriptionPortalValidationInvalidUrl" xml:space="preserve">
+    <value>Die URL des Abrechnungsportals ist ungültig. Bitte eine absolute URL konfigurieren.</value>
+  </data>
+  <data name="SubscriptionPortalValidationRequiresHttps" xml:space="preserve">
+    <value>Die URL des Abrechnungsportals muss HTTPS verwenden.</value>
+  </data>
+  <data name="SubscriptionPortalValidationReadyFormat" xml:space="preserve">
+    <value>Konfigurierter Host: {0}</value>
+  </data>
   <data name="SubscriptionOpenPortalButton" xml:space="preserve">
     <value>Abrechnungsportal öffnen</value>
   </data>

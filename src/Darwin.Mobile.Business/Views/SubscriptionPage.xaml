@@ -26,6 +26,11 @@
                     <Label Text="{Binding PortalHint}"
                            LineBreakMode="WordWrap" />
 
+                    <Label Text="{Binding PortalConfigurationDetails}"
+                           FontSize="12"
+                           Opacity="0.75"
+                           LineBreakMode="WordWrap" />
+
                     <Label Text="{x:Static res:AppResources.SubscriptionPortalUrlLabel}"
                            FontAttributes="Bold"
                            FontSize="13"

@@ -264,6 +264,18 @@
   <data name="SubscriptionPortalCopyFailed" xml:space="preserve">
     <value>Unable to copy billing portal URL right now. Please try again.</value>
   </data>
+  <data name="SubscriptionPortalValidationMissingUrl" xml:space="preserve">
+    <value>Billing portal URL is not configured.</value>
+  </data>
+  <data name="SubscriptionPortalValidationInvalidUrl" xml:space="preserve">
+    <value>Billing portal URL is invalid. Configure an absolute URL.</value>
+  </data>
+  <data name="SubscriptionPortalValidationRequiresHttps" xml:space="preserve">
+    <value>Billing portal URL must use HTTPS.</value>
+  </data>
+  <data name="SubscriptionPortalValidationReadyFormat" xml:space="preserve">
+    <value>Configured host: {0}</value>
+  </data>
   <data name="SubscriptionOpenPortalButton" xml:space="preserve">
     <value>Open billing portal</value>
   </data>

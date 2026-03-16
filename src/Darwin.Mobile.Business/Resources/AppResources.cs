@@ -98,6 +98,10 @@ public static class AppResources
     public static string SubscriptionPortalCopiedHint => ResourceManager.GetString(nameof(SubscriptionPortalCopiedHint), Culture) ?? "Billing portal URL copied to clipboard.";
     public static string SubscriptionPortalOpenFailed => ResourceManager.GetString(nameof(SubscriptionPortalOpenFailed), Culture) ?? "Unable to open billing portal right now. Please try again shortly.";
     public static string SubscriptionPortalCopyFailed => ResourceManager.GetString(nameof(SubscriptionPortalCopyFailed), Culture) ?? "Unable to copy billing portal URL right now. Please try again.";
+    public static string SubscriptionPortalValidationMissingUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationMissingUrl), Culture) ?? "Billing portal URL is not configured.";
+    public static string SubscriptionPortalValidationInvalidUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationInvalidUrl), Culture) ?? "Billing portal URL is invalid. Configure an absolute URL.";
+    public static string SubscriptionPortalValidationRequiresHttps => ResourceManager.GetString(nameof(SubscriptionPortalValidationRequiresHttps), Culture) ?? "Billing portal URL must use HTTPS.";
+    public static string SubscriptionPortalValidationReadyFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationReadyFormat), Culture) ?? "Configured host: {0}";
     public static string SubscriptionOpenPortalButton => ResourceManager.GetString(nameof(SubscriptionOpenPortalButton), Culture) ?? "Open billing portal";
     public static string SubscriptionCopyPortalUrlButton => ResourceManager.GetString(nameof(SubscriptionCopyPortalUrlButton), Culture) ?? "Copy portal URL";
 

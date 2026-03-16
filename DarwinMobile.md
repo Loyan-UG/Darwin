@@ -53,7 +53,7 @@ Key principles for the loyalty flow:
 - Phase-2 increment delivered: business-side reward tier editing (load/create/update/delete) backed by loyalty reward-configuration APIs.
 - Phase-2 increment delivered: business dashboard + lightweight reporting cards (sessions/accruals/redemptions/top customers/recent activity).
 - Phase-2 increment delivered: staff role visibility + client-side permission guards for reward edit and redemption/accrual confirmations.
-- Phase-3 increment delivered: subscription settings entry point with HTTPS-validated billing portal URL launch and copy-url support for operator self-service and troubleshooting.
+- Phase-3 increment delivered: subscription settings entry point with portal configuration diagnostics (missing/invalid/non-HTTPS), HTTPS-validated launch, and copy-url support for operator self-service and troubleshooting.
 
 ### 1.3 Darwin.Mobile.Shared (Class Library)
 

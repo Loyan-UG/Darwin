@@ -29,6 +29,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private bool _isPortalConfigured;
     private string _portalHint = string.Empty;
     private string _portalUrlText = string.Empty;
+    private string _portalConfigurationDetails = string.Empty;
 
     public SubscriptionViewModel(ApiOptions apiOptions)
     {
@@ -73,6 +74,16 @@ public sealed class SubscriptionViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets configuration diagnostics describing why billing portal is or is not available.
+    /// This helps operators quickly route environment issues to the correct team.
+    /// </summary>
+    public string PortalConfigurationDetails
+    {
+        get => _portalConfigurationDetails;
+        private set => SetProperty(ref _portalConfigurationDetails, value);
+    }
+
+    /// <summary>
     /// Opens Stripe/customer billing portal URL in external browser.
     /// </summary>
     public AsyncCommand OpenBillingPortalCommand { get; }
@@ -86,9 +97,10 @@ public sealed class SubscriptionViewModel : BaseViewModel
     {
         RunOnMain(() =>
         {
-            var portalUri = GetValidatedPortalUri();
-            IsPortalConfigured = portalUri is not null;
-            PortalUrlText = portalUri?.AbsoluteUri ?? string.Empty;
+            var portalValidation = ValidatePortalConfiguration();
+            IsPortalConfigured = portalValidation.PortalUri is not null;
+            PortalUrlText = portalValidation.PortalUri?.AbsoluteUri ?? string.Empty;
+            PortalConfigurationDetails = portalValidation.Details;
 
             PortalHint = IsPortalConfigured
                 ? AppResources.SubscriptionPortalReadyHint
@@ -107,7 +119,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             return;
         }
 
-        var portalUri = GetValidatedPortalUri();
+        var portalUri = ValidatePortalConfiguration().PortalUri;
         if (portalUri is null)
         {
             RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
@@ -148,7 +160,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             return;
         }
 
-        var portalUri = GetValidatedPortalUri();
+        var portalUri = ValidatePortalConfiguration().PortalUri;
         if (portalUri is null)
         {
             RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
@@ -185,19 +197,38 @@ public sealed class SubscriptionViewModel : BaseViewModel
     /// Resolves and validates configured billing portal URL.
     /// Only HTTPS absolute URIs are accepted to prevent insecure redirects.
     /// </summary>
-    private Uri? GetValidatedPortalUri()
+    private PortalValidationResult ValidatePortalConfiguration()
     {
         var rawUrl = _apiOptions.BusinessBillingPortalUrl?.Trim();
+        if (string.IsNullOrWhiteSpace(rawUrl))
+        {
+            return new PortalValidationResult(
+                PortalUri: null,
+                Details: AppResources.SubscriptionPortalValidationMissingUrl);
+        }
+
         if (!Uri.TryCreate(rawUrl, UriKind.Absolute, out var portalUri))
         {
-            return null;
+            return new PortalValidationResult(
+                PortalUri: null,
+                Details: AppResources.SubscriptionPortalValidationInvalidUrl);
         }
 
         if (!string.Equals(portalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
-            return null;
+            return new PortalValidationResult(
+                PortalUri: null,
+                Details: AppResources.SubscriptionPortalValidationRequiresHttps);
         }
 
-        return portalUri;
+        var details = string.Format(AppResources.SubscriptionPortalValidationReadyFormat, portalUri.Host);
+        return new PortalValidationResult(
+            PortalUri: portalUri,
+            Details: details);
     }
+
+    /// <summary>
+    /// Immutable validation result for billing portal configuration checks.
+    /// </summary>
+    private sealed record PortalValidationResult(Uri? PortalUri, string Details);
 }
