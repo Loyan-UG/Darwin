@@ -498,15 +498,27 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business campaign editor now includes optional UTC schedule inputs with pre-submit validation for date format and start/end range.
 - Business campaign editor now includes channel selection controls (In-App / In-App+Push) and channel validation before API mutations.
 - Business campaign editor now validates and submits optional `targeting/payload` JSON object fields with localized guardrail errors before API mutations.
+- Business campaign editor now blocks duplicate internal campaign names on the client before API mutations, reducing avoidable retry loops for operators.
+- Business campaign list now supports local search + lifecycle-state filtering to keep large campaign sets manageable on tablet screens.
+- Business campaign list now shows visible/total result summary and supports one-tap filter reset to reduce operator friction during frequent context switching.
+- Business campaign list now supports operator-selectable sort modes (start date and title ascending/descending) for faster review in high-volume campaign inventories.
+- Business campaign list now shows lifecycle KPI counters (Draft/Scheduled/Active/Expired) for faster day-to-day operational monitoring.
+- Business campaign lifecycle KPI counters now act as one-tap filter chips so operators can jump directly to a state-specific list.
+- Business campaign lifecycle KPI chips now include "All" quick-reset and toggle-to-clear behavior on active state chips for faster context switching.
+- "All" lifecycle KPI chip now resets only the state filter while keeping search/sort criteria intact for faster repeated operator triage loops.
+- Campaign management toolbar now includes "Clear search" action that resets only search query while preserving state/sort context.
+- Business campaign search now also matches campaign body text (besides internal name/title) to improve findability across long-form campaign content.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
 - Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
 - Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
-- Business Dashboard now includes CSV export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
+- Business Dashboard now includes CSV + PDF export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
+- **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign search across name/title/body with docs/backlog synchronized.
+- **Recommended next step (new chat):** resume with Promotions foundation backlog item (contracts/lifecycle refinement), then continue incremental delivery with per-step docs/backlog updates.
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
 - Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.

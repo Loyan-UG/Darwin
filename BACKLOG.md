@@ -168,7 +168,7 @@ It is designed as the **single source of truth** for development planning.
 - [~] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
-- [~] Full analytics module (CSV/PDF export)
+- [x] Full analytics module (CSV/PDF export)
 - [ ] Business subscription management (Stripe)
 - [x] Staff QR codes for internal access
 
@@ -200,6 +200,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Added Android 13+ startup notification-permission request bootstrap with one-time prompt persistence, and removed legacy fallback push token providers to reduce production ambiguity.
 - [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
 - [x] Business dashboard now supports CSV export (summary KPIs + top customers + recent activities) through native share flow for lightweight operator reporting.
+- [x] Business dashboard now supports PDF export (single-page operational snapshot) through native share flow for lightweight operator reporting handoff.
 - [x] Business settings now include a rotating staff access badge page that emits short-lived internal QR payloads with expiry countdown and manual refresh.
 - [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
 - [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
@@ -227,6 +228,16 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business campaign editor now supports optional UTC start/end inputs with client-side format/range validation before create/update API calls.
 - [x] Business campaign editor now supports delivery-channel selection (In-App / In-App+Push) with explicit validation and localized labels in mobile UI.
 - [x] Business campaign editor now validates and submits optional `targeting/payload` JSON object fields (with localized validation feedback) to reduce malformed mutation payloads.
+- [x] Business campaign editor now performs client-side duplicate internal-name guardrails before create/update API calls to reduce avoidable round-trips and operator confusion.
+- [x] Business campaign operations list now supports local search + lifecycle-state filtering (Draft/Scheduled/Active/Expired) to improve operator navigation in larger campaign sets.
+- [x] Business campaign operations list now shows filter-result summary (visible/total) and includes one-tap filter reset for faster operator recovery in dense campaign sets.
+- [x] Business campaign operations list now supports configurable client-side sort options (start date and title asc/desc) for faster operator triage workflows.
+- [x] Business campaign operations list now surfaces lifecycle KPI counters (Draft/Scheduled/Active/Expired) to give operators a fast health snapshot before drilling into details.
+- [x] Business campaign lifecycle KPI counters are now actionable chips that apply state filter in one tap for faster drill-down workflows.
+- [x] Business campaign lifecycle KPI chips now support toggle behavior (tap active chip again to clear state filter) and include an "All" chip for one-tap reset.
+- [x] "All" KPI chip now resets only lifecycle-state filter (preserving active search/sort context) for faster iterative campaign triage.
+- [x] Campaign toolbar now includes a dedicated "Clear search" action that resets only search query while preserving state/sort context.
+- [x] Business campaign local search now also matches campaign body text (in addition to internal name/title) for better operator discovery in dense lists.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
@@ -234,6 +245,11 @@ It is designed as the **single source of truth** for development planning.
 2. **P1 — Promotions delivery consistency:** align server-side feed guardrails (priority/cap/dedup/frequency) with current mobile client guardrails and expose suppression policy in contracts.
 3. **P1 — Promotions operations:** add minimal business/admin campaign management APIs (CRUD + activation) and minimal management UI.
 4. **P2 — Inactive reminders completion:** extend current reminder baseline with explicit dispatch/suppression workflow (send log + cooldown policy) and provider-native sender integration hardening.
+
+### 3.9.1 Handoff Status (Prepared for next chat)
+- Current iteration status: **Paused intentionally** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
+- Last delivered increment: campaign local search now matches `Name` + `Title` + `Body` (Business mobile Rewards list).
+- Next recommended starting point in new chat: continue from item **3.9 / P0 Promotions foundation** and keep backlog/docs updated per increment.
 
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
