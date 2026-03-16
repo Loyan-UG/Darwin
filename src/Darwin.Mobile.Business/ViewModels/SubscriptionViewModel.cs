@@ -328,7 +328,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
             SelectedPlanOption = _planOptions.FirstOrDefault();
 
             AvailablePlansText = plans.Count == 0
-                ? AppResources.SubscriptionPlansUnavailable
+                ? GetPlansEmptyMessage()
                 : string.Join(Environment.NewLine, plans.Select(p => $"• {FormatPlanOption(p)}"));
 
             UpdateSelectedPlanSummary();
@@ -636,6 +636,16 @@ public sealed class SubscriptionViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasPlanOptions));
         StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
     }
+
+    /// <summary>
+    /// Returns contextual empty-state message for plan list.
+    /// If current subscription exists and no alternative plans remain,
+    /// guide operators that an upgrade target is not currently available.
+    /// </summary>
+    private string GetPlansEmptyMessage()
+        => HasSubscriptionStatus
+            ? AppResources.SubscriptionNoAlternativePlans
+            : AppResources.SubscriptionPlansUnavailable;
 
     /// <summary>
     /// Returns whether candidate code points to currently active subscription plan.

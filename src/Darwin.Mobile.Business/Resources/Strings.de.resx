@@ -294,6 +294,9 @@
   <data name="SubscriptionPlansUnavailable" xml:space="preserve">
     <value>Derzeit sind keine Abrechnungstarife verfügbar.</value>
   </data>
+  <data name="SubscriptionNoAlternativePlans" xml:space="preserve">
+    <value>Derzeit sind keine alternativen Tarife für ein Upgrade verfügbar.</value>
+  </data>
   <data name="SubscriptionPlanLineFormat" xml:space="preserve">
     <value>{0}: {1} {2} alle {3} {4}</value>
   </data>

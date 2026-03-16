@@ -108,6 +108,7 @@ public static class AppResources
     public static string SubscriptionCancelAtPeriodEndUpdateFailed => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndUpdateFailed), Culture) ?? "Unable to update cancellation preference. Please refresh and try again.";
     public static string SubscriptionPlansSectionTitle => ResourceManager.GetString(nameof(SubscriptionPlansSectionTitle), Culture) ?? "Available plans";
     public static string SubscriptionPlansUnavailable => ResourceManager.GetString(nameof(SubscriptionPlansUnavailable), Culture) ?? "No billing plans are currently available.";
+    public static string SubscriptionNoAlternativePlans => ResourceManager.GetString(nameof(SubscriptionNoAlternativePlans), Culture) ?? "No alternative plans are currently available for upgrade.";
     public static string SubscriptionPlanLineFormat => ResourceManager.GetString(nameof(SubscriptionPlanLineFormat), Culture) ?? "{0}: {1} {2} every {3} {4}";
     public static string SubscriptionCheckoutNoPlanSelected => ResourceManager.GetString(nameof(SubscriptionCheckoutNoPlanSelected), Culture) ?? "Select a plan to continue checkout.";
     public static string SubscriptionCheckoutSelectedPlanFormat => ResourceManager.GetString(nameof(SubscriptionCheckoutSelectedPlanFormat), Culture) ?? "Checkout target: {0} ({1})";

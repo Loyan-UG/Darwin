@@ -294,6 +294,9 @@
   <data name="SubscriptionPlansUnavailable" xml:space="preserve">
     <value>No billing plans are currently available.</value>
   </data>
+  <data name="SubscriptionNoAlternativePlans" xml:space="preserve">
+    <value>No alternative plans are currently available for upgrade.</value>
+  </data>
   <data name="SubscriptionPlanLineFormat" xml:space="preserve">
     <value>{0}: {1} {2} every {3} {4}</value>
   </data>
