@@ -39,11 +39,16 @@ public sealed partial class LoginViewModel : BaseViewModel
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
-        // TODO [TEST-ONLY][MOBILE-SECURITY]:
-        // Remove these default credentials before release builds.
-        // They are intentionally set for rapid QA loops in local/dev environments only.
+        // TESTING PHASE NOTE:
+        // Keep QA credentials prefilled only in DEBUG builds to speed repeated integration checks.
+        // In non-DEBUG builds we intentionally keep credentials empty to reduce accidental exposure risk.
+#if DEBUG
         Email = "cons1@darwin.de";
         Password = "Consumer123!";
+#else
+        Email = string.Empty;
+        Password = string.Empty;
+#endif
     }
 
     /// <summary>
