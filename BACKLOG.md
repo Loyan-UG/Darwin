@@ -265,7 +265,13 @@ It is designed as the **single source of truth** for development planning.
 ### 3.9.1 Handoff Status (Prepared for next chat)
 - Current iteration status: **Closed cleanly** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
 - Last delivered increment: campaign targeting quick-fix telemetry persisted into business activity logs and surfaced in dashboard/report exports.
-- Next recommended starting point in new chat: treat current quick-fix telemetry workstream as closed, then proceed with error-remediation items and continue from **3.9 / P0 Promotions foundation**.
+- Next recommended starting point in new chat: treat current quick-fix telemetry workstream as closed, run a fresh repository-wide baseline check (because parallel updates landed), then proceed with error-remediation items and continue from **3.9 / P0 Promotions foundation**.
+
+### 3.9.2 Ready-to-continue checklist (next chat)
+1. Re-open docs and code from latest `dev` snapshot (no cached assumptions) and refresh done/pending flags.
+2. Execute a focused mobile build/compile pass and capture only currently-active blockers.
+3. Close blocker fixes in isolated increments (small commits) before resuming feature delivery.
+4. Continue planned queue in order: **P0 Promotions foundation** → **P1 delivery consistency** → **P1 operations** → **P2 reminders completion**.
 
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 

@@ -532,11 +532,16 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 
 ### Remaining / follow-up
 - **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign quick-fix telemetry persistence into business activity dashboard/reporting with docs/backlog synchronized.
-- **Recommended next step (new chat):** this section is closed; next track can focus on targeted error-remediation tasks and then continue Promotions foundation contracts/lifecycle refinement.
+- **Recommended next step (new chat):** this section is closed; start with a fresh baseline validation from latest repository state (parallel updates landed), then focus on targeted error-remediation tasks and continue Promotions foundation contracts/lifecycle refinement.
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
 - Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
 - Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
+
+### Next-chat startup checklist
+1. Re-read `BACKLOG.md`, `DarwinMobile.md`, and current mobile ViewModels from disk before coding.
+2. Run mobile-only compile/build checks to capture only active failures from latest branch state.
+3. Resolve blocker errors in small isolated commits, then resume promotions/reminders queue delivery.
 
 ## 19) Contributor Checklist
 
