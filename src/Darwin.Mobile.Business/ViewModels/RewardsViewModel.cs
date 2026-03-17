@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
@@ -33,6 +34,7 @@ public sealed class RewardsViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
     private readonly IBusinessAuthorizationService _authorizationService;
+    private readonly IBusinessActivityTracker _activityTracker;
     private readonly List<BusinessCampaignEditorItem> _allCampaigns = new();
 
     private bool _loadedOnce;
@@ -60,9 +62,17 @@ public sealed class RewardsViewModel : BaseViewModel
     private string? _campaignEndsAtInput;
     private string _campaignTargetingJsonInput = "{}";
     private string _campaignPayloadJsonInput = "{}";
+    private string _campaignTargetingHint = AppResources.RewardsCampaignTargetingHintDefault;
+    private string _campaignTargetingSchemaValidationMessage = string.Empty;
+    private string _campaignTargetingFixStatusMessage = string.Empty;
+    private int _campaignTargetingFixAppliedCount;
+    private int _campaignTargetingFixNoChangeCount;
+    private DateTimeOffset? _campaignTargetingFixMetricsWindowStartedAtUtc;
+    private DateTimeOffset? _campaignTargetingFixMetricsLastResetAtUtc;
     private CampaignChannelOption? _selectedCampaignChannel;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
+    private CampaignAudienceFilterOption? _selectedCampaignAudienceFilter;
     private CampaignSortOption? _selectedCampaignSortOption;
 
     private const int CampaignListPageSize = 50;
@@ -71,10 +81,11 @@ public sealed class RewardsViewModel : BaseViewModel
     private const string RewardTypePercentDiscount = "PercentDiscount";
     private const string RewardTypeAmountDiscount = "AmountDiscount";
 
-    public RewardsViewModel(ILoyaltyService loyaltyService, IBusinessAuthorizationService authorizationService)
+    public RewardsViewModel(ILoyaltyService loyaltyService, IBusinessAuthorizationService authorizationService, IBusinessActivityTracker activityTracker)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+        _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
         Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
@@ -100,6 +111,15 @@ public sealed class RewardsViewModel : BaseViewModel
             new CampaignStateFilterOption(PromotionCampaignState.Expired, AppResources.RewardsCampaignStateFilterExpired)
         };
 
+        CampaignAudienceFilterOptions = new ObservableCollection<CampaignAudienceFilterOption>
+        {
+            new CampaignAudienceFilterOption(string.Empty, AppResources.RewardsCampaignAudienceFilterAll),
+            new CampaignAudienceFilterOption(PromotionAudienceKind.JoinedMembers, AppResources.RewardsCampaignAudienceJoinedMembers),
+            new CampaignAudienceFilterOption(PromotionAudienceKind.TierSegment, AppResources.RewardsCampaignAudienceTierSegment),
+            new CampaignAudienceFilterOption(PromotionAudienceKind.PointsThreshold, AppResources.RewardsCampaignAudiencePointsThreshold),
+            new CampaignAudienceFilterOption(PromotionAudienceKind.DateWindow, AppResources.RewardsCampaignAudienceDateWindow)
+        };
+
         CampaignSortOptions = new ObservableCollection<CampaignSortOption>
         {
             new CampaignSortOption(CampaignSortMode.StartDateDesc, AppResources.RewardsCampaignSortStartDateDesc),
@@ -110,7 +130,10 @@ public sealed class RewardsViewModel : BaseViewModel
 
         _selectedCampaignChannel = CampaignChannelOptions[0];
         _selectedCampaignStateFilter = CampaignStateFilterOptions[0];
+        _selectedCampaignAudienceFilter = CampaignAudienceFilterOptions[0];
         _selectedCampaignSortOption = CampaignSortOptions[0];
+        UpdateCampaignTargetingHint();
+        RefreshCampaignTargetingSchemaValidationState();
 
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
@@ -122,6 +145,10 @@ public sealed class RewardsViewModel : BaseViewModel
         ClearCampaignFiltersCommand = new AsyncCommand(ClearCampaignFiltersAsync, () => !IsBusy && HasActiveCampaignFilters);
         ClearCampaignSearchCommand = new AsyncCommand(ClearCampaignSearchAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(CampaignSearchQuery));
         ApplyCampaignStateFilterCommand = new AsyncCommand<string>(ApplyCampaignStateFilterAsync, _ => !IsBusy);
+        ApplyCampaignAudienceFilterCommand = new AsyncCommand<string>(ApplyCampaignAudienceFilterAsync, _ => !IsBusy);
+        ApplyCampaignTargetingPresetCommand = new AsyncCommand<string>(ApplyCampaignTargetingPresetAsync, _ => !IsBusy && CanManageRewards);
+        ApplyCampaignTargetingSchemaFixCommand = new AsyncCommand(ApplyCampaignTargetingSchemaQuickFixAsync, () => !IsBusy && CanManageRewards && HasCampaignTargetingSchemaValidationError);
+        ResetCampaignTargetingFixMetricsCommand = new AsyncCommand(ResetCampaignTargetingQuickFixMetricsAsync, () => !IsBusy && CanManageRewards && (CampaignTargetingFixAppliedCount > 0 || CampaignTargetingFixNoChangeCount > 0));
     }
 
 
@@ -179,6 +206,11 @@ public sealed class RewardsViewModel : BaseViewModel
     public ObservableCollection<CampaignStateFilterOption> CampaignStateFilterOptions { get; }
 
     /// <summary>
+    /// Picker options for campaign audience filtering in the management list.
+    /// </summary>
+    public ObservableCollection<CampaignAudienceFilterOption> CampaignAudienceFilterOptions { get; }
+
+    /// <summary>
     /// Picker options for campaign list ordering in management UI.
     /// </summary>
     public ObservableCollection<CampaignSortOption> CampaignSortOptions { get; }
@@ -207,6 +239,21 @@ public sealed class RewardsViewModel : BaseViewModel
         set
         {
             if (SetProperty(ref _selectedCampaignStateFilter, value))
+            {
+                ApplyCampaignFilter();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Currently selected audience filter for campaign list.
+    /// </summary>
+    public CampaignAudienceFilterOption? SelectedCampaignAudienceFilter
+    {
+        get => _selectedCampaignAudienceFilter;
+        set
+        {
+            if (SetProperty(ref _selectedCampaignAudienceFilter, value))
             {
                 ApplyCampaignFilter();
             }
@@ -248,7 +295,8 @@ public sealed class RewardsViewModel : BaseViewModel
     /// </summary>
     public bool HasActiveCampaignFilters =>
         !string.IsNullOrWhiteSpace(CampaignSearchQuery) ||
-        !string.IsNullOrWhiteSpace(SelectedCampaignStateFilter?.StateKey);
+        !string.IsNullOrWhiteSpace(SelectedCampaignStateFilter?.StateKey) ||
+        !string.IsNullOrWhiteSpace(SelectedCampaignAudienceFilter?.AudienceKindKey);
 
     /// <summary>
     /// Gets whether campaign search query currently contains a value.
@@ -319,6 +367,62 @@ public sealed class RewardsViewModel : BaseViewModel
     /// KPI chip text for all campaigns regardless of lifecycle state.
     /// </summary>
     public string AllCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterAll, TotalCampaignCount);
+
+    /// <summary>
+    /// Gets count of joined-members audience campaigns from full campaign dataset.
+    /// </summary>
+    public int JoinedMembersCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.JoinedMembers);
+
+    /// <summary>
+    /// Gets count of tier-segment audience campaigns from full campaign dataset.
+    /// </summary>
+    public int TierSegmentCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.TierSegment);
+
+    /// <summary>
+    /// Gets count of points-threshold audience campaigns from full campaign dataset.
+    /// </summary>
+    public int PointsThresholdCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.PointsThreshold);
+
+    /// <summary>
+    /// Gets count of date-window audience campaigns from full campaign dataset.
+    /// </summary>
+    public int DateWindowCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.DateWindow);
+
+    /// <summary>
+    /// Localized summary line for audience segmentation quick metrics.
+    /// </summary>
+    public string CampaignAudienceMetricsSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignAudienceMetricsFormat,
+        JoinedMembersCampaignCount,
+        TierSegmentCampaignCount,
+        PointsThresholdCampaignCount,
+        DateWindowCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for all audiences.
+    /// </summary>
+    public string AllCampaignAudienceMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceFilterAll, TotalCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for joined-members audience.
+    /// </summary>
+    public string JoinedMembersCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceJoinedMembers, JoinedMembersCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for tier-segment audience.
+    /// </summary>
+    public string TierSegmentCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceTierSegment, TierSegmentCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for points-threshold audience.
+    /// </summary>
+    public string PointsThresholdCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudiencePointsThreshold, PointsThresholdCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for date-window audience.
+    /// </summary>
+    public string DateWindowCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceDateWindow, DateWindowCampaignCount);
 
     /// <summary>
     /// User-entered points required for the reward tier.
@@ -417,7 +521,15 @@ public sealed class RewardsViewModel : BaseViewModel
     public string CampaignTargetingJsonInput
     {
         get => _campaignTargetingJsonInput;
-        set => SetProperty(ref _campaignTargetingJsonInput, value);
+        set
+        {
+            if (SetProperty(ref _campaignTargetingJsonInput, value))
+            {
+                UpdateCampaignTargetingHint();
+                RefreshCampaignTargetingSchemaValidationState();
+                CampaignTargetingFixStatusMessage = string.Empty;
+            }
+        }
     }
 
     /// <summary>
@@ -428,6 +540,143 @@ public sealed class RewardsViewModel : BaseViewModel
         get => _campaignPayloadJsonInput;
         set => SetProperty(ref _campaignPayloadJsonInput, value);
     }
+
+    /// <summary>
+    /// Inline targeting guidance derived from the current targeting JSON.
+    /// </summary>
+    public string CampaignTargetingHint
+    {
+        get => _campaignTargetingHint;
+        private set => SetProperty(ref _campaignTargetingHint, value);
+    }
+
+    /// <summary>
+    /// Inline schema validation message for targeting JSON.
+    /// </summary>
+    public string CampaignTargetingSchemaValidationMessage
+    {
+        get => _campaignTargetingSchemaValidationMessage;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingSchemaValidationMessage, value))
+            {
+                OnPropertyChanged(nameof(HasCampaignTargetingSchemaValidationError));
+                ApplyCampaignTargetingSchemaFixCommand?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether targeting schema currently has inline validation errors.
+    /// </summary>
+    public bool HasCampaignTargetingSchemaValidationError => !string.IsNullOrWhiteSpace(CampaignTargetingSchemaValidationMessage);
+
+    /// <summary>
+    /// Informational status message after applying automatic targeting fixes.
+    /// </summary>
+    public string CampaignTargetingFixStatusMessage
+    {
+        get => _campaignTargetingFixStatusMessage;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixStatusMessage, value))
+            {
+                OnPropertyChanged(nameof(HasCampaignTargetingFixStatusMessage));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether targeting fix status message should be shown.
+    /// </summary>
+    public bool HasCampaignTargetingFixStatusMessage => !string.IsNullOrWhiteSpace(CampaignTargetingFixStatusMessage);
+
+    /// <summary>
+    /// Counter for quick-fix operations that modified targeting JSON.
+    /// </summary>
+    public int CampaignTargetingFixAppliedCount
+    {
+        get => _campaignTargetingFixAppliedCount;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixAppliedCount, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+                OnPropertyChanged(nameof(HasCampaignTargetingFixMetrics));
+                ResetCampaignTargetingFixMetricsCommand?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Counter for quick-fix operations that found no required changes.
+    /// </summary>
+    public int CampaignTargetingFixNoChangeCount
+    {
+        get => _campaignTargetingFixNoChangeCount;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixNoChangeCount, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+                OnPropertyChanged(nameof(HasCampaignTargetingFixMetrics));
+                ResetCampaignTargetingFixMetricsCommand?.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Localized quick-fix telemetry summary for operator awareness.
+    /// </summary>
+    public string CampaignTargetingFixMetricsSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignTargetingFixMetricsFormat,
+        CampaignTargetingFixAppliedCount,
+        CampaignTargetingFixNoChangeCount);
+
+    /// <summary>
+    /// Indicates whether quick-fix telemetry counters currently contain any value.
+    /// </summary>
+    public bool HasCampaignTargetingFixMetrics => CampaignTargetingFixAppliedCount > 0 || CampaignTargetingFixNoChangeCount > 0;
+
+    /// <summary>
+    /// UTC timestamp of current quick-fix monitoring window start.
+    /// </summary>
+    public DateTimeOffset? CampaignTargetingFixMetricsWindowStartedAtUtc
+    {
+        get => _campaignTargetingFixMetricsWindowStartedAtUtc;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixMetricsWindowStartedAtUtc, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsWindowSummary));
+            }
+        }
+    }
+
+    /// <summary>
+    /// UTC timestamp of the latest quick-fix telemetry reset action.
+    /// </summary>
+    public DateTimeOffset? CampaignTargetingFixMetricsLastResetAtUtc
+    {
+        get => _campaignTargetingFixMetricsLastResetAtUtc;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixMetricsLastResetAtUtc, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsWindowSummary));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Localized quick-fix monitoring window summary.
+    /// </summary>
+    public string CampaignTargetingFixMetricsWindowSummary => string.Format(
+        CultureInfo.CurrentCulture,
+        AppResources.RewardsCampaignTargetingFixMetricsWindowFormat,
+        CampaignTargetingFixMetricsWindowStartedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture) ?? AppResources.RewardsCampaignTargetingFixMetricsWindowUnknown,
+        CampaignTargetingFixMetricsLastResetAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture) ?? AppResources.RewardsCampaignTargetingFixMetricsWindowUnknown);
 
     /// <summary>
     /// Selected campaign channel option used for create/update payloads.
@@ -473,6 +722,10 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand ClearCampaignFiltersCommand { get; }
     public AsyncCommand ClearCampaignSearchCommand { get; }
     public AsyncCommand<string> ApplyCampaignStateFilterCommand { get; }
+    public AsyncCommand<string> ApplyCampaignAudienceFilterCommand { get; }
+    public AsyncCommand<string> ApplyCampaignTargetingPresetCommand { get; }
+    public AsyncCommand ApplyCampaignTargetingSchemaFixCommand { get; }
+    public AsyncCommand ResetCampaignTargetingFixMetricsCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -792,9 +1045,310 @@ public sealed class RewardsViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Validates and normalizes campaign JSON fields before API mutations.
+    /// Computes localized inline guidance for targeting JSON based on the selected audience kind.
     /// </summary>
-    private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
+    private void UpdateCampaignTargetingHint()
+    {
+        var json = CampaignTargetingJsonInput?.Trim();
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            CampaignTargetingHint = AppResources.RewardsCampaignTargetingHintDefault;
+            return;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                CampaignTargetingHint = AppResources.RewardsCampaignTargetingHintInvalid;
+                return;
+            }
+
+            var audienceKind = root.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
+                ? audienceElement.GetString()
+                : PromotionAudienceKind.JoinedMembers;
+
+            CampaignTargetingHint = audienceKind switch
+            {
+                PromotionAudienceKind.TierSegment => AppResources.RewardsCampaignTargetingHintTierSegment,
+                PromotionAudienceKind.PointsThreshold => AppResources.RewardsCampaignTargetingHintPointsThreshold,
+                PromotionAudienceKind.DateWindow => AppResources.RewardsCampaignTargetingHintDateWindow,
+                _ => AppResources.RewardsCampaignTargetingHintJoinedMembers
+            };
+        }
+        catch (JsonException)
+        {
+            CampaignTargetingHint = AppResources.RewardsCampaignTargetingHintInvalid;
+        }
+    }
+
+    /// <summary>
+    /// Updates schema-level validation message for targeting JSON using audience-specific checks.
+    /// </summary>
+    private void RefreshCampaignTargetingSchemaValidationState()
+    {
+        if (!TryNormalizeCampaignJsonObject(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var normalizedJson, out var jsonError))
+        {
+            CampaignTargetingSchemaValidationMessage = jsonError ?? AppResources.RewardsCampaignTargetingValidationFailed;
+            return;
+        }
+
+        if (!TryValidateCampaignTargetingSchemaRules(normalizedJson, out var schemaError))
+        {
+            CampaignTargetingSchemaValidationMessage = schemaError ?? AppResources.RewardsCampaignTargetingValidationFailed;
+            return;
+        }
+
+        CampaignTargetingSchemaValidationMessage = string.Empty;
+    }
+
+    /// <summary>
+    /// Validates audience-specific schema requirements for targeting JSON.
+    /// </summary>
+    private static bool TryValidateCampaignTargetingSchemaRules(string normalizedJson, out string? schemaError)
+    {
+        schemaError = null;
+
+        using var document = JsonDocument.Parse(normalizedJson);
+        var root = document.RootElement;
+        var audienceKind = root.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
+            ? audienceElement.GetString()
+            : PromotionAudienceKind.JoinedMembers;
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!root.TryGetProperty("tier", out var tierElement) || tierElement.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(tierElement.GetString()))
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaTierMissing;
+                return false;
+            }
+
+            return true;
+        }
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.PointsThreshold, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!root.TryGetProperty("minimumPoints", out var minPointsElement) ||
+                (minPointsElement.ValueKind != JsonValueKind.Number || !minPointsElement.TryGetInt32(out var minimumPoints) || minimumPoints < 0))
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaMinimumPointsMissing;
+                return false;
+            }
+
+            return true;
+        }
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.DateWindow, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!TryReadCampaignUtcDate(root, "eligibleFromUtc", out var eligibleFromUtc) || !TryReadCampaignUtcDate(root, "eligibleToUtc", out var eligibleToUtc))
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaDateWindowMissing;
+                return false;
+            }
+
+            if (eligibleFromUtc > eligibleToUtc)
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaDateWindowRangeInvalid;
+                return false;
+            }
+
+            return true;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Reads required UTC date string from targeting JSON object.
+    /// </summary>
+    private static bool TryReadCampaignUtcDate(JsonElement root, string propertyName, out DateTimeOffset value)
+    {
+        value = default;
+        if (!root.TryGetProperty(propertyName, out var dateElement) || dateElement.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        var raw = dateElement.GetString();
+        return DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out value);
+    }
+
+    /// <summary>
+    /// Applies a safe schema correction for the current targeting JSON when possible.
+    /// </summary>
+    private async Task ApplyCampaignTargetingSchemaQuickFixAsync()
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return;
+        }
+
+        if (!TryNormalizeCampaignJsonObject(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var normalizedJson, out _))
+        {
+            return;
+        }
+
+        if (!TryBuildSchemaFixedTargetingJsonDocument(normalizedJson, out var fixedJson, out var changed))
+        {
+            return;
+        }
+
+        await _activityTracker.RecordCampaignTargetingSchemaFixAsync(changed, CancellationToken.None).ConfigureAwait(false);
+
+        RunOnMain(() =>
+        {
+            if (!CampaignTargetingFixMetricsWindowStartedAtUtc.HasValue)
+            {
+                CampaignTargetingFixMetricsWindowStartedAtUtc = DateTimeOffset.UtcNow;
+            }
+
+            if (changed)
+            {
+                CampaignTargetingJsonInput = fixedJson;
+                CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixAppliedMessage;
+                CampaignTargetingFixAppliedCount++;
+            }
+            else
+            {
+                CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixNoChangesMessage;
+                CampaignTargetingFixNoChangeCount++;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Builds a corrected targeting JSON payload and indicates whether any change was applied.
+    /// </summary>
+    private static bool TryBuildSchemaFixedTargetingJsonDocument(string normalizedJson, out string fixedJson, out bool changed)
+    {
+        fixedJson = normalizedJson;
+        changed = false;
+
+        try
+        {
+            using var document = JsonDocument.Parse(normalizedJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            var map = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                map[property.Name] = JsonSerializer.Deserialize<object?>(property.Value.GetRawText());
+            }
+
+            var audienceKind = document.RootElement.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
+                ? audienceElement.GetString()
+                : PromotionAudienceKind.JoinedMembers;
+
+            if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
+            {
+                changed = EnsureTierSegmentSchemaFields(map) || changed;
+            }
+            else if (string.Equals(audienceKind, PromotionAudienceKind.PointsThreshold, StringComparison.OrdinalIgnoreCase))
+            {
+                changed = EnsurePointsThresholdSchemaFields(map) || changed;
+            }
+            else if (string.Equals(audienceKind, PromotionAudienceKind.DateWindow, StringComparison.OrdinalIgnoreCase))
+            {
+                changed = EnsureDateWindowSchemaFields(document.RootElement, map) || changed;
+            }
+
+            fixedJson = JsonSerializer.Serialize(map);
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Ensures TierSegment targeting includes non-empty tier key.
+    /// </summary>
+    private static bool EnsureTierSegmentSchemaFields(IDictionary<string, object?> map)
+    {
+        if (!map.TryGetValue("tier", out var tierValue) || tierValue is null || string.IsNullOrWhiteSpace(tierValue.ToString()))
+        {
+            map["tier"] = "Gold";
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Ensures PointsThreshold targeting includes non-negative minimum points.
+    /// </summary>
+    private static bool EnsurePointsThresholdSchemaFields(IDictionary<string, object?> map)
+    {
+        if (!map.TryGetValue("minimumPoints", out var minimumPointsValue) || minimumPointsValue is null || !int.TryParse(minimumPointsValue.ToString(), out var minimumPoints) || minimumPoints < 0)
+        {
+            map["minimumPoints"] = 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Ensures DateWindow targeting includes valid UTC bounds and normalized range.
+    /// </summary>
+    private static bool EnsureDateWindowSchemaFields(JsonElement root, IDictionary<string, object?> map)
+    {
+        var changed = false;
+        var hasFrom = TryReadCampaignUtcDate(root, "eligibleFromUtc", out var eligibleFromUtc);
+        var hasTo = TryReadCampaignUtcDate(root, "eligibleToUtc", out var eligibleToUtc);
+
+        if (!hasFrom)
+        {
+            eligibleFromUtc = DateTimeOffset.UtcNow;
+            map["eligibleFromUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
+            changed = true;
+        }
+
+        if (!hasTo)
+        {
+            eligibleToUtc = (hasFrom ? eligibleFromUtc : DateTimeOffset.UtcNow).AddDays(7);
+            map["eligibleToUtc"] = eligibleToUtc.ToString("O", CultureInfo.InvariantCulture);
+            changed = true;
+        }
+
+        if (hasFrom && hasTo && eligibleFromUtc > eligibleToUtc)
+        {
+            map["eligibleToUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// Resets quick-fix telemetry counters for a fresh operational tracking window.
+    /// </summary>
+    private async Task ResetCampaignTargetingQuickFixMetricsAsync()
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return;
+        }
+
+        await _activityTracker.RecordCampaignTargetingFixMetricsResetAsync(CancellationToken.None).ConfigureAwait(false);
+
+        RunOnMain(() =>
+        {
+            CampaignTargetingFixAppliedCount = 0;
+            CampaignTargetingFixNoChangeCount = 0;
+            CampaignTargetingFixMetricsWindowStartedAtUtc = DateTimeOffset.UtcNow;
+            CampaignTargetingFixMetricsLastResetAtUtc = DateTimeOffset.UtcNow;
+            CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixMetricsResetMessage;
+        });
+    }
+
+    private static bool TryNormalizeCampaignJsonObject(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
     {
         normalizedJson = "{}";
         error = null;
@@ -879,13 +1433,19 @@ public sealed class RewardsViewModel : BaseViewModel
 
         var selectedChannels = SelectedCampaignChannel.Value;
 
-        if (!TryNormalizeCampaignJson(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
+        if (!TryNormalizeCampaignJsonObject(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
         {
             RunOnMain(() => ErrorMessage = targetingError ?? AppResources.RewardsCampaignTargetingValidationFailed);
             return;
         }
 
-        if (!TryNormalizeCampaignJson(CampaignPayloadJsonInput, AppResources.RewardsCampaignPayloadValidationFailed, out var payloadJson, out var payloadError))
+        if (!TryValidateCampaignTargetingSchemaRules(targetingJson, out var targetingSchemaError))
+        {
+            RunOnMain(() => ErrorMessage = targetingSchemaError ?? AppResources.RewardsCampaignTargetingValidationFailed);
+            return;
+        }
+
+        if (!TryNormalizeCampaignJsonObject(CampaignPayloadJsonInput, AppResources.RewardsCampaignPayloadValidationFailed, out var payloadJson, out var payloadError))
         {
             RunOnMain(() => ErrorMessage = payloadError ?? AppResources.RewardsCampaignPayloadValidationFailed);
             return;
@@ -1099,15 +1659,17 @@ public sealed class RewardsViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Applies state/query filters to the cached campaign list and updates visible list.
+    /// Applies state/audience/query filters to the cached campaign list and updates visible list.
     /// </summary>
     private void ApplyCampaignFilter()
     {
         var stateKey = SelectedCampaignStateFilter?.StateKey;
+        var audienceKindKey = SelectedCampaignAudienceFilter?.AudienceKindKey;
         var query = CampaignSearchQuery?.Trim();
 
         var filteredQuery = _allCampaigns.Where(campaign =>
             (string.IsNullOrWhiteSpace(stateKey) || string.Equals(campaign.CampaignState, stateKey, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(audienceKindKey) || string.Equals(campaign.AudienceKindKey, audienceKindKey, StringComparison.OrdinalIgnoreCase)) &&
             (string.IsNullOrWhiteSpace(query) ||
              campaign.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
              campaign.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
@@ -1154,11 +1716,25 @@ public sealed class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(ScheduledCampaignMetricText));
         OnPropertyChanged(nameof(ActiveCampaignMetricText));
         OnPropertyChanged(nameof(ExpiredCampaignMetricText));
+        OnPropertyChanged(nameof(JoinedMembersCampaignCount));
+        OnPropertyChanged(nameof(TierSegmentCampaignCount));
+        OnPropertyChanged(nameof(PointsThresholdCampaignCount));
+        OnPropertyChanged(nameof(DateWindowCampaignCount));
+        OnPropertyChanged(nameof(CampaignAudienceMetricsSummary));
+        OnPropertyChanged(nameof(AllCampaignAudienceMetricText));
+        OnPropertyChanged(nameof(JoinedMembersCampaignMetricText));
+        OnPropertyChanged(nameof(TierSegmentCampaignMetricText));
+        OnPropertyChanged(nameof(PointsThresholdCampaignMetricText));
+        OnPropertyChanged(nameof(DateWindowCampaignMetricText));
         OnPropertyChanged(nameof(HasActiveCampaignFilters));
         OnPropertyChanged(nameof(HasCampaignSearchQuery));
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
         ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
+        ResetCampaignTargetingFixMetricsCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -1172,7 +1748,17 @@ public sealed class RewardsViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Clears campaign search/state filters and re-displays full campaign list.
+    /// Counts campaigns by audience-kind key in a case-insensitive manner.
+    /// </summary>
+    /// <param name="audienceKind">Audience key from targeting metadata.</param>
+    /// <returns>Number of campaigns mapped to the requested audience kind.</returns>
+    private int CountCampaignsByAudienceKind(string audienceKind)
+    {
+        return _allCampaigns.Count(c => string.Equals(c.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Clears campaign search/state/audience filters and re-displays full campaign list.
     /// </summary>
     private Task ClearCampaignFiltersAsync()
     {
@@ -1185,9 +1771,8 @@ public sealed class RewardsViewModel : BaseViewModel
         {
             CampaignSearchQuery = string.Empty;
             SelectedCampaignStateFilter = CampaignStateFilterOptions.FirstOrDefault();
+            SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
         });
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -1238,8 +1823,65 @@ public sealed class RewardsViewModel : BaseViewModel
                 .FirstOrDefault(option => string.Equals(option.StateKey, state, StringComparison.OrdinalIgnoreCase))
                 ?? SelectedCampaignStateFilter;
         });
+    }
 
-        return Task.CompletedTask;
+    /// <summary>
+    /// Applies the requested audience kind directly from audience KPI action chips.
+    /// </summary>
+    /// <param name="audienceKind">Target audience key.</param>
+    private Task ApplyCampaignAudienceFilterAsync(string? audienceKind)
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            if (string.IsNullOrWhiteSpace(audienceKind))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            if (string.Equals(SelectedCampaignAudienceFilter?.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions
+                .FirstOrDefault(option => string.Equals(option.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+                ?? SelectedCampaignAudienceFilter;
+        });
+    }
+
+    /// <summary>
+    /// Applies a targeting JSON preset in the campaign editor to speed up common audience setups.
+    /// </summary>
+    /// <param name="presetKey">Audience preset key requested by the operator.</param>
+    private Task ApplyCampaignTargetingPresetAsync(string? presetKey)
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return Task.CompletedTask;
+        }
+
+        var normalizedKey = presetKey?.Trim();
+        var targetingJson = normalizedKey switch
+        {
+            "JoinedMembers" => """{"audienceKind":"JoinedMembers"}""",
+            "TierSegment" => """{"audienceKind":"TierSegment","tier":"Gold"}""",
+            "PointsThreshold" => """{"audienceKind":"PointsThreshold","minimumPoints":100}""",
+            "DateWindow" => """{"audienceKind":"DateWindow","eligibleFromUtc":"2026-01-01T00:00:00Z","eligibleToUtc":"2026-01-31T23:59:59Z"}""",
+            _ => "{}"
+        };
+
+        RunOnMain(() =>
+        {
+            CampaignTargetingJsonInput = targetingJson;
+            ErrorMessage = null;
+        });
     }
 
     /// <summary>
@@ -1375,6 +2017,10 @@ public sealed class RewardsViewModel : BaseViewModel
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
         ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
+        ResetCampaignTargetingFixMetricsCommand.RaiseCanExecuteChanged();
     }
 }
 
@@ -1451,6 +2097,30 @@ public sealed class CampaignStateFilterOption
 }
 
 /// <summary>
+/// Represents a selectable audience-kind filter option for campaign list.
+/// </summary>
+public sealed class CampaignAudienceFilterOption
+{
+    public CampaignAudienceFilterOption(string audienceKindKey, string label)
+    {
+        AudienceKindKey = audienceKindKey;
+        Label = label;
+    }
+
+    /// <summary>
+    /// Contract audience key; empty means "all audiences".
+    /// </summary>
+    public string AudienceKindKey { get; }
+
+    /// <summary>
+    /// Localized display label.
+    /// </summary>
+    public string Label { get; }
+
+    public override string ToString() => Label;
+}
+
+/// <summary>
 /// Supported sort modes for campaign list projection in mobile business UI.
 /// </summary>
 public enum CampaignSortMode
@@ -1502,12 +2172,22 @@ public sealed class BusinessCampaignEditorItem
     public string TargetingJson { get; init; } = "{}";
     public string PayloadJson { get; init; } = "{}";
     public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+    public string AudienceKindKey { get; init; } = PromotionAudienceKind.JoinedMembers;
+
+    /// <summary>
+    /// Gets a compact, localized audience summary derived from <see cref="TargetingJson"/>.
+    /// This summary helps business operators quickly verify campaign segmentation directly in
+    /// the list view without opening each campaign editor.
+    /// </summary>
+    public string AudienceSummary => BuildAudienceSummary(TargetingJson);
 
     public string ActivationButtonText => IsActive ? AppResources.RewardsCampaignDeactivateButton : AppResources.RewardsCampaignActivateButton;
 
     public static BusinessCampaignEditorItem FromContract(BusinessCampaignItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
+
+        var audienceKindKey = ResolveAudienceKindKey(item.TargetingJson);
 
         return new BusinessCampaignEditorItem
         {
@@ -1522,7 +2202,205 @@ public sealed class BusinessCampaignEditorItem
             Channels = item.Channels,
             TargetingJson = item.TargetingJson ?? "{}",
             PayloadJson = item.PayloadJson ?? "{}",
-            RowVersion = item.RowVersion ?? Array.Empty<byte>()
+            RowVersion = item.RowVersion ?? Array.Empty<byte>(),
+            AudienceKindKey = audienceKindKey
         };
+    }
+
+    /// <summary>
+    /// Builds a concise audience/eligibility caption by parsing campaign targeting JSON.
+    /// </summary>
+    /// <param name="targetingJson">Raw targeting JSON as stored in campaign payload.</param>
+    /// <returns>A localized one-line summary suitable for list display.</returns>
+    private static string BuildAudienceSummary(string? targetingJson)
+    {
+        if (string.IsNullOrWhiteSpace(targetingJson))
+        {
+            return AppResources.RewardsCampaignAudienceSummaryDefault;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(targetingJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return AppResources.RewardsCampaignAudienceSummaryDefault;
+            }
+
+            var root = document.RootElement;
+            var audienceKind = ResolveAudienceKind(root);
+            var minPoints = TryGetInt(root, "minPoints");
+            var maxPoints = TryGetInt(root, "maxPoints");
+            var tierKey = TryGetString(root, "tierKey");
+
+            // Support targeting payloads that store rule details under an array-based structure.
+            if (root.TryGetProperty("eligibilityRules", out var rules) &&
+                rules.ValueKind == JsonValueKind.Array &&
+                rules.GetArrayLength() > 0)
+            {
+                var firstRule = rules[0];
+                if (firstRule.ValueKind == JsonValueKind.Object)
+                {
+                    audienceKind ??= ResolveAudienceKind(firstRule);
+                    minPoints ??= TryGetInt(firstRule, "minPoints");
+                    maxPoints ??= TryGetInt(firstRule, "maxPoints");
+                    tierKey ??= TryGetString(firstRule, "tierKey");
+                }
+            }
+
+            var audienceLabel = ResolveAudienceLabel(audienceKind);
+            var eligibilityLabel = BuildEligibilityLabel(minPoints, maxPoints, tierKey);
+
+            if (string.IsNullOrWhiteSpace(eligibilityLabel))
+            {
+                return string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignAudienceSummaryFormat, audienceLabel);
+            }
+
+            return string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignAudienceSummaryWithEligibilityFormat, audienceLabel, eligibilityLabel);
+        }
+        catch (JsonException)
+        {
+            return AppResources.RewardsCampaignAudienceSummaryDefault;
+        }
+    }
+
+    /// <summary>
+    /// Resolves canonical audience kind key from targeting JSON for filtering scenarios.
+    /// </summary>
+    private static string ResolveAudienceKindKey(string? targetingJson)
+    {
+        if (string.IsNullOrWhiteSpace(targetingJson))
+        {
+            return PromotionAudienceKind.JoinedMembers;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(targetingJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return PromotionAudienceKind.JoinedMembers;
+            }
+
+            return ResolveAudienceKind(document.RootElement) ?? PromotionAudienceKind.JoinedMembers;
+        }
+        catch (JsonException)
+        {
+            return PromotionAudienceKind.JoinedMembers;
+        }
+    }
+
+    /// <summary>
+    /// Reads audience kind from root object or the first eligibility rule object.
+    /// </summary>
+    private static string? ResolveAudienceKind(JsonElement root)
+    {
+        var direct = TryGetString(root, "audienceKind") ?? TryGetString(root, "kind");
+        if (!string.IsNullOrWhiteSpace(direct))
+        {
+            return direct;
+        }
+
+        if (root.TryGetProperty("eligibilityRules", out var rules) &&
+            rules.ValueKind == JsonValueKind.Array &&
+            rules.GetArrayLength() > 0)
+        {
+            var firstRule = rules[0];
+            if (firstRule.ValueKind == JsonValueKind.Object)
+            {
+                return TryGetString(firstRule, "audienceKind") ?? TryGetString(firstRule, "kind");
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves raw audience kind into a user-facing localized label.
+    /// </summary>
+    private static string ResolveAudienceLabel(string? audienceKind)
+    {
+        if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.RewardsCampaignAudienceTierSegment;
+        }
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.PointsThreshold, StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.RewardsCampaignAudiencePointsThreshold;
+        }
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.DateWindow, StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.RewardsCampaignAudienceDateWindow;
+        }
+
+        return AppResources.RewardsCampaignAudienceJoinedMembers;
+    }
+
+    /// <summary>
+    /// Produces a compact eligibility clause from optional rule fields.
+    /// </summary>
+    private static string? BuildEligibilityLabel(int? minPoints, int? maxPoints, string? tierKey)
+    {
+        if (!string.IsNullOrWhiteSpace(tierKey))
+        {
+            return string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignEligibilityTierFormat, tierKey);
+        }
+
+        if (minPoints.HasValue && maxPoints.HasValue)
+        {
+            return string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignEligibilityRangeFormat, minPoints.Value, maxPoints.Value);
+        }
+
+        if (minPoints.HasValue)
+        {
+            return string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignEligibilityMinFormat, minPoints.Value);
+        }
+
+        if (maxPoints.HasValue)
+        {
+            return string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignEligibilityMaxFormat, maxPoints.Value);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Reads an optional string property from a JSON object element.
+    /// </summary>
+    private static string? TryGetString(JsonElement element, string propertyName)
+    {
+        if (!element.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        return property.GetString();
+    }
+
+    /// <summary>
+    /// Reads an optional integer property from a JSON object element.
+    /// Supports both numeric and string-encoded integer values for compatibility.
+    /// </summary>
+    private static int? TryGetInt(JsonElement element, string propertyName)
+    {
+        if (!element.TryGetProperty(propertyName, out var property))
+        {
+            return null;
+        }
+
+        if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var numericValue))
+        {
+            return numericValue;
+        }
+
+        if (property.ValueKind == JsonValueKind.String &&
+            int.TryParse(property.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedValue))
+        {
+            return parsedValue;
+        }
+
+        return null;
     }
 }
