@@ -238,6 +238,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] "All" KPI chip now resets only lifecycle-state filter (preserving active search/sort context) for faster iterative campaign triage.
 - [x] Campaign toolbar now includes a dedicated "Clear search" action that resets only search query while preserving state/sort context.
 - [x] Business campaign local search now also matches campaign body text (in addition to internal name/title) for better operator discovery in dense lists.
+- [x] Business campaign list now surfaces localized audience/eligibility summary parsed from targeting JSON (including rule-array fallback) for faster operator segmentation checks without opening editor.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 - [x] Business Settings subscription flow now includes environment diagnostics (missing/invalid/non-HTTPS/host-allowlist), secure portal launch, copy-url support, server-backed read-only status snapshot, cancel-at-period-end toggle, and available-plans visibility for operator decision support.
 - [x] Business subscription checkout options now exclude the currently active plan and display explicit empty-state guidance when no alternative upgrade target exists.
