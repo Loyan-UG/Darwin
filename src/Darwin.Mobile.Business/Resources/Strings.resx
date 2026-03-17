@@ -642,6 +642,24 @@
   <data name="RewardsCampaignTargetingPresetTitle" xml:space="preserve">
     <value>Quick audience presets</value>
   </data>
+  <data name="RewardsCampaignTargetingHintDefault" xml:space="preserve">
+    <value>Audience: joined members (default).</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintJoinedMembers" xml:space="preserve">
+    <value>Joined members preset: keep {"audienceKind":"JoinedMembers"}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintTierSegment" xml:space="preserve">
+    <value>Tier preset: provide tier value, for example {"audienceKind":"TierSegment","tier":"Gold"}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintPointsThreshold" xml:space="preserve">
+    <value>Points preset: provide minimumPoints, for example {"audienceKind":"PointsThreshold","minimumPoints":100}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintDateWindow" xml:space="preserve">
+    <value>Date-window preset: provide eligibleFromUtc and eligibleToUtc in ISO-8601 UTC format.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintInvalid" xml:space="preserve">
+    <value>Targeting JSON is invalid. Use presets or a valid JSON object.</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>

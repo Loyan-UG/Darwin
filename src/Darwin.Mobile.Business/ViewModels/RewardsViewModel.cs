@@ -60,6 +60,7 @@ public sealed class RewardsViewModel : BaseViewModel
     private string? _campaignEndsAtInput;
     private string _campaignTargetingJsonInput = "{}";
     private string _campaignPayloadJsonInput = "{}";
+    private string _campaignTargetingHint = AppResources.RewardsCampaignTargetingHintDefault;
     private CampaignChannelOption? _selectedCampaignChannel;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
@@ -122,6 +123,7 @@ public sealed class RewardsViewModel : BaseViewModel
         _selectedCampaignStateFilter = CampaignStateFilterOptions[0];
         _selectedCampaignAudienceFilter = CampaignAudienceFilterOptions[0];
         _selectedCampaignSortOption = CampaignSortOptions[0];
+        UpdateCampaignTargetingHint();
 
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
@@ -507,7 +509,13 @@ public sealed class RewardsViewModel : BaseViewModel
     public string CampaignTargetingJsonInput
     {
         get => _campaignTargetingJsonInput;
-        set => SetProperty(ref _campaignTargetingJsonInput, value);
+        set
+        {
+            if (SetProperty(ref _campaignTargetingJsonInput, value))
+            {
+                UpdateCampaignTargetingHint();
+            }
+        }
     }
 
     /// <summary>
@@ -517,6 +525,15 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         get => _campaignPayloadJsonInput;
         set => SetProperty(ref _campaignPayloadJsonInput, value);
+    }
+
+    /// <summary>
+    /// Inline targeting guidance derived from the current targeting JSON.
+    /// </summary>
+    public string CampaignTargetingHint
+    {
+        get => _campaignTargetingHint;
+        private set => SetProperty(ref _campaignTargetingHint, value);
     }
 
     /// <summary>
@@ -884,8 +901,45 @@ public sealed class RewardsViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Validates and normalizes campaign JSON fields before API mutations.
+    /// Computes localized inline guidance for targeting JSON based on the selected audience kind.
     /// </summary>
+    private void UpdateCampaignTargetingHint()
+    {
+        var json = CampaignTargetingJsonInput?.Trim();
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            CampaignTargetingHint = AppResources.RewardsCampaignTargetingHintDefault;
+            return;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                CampaignTargetingHint = AppResources.RewardsCampaignTargetingHintInvalid;
+                return;
+            }
+
+            var audienceKind = root.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
+                ? audienceElement.GetString()
+                : PromotionAudienceKind.JoinedMembers;
+
+            CampaignTargetingHint = audienceKind switch
+            {
+                PromotionAudienceKind.TierSegment => AppResources.RewardsCampaignTargetingHintTierSegment,
+                PromotionAudienceKind.PointsThreshold => AppResources.RewardsCampaignTargetingHintPointsThreshold,
+                PromotionAudienceKind.DateWindow => AppResources.RewardsCampaignTargetingHintDateWindow,
+                _ => AppResources.RewardsCampaignTargetingHintJoinedMembers
+            };
+        }
+        catch (JsonException)
+        {
+            CampaignTargetingHint = AppResources.RewardsCampaignTargetingHintInvalid;
+        }
+    }
+
     private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
     {
         normalizedJson = "{}";

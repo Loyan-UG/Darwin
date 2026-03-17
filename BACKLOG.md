@@ -242,6 +242,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business campaign operations list now supports audience-kind filtering (all/joined/tier/points/date-window) for faster segmentation-focused triage during daily operations.
 - [x] Business campaign audience KPIs now render as actionable chips (with toggle-to-clear and all-audiences reset) to speed up segmentation-focused drill-down without reopening filter pickers.
 - [x] Business campaign editor now provides one-tap audience targeting JSON presets (joined/tier/points/date-window) to reduce operator setup time and malformed targeting payloads.
+- [x] Business campaign editor now shows inline targeting guidance derived from targeting JSON (`audienceKind`) so operators can validate segmentation intent before saving.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 - [x] Business Settings subscription flow now includes environment diagnostics (missing/invalid/non-HTTPS/host-allowlist), secure portal launch, copy-url support, server-backed read-only status snapshot, cancel-at-period-end toggle, and available-plans visibility for operator decision support.
 - [x] Business subscription checkout options now exclude the currently active plan and display explicit empty-state guidance when no alternative upgrade target exists.

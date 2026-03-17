@@ -642,6 +642,24 @@
   <data name="RewardsCampaignTargetingPresetTitle" xml:space="preserve">
     <value>Schnelle Zielgruppen-Vorlagen</value>
   </data>
+  <data name="RewardsCampaignTargetingHintDefault" xml:space="preserve">
+    <value>Zielgruppe: beigetretene Mitglieder (Standard).</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintJoinedMembers" xml:space="preserve">
+    <value>Mitglieder-Vorlage: {"audienceKind":"JoinedMembers"} beibehalten.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintTierSegment" xml:space="preserve">
+    <value>Stufen-Vorlage: tier-Wert angeben, z. B. {"audienceKind":"TierSegment","tier":"Gold"}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintPointsThreshold" xml:space="preserve">
+    <value>Punkte-Vorlage: minimumPoints angeben, z. B. {"audienceKind":"PointsThreshold","minimumPoints":100}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintDateWindow" xml:space="preserve">
+    <value>Datumsfenster-Vorlage: eligibleFromUtc und eligibleToUtc im ISO-8601-UTC-Format angeben.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintInvalid" xml:space="preserve">
+    <value>Targeting-JSON ist ungültig. Vorlagen oder ein gültiges JSON-Objekt verwenden.</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload-JSON (optional, Objekt)</value>
   </data>
