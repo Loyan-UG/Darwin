@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Business.Resources;
@@ -150,6 +152,7 @@ public sealed class BusinessCampaignEditorItem
     public short Channels { get; init; }
     public string TargetingJson { get; init; } = "{}";
     public string PayloadJson { get; init; } = "{}";
+    public IReadOnlyList<PromotionEligibilityRule> EligibilityRules { get; init; } = Array.Empty<PromotionEligibilityRule>();
     public byte[] RowVersion { get; init; } = Array.Empty<byte>();
     public string AudienceKindKey { get; init; } = PromotionAudienceKind.JoinedMembers;
 
@@ -158,7 +161,7 @@ public sealed class BusinessCampaignEditorItem
     /// This summary helps business operators quickly verify campaign segmentation directly in
     /// the list view without opening each campaign editor.
     /// </summary>
-    public string AudienceSummary => BuildAudienceSummary(TargetingJson);
+    public string AudienceSummary => BuildAudienceSummary(TargetingJson, EligibilityRules);
 
     public string ActivationButtonText => IsActive ? AppResources.RewardsCampaignDeactivateButton : AppResources.RewardsCampaignActivateButton;
 
@@ -166,7 +169,7 @@ public sealed class BusinessCampaignEditorItem
     {
         ArgumentNullException.ThrowIfNull(item);
 
-        var audienceKindKey = ResolveAudienceKindKey(item.TargetingJson);
+        var audienceKindKey = ResolveAudienceKindKey(item.TargetingJson, item.EligibilityRules);
 
         return new BusinessCampaignEditorItem
         {
@@ -181,6 +184,7 @@ public sealed class BusinessCampaignEditorItem
             Channels = item.Channels,
             TargetingJson = item.TargetingJson ?? "{}",
             PayloadJson = item.PayloadJson ?? "{}",
+            EligibilityRules = item.EligibilityRules?.ToList() ?? new List<PromotionEligibilityRule>(),
             RowVersion = item.RowVersion ?? Array.Empty<byte>(),
             AudienceKindKey = audienceKindKey
         };
@@ -191,8 +195,18 @@ public sealed class BusinessCampaignEditorItem
     /// </summary>
     /// <param name="targetingJson">Raw targeting JSON as stored in campaign payload.</param>
     /// <returns>A localized one-line summary suitable for list display.</returns>
-    private static string BuildAudienceSummary(string? targetingJson)
+    private static string BuildAudienceSummary(string? targetingJson, IReadOnlyList<PromotionEligibilityRule> explicitEligibilityRules)
     {
+        if (explicitEligibilityRules is not null && explicitEligibilityRules.Count > 0)
+        {
+            var explicitRule = explicitEligibilityRules[0];
+            var explicitAudienceLabel = ResolveAudienceLabel(explicitRule.AudienceKind);
+            var explicitEligibilityLabel = BuildEligibilityLabel(explicitRule.MinPoints, explicitRule.MaxPoints, explicitRule.TierKey);
+            return string.IsNullOrWhiteSpace(explicitEligibilityLabel)
+                ? string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignAudienceSummaryFormat, explicitAudienceLabel)
+                : string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignAudienceSummaryWithEligibilityFormat, explicitAudienceLabel, explicitEligibilityLabel);
+        }
+
         if (string.IsNullOrWhiteSpace(targetingJson))
         {
             return AppResources.RewardsCampaignAudienceSummaryDefault;
@@ -246,8 +260,14 @@ public sealed class BusinessCampaignEditorItem
     /// <summary>
     /// Resolves canonical audience kind key from targeting JSON for filtering scenarios.
     /// </summary>
-    private static string ResolveAudienceKindKey(string? targetingJson)
+    private static string ResolveAudienceKindKey(string? targetingJson, IReadOnlyList<PromotionEligibilityRule> explicitEligibilityRules)
     {
+        if (explicitEligibilityRules is not null && explicitEligibilityRules.Count > 0)
+        {
+            var explicitAudienceKind = explicitEligibilityRules[0].AudienceKind;
+            return string.IsNullOrWhiteSpace(explicitAudienceKind) ? PromotionAudienceKind.JoinedMembers : explicitAudienceKind;
+        }
+
         if (string.IsNullOrWhiteSpace(targetingJson))
         {
             return PromotionAudienceKind.JoinedMembers;
