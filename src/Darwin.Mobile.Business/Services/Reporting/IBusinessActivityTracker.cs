@@ -26,6 +26,31 @@ public interface IBusinessActivityTracker
     Task RecordRedemptionConfirmedAsync(string? customerDisplayName, int pointsRedeemed, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Records subscription status refresh result for business settings telemetry.
+    /// </summary>
+    Task RecordSubscriptionStatusRefreshAsync(bool succeeded, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records available subscription plans load result.
+    /// </summary>
+    Task RecordSubscriptionPlansLoadedAsync(int availablePlansCount, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records checkout flow start intent from subscription settings.
+    /// </summary>
+    Task RecordSubscriptionCheckoutStartedAsync(string? targetPlanCode, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records checkout flow failure event from subscription settings.
+    /// </summary>
+    Task RecordSubscriptionCheckoutFailedAsync(string? targetPlanCode, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records cancel-at-period-end preference mutation result.
+    /// </summary>
+    Task RecordSubscriptionCancelPreferenceChangedAsync(bool cancelAtPeriodEnd, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Returns an aggregated dashboard snapshot for the specified lookback window.
     /// </summary>
     Task<BusinessDashboardSnapshot> GetDashboardSnapshotAsync(TimeSpan lookbackWindow, CancellationToken cancellationToken);
@@ -39,6 +64,9 @@ public sealed class BusinessDashboardSnapshot
     public int TotalSessions { get; init; }
     public int AccrualCount { get; init; }
     public int RedemptionCount { get; init; }
+    public int SubscriptionStatusRefreshFailures { get; init; }
+    public int SubscriptionCheckoutStarts { get; init; }
+    public int SubscriptionCheckoutFailures { get; init; }
     public int TotalAccruedPoints { get; init; }
     public int TotalRedeemedPoints { get; init; }
     public IReadOnlyList<BusinessTopCustomerItem> TopCustomers { get; init; } = Array.Empty<BusinessTopCustomerItem>();
