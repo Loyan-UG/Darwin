@@ -602,3 +602,5 @@ Use that document as the source of truth for:
 - endpoint-specific request/response examples,
 - role/policy requirements,
 - and operational diagnostics/troubleshooting.
+
+- [x] Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
