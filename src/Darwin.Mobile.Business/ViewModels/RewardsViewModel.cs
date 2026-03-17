@@ -143,6 +143,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ApplyCampaignAudienceFilterCommand = new AsyncCommand<string>(ApplyCampaignAudienceFilterAsync, _ => !IsBusy);
         ApplyCampaignTargetingPresetCommand = new AsyncCommand<string>(ApplyCampaignTargetingPresetAsync, _ => !IsBusy && CanManageRewards);
         ApplyCampaignTargetingSchemaFixCommand = new AsyncCommand(ApplyCampaignTargetingSchemaFixAsync, () => !IsBusy && CanManageRewards && HasCampaignTargetingSchemaValidationError);
+        ResetCampaignTargetingFixMetricsCommand = new AsyncCommand(ResetCampaignTargetingFixMetricsAsync, () => !IsBusy && CanManageRewards && (CampaignTargetingFixAppliedCount > 0 || CampaignTargetingFixNoChangeCount > 0));
     }
 
 
@@ -596,6 +597,8 @@ public sealed class RewardsViewModel : BaseViewModel
             if (SetProperty(ref _campaignTargetingFixAppliedCount, value))
             {
                 OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+                OnPropertyChanged(nameof(HasCampaignTargetingFixMetrics));
+                ResetCampaignTargetingFixMetricsCommand?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -611,6 +614,8 @@ public sealed class RewardsViewModel : BaseViewModel
             if (SetProperty(ref _campaignTargetingFixNoChangeCount, value))
             {
                 OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+                OnPropertyChanged(nameof(HasCampaignTargetingFixMetrics));
+                ResetCampaignTargetingFixMetricsCommand?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -623,6 +628,11 @@ public sealed class RewardsViewModel : BaseViewModel
         AppResources.RewardsCampaignTargetingFixMetricsFormat,
         CampaignTargetingFixAppliedCount,
         CampaignTargetingFixNoChangeCount);
+
+    /// <summary>
+    /// Indicates whether quick-fix telemetry counters currently contain any value.
+    /// </summary>
+    public bool HasCampaignTargetingFixMetrics => CampaignTargetingFixAppliedCount > 0 || CampaignTargetingFixNoChangeCount > 0;
 
     /// <summary>
     /// Selected campaign channel option used for create/update payloads.
@@ -671,6 +681,7 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand<string> ApplyCampaignAudienceFilterCommand { get; }
     public AsyncCommand<string> ApplyCampaignTargetingPresetCommand { get; }
     public AsyncCommand ApplyCampaignTargetingSchemaFixCommand { get; }
+    public AsyncCommand ResetCampaignTargetingFixMetricsCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -1266,6 +1277,26 @@ public sealed class RewardsViewModel : BaseViewModel
         return changed;
     }
 
+    /// <summary>
+    /// Resets quick-fix telemetry counters for a fresh operational tracking window.
+    /// </summary>
+    private Task ResetCampaignTargetingFixMetricsAsync()
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            CampaignTargetingFixAppliedCount = 0;
+            CampaignTargetingFixNoChangeCount = 0;
+            CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixMetricsResetMessage;
+        });
+
+        return Task.CompletedTask;
+    }
+
     private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
     {
         normalizedJson = "{}";
@@ -1652,6 +1683,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
+        ResetCampaignTargetingFixMetricsCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -1945,6 +1977,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
+        ResetCampaignTargetingFixMetricsCommand.RaiseCanExecuteChanged();
     }
 }
 

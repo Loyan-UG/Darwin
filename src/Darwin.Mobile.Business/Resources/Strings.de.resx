@@ -684,6 +684,12 @@
   <data name="RewardsCampaignTargetingFixMetricsFormat" xml:space="preserve">
     <value>Schnellkorrektur-Statistik — angewendet: {0}, unverändert: {1}</value>
   </data>
+  <data name="RewardsCampaignTargetingFixMetricsResetButton" xml:space="preserve">
+    <value>Schnellkorrektur-Statistik zurücksetzen</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsResetMessage" xml:space="preserve">
+    <value>Schnellkorrektur-Statistik wurde zurückgesetzt.</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload-JSON (optional, Objekt)</value>
   </data>

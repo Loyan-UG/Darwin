@@ -196,6 +196,10 @@
                            FontSize="11"
                            Opacity="0.7" />
 
+                    <Button Text="{x:Static res:AppResources.RewardsCampaignTargetingFixMetricsResetButton}"
+                            Command="{Binding ResetCampaignTargetingFixMetricsCommand}"
+                            IsVisible="{Binding HasCampaignTargetingFixMetrics}" />
+
                     <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignPayloadJsonPlaceholder}"
                             AutoSize="TextChanges"
                             Text="{Binding CampaignPayloadJsonInput}" />

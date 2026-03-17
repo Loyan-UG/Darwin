@@ -519,6 +519,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business campaign editor now offers one-tap schema quick-fix action for common targeting errors to accelerate operator recovery before save.
 - Business campaign editor quick-fix now shows localized status feedback (applied/no-change) after auto-correction attempts.
 - Business campaign editor now shows quick-fix applied/no-change telemetry counters inline for lightweight operational diagnostics.
+- Business campaign editor now allows resetting quick-fix telemetry counters to start a fresh monitoring window during daily operations.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).

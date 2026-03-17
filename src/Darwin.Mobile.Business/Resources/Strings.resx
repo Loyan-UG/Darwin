@@ -684,6 +684,12 @@
   <data name="RewardsCampaignTargetingFixMetricsFormat" xml:space="preserve">
     <value>Quick-fix stats — applied: {0}, no-change: {1}</value>
   </data>
+  <data name="RewardsCampaignTargetingFixMetricsResetButton" xml:space="preserve">
+    <value>Reset quick-fix stats</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsResetMessage" xml:space="preserve">
+    <value>Quick-fix stats were reset.</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>
