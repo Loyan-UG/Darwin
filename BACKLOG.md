@@ -249,6 +249,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business campaign editor now surfaces quick-fix applied/no-change counters to improve operator visibility into targeting correction patterns during daily operations.
 - [x] Business campaign editor now includes a reset action for quick-fix counters, enabling per-shift/per-session diagnostics hygiene for operations teams.
 - [x] Quick-fix telemetry now includes monitoring-window context (window start + last reset timestamps) for clearer interpretation of applied/no-change counters in operations.
+- [x] Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 - [x] Business Settings subscription flow now includes environment diagnostics (missing/invalid/non-HTTPS/host-allowlist), secure portal launch, copy-url support, server-backed read-only status snapshot, cancel-at-period-end toggle, and available-plans visibility for operator decision support.
 - [x] Business subscription checkout options now exclude the currently active plan and display explicit empty-state guidance when no alternative upgrade target exists.

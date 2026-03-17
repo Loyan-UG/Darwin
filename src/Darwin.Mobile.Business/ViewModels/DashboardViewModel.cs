@@ -34,6 +34,9 @@ public sealed class DashboardViewModel : BaseViewModel
     private int _subscriptionStatusRefreshFailures;
     private int _subscriptionCheckoutStarts;
     private int _subscriptionCheckoutFailures;
+    private int _campaignTargetingFixAppliedCount;
+    private int _campaignTargetingFixNoChangeCount;
+    private int _campaignTargetingFixMetricsResetCount;
     private int _totalAccruedPoints;
     private int _totalRedeemedPoints;
 
@@ -96,6 +99,33 @@ public sealed class DashboardViewModel : BaseViewModel
     {
         get => _subscriptionCheckoutFailures;
         private set => SetProperty(ref _subscriptionCheckoutFailures, value);
+    }
+
+    /// <summary>
+    /// Count of targeting schema quick-fix actions that changed the JSON payload.
+    /// </summary>
+    public int CampaignTargetingFixAppliedCount
+    {
+        get => _campaignTargetingFixAppliedCount;
+        private set => SetProperty(ref _campaignTargetingFixAppliedCount, value);
+    }
+
+    /// <summary>
+    /// Count of targeting schema quick-fix actions that produced no change.
+    /// </summary>
+    public int CampaignTargetingFixNoChangeCount
+    {
+        get => _campaignTargetingFixNoChangeCount;
+        private set => SetProperty(ref _campaignTargetingFixNoChangeCount, value);
+    }
+
+    /// <summary>
+    /// Count of telemetry reset actions for targeting quick-fix metrics.
+    /// </summary>
+    public int CampaignTargetingFixMetricsResetCount
+    {
+        get => _campaignTargetingFixMetricsResetCount;
+        private set => SetProperty(ref _campaignTargetingFixMetricsResetCount, value);
     }
 
     public int TotalAccruedPoints
@@ -171,6 +201,9 @@ public sealed class DashboardViewModel : BaseViewModel
                 SubscriptionStatusRefreshFailures = snapshot.SubscriptionStatusRefreshFailures;
                 SubscriptionCheckoutStarts = snapshot.SubscriptionCheckoutStarts;
                 SubscriptionCheckoutFailures = snapshot.SubscriptionCheckoutFailures;
+                CampaignTargetingFixAppliedCount = snapshot.CampaignTargetingFixAppliedCount;
+                CampaignTargetingFixNoChangeCount = snapshot.CampaignTargetingFixNoChangeCount;
+                CampaignTargetingFixMetricsResetCount = snapshot.CampaignTargetingFixMetricsResetCount;
                 TotalAccruedPoints = snapshot.TotalAccruedPoints;
                 TotalRedeemedPoints = snapshot.TotalRedeemedPoints;
 
@@ -280,6 +313,9 @@ public sealed class DashboardViewModel : BaseViewModel
         builder.AppendLine($"Summary,SubscriptionStatusRefreshFailures,{snapshot.SubscriptionStatusRefreshFailures}");
         builder.AppendLine($"Summary,SubscriptionCheckoutStarts,{snapshot.SubscriptionCheckoutStarts}");
         builder.AppendLine($"Summary,SubscriptionCheckoutFailures,{snapshot.SubscriptionCheckoutFailures}");
+        builder.AppendLine($"Summary,CampaignTargetingFixAppliedCount,{snapshot.CampaignTargetingFixAppliedCount}");
+        builder.AppendLine($"Summary,CampaignTargetingFixNoChangeCount,{snapshot.CampaignTargetingFixNoChangeCount}");
+        builder.AppendLine($"Summary,CampaignTargetingFixMetricsResetCount,{snapshot.CampaignTargetingFixMetricsResetCount}");
         builder.AppendLine($"Summary,TotalAccruedPoints,{snapshot.TotalAccruedPoints}");
         builder.AppendLine($"Summary,TotalRedeemedPoints,{snapshot.TotalRedeemedPoints}");
 
@@ -372,6 +408,9 @@ public sealed class DashboardViewModel : BaseViewModel
             $"- Subscription refresh failures: {snapshot.SubscriptionStatusRefreshFailures}",
             $"- Subscription checkout starts: {snapshot.SubscriptionCheckoutStarts}",
             $"- Subscription checkout failures: {snapshot.SubscriptionCheckoutFailures}",
+            $"- Campaign quick-fix applied: {snapshot.CampaignTargetingFixAppliedCount}",
+            $"- Campaign quick-fix no-change: {snapshot.CampaignTargetingFixNoChangeCount}",
+            $"- Campaign quick-fix resets: {snapshot.CampaignTargetingFixMetricsResetCount}",
             $"- Total accrued points: {snapshot.TotalAccruedPoints}",
             $"- Total redeemed points: {snapshot.TotalRedeemedPoints}",
             string.Empty,

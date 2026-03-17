@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
@@ -33,6 +34,7 @@ public sealed class RewardsViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
     private readonly IBusinessAuthorizationService _authorizationService;
+    private readonly IBusinessActivityTracker _activityTracker;
     private readonly List<BusinessCampaignEditorItem> _allCampaigns = new();
 
     private bool _loadedOnce;
@@ -79,10 +81,11 @@ public sealed class RewardsViewModel : BaseViewModel
     private const string RewardTypePercentDiscount = "PercentDiscount";
     private const string RewardTypeAmountDiscount = "AmountDiscount";
 
-    public RewardsViewModel(ILoyaltyService loyaltyService, IBusinessAuthorizationService authorizationService)
+    public RewardsViewModel(ILoyaltyService loyaltyService, IBusinessAuthorizationService authorizationService, IBusinessActivityTracker activityTracker)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+        _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
         Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
@@ -1175,22 +1178,24 @@ public sealed class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Applies a safe schema correction for the current targeting JSON when possible.
     /// </summary>
-    private Task ApplyCampaignTargetingSchemaFixAsync()
+    private async Task ApplyCampaignTargetingSchemaFixAsync()
     {
         if (IsBusy || !CanManageRewards)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         if (!TryNormalizeCampaignJson(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var normalizedJson, out _))
         {
-            return Task.CompletedTask;
+            return;
         }
 
         if (!TryBuildSchemaFixedTargetingJson(normalizedJson, out var fixedJson, out var changed))
         {
-            return Task.CompletedTask;
+            return;
         }
+
+        await _activityTracker.RecordCampaignTargetingSchemaFixAsync(changed, CancellationToken.None).ConfigureAwait(false);
 
         RunOnMain(() =>
         {
@@ -1211,8 +1216,6 @@ public sealed class RewardsViewModel : BaseViewModel
                 CampaignTargetingFixNoChangeCount++;
             }
         });
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -1326,12 +1329,14 @@ public sealed class RewardsViewModel : BaseViewModel
     /// <summary>
     /// Resets quick-fix telemetry counters for a fresh operational tracking window.
     /// </summary>
-    private Task ResetCampaignTargetingFixMetricsAsync()
+    private async Task ResetCampaignTargetingFixMetricsAsync()
     {
         if (IsBusy || !CanManageRewards)
         {
-            return Task.CompletedTask;
+            return;
         }
+
+        await _activityTracker.RecordCampaignTargetingFixMetricsResetAsync(CancellationToken.None).ConfigureAwait(false);
 
         RunOnMain(() =>
         {
@@ -1341,8 +1346,6 @@ public sealed class RewardsViewModel : BaseViewModel
             CampaignTargetingFixMetricsLastResetAtUtc = DateTimeOffset.UtcNow;
             CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixMetricsResetMessage;
         });
-
-        return Task.CompletedTask;
     }
 
     private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
@@ -1770,8 +1773,6 @@ public sealed class RewardsViewModel : BaseViewModel
             SelectedCampaignStateFilter = CampaignStateFilterOptions.FirstOrDefault();
             SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
         });
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -1822,8 +1823,65 @@ public sealed class RewardsViewModel : BaseViewModel
                 .FirstOrDefault(option => string.Equals(option.StateKey, state, StringComparison.OrdinalIgnoreCase))
                 ?? SelectedCampaignStateFilter;
         });
+    }
 
-        return Task.CompletedTask;
+    /// <summary>
+    /// Applies the requested audience kind directly from audience KPI action chips.
+    /// </summary>
+    /// <param name="audienceKind">Target audience key.</param>
+    private Task ApplyCampaignAudienceFilterAsync(string? audienceKind)
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            if (string.IsNullOrWhiteSpace(audienceKind))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            if (string.Equals(SelectedCampaignAudienceFilter?.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions
+                .FirstOrDefault(option => string.Equals(option.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+                ?? SelectedCampaignAudienceFilter;
+        });
+    }
+
+    /// <summary>
+    /// Applies a targeting JSON preset in the campaign editor to speed up common audience setups.
+    /// </summary>
+    /// <param name="presetKey">Audience preset key requested by the operator.</param>
+    private Task ApplyCampaignTargetingPresetAsync(string? presetKey)
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return Task.CompletedTask;
+        }
+
+        var normalizedKey = presetKey?.Trim();
+        var targetingJson = normalizedKey switch
+        {
+            "JoinedMembers" => """{"audienceKind":"JoinedMembers"}""",
+            "TierSegment" => """{"audienceKind":"TierSegment","tier":"Gold"}""",
+            "PointsThreshold" => """{"audienceKind":"PointsThreshold","minimumPoints":100}""",
+            "DateWindow" => """{"audienceKind":"DateWindow","eligibleFromUtc":"2026-01-01T00:00:00Z","eligibleToUtc":"2026-01-31T23:59:59Z"}""",
+            _ => "{}"
+        };
+
+        RunOnMain(() =>
+        {
+            CampaignTargetingJsonInput = targetingJson;
+            ErrorMessage = null;
+        });
     }
 
     /// <summary>
