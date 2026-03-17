@@ -190,6 +190,7 @@ public static class AppResources
     public static string DashboardTopCustomersEmpty => ResourceManager.GetString(nameof(DashboardTopCustomersEmpty), Culture) ?? "No customer interactions were recorded in the selected window.";
     public static string DashboardRecentActivityTitle => ResourceManager.GetString(nameof(DashboardRecentActivityTitle), Culture) ?? "Recent activity";
     public static string DashboardRecentActivityEmpty => ResourceManager.GetString(nameof(DashboardRecentActivityEmpty), Culture) ?? "No recent activity was recorded yet.";
+    public static string DashboardCampaignTargetingFixMetricsFormat => ResourceManager.GetString(nameof(DashboardCampaignTargetingFixMetricsFormat), Culture) ?? "Campaign quick-fix — applied: {0} · no-change: {1} · resets: {2}";
 
 
     // Rewards editor

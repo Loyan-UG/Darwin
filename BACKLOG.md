@@ -264,8 +264,8 @@ It is designed as the **single source of truth** for development planning.
 
 ### 3.9.1 Handoff Status (Prepared for next chat)
 - Current iteration status: **Closed cleanly** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
-- Last delivered increment: Business subscription self-service flow completed with safer checkout optioning and dashboard-visible subscription funnel KPI telemetry.
-- Next recommended starting point in new chat: continue from item **3.9 / P0 Promotions foundation** and keep backlog/docs updated per increment.
+- Last delivered increment: campaign targeting quick-fix telemetry persisted into business activity logs and surfaced in dashboard/report exports.
+- Next recommended starting point in new chat: treat current quick-fix telemetry workstream as closed, then proceed with error-remediation items and continue from **3.9 / P0 Promotions foundation**.
 
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 

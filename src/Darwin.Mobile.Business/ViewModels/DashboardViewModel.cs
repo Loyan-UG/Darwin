@@ -107,7 +107,13 @@ public sealed class DashboardViewModel : BaseViewModel
     public int CampaignTargetingFixAppliedCount
     {
         get => _campaignTargetingFixAppliedCount;
-        private set => SetProperty(ref _campaignTargetingFixAppliedCount, value);
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixAppliedCount, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+            }
+        }
     }
 
     /// <summary>
@@ -116,7 +122,13 @@ public sealed class DashboardViewModel : BaseViewModel
     public int CampaignTargetingFixNoChangeCount
     {
         get => _campaignTargetingFixNoChangeCount;
-        private set => SetProperty(ref _campaignTargetingFixNoChangeCount, value);
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixNoChangeCount, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+            }
+        }
     }
 
     /// <summary>
@@ -125,8 +137,24 @@ public sealed class DashboardViewModel : BaseViewModel
     public int CampaignTargetingFixMetricsResetCount
     {
         get => _campaignTargetingFixMetricsResetCount;
-        private set => SetProperty(ref _campaignTargetingFixMetricsResetCount, value);
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixMetricsResetCount, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+            }
+        }
     }
+
+    /// <summary>
+    /// Localized campaign quick-fix telemetry summary for dashboard KPI card.
+    /// </summary>
+    public string CampaignTargetingFixMetricsSummary => string.Format(
+        CultureInfo.CurrentCulture,
+        AppResources.DashboardCampaignTargetingFixMetricsFormat,
+        CampaignTargetingFixAppliedCount,
+        CampaignTargetingFixNoChangeCount,
+        CampaignTargetingFixMetricsResetCount);
 
     public int TotalAccruedPoints
     {

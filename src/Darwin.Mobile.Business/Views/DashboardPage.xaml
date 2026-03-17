@@ -70,11 +70,7 @@
                 </Border>
 
                 <Border Grid.Row="3" Grid.ColumnSpan="2" StrokeThickness="1" Stroke="#555555" Padding="10">
-                    <VerticalStackLayout Spacing="2">
-                        <Label Text="{Binding CampaignTargetingFixAppliedCount, StringFormat='Campaign quick-fix applied: {0}'}" FontAttributes="Bold" FontSize="13" />
-                        <Label Text="{Binding CampaignTargetingFixNoChangeCount, StringFormat='Campaign quick-fix no-change: {0}'}" FontSize="13" />
-                        <Label Text="{Binding CampaignTargetingFixMetricsResetCount, StringFormat='Campaign quick-fix resets: {0}'}" FontSize="13" />
-                    </VerticalStackLayout>
+                    <Label Text="{Binding CampaignTargetingFixMetricsSummary}" FontAttributes="Bold" FontSize="13" />
                 </Border>
             </Grid>
 

@@ -804,4 +804,7 @@
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>
+  <data name="DashboardCampaignTargetingFixMetricsFormat" xml:space="preserve">
+    <value>Campaign quick-fix — applied: {0} · no-change: {1} · resets: {2}</value>
+  </data>
 </root>

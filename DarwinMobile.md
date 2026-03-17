@@ -521,6 +521,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business campaign editor now shows quick-fix applied/no-change telemetry counters inline for lightweight operational diagnostics.
 - Business campaign editor now allows resetting quick-fix telemetry counters to start a fresh monitoring window during daily operations.
 - Quick-fix telemetry now shows monitoring-window context (window start + last reset) to improve operational diagnostics readability.
+- Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
@@ -530,8 +531,8 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
-- **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign audience-kind filtering in Business list with docs/backlog synchronized.
-- **Recommended next step (new chat):** resume with Promotions foundation backlog item (contracts/lifecycle refinement), then continue incremental delivery with per-step docs/backlog updates.
+- **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign quick-fix telemetry persistence into business activity dashboard/reporting with docs/backlog synchronized.
+- **Recommended next step (new chat):** this section is closed; next track can focus on targeted error-remediation tasks and then continue Promotions foundation contracts/lifecycle refinement.
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
 - Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
 - Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
