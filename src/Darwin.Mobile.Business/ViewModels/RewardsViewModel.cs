@@ -134,6 +134,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ClearCampaignSearchCommand = new AsyncCommand(ClearCampaignSearchAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(CampaignSearchQuery));
         ApplyCampaignStateFilterCommand = new AsyncCommand<string>(ApplyCampaignStateFilterAsync, _ => !IsBusy);
         ApplyCampaignAudienceFilterCommand = new AsyncCommand<string>(ApplyCampaignAudienceFilterAsync, _ => !IsBusy);
+        ApplyCampaignTargetingPresetCommand = new AsyncCommand<string>(ApplyCampaignTargetingPresetAsync, _ => !IsBusy && CanManageRewards);
     }
 
 
@@ -563,6 +564,7 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand ClearCampaignSearchCommand { get; }
     public AsyncCommand<string> ApplyCampaignStateFilterCommand { get; }
     public AsyncCommand<string> ApplyCampaignAudienceFilterCommand { get; }
+    public AsyncCommand<string> ApplyCampaignTargetingPresetCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -1262,6 +1264,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -1384,6 +1387,36 @@ public sealed class RewardsViewModel : BaseViewModel
             SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions
                 .FirstOrDefault(option => string.Equals(option.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
                 ?? SelectedCampaignAudienceFilter;
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Applies a targeting JSON preset in the campaign editor to speed up common audience setups.
+    /// </summary>
+    /// <param name="presetKey">Audience preset key requested by the operator.</param>
+    private Task ApplyCampaignTargetingPresetAsync(string? presetKey)
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return Task.CompletedTask;
+        }
+
+        var normalizedKey = presetKey?.Trim();
+        var targetingJson = normalizedKey switch
+        {
+            "JoinedMembers" => """{"audienceKind":"JoinedMembers"}""",
+            "TierSegment" => """{"audienceKind":"TierSegment","tier":"Gold"}""",
+            "PointsThreshold" => """{"audienceKind":"PointsThreshold","minimumPoints":100}""",
+            "DateWindow" => """{"audienceKind":"DateWindow","eligibleFromUtc":"2026-01-01T00:00:00Z","eligibleToUtc":"2026-01-31T23:59:59Z"}""",
+            _ => "{}"
+        };
+
+        RunOnMain(() =>
+        {
+            CampaignTargetingJsonInput = targetingJson;
+            ErrorMessage = null;
         });
 
         return Task.CompletedTask;
@@ -1523,6 +1556,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
     }
 }
 

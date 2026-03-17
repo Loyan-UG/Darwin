@@ -639,6 +639,9 @@
   <data name="RewardsCampaignTargetingJsonPlaceholder" xml:space="preserve">
     <value>Targeting-JSON (optional, Objekt)</value>
   </data>
+  <data name="RewardsCampaignTargetingPresetTitle" xml:space="preserve">
+    <value>Schnelle Zielgruppen-Vorlagen</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload-JSON (optional, Objekt)</value>
   </data>

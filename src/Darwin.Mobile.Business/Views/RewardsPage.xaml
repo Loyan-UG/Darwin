@@ -151,6 +151,29 @@
                             AutoSize="TextChanges"
                             Text="{Binding CampaignTargetingJsonInput}" />
 
+                    <Label Text="{x:Static res:AppResources.RewardsCampaignTargetingPresetTitle}"
+                           FontSize="12"
+                           Opacity="0.75" />
+
+                    <HorizontalStackLayout Spacing="6">
+                        <Button Text="{x:Static res:AppResources.RewardsCampaignAudienceJoinedMembers}"
+                                Command="{Binding ApplyCampaignTargetingPresetCommand}"
+                                CommandParameter="JoinedMembers"
+                                FontSize="12" />
+                        <Button Text="{x:Static res:AppResources.RewardsCampaignAudienceTierSegment}"
+                                Command="{Binding ApplyCampaignTargetingPresetCommand}"
+                                CommandParameter="TierSegment"
+                                FontSize="12" />
+                        <Button Text="{x:Static res:AppResources.RewardsCampaignAudiencePointsThreshold}"
+                                Command="{Binding ApplyCampaignTargetingPresetCommand}"
+                                CommandParameter="PointsThreshold"
+                                FontSize="12" />
+                        <Button Text="{x:Static res:AppResources.RewardsCampaignAudienceDateWindow}"
+                                Command="{Binding ApplyCampaignTargetingPresetCommand}"
+                                CommandParameter="DateWindow"
+                                FontSize="12" />
+                    </HorizontalStackLayout>
+
                     <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignPayloadJsonPlaceholder}"
                             AutoSize="TextChanges"
                             Text="{Binding CampaignPayloadJsonInput}" />
