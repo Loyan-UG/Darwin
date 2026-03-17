@@ -675,6 +675,12 @@
   <data name="RewardsCampaignTargetingApplyFixButton" xml:space="preserve">
     <value>Apply quick fix</value>
   </data>
+  <data name="RewardsCampaignTargetingFixAppliedMessage" xml:space="preserve">
+    <value>Quick fix applied to targeting JSON.</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixNoChangesMessage" xml:space="preserve">
+    <value>No schema fix was needed for targeting JSON.</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>

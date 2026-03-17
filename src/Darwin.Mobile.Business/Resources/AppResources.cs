@@ -247,6 +247,8 @@ public static class AppResources
     public static string RewardsCampaignTargetingSchemaDateWindowMissing => ResourceManager.GetString(nameof(RewardsCampaignTargetingSchemaDateWindowMissing), Culture) ?? "Date-window audience requires valid \"eligibleFromUtc\" and \"eligibleToUtc\" UTC values.";
     public static string RewardsCampaignTargetingSchemaDateWindowRangeInvalid => ResourceManager.GetString(nameof(RewardsCampaignTargetingSchemaDateWindowRangeInvalid), Culture) ?? "Date-window audience requires eligibleFromUtc to be earlier than or equal to eligibleToUtc.";
     public static string RewardsCampaignTargetingApplyFixButton => ResourceManager.GetString(nameof(RewardsCampaignTargetingApplyFixButton), Culture) ?? "Apply quick fix";
+    public static string RewardsCampaignTargetingFixAppliedMessage => ResourceManager.GetString(nameof(RewardsCampaignTargetingFixAppliedMessage), Culture) ?? "Quick fix applied to targeting JSON.";
+    public static string RewardsCampaignTargetingFixNoChangesMessage => ResourceManager.GetString(nameof(RewardsCampaignTargetingFixNoChangesMessage), Culture) ?? "No schema fix was needed for targeting JSON.";
     public static string RewardsCampaignPayloadJsonPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignPayloadJsonPlaceholder), Culture) ?? "Payload JSON (optional, object)";
     public static string RewardsCampaignTargetingValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignTargetingValidationFailed), Culture) ?? "Targeting JSON must be a valid JSON object.";
     public static string RewardsCampaignPayloadValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignPayloadValidationFailed), Culture) ?? "Payload JSON must be a valid JSON object.";

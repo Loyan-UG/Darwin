@@ -675,6 +675,12 @@
   <data name="RewardsCampaignTargetingApplyFixButton" xml:space="preserve">
     <value>Schnellkorrektur anwenden</value>
   </data>
+  <data name="RewardsCampaignTargetingFixAppliedMessage" xml:space="preserve">
+    <value>Schnellkorrektur auf Targeting-JSON angewendet.</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixNoChangesMessage" xml:space="preserve">
+    <value>Für Targeting-JSON war keine Schema-Korrektur erforderlich.</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload-JSON (optional, Objekt)</value>
   </data>

@@ -62,6 +62,7 @@ public sealed class RewardsViewModel : BaseViewModel
     private string _campaignPayloadJsonInput = "{}";
     private string _campaignTargetingHint = AppResources.RewardsCampaignTargetingHintDefault;
     private string _campaignTargetingSchemaValidationMessage = string.Empty;
+    private string _campaignTargetingFixStatusMessage = string.Empty;
     private CampaignChannelOption? _selectedCampaignChannel;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
@@ -518,6 +519,7 @@ public sealed class RewardsViewModel : BaseViewModel
             {
                 UpdateCampaignTargetingHint();
                 UpdateCampaignTargetingSchemaValidationMessage();
+                CampaignTargetingFixStatusMessage = string.Empty;
             }
         }
     }
@@ -551,7 +553,7 @@ public sealed class RewardsViewModel : BaseViewModel
             if (SetProperty(ref _campaignTargetingSchemaValidationMessage, value))
             {
                 OnPropertyChanged(nameof(HasCampaignTargetingSchemaValidationError));
-                ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
+                ApplyCampaignTargetingSchemaFixCommand?.RaiseCanExecuteChanged();
             }
         }
     }
@@ -560,6 +562,26 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Indicates whether targeting schema currently has inline validation errors.
     /// </summary>
     public bool HasCampaignTargetingSchemaValidationError => !string.IsNullOrWhiteSpace(CampaignTargetingSchemaValidationMessage);
+
+    /// <summary>
+    /// Informational status message after applying automatic targeting fixes.
+    /// </summary>
+    public string CampaignTargetingFixStatusMessage
+    {
+        get => _campaignTargetingFixStatusMessage;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixStatusMessage, value))
+            {
+                OnPropertyChanged(nameof(HasCampaignTargetingFixStatusMessage));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether targeting fix status message should be shown.
+    /// </summary>
+    public bool HasCampaignTargetingFixStatusMessage => !string.IsNullOrWhiteSpace(CampaignTargetingFixStatusMessage);
 
     /// <summary>
     /// Selected campaign channel option used for create/update payloads.
@@ -1072,12 +1094,41 @@ public sealed class RewardsViewModel : BaseViewModel
             return Task.CompletedTask;
         }
 
+        if (!TryBuildSchemaFixedTargetingJson(normalizedJson, out var fixedJson, out var changed))
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            if (changed)
+            {
+                CampaignTargetingJsonInput = fixedJson;
+                CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixAppliedMessage;
+            }
+            else
+            {
+                CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixNoChangesMessage;
+            }
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Builds a corrected targeting JSON payload and indicates whether any change was applied.
+    /// </summary>
+    private static bool TryBuildSchemaFixedTargetingJson(string normalizedJson, out string fixedJson, out bool changed)
+    {
+        fixedJson = normalizedJson;
+        changed = false;
+
         try
         {
             using var document = JsonDocument.Parse(normalizedJson);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
             {
-                return Task.CompletedTask;
+                return false;
             }
 
             var map = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
@@ -1092,50 +1143,84 @@ public sealed class RewardsViewModel : BaseViewModel
 
             if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
             {
-                if (!map.TryGetValue("tier", out var tierValue) || tierValue is null || string.IsNullOrWhiteSpace(tierValue.ToString()))
-                {
-                    map["tier"] = "Gold";
-                }
+                changed = EnsureTierSegmentSchema(map) || changed;
             }
             else if (string.Equals(audienceKind, PromotionAudienceKind.PointsThreshold, StringComparison.OrdinalIgnoreCase))
             {
-                if (!map.TryGetValue("minimumPoints", out var minimumPointsValue) || minimumPointsValue is null || !int.TryParse(minimumPointsValue.ToString(), out var minimumPoints) || minimumPoints < 0)
-                {
-                    map["minimumPoints"] = 0;
-                }
+                changed = EnsurePointsThresholdSchema(map) || changed;
             }
             else if (string.Equals(audienceKind, PromotionAudienceKind.DateWindow, StringComparison.OrdinalIgnoreCase))
             {
-                var hasFrom = TryReadUtcDate(document.RootElement, "eligibleFromUtc", out var eligibleFromUtc);
-                var hasTo = TryReadUtcDate(document.RootElement, "eligibleToUtc", out var eligibleToUtc);
-
-                if (!hasFrom)
-                {
-                    eligibleFromUtc = DateTimeOffset.UtcNow;
-                    map["eligibleFromUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
-                }
-
-                if (!hasTo)
-                {
-                    eligibleToUtc = (hasFrom ? eligibleFromUtc : DateTimeOffset.UtcNow).AddDays(7);
-                    map["eligibleToUtc"] = eligibleToUtc.ToString("O", CultureInfo.InvariantCulture);
-                }
-
-                if (hasFrom && hasTo && eligibleFromUtc > eligibleToUtc)
-                {
-                    map["eligibleToUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
-                }
+                changed = EnsureDateWindowSchema(document.RootElement, map) || changed;
             }
 
-            var fixedJson = JsonSerializer.Serialize(map);
-            RunOnMain(() => CampaignTargetingJsonInput = fixedJson);
+            fixedJson = JsonSerializer.Serialize(map);
+            return true;
         }
         catch (JsonException)
         {
-            // Keep current text unchanged; inline validation message already explains the issue.
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Ensures TierSegment targeting includes non-empty tier key.
+    /// </summary>
+    private static bool EnsureTierSegmentSchema(IDictionary<string, object?> map)
+    {
+        if (!map.TryGetValue("tier", out var tierValue) || tierValue is null || string.IsNullOrWhiteSpace(tierValue.ToString()))
+        {
+            map["tier"] = "Gold";
+            return true;
         }
 
-        return Task.CompletedTask;
+        return false;
+    }
+
+    /// <summary>
+    /// Ensures PointsThreshold targeting includes non-negative minimum points.
+    /// </summary>
+    private static bool EnsurePointsThresholdSchema(IDictionary<string, object?> map)
+    {
+        if (!map.TryGetValue("minimumPoints", out var minimumPointsValue) || minimumPointsValue is null || !int.TryParse(minimumPointsValue.ToString(), out var minimumPoints) || minimumPoints < 0)
+        {
+            map["minimumPoints"] = 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Ensures DateWindow targeting includes valid UTC bounds and normalized range.
+    /// </summary>
+    private static bool EnsureDateWindowSchema(JsonElement root, IDictionary<string, object?> map)
+    {
+        var changed = false;
+        var hasFrom = TryReadUtcDate(root, "eligibleFromUtc", out var eligibleFromUtc);
+        var hasTo = TryReadUtcDate(root, "eligibleToUtc", out var eligibleToUtc);
+
+        if (!hasFrom)
+        {
+            eligibleFromUtc = DateTimeOffset.UtcNow;
+            map["eligibleFromUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
+            changed = true;
+        }
+
+        if (!hasTo)
+        {
+            eligibleToUtc = (hasFrom ? eligibleFromUtc : DateTimeOffset.UtcNow).AddDays(7);
+            map["eligibleToUtc"] = eligibleToUtc.ToString("O", CultureInfo.InvariantCulture);
+            changed = true;
+        }
+
+        if (hasFrom && hasTo && eligibleFromUtc > eligibleToUtc)
+        {
+            map["eligibleToUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
+            changed = true;
+        }
+
+        return changed;
     }
 
     private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)

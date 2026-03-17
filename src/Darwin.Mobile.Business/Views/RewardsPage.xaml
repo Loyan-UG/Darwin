@@ -187,6 +187,11 @@
                             Command="{Binding ApplyCampaignTargetingSchemaFixCommand}"
                             IsVisible="{Binding HasCampaignTargetingSchemaValidationError}" />
 
+                    <Label Text="{Binding CampaignTargetingFixStatusMessage}"
+                           FontSize="11"
+                           TextColor="SeaGreen"
+                           IsVisible="{Binding HasCampaignTargetingFixStatusMessage}" />
+
                     <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignPayloadJsonPlaceholder}"
                             AutoSize="TextChanges"
                             Text="{Binding CampaignPayloadJsonInput}" />
