@@ -660,6 +660,18 @@
   <data name="RewardsCampaignTargetingHintInvalid" xml:space="preserve">
     <value>Targeting JSON is invalid. Use presets or a valid JSON object.</value>
   </data>
+  <data name="RewardsCampaignTargetingSchemaTierMissing" xml:space="preserve">
+    <value>Tier audience requires a non-empty "tier" value.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaMinimumPointsMissing" xml:space="preserve">
+    <value>Points audience requires a non-negative "minimumPoints" value.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaDateWindowMissing" xml:space="preserve">
+    <value>Date-window audience requires valid "eligibleFromUtc" and "eligibleToUtc" UTC values.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaDateWindowRangeInvalid" xml:space="preserve">
+    <value>Date-window audience requires eligibleFromUtc to be earlier than or equal to eligibleToUtc.</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>

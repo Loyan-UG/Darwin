@@ -61,6 +61,7 @@ public sealed class RewardsViewModel : BaseViewModel
     private string _campaignTargetingJsonInput = "{}";
     private string _campaignPayloadJsonInput = "{}";
     private string _campaignTargetingHint = AppResources.RewardsCampaignTargetingHintDefault;
+    private string _campaignTargetingSchemaValidationMessage = string.Empty;
     private CampaignChannelOption? _selectedCampaignChannel;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
@@ -124,6 +125,7 @@ public sealed class RewardsViewModel : BaseViewModel
         _selectedCampaignAudienceFilter = CampaignAudienceFilterOptions[0];
         _selectedCampaignSortOption = CampaignSortOptions[0];
         UpdateCampaignTargetingHint();
+        UpdateCampaignTargetingSchemaValidationMessage();
 
         RefreshCommand = new AsyncCommand(LoadConfigurationAsync, () => !IsBusy);
         SaveCommand = new AsyncCommand(SaveAsync, () => !IsBusy && CanManageRewards);
@@ -514,6 +516,7 @@ public sealed class RewardsViewModel : BaseViewModel
             if (SetProperty(ref _campaignTargetingJsonInput, value))
             {
                 UpdateCampaignTargetingHint();
+                UpdateCampaignTargetingSchemaValidationMessage();
             }
         }
     }
@@ -534,6 +537,15 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         get => _campaignTargetingHint;
         private set => SetProperty(ref _campaignTargetingHint, value);
+    }
+
+    /// <summary>
+    /// Inline schema validation message for targeting JSON.
+    /// </summary>
+    public string CampaignTargetingSchemaValidationMessage
+    {
+        get => _campaignTargetingSchemaValidationMessage;
+        private set => SetProperty(ref _campaignTargetingSchemaValidationMessage, value);
     }
 
     /// <summary>
@@ -940,6 +952,97 @@ public sealed class RewardsViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Updates schema-level validation message for targeting JSON using audience-specific checks.
+    /// </summary>
+    private void UpdateCampaignTargetingSchemaValidationMessage()
+    {
+        if (!TryNormalizeCampaignJson(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var normalizedJson, out var jsonError))
+        {
+            CampaignTargetingSchemaValidationMessage = jsonError ?? AppResources.RewardsCampaignTargetingValidationFailed;
+            return;
+        }
+
+        if (!TryValidateCampaignTargetingSchema(normalizedJson, out var schemaError))
+        {
+            CampaignTargetingSchemaValidationMessage = schemaError ?? AppResources.RewardsCampaignTargetingValidationFailed;
+            return;
+        }
+
+        CampaignTargetingSchemaValidationMessage = string.Empty;
+    }
+
+    /// <summary>
+    /// Validates audience-specific schema requirements for targeting JSON.
+    /// </summary>
+    private static bool TryValidateCampaignTargetingSchema(string normalizedJson, out string? schemaError)
+    {
+        schemaError = null;
+
+        using var document = JsonDocument.Parse(normalizedJson);
+        var root = document.RootElement;
+        var audienceKind = root.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
+            ? audienceElement.GetString()
+            : PromotionAudienceKind.JoinedMembers;
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!root.TryGetProperty("tier", out var tierElement) || tierElement.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(tierElement.GetString()))
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaTierMissing;
+                return false;
+            }
+
+            return true;
+        }
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.PointsThreshold, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!root.TryGetProperty("minimumPoints", out var minPointsElement) ||
+                (minPointsElement.ValueKind != JsonValueKind.Number || !minPointsElement.TryGetInt32(out var minimumPoints) || minimumPoints < 0))
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaMinimumPointsMissing;
+                return false;
+            }
+
+            return true;
+        }
+
+        if (string.Equals(audienceKind, PromotionAudienceKind.DateWindow, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!TryReadUtcDate(root, "eligibleFromUtc", out var eligibleFromUtc) || !TryReadUtcDate(root, "eligibleToUtc", out var eligibleToUtc))
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaDateWindowMissing;
+                return false;
+            }
+
+            if (eligibleFromUtc > eligibleToUtc)
+            {
+                schemaError = AppResources.RewardsCampaignTargetingSchemaDateWindowRangeInvalid;
+                return false;
+            }
+
+            return true;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Reads required UTC date string from targeting JSON object.
+    /// </summary>
+    private static bool TryReadUtcDate(JsonElement root, string propertyName, out DateTimeOffset value)
+    {
+        value = default;
+        if (!root.TryGetProperty(propertyName, out var dateElement) || dateElement.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        var raw = dateElement.GetString();
+        return DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out value);
+    }
+
     private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
     {
         normalizedJson = "{}";
@@ -1028,6 +1131,12 @@ public sealed class RewardsViewModel : BaseViewModel
         if (!TryNormalizeCampaignJson(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var targetingJson, out var targetingError))
         {
             RunOnMain(() => ErrorMessage = targetingError ?? AppResources.RewardsCampaignTargetingValidationFailed);
+            return;
+        }
+
+        if (!TryValidateCampaignTargetingSchema(targetingJson, out var targetingSchemaError))
+        {
+            RunOnMain(() => ErrorMessage = targetingSchemaError ?? AppResources.RewardsCampaignTargetingValidationFailed);
             return;
         }
 
