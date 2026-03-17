@@ -256,6 +256,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business dashboard/report exports now include subscription funnel KPI counters (refresh failures, checkout starts/failures) from local activity telemetry.
 - [x] Testing-phase login acceleration hardened: QA credentials remain prefilled only in DEBUG mobile builds (Consumer/Business), while non-DEBUG builds default to empty credentials; full removal remains mandatory before customer rollout.
 - [x] UI-thread stability guardrail documented from production crash pattern: command `CanExecuteChanged` notifications and final busy-state/property updates must be marshaled to Main Thread in MAUI ViewModels/commands (especially after `ConfigureAwait(false)` continuations) to prevent Android `CalledFromWrongThreadException` / `AndroidRuntimeException` screen crashes.
+- [x] `BaseViewModel.OnPropertyChanged` now enforces main-thread marshaling for property change notifications to reduce repeated MAUI cross-thread UI crashes in view-model continuations.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
