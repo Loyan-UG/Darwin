@@ -1570,13 +1570,6 @@ public sealed class BusinessCampaignEditorItem
     /// </summary>
     public string AudienceSummary => BuildAudienceSummary(TargetingJson);
 
-    /// <summary>
-    /// Gets a compact, localized audience summary derived from <see cref="TargetingJson"/>.
-    /// This summary helps business operators quickly verify campaign segmentation directly in
-    /// the list view without opening each campaign editor.
-    /// </summary>
-    public string AudienceSummary => BuildAudienceSummary(TargetingJson);
-
     public string ActivationButtonText => IsActive ? AppResources.RewardsCampaignDeactivateButton : AppResources.RewardsCampaignActivateButton;
 
     public static BusinessCampaignEditorItem FromContract(BusinessCampaignItem item)
