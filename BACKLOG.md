@@ -260,6 +260,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Promotions P0 contracts/app wiring expanded with explicit campaign eligibility rules (`EligibilityRules`) across Business campaign APIs (Contracts, Application handlers, WebApi mapping) while preserving backward compatibility with existing `TargetingJson` payloads.
 - [x] Consumer feed suppression/cap guardrails now honor server-applied promotion policy (`AppliedPolicy.FrequencyWindowMinutes` / `SuppressionWindowMinutes` / `MaxCards`) instead of relying only on fixed client constants, improving delivery consistency between mobile and API.
 - [x] Consumer feed now captures server promotion diagnostics counters (`InitialCandidates`, `SuppressedByFrequency`, `Deduplicated`, `TrimmedByCap`, `FinalCount`) and effective applied policy values in ViewModel state for operational observability and troubleshooting workflows.
+- [x] Consumer Feed UI now surfaces a localized promotion policy/diagnostics summary line (suppression window, cap, and guardrail counters) to make server delivery behavior visible during operations validation.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).

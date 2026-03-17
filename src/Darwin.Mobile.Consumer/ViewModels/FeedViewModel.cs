@@ -133,6 +133,21 @@ public sealed class FeedViewModel : BaseViewModel
             || PromotionDeduplicatedCount > 0
             || PromotionTrimmedByCapCount > 0;
 
+
+    /// <summary>
+    /// Gets localized operational summary for applied promotion policy and diagnostics counters.
+    /// </summary>
+    public string PromotionPolicyDiagnosticsSummaryText
+        => string.Format(
+            Resources.AppResources.FeedPromotionPolicyDiagnosticsSummaryFormat,
+            PromotionAppliedSuppressionMinutes,
+            PromotionAppliedMaxCards,
+            PromotionInitialCandidateCount,
+            PromotionSuppressedByFrequencyCount,
+            PromotionDeduplicatedCount,
+            PromotionTrimmedByCapCount,
+            PromotionFinalCount);
+
     /// <summary>
     /// Gets whether promotion cards are loaded across all joined businesses.
     /// </summary>
@@ -530,6 +545,7 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(PromotionAppliedMaxCards));
             OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
+            OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
         });
 
         foreach (var item in eligible)
@@ -824,6 +840,7 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(PromotionAppliedMaxCards));
             OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
+            OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
         });
     }
 
