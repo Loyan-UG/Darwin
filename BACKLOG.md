@@ -238,6 +238,18 @@ It is designed as the **single source of truth** for development planning.
 - [x] "All" KPI chip now resets only lifecycle-state filter (preserving active search/sort context) for faster iterative campaign triage.
 - [x] Campaign toolbar now includes a dedicated "Clear search" action that resets only search query while preserving state/sort context.
 - [x] Business campaign local search now also matches campaign body text (in addition to internal name/title) for better operator discovery in dense lists.
+- [x] Business campaign list now surfaces localized audience/eligibility summary parsed from targeting JSON (including rule-array fallback) for faster operator segmentation checks without opening editor.
+- [x] Business campaign operations list now supports audience-kind filtering (all/joined/tier/points/date-window) for faster segmentation-focused triage during daily operations.
+- [x] Business campaign audience KPIs now render as actionable chips (with toggle-to-clear and all-audiences reset) to speed up segmentation-focused drill-down without reopening filter pickers.
+- [x] Business campaign editor now provides one-tap audience targeting JSON presets (joined/tier/points/date-window) to reduce operator setup time and malformed targeting payloads.
+- [x] Business campaign editor now shows inline targeting guidance derived from targeting JSON (`audienceKind`) so operators can validate segmentation intent before saving.
+- [x] Business campaign editor now enforces audience-specific targeting schema validation (tier/minimumPoints/date-window UTC range) with inline localized feedback before save.
+- [x] Business campaign editor now includes one-tap targeting schema quick-fix action for common audience errors (tier/minimumPoints/date-window fields), reducing manual JSON correction overhead.
+- [x] Business campaign editor quick-fix now reports localized success/no-change status so operators can confirm whether auto-correction changed targeting JSON.
+- [x] Business campaign editor now surfaces quick-fix applied/no-change counters to improve operator visibility into targeting correction patterns during daily operations.
+- [x] Business campaign editor now includes a reset action for quick-fix counters, enabling per-shift/per-session diagnostics hygiene for operations teams.
+- [x] Quick-fix telemetry now includes monitoring-window context (window start + last reset timestamps) for clearer interpretation of applied/no-change counters in operations.
+- [x] Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 - [x] Business Settings subscription flow now includes environment diagnostics (missing/invalid/non-HTTPS/host-allowlist), secure portal launch, copy-url support, server-backed read-only status snapshot, cancel-at-period-end toggle, and available-plans visibility for operator decision support.
 - [x] Business subscription checkout options now exclude the currently active plan and display explicit empty-state guidance when no alternative upgrade target exists.
@@ -252,8 +264,14 @@ It is designed as the **single source of truth** for development planning.
 
 ### 3.9.1 Handoff Status (Prepared for next chat)
 - Current iteration status: **Closed cleanly** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
-- Last delivered increment: Business subscription self-service flow completed with safer checkout optioning and dashboard-visible subscription funnel KPI telemetry.
-- Next recommended starting point in new chat: continue from item **3.9 / P0 Promotions foundation** and keep backlog/docs updated per increment.
+- Last delivered increment: campaign targeting quick-fix telemetry persisted into business activity logs and surfaced in dashboard/report exports.
+- Next recommended starting point in new chat: treat current quick-fix telemetry workstream as closed, run a fresh repository-wide baseline check (because parallel updates landed), then proceed with error-remediation items and continue from **3.9 / P0 Promotions foundation**.
+
+### 3.9.2 Ready-to-continue checklist (next chat)
+1. Re-open docs and code from latest `dev` snapshot (no cached assumptions) and refresh done/pending flags.
+2. Execute a focused mobile build/compile pass and capture only currently-active blockers.
+3. Close blocker fixes in isolated increments (small commits) before resuming feature delivery.
+4. Continue planned queue in order: **P0 Promotions foundation** → **P1 delivery consistency** → **P1 operations** → **P2 reminders completion**.
 
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
