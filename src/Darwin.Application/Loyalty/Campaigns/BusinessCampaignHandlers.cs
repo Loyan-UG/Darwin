@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Domain.Entities.Marketing;
 using Darwin.Shared.Results;
@@ -59,6 +61,7 @@ namespace Darwin.Application.Loyalty.Campaigns
                             : "Scheduled"
                         : "Expired",
                     TargetingJson = c.TargetingJson,
+                    EligibilityRules = CampaignEligibilityRulesMapper.BuildRulesFromTargetingJson(c.TargetingJson),
                     PayloadJson = c.PayloadJson,
                     RowVersion = c.RowVersion
                 })
@@ -107,7 +110,7 @@ namespace Darwin.Application.Loyalty.Campaigns
                 StartsAtUtc = dto.StartsAtUtc,
                 EndsAtUtc = dto.EndsAtUtc,
                 IsActive = false,
-                TargetingJson = string.IsNullOrWhiteSpace(dto.TargetingJson) ? "{}" : dto.TargetingJson,
+                TargetingJson = CampaignEligibilityRulesMapper.BuildTargetingJson(dto.TargetingJson, dto.EligibilityRules),
                 PayloadJson = string.IsNullOrWhiteSpace(dto.PayloadJson) ? "{}" : dto.PayloadJson
             };
 
@@ -156,7 +159,7 @@ namespace Darwin.Application.Loyalty.Campaigns
             entity.Channels = (Domain.Enums.CampaignChannels)dto.Channels;
             entity.StartsAtUtc = dto.StartsAtUtc;
             entity.EndsAtUtc = dto.EndsAtUtc;
-            entity.TargetingJson = string.IsNullOrWhiteSpace(dto.TargetingJson) ? "{}" : dto.TargetingJson;
+            entity.TargetingJson = CampaignEligibilityRulesMapper.BuildTargetingJson(dto.TargetingJson, dto.EligibilityRules);
             entity.PayloadJson = string.IsNullOrWhiteSpace(dto.PayloadJson) ? "{}" : dto.PayloadJson;
 
             try
@@ -170,6 +173,159 @@ namespace Darwin.Application.Loyalty.Campaigns
             }
         }
     }
+
+    /// <summary>
+    /// Maps campaign targeting JSON to normalized eligibility rules and vice versa.
+    /// </summary>
+    internal static class CampaignEligibilityRulesMapper
+    {
+        public static List<PromotionEligibilityRuleDto> BuildRulesFromTargetingJson(string? targetingJson)
+        {
+            var rules = new List<PromotionEligibilityRuleDto>();
+            if (string.IsNullOrWhiteSpace(targetingJson))
+            {
+                return rules;
+            }
+
+            try
+            {
+                using var document = JsonDocument.Parse(targetingJson);
+                if (document.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    return rules;
+                }
+
+                var root = document.RootElement;
+                if (root.TryGetProperty("eligibilityRules", out var eligibilityArray) && eligibilityArray.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var ruleElement in eligibilityArray.EnumerateArray())
+                    {
+                        if (ruleElement.ValueKind != JsonValueKind.Object)
+                        {
+                            continue;
+                        }
+
+                        var mapped = BuildRuleFromElement(ruleElement);
+                        if (mapped is not null)
+                        {
+                            rules.Add(mapped);
+                        }
+                    }
+
+                    if (rules.Count > 0)
+                    {
+                        return rules;
+                    }
+                }
+
+                var fallback = BuildRuleFromElement(root);
+                if (fallback is not null)
+                {
+                    rules.Add(fallback);
+                }
+            }
+            catch (JsonException)
+            {
+                // Keep compatibility with legacy free-form targeting payloads.
+                return rules;
+            }
+
+            return rules;
+        }
+
+        public static string BuildTargetingJson(string? targetingJson, IReadOnlyCollection<PromotionEligibilityRuleDto>? eligibilityRules)
+        {
+            if (!string.IsNullOrWhiteSpace(targetingJson))
+            {
+                return targetingJson;
+            }
+
+            if (eligibilityRules is null || eligibilityRules.Count == 0)
+            {
+                return "{}";
+            }
+
+            var normalizedRules = eligibilityRules
+                .Where(rule => rule is not null)
+                .Select(rule => new Dictionary<string, object?>
+                {
+                    ["audienceKind"] = string.IsNullOrWhiteSpace(rule.AudienceKind) ? "JoinedMembers" : rule.AudienceKind.Trim(),
+                    ["minPoints"] = rule.MinPoints,
+                    ["maxPoints"] = rule.MaxPoints,
+                    ["tierKey"] = string.IsNullOrWhiteSpace(rule.TierKey) ? null : rule.TierKey.Trim(),
+                    ["note"] = string.IsNullOrWhiteSpace(rule.Note) ? null : rule.Note.Trim()
+                })
+                .ToList();
+
+            if (normalizedRules.Count == 0)
+            {
+                return "{}";
+            }
+
+            var first = normalizedRules[0];
+            var envelope = new Dictionary<string, object?>
+            {
+                ["audienceKind"] = first["audienceKind"],
+                ["minPoints"] = first["minPoints"],
+                ["maxPoints"] = first["maxPoints"],
+                ["tierKey"] = first["tierKey"],
+                ["note"] = first["note"],
+                ["eligibilityRules"] = normalizedRules
+            };
+
+            return JsonSerializer.Serialize(envelope);
+        }
+
+        private static PromotionEligibilityRuleDto? BuildRuleFromElement(JsonElement element)
+        {
+            var audienceKind = TryGetString(element, "audienceKind") ?? TryGetString(element, "kind") ?? "JoinedMembers";
+            var minPoints = TryGetInt32(element, "minPoints");
+            var maxPoints = TryGetInt32(element, "maxPoints");
+            var tierKey = TryGetString(element, "tierKey") ?? TryGetString(element, "tier");
+            var note = TryGetString(element, "note");
+
+            return new PromotionEligibilityRuleDto
+            {
+                AudienceKind = audienceKind,
+                MinPoints = minPoints,
+                MaxPoints = maxPoints,
+                TierKey = tierKey,
+                Note = note
+            };
+        }
+
+        private static string? TryGetString(JsonElement element, string propertyName)
+        {
+            if (!element.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            var value = property.GetString();
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        private static int? TryGetInt32(JsonElement element, string propertyName)
+        {
+            if (!element.TryGetProperty(propertyName, out var property))
+            {
+                return null;
+            }
+
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var numeric))
+            {
+                return numeric;
+            }
+
+            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out var parsed))
+            {
+                return parsed;
+            }
+
+            return null;
+        }
+    }
+
 
     /// <summary>
     /// Activates or deactivates a campaign.

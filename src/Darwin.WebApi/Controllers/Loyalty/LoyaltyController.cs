@@ -1354,6 +1354,14 @@ namespace Darwin.WebApi.Controllers.Loyalty
                     IsActive = x.IsActive,
                     CampaignState = x.CampaignState,
                     TargetingJson = x.TargetingJson,
+                    EligibilityRules = x.EligibilityRules.Select(rule => new PromotionEligibilityRule
+                    {
+                        AudienceKind = rule.AudienceKind,
+                        MinPoints = rule.MinPoints,
+                        MaxPoints = rule.MaxPoints,
+                        TierKey = rule.TierKey,
+                        Note = rule.Note
+                    }).ToList(),
                     PayloadJson = x.PayloadJson,
                     RowVersion = x.RowVersion
                 }).ToList()
@@ -1394,6 +1402,14 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 StartsAtUtc = request.StartsAtUtc,
                 EndsAtUtc = request.EndsAtUtc,
                 TargetingJson = request.TargetingJson,
+                EligibilityRules = request.EligibilityRules.Select(rule => new PromotionEligibilityRuleDto
+                {
+                    AudienceKind = rule.AudienceKind,
+                    MinPoints = rule.MinPoints,
+                    MaxPoints = rule.MaxPoints,
+                    TierKey = rule.TierKey,
+                    Note = rule.Note
+                }).ToList(),
                 PayloadJson = request.PayloadJson
             }, ct).ConfigureAwait(false);
 
@@ -1438,6 +1454,14 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 StartsAtUtc = request.StartsAtUtc,
                 EndsAtUtc = request.EndsAtUtc,
                 TargetingJson = request.TargetingJson,
+                EligibilityRules = request.EligibilityRules.Select(rule => new PromotionEligibilityRuleDto
+                {
+                    AudienceKind = rule.AudienceKind,
+                    MinPoints = rule.MinPoints,
+                    MaxPoints = rule.MaxPoints,
+                    TierKey = rule.TierKey,
+                    Note = rule.Note
+                }).ToList(),
                 PayloadJson = request.PayloadJson,
                 RowVersion = request.RowVersion
             }, ct).ConfigureAwait(false);
