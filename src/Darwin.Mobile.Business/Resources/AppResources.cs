@@ -246,6 +246,8 @@ public static class AppResources
     public static string RewardsCampaignStateFilterScheduled => ResourceManager.GetString(nameof(RewardsCampaignStateFilterScheduled), Culture) ?? "Scheduled";
     public static string RewardsCampaignStateFilterActive => ResourceManager.GetString(nameof(RewardsCampaignStateFilterActive), Culture) ?? "Active";
     public static string RewardsCampaignStateFilterExpired => ResourceManager.GetString(nameof(RewardsCampaignStateFilterExpired), Culture) ?? "Expired";
+    public static string RewardsCampaignAudienceFilterPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignAudienceFilterPickerTitle), Culture) ?? "Audience filter";
+    public static string RewardsCampaignAudienceFilterAll => ResourceManager.GetString(nameof(RewardsCampaignAudienceFilterAll), Culture) ?? "All audiences";
     public static string RewardsCampaignSortPickerTitle => ResourceManager.GetString(nameof(RewardsCampaignSortPickerTitle), Culture) ?? "Sort by";
     public static string RewardsCampaignSortStartDateDesc => ResourceManager.GetString(nameof(RewardsCampaignSortStartDateDesc), Culture) ?? "Start date (newest first)";
     public static string RewardsCampaignSortStartDateAsc => ResourceManager.GetString(nameof(RewardsCampaignSortStartDateAsc), Culture) ?? "Start date (oldest first)";

@@ -675,6 +675,12 @@
   <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
     <value>Abgelaufen</value>
   </data>
+  <data name="RewardsCampaignAudienceFilterPickerTitle" xml:space="preserve">
+    <value>Zielgruppenfilter</value>
+  </data>
+  <data name="RewardsCampaignAudienceFilterAll" xml:space="preserve">
+    <value>Alle Zielgruppen</value>
+  </data>
   <data name="RewardsCampaignSortPickerTitle" xml:space="preserve">
     <value>Sortieren nach</value>
   </data>
