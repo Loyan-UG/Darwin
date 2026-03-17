@@ -672,6 +672,9 @@
   <data name="RewardsCampaignTargetingSchemaDateWindowRangeInvalid" xml:space="preserve">
     <value>Datumsfenster-Zielgruppe erfordert, dass eligibleFromUtc kleiner oder gleich eligibleToUtc ist.</value>
   </data>
+  <data name="RewardsCampaignTargetingApplyFixButton" xml:space="preserve">
+    <value>Schnellkorrektur anwenden</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload-JSON (optional, Objekt)</value>
   </data>

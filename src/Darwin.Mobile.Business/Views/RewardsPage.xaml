@@ -180,7 +180,12 @@
 
                     <Label Text="{Binding CampaignTargetingSchemaValidationMessage}"
                            FontSize="11"
-                           TextColor="OrangeRed" />
+                           TextColor="OrangeRed"
+                           IsVisible="{Binding HasCampaignTargetingSchemaValidationError}" />
+
+                    <Button Text="{x:Static res:AppResources.RewardsCampaignTargetingApplyFixButton}"
+                            Command="{Binding ApplyCampaignTargetingSchemaFixCommand}"
+                            IsVisible="{Binding HasCampaignTargetingSchemaValidationError}" />
 
                     <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignPayloadJsonPlaceholder}"
                             AutoSize="TextChanges"

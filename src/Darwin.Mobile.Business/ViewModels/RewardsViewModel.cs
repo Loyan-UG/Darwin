@@ -139,6 +139,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ApplyCampaignStateFilterCommand = new AsyncCommand<string>(ApplyCampaignStateFilterAsync, _ => !IsBusy);
         ApplyCampaignAudienceFilterCommand = new AsyncCommand<string>(ApplyCampaignAudienceFilterAsync, _ => !IsBusy);
         ApplyCampaignTargetingPresetCommand = new AsyncCommand<string>(ApplyCampaignTargetingPresetAsync, _ => !IsBusy && CanManageRewards);
+        ApplyCampaignTargetingSchemaFixCommand = new AsyncCommand(ApplyCampaignTargetingSchemaFixAsync, () => !IsBusy && CanManageRewards && HasCampaignTargetingSchemaValidationError);
     }
 
 
@@ -545,8 +546,20 @@ public sealed class RewardsViewModel : BaseViewModel
     public string CampaignTargetingSchemaValidationMessage
     {
         get => _campaignTargetingSchemaValidationMessage;
-        private set => SetProperty(ref _campaignTargetingSchemaValidationMessage, value);
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingSchemaValidationMessage, value))
+            {
+                OnPropertyChanged(nameof(HasCampaignTargetingSchemaValidationError));
+                ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
+
+    /// <summary>
+    /// Indicates whether targeting schema currently has inline validation errors.
+    /// </summary>
+    public bool HasCampaignTargetingSchemaValidationError => !string.IsNullOrWhiteSpace(CampaignTargetingSchemaValidationMessage);
 
     /// <summary>
     /// Selected campaign channel option used for create/update payloads.
@@ -594,6 +607,7 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand<string> ApplyCampaignStateFilterCommand { get; }
     public AsyncCommand<string> ApplyCampaignAudienceFilterCommand { get; }
     public AsyncCommand<string> ApplyCampaignTargetingPresetCommand { get; }
+    public AsyncCommand ApplyCampaignTargetingSchemaFixCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -1043,6 +1057,87 @@ public sealed class RewardsViewModel : BaseViewModel
         return DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out value);
     }
 
+    /// <summary>
+    /// Applies a safe schema correction for the current targeting JSON when possible.
+    /// </summary>
+    private Task ApplyCampaignTargetingSchemaFixAsync()
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (!TryNormalizeCampaignJson(CampaignTargetingJsonInput, AppResources.RewardsCampaignTargetingValidationFailed, out var normalizedJson, out _))
+        {
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(normalizedJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return Task.CompletedTask;
+            }
+
+            var map = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                map[property.Name] = JsonSerializer.Deserialize<object?>(property.Value.GetRawText());
+            }
+
+            var audienceKind = document.RootElement.TryGetProperty("audienceKind", out var audienceElement) && audienceElement.ValueKind == JsonValueKind.String
+                ? audienceElement.GetString()
+                : PromotionAudienceKind.JoinedMembers;
+
+            if (string.Equals(audienceKind, PromotionAudienceKind.TierSegment, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!map.TryGetValue("tier", out var tierValue) || tierValue is null || string.IsNullOrWhiteSpace(tierValue.ToString()))
+                {
+                    map["tier"] = "Gold";
+                }
+            }
+            else if (string.Equals(audienceKind, PromotionAudienceKind.PointsThreshold, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!map.TryGetValue("minimumPoints", out var minimumPointsValue) || minimumPointsValue is null || !int.TryParse(minimumPointsValue.ToString(), out var minimumPoints) || minimumPoints < 0)
+                {
+                    map["minimumPoints"] = 0;
+                }
+            }
+            else if (string.Equals(audienceKind, PromotionAudienceKind.DateWindow, StringComparison.OrdinalIgnoreCase))
+            {
+                var hasFrom = TryReadUtcDate(document.RootElement, "eligibleFromUtc", out var eligibleFromUtc);
+                var hasTo = TryReadUtcDate(document.RootElement, "eligibleToUtc", out var eligibleToUtc);
+
+                if (!hasFrom)
+                {
+                    eligibleFromUtc = DateTimeOffset.UtcNow;
+                    map["eligibleFromUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
+                }
+
+                if (!hasTo)
+                {
+                    eligibleToUtc = (hasFrom ? eligibleFromUtc : DateTimeOffset.UtcNow).AddDays(7);
+                    map["eligibleToUtc"] = eligibleToUtc.ToString("O", CultureInfo.InvariantCulture);
+                }
+
+                if (hasFrom && hasTo && eligibleFromUtc > eligibleToUtc)
+                {
+                    map["eligibleToUtc"] = eligibleFromUtc.ToString("O", CultureInfo.InvariantCulture);
+                }
+            }
+
+            var fixedJson = JsonSerializer.Serialize(map);
+            RunOnMain(() => CampaignTargetingJsonInput = fixedJson);
+        }
+        catch (JsonException)
+        {
+            // Keep current text unchanged; inline validation message already explains the issue.
+        }
+
+        return Task.CompletedTask;
+    }
+
     private static bool TryNormalizeCampaignJson(string? jsonInput, string validationMessage, out string normalizedJson, out string? error)
     {
         normalizedJson = "{}";
@@ -1428,6 +1523,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -1720,6 +1816,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
+        ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
     }
 }
 

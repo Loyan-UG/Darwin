@@ -244,6 +244,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business campaign editor now provides one-tap audience targeting JSON presets (joined/tier/points/date-window) to reduce operator setup time and malformed targeting payloads.
 - [x] Business campaign editor now shows inline targeting guidance derived from targeting JSON (`audienceKind`) so operators can validate segmentation intent before saving.
 - [x] Business campaign editor now enforces audience-specific targeting schema validation (tier/minimumPoints/date-window UTC range) with inline localized feedback before save.
+- [x] Business campaign editor now includes one-tap targeting schema quick-fix action for common audience errors (tier/minimumPoints/date-window fields), reducing manual JSON correction overhead.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
 - [x] Business Settings subscription flow now includes environment diagnostics (missing/invalid/non-HTTPS/host-allowlist), secure portal launch, copy-url support, server-backed read-only status snapshot, cancel-at-period-end toggle, and available-plans visibility for operator decision support.
 - [x] Business subscription checkout options now exclude the currently active plan and display explicit empty-state guidance when no alternative upgrade target exists.

@@ -672,6 +672,9 @@
   <data name="RewardsCampaignTargetingSchemaDateWindowRangeInvalid" xml:space="preserve">
     <value>Date-window audience requires eligibleFromUtc to be earlier than or equal to eligibleToUtc.</value>
   </data>
+  <data name="RewardsCampaignTargetingApplyFixButton" xml:space="preserve">
+    <value>Apply quick fix</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>

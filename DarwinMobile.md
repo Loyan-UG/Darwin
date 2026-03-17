@@ -516,6 +516,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business campaign editor now offers quick audience targeting presets (joined/tier/points/date-window) to accelerate common segmentation setup while keeping JSON editable.
 - Business campaign editor now renders inline targeting guidance from current targeting JSON so segmentation intent is visible before submit.
 - Business campaign editor now validates audience-specific targeting schema inline (tier/minimumPoints/date-window UTC fields) and blocks invalid saves with localized feedback.
+- Business campaign editor now offers one-tap schema quick-fix action for common targeting errors to accelerate operator recovery before save.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
