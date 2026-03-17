@@ -65,6 +65,8 @@ public sealed class RewardsViewModel : BaseViewModel
     private string _campaignTargetingFixStatusMessage = string.Empty;
     private int _campaignTargetingFixAppliedCount;
     private int _campaignTargetingFixNoChangeCount;
+    private DateTimeOffset? _campaignTargetingFixMetricsWindowStartedAtUtc;
+    private DateTimeOffset? _campaignTargetingFixMetricsLastResetAtUtc;
     private CampaignChannelOption? _selectedCampaignChannel;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
@@ -635,6 +637,45 @@ public sealed class RewardsViewModel : BaseViewModel
     public bool HasCampaignTargetingFixMetrics => CampaignTargetingFixAppliedCount > 0 || CampaignTargetingFixNoChangeCount > 0;
 
     /// <summary>
+    /// UTC timestamp of current quick-fix monitoring window start.
+    /// </summary>
+    public DateTimeOffset? CampaignTargetingFixMetricsWindowStartedAtUtc
+    {
+        get => _campaignTargetingFixMetricsWindowStartedAtUtc;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixMetricsWindowStartedAtUtc, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsWindowSummary));
+            }
+        }
+    }
+
+    /// <summary>
+    /// UTC timestamp of the latest quick-fix telemetry reset action.
+    /// </summary>
+    public DateTimeOffset? CampaignTargetingFixMetricsLastResetAtUtc
+    {
+        get => _campaignTargetingFixMetricsLastResetAtUtc;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixMetricsLastResetAtUtc, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsWindowSummary));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Localized quick-fix monitoring window summary.
+    /// </summary>
+    public string CampaignTargetingFixMetricsWindowSummary => string.Format(
+        CultureInfo.CurrentCulture,
+        AppResources.RewardsCampaignTargetingFixMetricsWindowFormat,
+        CampaignTargetingFixMetricsWindowStartedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture) ?? AppResources.RewardsCampaignTargetingFixMetricsWindowUnknown,
+        CampaignTargetingFixMetricsLastResetAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture) ?? AppResources.RewardsCampaignTargetingFixMetricsWindowUnknown);
+
+    /// <summary>
     /// Selected campaign channel option used for create/update payloads.
     /// </summary>
     public CampaignChannelOption? SelectedCampaignChannel
@@ -1153,6 +1194,11 @@ public sealed class RewardsViewModel : BaseViewModel
 
         RunOnMain(() =>
         {
+            if (!CampaignTargetingFixMetricsWindowStartedAtUtc.HasValue)
+            {
+                CampaignTargetingFixMetricsWindowStartedAtUtc = DateTimeOffset.UtcNow;
+            }
+
             if (changed)
             {
                 CampaignTargetingJsonInput = fixedJson;
@@ -1291,6 +1337,8 @@ public sealed class RewardsViewModel : BaseViewModel
         {
             CampaignTargetingFixAppliedCount = 0;
             CampaignTargetingFixNoChangeCount = 0;
+            CampaignTargetingFixMetricsWindowStartedAtUtc = DateTimeOffset.UtcNow;
+            CampaignTargetingFixMetricsLastResetAtUtc = DateTimeOffset.UtcNow;
             CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixMetricsResetMessage;
         });
 

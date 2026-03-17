@@ -690,6 +690,12 @@
   <data name="RewardsCampaignTargetingFixMetricsResetMessage" xml:space="preserve">
     <value>Quick-fix stats were reset.</value>
   </data>
+  <data name="RewardsCampaignTargetingFixMetricsWindowFormat" xml:space="preserve">
+    <value>Window start: {0} · Last reset: {1}</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsWindowUnknown" xml:space="preserve">
+    <value>—</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>

@@ -196,6 +196,10 @@
                            FontSize="11"
                            Opacity="0.7" />
 
+                    <Label Text="{Binding CampaignTargetingFixMetricsWindowSummary}"
+                           FontSize="11"
+                           Opacity="0.65" />
+
                     <Button Text="{x:Static res:AppResources.RewardsCampaignTargetingFixMetricsResetButton}"
                             Command="{Binding ResetCampaignTargetingFixMetricsCommand}"
                             IsVisible="{Binding HasCampaignTargetingFixMetrics}" />

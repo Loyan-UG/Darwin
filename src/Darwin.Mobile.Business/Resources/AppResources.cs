@@ -252,6 +252,8 @@ public static class AppResources
     public static string RewardsCampaignTargetingFixMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignTargetingFixMetricsFormat), Culture) ?? "Quick-fix stats — applied: {0}, no-change: {1}";
     public static string RewardsCampaignTargetingFixMetricsResetButton => ResourceManager.GetString(nameof(RewardsCampaignTargetingFixMetricsResetButton), Culture) ?? "Reset quick-fix stats";
     public static string RewardsCampaignTargetingFixMetricsResetMessage => ResourceManager.GetString(nameof(RewardsCampaignTargetingFixMetricsResetMessage), Culture) ?? "Quick-fix stats were reset.";
+    public static string RewardsCampaignTargetingFixMetricsWindowFormat => ResourceManager.GetString(nameof(RewardsCampaignTargetingFixMetricsWindowFormat), Culture) ?? "Window start: {0} · Last reset: {1}";
+    public static string RewardsCampaignTargetingFixMetricsWindowUnknown => ResourceManager.GetString(nameof(RewardsCampaignTargetingFixMetricsWindowUnknown), Culture) ?? "—";
     public static string RewardsCampaignPayloadJsonPlaceholder => ResourceManager.GetString(nameof(RewardsCampaignPayloadJsonPlaceholder), Culture) ?? "Payload JSON (optional, object)";
     public static string RewardsCampaignTargetingValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignTargetingValidationFailed), Culture) ?? "Targeting JSON must be a valid JSON object.";
     public static string RewardsCampaignPayloadValidationFailed => ResourceManager.GetString(nameof(RewardsCampaignPayloadValidationFailed), Culture) ?? "Payload JSON must be a valid JSON object.";
