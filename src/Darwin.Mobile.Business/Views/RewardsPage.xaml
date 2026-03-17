@@ -249,6 +249,7 @@
                                 <Label Text="{Binding Title}" FontAttributes="Bold" />
                                 <Label Text="{Binding Name}" Opacity="0.8" FontSize="13" />
                                 <Label Text="{Binding CampaignState, StringFormat='State: {0}'}" FontSize="12" Opacity="0.8" />
+                                <Label Text="{Binding AudienceSummary}" FontSize="12" Opacity="0.8" />
                                 <Label Text="{Binding StartsAtUtc, StringFormat='Start: {0:yyyy-MM-dd HH:mm}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />
                                 <Label Text="{Binding EndsAtUtc, StringFormat='End: {0:yyyy-MM-dd HH:mm}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding EndsAtUtc, Converter={StaticResource NullCheckConverter}}" />
                                 <Button Text="{Binding ActivationButtonText}"

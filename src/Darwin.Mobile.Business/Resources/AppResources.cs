@@ -254,6 +254,17 @@ public static class AppResources
     public static string RewardsCampaignsEmptyFiltered => ResourceManager.GetString(nameof(RewardsCampaignsEmptyFiltered), Culture) ?? "No campaigns match the current search/filter.";
     public static string RewardsCampaignClearFiltersButton => ResourceManager.GetString(nameof(RewardsCampaignClearFiltersButton), Culture) ?? "Clear filters";
     public static string RewardsCampaignFilterSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignFilterSummaryFormat), Culture) ?? "Showing {0} of {1} campaigns";
+    public static string RewardsCampaignAudienceSummaryDefault => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryDefault), Culture) ?? "Audience: all joined members";
+    public static string RewardsCampaignAudienceSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryFormat), Culture) ?? "Audience: {0}";
+    public static string RewardsCampaignAudienceSummaryWithEligibilityFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryWithEligibilityFormat), Culture) ?? "Audience: {0} • {1}";
+    public static string RewardsCampaignAudienceJoinedMembers => ResourceManager.GetString(nameof(RewardsCampaignAudienceJoinedMembers), Culture) ?? "joined members";
+    public static string RewardsCampaignAudienceTierSegment => ResourceManager.GetString(nameof(RewardsCampaignAudienceTierSegment), Culture) ?? "tier segment";
+    public static string RewardsCampaignAudiencePointsThreshold => ResourceManager.GetString(nameof(RewardsCampaignAudiencePointsThreshold), Culture) ?? "points threshold";
+    public static string RewardsCampaignAudienceDateWindow => ResourceManager.GetString(nameof(RewardsCampaignAudienceDateWindow), Culture) ?? "date window";
+    public static string RewardsCampaignEligibilityTierFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityTierFormat), Culture) ?? "Tier: {0}";
+    public static string RewardsCampaignEligibilityRangeFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityRangeFormat), Culture) ?? "Points {0}-{1}";
+    public static string RewardsCampaignEligibilityMinFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMinFormat), Culture) ?? "Points ≥ {0}";
+    public static string RewardsCampaignEligibilityMaxFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMaxFormat), Culture) ?? "Points ≤ {0}";
     public static string RewardsCampaignStateMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricsFormat), Culture) ?? "Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}";
     public static string RewardsCampaignStateMetricChipFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricChipFormat), Culture) ?? "{0} ({1})";
 
