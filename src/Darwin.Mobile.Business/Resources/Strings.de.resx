@@ -639,6 +639,42 @@
   <data name="RewardsCampaignTargetingJsonPlaceholder" xml:space="preserve">
     <value>Targeting-JSON (optional, Objekt)</value>
   </data>
+  <data name="RewardsCampaignTargetingPresetTitle" xml:space="preserve">
+    <value>Schnelle Zielgruppen-Vorlagen</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintDefault" xml:space="preserve">
+    <value>Zielgruppe: beigetretene Mitglieder (Standard).</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintJoinedMembers" xml:space="preserve">
+    <value>Mitglieder-Vorlage: {"audienceKind":"JoinedMembers"} beibehalten.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintTierSegment" xml:space="preserve">
+    <value>Stufen-Vorlage: tier-Wert angeben, z. B. {"audienceKind":"TierSegment","tier":"Gold"}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintPointsThreshold" xml:space="preserve">
+    <value>Punkte-Vorlage: minimumPoints angeben, z. B. {"audienceKind":"PointsThreshold","minimumPoints":100}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintDateWindow" xml:space="preserve">
+    <value>Datumsfenster-Vorlage: eligibleFromUtc und eligibleToUtc im ISO-8601-UTC-Format angeben.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintInvalid" xml:space="preserve">
+    <value>Targeting-JSON ist ungültig. Vorlagen oder ein gültiges JSON-Objekt verwenden.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaTierMissing" xml:space="preserve">
+    <value>Stufen-Zielgruppe erfordert einen nicht-leeren "tier"-Wert.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaMinimumPointsMissing" xml:space="preserve">
+    <value>Punkte-Zielgruppe erfordert einen nicht-negativen "minimumPoints"-Wert.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaDateWindowMissing" xml:space="preserve">
+    <value>Datumsfenster-Zielgruppe erfordert gültige UTC-Werte für "eligibleFromUtc" und "eligibleToUtc".</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaDateWindowRangeInvalid" xml:space="preserve">
+    <value>Datumsfenster-Zielgruppe erfordert, dass eligibleFromUtc kleiner oder gleich eligibleToUtc ist.</value>
+  </data>
+  <data name="RewardsCampaignTargetingApplyFixButton" xml:space="preserve">
+    <value>Schnellkorrektur anwenden</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload-JSON (optional, Objekt)</value>
   </data>
@@ -675,6 +711,12 @@
   <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
     <value>Abgelaufen</value>
   </data>
+  <data name="RewardsCampaignAudienceFilterPickerTitle" xml:space="preserve">
+    <value>Zielgruppenfilter</value>
+  </data>
+  <data name="RewardsCampaignAudienceFilterAll" xml:space="preserve">
+    <value>Alle Zielgruppen</value>
+  </data>
   <data name="RewardsCampaignSortPickerTitle" xml:space="preserve">
     <value>Sortieren nach</value>
   </data>
@@ -699,8 +741,44 @@
   <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
     <value>{0} von {1} Kampagnen werden angezeigt</value>
   </data>
+  <data name="RewardsCampaignAudienceSummaryDefault" xml:space="preserve">
+    <value>Zielgruppe: alle teilnehmenden Mitglieder</value>
+  </data>
+  <data name="RewardsCampaignAudienceSummaryFormat" xml:space="preserve">
+    <value>Zielgruppe: {0}</value>
+  </data>
+  <data name="RewardsCampaignAudienceSummaryWithEligibilityFormat" xml:space="preserve">
+    <value>Zielgruppe: {0} • {1}</value>
+  </data>
+  <data name="RewardsCampaignAudienceJoinedMembers" xml:space="preserve">
+    <value>teilnehmende Mitglieder</value>
+  </data>
+  <data name="RewardsCampaignAudienceTierSegment" xml:space="preserve">
+    <value>Tier-Segment</value>
+  </data>
+  <data name="RewardsCampaignAudiencePointsThreshold" xml:space="preserve">
+    <value>Punkteschwelle</value>
+  </data>
+  <data name="RewardsCampaignAudienceDateWindow" xml:space="preserve">
+    <value>Zeitfenster</value>
+  </data>
+  <data name="RewardsCampaignEligibilityTierFormat" xml:space="preserve">
+    <value>Tier: {0}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityRangeFormat" xml:space="preserve">
+    <value>Punkte {0}-{1}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityMinFormat" xml:space="preserve">
+    <value>Punkte ≥ {0}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityMaxFormat" xml:space="preserve">
+    <value>Punkte ≤ {0}</value>
+  </data>
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Entwurf: {0} · Geplant: {1} · Aktiv: {2} · Abgelaufen: {3}</value>
+  </data>
+  <data name="RewardsCampaignAudienceMetricsFormat" xml:space="preserve">
+    <value>Mitglied: {0} · Stufe: {1} · Punkte: {2} · Datumsfenster: {3}</value>
   </data>
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>
