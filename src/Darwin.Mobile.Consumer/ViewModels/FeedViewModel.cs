@@ -44,6 +44,13 @@ public sealed class FeedViewModel : BaseViewModel
     private LoyaltyAccountSummary? _selectedAccount;
     private bool _suppressSelectionRefresh;
     private bool _isPromotionScopeAllBusinesses;
+    private int _promotionSuppressedByFrequencyCount;
+    private int _promotionDeduplicatedCount;
+    private int _promotionTrimmedByCapCount;
+    private int _promotionInitialCandidateCount;
+    private int _promotionFinalCount;
+    private int _promotionAppliedMaxCards;
+    private int _promotionAppliedSuppressionMinutes;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedViewModel"/> class.
@@ -80,6 +87,51 @@ public sealed class FeedViewModel : BaseViewModel
     /// Gets a value indicating whether at least one promotion card exists.
     /// </summary>
     public bool HasPromotions => PromotionItems.Count > 0;
+
+
+    /// <summary>
+    /// Gets the number of initial promotion candidates before server guardrails.
+    /// </summary>
+    public int PromotionInitialCandidateCount => _promotionInitialCandidateCount;
+
+    /// <summary>
+    /// Gets the number of items suppressed by server-side frequency policy.
+    /// </summary>
+    public int PromotionSuppressedByFrequencyCount => _promotionSuppressedByFrequencyCount;
+
+    /// <summary>
+    /// Gets the number of items removed by de-duplication policy.
+    /// </summary>
+    public int PromotionDeduplicatedCount => _promotionDeduplicatedCount;
+
+    /// <summary>
+    /// Gets the number of items removed by max-card cap policy.
+    /// </summary>
+    public int PromotionTrimmedByCapCount => _promotionTrimmedByCapCount;
+
+    /// <summary>
+    /// Gets the final promotion count produced by server for current request.
+    /// </summary>
+    public int PromotionFinalCount => _promotionFinalCount;
+
+    /// <summary>
+    /// Gets effective max-card cap applied by server policy.
+    /// </summary>
+    public int PromotionAppliedMaxCards => _promotionAppliedMaxCards;
+
+    /// <summary>
+    /// Gets effective suppression window minutes resolved from server policy.
+    /// </summary>
+    public int PromotionAppliedSuppressionMinutes => _promotionAppliedSuppressionMinutes;
+
+    /// <summary>
+    /// Gets whether server diagnostics contain at least one non-zero guardrail signal.
+    /// </summary>
+    public bool HasPromotionDiagnostics
+        => PromotionInitialCandidateCount > 0
+            || PromotionSuppressedByFrequencyCount > 0
+            || PromotionDeduplicatedCount > 0
+            || PromotionTrimmedByCapCount > 0;
 
     /// <summary>
     /// Gets whether promotion cards are loaded across all joined businesses.
@@ -441,14 +493,25 @@ public sealed class FeedViewModel : BaseViewModel
             .ToList();
 
         var nowUtc = DateTime.UtcNow;
+        var suppressionWindow = ResolvePromotionSuppressionWindow(result.Value.AppliedPolicy);
+        var displayCap = ResolvePromotionDisplayCap(result.Value.AppliedPolicy);
+
+        _promotionInitialCandidateCount = result.Value.Diagnostics.InitialCandidates;
+        _promotionSuppressedByFrequencyCount = result.Value.Diagnostics.SuppressedByFrequency;
+        _promotionDeduplicatedCount = result.Value.Diagnostics.Deduplicated;
+        _promotionTrimmedByCapCount = result.Value.Diagnostics.TrimmedByCap;
+        _promotionFinalCount = result.Value.Diagnostics.FinalCount;
+        _promotionAppliedMaxCards = displayCap;
+        _promotionAppliedSuppressionMinutes = (int)Math.Round(suppressionWindow.TotalMinutes, MidpointRounding.AwayFromZero);
+
         var eligible = unique
-            .Where(item => !IsPromotionSuppressed(item, nowUtc))
-            .Take(PromotionDisplayCap)
+            .Where(item => !IsPromotionSuppressed(item, nowUtc, suppressionWindow))
+            .Take(displayCap)
             .ToList();
 
         if (eligible.Count == 0)
         {
-            eligible = unique.Take(PromotionDisplayCap).ToList();
+            eligible = unique.Take(displayCap).ToList();
         }
 
         RunOnMain(() =>
@@ -459,6 +522,14 @@ public sealed class FeedViewModel : BaseViewModel
             }
 
             OnPropertyChanged(nameof(HasPromotions));
+            OnPropertyChanged(nameof(PromotionInitialCandidateCount));
+            OnPropertyChanged(nameof(PromotionSuppressedByFrequencyCount));
+            OnPropertyChanged(nameof(PromotionDeduplicatedCount));
+            OnPropertyChanged(nameof(PromotionTrimmedByCapCount));
+            OnPropertyChanged(nameof(PromotionFinalCount));
+            OnPropertyChanged(nameof(PromotionAppliedMaxCards));
+            OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
+            OnPropertyChanged(nameof(HasPromotionDiagnostics));
         });
 
         foreach (var item in eligible)
@@ -481,9 +552,36 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Resolves effective client-side suppression window from server-applied policy.
+    /// </summary>
+    private static TimeSpan ResolvePromotionSuppressionWindow(PromotionFeedPolicy? policy)
+    {
+        var minutes = policy?.FrequencyWindowMinutes ?? policy?.SuppressionWindowMinutes;
+        if (!minutes.HasValue || minutes.Value <= 0)
+        {
+            return PromotionDisplaySuppressionWindow;
+        }
+
+        return TimeSpan.FromMinutes(minutes.Value);
+    }
+
+    /// <summary>
+    /// Resolves effective display-cap from server-applied policy while keeping safe client fallback.
+    /// </summary>
+    private static int ResolvePromotionDisplayCap(PromotionFeedPolicy? policy)
+    {
+        if (policy is null || policy.MaxCards <= 0)
+        {
+            return PromotionDisplayCap;
+        }
+
+        return policy.MaxCards;
+    }
+
+    /// <summary>
     /// Checks whether the promotion is still inside the suppression window.
     /// </summary>
-    private static bool IsPromotionSuppressed(PromotionFeedItem item, DateTime nowUtc)
+    private static bool IsPromotionSuppressed(PromotionFeedItem item, DateTime nowUtc, TimeSpan suppressionWindow)
     {
         var storageKey = BuildPromotionSeenAtStorageKey(item);
         var seenAtTicks = Preferences.Default.Get(storageKey, 0L);
@@ -494,7 +592,7 @@ public sealed class FeedViewModel : BaseViewModel
 
         var seenAtUtc = new DateTime(seenAtTicks, DateTimeKind.Utc);
         var elapsed = nowUtc - seenAtUtc;
-        return elapsed >= TimeSpan.Zero && elapsed < PromotionDisplaySuppressionWindow;
+        return elapsed >= TimeSpan.Zero && elapsed < suppressionWindow;
     }
 
     /// <summary>
@@ -706,10 +804,26 @@ public sealed class FeedViewModel : BaseViewModel
     /// </summary>
     private void ClearPromotions()
     {
+        _promotionInitialCandidateCount = 0;
+        _promotionSuppressedByFrequencyCount = 0;
+        _promotionDeduplicatedCount = 0;
+        _promotionTrimmedByCapCount = 0;
+        _promotionFinalCount = 0;
+        _promotionAppliedMaxCards = 0;
+        _promotionAppliedSuppressionMinutes = 0;
+
         RunOnMain(() =>
         {
             PromotionItems.Clear();
             OnPropertyChanged(nameof(HasPromotions));
+            OnPropertyChanged(nameof(PromotionInitialCandidateCount));
+            OnPropertyChanged(nameof(PromotionSuppressedByFrequencyCount));
+            OnPropertyChanged(nameof(PromotionDeduplicatedCount));
+            OnPropertyChanged(nameof(PromotionTrimmedByCapCount));
+            OnPropertyChanged(nameof(PromotionFinalCount));
+            OnPropertyChanged(nameof(PromotionAppliedMaxCards));
+            OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
+            OnPropertyChanged(nameof(HasPromotionDiagnostics));
         });
     }
 
