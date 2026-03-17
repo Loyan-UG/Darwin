@@ -92,6 +92,7 @@ If device binding is enabled in your environment, login/refresh must carry devic
 | Billing | `GET /api/v1/billing/business/subscription/current` | `perm:AccessLoyaltyBusiness` | Business |
 | Billing | `GET /api/v1/billing/plans` | `perm:AccessLoyaltyBusiness` | Business |
 | Billing | `POST /api/v1/billing/business/subscription/cancel-at-period-end` | `perm:AccessLoyaltyBusiness` | Business |
+| Billing | `POST /api/v1/billing/business/subscription/checkout-intent` | `perm:AccessLoyaltyBusiness` | Business |
 
 ---
 
@@ -170,4 +171,3 @@ When API contracts or policies change, update these together in one PR:
 3. `Darwin.WebApi` controller mapping
 4. `DarwinWebApi.md`
 5. related mobile docs (`DarwinMobile.md`) only for app-side impact summaries
-
