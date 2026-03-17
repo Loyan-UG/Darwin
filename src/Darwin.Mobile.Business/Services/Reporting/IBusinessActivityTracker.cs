@@ -51,6 +51,16 @@ public interface IBusinessActivityTracker
     Task RecordSubscriptionCancelPreferenceChangedAsync(bool cancelAtPeriodEnd, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Records campaign targeting schema quick-fix outcome for operations telemetry.
+    /// </summary>
+    Task RecordCampaignTargetingSchemaFixAsync(bool changed, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records campaign targeting quick-fix telemetry reset event.
+    /// </summary>
+    Task RecordCampaignTargetingFixMetricsResetAsync(CancellationToken cancellationToken);
+
+    /// <summary>
     /// Returns an aggregated dashboard snapshot for the specified lookback window.
     /// </summary>
     Task<BusinessDashboardSnapshot> GetDashboardSnapshotAsync(TimeSpan lookbackWindow, CancellationToken cancellationToken);
@@ -67,6 +77,9 @@ public sealed class BusinessDashboardSnapshot
     public int SubscriptionStatusRefreshFailures { get; init; }
     public int SubscriptionCheckoutStarts { get; init; }
     public int SubscriptionCheckoutFailures { get; init; }
+    public int CampaignTargetingFixAppliedCount { get; init; }
+    public int CampaignTargetingFixNoChangeCount { get; init; }
+    public int CampaignTargetingFixMetricsResetCount { get; init; }
     public int TotalAccruedPoints { get; init; }
     public int TotalRedeemedPoints { get; init; }
     public IReadOnlyList<BusinessTopCustomerItem> TopCustomers { get; init; } = Array.Empty<BusinessTopCustomerItem>();

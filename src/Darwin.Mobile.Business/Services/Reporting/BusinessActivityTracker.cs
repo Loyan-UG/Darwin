@@ -73,6 +73,22 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             pointsDelta: 0,
             cancellationToken);
 
+    public Task RecordCampaignTargetingSchemaFixAsync(bool changed, CancellationToken cancellationToken)
+        => AppendAsync(
+            changed
+                ? BusinessActivityKind.CampaignTargetingFixApplied
+                : BusinessActivityKind.CampaignTargetingFixNoChange,
+            customerDisplayName: "Campaign targeting",
+            pointsDelta: 0,
+            cancellationToken);
+
+    public Task RecordCampaignTargetingFixMetricsResetAsync(CancellationToken cancellationToken)
+        => AppendAsync(
+            BusinessActivityKind.CampaignTargetingFixMetricsReset,
+            customerDisplayName: "Campaign targeting",
+            pointsDelta: 0,
+            cancellationToken);
+
     public Task<BusinessDashboardSnapshot> GetDashboardSnapshotAsync(TimeSpan lookbackWindow, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -91,6 +107,9 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         var subscriptionRefreshFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionStatusRefreshFailed);
         var subscriptionCheckoutStarts = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutStarted);
         var subscriptionCheckoutFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutFailed);
+        var campaignTargetingFixAppliedCount = entries.Count(x => x.Kind == BusinessActivityKind.CampaignTargetingFixApplied);
+        var campaignTargetingFixNoChangeCount = entries.Count(x => x.Kind == BusinessActivityKind.CampaignTargetingFixNoChange);
+        var campaignTargetingFixMetricsResetCount = entries.Count(x => x.Kind == BusinessActivityKind.CampaignTargetingFixMetricsReset);
 
         var topCustomers = entries
             .GroupBy(x => NormalizeCustomer(x.CustomerDisplayName))
@@ -123,6 +142,9 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             SubscriptionStatusRefreshFailures = subscriptionRefreshFailures,
             SubscriptionCheckoutStarts = subscriptionCheckoutStarts,
             SubscriptionCheckoutFailures = subscriptionCheckoutFailures,
+            CampaignTargetingFixAppliedCount = campaignTargetingFixAppliedCount,
+            CampaignTargetingFixNoChangeCount = campaignTargetingFixNoChangeCount,
+            CampaignTargetingFixMetricsResetCount = campaignTargetingFixMetricsResetCount,
             TotalAccruedPoints = accrualEntries.Sum(x => x.PointsDelta),
             TotalRedeemedPoints = redemptionEntries.Sum(x => x.PointsDelta),
             TopCustomers = topCustomers,
@@ -214,5 +236,8 @@ internal enum BusinessActivityKind
     SubscriptionCheckoutStarted = 6,
     SubscriptionCheckoutFailed = 7,
     SubscriptionCancelAtPeriodEndEnabled = 8,
-    SubscriptionCancelAtPeriodEndDisabled = 9
+    SubscriptionCancelAtPeriodEndDisabled = 9,
+    CampaignTargetingFixApplied = 10,
+    CampaignTargetingFixNoChange = 11,
+    CampaignTargetingFixMetricsReset = 12
 }
