@@ -63,6 +63,8 @@ public sealed class RewardsViewModel : BaseViewModel
     private string _campaignTargetingHint = AppResources.RewardsCampaignTargetingHintDefault;
     private string _campaignTargetingSchemaValidationMessage = string.Empty;
     private string _campaignTargetingFixStatusMessage = string.Empty;
+    private int _campaignTargetingFixAppliedCount;
+    private int _campaignTargetingFixNoChangeCount;
     private CampaignChannelOption? _selectedCampaignChannel;
     private string _campaignSearchQuery = string.Empty;
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
@@ -582,6 +584,45 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Indicates whether targeting fix status message should be shown.
     /// </summary>
     public bool HasCampaignTargetingFixStatusMessage => !string.IsNullOrWhiteSpace(CampaignTargetingFixStatusMessage);
+
+    /// <summary>
+    /// Counter for quick-fix operations that modified targeting JSON.
+    /// </summary>
+    public int CampaignTargetingFixAppliedCount
+    {
+        get => _campaignTargetingFixAppliedCount;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixAppliedCount, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Counter for quick-fix operations that found no required changes.
+    /// </summary>
+    public int CampaignTargetingFixNoChangeCount
+    {
+        get => _campaignTargetingFixNoChangeCount;
+        private set
+        {
+            if (SetProperty(ref _campaignTargetingFixNoChangeCount, value))
+            {
+                OnPropertyChanged(nameof(CampaignTargetingFixMetricsSummary));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Localized quick-fix telemetry summary for operator awareness.
+    /// </summary>
+    public string CampaignTargetingFixMetricsSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignTargetingFixMetricsFormat,
+        CampaignTargetingFixAppliedCount,
+        CampaignTargetingFixNoChangeCount);
 
     /// <summary>
     /// Selected campaign channel option used for create/update payloads.
@@ -1105,10 +1146,12 @@ public sealed class RewardsViewModel : BaseViewModel
             {
                 CampaignTargetingJsonInput = fixedJson;
                 CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixAppliedMessage;
+                CampaignTargetingFixAppliedCount++;
             }
             else
             {
                 CampaignTargetingFixStatusMessage = AppResources.RewardsCampaignTargetingFixNoChangesMessage;
+                CampaignTargetingFixNoChangeCount++;
             }
         });
 
