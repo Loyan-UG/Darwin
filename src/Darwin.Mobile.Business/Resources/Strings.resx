@@ -639,6 +639,63 @@
   <data name="RewardsCampaignTargetingJsonPlaceholder" xml:space="preserve">
     <value>Targeting JSON (optional, object)</value>
   </data>
+  <data name="RewardsCampaignTargetingPresetTitle" xml:space="preserve">
+    <value>Quick audience presets</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintDefault" xml:space="preserve">
+    <value>Audience: joined members (default).</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintJoinedMembers" xml:space="preserve">
+    <value>Joined members preset: keep {"audienceKind":"JoinedMembers"}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintTierSegment" xml:space="preserve">
+    <value>Tier preset: provide tier value, for example {"audienceKind":"TierSegment","tier":"Gold"}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintPointsThreshold" xml:space="preserve">
+    <value>Points preset: provide minimumPoints, for example {"audienceKind":"PointsThreshold","minimumPoints":100}.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintDateWindow" xml:space="preserve">
+    <value>Date-window preset: provide eligibleFromUtc and eligibleToUtc in ISO-8601 UTC format.</value>
+  </data>
+  <data name="RewardsCampaignTargetingHintInvalid" xml:space="preserve">
+    <value>Targeting JSON is invalid. Use presets or a valid JSON object.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaTierMissing" xml:space="preserve">
+    <value>Tier audience requires a non-empty "tier" value.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaMinimumPointsMissing" xml:space="preserve">
+    <value>Points audience requires a non-negative "minimumPoints" value.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaDateWindowMissing" xml:space="preserve">
+    <value>Date-window audience requires valid "eligibleFromUtc" and "eligibleToUtc" UTC values.</value>
+  </data>
+  <data name="RewardsCampaignTargetingSchemaDateWindowRangeInvalid" xml:space="preserve">
+    <value>Date-window audience requires eligibleFromUtc to be earlier than or equal to eligibleToUtc.</value>
+  </data>
+  <data name="RewardsCampaignTargetingApplyFixButton" xml:space="preserve">
+    <value>Apply quick fix</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixAppliedMessage" xml:space="preserve">
+    <value>Quick fix applied to targeting JSON.</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixNoChangesMessage" xml:space="preserve">
+    <value>No schema fix was needed for targeting JSON.</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsFormat" xml:space="preserve">
+    <value>Quick-fix stats — applied: {0}, no-change: {1}</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsResetButton" xml:space="preserve">
+    <value>Reset quick-fix stats</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsResetMessage" xml:space="preserve">
+    <value>Quick-fix stats were reset.</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsWindowFormat" xml:space="preserve">
+    <value>Window start: {0} · Last reset: {1}</value>
+  </data>
+  <data name="RewardsCampaignTargetingFixMetricsWindowUnknown" xml:space="preserve">
+    <value>—</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>
@@ -675,6 +732,12 @@
   <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
     <value>Expired</value>
   </data>
+  <data name="RewardsCampaignAudienceFilterPickerTitle" xml:space="preserve">
+    <value>Audience filter</value>
+  </data>
+  <data name="RewardsCampaignAudienceFilterAll" xml:space="preserve">
+    <value>All audiences</value>
+  </data>
   <data name="RewardsCampaignSortPickerTitle" xml:space="preserve">
     <value>Sort by</value>
   </data>
@@ -699,8 +762,44 @@
   <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
     <value>Showing {0} of {1} campaigns</value>
   </data>
+  <data name="RewardsCampaignAudienceSummaryDefault" xml:space="preserve">
+    <value>Audience: all joined members</value>
+  </data>
+  <data name="RewardsCampaignAudienceSummaryFormat" xml:space="preserve">
+    <value>Audience: {0}</value>
+  </data>
+  <data name="RewardsCampaignAudienceSummaryWithEligibilityFormat" xml:space="preserve">
+    <value>Audience: {0} • {1}</value>
+  </data>
+  <data name="RewardsCampaignAudienceJoinedMembers" xml:space="preserve">
+    <value>joined members</value>
+  </data>
+  <data name="RewardsCampaignAudienceTierSegment" xml:space="preserve">
+    <value>tier segment</value>
+  </data>
+  <data name="RewardsCampaignAudiencePointsThreshold" xml:space="preserve">
+    <value>points threshold</value>
+  </data>
+  <data name="RewardsCampaignAudienceDateWindow" xml:space="preserve">
+    <value>date window</value>
+  </data>
+  <data name="RewardsCampaignEligibilityTierFormat" xml:space="preserve">
+    <value>Tier: {0}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityRangeFormat" xml:space="preserve">
+    <value>Points {0}-{1}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityMinFormat" xml:space="preserve">
+    <value>Points ≥ {0}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityMaxFormat" xml:space="preserve">
+    <value>Points ≤ {0}</value>
+  </data>
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}</value>
+  </data>
+  <data name="RewardsCampaignAudienceMetricsFormat" xml:space="preserve">
+    <value>Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}</value>
   </data>
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>
