@@ -1885,6 +1885,69 @@ public sealed class RewardsViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Applies the requested audience kind directly from audience KPI action chips.
+    /// </summary>
+    /// <param name="audienceKind">Target audience key.</param>
+    private Task ApplyCampaignAudienceFilterAsync(string? audienceKind)
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            if (string.IsNullOrWhiteSpace(audienceKind))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            if (string.Equals(SelectedCampaignAudienceFilter?.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions
+                .FirstOrDefault(option => string.Equals(option.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+                ?? SelectedCampaignAudienceFilter;
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Applies a targeting JSON preset in the campaign editor to speed up common audience setups.
+    /// </summary>
+    /// <param name="presetKey">Audience preset key requested by the operator.</param>
+    private Task ApplyCampaignTargetingPresetAsync(string? presetKey)
+    {
+        if (IsBusy || !CanManageRewards)
+        {
+            return Task.CompletedTask;
+        }
+
+        var normalizedKey = presetKey?.Trim();
+        var targetingJson = normalizedKey switch
+        {
+            "JoinedMembers" => """{"audienceKind":"JoinedMembers"}""",
+            "TierSegment" => """{"audienceKind":"TierSegment","tier":"Gold"}""",
+            "PointsThreshold" => """{"audienceKind":"PointsThreshold","minimumPoints":100}""",
+            "DateWindow" => """{"audienceKind":"DateWindow","eligibleFromUtc":"2026-01-01T00:00:00Z","eligibleToUtc":"2026-01-31T23:59:59Z"}""",
+            _ => "{}"
+        };
+
+        RunOnMain(() =>
+        {
+            CampaignTargetingJsonInput = targetingJson;
+            ErrorMessage = null;
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
     /// Loads business campaigns for lightweight lifecycle controls in Rewards screen.
     /// </summary>
     private async Task<List<BusinessCampaignEditorItem>> LoadCampaignItemsAsync()
