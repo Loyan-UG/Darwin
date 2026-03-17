@@ -741,6 +741,9 @@
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}</value>
   </data>
+  <data name="RewardsCampaignAudienceMetricsFormat" xml:space="preserve">
+    <value>Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}</value>
+  </data>
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>

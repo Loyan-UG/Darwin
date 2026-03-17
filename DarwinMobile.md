@@ -512,6 +512,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business campaign search now also matches campaign body text (besides internal name/title) to improve findability across long-form campaign content.
 - Business campaign list now shows localized audience/eligibility summary parsed from targeting JSON (with compatibility fallback to `eligibilityRules[0]`) so operators can verify segmentation without opening editor.
 - Business campaign toolbar now includes audience-kind filtering (all/joined/tier/points/date-window) so operators can isolate segmentation cohorts in one tap.
+- Business campaign audience metrics now include actionable audience KPI chips (all/joined/tier/points/date-window) with toggle-to-clear behavior for faster cohort drill-down workflows.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).

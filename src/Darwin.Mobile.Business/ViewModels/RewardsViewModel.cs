@@ -133,6 +133,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ClearCampaignFiltersCommand = new AsyncCommand(ClearCampaignFiltersAsync, () => !IsBusy && HasActiveCampaignFilters);
         ClearCampaignSearchCommand = new AsyncCommand(ClearCampaignSearchAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(CampaignSearchQuery));
         ApplyCampaignStateFilterCommand = new AsyncCommand<string>(ApplyCampaignStateFilterAsync, _ => !IsBusy);
+        ApplyCampaignAudienceFilterCommand = new AsyncCommand<string>(ApplyCampaignAudienceFilterAsync, _ => !IsBusy);
     }
 
 
@@ -353,6 +354,62 @@ public sealed class RewardsViewModel : BaseViewModel
     public string AllCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterAll, TotalCampaignCount);
 
     /// <summary>
+    /// Gets count of joined-members audience campaigns from full campaign dataset.
+    /// </summary>
+    public int JoinedMembersCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.JoinedMembers);
+
+    /// <summary>
+    /// Gets count of tier-segment audience campaigns from full campaign dataset.
+    /// </summary>
+    public int TierSegmentCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.TierSegment);
+
+    /// <summary>
+    /// Gets count of points-threshold audience campaigns from full campaign dataset.
+    /// </summary>
+    public int PointsThresholdCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.PointsThreshold);
+
+    /// <summary>
+    /// Gets count of date-window audience campaigns from full campaign dataset.
+    /// </summary>
+    public int DateWindowCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.DateWindow);
+
+    /// <summary>
+    /// Localized summary line for audience segmentation quick metrics.
+    /// </summary>
+    public string CampaignAudienceMetricsSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignAudienceMetricsFormat,
+        JoinedMembersCampaignCount,
+        TierSegmentCampaignCount,
+        PointsThresholdCampaignCount,
+        DateWindowCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for all audiences.
+    /// </summary>
+    public string AllCampaignAudienceMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceFilterAll, TotalCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for joined-members audience.
+    /// </summary>
+    public string JoinedMembersCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceJoinedMembers, JoinedMembersCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for tier-segment audience.
+    /// </summary>
+    public string TierSegmentCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceTierSegment, TierSegmentCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for points-threshold audience.
+    /// </summary>
+    public string PointsThresholdCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudiencePointsThreshold, PointsThresholdCampaignCount);
+
+    /// <summary>
+    /// KPI chip text for date-window audience.
+    /// </summary>
+    public string DateWindowCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceDateWindow, DateWindowCampaignCount);
+
+    /// <summary>
     /// User-entered points required for the reward tier.
     /// </summary>
     public string PointsRequiredInput
@@ -505,6 +562,7 @@ public sealed class RewardsViewModel : BaseViewModel
     public AsyncCommand ClearCampaignFiltersCommand { get; }
     public AsyncCommand ClearCampaignSearchCommand { get; }
     public AsyncCommand<string> ApplyCampaignStateFilterCommand { get; }
+    public AsyncCommand<string> ApplyCampaignAudienceFilterCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -1188,11 +1246,22 @@ public sealed class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(ScheduledCampaignMetricText));
         OnPropertyChanged(nameof(ActiveCampaignMetricText));
         OnPropertyChanged(nameof(ExpiredCampaignMetricText));
+        OnPropertyChanged(nameof(JoinedMembersCampaignCount));
+        OnPropertyChanged(nameof(TierSegmentCampaignCount));
+        OnPropertyChanged(nameof(PointsThresholdCampaignCount));
+        OnPropertyChanged(nameof(DateWindowCampaignCount));
+        OnPropertyChanged(nameof(CampaignAudienceMetricsSummary));
+        OnPropertyChanged(nameof(AllCampaignAudienceMetricText));
+        OnPropertyChanged(nameof(JoinedMembersCampaignMetricText));
+        OnPropertyChanged(nameof(TierSegmentCampaignMetricText));
+        OnPropertyChanged(nameof(PointsThresholdCampaignMetricText));
+        OnPropertyChanged(nameof(DateWindowCampaignMetricText));
         OnPropertyChanged(nameof(HasActiveCampaignFilters));
         OnPropertyChanged(nameof(HasCampaignSearchQuery));
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
         ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -1203,6 +1272,16 @@ public sealed class RewardsViewModel : BaseViewModel
     private int CountCampaignsByState(string state)
     {
         return _allCampaigns.Count(c => string.Equals(c.CampaignState, state, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Counts campaigns by audience-kind key in a case-insensitive manner.
+    /// </summary>
+    /// <param name="audienceKind">Audience key from targeting metadata.</param>
+    /// <returns>Number of campaigns mapped to the requested audience kind.</returns>
+    private int CountCampaignsByAudienceKind(string audienceKind)
+    {
+        return _allCampaigns.Count(c => string.Equals(c.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -1272,6 +1351,39 @@ public sealed class RewardsViewModel : BaseViewModel
             SelectedCampaignStateFilter = CampaignStateFilterOptions
                 .FirstOrDefault(option => string.Equals(option.StateKey, state, StringComparison.OrdinalIgnoreCase))
                 ?? SelectedCampaignStateFilter;
+        });
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Applies the requested audience kind directly from audience KPI action chips.
+    /// </summary>
+    /// <param name="audienceKind">Target audience key.</param>
+    private Task ApplyCampaignAudienceFilterAsync(string? audienceKind)
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() =>
+        {
+            if (string.IsNullOrWhiteSpace(audienceKind))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            if (string.Equals(SelectedCampaignAudienceFilter?.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions.FirstOrDefault();
+                return;
+            }
+
+            SelectedCampaignAudienceFilter = CampaignAudienceFilterOptions
+                .FirstOrDefault(option => string.Equals(option.AudienceKindKey, audienceKind, StringComparison.OrdinalIgnoreCase))
+                ?? SelectedCampaignAudienceFilter;
         });
 
         return Task.CompletedTask;
@@ -1410,6 +1522,7 @@ public sealed class RewardsViewModel : BaseViewModel
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
         ClearCampaignSearchCommand.RaiseCanExecuteChanged();
         ApplyCampaignStateFilterCommand.RaiseCanExecuteChanged();
+        ApplyCampaignAudienceFilterCommand.RaiseCanExecuteChanged();
     }
 }
 

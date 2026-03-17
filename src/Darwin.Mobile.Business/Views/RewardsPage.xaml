@@ -235,6 +235,33 @@
                         FontSize="12" />
             </HorizontalStackLayout>
 
+            <Label Text="{Binding CampaignAudienceMetricsSummary}"
+                   FontSize="12"
+                   Opacity="0.75" />
+
+            <HorizontalStackLayout Spacing="6">
+                <Button Text="{Binding AllCampaignAudienceMetricText}"
+                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                        CommandParameter=""
+                        FontSize="12" />
+                <Button Text="{Binding JoinedMembersCampaignMetricText}"
+                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                        CommandParameter="JoinedMembers"
+                        FontSize="12" />
+                <Button Text="{Binding TierSegmentCampaignMetricText}"
+                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                        CommandParameter="TierSegment"
+                        FontSize="12" />
+                <Button Text="{Binding PointsThresholdCampaignMetricText}"
+                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                        CommandParameter="PointsThreshold"
+                        FontSize="12" />
+                <Button Text="{Binding DateWindowCampaignMetricText}"
+                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                        CommandParameter="DateWindow"
+                        FontSize="12" />
+            </HorizontalStackLayout>
+
             <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyFiltered}"
                    Opacity="0.8"
                    IsVisible="{Binding HasCampaigns, Converter={StaticResource InverseBoolConverter}}" />
