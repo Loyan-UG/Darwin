@@ -639,6 +639,9 @@
   <data name="RewardsCampaignTargetingJsonPlaceholder" xml:space="preserve">
     <value>Targeting JSON (optional, object)</value>
   </data>
+  <data name="RewardsCampaignTargetingPresetTitle" xml:space="preserve">
+    <value>Quick audience presets</value>
+  </data>
   <data name="RewardsCampaignPayloadJsonPlaceholder" xml:space="preserve">
     <value>Payload JSON (optional, object)</value>
   </data>
@@ -675,6 +678,12 @@
   <data name="RewardsCampaignStateFilterExpired" xml:space="preserve">
     <value>Expired</value>
   </data>
+  <data name="RewardsCampaignAudienceFilterPickerTitle" xml:space="preserve">
+    <value>Audience filter</value>
+  </data>
+  <data name="RewardsCampaignAudienceFilterAll" xml:space="preserve">
+    <value>All audiences</value>
+  </data>
   <data name="RewardsCampaignSortPickerTitle" xml:space="preserve">
     <value>Sort by</value>
   </data>
@@ -699,8 +708,44 @@
   <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
     <value>Showing {0} of {1} campaigns</value>
   </data>
+  <data name="RewardsCampaignAudienceSummaryDefault" xml:space="preserve">
+    <value>Audience: all joined members</value>
+  </data>
+  <data name="RewardsCampaignAudienceSummaryFormat" xml:space="preserve">
+    <value>Audience: {0}</value>
+  </data>
+  <data name="RewardsCampaignAudienceSummaryWithEligibilityFormat" xml:space="preserve">
+    <value>Audience: {0} • {1}</value>
+  </data>
+  <data name="RewardsCampaignAudienceJoinedMembers" xml:space="preserve">
+    <value>joined members</value>
+  </data>
+  <data name="RewardsCampaignAudienceTierSegment" xml:space="preserve">
+    <value>tier segment</value>
+  </data>
+  <data name="RewardsCampaignAudiencePointsThreshold" xml:space="preserve">
+    <value>points threshold</value>
+  </data>
+  <data name="RewardsCampaignAudienceDateWindow" xml:space="preserve">
+    <value>date window</value>
+  </data>
+  <data name="RewardsCampaignEligibilityTierFormat" xml:space="preserve">
+    <value>Tier: {0}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityRangeFormat" xml:space="preserve">
+    <value>Points {0}-{1}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityMinFormat" xml:space="preserve">
+    <value>Points ≥ {0}</value>
+  </data>
+  <data name="RewardsCampaignEligibilityMaxFormat" xml:space="preserve">
+    <value>Points ≤ {0}</value>
+  </data>
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}</value>
+  </data>
+  <data name="RewardsCampaignAudienceMetricsFormat" xml:space="preserve">
+    <value>Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}</value>
   </data>
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>

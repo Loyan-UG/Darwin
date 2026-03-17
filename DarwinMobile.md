@@ -510,6 +510,10 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - "All" lifecycle KPI chip now resets only the state filter while keeping search/sort criteria intact for faster repeated operator triage loops.
 - Campaign management toolbar now includes "Clear search" action that resets only search query while preserving state/sort context.
 - Business campaign search now also matches campaign body text (besides internal name/title) to improve findability across long-form campaign content.
+- Business campaign list now shows localized audience/eligibility summary parsed from targeting JSON (with compatibility fallback to `eligibilityRules[0]`) so operators can verify segmentation without opening editor.
+- Business campaign toolbar now includes audience-kind filtering (all/joined/tier/points/date-window) so operators can isolate segmentation cohorts in one tap.
+- Business campaign audience metrics now include actionable audience KPI chips (all/joined/tier/points/date-window) with toggle-to-clear behavior for faster cohort drill-down workflows.
+- Business campaign editor now offers quick audience targeting presets (joined/tier/points/date-window) to accelerate common segmentation setup while keeping JSON editable.
 - Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
 - Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
 - Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
@@ -519,7 +523,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
-- **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign search across name/title/body with docs/backlog synchronized.
+- **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign audience-kind filtering in Business list with docs/backlog synchronized.
 - **Recommended next step (new chat):** resume with Promotions foundation backlog item (contracts/lifecycle refinement), then continue incremental delivery with per-step docs/backlog updates.
 - Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
 - Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
