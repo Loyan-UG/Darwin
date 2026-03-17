@@ -441,14 +441,17 @@ public sealed class FeedViewModel : BaseViewModel
             .ToList();
 
         var nowUtc = DateTime.UtcNow;
+        var suppressionWindow = ResolvePromotionSuppressionWindow(result.Value.AppliedPolicy);
+        var displayCap = ResolvePromotionDisplayCap(result.Value.AppliedPolicy);
+
         var eligible = unique
-            .Where(item => !IsPromotionSuppressed(item, nowUtc))
-            .Take(PromotionDisplayCap)
+            .Where(item => !IsPromotionSuppressed(item, nowUtc, suppressionWindow))
+            .Take(displayCap)
             .ToList();
 
         if (eligible.Count == 0)
         {
-            eligible = unique.Take(PromotionDisplayCap).ToList();
+            eligible = unique.Take(displayCap).ToList();
         }
 
         RunOnMain(() =>
@@ -481,9 +484,36 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Resolves effective client-side suppression window from server-applied policy.
+    /// </summary>
+    private static TimeSpan ResolvePromotionSuppressionWindow(PromotionFeedPolicy? policy)
+    {
+        var minutes = policy?.FrequencyWindowMinutes ?? policy?.SuppressionWindowMinutes;
+        if (!minutes.HasValue || minutes.Value <= 0)
+        {
+            return PromotionDisplaySuppressionWindow;
+        }
+
+        return TimeSpan.FromMinutes(minutes.Value);
+    }
+
+    /// <summary>
+    /// Resolves effective display-cap from server-applied policy while keeping safe client fallback.
+    /// </summary>
+    private static int ResolvePromotionDisplayCap(PromotionFeedPolicy? policy)
+    {
+        if (policy is null || policy.MaxCards <= 0)
+        {
+            return PromotionDisplayCap;
+        }
+
+        return policy.MaxCards;
+    }
+
+    /// <summary>
     /// Checks whether the promotion is still inside the suppression window.
     /// </summary>
-    private static bool IsPromotionSuppressed(PromotionFeedItem item, DateTime nowUtc)
+    private static bool IsPromotionSuppressed(PromotionFeedItem item, DateTime nowUtc, TimeSpan suppressionWindow)
     {
         var storageKey = BuildPromotionSeenAtStorageKey(item);
         var seenAtTicks = Preferences.Default.Get(storageKey, 0L);
@@ -494,7 +524,7 @@ public sealed class FeedViewModel : BaseViewModel
 
         var seenAtUtc = new DateTime(seenAtTicks, DateTimeKind.Utc);
         var elapsed = nowUtc - seenAtUtc;
-        return elapsed >= TimeSpan.Zero && elapsed < PromotionDisplaySuppressionWindow;
+        return elapsed >= TimeSpan.Zero && elapsed < suppressionWindow;
     }
 
     /// <summary>
