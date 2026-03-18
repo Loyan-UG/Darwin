@@ -828,6 +828,12 @@
   <data name="RewardsCampaignDiagnosticsSnapshotAtFormat" xml:space="preserve">
     <value>Diagnose-Snapshot um: {0}</value>
   </data>
+  <data name="RewardsCampaignDiagnosticsFreshnessFreshFormat" xml:space="preserve">
+    <value>Snapshot-Aktualität: vor {0} Minute(n)</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsFreshnessStaleFormat" xml:space="preserve">
+    <value>Warnung zur Snapshot-Aktualität: vor {0} Minute(n)</value>
+  </data>
   <data name="RewardsCampaignCopyDiagnosticsButton" xml:space="preserve">
     <value>Kampagnen-Diagnose kopieren</value>
   </data>

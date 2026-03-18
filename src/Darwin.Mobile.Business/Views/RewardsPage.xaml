@@ -266,6 +266,18 @@
                    Opacity="0.75"
                    IsVisible="{Binding HasCampaignDiagnosticsSnapshotAt}" />
 
+            <Label Text="{Binding CampaignDiagnosticsFreshnessText}"
+                   FontSize="11"
+                   Opacity="0.75"
+                   TextColor="OrangeRed"
+                   IsVisible="{Binding IsCampaignDiagnosticsSnapshotStale}" />
+
+            <Label Text="{Binding CampaignDiagnosticsFreshnessText}"
+                   FontSize="11"
+                   Opacity="0.75"
+                   TextColor="{StaticResource BrushPrimary}"
+                   IsVisible="{Binding IsCampaignDiagnosticsSnapshotStale, Converter={StaticResource InverseBoolConverter}}" />
+
             <Label Text="{Binding CampaignDiagnosticsVisibleCampaignsPreview}"
                    FontSize="11"
                    Opacity="0.75" />

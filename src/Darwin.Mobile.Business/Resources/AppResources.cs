@@ -298,6 +298,8 @@ public static class AppResources
     public static string RewardsCampaignChannelMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelMetricsFormat), Culture) ?? "In-app only: {0} · In-app + Push: {1} · Other: {2}";
     public static string RewardsCampaignStateMetricChipFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricChipFormat), Culture) ?? "{0} ({1})";
     public static string RewardsCampaignDiagnosticsSnapshotAtFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsSnapshotAtFormat), Culture) ?? "Diagnostics snapshot at: {0}";
+    public static string RewardsCampaignDiagnosticsFreshnessFreshFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsFreshnessFreshFormat), Culture) ?? "Snapshot freshness: {0} minute(s) old";
+    public static string RewardsCampaignDiagnosticsFreshnessStaleFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsFreshnessStaleFormat), Culture) ?? "Snapshot freshness warning: {0} minute(s) old";
     public static string RewardsCampaignCopyDiagnosticsButton => ResourceManager.GetString(nameof(RewardsCampaignCopyDiagnosticsButton), Culture) ?? "Copy campaign diagnostics";
     public static string RewardsCampaignClearDiagnosticsStatusButton => ResourceManager.GetString(nameof(RewardsCampaignClearDiagnosticsStatusButton), Culture) ?? "Clear diagnostics status";
     public static string RewardsCampaignDiagnosticsAppliedFiltersFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsAppliedFiltersFormat), Culture) ?? "Applied filters — State: {0} · Audience: {1} · Search: {2} · Sort: {3}";

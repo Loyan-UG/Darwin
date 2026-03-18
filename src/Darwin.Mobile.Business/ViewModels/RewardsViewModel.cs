@@ -375,6 +375,32 @@ public sealed partial class RewardsViewModel : BaseViewModel
             : string.Empty;
 
     /// <summary>
+    /// Localized freshness text for campaign diagnostics snapshot to help operators identify stale context.
+    /// </summary>
+    public string CampaignDiagnosticsFreshnessText
+    {
+        get
+        {
+            if (!_campaignDiagnosticsSnapshotAtLocal.HasValue)
+            {
+                return string.Empty;
+            }
+
+            var ageMinutes = Math.Max(0, (int)Math.Round((DateTimeOffset.Now - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
+            return ageMinutes > 15
+                ? string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignDiagnosticsFreshnessStaleFormat, ageMinutes)
+                : string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignDiagnosticsFreshnessFreshFormat, ageMinutes);
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether the latest campaign diagnostics snapshot crossed the stale threshold.
+    /// </summary>
+    public bool IsCampaignDiagnosticsSnapshotStale
+        => _campaignDiagnosticsSnapshotAtLocal.HasValue
+           && (DateTimeOffset.Now - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
+
+    /// <summary>
     /// Localized preview of visible campaign titles to make diagnostics payload easier to read before copying.
     /// </summary>
     public string CampaignDiagnosticsVisibleCampaignsPreview
@@ -1840,6 +1866,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(DateWindowCampaignMetricText));
         _campaignDiagnosticsSnapshotAtLocal = DateTimeOffset.Now;
         OnPropertyChanged(nameof(CampaignDiagnosticsSnapshotAtText));
+        OnPropertyChanged(nameof(CampaignDiagnosticsFreshnessText));
+        OnPropertyChanged(nameof(IsCampaignDiagnosticsSnapshotStale));
         OnPropertyChanged(nameof(HasCampaignDiagnosticsSnapshotAt));
         OnPropertyChanged(nameof(HasActiveCampaignFilters));
         OnPropertyChanged(nameof(HasCampaignSearchQuery));
@@ -2103,6 +2131,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 CampaignAudienceMetricsSummary,
                 CampaignChannelMetricsSummary,
                 CampaignDiagnosticsSnapshotAtText,
+                CampaignDiagnosticsFreshnessText,
                 CampaignDiagnosticsVisibleCampaignsPreview,
                 string.Format(
                     CultureInfo.InvariantCulture,
