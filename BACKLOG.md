@@ -265,22 +265,22 @@ It is designed as the **single source of truth** for development planning.
 - [x] Inactive reminder background worker observability hardened with split suppression/failure rates and configurable warning thresholds (`HighFailureRateWarningThresholdPercent`, `HighCooldownSuppressionWarningThresholdPercent`) for proactive operations alerting.
 - [x] Inactive reminder HTTP gateway dispatcher now applies bounded retry with exponential backoff+jitter for transient failures (408/429/5xx/transport timeout), improving provider-native sender hardening without changing non-transient failure taxonomy.
 
-## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
-1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
-2. **P1 — Promotions delivery consistency:** align server-side feed guardrails (priority/cap/dedup/frequency) with current mobile client guardrails and expose suppression policy in contracts.
-3. **P1 — Promotions operations:** add minimal business/admin campaign management APIs (CRUD + activation) and minimal management UI.
-4. **P2 — Inactive reminders completion:** extend current reminder baseline with explicit dispatch/suppression workflow (send log + cooldown policy) and provider-native sender integration hardening.
+## 3.9 Mobile Execution Queue (Updated for next chat continuation)
+1. **P1 — Promotions verification & hardening:** add/finish automated tests for lifecycle resolution (`Draft/Scheduled/Active/Expired`), priority extraction, and eligibility-rules parsing paths in promotions handlers.
+2. **P1 — Promotions operations polish:** continue advanced business/admin campaign management UX polish (operator workflows, validation refinements, and troubleshooting affordances).
+3. **P2 — Inactive reminders completion:** finalize provider-native sender integration behind gateway and expand failure taxonomy mapping + observability for remediation playbooks.
+4. **P2 — Delivery evidence:** attach fresh mobile/server build + test evidence from current branch state (tracked in `DarwinTesting.md`) after environment baseline re-check.
 
 ### 3.9.1 Handoff Status (Prepared for next chat)
 - Current iteration status: **Closed cleanly** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
-- Last delivered increment: campaign targeting quick-fix telemetry persisted into business activity logs and surfaced in dashboard/report exports.
-- Next recommended starting point in new chat: treat current quick-fix telemetry workstream as closed, run a fresh repository-wide baseline check (because parallel updates landed), then proceed with error-remediation items and continue from **3.9 / P0 Promotions foundation**.
+- Last delivered increment: promotions feed hardening for priority parsing, eligibility rule-array compatibility parsing, and lifecycle-state classification consistency updates.
+- Next recommended starting point in new chat: run a fresh repository baseline validation, then start from **3.9 / P1 Promotions verification & hardening**.
 
 ### 3.9.2 Ready-to-continue checklist (next chat)
 1. Re-open docs and code from latest `dev` snapshot (no cached assumptions) and refresh done/pending flags.
-2. Execute a focused mobile build/compile pass and capture only currently-active blockers.
+2. Execute a focused mobile/server build+test pass and capture only currently-active blockers.
 3. Close blocker fixes in isolated increments (small commits) before resuming feature delivery.
-4. Continue planned queue in order: **P0 Promotions foundation** → **P1 delivery consistency** → **P1 operations** → **P2 reminders completion**.
+4. Continue planned queue in order: **P1 verification** → **P1 operations polish** → **P2 reminders completion** → **P2 delivery evidence**.
 
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 
