@@ -51,4 +51,8 @@
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\images\DarwinJustLogo.svg" />
+  </ItemGroup>
+
 </Project>

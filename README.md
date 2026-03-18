@@ -1,4 +1,9 @@
-# 🛒 Darwin CMS + E-Commerce + Loyalty + CRM Platform
+<h1>
+  <img src="./src/Darwin.Web/wwwroot/images/DarwinJustLogo.png" alt="Darwin Logo" width="64" style="vertical-align: middle;" />
+  Darwin Platform
+</h1>
+
+## CMS + CRM + E-Commerce + Loyalty + Mobile
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
@@ -8,10 +13,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/shahramvafadar/Darwin/build.yml?branch=master&logo=githubactions&label=CI)](../../actions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.txt)
 
-Darwin is a **modern CMS + e-commerce platform + CRM** designed for **European SMBs** who need a flexible, future-proof system that can run even on **shared hosting**.
-
-Darwin also includes a **customer loyalty system** (QR-based session scanning, points accrual/redemption, campaigns/promotions) and a **two-app mobile suite** (Consumer + Business).  
-The next major pillar after the mobile wave is the **CRM module**, tightly integrated with identity, loyalty, and engagement.
+Darwin is a unified platform that combines a content management system (CMS) with robust e‑commerce, a flexible loyalty engine, a forthcoming customer relationship management (CRM) module and modern .NET MAUI mobile apps. The goal of the platform is to allow businesses to manage content, products, loyalty programmes and customer engagement from a single codebase while exposing a RESTful WebApi for integration and providing first‑party mobile experiences for both consumers and business staff. Contract‑first development ensures that mobile apps, WebApi and web portals all stay in sync through the shared Darwin.Contracts library.
 
 ## 📌 Documentation Map (Start Here)
 
@@ -30,20 +32,20 @@ Use this README as the entry point, then jump to the specialized docs:
 
 This is a **high-level snapshot**. For detailed planning and the authoritative status per workstream, use `BACKLOG.md`.
 
-Legend:
-- ✅ Done / Stable
-- 🚧 In Progress (actively worked on)
-- 🟡 Partial (some parts done, more needed)
-- 💤 Not started (future)
+## Status Snapshot
 
-| Pillar | Status | Notes |
-|---|---|---|
-| Web CMS + Admin | 🟡 | Core CMS/Catalog is present; admin polish and coverage are ongoing. |
-| E-Commerce foundation | 🟡 | Catalog/pricing/inventory exist; checkout/orders/shipping/payments are not fully complete end-to-end. |
-| Loyalty system | 🟡 | Core QR scan-session flow exists; campaigns/promotions are evolving. |
-| Public WebApi | 🚧 | Contracts-first API for mobile + future integrations; see `DarwinWebApi.md`. |
-| Mobile apps (MAUI) | 🚧 | Consumer + Business apps exist; features are being refined and expanded. |
-| CRM module | 💤 | Planned after the mobile wave; must integrate with loyalty + engagement + consent. |
+| Pillar                     | Status         | Notes                                                                                                                                                                                                       |
+| -------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Domain & Application**   | ✔︎ Complete    | Clean architecture implemented with Commands/Queries, DTOs and validators.                                                                                                                                  |
+| **Infrastructure**         | ✔︎ Complete    | Persistence (EF Core), Identity & JWT, Data Protection, Notifications.                                                                                                                                      |
+| **Web CMS & E‑Commerce**   | ▶︎ In Progress   | Content & page management, product catalogue, cart & order flows.                                                                                                                                           |
+| **Loyalty System**         | ▶︎ Phase 3+    | Scan‑session based accrual/redemption, rewards & campaigns, server‑side guardrails, push notifications and analytics implemented. Remaining work: advanced campaign editor & dispatch/suppression workflow. |
+| **REST WebApi**            | ▶︎ Mature      | All mobile‑facing and admin endpoints delivered; continuous improvements & new endpoints are tracked in the backlog.                                                                                        |
+| **Mobile Apps (Consumer)** | ▶︎ Phase 3+    | Login/register, QR display, discovery & map, rewards dashboard, promotions feed, push registration and analytics done; improvements in progress (multi‑business wallet, reminders).                         |
+| **Mobile Apps (Business)** | ▶︎ Phase 3+    | QR scanning, point accrual/redemption, reward management, dashboard & reporting, business campaign editor implemented; enhancements to campaign editor and reminder workflows planned.                      |
+| **CRM Module**             | ⚙︎ Planned     | Entities and flows for leads, contacts, opportunities and segmentation under design; integration with loyalty and commerce to follow.                                                                       |
+| **Storefront**             | ⚙︎ Planned     | Customer‑facing shop interface (ASP.NET MVC/Blazor) with checkout and payment integration.                                                                                                                  |
+| **Testing & QA**           | ▶︎ In Progress | Integration, contract and concurrency tests exist; additional coverage for new features and push‑sync scenarios planned.                                                                                    |
 
 ---
 
@@ -170,6 +172,18 @@ WebApi provides contracts-first surfaces for:
 - JWT bearer auth (`JwtTokenService`); rate limiting on login/refresh (`EnableRateLimiting` policies).
 - Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
 - `ICurrentUserService` resolved from claims (no admin fallback).
+
+---
+
+## CRM Overview
+
+A CRM module is being designed to complement the CMS and loyalty system.  Planned capabilities include:
+
+* **Lead & Opportunity Management** – Define lead entities with lifecycle stages, convert leads to opportunities and track opportunity pipelines.
+* **Customer 360°** – Store customer profiles, interactions, loyalty balances and purchasing history in a unified view.
+* **Segmentation & Campaigns** – Segment customers based on attributes or behaviour (e.g. loyalty tier, purchase frequency, geography) and target them with personalised campaigns.
+* **Integration with Loyalty & Commerce** – CRM data will feed into loyalty rules and e‑commerce workflows, enabling cross‑sell/upsell scenarios and measuring campaign ROI.
+
 
 ---
 
