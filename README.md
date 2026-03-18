@@ -1,7 +1,13 @@
-<h1>
-  <img src="./src/Darwin.Web/wwwroot/images/DarwinJustLogo.png" alt="Darwin Logo" width="64" style="vertical-align: middle;" />
-  Darwin Platform
-</h1>
+<table>
+  <tr>
+    <td width="100">
+      <img src="./src/Darwin.Web/wwwroot/images/DarwinJustLogo.png" alt="Darwin Logo" width="64" />
+    </td>
+    <td>
+      <h1 style="margin: 0;">Darwin Platform</h1>
+    </td>
+  </tr>
+</table>
 
 ## CMS + CRM + E-Commerce + Loyalty + Mobile
 
