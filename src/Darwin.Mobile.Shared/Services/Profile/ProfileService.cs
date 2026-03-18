@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Shared.Results;
 
 namespace Darwin.Mobile.Shared.Services.Profile
 {
@@ -28,12 +29,11 @@ namespace Darwin.Mobile.Shared.Services.Profile
         /// Updates the current user's profile using PUT /api/v1/profile/me.
         /// The server returns 204 No Content on success; this method maps that to true.
         /// </summary>
-        public async Task<bool> UpdateMeAsync(CustomerProfile profile, CancellationToken ct)
+        public async Task<Result> UpdateMeAsync(CustomerProfile profile, CancellationToken ct)
         {
             if (profile is null) throw new ArgumentNullException(nameof(profile));
 
-            var res = await _api.PutNoContentAsync(ApiRoutes.Profile.UpdateMe, profile, ct).ConfigureAwait(false);
-            return res.Succeeded;
+            return await _api.PutNoContentAsync(ApiRoutes.Profile.UpdateMe, profile, ct).ConfigureAwait(false);
         }
     }
 }
