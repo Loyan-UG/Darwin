@@ -55,6 +55,27 @@
                    Opacity="0.75"
                    IsVisible="{Binding HasPromotions}" />
 
+            <Label Text="{Binding PromotionDiagnosticsSnapshotAtText}"
+                   FontSize="11"
+                   Opacity="0.65"
+                   IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}" />
+
+            <Button Text="{x:Static res:AppResources.FeedCopyPromotionDiagnosticsButton}"
+                    FontSize="12"
+                    Command="{Binding CopyPromotionDiagnosticsCommand}"
+                    IsVisible="{Binding HasPromotions}" />
+
+            <Label Text="{Binding PromotionDiagnosticsCopyStatus}"
+                   FontSize="11"
+                   Opacity="0.75"
+                   TextColor="{StaticResource BrushPrimary}"
+                   IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
+
+            <Button Text="{x:Static res:AppResources.FeedPromotionDiagnosticsClearStatusButton}"
+                    FontSize="11"
+                    Command="{Binding ClearPromotionDiagnosticsStatusCommand}"
+                    IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
+
             <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="8"
                   IsVisible="{Binding HasAccounts}">
