@@ -49,7 +49,6 @@ public sealed partial class LoginViewModel : BaseViewModel
 #else
         Email = string.Empty;
         Password = string.Empty;
-#endif
     }
 
     /// <summary>
