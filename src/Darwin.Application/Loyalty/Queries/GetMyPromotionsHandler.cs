@@ -25,6 +25,7 @@ namespace Darwin.Application.Loyalty.Queries
     /// </summary>
     public sealed class GetMyPromotionsHandler
     {
+        private const string DraftCampaignState = "Draft";
         private const string ActiveCampaignState = "Active";
         private const string ScheduledCampaignState = "Scheduled";
         private const string ExpiredCampaignState = "Expired";
@@ -293,7 +294,7 @@ namespace Darwin.Application.Loyalty.Queries
                     Title = string.IsNullOrWhiteSpace(campaign.Title) ? campaign.Name : campaign.Title,
                     Description = campaign.Body ?? campaign.Subtitle ?? string.Empty,
                     CtaKind = "OpenRewards",
-                    Priority = 120,
+                    Priority = ResolveCampaignPriority(campaign.PayloadJson),
                     CampaignId = campaign.Id,
                     CampaignState = ResolveCampaignState(campaign, nowUtc),
                     StartsAtUtc = campaign.StartsAtUtc,
@@ -379,7 +380,7 @@ namespace Darwin.Application.Loyalty.Queries
                         {
                             AudienceKind = PointsThresholdAudience,
                             MinPoints = next.PointsRequired,
-                            MaxPoints = Math.Max(next.PointsRequired - 1, 0),
+                            MaxPoints = next.PointsRequired - 1,
                             Note = $"Member needs {missing} more points to qualify."
                         }
                     }
@@ -394,18 +395,18 @@ namespace Darwin.Application.Loyalty.Queries
         /// </summary>
         private static List<PromotionEligibilityRuleDto> BuildEligibilityRulesFromTargeting(string? targetingJson)
         {
-            var rules = new List<PromotionEligibilityRuleDto>
-            {
-                new PromotionEligibilityRuleDto
-                {
-                    AudienceKind = JoinedMembersAudience,
-                    Note = "Campaign is visible to joined members."
-                }
-            };
+            var rules = new List<PromotionEligibilityRuleDto>();
 
             if (string.IsNullOrWhiteSpace(targetingJson))
             {
-                return rules;
+                return new List<PromotionEligibilityRuleDto>
+                {
+                    new PromotionEligibilityRuleDto
+                    {
+                        AudienceKind = JoinedMembersAudience,
+                        Note = "Campaign is visible to joined members."
+                    }
+                };
             }
 
             try
@@ -413,27 +414,51 @@ namespace Darwin.Application.Loyalty.Queries
                 using var doc = JsonDocument.Parse(targetingJson);
                 var root = doc.RootElement;
 
-                if (root.TryGetProperty("minPoints", out var minPointsElement) && minPointsElement.TryGetInt32(out var minPoints))
+                if (root.TryGetProperty("eligibilityRules", out var eligibilityArray) && eligibilityArray.ValueKind == JsonValueKind.Array)
                 {
-                    rules.Add(new PromotionEligibilityRuleDto
+                    foreach (var ruleElement in eligibilityArray.EnumerateArray())
                     {
-                        AudienceKind = PointsThresholdAudience,
-                        MinPoints = minPoints,
-                        Note = "Minimum points threshold applies."
-                    });
+                        if (ruleElement.ValueKind != JsonValueKind.Object)
+                        {
+                            continue;
+                        }
+
+                        var audienceKind = TryGetString(ruleElement, "audienceKind") ?? TryGetString(ruleElement, "kind") ?? JoinedMembersAudience;
+                        rules.Add(new PromotionEligibilityRuleDto
+                        {
+                            AudienceKind = audienceKind,
+                            MinPoints = TryGetInt32(ruleElement, "minPoints"),
+                            MaxPoints = TryGetInt32(ruleElement, "maxPoints"),
+                            TierKey = TryGetString(ruleElement, "tierKey") ?? TryGetString(ruleElement, "tier"),
+                            Note = TryGetString(ruleElement, "note")
+                        });
+                    }
                 }
 
-                if (root.TryGetProperty("tier", out var tierElement) && tierElement.ValueKind == JsonValueKind.String)
+                if (rules.Count == 0)
                 {
-                    var tier = tierElement.GetString();
-                    if (!string.IsNullOrWhiteSpace(tier))
+                    if (root.TryGetProperty("minPoints", out var minPointsElement) && minPointsElement.TryGetInt32(out var minPoints))
                     {
                         rules.Add(new PromotionEligibilityRuleDto
                         {
-                            AudienceKind = TierSegmentAudience,
-                            TierKey = tier,
-                            Note = "Campaign targets a specific member tier."
+                            AudienceKind = PointsThresholdAudience,
+                            MinPoints = minPoints,
+                            Note = "Minimum points threshold applies."
                         });
+                    }
+
+                    if (root.TryGetProperty("tier", out var tierElement) && tierElement.ValueKind == JsonValueKind.String)
+                    {
+                        var tier = tierElement.GetString();
+                        if (!string.IsNullOrWhiteSpace(tier))
+                        {
+                            rules.Add(new PromotionEligibilityRuleDto
+                            {
+                                AudienceKind = TierSegmentAudience,
+                                TierKey = tier,
+                                Note = "Campaign targets a specific member tier."
+                            });
+                        }
                     }
                 }
             }
@@ -442,7 +467,72 @@ namespace Darwin.Application.Loyalty.Queries
                 // Ignore malformed targeting JSON to keep feed resilient.
             }
 
+            if (rules.Count == 0)
+            {
+                rules.Add(new PromotionEligibilityRuleDto
+                {
+                    AudienceKind = JoinedMembersAudience,
+                    Note = "Campaign is visible to joined members."
+                });
+            }
+
             return rules;
+        }
+
+        private static int ResolveCampaignPriority(string? payloadJson)
+        {
+            const int defaultPriority = 120;
+            if (string.IsNullOrWhiteSpace(payloadJson))
+            {
+                return defaultPriority;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(payloadJson);
+                var root = doc.RootElement;
+                if (TryGetInt32(root, "priority") is int explicitPriority)
+                {
+                    return Math.Clamp(explicitPriority, 0, 1000);
+                }
+            }
+            catch
+            {
+                // Keep default priority on malformed payloads.
+            }
+
+            return defaultPriority;
+        }
+
+        private static string? TryGetString(JsonElement element, string propertyName)
+        {
+            if (!element.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            var value = property.GetString();
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        private static int? TryGetInt32(JsonElement element, string propertyName)
+        {
+            if (!element.TryGetProperty(propertyName, out var property))
+            {
+                return null;
+            }
+
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var numeric))
+            {
+                return numeric;
+            }
+
+            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out var parsed))
+            {
+                return parsed;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -450,19 +540,19 @@ namespace Darwin.Application.Loyalty.Queries
         /// </summary>
         private static string ResolveCampaignState(Campaign campaign, DateTime nowUtc)
         {
-            if (!campaign.IsActive)
+            if (campaign.EndsAtUtc.HasValue && campaign.EndsAtUtc.Value < nowUtc)
             {
                 return ExpiredCampaignState;
+            }
+
+            if (!campaign.IsActive)
+            {
+                return DraftCampaignState;
             }
 
             if (campaign.StartsAtUtc.HasValue && campaign.StartsAtUtc.Value > nowUtc)
             {
                 return ScheduledCampaignState;
-            }
-
-            if (campaign.EndsAtUtc.HasValue && campaign.EndsAtUtc.Value < nowUtc)
-            {
-                return ExpiredCampaignState;
             }
 
             return ActiveCampaignState;

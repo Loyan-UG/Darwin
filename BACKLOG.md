@@ -165,7 +165,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
 - [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
 - [x] Promotion campaigns integration in consumer timeline.
-- [~] Inactive user reminder strategy (triggering + suppression + measurement).
+- [x] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
 - [x] Full analytics module (CSV/PDF export)
@@ -183,12 +183,12 @@ It is designed as the **single source of truth** for development planning.
 - [x] Externalize mobile map API keys (Android Google Maps) to secure secret providers, with Android build-time validation (warn in Debug, fail in Release) and documented iOS/MapKit requirements per environment.
 
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
-- [~] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
-- [~] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
-- [~] Add eligibility + audience rules (joined members, tier, points threshold, date window).
-- [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
+- [x] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
+- [x] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
+- [x] Add eligibility + audience rules (joined members, tier, points threshold, date window).
+- [x] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
 - [x] Add tracking events for impression/open/claim to measure conversion.
-- [~] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+- [x] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 
 ## 3.8 Quality Findings & Follow-up
@@ -255,6 +255,15 @@ It is designed as the **single source of truth** for development planning.
 - [x] Business subscription checkout options now exclude the currently active plan and display explicit empty-state guidance when no alternative upgrade target exists.
 - [x] Business dashboard/report exports now include subscription funnel KPI counters (refresh failures, checkout starts/failures) from local activity telemetry.
 - [x] Testing-phase login acceleration hardened: QA credentials remain prefilled only in DEBUG mobile builds (Consumer/Business), while non-DEBUG builds default to empty credentials; full removal remains mandatory before customer rollout.
+- [x] UI-thread stability guardrail documented from production crash pattern: command `CanExecuteChanged` notifications and final busy-state/property updates must be marshaled to Main Thread in MAUI ViewModels/commands (especially after `ConfigureAwait(false)` continuations) to prevent Android `CalledFromWrongThreadException` / `AndroidRuntimeException` screen crashes.
+- [x] `BaseViewModel.OnPropertyChanged` now enforces main-thread marshaling for property change notifications to reduce repeated MAUI cross-thread UI crashes in view-model continuations.
+- [x] Promotions P0 contracts/app wiring expanded with explicit campaign eligibility rules (`EligibilityRules`) across Business campaign APIs (Contracts, Application handlers, WebApi mapping) while preserving backward compatibility with existing `TargetingJson` payloads.
+- [x] Consumer feed suppression/cap guardrails now honor server-applied promotion policy (`AppliedPolicy.FrequencyWindowMinutes` / `SuppressionWindowMinutes` / `MaxCards`) instead of relying only on fixed client constants, improving delivery consistency between mobile and API.
+- [x] Consumer feed now captures server promotion diagnostics counters (`InitialCandidates`, `SuppressedByFrequency`, `Deduplicated`, `TrimmedByCap`, `FinalCount`) and effective applied policy values in ViewModel state for operational observability and troubleshooting workflows.
+- [x] Consumer Feed UI now surfaces a localized promotion policy/diagnostics summary line (suppression window, cap, and guardrail counters) to make server delivery behavior visible during operations validation.
+- [x] Inactive reminder orchestration now includes explicit cooldown-suppressed candidate logging (`CooldownActive`) and split suppression counters (`SuppressedByCooldownCount` vs `SuppressedByMissingDestinationCount`) for cleaner dispatch/suppression measurement.
+- [x] Inactive reminder background worker observability hardened with split suppression/failure rates and configurable warning thresholds (`HighFailureRateWarningThresholdPercent`, `HighCooldownSuppressionWarningThresholdPercent`) for proactive operations alerting.
+- [x] Inactive reminder HTTP gateway dispatcher now applies bounded retry with exponential backoff+jitter for transient failures (408/429/5xx/transport timeout), improving provider-native sender hardening without changing non-transient failure taxonomy.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
