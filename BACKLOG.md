@@ -183,12 +183,12 @@ It is designed as the **single source of truth** for development planning.
 - [x] Externalize mobile map API keys (Android Google Maps) to secure secret providers, with Android build-time validation (warn in Debug, fail in Release) and documented iOS/MapKit requirements per environment.
 
 ## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
-- [~] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
-- [~] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
-- [~] Add eligibility + audience rules (joined members, tier, points threshold, date window).
-- [~] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
+- [x] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
+- [x] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
+- [x] Add eligibility + audience rules (joined members, tier, points threshold, date window).
+- [x] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
 - [x] Add tracking events for impression/open/claim to measure conversion.
-- [~] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+- [x] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
 
 
 ## 3.8 Quality Findings & Follow-up
