@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Constants;
+using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Integration;
-using Darwin.Mobile.Shared.Models.Loyalty;
 using Darwin.Mobile.Shared.Navigation;
-using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
-using Darwin.Mobile.Business.Services.Identity;
-using Darwin.Mobile.Business.Resources;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
@@ -25,19 +23,13 @@ namespace Darwin.Mobile.Business.ViewModels;
 /// </summary>
 public sealed class ScannerViewModel : BaseViewModel
 {
-    private readonly ILoyaltyService _loyaltyService;
     private readonly IScanner _scanner;
     private readonly INavigationService _navigationService;
     private readonly IBusinessAuthorizationService _authorizationService;
 
     private string _lastScannedToken = string.Empty;
-    private BusinessScanSessionClientModel? _currentSession;
-
-    private bool _canConfirmAccrual;
-    private bool _canConfirmRedemption;
     private bool _hasRedemptionPermission = true;
     private bool _hasAccrualPermission = true;
-    private int _pointsToAccrue = 1;
     private string _operatorRole = "—";
 
     private string? _successMessage;
@@ -51,41 +43,19 @@ public sealed class ScannerViewModel : BaseViewModel
     /// <summary>
     /// Initializes a new instance of the <see cref="ScannerViewModel"/> class.
     /// </summary>
-    /// <param name="loyaltyService">The loyalty service abstraction.</param>
     /// <param name="scanner">The scanner implementation used to read QR codes.</param>
     /// <param name="navigationService">Shell navigation service for page transitions.</param>
+    /// <param name="authorizationService">Business authorization context used for role/permission labels.</param>
     public ScannerViewModel(
-        ILoyaltyService loyaltyService,
         IScanner scanner,
         INavigationService navigationService,
         IBusinessAuthorizationService authorizationService)
     {
-        _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
 
         ScanCommand = new AsyncCommand(ScanAsync);
-        ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanExecuteAccrual);
-        ConfirmRedemptionCommand = new AsyncCommand(ConfirmRedemptionAsync, () => CanExecuteRedemption);
-    }
-
-    /// <summary>
-    /// Gets the last scanned QR token, mainly for debugging or display only.
-    /// </summary>
-    public string LastScannedToken
-    {
-        get => _lastScannedToken;
-        private set => SetProperty(ref _lastScannedToken, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the number of points to accrue when confirming.
-    /// </summary>
-    public int PointsToAccrue
-    {
-        get => _pointsToAccrue;
-        set => SetProperty(ref _pointsToAccrue, value);
     }
 
     /// <summary>
@@ -107,8 +77,7 @@ public sealed class ScannerViewModel : BaseViewModel
         {
             if (SetProperty(ref _hasAccrualPermission, value))
             {
-                ConfirmAccrualCommand.RaiseCanExecuteChanged();
-                OnPropertyChanged(nameof(CanExecuteAccrual));
+                OnPropertyChanged(nameof(HasAnyProcessingPermission));
             }
         }
     }
@@ -123,53 +92,24 @@ public sealed class ScannerViewModel : BaseViewModel
         {
             if (SetProperty(ref _hasRedemptionPermission, value))
             {
-                ConfirmRedemptionCommand.RaiseCanExecuteChanged();
-                OnPropertyChanged(nameof(CanExecuteRedemption));
-            }
-        }
-    }
-
-
-    /// <summary>
-    /// UI helper: session and role both allow accrual confirmation.
-    /// </summary>
-    public bool CanExecuteAccrual => CanConfirmAccrual && HasAccrualPermission;
-
-    /// <summary>
-    /// UI helper: session and role both allow redemption confirmation.
-    /// </summary>
-    public bool CanExecuteRedemption => CanConfirmRedemption && HasRedemptionPermission;
-
-    /// <summary>
-    /// Gets a value indicating whether the current session allows confirming accrual.
-    /// </summary>
-    public bool CanConfirmAccrual
-    {
-        get => _canConfirmAccrual;
-        private set
-        {
-            if (SetProperty(ref _canConfirmAccrual, value))
-            {
-                ConfirmAccrualCommand.RaiseCanExecuteChanged();
-                OnPropertyChanged(nameof(CanExecuteAccrual));
+                OnPropertyChanged(nameof(HasAnyProcessingPermission));
             }
         }
     }
 
     /// <summary>
-    /// Gets a value indicating whether the current session allows confirming redemption.
+    /// Indicates whether the operator has at least one processing permission.
+    /// This is shown on the scanner page as a quick readiness indicator.
     /// </summary>
-    public bool CanConfirmRedemption
+    public bool HasAnyProcessingPermission => HasAccrualPermission || HasRedemptionPermission;
+
+    /// <summary>
+    /// Gets the last scanned QR token, mainly for debugging or display only.
+    /// </summary>
+    public string LastScannedToken
     {
-        get => _canConfirmRedemption;
-        private set
-        {
-            if (SetProperty(ref _canConfirmRedemption, value))
-            {
-                ConfirmRedemptionCommand.RaiseCanExecuteChanged();
-                OnPropertyChanged(nameof(CanExecuteRedemption));
-            }
-        }
+        get => _lastScannedToken;
+        private set => SetProperty(ref _lastScannedToken, value);
     }
 
     /// <summary>
@@ -217,16 +157,6 @@ public sealed class ScannerViewModel : BaseViewModel
     /// </summary>
     public AsyncCommand ScanCommand { get; }
 
-    /// <summary>
-    /// Command that confirms point accrual for the current scan session.
-    /// </summary>
-    public AsyncCommand ConfirmAccrualCommand { get; }
-
-    /// <summary>
-    /// Command that confirms reward redemption for the current scan session.
-    /// </summary>
-    public AsyncCommand ConfirmRedemptionCommand { get; }
-
     public override async Task OnAppearingAsync()
     {
         await RefreshAuthorizationAsync().ConfigureAwait(false);
@@ -241,9 +171,6 @@ public sealed class ScannerViewModel : BaseViewModel
 
         IsBusy = true;
         ClearFeedback();
-        _currentSession = null;
-        CanConfirmAccrual = false;
-        CanConfirmRedemption = false;
 
         try
         {
@@ -281,124 +208,6 @@ public sealed class ScannerViewModel : BaseViewModel
         }
     }
 
-    private async Task ConfirmAccrualAsync()
-    {
-        if (_currentSession is null)
-        {
-            SetWarning("No active scan session.");
-            return;
-        }
-
-        if (!HasAccrualPermission)
-        {
-            SetWarning(AppResources.BusinessPermissionDeniedAccrual);
-            return;
-        }
-
-        if (!CanConfirmAccrual)
-        {
-            SetWarning("Accrual is not allowed for this session.");
-            return;
-        }
-
-        var authSnapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
-        if (!authSnapshot.Succeeded || authSnapshot.Value is null || !authSnapshot.Value.CanConfirmAccrual)
-        {
-            SetWarning(AppResources.BusinessPermissionDeniedAccrual);
-            return;
-        }
-
-        if (PointsToAccrue <= 0)
-        {
-            SetWarning("Points must be greater than zero.");
-            return;
-        }
-
-        if (IsBusy)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        ClearFeedback();
-
-        try
-        {
-            var result = await _loyaltyService
-                .ConfirmAccrualAsync(_currentSession.Token, PointsToAccrue, CancellationToken.None);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                SetError(result.Error ?? "Failed to confirm accrual.");
-                return;
-            }
-
-            CanConfirmAccrual = false;
-            CanConfirmRedemption = false;
-            SetSuccess("Points accrual confirmed successfully.");
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private async Task ConfirmRedemptionAsync()
-    {
-        if (_currentSession is null)
-        {
-            SetWarning("No active scan session.");
-            return;
-        }
-
-        if (!HasRedemptionPermission)
-        {
-            SetWarning(AppResources.BusinessPermissionDeniedRedemption);
-            return;
-        }
-
-        if (!CanConfirmRedemption)
-        {
-            SetWarning("Redemption is not allowed for this session.");
-            return;
-        }
-
-        var authSnapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
-        if (!authSnapshot.Succeeded || authSnapshot.Value is null || !authSnapshot.Value.CanConfirmRedemption)
-        {
-            SetWarning(AppResources.BusinessPermissionDeniedRedemption);
-            return;
-        }
-
-        if (IsBusy)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        ClearFeedback();
-
-        try
-        {
-            var result = await _loyaltyService
-                .ConfirmRedemptionAsync(_currentSession.Token, CancellationToken.None);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                SetError(result.Error ?? "Failed to confirm redemption.");
-                return;
-            }
-
-            CanConfirmRedemption = false;
-            CanConfirmAccrual = false;
-            SetSuccess("Reward redemption confirmed successfully.");
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
     /// <summary>
     /// Clears all feedback messages before a new operation starts.
     /// </summary>
@@ -425,14 +234,6 @@ public sealed class ScannerViewModel : BaseViewModel
         FeedbackVisibilityRequested?.Invoke();
     }
 
-    private void SetError(string message)
-    {
-        SuccessMessage = null;
-        WarningMessage = null;
-        ErrorMessage = message;
-        FeedbackVisibilityRequested?.Invoke();
-    }
-
     private async Task RefreshAuthorizationAsync()
     {
         var snapshot = await _authorizationService.GetSnapshotAsync(CancellationToken.None).ConfigureAwait(false);
@@ -442,11 +243,17 @@ public sealed class ScannerViewModel : BaseViewModel
             OperatorRole = "—";
             HasAccrualPermission = false;
             HasRedemptionPermission = false;
+            SetWarning(AppResources.BusinessPermissionsUnavailableWarning);
             return;
         }
 
         OperatorRole = snapshot.Value.RoleDisplayName;
         HasAccrualPermission = snapshot.Value.CanConfirmAccrual;
         HasRedemptionPermission = snapshot.Value.CanConfirmRedemption;
+
+        if (!HasAnyProcessingPermission)
+        {
+            SetWarning(AppResources.BusinessNoScannerPermissionWarning);
+        }
     }
 }

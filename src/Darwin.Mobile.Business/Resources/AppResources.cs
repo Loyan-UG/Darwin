@@ -172,6 +172,9 @@ public static class AppResources
     public static string BusinessPermissionDeniedRewardEdit => ResourceManager.GetString(nameof(BusinessPermissionDeniedRewardEdit), Culture) ?? "Your account does not have permission to edit reward tiers.";
     public static string BusinessPermissionDeniedRedemption => ResourceManager.GetString(nameof(BusinessPermissionDeniedRedemption), Culture) ?? "Your account does not have permission to confirm redemption.";
     public static string BusinessPermissionDeniedAccrual => ResourceManager.GetString(nameof(BusinessPermissionDeniedAccrual), Culture) ?? "Your account does not have permission to confirm accrual.";
+    public static string BusinessPermissionsUnavailableWarning => ResourceManager.GetString(nameof(BusinessPermissionsUnavailableWarning), Culture) ?? "Operator permissions could not be loaded. Please refresh and try again.";
+    public static string BusinessNoScannerPermissionWarning => ResourceManager.GetString(nameof(BusinessNoScannerPermissionWarning), Culture) ?? "Your account does not currently have scanner processing permissions.";
+    public static string ScannerSingleOwnerHint => ResourceManager.GetString(nameof(ScannerSingleOwnerHint), Culture) ?? "After scanning, the session screen will load details and handle confirmation in one place.";
 
 
     // Dashboard + reporting
