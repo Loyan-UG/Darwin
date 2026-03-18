@@ -273,7 +273,7 @@
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button Text="{x:Static res:AppResources.RewardsCampaignCopyDiagnosticsButton}"
                         Command="{Binding CopyCampaignDiagnosticsCommand}"
-                        IsEnabled="{Binding HasCampaigns}" />
+                        IsEnabled="{Binding HasCampaignDataset}" />
                 <Button Grid.Column="1"
                         Text="{x:Static res:AppResources.RewardsCampaignClearDiagnosticsStatusButton}"
                         Command="{Binding ClearCampaignDiagnosticsStatusCommand}"

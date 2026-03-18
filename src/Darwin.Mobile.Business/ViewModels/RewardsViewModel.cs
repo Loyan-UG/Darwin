@@ -151,7 +151,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         ApplyCampaignTargetingPresetCommand = new AsyncCommand<string>(ApplyCampaignTargetingPresetAsync, _ => !IsBusy && CanManageRewards);
         ApplyCampaignTargetingSchemaFixCommand = new AsyncCommand(ApplyCampaignTargetingSchemaQuickFixAsync, () => !IsBusy && CanManageRewards && HasCampaignTargetingSchemaValidationError);
         ResetCampaignTargetingFixMetricsCommand = new AsyncCommand(ResetCampaignTargetingQuickFixMetricsAsync, () => !IsBusy && CanManageRewards && (CampaignTargetingFixAppliedCount > 0 || CampaignTargetingFixNoChangeCount > 0));
-        CopyCampaignDiagnosticsCommand = new AsyncCommand(CopyCampaignDiagnosticsAsync, () => !IsBusy && HasCampaigns);
+        CopyCampaignDiagnosticsCommand = new AsyncCommand(CopyCampaignDiagnosticsAsync, () => !IsBusy && HasCampaignDataset);
         ClearCampaignDiagnosticsStatusCommand = new AsyncCommand(ClearCampaignDiagnosticsStatusAsync, () => !IsBusy && HasCampaignDiagnosticsCopyStatus);
     }
 
@@ -288,6 +288,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// Gets total campaign count returned from server before filters are applied.
     /// </summary>
     public int TotalCampaignCount => _allCampaigns.Count;
+
+    /// <summary>
+    /// Gets whether at least one campaign exists in the current dataset (before filters are applied).
+    /// </summary>
+    public bool HasCampaignDataset => TotalCampaignCount > 0;
 
     /// <summary>
     /// Gets campaign count currently visible after active filters are applied.
@@ -1806,6 +1811,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasCampaigns));
         OnPropertyChanged(nameof(TotalCampaignCount));
         OnPropertyChanged(nameof(FilteredCampaignCount));
+        OnPropertyChanged(nameof(HasCampaignDataset));
         OnPropertyChanged(nameof(CampaignFilterSummary));
         OnPropertyChanged(nameof(CampaignDiagnosticsVisibleCampaignsPreview));
         OnPropertyChanged(nameof(DraftCampaignCount));
@@ -2083,7 +2089,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// </summary>
     private async Task CopyCampaignDiagnosticsAsync()
     {
-        if (!HasCampaigns || IsBusy)
+        if (!HasCampaignDataset || IsBusy)
         {
             return;
         }
