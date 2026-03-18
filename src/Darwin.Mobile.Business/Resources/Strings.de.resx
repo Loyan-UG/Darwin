@@ -431,11 +431,14 @@
 	<data name="ProfileRequiredFields" xml:space="preserve">
     <value>Bitte füllen Sie alle erforderlichen Profilfelder aus.</value>
   </data>
-	<data name="ProfileNotLoadedYet" xml:space="preserve">
+		<data name="ProfileNotLoadedYet" xml:space="preserve">
     <value>Profil ist noch nicht geladen. Bitte aktualisieren und erneut versuchen.</value>
   </data>
+		<data name="ProfileConcurrencyConflict" xml:space="preserve">
+    <value>Ihr Profil wurde zwischenzeitlich geändert. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
 
-	<data name="ChangePasswordTitle" xml:space="preserve">
+		<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>
 	<data name="CurrentPasswordLabel" xml:space="preserve">
@@ -575,6 +578,15 @@
   </data>
   <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
     <value>Ihr Konto hat keine Berechtigung, Gutschriften zu bestätigen.</value>
+  </data>
+  <data name="BusinessPermissionsUnavailableWarning" xml:space="preserve">
+    <value>Operatorberechtigungen konnten nicht geladen werden. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
+  <data name="BusinessNoScannerPermissionWarning" xml:space="preserve">
+    <value>Ihr Konto hat derzeit keine Berechtigung zur Scanner-Verarbeitung.</value>
+  </data>
+  <data name="ScannerSingleOwnerHint" xml:space="preserve">
+    <value>Nach dem Scannen lädt die Sitzungsseite die Details und bestätigt alle Aktionen zentral.</value>
   </data>
   <data name="RewardsCampaignsLabel" xml:space="preserve">
     <value>Kampagnen</value>
@@ -795,14 +807,53 @@
   <data name="RewardsCampaignEligibilityMaxFormat" xml:space="preserve">
     <value>Punkte ≤ {0}</value>
   </data>
+  <data name="RewardsCampaignChannelSummaryFormat" xml:space="preserve">
+    <value>Kanäle: {0}</value>
+  </data>
+  <data name="RewardsCampaignChannelUnknown" xml:space="preserve">
+    <value>unbekannt</value>
+  </data>
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Entwurf: {0} · Geplant: {1} · Aktiv: {2} · Abgelaufen: {3}</value>
   </data>
   <data name="RewardsCampaignAudienceMetricsFormat" xml:space="preserve">
     <value>Mitglied: {0} · Stufe: {1} · Punkte: {2} · Datumsfenster: {3}</value>
   </data>
+  <data name="RewardsCampaignChannelMetricsFormat" xml:space="preserve">
+    <value>Nur In-App: {0} · In-App + Push: {1} · Sonstige: {2}</value>
+  </data>
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsSnapshotAtFormat" xml:space="preserve">
+    <value>Diagnose-Snapshot um: {0}</value>
+  </data>
+  <data name="RewardsCampaignCopyDiagnosticsButton" xml:space="preserve">
+    <value>Kampagnen-Diagnose kopieren</value>
+  </data>
+  <data name="RewardsCampaignClearDiagnosticsStatusButton" xml:space="preserve">
+    <value>Diagnose-Status löschen</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsAppliedFiltersFormat" xml:space="preserve">
+    <value>Aktive Filter — Status: {0} · Zielgruppe: {1} · Suche: {2} · Sortierung: {3}</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsSearchEmpty" xml:space="preserve">
+    <value>keine</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsFormat" xml:space="preserve">
+    <value>Sichtbare Kampagnen: {0}</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsWithRemainingFormat" xml:space="preserve">
+    <value>Sichtbare Kampagnen: {0} (+{1} weitere)</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsEmpty" xml:space="preserve">
+    <value>Sichtbare Kampagnen: keine</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsCopied" xml:space="preserve">
+    <value>Kampagnen-Diagnose wurde in die Zwischenablage kopiert.</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsCopyFailed" xml:space="preserve">
+    <value>Kampagnen-Diagnose konnte derzeit nicht kopiert werden.</value>
   </data>
   <data name="DashboardCampaignTargetingFixMetricsFormat" xml:space="preserve">
     <value>Kampagnen-Schnellkorrektur — angewendet: {0} · unverändert: {1} · Zurücksetzungen: {2}</value>

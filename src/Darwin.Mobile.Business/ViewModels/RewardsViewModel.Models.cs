@@ -163,6 +163,14 @@ public sealed class BusinessCampaignEditorItem
     /// </summary>
     public string AudienceSummary => BuildAudienceSummary(TargetingJson, EligibilityRules);
 
+    /// <summary>
+    /// Gets a localized delivery-channel summary so operators can quickly verify channel strategy from list view.
+    /// </summary>
+    public string ChannelSummary => string.Format(
+        CultureInfo.CurrentCulture,
+        AppResources.RewardsCampaignChannelSummaryFormat,
+        ResolveChannelLabel(Channels));
+
     public string ActivationButtonText => IsActive ? AppResources.RewardsCampaignDeactivateButton : AppResources.RewardsCampaignActivateButton;
 
     public static BusinessCampaignEditorItem FromContract(BusinessCampaignItem item)
@@ -187,6 +195,21 @@ public sealed class BusinessCampaignEditorItem
             EligibilityRules = item.EligibilityRules?.ToList() ?? new List<PromotionEligibilityRule>(),
             RowVersion = item.RowVersion ?? Array.Empty<byte>(),
             AudienceKindKey = audienceKindKey
+        };
+    }
+
+    /// <summary>
+    /// Resolves campaign channel bitmask into localized display label for list diagnostics.
+    /// </summary>
+    /// <param name="channels">Bitmask from campaign contract.</param>
+    /// <returns>Localized channel caption.</returns>
+    private static string ResolveChannelLabel(short channels)
+    {
+        return channels switch
+        {
+            1 => AppResources.RewardsCampaignChannelInAppOnly,
+            3 => AppResources.RewardsCampaignChannelInAppAndPush,
+            _ => AppResources.RewardsCampaignChannelUnknown
         };
     }
 
