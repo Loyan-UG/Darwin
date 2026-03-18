@@ -44,7 +44,8 @@ public sealed class ProcessInactiveReminderBatchHandler
         {
             InactiveThresholdDays = request.InactiveThresholdDays,
             CooldownHours = request.CooldownHours,
-            MaxItems = request.MaxItems
+            MaxItems = request.MaxItems,
+            IncludeSuppressedByCooldown = true
         }, ct).ConfigureAwait(false);
 
         if (!candidatesResult.Succeeded || candidatesResult.Value is null)
@@ -59,10 +60,25 @@ public sealed class ProcessInactiveReminderBatchHandler
             ct.ThrowIfCancellationRequested();
             summary.CandidatesEvaluated++;
 
+            if (candidate.IsSuppressed)
+            {
+                summary.SuppressedCount++;
+                summary.SuppressedByCooldownCount++;
+                await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
+                {
+                    UserId = candidate.UserId,
+                    Outcome = "Suppressed",
+                    OutcomeCode = candidate.SuppressionCode ?? "CooldownActive"
+                }, ct).ConfigureAwait(false);
+
+                continue;
+            }
+
             if (string.IsNullOrWhiteSpace(candidate.PushDestinationDeviceId)
                 || string.IsNullOrWhiteSpace(candidate.PushToken))
             {
                 summary.SuppressedCount++;
+                summary.SuppressedByMissingDestinationCount++;
                 await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
                 {
                     UserId = candidate.UserId,

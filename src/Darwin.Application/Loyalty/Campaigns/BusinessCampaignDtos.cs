@@ -19,8 +19,19 @@ namespace Darwin.Application.Loyalty.Campaigns
         public bool IsActive { get; init; }
         public string CampaignState { get; init; } = "Draft";
         public string TargetingJson { get; init; } = "{}";
+        public List<PromotionEligibilityRuleDto> EligibilityRules { get; init; } = new();
         public string PayloadJson { get; init; } = "{}";
         public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+    }
+
+
+    public sealed class PromotionEligibilityRuleDto
+    {
+        public string AudienceKind { get; init; } = "JoinedMembers";
+        public int? MinPoints { get; init; }
+        public int? MaxPoints { get; init; }
+        public string? TierKey { get; init; }
+        public string? Note { get; init; }
     }
 
     public sealed class GetBusinessCampaignsResultDto
@@ -42,6 +53,7 @@ namespace Darwin.Application.Loyalty.Campaigns
         public DateTime? StartsAtUtc { get; init; }
         public DateTime? EndsAtUtc { get; init; }
         public string TargetingJson { get; init; } = "{}";
+        public List<PromotionEligibilityRuleDto> EligibilityRules { get; init; } = new();
         public string PayloadJson { get; init; } = "{}";
     }
 
@@ -59,6 +71,7 @@ namespace Darwin.Application.Loyalty.Campaigns
         public DateTime? StartsAtUtc { get; init; }
         public DateTime? EndsAtUtc { get; init; }
         public string TargetingJson { get; init; } = "{}";
+        public List<PromotionEligibilityRuleDto> EligibilityRules { get; init; } = new();
         public string PayloadJson { get; init; } = "{}";
         public byte[] RowVersion { get; init; } = Array.Empty<byte>();
     }

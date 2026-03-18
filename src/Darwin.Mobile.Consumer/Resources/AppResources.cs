@@ -236,5 +236,6 @@ public static class AppResources
     public static string FeedPromotionScopeAllBusinessesButton => ResourceManager.GetString(nameof(FeedPromotionScopeAllBusinessesButton), Culture) ?? "All businesses promotions";
     public static string FeedPromotionScopeSelectedBusiness => ResourceManager.GetString(nameof(FeedPromotionScopeSelectedBusiness), Culture) ?? "Promotion scope: selected business";
     public static string FeedPromotionScopeAllBusinesses => ResourceManager.GetString(nameof(FeedPromotionScopeAllBusinesses), Culture) ?? "Promotion scope: all joined businesses";
+    public static string FeedPromotionPolicyDiagnosticsSummaryFormat => ResourceManager.GetString(nameof(FeedPromotionPolicyDiagnosticsSummaryFormat), Culture) ?? "Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}";
 
 }
