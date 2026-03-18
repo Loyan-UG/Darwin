@@ -437,7 +437,8 @@ public sealed class ProfileViewModel : BaseViewModel
             return AppResources.ProfileConcurrencyConflict;
         }
 
-        return string.IsNullOrWhiteSpace(error) ? AppResources.ProfileSaveFailed : error;
+        // Keep non-concurrency failures generic to avoid surfacing raw server/transport details in UI.
+        return AppResources.ProfileSaveFailed;
     }
 
     /// <summary>
