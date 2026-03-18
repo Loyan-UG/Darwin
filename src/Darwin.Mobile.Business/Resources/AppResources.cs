@@ -156,6 +156,7 @@ public static class AppResources
     public static string ProfileSaveSuccess => ResourceManager.GetString(nameof(ProfileSaveSuccess), Culture) ?? "Profile updated successfully.";
     public static string ProfileRequiredFields => ResourceManager.GetString(nameof(ProfileRequiredFields), Culture) ?? "Please fill all required profile fields before saving.";
     public static string ProfileNotLoadedYet => ResourceManager.GetString(nameof(ProfileNotLoadedYet), Culture) ?? "Profile is not loaded yet. Please refresh and try again.";
+    public static string ProfileConcurrencyConflict => ResourceManager.GetString(nameof(ProfileConcurrencyConflict), Culture) ?? "Your profile was updated elsewhere. Please refresh and try again.";
 
     public static string ChangePasswordTitle => ResourceManager.GetString(nameof(ChangePasswordTitle), Culture) ?? "Change password";
     public static string CurrentPasswordLabel => ResourceManager.GetString(nameof(CurrentPasswordLabel), Culture) ?? "Current password";
@@ -172,6 +173,9 @@ public static class AppResources
     public static string BusinessPermissionDeniedRewardEdit => ResourceManager.GetString(nameof(BusinessPermissionDeniedRewardEdit), Culture) ?? "Your account does not have permission to edit reward tiers.";
     public static string BusinessPermissionDeniedRedemption => ResourceManager.GetString(nameof(BusinessPermissionDeniedRedemption), Culture) ?? "Your account does not have permission to confirm redemption.";
     public static string BusinessPermissionDeniedAccrual => ResourceManager.GetString(nameof(BusinessPermissionDeniedAccrual), Culture) ?? "Your account does not have permission to confirm accrual.";
+    public static string BusinessPermissionsUnavailableWarning => ResourceManager.GetString(nameof(BusinessPermissionsUnavailableWarning), Culture) ?? "Operator permissions could not be loaded. Please refresh and try again.";
+    public static string BusinessNoScannerPermissionWarning => ResourceManager.GetString(nameof(BusinessNoScannerPermissionWarning), Culture) ?? "Your account does not currently have scanner processing permissions.";
+    public static string ScannerSingleOwnerHint => ResourceManager.GetString(nameof(ScannerSingleOwnerHint), Culture) ?? "After scanning, the session screen will load details and handle confirmation in one place.";
 
 
     // Dashboard + reporting
