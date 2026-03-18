@@ -237,5 +237,10 @@ public static class AppResources
     public static string FeedPromotionScopeSelectedBusiness => ResourceManager.GetString(nameof(FeedPromotionScopeSelectedBusiness), Culture) ?? "Promotion scope: selected business";
     public static string FeedPromotionScopeAllBusinesses => ResourceManager.GetString(nameof(FeedPromotionScopeAllBusinesses), Culture) ?? "Promotion scope: all joined businesses";
     public static string FeedPromotionPolicyDiagnosticsSummaryFormat => ResourceManager.GetString(nameof(FeedPromotionPolicyDiagnosticsSummaryFormat), Culture) ?? "Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}";
+    public static string FeedPromotionDiagnosticsSnapshotAtFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsSnapshotAtFormat), Culture) ?? "Diagnostics snapshot at: {0}";
+    public static string FeedCopyPromotionDiagnosticsButton => ResourceManager.GetString(nameof(FeedCopyPromotionDiagnosticsButton), Culture) ?? "Copy promotion diagnostics";
+    public static string FeedPromotionDiagnosticsCopied => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopied), Culture) ?? "Promotion diagnostics copied.";
+    public static string FeedPromotionDiagnosticsCopyFailed => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopyFailed), Culture) ?? "Unable to copy promotion diagnostics right now.";
+    public static string FeedPromotionDiagnosticsClearStatusButton => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsClearStatusButton), Culture) ?? "Clear diagnostics status";
 
 }
