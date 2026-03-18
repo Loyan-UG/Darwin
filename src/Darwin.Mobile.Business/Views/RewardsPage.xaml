@@ -261,6 +261,26 @@
                         IsEnabled="{Binding HasActiveCampaignFilters}" />
             </Grid>
 
+            <Label Text="{Binding CampaignDiagnosticsSnapshotAtText}"
+                   FontSize="11"
+                   Opacity="0.75"
+                   IsVisible="{Binding HasCampaignDiagnosticsSnapshotAt}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button Text="{x:Static res:AppResources.RewardsCampaignCopyDiagnosticsButton}"
+                        Command="{Binding CopyCampaignDiagnosticsCommand}"
+                        IsEnabled="{Binding HasCampaigns}" />
+                <Button Grid.Column="1"
+                        Text="{x:Static res:AppResources.RewardsCampaignClearDiagnosticsStatusButton}"
+                        Command="{Binding ClearCampaignDiagnosticsStatusCommand}"
+                        IsEnabled="{Binding HasCampaignDiagnosticsCopyStatus}" />
+            </Grid>
+
+            <Label Text="{Binding CampaignDiagnosticsCopyStatus}"
+                   FontSize="11"
+                   TextColor="SeaGreen"
+                   IsVisible="{Binding HasCampaignDiagnosticsCopyStatus}" />
+
             <Label Text="{Binding CampaignStateMetricsSummary}"
                    FontSize="12"
                    Opacity="0.75" />

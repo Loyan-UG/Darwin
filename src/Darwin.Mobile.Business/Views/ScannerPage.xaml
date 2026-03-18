@@ -15,6 +15,7 @@
             <Button Text="{x:Static res:AppResources.ScanTitle}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ScanCommand}"
+                    IsEnabled="{Binding CanStartScan}"
                     HorizontalOptions="Fill" />
 
             <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
@@ -29,30 +30,7 @@
                    FontSize="16"
                    LineBreakMode="CharacterWrap" />
 
-            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                <Label Text="{x:Static res:AppResources.PointsLabel}"
-                       FontSize="16"
-                       TextColor="{StaticResource BrushOnSurface}" />
-                <Entry Text="{Binding PointsToAccrue}"
-                       Keyboard="Numeric"
-                       WidthRequest="100"
-                       TextColor="{StaticResource BrushOnSurface}" />
-            </HorizontalStackLayout>
-
-            <Button Text="{x:Static res:AppResources.AccrueButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding ConfirmAccrualCommand}"
-                    IsEnabled="{Binding CanExecuteAccrual}" />
-            <Label Text="{x:Static res:AppResources.AccrualHelpText}"
-                   FontSize="12"
-                   Opacity="0.75"
-                   TextColor="{StaticResource BrushOnSurface}" />
-
-            <Button Text="{x:Static res:AppResources.RedeemButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding ConfirmRedemptionCommand}"
-                    IsEnabled="{Binding CanExecuteRedemption}" />
-            <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
+            <Label Text="{x:Static res:AppResources.ScannerSingleOwnerHint}"
                    FontSize="12"
                    Opacity="0.75"
                    TextColor="{StaticResource BrushOnSurface}" />
@@ -66,6 +44,11 @@
                    TextColor="OrangeRed"
                    FontSize="12"
                    IsVisible="{Binding HasRedemptionPermission, Converter={StaticResource InverseBoolConverter}}" />
+
+            <Label Text="{x:Static res:AppResources.BusinessNoScannerPermissionWarning}"
+                   TextColor="OrangeRed"
+                   FontSize="12"
+                   IsVisible="{Binding HasAnyProcessingPermission, Converter={StaticResource InverseBoolConverter}}" />
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
