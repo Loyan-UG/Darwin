@@ -263,6 +263,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Consumer Feed UI now surfaces a localized promotion policy/diagnostics summary line (suppression window, cap, and guardrail counters) to make server delivery behavior visible during operations validation.
 - [x] Inactive reminder orchestration now includes explicit cooldown-suppressed candidate logging (`CooldownActive`) and split suppression counters (`SuppressedByCooldownCount` vs `SuppressedByMissingDestinationCount`) for cleaner dispatch/suppression measurement.
 - [x] Inactive reminder background worker observability hardened with split suppression/failure rates and configurable warning thresholds (`HighFailureRateWarningThresholdPercent`, `HighCooldownSuppressionWarningThresholdPercent`) for proactive operations alerting.
+- [x] Inactive reminder HTTP gateway dispatcher now applies bounded retry with exponential backoff+jitter for transient failures (408/429/5xx/transport timeout), improving provider-native sender hardening without changing non-transient failure taxonomy.
 
 ## 3.9 Mobile Execution Queue (Proposed — Awaiting Confirmation)
 1. **P0 — Promotions foundation:** introduce campaign entity model + contracts for lifecycle (`Draft/Scheduled/Active/Expired`) and eligibility/audience rules (from 3.7 open items).
