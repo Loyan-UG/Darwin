@@ -640,6 +640,12 @@
   <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
     <value>Diagnose-Snapshot um: {0}</value>
   </data>
+  <data name="FeedPromotionDiagnosticsFreshnessFreshFormat" xml:space="preserve">
+    <value>Snapshot-Aktualität: vor {0} Minute(n)</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsFreshnessStaleFormat" xml:space="preserve">
+    <value>Warnung zur Snapshot-Aktualität: vor {0} Minute(n)</value>
+  </data>
   <data name="FeedPromotionDiagnosticsVisiblePromotionsFormat" xml:space="preserve">
     <value>Sichtbare Aktionen: {0}</value>
   </data>

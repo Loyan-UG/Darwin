@@ -239,6 +239,8 @@ public static class AppResources
     public static string FeedPromotionPolicyDiagnosticsSummaryFormat => ResourceManager.GetString(nameof(FeedPromotionPolicyDiagnosticsSummaryFormat), Culture) ?? "Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}";
     public static string FeedPromotionDiagnosticsTitle => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsTitle), Culture) ?? "Promotion diagnostics";
     public static string FeedPromotionDiagnosticsSnapshotAtFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsSnapshotAtFormat), Culture) ?? "Diagnostics snapshot at: {0}";
+    public static string FeedPromotionDiagnosticsFreshnessFreshFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsFreshnessFreshFormat), Culture) ?? "Snapshot freshness: {0} minute(s) old";
+    public static string FeedPromotionDiagnosticsFreshnessStaleFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsFreshnessStaleFormat), Culture) ?? "Snapshot freshness warning: {0} minute(s) old";
     public static string FeedPromotionDiagnosticsVisiblePromotionsFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsVisiblePromotionsFormat), Culture) ?? "Visible promotions: {0}";
     public static string FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat), Culture) ?? "Visible promotions: {0} (+{1} more)";
     public static string FeedPromotionDiagnosticsVisiblePromotionsEmpty => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsVisiblePromotionsEmpty), Culture) ?? "Visible promotions: none";

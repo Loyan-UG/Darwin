@@ -163,6 +163,32 @@ public sealed class FeedViewModel : BaseViewModel
             : string.Empty;
 
     /// <summary>
+    /// Gets localized freshness text for the diagnostics snapshot so operators can detect stale context quickly.
+    /// </summary>
+    public string PromotionDiagnosticsFreshnessText
+    {
+        get
+        {
+            if (!_promotionDiagnosticsSnapshotAtLocal.HasValue)
+            {
+                return string.Empty;
+            }
+
+            var ageMinutes = Math.Max(0, (int)Math.Round((DateTimeOffset.Now - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
+            return ageMinutes > 15
+                ? string.Format(Resources.AppResources.FeedPromotionDiagnosticsFreshnessStaleFormat, ageMinutes)
+                : string.Format(Resources.AppResources.FeedPromotionDiagnosticsFreshnessFreshFormat, ageMinutes);
+        }
+    }
+
+    /// <summary>
+    /// Gets whether current diagnostics snapshot is older than the operations freshness threshold.
+    /// </summary>
+    public bool IsPromotionDiagnosticsSnapshotStale
+        => _promotionDiagnosticsSnapshotAtLocal.HasValue
+           && (DateTimeOffset.Now - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
+
+    /// <summary>
     /// Gets localized preview text for visible promotions to provide more diagnostics context in support handoff.
     /// </summary>
     public string PromotionDiagnosticsVisiblePromotionsPreview
@@ -624,6 +650,8 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
             OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsFreshnessText));
+            OnPropertyChanged(nameof(IsPromotionDiagnosticsSnapshotStale));
             OnPropertyChanged(nameof(PromotionDiagnosticsVisiblePromotionsPreview));
             OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
@@ -786,10 +814,11 @@ public sealed class FeedViewModel : BaseViewModel
             var summary = PromotionPolicyDiagnosticsSummaryText;
             var businessName = SelectedAccount?.BusinessName ?? Resources.AppResources.FeedBusinessPickerLabel;
             var snapshotAt = PromotionDiagnosticsSnapshotAtText;
+            var freshness = PromotionDiagnosticsFreshnessText;
             var visiblePromotions = PromotionDiagnosticsVisiblePromotionsPreview;
             var payload = string.IsNullOrWhiteSpace(snapshotAt)
                 ? $"{scope}\n{businessName}\n{summary}\n{visiblePromotions}"
-                : $"{scope}\n{businessName}\n{summary}\n{visiblePromotions}\n{snapshotAt}";
+                : $"{scope}\n{businessName}\n{summary}\n{visiblePromotions}\n{snapshotAt}\n{freshness}";
 
             await Clipboard.Default.SetTextAsync(payload);
 
@@ -964,6 +993,8 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
             OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsFreshnessText));
+            OnPropertyChanged(nameof(IsPromotionDiagnosticsSnapshotStale));
             OnPropertyChanged(nameof(PromotionDiagnosticsVisiblePromotionsPreview));
             OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
