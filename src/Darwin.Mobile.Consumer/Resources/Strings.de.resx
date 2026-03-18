@@ -646,6 +646,9 @@
   <data name="FeedPromotionDiagnosticsCopyFailed" xml:space="preserve">
     <value>Aktionsdiagnose konnte derzeit nicht kopiert werden.</value>
   </data>
+  <data name="FeedPromotionDiagnosticsClearStatusButton" xml:space="preserve">
+    <value>Diagnosestatus löschen</value>
+  </data>
 <data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Öffnen</value>
 </data>

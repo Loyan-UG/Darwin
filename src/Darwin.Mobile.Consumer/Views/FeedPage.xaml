@@ -71,6 +71,11 @@
                    TextColor="{StaticResource BrushPrimary}"
                    IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
 
+            <Button Text="{x:Static res:AppResources.FeedPromotionDiagnosticsClearStatusButton}"
+                    FontSize="11"
+                    Command="{Binding ClearPromotionDiagnosticsStatusCommand}"
+                    IsVisible="{Binding HasPromotionDiagnosticsCopyStatus}" />
+
             <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="8"
                   IsVisible="{Binding HasAccounts}">

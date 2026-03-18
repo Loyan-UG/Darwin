@@ -241,5 +241,6 @@ public static class AppResources
     public static string FeedCopyPromotionDiagnosticsButton => ResourceManager.GetString(nameof(FeedCopyPromotionDiagnosticsButton), Culture) ?? "Copy promotion diagnostics";
     public static string FeedPromotionDiagnosticsCopied => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopied), Culture) ?? "Promotion diagnostics copied.";
     public static string FeedPromotionDiagnosticsCopyFailed => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopyFailed), Culture) ?? "Unable to copy promotion diagnostics right now.";
+    public static string FeedPromotionDiagnosticsClearStatusButton => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsClearStatusButton), Culture) ?? "Clear diagnostics status";
 
 }

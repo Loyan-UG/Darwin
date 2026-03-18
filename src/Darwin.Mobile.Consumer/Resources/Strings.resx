@@ -646,6 +646,9 @@
   <data name="FeedPromotionDiagnosticsCopyFailed" xml:space="preserve">
     <value>Unable to copy promotion diagnostics right now.</value>
   </data>
+  <data name="FeedPromotionDiagnosticsClearStatusButton" xml:space="preserve">
+    <value>Clear diagnostics status</value>
+  </data>
 <data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Open</value>
 </data>

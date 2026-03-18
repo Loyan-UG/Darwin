@@ -74,6 +74,7 @@ public sealed class FeedViewModel : BaseViewModel
         ShowSelectedBusinessPromotionsCommand = new AsyncCommand(ShowSelectedBusinessPromotionsAsync, () => !IsBusy);
         ShowAllBusinessesPromotionsCommand = new AsyncCommand(ShowAllBusinessesPromotionsAsync, () => !IsBusy);
         CopyPromotionDiagnosticsCommand = new AsyncCommand(CopyPromotionDiagnosticsAsync, () => HasPromotions && !IsBusy);
+        ClearPromotionDiagnosticsStatusCommand = new AsyncCommand(ClearPromotionDiagnosticsStatusAsync, () => HasPromotionDiagnosticsCopyStatus && !IsBusy);
     }
 
     /// <summary>
@@ -177,6 +178,7 @@ public sealed class FeedViewModel : BaseViewModel
             if (SetProperty(ref _promotionDiagnosticsCopyStatus, value))
             {
                 OnPropertyChanged(nameof(HasPromotionDiagnosticsCopyStatus));
+                ClearPromotionDiagnosticsStatusCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -294,6 +296,8 @@ public sealed class FeedViewModel : BaseViewModel
     public AsyncCommand ShowAllBusinessesPromotionsCommand { get; }
 
     public AsyncCommand CopyPromotionDiagnosticsCommand { get; }
+
+    public AsyncCommand ClearPromotionDiagnosticsStatusCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -764,6 +768,15 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Clears diagnostics copy feedback message from UI.
+    /// </summary>
+    private Task ClearPromotionDiagnosticsStatusAsync()
+    {
+        RunOnMain(() => PromotionDiagnosticsCopyStatus = null);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
     /// Navigates to QR tab using selected business as context.
     /// </summary>
     private async Task OpenQrAsync()
@@ -934,6 +947,7 @@ public sealed class FeedViewModel : BaseViewModel
         ShowSelectedBusinessPromotionsCommand.RaiseCanExecuteChanged();
         ShowAllBusinessesPromotionsCommand.RaiseCanExecuteChanged();
         CopyPromotionDiagnosticsCommand.RaiseCanExecuteChanged();
+        ClearPromotionDiagnosticsStatusCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanNavigateWithSelection));
         OnPropertyChanged(nameof(PromotionScopeText));
     }
