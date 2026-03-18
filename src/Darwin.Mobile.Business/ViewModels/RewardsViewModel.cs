@@ -370,6 +370,45 @@ public sealed partial class RewardsViewModel : BaseViewModel
             : string.Empty;
 
     /// <summary>
+    /// Localized preview of visible campaign titles to make diagnostics payload easier to read before copying.
+    /// </summary>
+    public string CampaignDiagnosticsVisibleCampaignsPreview
+    {
+        get
+        {
+            if (!HasCampaigns)
+            {
+                return AppResources.RewardsCampaignDiagnosticsVisibleCampaignsEmpty;
+            }
+
+            const int previewLimit = 3;
+            var visibleTitles = Campaigns
+                .Select(campaign => campaign.Title)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .Take(previewLimit)
+                .ToArray();
+
+            if (visibleTitles.Length == 0)
+            {
+                return AppResources.RewardsCampaignDiagnosticsVisibleCampaignsEmpty;
+            }
+
+            var remainingCount = Math.Max(0, Campaigns.Count - visibleTitles.Length);
+            var joinedTitles = string.Join(", ", visibleTitles);
+            return remainingCount > 0
+                ? string.Format(
+                    CultureInfo.CurrentCulture,
+                    AppResources.RewardsCampaignDiagnosticsVisibleCampaignsWithRemainingFormat,
+                    joinedTitles,
+                    remainingCount)
+                : string.Format(
+                    CultureInfo.CurrentCulture,
+                    AppResources.RewardsCampaignDiagnosticsVisibleCampaignsFormat,
+                    joinedTitles);
+        }
+    }
+
+    /// <summary>
     /// Indicates whether a diagnostics snapshot timestamp is currently available for display.
     /// </summary>
     public bool HasCampaignDiagnosticsSnapshotAt => _campaignDiagnosticsSnapshotAtLocal.HasValue;
@@ -1743,6 +1782,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(TotalCampaignCount));
         OnPropertyChanged(nameof(FilteredCampaignCount));
         OnPropertyChanged(nameof(CampaignFilterSummary));
+        OnPropertyChanged(nameof(CampaignDiagnosticsVisibleCampaignsPreview));
         OnPropertyChanged(nameof(DraftCampaignCount));
         OnPropertyChanged(nameof(ScheduledCampaignCount));
         OnPropertyChanged(nameof(ActiveCampaignCount));
@@ -2027,12 +2067,13 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 CampaignStateMetricsSummary,
                 CampaignAudienceMetricsSummary,
                 CampaignDiagnosticsSnapshotAtText,
+                CampaignDiagnosticsVisibleCampaignsPreview,
                 string.Format(
                     CultureInfo.InvariantCulture,
                     AppResources.RewardsCampaignDiagnosticsAppliedFiltersFormat,
                     SelectedCampaignStateFilter?.DisplayName ?? AppResources.RewardsCampaignStateFilterAll,
                     SelectedCampaignAudienceFilter?.DisplayName ?? AppResources.RewardsCampaignAudienceFilterAll,
-                    string.IsNullOrWhiteSpace(CampaignSearchQuery) ? "—" : CampaignSearchQuery,
+                    string.IsNullOrWhiteSpace(CampaignSearchQuery) ? AppResources.RewardsCampaignDiagnosticsSearchEmpty : CampaignSearchQuery,
                     SelectedCampaignSortOption?.DisplayName ?? AppResources.RewardsCampaignSortStartDateDesc));
 
             await Clipboard.Default.SetTextAsync(payload).ConfigureAwait(false);

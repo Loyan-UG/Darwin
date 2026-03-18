@@ -828,6 +828,18 @@
   <data name="RewardsCampaignDiagnosticsAppliedFiltersFormat" xml:space="preserve">
     <value>Aktive Filter — Status: {0} · Zielgruppe: {1} · Suche: {2} · Sortierung: {3}</value>
   </data>
+  <data name="RewardsCampaignDiagnosticsSearchEmpty" xml:space="preserve">
+    <value>keine</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsFormat" xml:space="preserve">
+    <value>Sichtbare Kampagnen: {0}</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsWithRemainingFormat" xml:space="preserve">
+    <value>Sichtbare Kampagnen: {0} (+{1} weitere)</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsEmpty" xml:space="preserve">
+    <value>Sichtbare Kampagnen: keine</value>
+  </data>
   <data name="RewardsCampaignDiagnosticsCopied" xml:space="preserve">
     <value>Kampagnen-Diagnose wurde in die Zwischenablage kopiert.</value>
   </data>

@@ -828,6 +828,18 @@
   <data name="RewardsCampaignDiagnosticsAppliedFiltersFormat" xml:space="preserve">
     <value>Applied filters — State: {0} · Audience: {1} · Search: {2} · Sort: {3}</value>
   </data>
+  <data name="RewardsCampaignDiagnosticsSearchEmpty" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsFormat" xml:space="preserve">
+    <value>Visible campaigns: {0}</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsWithRemainingFormat" xml:space="preserve">
+    <value>Visible campaigns: {0} (+{1} more)</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsVisibleCampaignsEmpty" xml:space="preserve">
+    <value>Visible campaigns: none</value>
+  </data>
   <data name="RewardsCampaignDiagnosticsCopied" xml:space="preserve">
     <value>Campaign diagnostics copied to clipboard.</value>
   </data>

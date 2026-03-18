@@ -266,6 +266,10 @@
                    Opacity="0.75"
                    IsVisible="{Binding HasCampaignDiagnosticsSnapshotAt}" />
 
+            <Label Text="{Binding CampaignDiagnosticsVisibleCampaignsPreview}"
+                   FontSize="11"
+                   Opacity="0.75" />
+
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button Text="{x:Static res:AppResources.RewardsCampaignCopyDiagnosticsButton}"
                         Command="{Binding CopyCampaignDiagnosticsCommand}"
