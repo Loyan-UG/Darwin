@@ -294,6 +294,12 @@ public static class AppResources
     public static string RewardsCampaignStateMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricsFormat), Culture) ?? "Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}";
     public static string RewardsCampaignAudienceMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceMetricsFormat), Culture) ?? "Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}";
     public static string RewardsCampaignStateMetricChipFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricChipFormat), Culture) ?? "{0} ({1})";
+    public static string RewardsCampaignDiagnosticsSnapshotAtFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsSnapshotAtFormat), Culture) ?? "Diagnostics snapshot at: {0}";
+    public static string RewardsCampaignCopyDiagnosticsButton => ResourceManager.GetString(nameof(RewardsCampaignCopyDiagnosticsButton), Culture) ?? "Copy campaign diagnostics";
+    public static string RewardsCampaignClearDiagnosticsStatusButton => ResourceManager.GetString(nameof(RewardsCampaignClearDiagnosticsStatusButton), Culture) ?? "Clear diagnostics status";
+    public static string RewardsCampaignDiagnosticsAppliedFiltersFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsAppliedFiltersFormat), Culture) ?? "Applied filters — State: {0} · Audience: {1} · Search: {2} · Sort: {3}";
+    public static string RewardsCampaignDiagnosticsCopied => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsCopied), Culture) ?? "Campaign diagnostics copied to clipboard.";
+    public static string RewardsCampaignDiagnosticsCopyFailed => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsCopyFailed), Culture) ?? "Unable to copy campaign diagnostics right now.";
 
 
 }

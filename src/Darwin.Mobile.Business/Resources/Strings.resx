@@ -816,6 +816,24 @@
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>
+  <data name="RewardsCampaignDiagnosticsSnapshotAtFormat" xml:space="preserve">
+    <value>Diagnostics snapshot at: {0}</value>
+  </data>
+  <data name="RewardsCampaignCopyDiagnosticsButton" xml:space="preserve">
+    <value>Copy campaign diagnostics</value>
+  </data>
+  <data name="RewardsCampaignClearDiagnosticsStatusButton" xml:space="preserve">
+    <value>Clear diagnostics status</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsAppliedFiltersFormat" xml:space="preserve">
+    <value>Applied filters — State: {0} · Audience: {1} · Search: {2} · Sort: {3}</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsCopied" xml:space="preserve">
+    <value>Campaign diagnostics copied to clipboard.</value>
+  </data>
+  <data name="RewardsCampaignDiagnosticsCopyFailed" xml:space="preserve">
+    <value>Unable to copy campaign diagnostics right now.</value>
+  </data>
   <data name="DashboardCampaignTargetingFixMetricsFormat" xml:space="preserve">
     <value>Campaign quick-fix — applied: {0} · no-change: {1} · resets: {2}</value>
   </data>
