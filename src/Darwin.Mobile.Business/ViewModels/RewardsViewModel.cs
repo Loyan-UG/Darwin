@@ -505,6 +505,31 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public string DateWindowCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceDateWindow, DateWindowCampaignCount);
 
     /// <summary>
+    /// Gets count of campaigns configured for in-app only delivery.
+    /// </summary>
+    public int InAppOnlyCampaignCount => _allCampaigns.Count(campaign => campaign.Channels == 1);
+
+    /// <summary>
+    /// Gets count of campaigns configured for in-app plus push delivery.
+    /// </summary>
+    public int InAppAndPushCampaignCount => _allCampaigns.Count(campaign => campaign.Channels == 3);
+
+    /// <summary>
+    /// Gets count of campaigns configured with unexpected/other channel bitmasks.
+    /// </summary>
+    public int OtherChannelCampaignCount => Math.Max(0, _allCampaigns.Count - InAppOnlyCampaignCount - InAppAndPushCampaignCount);
+
+    /// <summary>
+    /// Localized summary line for delivery-channel distribution across all loaded campaigns.
+    /// </summary>
+    public string CampaignChannelMetricsSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignChannelMetricsFormat,
+        InAppOnlyCampaignCount,
+        InAppAndPushCampaignCount,
+        OtherChannelCampaignCount);
+
+    /// <summary>
     /// User-entered points required for the reward tier.
     /// </summary>
     public string PointsRequiredInput
@@ -1798,6 +1823,10 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(PointsThresholdCampaignCount));
         OnPropertyChanged(nameof(DateWindowCampaignCount));
         OnPropertyChanged(nameof(CampaignAudienceMetricsSummary));
+        OnPropertyChanged(nameof(InAppOnlyCampaignCount));
+        OnPropertyChanged(nameof(InAppAndPushCampaignCount));
+        OnPropertyChanged(nameof(OtherChannelCampaignCount));
+        OnPropertyChanged(nameof(CampaignChannelMetricsSummary));
         OnPropertyChanged(nameof(AllCampaignAudienceMetricText));
         OnPropertyChanged(nameof(JoinedMembersCampaignMetricText));
         OnPropertyChanged(nameof(TierSegmentCampaignMetricText));
@@ -2066,6 +2095,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 CampaignFilterSummary,
                 CampaignStateMetricsSummary,
                 CampaignAudienceMetricsSummary,
+                CampaignChannelMetricsSummary,
                 CampaignDiagnosticsSnapshotAtText,
                 CampaignDiagnosticsVisibleCampaignsPreview,
                 string.Format(

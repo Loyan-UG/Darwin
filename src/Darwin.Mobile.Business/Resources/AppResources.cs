@@ -291,8 +291,11 @@ public static class AppResources
     public static string RewardsCampaignEligibilityRangeFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityRangeFormat), Culture) ?? "Points {0}-{1}";
     public static string RewardsCampaignEligibilityMinFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMinFormat), Culture) ?? "Points ≥ {0}";
     public static string RewardsCampaignEligibilityMaxFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMaxFormat), Culture) ?? "Points ≤ {0}";
+    public static string RewardsCampaignChannelSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelSummaryFormat), Culture) ?? "Channels: {0}";
+    public static string RewardsCampaignChannelUnknown => ResourceManager.GetString(nameof(RewardsCampaignChannelUnknown), Culture) ?? "unknown";
     public static string RewardsCampaignStateMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricsFormat), Culture) ?? "Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}";
     public static string RewardsCampaignAudienceMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceMetricsFormat), Culture) ?? "Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}";
+    public static string RewardsCampaignChannelMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelMetricsFormat), Culture) ?? "In-app only: {0} · In-app + Push: {1} · Other: {2}";
     public static string RewardsCampaignStateMetricChipFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricChipFormat), Culture) ?? "{0} ({1})";
     public static string RewardsCampaignDiagnosticsSnapshotAtFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsSnapshotAtFormat), Culture) ?? "Diagnostics snapshot at: {0}";
     public static string RewardsCampaignCopyDiagnosticsButton => ResourceManager.GetString(nameof(RewardsCampaignCopyDiagnosticsButton), Culture) ?? "Copy campaign diagnostics";

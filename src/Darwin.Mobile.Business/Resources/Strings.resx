@@ -807,11 +807,20 @@
   <data name="RewardsCampaignEligibilityMaxFormat" xml:space="preserve">
     <value>Points ≤ {0}</value>
   </data>
+  <data name="RewardsCampaignChannelSummaryFormat" xml:space="preserve">
+    <value>Channels: {0}</value>
+  </data>
+  <data name="RewardsCampaignChannelUnknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
   <data name="RewardsCampaignStateMetricsFormat" xml:space="preserve">
     <value>Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}</value>
   </data>
   <data name="RewardsCampaignAudienceMetricsFormat" xml:space="preserve">
     <value>Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}</value>
+  </data>
+  <data name="RewardsCampaignChannelMetricsFormat" xml:space="preserve">
+    <value>In-app only: {0} · In-app + Push: {1} · Other: {2}</value>
   </data>
   <data name="RewardsCampaignStateMetricChipFormat" xml:space="preserve">
     <value>{0} ({1})</value>
