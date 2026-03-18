@@ -39,10 +39,14 @@ public sealed partial class LoginViewModel : BaseViewModel
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
-        // Security hardening:
-        // Keep login inputs empty in every build configuration.
-        // This avoids shipping embedded credentials and ensures operators/testers
-        // always provide explicit credentials for each session.
+        // Manual QA acceleration policy:
+        // Keep seeded credentials prefilled in DEBUG builds for faster integration loops.
+        // IMPORTANT: this behavior is intentionally retained and must not be changed here.
+        // Final removal will be handled manually when release hardening is explicitly requested.
+#if DEBUG
+        Email = "cons1@darwin.de";
+        Password = "Consumer123!";
+#else
         Email = string.Empty;
         Password = string.Empty;
     }

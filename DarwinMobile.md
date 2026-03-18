@@ -191,7 +191,7 @@ These are sufficient for the map, directory and profile pages on Consumer.
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
 - `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
 - `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
-- Login view models in both mobile apps keep credentials empty in all build configurations. QA/test accounts can still be used manually during verification, but no seeded credentials are embedded in app binaries.
+- During active integration testing, login view models in both mobile apps prefill QA credentials only for DEBUG builds to speed manual verification loops; non-DEBUG builds keep credentials empty. This behavior is intentionally retained and must remain unchanged until manual removal is explicitly requested by product owner.
 - **Consumer QR auto-refresh policy (current app behavior)**: the UI countdown check runs every ~1 second for a smooth countdown, while the app enforces a **minimum 5-minute interval** between automatic network refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
