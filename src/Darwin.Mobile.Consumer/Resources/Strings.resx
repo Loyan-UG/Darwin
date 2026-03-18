@@ -634,6 +634,9 @@
 		<data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
     <value>Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}</value>
   </data>
+  <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
+    <value>Diagnostics snapshot at: {0}</value>
+  </data>
   <data name="FeedCopyPromotionDiagnosticsButton" xml:space="preserve">
     <value>Copy promotion diagnostics</value>
   </data>

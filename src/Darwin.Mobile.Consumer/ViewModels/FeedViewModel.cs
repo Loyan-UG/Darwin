@@ -51,6 +51,7 @@ public sealed class FeedViewModel : BaseViewModel
     private int _promotionFinalCount;
     private int _promotionAppliedMaxCards;
     private int _promotionAppliedSuppressionMinutes;
+    private DateTimeOffset? _promotionDiagnosticsSnapshotAtLocal;
     private string? _promotionDiagnosticsCopyStatus;
 
     /// <summary>
@@ -149,6 +150,21 @@ public sealed class FeedViewModel : BaseViewModel
             PromotionDeduplicatedCount,
             PromotionTrimmedByCapCount,
             PromotionFinalCount);
+
+    /// <summary>
+    /// Gets localized timestamp text for the latest promotion diagnostics snapshot.
+    /// </summary>
+    public string PromotionDiagnosticsSnapshotAtText
+        => _promotionDiagnosticsSnapshotAtLocal.HasValue
+            ? string.Format(
+                Resources.AppResources.FeedPromotionDiagnosticsSnapshotAtFormat,
+                _promotionDiagnosticsSnapshotAtLocal.Value.ToString("yyyy-MM-dd HH:mm"))
+            : string.Empty;
+
+    /// <summary>
+    /// Gets whether diagnostics snapshot timestamp is available for display.
+    /// </summary>
+    public bool HasPromotionDiagnosticsSnapshotAt => _promotionDiagnosticsSnapshotAtLocal.HasValue;
 
     /// <summary>
     /// Gets status text for the latest diagnostics copy action.
@@ -542,6 +558,7 @@ public sealed class FeedViewModel : BaseViewModel
         _promotionFinalCount = result.Value.Diagnostics.FinalCount;
         _promotionAppliedMaxCards = displayCap;
         _promotionAppliedSuppressionMinutes = (int)Math.Round(suppressionWindow.TotalMinutes, MidpointRounding.AwayFromZero);
+        _promotionDiagnosticsSnapshotAtLocal = DateTimeOffset.Now;
 
         var eligible = unique
             .Where(item => !IsPromotionSuppressed(item, nowUtc, suppressionWindow))
@@ -570,6 +587,8 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
 
         foreach (var item in eligible)
@@ -729,7 +748,10 @@ public sealed class FeedViewModel : BaseViewModel
             var scope = PromotionScopeText;
             var summary = PromotionPolicyDiagnosticsSummaryText;
             var businessName = SelectedAccount?.BusinessName ?? Resources.AppResources.FeedBusinessPickerLabel;
-            var payload = $"{scope}\n{businessName}\n{summary}";
+            var snapshotAt = PromotionDiagnosticsSnapshotAtText;
+            var payload = string.IsNullOrWhiteSpace(snapshotAt)
+                ? $"{scope}\n{businessName}\n{summary}"
+                : $"{scope}\n{businessName}\n{summary}\n{snapshotAt}";
 
             await Clipboard.Default.SetTextAsync(payload);
 
@@ -878,6 +900,7 @@ public sealed class FeedViewModel : BaseViewModel
         _promotionFinalCount = 0;
         _promotionAppliedMaxCards = 0;
         _promotionAppliedSuppressionMinutes = 0;
+        _promotionDiagnosticsSnapshotAtLocal = null;
 
         RunOnMain(() =>
         {
@@ -893,6 +916,8 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
     }
 

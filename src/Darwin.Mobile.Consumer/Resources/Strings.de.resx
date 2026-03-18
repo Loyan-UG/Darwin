@@ -634,6 +634,9 @@
 		<data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
     <value>Richtlinie: Unterdrückung {0} Min. · Limit {1} | Diagnose: initial {2}, unterdrückt {3}, dedupliziert {4}, gekappt {5}, final {6}</value>
   </data>
+  <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
+    <value>Diagnose-Snapshot um: {0}</value>
+  </data>
   <data name="FeedCopyPromotionDiagnosticsButton" xml:space="preserve">
     <value>Diagnose kopieren</value>
   </data>
