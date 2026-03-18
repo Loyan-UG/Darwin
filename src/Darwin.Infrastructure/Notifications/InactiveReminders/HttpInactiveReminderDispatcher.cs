@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Clock;
 using Darwin.Application.Abstractions.Notifications;
 using Darwin.Shared.Results;
 using Microsoft.Extensions.Logging;
@@ -19,15 +20,18 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
 {
     private readonly HttpClient _httpClient;
     private readonly IOptionsMonitor<InactiveReminderPushGatewayOptions> _optionsMonitor;
+    private readonly IClock _clock;
     private readonly ILogger<HttpInactiveReminderDispatcher> _logger;
 
     public HttpInactiveReminderDispatcher(
         HttpClient httpClient,
         IOptionsMonitor<InactiveReminderPushGatewayOptions> optionsMonitor,
+        IClock clock,
         ILogger<HttpInactiveReminderDispatcher> logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _optionsMonitor = optionsMonitor ?? throw new ArgumentNullException(nameof(optionsMonitor));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -61,18 +65,108 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
             return Result.Fail("Gateway.EndpointNotConfigured");
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, options.Endpoint)
+        var requestPayload = new InactiveReminderPushGatewayRequest
         {
-            Content = JsonContent.Create(new InactiveReminderPushGatewayRequest
+            UserId = userId,
+            DeviceId = destinationDeviceId,
+            PushToken = pushToken,
+            Platform = string.IsNullOrWhiteSpace(platform) ? "Unknown" : platform,
+            InactiveDays = Math.Max(0, inactiveDays),
+            Title = ApplyTemplate(options.TitleTemplate, inactiveDays),
+            Body = ApplyTemplate(options.BodyTemplate, inactiveDays)
+        };
+
+        var maxAttempts = Math.Clamp(options.MaxAttempts, 1, 5);
+        var initialBackoffMs = Math.Clamp(options.InitialBackoffMilliseconds, 100, 10_000);
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
             {
-                UserId = userId,
-                DeviceId = destinationDeviceId,
-                PushToken = pushToken,
-                Platform = string.IsNullOrWhiteSpace(platform) ? "Unknown" : platform,
-                InactiveDays = Math.Max(0, inactiveDays),
-                Title = ApplyTemplate(options.TitleTemplate, inactiveDays),
-                Body = ApplyTemplate(options.BodyTemplate, inactiveDays)
-            })
+                using var request = BuildGatewayRequest(options, requestPayload);
+                using var response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
+                if (response.IsSuccessStatusCode)
+                {
+                    return Result.Ok();
+                }
+
+                var statusCode = (int)response.StatusCode;
+                var responseBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                _logger.LogWarning(
+                    "Inactive reminder gateway rejected dispatch. Attempt={Attempt}/{MaxAttempts}, StatusCode={StatusCode}, UserId={UserId}, Body={Body}",
+                    attempt,
+                    maxAttempts,
+                    statusCode,
+                    userId,
+                    TruncateForLog(responseBody));
+
+                var providerFailureCode = MapProviderFailureCodeFromBody(responseBody);
+                if (!string.IsNullOrWhiteSpace(providerFailureCode))
+                {
+                    return Result.Fail(providerFailureCode);
+                }
+
+                var mappedFailure = MapGatewayFailureCode(statusCode);
+                if (!IsTransientGatewayStatusCode(statusCode) || attempt >= maxAttempts)
+                {
+                    return Result.Fail(mappedFailure);
+                }
+
+                await DelayBeforeRetryAsync(attempt, initialBackoffMs, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Inactive reminder gateway transport error. Attempt={Attempt}/{MaxAttempts}, UserId={UserId}",
+                    attempt,
+                    maxAttempts,
+                    userId);
+
+                if (attempt >= maxAttempts)
+                {
+                    return Result.Fail("Gateway.TransportError");
+                }
+
+                await DelayBeforeRetryAsync(attempt, initialBackoffMs, ct).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+            {
+                _logger.LogWarning(
+                    "Inactive reminder gateway request timed out. Attempt={Attempt}/{MaxAttempts}, UserId={UserId}",
+                    attempt,
+                    maxAttempts,
+                    userId);
+
+                if (attempt >= maxAttempts)
+                {
+                    return Result.Fail("Gateway.Timeout");
+                }
+
+                await DelayBeforeRetryAsync(attempt, initialBackoffMs, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Inactive reminder gateway dispatch failed for UserId={UserId}.", userId);
+                return Result.Fail("Gateway.TransportError");
+            }
+        }
+
+        return Result.Fail("Gateway.TransportError");
+    }
+
+    /// <summary>
+    /// Builds one gateway request instance. Requests are not reused across retries.
+    /// </summary>
+    private static HttpRequestMessage BuildGatewayRequest(InactiveReminderPushGatewayOptions options, InactiveReminderPushGatewayRequest payload)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, options.Endpoint)
+        {
+            Content = JsonContent.Create(payload)
         };
 
         if (!string.IsNullOrWhiteSpace(options.BearerToken))
@@ -80,39 +174,28 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.BearerToken.Trim());
         }
 
-        try
-        {
-            using var response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
-            if (response.IsSuccessStatusCode)
-            {
-                return Result.Ok();
-            }
-
-            var responseBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            _logger.LogWarning(
-                "Inactive reminder gateway rejected dispatch. StatusCode={StatusCode}, UserId={UserId}, Body={Body}",
-                (int)response.StatusCode,
-                userId,
-                TruncateForLog(responseBody));
-
-            var providerFailureCode = MapProviderFailureCodeFromBody(responseBody);
-            if (!string.IsNullOrWhiteSpace(providerFailureCode))
-            {
-                return Result.Fail(providerFailureCode);
-            }
-
-            return Result.Fail(MapGatewayFailureCode((int)response.StatusCode));
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Inactive reminder gateway dispatch failed for UserId={UserId}.", userId);
-            return Result.Fail("Gateway.TransportError");
-        }
+        return request;
     }
+
+    /// <summary>
+    /// Waits before retrying transient gateway failures using exponential backoff with bounded jitter.
+    /// </summary>
+    private async Task DelayBeforeRetryAsync(int attempt, int initialBackoffMs, CancellationToken ct)
+    {
+        var exponential = initialBackoffMs * Math.Pow(2, Math.Max(0, attempt - 1));
+        var bounded = Math.Min(15_000d, exponential);
+
+        // Small deterministic jitter derived from current clock ticks to reduce synchronized retries.
+        var jitter = Math.Abs(_clock.UtcNow.Ticks % 200);
+        var delay = TimeSpan.FromMilliseconds(bounded + jitter);
+        await Task.Delay(delay, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Determines whether gateway status code is safe to retry.
+    /// </summary>
+    private static bool IsTransientGatewayStatusCode(int statusCode)
+        => statusCode == 408 || statusCode == 429 || (statusCode >= 500 && statusCode <= 599);
 
     /// <summary>
     /// Applies simple placeholder replacement in templates.
