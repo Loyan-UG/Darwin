@@ -78,6 +78,7 @@ public sealed class ScannerViewModel : BaseViewModel
             if (SetProperty(ref _hasAccrualPermission, value))
             {
                 OnPropertyChanged(nameof(HasAnyProcessingPermission));
+                OnPropertyChanged(nameof(CanStartScan));
             }
         }
     }
@@ -93,6 +94,7 @@ public sealed class ScannerViewModel : BaseViewModel
             if (SetProperty(ref _hasRedemptionPermission, value))
             {
                 OnPropertyChanged(nameof(HasAnyProcessingPermission));
+                OnPropertyChanged(nameof(CanStartScan));
             }
         }
     }
@@ -102,6 +104,11 @@ public sealed class ScannerViewModel : BaseViewModel
     /// This is shown on the scanner page as a quick readiness indicator.
     /// </summary>
     public bool HasAnyProcessingPermission => HasAccrualPermission || HasRedemptionPermission;
+
+    /// <summary>
+    /// Gets whether scanner action should be enabled for the current operator and UI busy state.
+    /// </summary>
+    public bool CanStartScan => HasAnyProcessingPermission && !IsBusy;
 
     /// <summary>
     /// Gets the last scanned QR token, mainly for debugging or display only.
@@ -170,6 +177,7 @@ public sealed class ScannerViewModel : BaseViewModel
         }
 
         IsBusy = true;
+        OnPropertyChanged(nameof(CanStartScan));
         ClearFeedback();
 
         try
@@ -205,6 +213,7 @@ public sealed class ScannerViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            OnPropertyChanged(nameof(CanStartScan));
         }
     }
 

@@ -15,6 +15,7 @@
             <Button Text="{x:Static res:AppResources.ScanTitle}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding ScanCommand}"
+                    IsEnabled="{Binding CanStartScan}"
                     HorizontalOptions="Fill" />
 
             <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
