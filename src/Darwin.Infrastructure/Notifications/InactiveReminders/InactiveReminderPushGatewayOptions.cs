@@ -29,4 +29,15 @@ public sealed class InactiveReminderPushGatewayOptions
     /// Push body template. Supports <c>{inactiveDays}</c> placeholder.
     /// </summary>
     public string BodyTemplate { get; set; } = "It has been {inactiveDays} days since your last visit. Come back and discover new rewards.";
+
+    /// <summary>
+    /// Maximum dispatch attempts for transient gateway failures.
+    /// </summary>
+    public int MaxAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Initial retry backoff in milliseconds for transient failures.
+    /// Subsequent attempts use exponential backoff.
+    /// </summary>
+    public int InitialBackoffMilliseconds { get; set; } = 300;
 }

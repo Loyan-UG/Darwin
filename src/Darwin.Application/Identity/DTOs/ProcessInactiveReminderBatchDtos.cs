@@ -29,5 +29,7 @@ public sealed class ProcessInactiveReminderBatchResultDto
     public int CandidatesEvaluated { get; set; }
     public int DispatchedCount { get; set; }
     public int SuppressedCount { get; set; }
+    public int SuppressedByCooldownCount { get; set; }
+    public int SuppressedByMissingDestinationCount { get; set; }
     public int FailedCount { get; set; }
 }

@@ -531,12 +531,12 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
-- **Handoff note (this chat):** current iteration is intentionally paused cleanly for continuation in a new chat; latest completed increment is campaign quick-fix telemetry persistence into business activity dashboard/reporting with docs/backlog synchronized.
-- **Recommended next step (new chat):** this section is closed; start with a fresh baseline validation from latest repository state (parallel updates landed), then focus on targeted error-remediation tasks and continue Promotions foundation contracts/lifecycle refinement.
-- Testing coverage for Profile save metadata fallback path and push-sync command busy-state/reentrancy behavior is tracked in `DarwinTesting.md` (dedicated testing stream).
-- Continue Promotions Phase upgrade: add advanced campaign editor UX polish and admin-side campaign operations on top of delivered business APIs/contracts.
-- Add explicit reminder dispatch/suppression workflow (send log + cooldown policy) on top of the current engagement snapshot baseline.
-- Integrate provider-native sender behind the gateway (FCM/APNs) and map provider-specific response codes for richer failure taxonomy.
+- **Handoff note (this chat):** current iteration is paused cleanly for continuation in a new chat; latest completed increment hardened promotions feed mapping (priority extraction from payload, eligibility-rules array compatibility parsing, and lifecycle-state normalization).
+- **Recommended next step (new chat):** start with a fresh baseline validation from latest repository state, then execute Promotions verification/hardening (automated tests for lifecycle/priority/eligibility parsing paths).
+- Testing coverage and execution evidence are tracked in `DarwinTesting.md` (dedicated testing stream); update that file alongside status changes.
+- Continue Promotions Phase upgrade with advanced campaign editor UX polish and admin-side campaign operations refinement on top of delivered business APIs/contracts.
+- Finalize inactive-reminder provider-native sender integration behind gateway (FCM/APNs), and extend provider-specific failure taxonomy/remediation mapping.
+- Re-run end-to-end mobile/server build + test evidence collection from current branch before rollout decisions.
 
 ### Next-chat startup checklist
 1. Re-read `BACKLOG.md`, `DarwinMobile.md`, and current mobile ViewModels from disk before coding.
