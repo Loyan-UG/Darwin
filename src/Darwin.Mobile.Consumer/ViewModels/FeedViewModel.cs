@@ -51,6 +51,8 @@ public sealed class FeedViewModel : BaseViewModel
     private int _promotionFinalCount;
     private int _promotionAppliedMaxCards;
     private int _promotionAppliedSuppressionMinutes;
+    private DateTimeOffset? _promotionDiagnosticsSnapshotAtLocal;
+    private string? _promotionDiagnosticsCopyStatus;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedViewModel"/> class.
@@ -71,6 +73,8 @@ public sealed class FeedViewModel : BaseViewModel
         OpenPromotionCommand = new AsyncCommand<PromotionFeedItem>(OpenPromotionAsync, item => item is not null && !IsBusy);
         ShowSelectedBusinessPromotionsCommand = new AsyncCommand(ShowSelectedBusinessPromotionsAsync, () => !IsBusy);
         ShowAllBusinessesPromotionsCommand = new AsyncCommand(ShowAllBusinessesPromotionsAsync, () => !IsBusy);
+        CopyPromotionDiagnosticsCommand = new AsyncCommand(CopyPromotionDiagnosticsAsync, () => HasPromotionDiagnosticsSnapshotAt && !IsBusy);
+        ClearPromotionDiagnosticsStatusCommand = new AsyncCommand(ClearPromotionDiagnosticsStatusAsync, () => HasPromotionDiagnosticsCopyStatus && !IsBusy);
     }
 
     /// <summary>
@@ -147,6 +151,100 @@ public sealed class FeedViewModel : BaseViewModel
             PromotionDeduplicatedCount,
             PromotionTrimmedByCapCount,
             PromotionFinalCount);
+
+    /// <summary>
+    /// Gets localized timestamp text for the latest promotion diagnostics snapshot.
+    /// </summary>
+    public string PromotionDiagnosticsSnapshotAtText
+        => _promotionDiagnosticsSnapshotAtLocal.HasValue
+            ? string.Format(
+                Resources.AppResources.FeedPromotionDiagnosticsSnapshotAtFormat,
+                _promotionDiagnosticsSnapshotAtLocal.Value.ToString("yyyy-MM-dd HH:mm"))
+            : string.Empty;
+
+    /// <summary>
+    /// Gets localized freshness text for the diagnostics snapshot so operators can detect stale context quickly.
+    /// </summary>
+    public string PromotionDiagnosticsFreshnessText
+    {
+        get
+        {
+            if (!_promotionDiagnosticsSnapshotAtLocal.HasValue)
+            {
+                return string.Empty;
+            }
+
+            var ageMinutes = Math.Max(0, (int)Math.Round((DateTimeOffset.Now - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
+            return ageMinutes > 15
+                ? string.Format(Resources.AppResources.FeedPromotionDiagnosticsFreshnessStaleFormat, ageMinutes)
+                : string.Format(Resources.AppResources.FeedPromotionDiagnosticsFreshnessFreshFormat, ageMinutes);
+        }
+    }
+
+    /// <summary>
+    /// Gets whether current diagnostics snapshot is older than the operations freshness threshold.
+    /// </summary>
+    public bool IsPromotionDiagnosticsSnapshotStale
+        => _promotionDiagnosticsSnapshotAtLocal.HasValue
+           && (DateTimeOffset.Now - _promotionDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
+
+    /// <summary>
+    /// Gets localized preview text for visible promotions to provide more diagnostics context in support handoff.
+    /// </summary>
+    public string PromotionDiagnosticsVisiblePromotionsPreview
+    {
+        get
+        {
+            if (!HasPromotions)
+            {
+                return Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsEmpty;
+            }
+
+            const int previewLimit = 3;
+            var titles = PromotionItems
+                .Select(item => item.Title)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .Take(previewLimit)
+                .ToArray();
+
+            if (titles.Length == 0)
+            {
+                return Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsEmpty;
+            }
+
+            var remaining = Math.Max(0, PromotionItems.Count - titles.Length);
+            var joinedTitles = string.Join(", ", titles);
+            return remaining > 0
+                ? string.Format(Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat, joinedTitles, remaining)
+                : string.Format(Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsFormat, joinedTitles);
+        }
+    }
+
+    /// <summary>
+    /// Gets whether diagnostics snapshot timestamp is available for display.
+    /// </summary>
+    public bool HasPromotionDiagnosticsSnapshotAt => _promotionDiagnosticsSnapshotAtLocal.HasValue;
+
+    /// <summary>
+    /// Gets status text for the latest diagnostics copy action.
+    /// </summary>
+    public string? PromotionDiagnosticsCopyStatus
+    {
+        get => _promotionDiagnosticsCopyStatus;
+        private set
+        {
+            if (SetProperty(ref _promotionDiagnosticsCopyStatus, value))
+            {
+                OnPropertyChanged(nameof(HasPromotionDiagnosticsCopyStatus));
+                ClearPromotionDiagnosticsStatusCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether a copy-status message is available for display.
+    /// </summary>
+    public bool HasPromotionDiagnosticsCopyStatus => !string.IsNullOrWhiteSpace(PromotionDiagnosticsCopyStatus);
 
     /// <summary>
     /// Gets whether promotion cards are loaded across all joined businesses.
@@ -254,6 +352,10 @@ public sealed class FeedViewModel : BaseViewModel
     public AsyncCommand ShowSelectedBusinessPromotionsCommand { get; }
 
     public AsyncCommand ShowAllBusinessesPromotionsCommand { get; }
+
+    public AsyncCommand CopyPromotionDiagnosticsCommand { get; }
+
+    public AsyncCommand ClearPromotionDiagnosticsStatusCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -518,6 +620,7 @@ public sealed class FeedViewModel : BaseViewModel
         _promotionFinalCount = result.Value.Diagnostics.FinalCount;
         _promotionAppliedMaxCards = displayCap;
         _promotionAppliedSuppressionMinutes = (int)Math.Round(suppressionWindow.TotalMinutes, MidpointRounding.AwayFromZero);
+        _promotionDiagnosticsSnapshotAtLocal = DateTimeOffset.Now;
 
         var eligible = unique
             .Where(item => !IsPromotionSuppressed(item, nowUtc, suppressionWindow))
@@ -546,6 +649,11 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsFreshnessText));
+            OnPropertyChanged(nameof(IsPromotionDiagnosticsSnapshotStale));
+            OnPropertyChanged(nameof(PromotionDiagnosticsVisiblePromotionsPreview));
+            OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
 
         foreach (var item in eligible)
@@ -691,6 +799,47 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Copies current promotion policy/diagnostics summary to system clipboard for operational support handoff.
+    /// </summary>
+    private async Task CopyPromotionDiagnosticsAsync()
+    {
+        if (!HasPromotionDiagnosticsSnapshotAt)
+        {
+            return;
+        }
+
+        try
+        {
+            var scope = PromotionScopeText;
+            var summary = PromotionPolicyDiagnosticsSummaryText;
+            var businessName = SelectedAccount?.BusinessName ?? Resources.AppResources.FeedBusinessPickerLabel;
+            var snapshotAt = PromotionDiagnosticsSnapshotAtText;
+            var freshness = PromotionDiagnosticsFreshnessText;
+            var visiblePromotions = PromotionDiagnosticsVisiblePromotionsPreview;
+            var payload = string.IsNullOrWhiteSpace(snapshotAt)
+                ? $"{scope}\n{businessName}\n{summary}\n{visiblePromotions}"
+                : $"{scope}\n{businessName}\n{summary}\n{visiblePromotions}\n{snapshotAt}\n{freshness}";
+
+            await Clipboard.Default.SetTextAsync(payload);
+
+            RunOnMain(() => PromotionDiagnosticsCopyStatus = Resources.AppResources.FeedPromotionDiagnosticsCopied);
+        }
+        catch
+        {
+            RunOnMain(() => PromotionDiagnosticsCopyStatus = Resources.AppResources.FeedPromotionDiagnosticsCopyFailed);
+        }
+    }
+
+    /// <summary>
+    /// Clears diagnostics copy feedback message from UI.
+    /// </summary>
+    private Task ClearPromotionDiagnosticsStatusAsync()
+    {
+        RunOnMain(() => PromotionDiagnosticsCopyStatus = null);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
     /// Navigates to QR tab using selected business as context.
     /// </summary>
     private async Task OpenQrAsync()
@@ -827,10 +976,12 @@ public sealed class FeedViewModel : BaseViewModel
         _promotionFinalCount = 0;
         _promotionAppliedMaxCards = 0;
         _promotionAppliedSuppressionMinutes = 0;
+        _promotionDiagnosticsSnapshotAtLocal = null;
 
         RunOnMain(() =>
         {
             PromotionItems.Clear();
+            PromotionDiagnosticsCopyStatus = null;
             OnPropertyChanged(nameof(HasPromotions));
             OnPropertyChanged(nameof(PromotionInitialCandidateCount));
             OnPropertyChanged(nameof(PromotionSuppressedByFrequencyCount));
@@ -841,6 +992,11 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(PromotionAppliedSuppressionMinutes));
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsFreshnessText));
+            OnPropertyChanged(nameof(IsPromotionDiagnosticsSnapshotStale));
+            OnPropertyChanged(nameof(PromotionDiagnosticsVisiblePromotionsPreview));
+            OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
     }
 
@@ -856,6 +1012,8 @@ public sealed class FeedViewModel : BaseViewModel
         OpenPromotionCommand.RaiseCanExecuteChanged();
         ShowSelectedBusinessPromotionsCommand.RaiseCanExecuteChanged();
         ShowAllBusinessesPromotionsCommand.RaiseCanExecuteChanged();
+        CopyPromotionDiagnosticsCommand.RaiseCanExecuteChanged();
+        ClearPromotionDiagnosticsStatusCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanNavigateWithSelection));
         OnPropertyChanged(nameof(PromotionScopeText));
     }

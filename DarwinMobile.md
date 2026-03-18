@@ -191,7 +191,7 @@ These are sufficient for the map, directory and profile pages on Consumer.
 - `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
 - `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
 - `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
-- During active integration testing, login view models in both mobile apps prefill QA credentials only for DEBUG builds to speed manual verification loops; non-DEBUG builds keep credentials empty. This remains a temporary exception and must be fully removed during final pre-release hardening before customer rollout.
+- During active integration testing, login view models in both mobile apps prefill QA credentials only for DEBUG builds to speed manual verification loops; non-DEBUG builds keep credentials empty. This behavior is intentionally retained and must remain unchanged until manual removal is explicitly requested by product owner.
 - **Consumer QR auto-refresh policy (current app behavior)**: the UI countdown check runs every ~1 second for a smooth countdown, while the app enforces a **minimum 5-minute interval** between automatic network refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
 
 ### 5.3 Integration Abstractions
@@ -531,10 +531,10 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
-- **Handoff note (this chat):** current iteration is paused cleanly for continuation in a new chat; latest completed increment hardened promotions feed mapping (priority extraction from payload, eligibility-rules array compatibility parsing, and lifecycle-state normalization).
-- **Recommended next step (new chat):** start with a fresh baseline validation from latest repository state, then execute Promotions verification/hardening (automated tests for lifecycle/priority/eligibility parsing paths).
+- **Handoff note (this chat):** current iteration is paused cleanly for continuation in a new chat; latest completed increment hardened mobile diagnostics UX (Consumer Feed + Business Rewards) with snapshot-context visibility in empty-list scenarios, visible-item preview lines, and freshness signals in both UI and clipboard export payloads.
+- **Recommended next step (new chat):** start with a fresh baseline validation from latest repository state, then continue from inactive-reminder completion workstream (provider-native sender integration + taxonomy/remediation observability), while Promotions verification remains in the dedicated testing stream.
 - Testing coverage and execution evidence are tracked in `DarwinTesting.md` (dedicated testing stream); update that file alongside status changes.
-- Continue Promotions Phase upgrade with advanced campaign editor UX polish and admin-side campaign operations refinement on top of delivered business APIs/contracts.
+- Keep Promotions operations polish as feedback-driven follow-up (address only newly reported UX gaps) on top of the delivered diagnostics baseline.
 - Finalize inactive-reminder provider-native sender integration behind gateway (FCM/APNs), and extend provider-specific failure taxonomy/remediation mapping.
 - Re-run end-to-end mobile/server build + test evidence collection from current branch before rollout decisions.
 
@@ -542,6 +542,7 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 1. Re-read `BACKLOG.md`, `DarwinMobile.md`, and current mobile ViewModels from disk before coding.
 2. Run mobile-only compile/build checks to capture only active failures from latest branch state.
 3. Resolve blocker errors in small isolated commits, then resume promotions/reminders queue delivery.
+4. If no new promotions UX gap is reported, prioritize inactive-reminder completion and release-evidence collection before opening new UI polish tasks.
 
 ## 19) Contributor Checklist
 

@@ -631,8 +631,41 @@
 	<data name="FeedPromotionScopeAllBusinesses" xml:space="preserve">
     <value>Promotion scope: all joined businesses</value>
   </data>
-	  <data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
-    <value>Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}</value>
+		<data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
+			<value>Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}</value>
+		</data>
+  <data name="FeedPromotionDiagnosticsTitle" xml:space="preserve">
+    <value>Promotion diagnostics</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
+    <value>Diagnostics snapshot at: {0}</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsFreshnessFreshFormat" xml:space="preserve">
+    <value>Snapshot freshness: {0} minute(s) old</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsFreshnessStaleFormat" xml:space="preserve">
+    <value>Snapshot freshness warning: {0} minute(s) old</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsFormat" xml:space="preserve">
+    <value>Visible promotions: {0}</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat" xml:space="preserve">
+    <value>Visible promotions: {0} (+{1} more)</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsEmpty" xml:space="preserve">
+    <value>Visible promotions: none</value>
+  </data>
+  <data name="FeedCopyPromotionDiagnosticsButton" xml:space="preserve">
+    <value>Copy promotion diagnostics</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsCopied" xml:space="preserve">
+    <value>Promotion diagnostics copied.</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsCopyFailed" xml:space="preserve">
+    <value>Unable to copy promotion diagnostics right now.</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsClearStatusButton" xml:space="preserve">
+    <value>Clear diagnostics status</value>
   </data>
 <data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Open</value>
