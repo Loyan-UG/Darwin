@@ -102,7 +102,8 @@ public sealed class GetInactiveReminderCandidatesHandler
             var metadata = DeserializeMetadata(snapshot.SnapshotJson);
             var lastReminderSentAtUtc = TryReadDateTimeUtc(metadata, ReminderMetadataKeys.LastInactiveReminderSentAtUtc);
             var cooldownEndsAtUtc = lastReminderSentAtUtc?.Add(cooldown);
-            if (cooldownEndsAtUtc.HasValue && cooldownEndsAtUtc.Value > nowUtc)
+            var isSuppressedByCooldown = cooldownEndsAtUtc.HasValue && cooldownEndsAtUtc.Value > nowUtc;
+            if (isSuppressedByCooldown && !request.IncludeSuppressedByCooldown)
             {
                 continue;
             }
@@ -117,7 +118,9 @@ public sealed class GetInactiveReminderCandidatesHandler
                 CooldownEndsAtUtc = cooldownEndsAtUtc,
                 PushDestinationDeviceId = destination.DeviceId,
                 PushToken = destination.PushToken,
-                Platform = destination.Platform.ToString()
+                Platform = destination.Platform.ToString(),
+                IsSuppressed = isSuppressedByCooldown,
+                SuppressionCode = isSuppressedByCooldown ? "CooldownActive" : null
             });
 
             if (result.Count >= maxItems)

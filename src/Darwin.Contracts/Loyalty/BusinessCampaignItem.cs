@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Darwin.Contracts.Loyalty
 {
@@ -21,6 +22,7 @@ namespace Darwin.Contracts.Loyalty
         public bool IsActive { get; init; }
         public string CampaignState { get; init; } = PromotionCampaignState.Draft;
         public string TargetingJson { get; init; } = "{}";
+        public List<PromotionEligibilityRule> EligibilityRules { get; init; } = new();
         public string PayloadJson { get; init; } = "{}";
         public byte[] RowVersion { get; init; } = Array.Empty<byte>();
     }
