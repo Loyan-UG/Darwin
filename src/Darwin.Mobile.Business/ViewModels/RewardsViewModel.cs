@@ -74,6 +74,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private CampaignStateFilterOption? _selectedCampaignStateFilter;
     private CampaignAudienceFilterOption? _selectedCampaignAudienceFilter;
     private CampaignSortOption? _selectedCampaignSortOption;
+    private DateTimeOffset? _campaignDiagnosticsSnapshotAtLocal;
+    private string? _campaignDiagnosticsCopyStatus;
 
     private const int CampaignListPageSize = 50;
 
@@ -149,6 +151,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
         ApplyCampaignTargetingPresetCommand = new AsyncCommand<string>(ApplyCampaignTargetingPresetAsync, _ => !IsBusy && CanManageRewards);
         ApplyCampaignTargetingSchemaFixCommand = new AsyncCommand(ApplyCampaignTargetingSchemaQuickFixAsync, () => !IsBusy && CanManageRewards && HasCampaignTargetingSchemaValidationError);
         ResetCampaignTargetingFixMetricsCommand = new AsyncCommand(ResetCampaignTargetingQuickFixMetricsAsync, () => !IsBusy && CanManageRewards && (CampaignTargetingFixAppliedCount > 0 || CampaignTargetingFixNoChangeCount > 0));
+        CopyCampaignDiagnosticsCommand = new AsyncCommand(CopyCampaignDiagnosticsAsync, () => !IsBusy && HasCampaignDataset);
+        ClearCampaignDiagnosticsStatusCommand = new AsyncCommand(ClearCampaignDiagnosticsStatusAsync, () => !IsBusy && HasCampaignDiagnosticsCopyStatus);
     }
 
 
@@ -286,6 +290,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public int TotalCampaignCount => _allCampaigns.Count;
 
     /// <summary>
+    /// Gets whether at least one campaign exists in the current dataset (before filters are applied).
+    /// </summary>
+    public bool HasCampaignDataset => TotalCampaignCount > 0;
+
+    /// <summary>
     /// Gets campaign count currently visible after active filters are applied.
     /// </summary>
     public int FilteredCampaignCount => Campaigns.Count;
@@ -344,6 +353,119 @@ public sealed partial class RewardsViewModel : BaseViewModel
         ExpiredCampaignCount);
 
     /// <summary>
+    /// Localized summary line for campaign audience KPI counters.
+    /// </summary>
+    public string CampaignAudienceMetricsSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignAudienceMetricsFormat,
+        JoinedMembersCampaignCount,
+        TierSegmentCampaignCount,
+        PointsThresholdCampaignCount,
+        DateWindowCampaignCount);
+
+    /// <summary>
+    /// Localized timestamp text that indicates when the current diagnostics snapshot was produced.
+    /// </summary>
+    public string CampaignDiagnosticsSnapshotAtText =>
+        _campaignDiagnosticsSnapshotAtLocal.HasValue
+            ? string.Format(
+                CultureInfo.CurrentCulture,
+                AppResources.RewardsCampaignDiagnosticsSnapshotAtFormat,
+                _campaignDiagnosticsSnapshotAtLocal.Value.ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture))
+            : string.Empty;
+
+    /// <summary>
+    /// Localized freshness text for campaign diagnostics snapshot to help operators identify stale context.
+    /// </summary>
+    public string CampaignDiagnosticsFreshnessText
+    {
+        get
+        {
+            if (!_campaignDiagnosticsSnapshotAtLocal.HasValue)
+            {
+                return string.Empty;
+            }
+
+            var ageMinutes = Math.Max(0, (int)Math.Round((DateTimeOffset.Now - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes, MidpointRounding.AwayFromZero));
+            return ageMinutes > 15
+                ? string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignDiagnosticsFreshnessStaleFormat, ageMinutes)
+                : string.Format(CultureInfo.CurrentCulture, AppResources.RewardsCampaignDiagnosticsFreshnessFreshFormat, ageMinutes);
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether the latest campaign diagnostics snapshot crossed the stale threshold.
+    /// </summary>
+    public bool IsCampaignDiagnosticsSnapshotStale
+        => _campaignDiagnosticsSnapshotAtLocal.HasValue
+           && (DateTimeOffset.Now - _campaignDiagnosticsSnapshotAtLocal.Value).TotalMinutes > 15;
+
+    /// <summary>
+    /// Localized preview of visible campaign titles to make diagnostics payload easier to read before copying.
+    /// </summary>
+    public string CampaignDiagnosticsVisibleCampaignsPreview
+    {
+        get
+        {
+            if (!HasCampaigns)
+            {
+                return AppResources.RewardsCampaignDiagnosticsVisibleCampaignsEmpty;
+            }
+
+            const int previewLimit = 3;
+            var visibleTitles = Campaigns
+                .Select(campaign => campaign.Title)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .Take(previewLimit)
+                .ToArray();
+
+            if (visibleTitles.Length == 0)
+            {
+                return AppResources.RewardsCampaignDiagnosticsVisibleCampaignsEmpty;
+            }
+
+            var remainingCount = Math.Max(0, Campaigns.Count - visibleTitles.Length);
+            var joinedTitles = string.Join(", ", visibleTitles);
+            return remainingCount > 0
+                ? string.Format(
+                    CultureInfo.CurrentCulture,
+                    AppResources.RewardsCampaignDiagnosticsVisibleCampaignsWithRemainingFormat,
+                    joinedTitles,
+                    remainingCount)
+                : string.Format(
+                    CultureInfo.CurrentCulture,
+                    AppResources.RewardsCampaignDiagnosticsVisibleCampaignsFormat,
+                    joinedTitles);
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether a diagnostics snapshot timestamp is currently available for display.
+    /// </summary>
+    public bool HasCampaignDiagnosticsSnapshotAt => _campaignDiagnosticsSnapshotAtLocal.HasValue;
+
+    /// <summary>
+    /// Latest status message for campaign diagnostics copy action.
+    /// </summary>
+    public string? CampaignDiagnosticsCopyStatus
+    {
+        get => _campaignDiagnosticsCopyStatus;
+        private set
+        {
+            if (SetProperty(ref _campaignDiagnosticsCopyStatus, value))
+            {
+                OnPropertyChanged(nameof(HasCampaignDiagnosticsCopyStatus));
+                ClearCampaignDiagnosticsStatusCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether a copy status message is currently visible.
+    /// </summary>
+    public bool HasCampaignDiagnosticsCopyStatus => !string.IsNullOrWhiteSpace(CampaignDiagnosticsCopyStatus);
+
+    /// <summary>
     /// KPI chip text for Draft campaigns.
     /// </summary>
     public string DraftCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignStateFilterDraft, DraftCampaignCount);
@@ -389,17 +511,6 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public int DateWindowCampaignCount => CountCampaignsByAudienceKind(PromotionAudienceKind.DateWindow);
 
     /// <summary>
-    /// Localized summary line for audience segmentation quick metrics.
-    /// </summary>
-    public string CampaignAudienceMetricsSummary => string.Format(
-        CultureInfo.InvariantCulture,
-        AppResources.RewardsCampaignAudienceMetricsFormat,
-        JoinedMembersCampaignCount,
-        TierSegmentCampaignCount,
-        PointsThresholdCampaignCount,
-        DateWindowCampaignCount);
-
-    /// <summary>
     /// KPI chip text for all audiences.
     /// </summary>
     public string AllCampaignAudienceMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceFilterAll, TotalCampaignCount);
@@ -423,6 +534,31 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// KPI chip text for date-window audience.
     /// </summary>
     public string DateWindowCampaignMetricText => string.Format(CultureInfo.InvariantCulture, AppResources.RewardsCampaignStateMetricChipFormat, AppResources.RewardsCampaignAudienceDateWindow, DateWindowCampaignCount);
+
+    /// <summary>
+    /// Gets count of campaigns configured for in-app only delivery.
+    /// </summary>
+    public int InAppOnlyCampaignCount => _allCampaigns.Count(campaign => campaign.Channels == 1);
+
+    /// <summary>
+    /// Gets count of campaigns configured for in-app plus push delivery.
+    /// </summary>
+    public int InAppAndPushCampaignCount => _allCampaigns.Count(campaign => campaign.Channels == 3);
+
+    /// <summary>
+    /// Gets count of campaigns configured with unexpected/other channel bitmasks.
+    /// </summary>
+    public int OtherChannelCampaignCount => Math.Max(0, _allCampaigns.Count - InAppOnlyCampaignCount - InAppAndPushCampaignCount);
+
+    /// <summary>
+    /// Localized summary line for delivery-channel distribution across all loaded campaigns.
+    /// </summary>
+    public string CampaignChannelMetricsSummary => string.Format(
+        CultureInfo.InvariantCulture,
+        AppResources.RewardsCampaignChannelMetricsFormat,
+        InAppOnlyCampaignCount,
+        InAppAndPushCampaignCount,
+        OtherChannelCampaignCount);
 
     /// <summary>
     /// User-entered points required for the reward tier.
@@ -726,6 +862,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public AsyncCommand<string> ApplyCampaignTargetingPresetCommand { get; }
     public AsyncCommand ApplyCampaignTargetingSchemaFixCommand { get; }
     public AsyncCommand ResetCampaignTargetingFixMetricsCommand { get; }
+    public AsyncCommand CopyCampaignDiagnosticsCommand { get; }
+    public AsyncCommand ClearCampaignDiagnosticsStatusCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -1699,7 +1837,9 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(HasCampaigns));
         OnPropertyChanged(nameof(TotalCampaignCount));
         OnPropertyChanged(nameof(FilteredCampaignCount));
+        OnPropertyChanged(nameof(HasCampaignDataset));
         OnPropertyChanged(nameof(CampaignFilterSummary));
+        OnPropertyChanged(nameof(CampaignDiagnosticsVisibleCampaignsPreview));
         OnPropertyChanged(nameof(DraftCampaignCount));
         OnPropertyChanged(nameof(ScheduledCampaignCount));
         OnPropertyChanged(nameof(ActiveCampaignCount));
@@ -1715,11 +1855,20 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(PointsThresholdCampaignCount));
         OnPropertyChanged(nameof(DateWindowCampaignCount));
         OnPropertyChanged(nameof(CampaignAudienceMetricsSummary));
+        OnPropertyChanged(nameof(InAppOnlyCampaignCount));
+        OnPropertyChanged(nameof(InAppAndPushCampaignCount));
+        OnPropertyChanged(nameof(OtherChannelCampaignCount));
+        OnPropertyChanged(nameof(CampaignChannelMetricsSummary));
         OnPropertyChanged(nameof(AllCampaignAudienceMetricText));
         OnPropertyChanged(nameof(JoinedMembersCampaignMetricText));
         OnPropertyChanged(nameof(TierSegmentCampaignMetricText));
         OnPropertyChanged(nameof(PointsThresholdCampaignMetricText));
         OnPropertyChanged(nameof(DateWindowCampaignMetricText));
+        _campaignDiagnosticsSnapshotAtLocal = DateTimeOffset.Now;
+        OnPropertyChanged(nameof(CampaignDiagnosticsSnapshotAtText));
+        OnPropertyChanged(nameof(CampaignDiagnosticsFreshnessText));
+        OnPropertyChanged(nameof(IsCampaignDiagnosticsSnapshotStale));
+        OnPropertyChanged(nameof(HasCampaignDiagnosticsSnapshotAt));
         OnPropertyChanged(nameof(HasActiveCampaignFilters));
         OnPropertyChanged(nameof(HasCampaignSearchQuery));
         ClearCampaignFiltersCommand.RaiseCanExecuteChanged();
@@ -1729,6 +1878,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
         ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
         ResetCampaignTargetingFixMetricsCommand.RaiseCanExecuteChanged();
+        CopyCampaignDiagnosticsCommand.RaiseCanExecuteChanged();
+        ClearCampaignDiagnosticsStatusCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -1951,14 +2102,66 @@ public sealed partial class RewardsViewModel : BaseViewModel
             RunOnMain(() => ErrorMessage = null);
             await ReloadConfigurationAfterMutationAsync().ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsCampaignToggleFailed} {ex.Message}");
+            RunOnMain(() => ErrorMessage = AppResources.RewardsCampaignToggleFailed);
         }
         finally
         {
             EndBusyOperation();
         }
+    }
+
+    /// <summary>
+    /// Copies a compact campaign diagnostics snapshot for operations/support handoff.
+    /// </summary>
+    private async Task CopyCampaignDiagnosticsAsync()
+    {
+        if (!HasCampaignDataset || IsBusy)
+        {
+            return;
+        }
+
+        try
+        {
+            var payload = string.Join(
+                Environment.NewLine,
+                CampaignFilterSummary,
+                CampaignStateMetricsSummary,
+                CampaignAudienceMetricsSummary,
+                CampaignChannelMetricsSummary,
+                CampaignDiagnosticsSnapshotAtText,
+                CampaignDiagnosticsFreshnessText,
+                CampaignDiagnosticsVisibleCampaignsPreview,
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    AppResources.RewardsCampaignDiagnosticsAppliedFiltersFormat,
+                    SelectedCampaignStateFilter?.DisplayName ?? AppResources.RewardsCampaignStateFilterAll,
+                    SelectedCampaignAudienceFilter?.DisplayName ?? AppResources.RewardsCampaignAudienceFilterAll,
+                    string.IsNullOrWhiteSpace(CampaignSearchQuery) ? AppResources.RewardsCampaignDiagnosticsSearchEmpty : CampaignSearchQuery,
+                    SelectedCampaignSortOption?.DisplayName ?? AppResources.RewardsCampaignSortStartDateDesc));
+
+            await Clipboard.Default.SetTextAsync(payload).ConfigureAwait(false);
+            RunOnMain(() => CampaignDiagnosticsCopyStatus = AppResources.RewardsCampaignDiagnosticsCopied);
+        }
+        catch
+        {
+            RunOnMain(() => CampaignDiagnosticsCopyStatus = AppResources.RewardsCampaignDiagnosticsCopyFailed);
+        }
+    }
+
+    /// <summary>
+    /// Clears transient copy status banner used by campaign diagnostics export action.
+    /// </summary>
+    private Task ClearCampaignDiagnosticsStatusAsync()
+    {
+        if (IsBusy)
+        {
+            return Task.CompletedTask;
+        }
+
+        RunOnMain(() => CampaignDiagnosticsCopyStatus = null);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -2046,5 +2249,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         ApplyCampaignTargetingPresetCommand.RaiseCanExecuteChanged();
         ApplyCampaignTargetingSchemaFixCommand.RaiseCanExecuteChanged();
         ResetCampaignTargetingFixMetricsCommand.RaiseCanExecuteChanged();
+        CopyCampaignDiagnosticsCommand.RaiseCanExecuteChanged();
+        ClearCampaignDiagnosticsStatusCommand.RaiseCanExecuteChanged();
     }
 }

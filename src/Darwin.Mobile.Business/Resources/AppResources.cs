@@ -156,6 +156,7 @@ public static class AppResources
     public static string ProfileSaveSuccess => ResourceManager.GetString(nameof(ProfileSaveSuccess), Culture) ?? "Profile updated successfully.";
     public static string ProfileRequiredFields => ResourceManager.GetString(nameof(ProfileRequiredFields), Culture) ?? "Please fill all required profile fields before saving.";
     public static string ProfileNotLoadedYet => ResourceManager.GetString(nameof(ProfileNotLoadedYet), Culture) ?? "Profile is not loaded yet. Please refresh and try again.";
+    public static string ProfileConcurrencyConflict => ResourceManager.GetString(nameof(ProfileConcurrencyConflict), Culture) ?? "Your profile was updated elsewhere. Please refresh and try again.";
 
     public static string ChangePasswordTitle => ResourceManager.GetString(nameof(ChangePasswordTitle), Culture) ?? "Change password";
     public static string CurrentPasswordLabel => ResourceManager.GetString(nameof(CurrentPasswordLabel), Culture) ?? "Current password";
@@ -172,6 +173,9 @@ public static class AppResources
     public static string BusinessPermissionDeniedRewardEdit => ResourceManager.GetString(nameof(BusinessPermissionDeniedRewardEdit), Culture) ?? "Your account does not have permission to edit reward tiers.";
     public static string BusinessPermissionDeniedRedemption => ResourceManager.GetString(nameof(BusinessPermissionDeniedRedemption), Culture) ?? "Your account does not have permission to confirm redemption.";
     public static string BusinessPermissionDeniedAccrual => ResourceManager.GetString(nameof(BusinessPermissionDeniedAccrual), Culture) ?? "Your account does not have permission to confirm accrual.";
+    public static string BusinessPermissionsUnavailableWarning => ResourceManager.GetString(nameof(BusinessPermissionsUnavailableWarning), Culture) ?? "Operator permissions could not be loaded. Please refresh and try again.";
+    public static string BusinessNoScannerPermissionWarning => ResourceManager.GetString(nameof(BusinessNoScannerPermissionWarning), Culture) ?? "Your account does not currently have scanner processing permissions.";
+    public static string ScannerSingleOwnerHint => ResourceManager.GetString(nameof(ScannerSingleOwnerHint), Culture) ?? "After scanning, the session screen will load details and handle confirmation in one place.";
 
 
     // Dashboard + reporting
@@ -287,9 +291,24 @@ public static class AppResources
     public static string RewardsCampaignEligibilityRangeFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityRangeFormat), Culture) ?? "Points {0}-{1}";
     public static string RewardsCampaignEligibilityMinFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMinFormat), Culture) ?? "Points ≥ {0}";
     public static string RewardsCampaignEligibilityMaxFormat => ResourceManager.GetString(nameof(RewardsCampaignEligibilityMaxFormat), Culture) ?? "Points ≤ {0}";
+    public static string RewardsCampaignChannelSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelSummaryFormat), Culture) ?? "Channels: {0}";
+    public static string RewardsCampaignChannelUnknown => ResourceManager.GetString(nameof(RewardsCampaignChannelUnknown), Culture) ?? "unknown";
     public static string RewardsCampaignStateMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricsFormat), Culture) ?? "Draft: {0} · Scheduled: {1} · Active: {2} · Expired: {3}";
     public static string RewardsCampaignAudienceMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceMetricsFormat), Culture) ?? "Joined: {0} · Tier: {1} · Points: {2} · Date window: {3}";
+    public static string RewardsCampaignChannelMetricsFormat => ResourceManager.GetString(nameof(RewardsCampaignChannelMetricsFormat), Culture) ?? "In-app only: {0} · In-app + Push: {1} · Other: {2}";
     public static string RewardsCampaignStateMetricChipFormat => ResourceManager.GetString(nameof(RewardsCampaignStateMetricChipFormat), Culture) ?? "{0} ({1})";
+    public static string RewardsCampaignDiagnosticsSnapshotAtFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsSnapshotAtFormat), Culture) ?? "Diagnostics snapshot at: {0}";
+    public static string RewardsCampaignDiagnosticsFreshnessFreshFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsFreshnessFreshFormat), Culture) ?? "Snapshot freshness: {0} minute(s) old";
+    public static string RewardsCampaignDiagnosticsFreshnessStaleFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsFreshnessStaleFormat), Culture) ?? "Snapshot freshness warning: {0} minute(s) old";
+    public static string RewardsCampaignCopyDiagnosticsButton => ResourceManager.GetString(nameof(RewardsCampaignCopyDiagnosticsButton), Culture) ?? "Copy campaign diagnostics";
+    public static string RewardsCampaignClearDiagnosticsStatusButton => ResourceManager.GetString(nameof(RewardsCampaignClearDiagnosticsStatusButton), Culture) ?? "Clear diagnostics status";
+    public static string RewardsCampaignDiagnosticsAppliedFiltersFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsAppliedFiltersFormat), Culture) ?? "Applied filters — State: {0} · Audience: {1} · Search: {2} · Sort: {3}";
+    public static string RewardsCampaignDiagnosticsSearchEmpty => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsSearchEmpty), Culture) ?? "none";
+    public static string RewardsCampaignDiagnosticsVisibleCampaignsFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsVisibleCampaignsFormat), Culture) ?? "Visible campaigns: {0}";
+    public static string RewardsCampaignDiagnosticsVisibleCampaignsWithRemainingFormat => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsVisibleCampaignsWithRemainingFormat), Culture) ?? "Visible campaigns: {0} (+{1} more)";
+    public static string RewardsCampaignDiagnosticsVisibleCampaignsEmpty => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsVisibleCampaignsEmpty), Culture) ?? "Visible campaigns: none";
+    public static string RewardsCampaignDiagnosticsCopied => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsCopied), Culture) ?? "Campaign diagnostics copied to clipboard.";
+    public static string RewardsCampaignDiagnosticsCopyFailed => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsCopyFailed), Culture) ?? "Unable to copy campaign diagnostics right now.";
 
 
 }
