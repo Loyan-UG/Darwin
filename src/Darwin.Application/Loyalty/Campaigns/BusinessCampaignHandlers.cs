@@ -18,6 +18,11 @@ namespace Darwin.Application.Loyalty.Campaigns
     {
         private readonly IAppDbContext _db;
 
+        private const string DraftCampaignState = "Draft";
+        private const string ScheduledCampaignState = "Scheduled";
+        private const string ActiveCampaignState = "Active";
+        private const string ExpiredCampaignState = "Expired";
+
         public GetBusinessCampaignsHandler(IAppDbContext db) => _db = db;
 
         public async Task<Result<GetBusinessCampaignsResultDto>> HandleAsync(Guid businessId, int page, int pageSize, CancellationToken ct = default)
@@ -55,11 +60,7 @@ namespace Darwin.Application.Loyalty.Campaigns
                     StartsAtUtc = c.StartsAtUtc,
                     EndsAtUtc = c.EndsAtUtc,
                     IsActive = c.IsActive,
-                    CampaignState = c.IsActive
-                        ? (!c.StartsAtUtc.HasValue || c.StartsAtUtc.Value <= nowUtc)
-                            ? "Active"
-                            : "Scheduled"
-                        : "Expired",
+                    CampaignState = ResolveCampaignState(c.IsActive, c.StartsAtUtc, c.EndsAtUtc, nowUtc),
                     TargetingJson = c.TargetingJson,
                     EligibilityRules = CampaignEligibilityRulesMapper.BuildRulesFromTargetingJson(c.TargetingJson),
                     PayloadJson = c.PayloadJson,
@@ -73,6 +74,26 @@ namespace Darwin.Application.Loyalty.Campaigns
                 Items = items,
                 Total = total
             });
+        }
+
+        private static string ResolveCampaignState(bool isActive, DateTime? startsAtUtc, DateTime? endsAtUtc, DateTime nowUtc)
+        {
+            if (endsAtUtc.HasValue && endsAtUtc.Value < nowUtc)
+            {
+                return ExpiredCampaignState;
+            }
+
+            if (!isActive)
+            {
+                return DraftCampaignState;
+            }
+
+            if (startsAtUtc.HasValue && startsAtUtc.Value > nowUtc)
+            {
+                return ScheduledCampaignState;
+            }
+
+            return ActiveCampaignState;
         }
     }
 
@@ -134,6 +155,11 @@ namespace Darwin.Application.Loyalty.Campaigns
             if (dto.BusinessId == Guid.Empty || dto.Id == Guid.Empty)
             {
                 return Result.Fail("BusinessId and campaign Id are required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.Title))
+            {
+                return Result.Fail("Name and Title are required.");
             }
 
             var entity = await _db.Set<Campaign>()

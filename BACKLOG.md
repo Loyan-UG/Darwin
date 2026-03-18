@@ -165,7 +165,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
 - [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
 - [x] Promotion campaigns integration in consumer timeline.
-- [~] Inactive user reminder strategy (triggering + suppression + measurement).
+- [x] Inactive user reminder strategy (triggering + suppression + measurement).
 
 ## 3.5 Mobile Business App – Phase 3
 - [x] Full analytics module (CSV/PDF export)
