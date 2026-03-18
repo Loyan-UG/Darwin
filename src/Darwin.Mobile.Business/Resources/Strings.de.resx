@@ -431,11 +431,14 @@
 	<data name="ProfileRequiredFields" xml:space="preserve">
     <value>Bitte füllen Sie alle erforderlichen Profilfelder aus.</value>
   </data>
-	<data name="ProfileNotLoadedYet" xml:space="preserve">
+		<data name="ProfileNotLoadedYet" xml:space="preserve">
     <value>Profil ist noch nicht geladen. Bitte aktualisieren und erneut versuchen.</value>
   </data>
+		<data name="ProfileConcurrencyConflict" xml:space="preserve">
+    <value>Ihr Profil wurde zwischenzeitlich geändert. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
 
-	<data name="ChangePasswordTitle" xml:space="preserve">
+		<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>
 	<data name="CurrentPasswordLabel" xml:space="preserve">
@@ -575,6 +578,15 @@
   </data>
   <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
     <value>Ihr Konto hat keine Berechtigung, Gutschriften zu bestätigen.</value>
+  </data>
+  <data name="BusinessPermissionsUnavailableWarning" xml:space="preserve">
+    <value>Operatorberechtigungen konnten nicht geladen werden. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
+  <data name="BusinessNoScannerPermissionWarning" xml:space="preserve">
+    <value>Ihr Konto hat derzeit keine Berechtigung zur Scanner-Verarbeitung.</value>
+  </data>
+  <data name="ScannerSingleOwnerHint" xml:space="preserve">
+    <value>Nach dem Scannen lädt die Sitzungsseite die Details und bestätigt alle Aktionen zentral.</value>
   </data>
   <data name="RewardsCampaignsLabel" xml:space="preserve">
     <value>Kampagnen</value>
