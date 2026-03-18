@@ -62,12 +62,40 @@ public sealed class InactiveReminderBackgroundService : BackgroundService
                 }
                 else
                 {
+                    var evaluated = Math.Max(1, result.Value.CandidatesEvaluated);
+                    var failedRatePercent = (result.Value.FailedCount * 100d) / evaluated;
+                    var cooldownSuppressionRatePercent = (result.Value.SuppressedByCooldownCount * 100d) / evaluated;
+
                     _logger.LogInformation(
-                        "Inactive reminder batch completed. Evaluated={Evaluated}, Dispatched={Dispatched}, Suppressed={Suppressed}, Failed={Failed}",
+                        "Inactive reminder batch completed. Evaluated={Evaluated}, Dispatched={Dispatched}, Suppressed={Suppressed}, SuppressedByCooldown={SuppressedByCooldown}, SuppressedByMissingDestination={SuppressedByMissingDestination}, Failed={Failed}, FailedRatePercent={FailedRatePercent:F1}, CooldownSuppressionRatePercent={CooldownSuppressionRatePercent:F1}",
                         result.Value.CandidatesEvaluated,
                         result.Value.DispatchedCount,
                         result.Value.SuppressedCount,
-                        result.Value.FailedCount);
+                        result.Value.SuppressedByCooldownCount,
+                        result.Value.SuppressedByMissingDestinationCount,
+                        result.Value.FailedCount,
+                        failedRatePercent,
+                        cooldownSuppressionRatePercent);
+
+                    if (failedRatePercent >= Math.Clamp(options.HighFailureRateWarningThresholdPercent, 0, 100))
+                    {
+                        _logger.LogWarning(
+                            "Inactive reminder batch failure rate exceeded warning threshold. FailedRatePercent={FailedRatePercent:F1}, ThresholdPercent={ThresholdPercent}, Evaluated={Evaluated}, Failed={Failed}",
+                            failedRatePercent,
+                            options.HighFailureRateWarningThresholdPercent,
+                            result.Value.CandidatesEvaluated,
+                            result.Value.FailedCount);
+                    }
+
+                    if (cooldownSuppressionRatePercent >= Math.Clamp(options.HighCooldownSuppressionWarningThresholdPercent, 0, 100))
+                    {
+                        _logger.LogWarning(
+                            "Inactive reminder batch cooldown suppression rate exceeded warning threshold. CooldownSuppressionRatePercent={CooldownSuppressionRatePercent:F1}, ThresholdPercent={ThresholdPercent}, Evaluated={Evaluated}, SuppressedByCooldown={SuppressedByCooldown}",
+                            cooldownSuppressionRatePercent,
+                            options.HighCooldownSuppressionWarningThresholdPercent,
+                            result.Value.CandidatesEvaluated,
+                            result.Value.SuppressedByCooldownCount);
+                    }
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

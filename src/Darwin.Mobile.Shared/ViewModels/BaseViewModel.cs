@@ -95,7 +95,16 @@ namespace Darwin.Mobile.Shared.ViewModels
                 return;
             }
 
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (MainThread.IsMainThread)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+                return;
+            }
+
+            // Always marshal notifications that can affect UI-bound properties.
+            // This prevents MAUI platform controls from being updated by background
+            // thread continuations after asynchronous operations.
+            MainThread.BeginInvokeOnMainThread(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
         }
 
         /// <summary>

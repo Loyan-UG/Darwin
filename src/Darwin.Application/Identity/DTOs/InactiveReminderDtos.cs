@@ -21,6 +21,11 @@ public sealed class GetInactiveReminderCandidatesDto
     /// Maximum number of candidates to return in one query call.
     /// </summary>
     public int MaxItems { get; set; } = 200;
+
+    /// <summary>
+    /// When true, candidate selection also returns cooldown-suppressed rows for measurement workflows.
+    /// </summary>
+    public bool IncludeSuppressedByCooldown { get; set; }
 }
 
 /// <summary>
@@ -36,4 +41,14 @@ public sealed class InactiveReminderCandidateDto
     public string? PushDestinationDeviceId { get; set; }
     public string? PushToken { get; set; }
     public string Platform { get; set; } = "Unknown";
+
+    /// <summary>
+    /// Indicates whether this row is currently suppressed and should not be dispatched.
+    /// </summary>
+    public bool IsSuppressed { get; set; }
+
+    /// <summary>
+    /// Optional suppression reason code (for example: CooldownActive).
+    /// </summary>
+    public string? SuppressionCode { get; set; }
 }

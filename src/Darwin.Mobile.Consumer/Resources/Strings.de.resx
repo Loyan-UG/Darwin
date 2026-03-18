@@ -631,7 +631,10 @@
 	<data name="FeedPromotionScopeAllBusinesses" xml:space="preserve">
     <value>Aktionsbereich: alle beigetretenen Unternehmen</value>
   </data>
-	<data name="FeedOpenPromotionButton" xml:space="preserve">
+	  <data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
+    <value>Richtlinie: Unterdrückung {0} Min. · Limit {1} | Diagnose: initial {2}, unterdrückt {3}, dedupliziert {4}, gekappt {5}, final {6}</value>
+  </data>
+<data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Öffnen</value>
 </data>
   <data name="ResetPasswordTitle" xml:space="preserve">
