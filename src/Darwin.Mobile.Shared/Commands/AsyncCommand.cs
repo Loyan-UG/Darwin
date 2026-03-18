@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Maui.ApplicationModel;
 
 namespace Darwin.Mobile.Shared.Commands
 {
@@ -73,7 +74,13 @@ namespace Darwin.Mobile.Shared.Commands
         /// </summary>
         public void RaiseCanExecuteChanged()
         {
-            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            if (MainThread.IsMainThread)
+            {
+                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            MainThread.BeginInvokeOnMainThread(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
         }
     }
 
@@ -167,7 +174,13 @@ namespace Darwin.Mobile.Shared.Commands
         /// </summary>
         public void RaiseCanExecuteChanged()
         {
-            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            if (MainThread.IsMainThread)
+            {
+                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            MainThread.BeginInvokeOnMainThread(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
         }
     }
 }

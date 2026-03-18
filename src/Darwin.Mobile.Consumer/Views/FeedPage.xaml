@@ -50,6 +50,11 @@
                    Opacity="0.8"
                    IsVisible="{Binding HasPromotions}" />
 
+            <Label Text="{Binding PromotionPolicyDiagnosticsSummaryText}"
+                   FontSize="11"
+                   Opacity="0.75"
+                   IsVisible="{Binding HasPromotions}" />
+
             <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="8"
                   IsVisible="{Binding HasAccounts}">
