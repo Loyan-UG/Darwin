@@ -576,6 +576,15 @@
   <data name="BusinessPermissionDeniedAccrual" xml:space="preserve">
     <value>Your account does not have permission to confirm accrual.</value>
   </data>
+  <data name="BusinessPermissionsUnavailableWarning" xml:space="preserve">
+    <value>Operator permissions could not be loaded. Please refresh and try again.</value>
+  </data>
+  <data name="BusinessNoScannerPermissionWarning" xml:space="preserve">
+    <value>Your account does not currently have scanner processing permissions.</value>
+  </data>
+  <data name="ScannerSingleOwnerHint" xml:space="preserve">
+    <value>After scanning, the session screen will load details and handle confirmation in one place.</value>
+  </data>
   <data name="RewardsCampaignsLabel" xml:space="preserve">
     <value>Campaigns</value>
   </data>

@@ -54,16 +54,11 @@ public sealed partial class LoginViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
 
-        // TESTING PHASE NOTE:
-        // Keep QA credentials prefilled only in DEBUG builds to shorten regression loops.
-        // In non-DEBUG builds we intentionally keep credentials empty for safer release posture.
-#if DEBUG
-        Email = "biz1@darwin.de";
-        Password = "Business123!";
-#else
+        // Security hardening:
+        // Keep login inputs empty in every build configuration so we never
+        // carry seeded credentials inside distributed app binaries.
         Email = string.Empty;
         Password = string.Empty;
-#endif
 
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
     }
