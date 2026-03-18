@@ -198,10 +198,10 @@ public sealed class ProfileViewModel : BaseViewModel
                 RowVersion = _rowVersion
             };
 
-            var updated = await _profileService.UpdateMeAsync(payload, CancellationToken.None);
-            if (!updated)
+            var updateResult = await _profileService.UpdateMeAsync(payload, CancellationToken.None);
+            if (!updateResult.Succeeded)
             {
-                ErrorMessage = AppResources.ProfileSaveFailed;
+                ErrorMessage = ResolveProfileSaveFailureMessage(updateResult.Error);
                 return;
             }
 
@@ -213,7 +213,7 @@ public sealed class ProfileViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            ErrorMessage = ResolveProfileSaveFailureMessage(ex.Message);
         }
         finally
         {
@@ -240,5 +240,36 @@ public sealed class ProfileViewModel : BaseViewModel
         }
 
         return value.Trim();
+    }
+
+    /// <summary>
+    /// Maps profile update errors to user-facing messages with explicit concurrency guidance.
+    /// </summary>
+    private static string ResolveProfileSaveFailureMessage(string? error)
+    {
+        if (LooksLikeProfileConcurrencyConflict(error))
+        {
+            return AppResources.ProfileConcurrencyConflict;
+        }
+
+        // Keep non-concurrency failures generic to avoid leaking internal/server details.
+        return AppResources.ProfileSaveFailed;
+    }
+
+    /// <summary>
+    /// Detects typical optimistic-concurrency conflict markers from API error payloads.
+    /// </summary>
+    private static bool LooksLikeProfileConcurrencyConflict(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        return error.Contains("concurrency", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("rowversion", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("conflict", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("412", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("409", StringComparison.OrdinalIgnoreCase);
     }
 }
