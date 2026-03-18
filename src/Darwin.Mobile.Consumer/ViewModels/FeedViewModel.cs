@@ -73,7 +73,7 @@ public sealed class FeedViewModel : BaseViewModel
         OpenPromotionCommand = new AsyncCommand<PromotionFeedItem>(OpenPromotionAsync, item => item is not null && !IsBusy);
         ShowSelectedBusinessPromotionsCommand = new AsyncCommand(ShowSelectedBusinessPromotionsAsync, () => !IsBusy);
         ShowAllBusinessesPromotionsCommand = new AsyncCommand(ShowAllBusinessesPromotionsAsync, () => !IsBusy);
-        CopyPromotionDiagnosticsCommand = new AsyncCommand(CopyPromotionDiagnosticsAsync, () => HasPromotions && !IsBusy);
+        CopyPromotionDiagnosticsCommand = new AsyncCommand(CopyPromotionDiagnosticsAsync, () => HasPromotionDiagnosticsSnapshotAt && !IsBusy);
         ClearPromotionDiagnosticsStatusCommand = new AsyncCommand(ClearPromotionDiagnosticsStatusAsync, () => HasPromotionDiagnosticsCopyStatus && !IsBusy);
     }
 
@@ -742,7 +742,7 @@ public sealed class FeedViewModel : BaseViewModel
     /// </summary>
     private async Task CopyPromotionDiagnosticsAsync()
     {
-        if (!HasPromotions)
+        if (!HasPromotionDiagnosticsSnapshotAt)
         {
             return;
         }
