@@ -51,6 +51,7 @@ public sealed class FeedViewModel : BaseViewModel
     private int _promotionFinalCount;
     private int _promotionAppliedMaxCards;
     private int _promotionAppliedSuppressionMinutes;
+    private string? _promotionDiagnosticsCopyStatus;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedViewModel"/> class.
@@ -71,6 +72,7 @@ public sealed class FeedViewModel : BaseViewModel
         OpenPromotionCommand = new AsyncCommand<PromotionFeedItem>(OpenPromotionAsync, item => item is not null && !IsBusy);
         ShowSelectedBusinessPromotionsCommand = new AsyncCommand(ShowSelectedBusinessPromotionsAsync, () => !IsBusy);
         ShowAllBusinessesPromotionsCommand = new AsyncCommand(ShowAllBusinessesPromotionsAsync, () => !IsBusy);
+        CopyPromotionDiagnosticsCommand = new AsyncCommand(CopyPromotionDiagnosticsAsync, () => HasPromotions && !IsBusy);
     }
 
     /// <summary>
@@ -147,6 +149,26 @@ public sealed class FeedViewModel : BaseViewModel
             PromotionDeduplicatedCount,
             PromotionTrimmedByCapCount,
             PromotionFinalCount);
+
+    /// <summary>
+    /// Gets status text for the latest diagnostics copy action.
+    /// </summary>
+    public string? PromotionDiagnosticsCopyStatus
+    {
+        get => _promotionDiagnosticsCopyStatus;
+        private set
+        {
+            if (SetProperty(ref _promotionDiagnosticsCopyStatus, value))
+            {
+                OnPropertyChanged(nameof(HasPromotionDiagnosticsCopyStatus));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether a copy-status message is available for display.
+    /// </summary>
+    public bool HasPromotionDiagnosticsCopyStatus => !string.IsNullOrWhiteSpace(PromotionDiagnosticsCopyStatus);
 
     /// <summary>
     /// Gets whether promotion cards are loaded across all joined businesses.
@@ -254,6 +276,8 @@ public sealed class FeedViewModel : BaseViewModel
     public AsyncCommand ShowSelectedBusinessPromotionsCommand { get; }
 
     public AsyncCommand ShowAllBusinessesPromotionsCommand { get; }
+
+    public AsyncCommand CopyPromotionDiagnosticsCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
@@ -691,6 +715,33 @@ public sealed class FeedViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Copies current promotion policy/diagnostics summary to system clipboard for operational support handoff.
+    /// </summary>
+    private async Task CopyPromotionDiagnosticsAsync()
+    {
+        if (!HasPromotions)
+        {
+            return;
+        }
+
+        try
+        {
+            var scope = PromotionScopeText;
+            var summary = PromotionPolicyDiagnosticsSummaryText;
+            var businessName = SelectedAccount?.BusinessName ?? Resources.AppResources.FeedBusinessPickerLabel;
+            var payload = $"{scope}\n{businessName}\n{summary}";
+
+            await Clipboard.Default.SetTextAsync(payload);
+
+            RunOnMain(() => PromotionDiagnosticsCopyStatus = Resources.AppResources.FeedPromotionDiagnosticsCopied);
+        }
+        catch
+        {
+            RunOnMain(() => PromotionDiagnosticsCopyStatus = Resources.AppResources.FeedPromotionDiagnosticsCopyFailed);
+        }
+    }
+
+    /// <summary>
     /// Navigates to QR tab using selected business as context.
     /// </summary>
     private async Task OpenQrAsync()
@@ -831,6 +882,7 @@ public sealed class FeedViewModel : BaseViewModel
         RunOnMain(() =>
         {
             PromotionItems.Clear();
+            PromotionDiagnosticsCopyStatus = null;
             OnPropertyChanged(nameof(HasPromotions));
             OnPropertyChanged(nameof(PromotionInitialCandidateCount));
             OnPropertyChanged(nameof(PromotionSuppressedByFrequencyCount));
@@ -856,6 +908,7 @@ public sealed class FeedViewModel : BaseViewModel
         OpenPromotionCommand.RaiseCanExecuteChanged();
         ShowSelectedBusinessPromotionsCommand.RaiseCanExecuteChanged();
         ShowAllBusinessesPromotionsCommand.RaiseCanExecuteChanged();
+        CopyPromotionDiagnosticsCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanNavigateWithSelection));
         OnPropertyChanged(nameof(PromotionScopeText));
     }
