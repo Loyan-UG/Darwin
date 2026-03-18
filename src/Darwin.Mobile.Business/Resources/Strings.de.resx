@@ -431,11 +431,14 @@
 	<data name="ProfileRequiredFields" xml:space="preserve">
     <value>Bitte füllen Sie alle erforderlichen Profilfelder aus.</value>
   </data>
-	<data name="ProfileNotLoadedYet" xml:space="preserve">
+		<data name="ProfileNotLoadedYet" xml:space="preserve">
     <value>Profil ist noch nicht geladen. Bitte aktualisieren und erneut versuchen.</value>
   </data>
+		<data name="ProfileConcurrencyConflict" xml:space="preserve">
+    <value>Ihr Profil wurde zwischenzeitlich geändert. Bitte aktualisieren und erneut versuchen.</value>
+  </data>
 
-	<data name="ChangePasswordTitle" xml:space="preserve">
+		<data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>
 	<data name="CurrentPasswordLabel" xml:space="preserve">

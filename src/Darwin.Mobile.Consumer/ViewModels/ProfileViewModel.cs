@@ -279,10 +279,11 @@ public sealed class ProfileViewModel : BaseViewModel
                 RowVersion = _rowVersion
             };
 
-            var updated = await _profileService.UpdateMeAsync(request, CancellationToken.None);
-            if (!updated)
+            var updateResult = await _profileService.UpdateMeAsync(request, CancellationToken.None);
+            if (!updateResult.Succeeded)
             {
-                RunOnMain(() => ErrorMessage = AppResources.ProfileSaveFailed);
+                var failureMessage = ResolveProfileSaveFailureMessage(updateResult.Error);
+                RunOnMain(() => ErrorMessage = failureMessage);
                 return;
             }
 
@@ -422,5 +423,37 @@ public sealed class ProfileViewModel : BaseViewModel
         }
 
         return value.Trim();
+    }
+
+    /// <summary>
+    /// Maps profile-update failures to user-facing messages with a dedicated optimistic-concurrency hint.
+    /// </summary>
+    /// <param name="error">Raw error text returned by shared profile service result.</param>
+    /// <returns>Localized message suitable for inline UI feedback.</returns>
+    private static string ResolveProfileSaveFailureMessage(string? error)
+    {
+        if (LooksLikeProfileConcurrencyConflict(error))
+        {
+            return AppResources.ProfileConcurrencyConflict;
+        }
+
+        return string.IsNullOrWhiteSpace(error) ? AppResources.ProfileSaveFailed : error;
+    }
+
+    /// <summary>
+    /// Detects common concurrency-conflict markers emitted by WebApi or infrastructure layers.
+    /// </summary>
+    private static bool LooksLikeProfileConcurrencyConflict(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        return error.Contains("concurrency", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("rowversion", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("conflict", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("412", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("409", StringComparison.OrdinalIgnoreCase);
     }
 }
