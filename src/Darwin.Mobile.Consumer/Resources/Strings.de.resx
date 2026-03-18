@@ -631,8 +631,26 @@
 	<data name="FeedPromotionScopeAllBusinesses" xml:space="preserve">
     <value>Aktionsbereich: alle beigetretenen Unternehmen</value>
   </data>
-	  <data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
+		<data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
     <value>Richtlinie: Unterdrückung {0} Min. · Limit {1} | Diagnose: initial {2}, unterdrückt {3}, dedupliziert {4}, gekappt {5}, final {6}</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsTitle" xml:space="preserve">
+    <value>Aktions-Diagnose</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
+    <value>Diagnose-Snapshot um: {0}</value>
+  </data>
+  <data name="FeedCopyPromotionDiagnosticsButton" xml:space="preserve">
+    <value>Diagnose kopieren</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsCopied" xml:space="preserve">
+    <value>Aktionsdiagnose wurde kopiert.</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsCopyFailed" xml:space="preserve">
+    <value>Aktionsdiagnose konnte derzeit nicht kopiert werden.</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsClearStatusButton" xml:space="preserve">
+    <value>Diagnosestatus löschen</value>
   </data>
 <data name="FeedOpenPromotionButton" xml:space="preserve">
   <value>Öffnen</value>

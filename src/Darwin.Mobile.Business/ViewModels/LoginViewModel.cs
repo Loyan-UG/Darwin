@@ -54,9 +54,10 @@ public sealed partial class LoginViewModel : BaseViewModel
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
 
-        // TESTING PHASE NOTE:
-        // Keep QA credentials prefilled only in DEBUG builds to shorten regression loops.
-        // In non-DEBUG builds we intentionally keep credentials empty for safer release posture.
+        // Manual QA acceleration policy:
+        // Keep seeded credentials prefilled in DEBUG builds for faster regression cycles.
+        // IMPORTANT: this behavior is intentionally retained and must not be changed here.
+        // Final removal will be handled manually when release hardening is explicitly requested.
 #if DEBUG
         Email = "biz1@darwin.de";
         Password = "Business123!";
