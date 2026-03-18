@@ -39,9 +39,10 @@ public sealed partial class LoginViewModel : BaseViewModel
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
 
-        // TESTING PHASE NOTE:
-        // Keep QA credentials prefilled only in DEBUG builds to speed repeated integration checks.
-        // In non-DEBUG builds we intentionally keep credentials empty to reduce accidental exposure risk.
+        // Manual QA acceleration policy:
+        // Keep seeded credentials prefilled in DEBUG builds for faster integration loops.
+        // IMPORTANT: this behavior is intentionally retained and must not be changed here.
+        // Final removal will be handled manually when release hardening is explicitly requested.
 #if DEBUG
         Email = "cons1@darwin.de";
         Password = "Consumer123!";
