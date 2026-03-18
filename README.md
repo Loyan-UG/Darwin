@@ -1,15 +1,6 @@
-<table>
-  <tr>
-    <td width="100">
-      <img src="./src/Darwin.Web/wwwroot/images/DarwinJustLogo.png" alt="Darwin Logo" width="64" />
-    </td>
-    <td>
-      <h1 style="margin: 0;">Darwin Platform</h1>
-    </td>
-  </tr>
-</table>
+<img src="./src/Darwin.Web/wwwroot/images/DarwinJustLogo.png" width="64" style="vertical-align: middle;" />
 
-## CMS + CRM + E-Commerce + Loyalty + Mobile
+# Darwin Platform - CMS + CRM + E-Commerce + Loyalty + Mobile
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
