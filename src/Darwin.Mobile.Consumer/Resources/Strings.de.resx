@@ -640,6 +640,15 @@
   <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
     <value>Diagnose-Snapshot um: {0}</value>
   </data>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsFormat" xml:space="preserve">
+    <value>Sichtbare Aktionen: {0}</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat" xml:space="preserve">
+    <value>Sichtbare Aktionen: {0} (+{1} weitere)</value>
+  </data>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsEmpty" xml:space="preserve">
+    <value>Sichtbare Aktionen: keine</value>
+  </data>
   <data name="FeedCopyPromotionDiagnosticsButton" xml:space="preserve">
     <value>Diagnose kopieren</value>
   </data>

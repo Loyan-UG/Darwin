@@ -163,6 +163,38 @@ public sealed class FeedViewModel : BaseViewModel
             : string.Empty;
 
     /// <summary>
+    /// Gets localized preview text for visible promotions to provide more diagnostics context in support handoff.
+    /// </summary>
+    public string PromotionDiagnosticsVisiblePromotionsPreview
+    {
+        get
+        {
+            if (!HasPromotions)
+            {
+                return Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsEmpty;
+            }
+
+            const int previewLimit = 3;
+            var titles = PromotionItems
+                .Select(item => item.Title)
+                .Where(title => !string.IsNullOrWhiteSpace(title))
+                .Take(previewLimit)
+                .ToArray();
+
+            if (titles.Length == 0)
+            {
+                return Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsEmpty;
+            }
+
+            var remaining = Math.Max(0, PromotionItems.Count - titles.Length);
+            var joinedTitles = string.Join(", ", titles);
+            return remaining > 0
+                ? string.Format(Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat, joinedTitles, remaining)
+                : string.Format(Resources.AppResources.FeedPromotionDiagnosticsVisiblePromotionsFormat, joinedTitles);
+        }
+    }
+
+    /// <summary>
     /// Gets whether diagnostics snapshot timestamp is available for display.
     /// </summary>
     public bool HasPromotionDiagnosticsSnapshotAt => _promotionDiagnosticsSnapshotAtLocal.HasValue;
@@ -592,6 +624,7 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
             OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsVisiblePromotionsPreview));
             OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
 
@@ -753,9 +786,10 @@ public sealed class FeedViewModel : BaseViewModel
             var summary = PromotionPolicyDiagnosticsSummaryText;
             var businessName = SelectedAccount?.BusinessName ?? Resources.AppResources.FeedBusinessPickerLabel;
             var snapshotAt = PromotionDiagnosticsSnapshotAtText;
+            var visiblePromotions = PromotionDiagnosticsVisiblePromotionsPreview;
             var payload = string.IsNullOrWhiteSpace(snapshotAt)
-                ? $"{scope}\n{businessName}\n{summary}"
-                : $"{scope}\n{businessName}\n{summary}\n{snapshotAt}";
+                ? $"{scope}\n{businessName}\n{summary}\n{visiblePromotions}"
+                : $"{scope}\n{businessName}\n{summary}\n{visiblePromotions}\n{snapshotAt}";
 
             await Clipboard.Default.SetTextAsync(payload);
 
@@ -930,6 +964,7 @@ public sealed class FeedViewModel : BaseViewModel
             OnPropertyChanged(nameof(HasPromotionDiagnostics));
             OnPropertyChanged(nameof(PromotionPolicyDiagnosticsSummaryText));
             OnPropertyChanged(nameof(PromotionDiagnosticsSnapshotAtText));
+            OnPropertyChanged(nameof(PromotionDiagnosticsVisiblePromotionsPreview));
             OnPropertyChanged(nameof(HasPromotionDiagnosticsSnapshotAt));
         });
     }

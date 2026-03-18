@@ -60,6 +60,11 @@
                    Opacity="0.75"
                    IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}" />
 
+            <Label Text="{Binding PromotionDiagnosticsVisiblePromotionsPreview}"
+                   FontSize="11"
+                   Opacity="0.75"
+                   IsVisible="{Binding HasPromotionDiagnosticsSnapshotAt}" />
+
             <Label Text="{Binding PromotionDiagnosticsSnapshotAtText}"
                    FontSize="11"
                    Opacity="0.65"

@@ -239,6 +239,9 @@ public static class AppResources
     public static string FeedPromotionPolicyDiagnosticsSummaryFormat => ResourceManager.GetString(nameof(FeedPromotionPolicyDiagnosticsSummaryFormat), Culture) ?? "Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}";
     public static string FeedPromotionDiagnosticsTitle => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsTitle), Culture) ?? "Promotion diagnostics";
     public static string FeedPromotionDiagnosticsSnapshotAtFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsSnapshotAtFormat), Culture) ?? "Diagnostics snapshot at: {0}";
+    public static string FeedPromotionDiagnosticsVisiblePromotionsFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsVisiblePromotionsFormat), Culture) ?? "Visible promotions: {0}";
+    public static string FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat), Culture) ?? "Visible promotions: {0} (+{1} more)";
+    public static string FeedPromotionDiagnosticsVisiblePromotionsEmpty => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsVisiblePromotionsEmpty), Culture) ?? "Visible promotions: none";
     public static string FeedCopyPromotionDiagnosticsButton => ResourceManager.GetString(nameof(FeedCopyPromotionDiagnosticsButton), Culture) ?? "Copy promotion diagnostics";
     public static string FeedPromotionDiagnosticsCopied => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopied), Culture) ?? "Promotion diagnostics copied.";
     public static string FeedPromotionDiagnosticsCopyFailed => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopyFailed), Culture) ?? "Unable to copy promotion diagnostics right now.";

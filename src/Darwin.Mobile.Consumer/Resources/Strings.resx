@@ -640,20 +640,14 @@
   <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
     <value>Diagnostics snapshot at: {0}</value>
   </data>
-  <data name="FeedCopyPromotionDiagnosticsButton" xml:space="preserve">
-    <value>Copy promotion diagnostics</value>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsFormat" xml:space="preserve">
+    <value>Visible promotions: {0}</value>
   </data>
-  <data name="FeedPromotionDiagnosticsCopied" xml:space="preserve">
-    <value>Promotion diagnostics copied.</value>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsWithRemainingFormat" xml:space="preserve">
+    <value>Visible promotions: {0} (+{1} more)</value>
   </data>
-  <data name="FeedPromotionDiagnosticsCopyFailed" xml:space="preserve">
-    <value>Unable to copy promotion diagnostics right now.</value>
-  </data>
-  <data name="FeedPromotionDiagnosticsClearStatusButton" xml:space="preserve">
-    <value>Clear diagnostics status</value>
-  </data>
-  <data name="FeedPromotionDiagnosticsSnapshotAtFormat" xml:space="preserve">
-    <value>Diagnostics snapshot at: {0}</value>
+  <data name="FeedPromotionDiagnosticsVisiblePromotionsEmpty" xml:space="preserve">
+    <value>Visible promotions: none</value>
   </data>
   <data name="FeedCopyPromotionDiagnosticsButton" xml:space="preserve">
     <value>Copy promotion diagnostics</value>
