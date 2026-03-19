@@ -74,6 +74,14 @@ public sealed class CampaignStateFilterOption
     /// </summary>
     public string Label { get; }
 
+    /// <summary>
+    /// Backward-compatible alias kept for call sites that still read <c>DisplayName</c>.
+    /// Splitting <c>RewardsViewModel</c> into multiple files introduced a naming mismatch
+    /// between the option models and the original view-model usage. Exposing this alias
+    /// keeps the public surface stable and avoids duplicating label-selection logic.
+    /// </summary>
+    public string DisplayName => Label;
+
     public override string ToString() => Label;
 }
 
@@ -97,6 +105,13 @@ public sealed class CampaignAudienceFilterOption
     /// Localized display label.
     /// </summary>
     public string Label { get; }
+
+    /// <summary>
+    /// Backward-compatible alias kept for call sites that still read <c>DisplayName</c>.
+    /// This preserves the original rewards diagnostics formatting API after the model
+    /// types were extracted into a companion file.
+    /// </summary>
+    public string DisplayName => Label;
 
     public override string ToString() => Label;
 }
@@ -132,6 +147,13 @@ public sealed class CampaignSortOption
     /// Localized display label.
     /// </summary>
     public string Label { get; }
+
+    /// <summary>
+    /// Backward-compatible alias kept for call sites that still read <c>DisplayName</c>.
+    /// Retaining this property avoids fragile string-formatting regressions in diagnostics,
+    /// clipboard export, and any future bindings that expect the older member name.
+    /// </summary>
+    public string DisplayName => Label;
 
     public override string ToString() => Label;
 }
