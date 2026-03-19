@@ -59,8 +59,6 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.ScannerViewModel>();
         services.AddTransient<Views.ScannerPage>();
 
-        services.AddTransient<Views.ComingSoonPage>();
-
         services.AddTransient<ViewModels.DashboardViewModel>();
         services.AddTransient<Views.DashboardPage>();
 
