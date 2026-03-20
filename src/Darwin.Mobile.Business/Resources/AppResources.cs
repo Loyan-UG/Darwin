@@ -19,7 +19,6 @@ public static class AppResources
     // Navigation / generic
     public static string HomeTitle => ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
     public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
-    public static string ComingSoonTitle => ResourceManager.GetString(nameof(ComingSoonTitle), Culture) ?? "Coming soon";
     public static string LogoutButtonText => ResourceManager.GetString(nameof(LogoutButtonText), Culture) ?? "Logout";
 
     // Scanner / actions
@@ -90,7 +89,7 @@ public static class AppResources
     public static string SettingsSubscriptionButton => ResourceManager.GetString(nameof(SettingsSubscriptionButton), Culture) ?? "Subscription";
 
     public static string SubscriptionTitle => ResourceManager.GetString(nameof(SubscriptionTitle), Culture) ?? "Subscription";
-    public static string SubscriptionDescription => ResourceManager.GetString(nameof(SubscriptionDescription), Culture) ?? "Manage your billing plan and payment methods via secure portal access.";
+    public static string SubscriptionDescription => ResourceManager.GetString(nameof(SubscriptionDescription), Culture) ?? "View your current subscription here. Plan changes, billing actions, and payment management are handled on the Loyan website.";
     public static string SubscriptionStatusSectionTitle => ResourceManager.GetString(nameof(SubscriptionStatusSectionTitle), Culture) ?? "Current plan";
     public static string SubscriptionRefreshStatusButton => ResourceManager.GetString(nameof(SubscriptionRefreshStatusButton), Culture) ?? "Refresh subscription status";
     public static string SubscriptionStatusUnavailable => ResourceManager.GetString(nameof(SubscriptionStatusUnavailable), Culture) ?? "Subscription status is currently unavailable.";
@@ -101,36 +100,18 @@ public static class AppResources
     public static string SubscriptionDateUnknown => ResourceManager.GetString(nameof(SubscriptionDateUnknown), Culture) ?? "N/A";
     public static string SubscriptionStatusSummaryFormat => ResourceManager.GetString(nameof(SubscriptionStatusSummaryFormat), Culture) ?? "Plan: {0} · Status: {1} · Provider: {2} · Price: {3}";
     public static string SubscriptionStatusDatesFormat => ResourceManager.GetString(nameof(SubscriptionStatusDatesFormat), Culture) ?? "Period end: {0} · Trial end: {1}";
-    public static string SubscriptionSetCancelAtPeriodEndButton => ResourceManager.GetString(nameof(SubscriptionSetCancelAtPeriodEndButton), Culture) ?? "Schedule cancellation at period end";
-    public static string SubscriptionUndoCancelAtPeriodEndButton => ResourceManager.GetString(nameof(SubscriptionUndoCancelAtPeriodEndButton), Culture) ?? "Keep subscription active";
-    public static string SubscriptionCancelAtPeriodEndScheduled => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndScheduled), Culture) ?? "Cancellation was scheduled for the end of current period.";
-    public static string SubscriptionCancelAtPeriodEndCleared => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndCleared), Culture) ?? "Cancellation schedule was removed.";
-    public static string SubscriptionCancelAtPeriodEndUpdateFailed => ResourceManager.GetString(nameof(SubscriptionCancelAtPeriodEndUpdateFailed), Culture) ?? "Unable to update cancellation preference. Please refresh and try again.";
-    public static string SubscriptionPlansSectionTitle => ResourceManager.GetString(nameof(SubscriptionPlansSectionTitle), Culture) ?? "Available plans";
-    public static string SubscriptionPlansUnavailable => ResourceManager.GetString(nameof(SubscriptionPlansUnavailable), Culture) ?? "No billing plans are currently available.";
-    public static string SubscriptionNoAlternativePlans => ResourceManager.GetString(nameof(SubscriptionNoAlternativePlans), Culture) ?? "No alternative plans are currently available for upgrade.";
-    public static string SubscriptionPlanLineFormat => ResourceManager.GetString(nameof(SubscriptionPlanLineFormat), Culture) ?? "{0}: {1} {2} every {3} {4}";
-    public static string SubscriptionCheckoutNoPlanSelected => ResourceManager.GetString(nameof(SubscriptionCheckoutNoPlanSelected), Culture) ?? "Select a plan to continue checkout.";
-    public static string SubscriptionCheckoutSelectedPlanFormat => ResourceManager.GetString(nameof(SubscriptionCheckoutSelectedPlanFormat), Culture) ?? "Checkout target: {0} ({1})";
-    public static string SubscriptionStartCheckoutButton => ResourceManager.GetString(nameof(SubscriptionStartCheckoutButton), Culture) ?? "Continue to checkout";
-    public static string SubscriptionCheckoutPlanPickerLabel => ResourceManager.GetString(nameof(SubscriptionCheckoutPlanPickerLabel), Culture) ?? "Checkout plan";
-    public static string SubscriptionCheckoutPlanPickerTitle => ResourceManager.GetString(nameof(SubscriptionCheckoutPlanPickerTitle), Culture) ?? "Select a plan";
-    public static string SubscriptionCheckoutUrlInvalid => ResourceManager.GetString(nameof(SubscriptionCheckoutUrlInvalid), Culture) ?? "Checkout URL is invalid. Please refresh and try again.";
-    public static string SubscriptionCheckoutStartFailed => ResourceManager.GetString(nameof(SubscriptionCheckoutStartFailed), Culture) ?? "Unable to start checkout right now. Please try again.";
-    public static string SubscriptionPortalSectionTitle => ResourceManager.GetString(nameof(SubscriptionPortalSectionTitle), Culture) ?? "Billing portal";
-    public static string SubscriptionPortalUrlLabel => ResourceManager.GetString(nameof(SubscriptionPortalUrlLabel), Culture) ?? "Portal URL";
-    public static string SubscriptionPortalReadyHint => ResourceManager.GetString(nameof(SubscriptionPortalReadyHint), Culture) ?? "Billing portal is configured for this environment. Open it to manage plan and payment details.";
-    public static string SubscriptionPortalMissingHint => ResourceManager.GetString(nameof(SubscriptionPortalMissingHint), Culture) ?? "Billing portal is not configured for this environment yet. Contact your admin team.";
-    public static string SubscriptionPortalCopiedHint => ResourceManager.GetString(nameof(SubscriptionPortalCopiedHint), Culture) ?? "Billing portal URL copied to clipboard.";
-    public static string SubscriptionPortalOpenFailed => ResourceManager.GetString(nameof(SubscriptionPortalOpenFailed), Culture) ?? "Unable to open billing portal right now. Please try again shortly.";
-    public static string SubscriptionPortalCopyFailed => ResourceManager.GetString(nameof(SubscriptionPortalCopyFailed), Culture) ?? "Unable to copy billing portal URL right now. Please try again.";
-    public static string SubscriptionPortalValidationMissingUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationMissingUrl), Culture) ?? "Billing portal URL is not configured.";
-    public static string SubscriptionPortalValidationInvalidUrl => ResourceManager.GetString(nameof(SubscriptionPortalValidationInvalidUrl), Culture) ?? "Billing portal URL is invalid. Configure an absolute URL.";
-    public static string SubscriptionPortalValidationRequiresHttps => ResourceManager.GetString(nameof(SubscriptionPortalValidationRequiresHttps), Culture) ?? "Billing portal URL must use HTTPS.";
-    public static string SubscriptionPortalValidationHostNotAllowedFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationHostNotAllowedFormat), Culture) ?? "Billing portal host \"{0}\" is not allowed for this environment.";
-    public static string SubscriptionPortalValidationReadyFormat => ResourceManager.GetString(nameof(SubscriptionPortalValidationReadyFormat), Culture) ?? "Configured host: {0}";
-    public static string SubscriptionOpenPortalButton => ResourceManager.GetString(nameof(SubscriptionOpenPortalButton), Culture) ?? "Open billing portal";
-    public static string SubscriptionCopyPortalUrlButton => ResourceManager.GetString(nameof(SubscriptionCopyPortalUrlButton), Culture) ?? "Copy portal URL";
+    public static string SubscriptionReadOnlyNotice => ResourceManager.GetString(nameof(SubscriptionReadOnlyNotice), Culture) ?? "To change plans, manage payment methods, or update billing details, use the Loyan website.";
+    public static string SubscriptionReadOnlyCancellationNotice => ResourceManager.GetString(nameof(SubscriptionReadOnlyCancellationNotice), Culture) ?? "Cancellation is already scheduled for period end. Any further subscription changes must be completed on the Loyan website.";
+    public static string SubscriptionManagementSectionTitle => ResourceManager.GetString(nameof(SubscriptionManagementSectionTitle), Culture) ?? "Manage on website";
+    public static string SubscriptionManagementWebsiteHint => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteHint), Culture) ?? "Open the Loyan website to manage subscription type, billing details, invoices, and payment actions outside the mobile app.";
+    public static string SubscriptionManagementWebsiteMissingHint => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteMissingHint), Culture) ?? "The Loyan management website is not configured yet. Please contact your admin team.";
+    public static string SubscriptionManagementWebsiteUrlLabel => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteUrlLabel), Culture) ?? "Website";
+    public static string SubscriptionManagementWebsiteMissingUrl => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteMissingUrl), Culture) ?? "The Loyan management website URL is not configured.";
+    public static string SubscriptionManagementWebsiteInvalidUrl => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteInvalidUrl), Culture) ?? "The Loyan management website URL is invalid. Configure an absolute URL.";
+    public static string SubscriptionManagementWebsiteRequiresHttps => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteRequiresHttps), Culture) ?? "The Loyan management website URL must use HTTPS.";
+    public static string SubscriptionManagementWebsiteReadyFormat => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteReadyFormat), Culture) ?? "Website host: {0}";
+    public static string SubscriptionOpenManagementWebsiteButton => ResourceManager.GetString(nameof(SubscriptionOpenManagementWebsiteButton), Culture) ?? "Open Loyan website";
+    public static string SubscriptionManagementWebsiteOpenFailed => ResourceManager.GetString(nameof(SubscriptionManagementWebsiteOpenFailed), Culture) ?? "Unable to open the Loyan website right now. Please try again shortly.";
 
     public static string StaffAccessBadgeTitle => ResourceManager.GetString(nameof(StaffAccessBadgeTitle), Culture) ?? "Staff access badge";
     public static string StaffAccessBadgeDescription => ResourceManager.GetString(nameof(StaffAccessBadgeDescription), Culture) ?? "Use this short-lived QR for internal staff checkpoints and controlled business operations.";

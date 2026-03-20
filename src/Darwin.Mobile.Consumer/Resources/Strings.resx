@@ -152,9 +152,6 @@
 	<data name="BusinessDetailsTitle" xml:space="preserve">
     <value>Business</value>
   </data>
-	<data name="ComingSoonTitle" xml:space="preserve">
-    <value>Coming soon</value>
-  </data>
 	<data name="ConfirmAccrualButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>

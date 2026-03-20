@@ -5,7 +5,7 @@
 /// 
 /// Design notes:
 /// - Phase 1 routes are fully active.
-/// - Future-phase routes already exist so navigation structure is stable from day one.
+/// - Production shell navigation exposes only implemented business operations.
 /// - Dedicated settings leaf routes are explicitly named to keep navigation predictable.
 /// </summary>
 public static class Routes
@@ -25,13 +25,7 @@ public static class Routes
     public const string SettingsStaffAccessBadge = "SettingsStaffAccessBadge";
     public const string SettingsSubscription = "SettingsSubscription";
 
-    // Future tabs (currently Coming Soon placeholders)
+    // Active business operations tabs
     public const string Dashboard = "Dashboard";
     public const string Rewards = "Rewards";
-    public const string Team = "Team";
-
-    // Internal routes for current Coming Soon placeholders.
-    public const string ComingSoonDashboard = "ComingSoonDashboard";
-    public const string ComingSoonRewards = "ComingSoonRewards";
-    public const string ComingSoonTeam = "ComingSoonTeam";
 }

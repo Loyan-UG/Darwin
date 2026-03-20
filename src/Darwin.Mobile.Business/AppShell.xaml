@@ -35,7 +35,7 @@
             Title="{x:Static res:AppResources.ScanTitle}"
             ContentTemplate="{DataTemplate views:ScannerPage}" />
 
-        <!-- Future phases (placeholder for now) -->
+        <!-- Business operations tabs -->
         <ShellContent Route="{x:Static local:Routes.Dashboard}"
                       Title="{x:Static res:AppResources.DashboardTitle}"
                       ContentTemplate="{DataTemplate views:DashboardPage}" />
@@ -43,10 +43,6 @@
         <ShellContent Route="{x:Static local:Routes.Rewards}"
                       Title="{x:Static res:AppResources.RewardsTitle}"
                       ContentTemplate="{DataTemplate views:RewardsPage}" />
-
-        <ShellContent Route="team"
-                      Title="Team"
-                      ContentTemplate="{DataTemplate views:ComingSoonPage}" />
 
         <!-- Settings is now functional -->
         <ShellContent
