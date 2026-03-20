@@ -8,7 +8,6 @@
 [![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
 [![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
 [![Build](https://img.shields.io/github/actions/workflow/status/shahramvafadar/Darwin/build.yml?branch=master&logo=githubactions&label=CI)](../../actions)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.txt)
 
 Darwin is a unified platform that combines a content management system (CMS) with robust e‑commerce, a flexible loyalty engine, a forthcoming customer relationship management (CRM) module and modern .NET MAUI mobile apps. The goal of the platform is to allow businesses to manage content, products, loyalty programmes and customer engagement from a single codebase while exposing a RESTful WebApi for integration and providing first‑party mobile experiences for both consumers and business staff. Contract‑first development ensures that mobile apps, WebApi and web portals all stay in sync through the shared Darwin.Contracts library.
 
@@ -23,7 +22,6 @@ Use this README as the entry point, then jump to the specialized docs:
 - **Testing strategy & test execution tracker**: [`DarwinTesting.md`](DarwinTesting.md)
 - **Admin Identity module how-to (Users/Roles/Permissions)**: [`howto-identity-access.md`](howto-identity-access.md)
 - **Contributing**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- **License**: [`LICENSE.txt`](LICENSE.txt)
 
 ## ✅ Current Status Snapshot
 
@@ -313,12 +311,6 @@ Also see: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ---
 
-## 📜 License
-
-This project is licensed under the MIT License.  
-See [`LICENSE.txt`](LICENSE.txt).
-
----
 
 ## 🏢 About
 
@@ -327,21 +319,4 @@ Darwin is built to support small and medium businesses in Germany/EU with a syst
 - Legally compliant (GDPR, VAT rules, Impressum/Privacy pages)
 - Extensible for growth (**Loyalty**, **Mobile apps**, and upcoming **CRM**, plus WebApi integrations)
 
-💡 The vision: One platform to manage **content + commerce + loyalty + CRM**, future-proof, open-source, developer-friendly.
-```
-
-## What changed and why this still respects your “don’t delete anything” rule
-
-The README currently contains a long “Mobile/WebApi Quick Start” endpoint inventory (auth/profile/loyalty/discovery routes listed one by one). That inventory is exactly the kind of information that goes stale, and it is already duplicated (in a better structured way) in `DarwinWebApi.md`, which has an endpoint matrix and a Postman verification playbook. fileciteturn6file0L1-L1 fileciteturn12file0L1-L1
-
-So the proposed README keeps the **Mobile/WebApi Quick Start** section intact as a section, but changes its intent: it becomes a **pointer** to the dedicated WebApi guide instead of trying to be the guide itself.
-
-The roadmap is rewritten to show explicit status (done/partial/in progress/not started) and to treat `BACKLOG.md` as the authoritative planning doc—as your backlog file is already structured that way. fileciteturn16file0L1-L1
-
-CRM + loyalty + mobile are promoted into the title and top-of-file narrative, aligning README with the backlog’s own definition of the platform pillars and the explicit CRM future module section. fileciteturn16file0L1-L1
-
-One straightforward fix is included: the license link is corrected to `LICENSE.txt` (the file that actually exists). fileciteturn27file0L1-L1
-
-## Important gaps discovered that affect the next round
-
-If you want a *truly strict* “README contains zero WebApi endpoint details” rule, there is one hard blocker: the README currently mentions a mobile bootstrap endpoint (`GET /api/v1/meta/bootstrap`) that is **not** present in the `DarwinWebApi.md` endpoint matrix right now. If you delete that endpoint from README without adding it to `DarwinWebApi.md`, that endpoint becomes effectively undocumented. fileciteturn6file0L1-L1 fileciteturn12file0L1-L1
+💡 The vision: One platform to manage **content + commerce + loyalty + CRM**, future-proof and developer-friendly.

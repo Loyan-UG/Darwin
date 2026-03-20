@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Identity.Commands;
@@ -67,7 +69,7 @@ public sealed class InactiveReminderBackgroundService : BackgroundService
                     var cooldownSuppressionRatePercent = (result.Value.SuppressedByCooldownCount * 100d) / evaluated;
 
                     _logger.LogInformation(
-                        "Inactive reminder batch completed. Evaluated={Evaluated}, Dispatched={Dispatched}, Suppressed={Suppressed}, SuppressedByCooldown={SuppressedByCooldown}, SuppressedByMissingDestination={SuppressedByMissingDestination}, Failed={Failed}, FailedRatePercent={FailedRatePercent:F1}, CooldownSuppressionRatePercent={CooldownSuppressionRatePercent:F1}",
+                        "Inactive reminder batch completed. Evaluated={Evaluated}, Dispatched={Dispatched}, Suppressed={Suppressed}, SuppressedByCooldown={SuppressedByCooldown}, SuppressedByMissingDestination={SuppressedByMissingDestination}, Failed={Failed}, FailedRatePercent={FailedRatePercent:F1}, CooldownSuppressionRatePercent={CooldownSuppressionRatePercent:F1}, FailureBreakdown={FailureBreakdown}, SuppressionBreakdown={SuppressionBreakdown}",
                         result.Value.CandidatesEvaluated,
                         result.Value.DispatchedCount,
                         result.Value.SuppressedCount,
@@ -75,7 +77,9 @@ public sealed class InactiveReminderBackgroundService : BackgroundService
                         result.Value.SuppressedByMissingDestinationCount,
                         result.Value.FailedCount,
                         failedRatePercent,
-                        cooldownSuppressionRatePercent);
+                        cooldownSuppressionRatePercent,
+                        FormatBreakdown(result.Value.FailureCodeCounts),
+                        FormatBreakdown(result.Value.SuppressionCodeCounts));
 
                     if (failedRatePercent >= Math.Clamp(options.HighFailureRateWarningThresholdPercent, 0, 100))
                     {
@@ -123,5 +127,23 @@ public sealed class InactiveReminderBackgroundService : BackgroundService
             : requestedInterval;
 
         return Task.Delay(interval, ct);
+    }
+
+    /// <summary>
+    /// Formats per-code counters into a compact stable log string for remediation workflows.
+    /// </summary>
+    private static string FormatBreakdown(IReadOnlyDictionary<string, int> counters)
+    {
+        if (counters.Count == 0)
+        {
+            return "none";
+        }
+
+        return string.Join(
+            ", ",
+            counters
+                .OrderByDescending(static kvp => kvp.Value)
+                .ThenBy(static kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(static kvp => $"{kvp.Key}={kvp.Value}"));
     }
 }

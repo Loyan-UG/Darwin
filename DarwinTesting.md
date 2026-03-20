@@ -630,6 +630,8 @@ Backlog update rule:
   - `tests/Darwin.Tests.Integration/TestInfrastructure/DeterministicIntegrationTestBase.cs` (shared `IAsyncLifetime` + host/client lifecycle to remove per-suite duplication)
 - Unit contract compatibility suite:
   - `tests/Darwin.Tests.Unit/Contracts/ContractSerializationCompatibilityTests.cs`
+  - `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsPolicyResolutionTests.cs`
+  - `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsCampaignParsingTests.cs`
 - Contracts project serialization suite:
   - `tests/Darwin.Contracts.Tests/Serialization/ContractsSerializationSmokeTests.cs`
 - Infrastructure project configuration suite:
@@ -645,19 +647,8 @@ Backlog update rule:
 
 ### Promotions policy/diagnostics test backlog (tracked here by design)
 
-- [ ] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
-- [ ] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream.
-- [ ] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows.
-
-### Promotions policy/diagnostics test backlog (tracked here by design)
-
-- [ ] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
-- [ ] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream.
-- [ ] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows.
-
-### Promotions policy/diagnostics test backlog (tracked here by design)
-
-- [ ] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
+- [x] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
+- [x] Add unit-level coverage for campaign lifecycle resolution (`Draft` / `Scheduled` / `Active` / `Expired`), priority extraction, and eligibility parsing helper paths in `GetMyPromotionsHandler`. Pending CLI/CI execution evidence.
 - [ ] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream.
 - [ ] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows.
 

@@ -71,9 +71,15 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
             DeviceId = destinationDeviceId,
             PushToken = pushToken,
             Platform = string.IsNullOrWhiteSpace(platform) ? "Unknown" : platform,
+            Provider = NormalizeProviderFromPlatform(platform),
             InactiveDays = Math.Max(0, inactiveDays),
             Title = ApplyTemplate(options.TitleTemplate, inactiveDays),
-            Body = ApplyTemplate(options.BodyTemplate, inactiveDays)
+            Body = ApplyTemplate(options.BodyTemplate, inactiveDays),
+            AndroidChannelId = options.AndroidChannelId,
+            ApnsTopic = options.ApnsTopic,
+            DeepLinkUrl = options.DeepLinkUrl,
+            CollapseKey = options.CollapseKey,
+            AnalyticsLabel = options.AnalyticsLabel
         };
 
         var maxAttempts = Math.Clamp(options.MaxAttempts, 1, 5);
@@ -207,6 +213,31 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
             : template;
 
         return safeTemplate.Replace("{inactiveDays}", Math.Max(0, inactiveDays).ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Maps mobile platform text to a gateway/provider hint for native sender routing.
+    /// </summary>
+    private static string NormalizeProviderFromPlatform(string? platform)
+    {
+        if (string.IsNullOrWhiteSpace(platform))
+        {
+            return "Unknown";
+        }
+
+        var normalized = platform.Trim();
+        if (normalized.Equals("Android", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Fcm";
+        }
+
+        if (normalized.Equals("iOS", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("MacCatalyst", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Apns";
+        }
+
+        return normalized;
     }
 
 
@@ -458,12 +489,69 @@ public sealed class HttpInactiveReminderDispatcher : IInactiveReminderDispatcher
     /// </summary>
     private sealed class InactiveReminderPushGatewayRequest
     {
+        /// <summary>
+        /// Internal Darwin user identifier tied to the reminder candidate.
+        /// </summary>
         public Guid UserId { get; init; }
+
+        /// <summary>
+        /// Device registration identifier resolved from the engagement snapshot.
+        /// </summary>
         public string DeviceId { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Provider-issued push token for the target device.
+        /// </summary>
         public string PushToken { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Original Darwin platform label (for example Android, iOS, MacCatalyst).
+        /// </summary>
         public string Platform { get; init; } = "Unknown";
+
+        /// <summary>
+        /// Normalized provider hint used by the downstream gateway for routing.
+        /// </summary>
+        public string Provider { get; init; } = "Unknown";
+
+        /// <summary>
+        /// Number of inactive days included in the reminder copy and analytics.
+        /// </summary>
         public int InactiveDays { get; init; }
+
+        /// <summary>
+        /// Push notification title rendered from the configured template.
+        /// </summary>
         public string Title { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Push notification body rendered from the configured template.
+        /// </summary>
         public string Body { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Optional Android channel id for FCM-native dispatch.
+        /// </summary>
+        public string? AndroidChannelId { get; init; }
+
+        /// <summary>
+        /// Optional APNs topic/bundle id for APNs-native dispatch.
+        /// </summary>
+        public string? ApnsTopic { get; init; }
+
+        /// <summary>
+        /// Optional deep link that the client should open from the reminder tap action.
+        /// </summary>
+        public string? DeepLinkUrl { get; init; }
+
+        /// <summary>
+        /// Optional collapse key used to merge repeated inactive reminders.
+        /// </summary>
+        public string? CollapseKey { get; init; }
+
+        /// <summary>
+        /// Optional analytics label forwarded to the downstream sender.
+        /// </summary>
+        public string? AnalyticsLabel { get; init; }
     }
 }

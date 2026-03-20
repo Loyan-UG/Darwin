@@ -123,9 +123,6 @@
   <data name="AccrualHelpText" xml:space="preserve">
     <value>Fügt dem Kundenkonto für diesen Besuch Punkte hinzu.</value>
   </data>
-  <data name="ComingSoonTitle" xml:space="preserve">
-    <value>Bald verfügbar</value>
-  </data>
   <data name="ConfirmAccrualButton" xml:space="preserve">
     <value>Punkte bestätigen</value>
   </data>
@@ -241,7 +238,7 @@
     <value>Abonnement</value>
   </data>
   <data name="SubscriptionDescription" xml:space="preserve">
-    <value>Verwalten Sie Tarif und Zahlungsarten über den sicheren Zugriff auf das Abrechnungsportal.</value>
+    <value>Hier sehen Sie Ihr aktuelles Abonnement. Tarifwechsel, Abrechnungsaktionen und die Verwaltung von Zahlungsarten erfolgen über die Loyan-Website.</value>
   </data>
   <data name="SubscriptionStatusSectionTitle" xml:space="preserve">
     <value>Aktueller Tarif</value>
@@ -272,6 +269,42 @@
   </data>
   <data name="SubscriptionStatusDatesFormat" xml:space="preserve">
     <value>Periodenende: {0} · Testphase bis: {1}</value>
+  </data>
+  <data name="SubscriptionReadOnlyNotice" xml:space="preserve">
+    <value>Um Tarife zu ändern, Zahlungsarten zu verwalten oder Abrechnungsdaten zu aktualisieren, verwenden Sie bitte die Loyan-Website.</value>
+  </data>
+  <data name="SubscriptionReadOnlyCancellationNotice" xml:space="preserve">
+    <value>Die Kündigung ist bereits zum Periodenende geplant. Weitere Änderungen am Abonnement müssen über die Loyan-Website erfolgen.</value>
+  </data>
+  <data name="SubscriptionManagementSectionTitle" xml:space="preserve">
+    <value>Auf Website verwalten</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteHint" xml:space="preserve">
+    <value>Öffnen Sie die Loyan-Website, um Tariftyp, Abrechnungsdaten, Rechnungen und Zahlungsaktionen außerhalb der mobilen App zu verwalten.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteMissingHint" xml:space="preserve">
+    <value>Die Loyan-Verwaltungswebsite ist noch nicht konfiguriert. Bitte kontaktieren Sie Ihr Admin-Team.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteUrlLabel" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteMissingUrl" xml:space="preserve">
+    <value>Die URL der Loyan-Verwaltungswebsite ist nicht konfiguriert.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteInvalidUrl" xml:space="preserve">
+    <value>Die URL der Loyan-Verwaltungswebsite ist ungültig. Bitte konfigurieren Sie eine absolute URL.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteRequiresHttps" xml:space="preserve">
+    <value>Die URL der Loyan-Verwaltungswebsite muss HTTPS verwenden.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteReadyFormat" xml:space="preserve">
+    <value>Website-Host: {0}</value>
+  </data>
+  <data name="SubscriptionOpenManagementWebsiteButton" xml:space="preserve">
+    <value>Loyan-Website öffnen</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteOpenFailed" xml:space="preserve">
+    <value>Die Loyan-Website kann derzeit nicht geöffnet werden. Bitte versuchen Sie es in Kürze erneut.</value>
   </data>
   <data name="SubscriptionSetCancelAtPeriodEndButton" xml:space="preserve">
     <value>Kündigung zum Periodenende planen</value>
