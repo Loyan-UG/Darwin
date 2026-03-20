@@ -169,7 +169,7 @@ It is designed as the **single source of truth** for development planning.
 
 ## 3.5 Mobile Business App – Phase 3
 - [x] Full analytics module (CSV/PDF export)
-- [x] Business subscription management (Stripe) — mobile settings entry point + read-only subscription status snapshot + cancel-at-period-end toggle + available-plans listing + checkout intent launch + subscription funnel telemetry/KPI counters delivered.
+- [x] Business subscription visibility — mobile settings now expose a read-only subscription status snapshot and redirect operators to the Loyan website for full billing/subscription management outside the app.
 - [x] Staff QR codes for internal access
 
 ## 3.6 Backlog Additions from Recent Mobile Implementation
@@ -251,9 +251,8 @@ It is designed as the **single source of truth** for development planning.
 - [x] Quick-fix telemetry now includes monitoring-window context (window start + last reset timestamps) for clearer interpretation of applied/no-change counters in operations.
 - [x] Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
 - [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
-- [x] Business Settings subscription flow now includes environment diagnostics (missing/invalid/non-HTTPS/host-allowlist), secure portal launch, copy-url support, server-backed read-only status snapshot, cancel-at-period-end toggle, and available-plans visibility for operator decision support.
-- [x] Business subscription checkout options now exclude the currently active plan and display explicit empty-state guidance when no alternative upgrade target exists.
-- [x] Business dashboard/report exports now include subscription funnel KPI counters (refresh failures, checkout starts/failures) from local activity telemetry.
+- [x] Business Settings subscription flow now keeps billing actions out of mobile and shows only the current server-backed subscription snapshot plus a handoff link to `https://www.loyan.de` for full account management.
+- [x] Business dashboard/report exports continue to expose subscription status refresh telemetry for mobile-side operational troubleshooting.
 - [x] Testing-phase login acceleration policy locked: QA credentials remain prefilled only in DEBUG mobile builds (Consumer/Business), while non-DEBUG builds default to empty credentials; this behavior must not be changed in routine backlog work and will be removed only by explicit manual owner decision.
 - [x] UI-thread stability guardrail documented from production crash pattern: command `CanExecuteChanged` notifications and final busy-state/property updates must be marshaled to Main Thread in MAUI ViewModels/commands (especially after `ConfigureAwait(false)` continuations) to prevent Android `CalledFromWrongThreadException` / `AndroidRuntimeException` screen crashes.
 - [x] `BaseViewModel.OnPropertyChanged` now enforces main-thread marshaling for property change notifications to reduce repeated MAUI cross-thread UI crashes in view-model continuations.
@@ -261,7 +260,7 @@ It is designed as the **single source of truth** for development planning.
 - [x] Fixed Business rewards diagnostics compile regression after `RewardsViewModel` partial-file split by restoring backward-compatible `DisplayName` aliases on campaign filter/sort option models.
 - [x] Fixed `Darwin.MobileOnly.slnf` so the mobile-focused solution filter now points to the actual mobile projects (`Darwin.Contracts`, `Darwin.Mobile.Shared`, `Darwin.Mobile.Consumer`, `Darwin.Mobile.Business`).
 - [x] Removed the obsolete Business "Team" placeholder tab from production shell navigation to keep the final mobile IA aligned with actually implemented operator features.
-- [x] Hardened committed Business mobile defaults by disabling TLS trust bypass and clearing placeholder billing portal configuration until environment-specific values are provided.
+- [x] Hardened committed Business mobile defaults by disabling TLS trust bypass and using the public Loyan website (`https://www.loyan.de`) as the only subscription-management handoff from mobile.
 - [x] Consumer feed suppression/cap guardrails now honor server-applied promotion policy (`AppliedPolicy.FrequencyWindowMinutes` / `SuppressionWindowMinutes` / `MaxCards`) instead of relying only on fixed client constants, improving delivery consistency between mobile and API.
 - [x] Consumer feed now captures server promotion diagnostics counters (`InitialCandidates`, `SuppressedByFrequency`, `Deduplicated`, `TrimmedByCap`, `FinalCount`) and effective applied policy values in ViewModel state for operational observability and troubleshooting workflows.
 - [x] Mobile profile save flow now uses `Result`-based update responses in shared profile service and maps optimistic-concurrency conflicts to explicit localized retry guidance (Consumer + Business), while keeping non-concurrency failures generic to avoid raw technical error leakage in profile UIs.

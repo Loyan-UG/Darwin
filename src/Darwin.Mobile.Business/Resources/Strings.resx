@@ -241,7 +241,7 @@
     <value>Subscription</value>
   </data>
   <data name="SubscriptionDescription" xml:space="preserve">
-    <value>Manage your billing plan and payment methods via secure portal access.</value>
+    <value>View your current subscription here. Plan changes, billing actions, and payment management are handled on the Loyan website.</value>
   </data>
   <data name="SubscriptionStatusSectionTitle" xml:space="preserve">
     <value>Current plan</value>
@@ -272,6 +272,42 @@
   </data>
   <data name="SubscriptionStatusDatesFormat" xml:space="preserve">
     <value>Period end: {0} · Trial end: {1}</value>
+  </data>
+  <data name="SubscriptionReadOnlyNotice" xml:space="preserve">
+    <value>To change plans, manage payment methods, or update billing details, use the Loyan website.</value>
+  </data>
+  <data name="SubscriptionReadOnlyCancellationNotice" xml:space="preserve">
+    <value>Cancellation is already scheduled for period end. Any further subscription changes must be completed on the Loyan website.</value>
+  </data>
+  <data name="SubscriptionManagementSectionTitle" xml:space="preserve">
+    <value>Manage on website</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteHint" xml:space="preserve">
+    <value>Open the Loyan website to manage subscription type, billing details, invoices, and payment actions outside the mobile app.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteMissingHint" xml:space="preserve">
+    <value>The Loyan management website is not configured yet. Please contact your admin team.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteUrlLabel" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteMissingUrl" xml:space="preserve">
+    <value>The Loyan management website URL is not configured.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteInvalidUrl" xml:space="preserve">
+    <value>The Loyan management website URL is invalid. Configure an absolute URL.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteRequiresHttps" xml:space="preserve">
+    <value>The Loyan management website URL must use HTTPS.</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteReadyFormat" xml:space="preserve">
+    <value>Website host: {0}</value>
+  </data>
+  <data name="SubscriptionOpenManagementWebsiteButton" xml:space="preserve">
+    <value>Open Loyan website</value>
+  </data>
+  <data name="SubscriptionManagementWebsiteOpenFailed" xml:space="preserve">
+    <value>Unable to open the Loyan website right now. Please try again shortly.</value>
   </data>
   <data name="SubscriptionSetCancelAtPeriodEndButton" xml:space="preserve">
     <value>Schedule cancellation at period end</value>

@@ -4,7 +4,8 @@ using System;
 namespace Darwin.Mobile.Business.Views;
 
 /// <summary>
-/// Business subscription management entry page.
+/// Business subscription overview page.
+/// The mobile app shows read-only status details and hands full management off to the Loyan website.
 /// </summary>
 public partial class SubscriptionPage : ContentPage
 {
