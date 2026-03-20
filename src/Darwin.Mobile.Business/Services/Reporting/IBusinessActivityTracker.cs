@@ -31,26 +31,6 @@ public interface IBusinessActivityTracker
     Task RecordSubscriptionStatusRefreshAsync(bool succeeded, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Records available subscription plans load result.
-    /// </summary>
-    Task RecordSubscriptionPlansLoadedAsync(int availablePlansCount, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Records checkout flow start intent from subscription settings.
-    /// </summary>
-    Task RecordSubscriptionCheckoutStartedAsync(string? targetPlanCode, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Records checkout flow failure event from subscription settings.
-    /// </summary>
-    Task RecordSubscriptionCheckoutFailedAsync(string? targetPlanCode, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Records cancel-at-period-end preference mutation result.
-    /// </summary>
-    Task RecordSubscriptionCancelPreferenceChangedAsync(bool cancelAtPeriodEnd, CancellationToken cancellationToken);
-
-    /// <summary>
     /// Records campaign targeting schema quick-fix outcome for operations telemetry.
     /// </summary>
     Task RecordCampaignTargetingSchemaFixAsync(bool changed, CancellationToken cancellationToken);
@@ -75,8 +55,6 @@ public sealed class BusinessDashboardSnapshot
     public int AccrualCount { get; init; }
     public int RedemptionCount { get; init; }
     public int SubscriptionStatusRefreshFailures { get; init; }
-    public int SubscriptionCheckoutStarts { get; init; }
-    public int SubscriptionCheckoutFailures { get; init; }
     public int CampaignTargetingFixAppliedCount { get; init; }
     public int CampaignTargetingFixNoChangeCount { get; init; }
     public int CampaignTargetingFixMetricsResetCount { get; init; }
