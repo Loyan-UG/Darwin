@@ -32,79 +32,48 @@
                            LineBreakMode="WordWrap"
                            IsVisible="{Binding HasSubscriptionStatus}" />
 
+                    <Label Text="{Binding SubscriptionPolicyNotice}"
+                           FontSize="12"
+                           Opacity="0.85"
+                           LineBreakMode="WordWrap" />
+
                     <Button Text="{x:Static res:AppResources.SubscriptionRefreshStatusButton}"
                             Command="{Binding RefreshSubscriptionStatusCommand}" />
-
-                    <Button Text="{Binding ToggleCancelAtPeriodEndButtonText}"
-                            Command="{Binding ToggleCancelAtPeriodEndCommand}"
-                            IsVisible="{Binding HasSubscriptionStatus}" />
-
-                    <Label Text="{x:Static res:AppResources.SubscriptionPlansSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-
-                    <Label Text="{Binding AvailablePlansText}"
-                           FontSize="12"
-                           Opacity="0.8"
-                           LineBreakMode="WordWrap" />
-
-                    <Label Text="{Binding SelectedPlanSummaryText}"
-                           FontSize="12"
-                           Opacity="0.75"
-                           LineBreakMode="WordWrap" />
-
-                    <Label Text="{x:Static res:AppResources.SubscriptionCheckoutPlanPickerLabel}"
-                           FontAttributes="Bold"
-                           FontSize="13"
-                           IsVisible="{Binding HasPlanOptions}" />
-
-                    <Picker ItemsSource="{Binding PlanOptions}"
-                            SelectedItem="{Binding SelectedPlanOption, Mode=TwoWay}"
-                            ItemDisplayBinding="{Binding DisplayText}"
-                            Title="{x:Static res:AppResources.SubscriptionCheckoutPlanPickerTitle}"
-                            IsVisible="{Binding HasPlanOptions}" />
-
-                    <Button Text="{x:Static res:AppResources.SubscriptionStartCheckoutButton}"
-                            Command="{Binding StartUpgradeCheckoutCommand}" />
                 </VerticalStackLayout>
             </Border>
 
             <Border StrokeThickness="1" Padding="16">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static res:AppResources.SubscriptionPortalSectionTitle}"
+                    <Label Text="{x:Static res:AppResources.SubscriptionManagementSectionTitle}"
                            FontAttributes="Bold"
                            FontSize="16" />
 
-                    <Label Text="{Binding PortalHint}"
+                    <Label Text="{Binding ManagementWebsiteHint}"
                            LineBreakMode="WordWrap" />
 
-                    <Label Text="{Binding PortalConfigurationDetails}"
+                    <Label Text="{Binding ManagementWebsiteDetails}"
                            FontSize="12"
                            Opacity="0.75"
                            LineBreakMode="WordWrap" />
 
-                    <Label Text="{x:Static res:AppResources.SubscriptionPortalUrlLabel}"
+                    <Label Text="{x:Static res:AppResources.SubscriptionManagementWebsiteUrlLabel}"
                            FontAttributes="Bold"
                            FontSize="13"
-                           IsVisible="{Binding IsPortalConfigured}" />
+                           IsVisible="{Binding IsManagementWebsiteConfigured}" />
 
-                    <Label Text="{Binding PortalUrlText}"
+                    <Label Text="{Binding ManagementWebsiteUrlText}"
                            FontSize="12"
                            Opacity="0.75"
                            LineBreakMode="WordWrap"
-                           IsVisible="{Binding IsPortalConfigured}" />
+                           IsVisible="{Binding IsManagementWebsiteConfigured}" />
 
                     <Label Text="{Binding ErrorMessage}"
                            TextColor="Red"
                            IsVisible="{Binding HasError}" />
 
-                    <Button Text="{x:Static res:AppResources.SubscriptionOpenPortalButton}"
-                            Command="{Binding OpenBillingPortalCommand}"
-                            IsEnabled="{Binding IsPortalConfigured}" />
-
-                    <Button Text="{x:Static res:AppResources.SubscriptionCopyPortalUrlButton}"
-                            Command="{Binding CopyBillingPortalUrlCommand}"
-                            IsEnabled="{Binding IsPortalConfigured}" />
+                    <Button Text="{x:Static res:AppResources.SubscriptionOpenManagementWebsiteButton}"
+                            Command="{Binding OpenManagementWebsiteCommand}"
+                            IsEnabled="{Binding IsManagementWebsiteConfigured}" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}" />

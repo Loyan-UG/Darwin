@@ -18,8 +18,6 @@ public static class AppResources
 
     public static string HomeTitle => ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
     public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
-    public static string ComingSoonTitle => ResourceManager.GetString(nameof(ComingSoonTitle), Culture) ?? "Coming soon";
-
     // keys for scanner functionality
     public static string ScanTitle => ResourceManager.GetString(nameof(ScanTitle), Culture) ?? "Scan";
     public static string LastTokenLabel => ResourceManager.GetString(nameof(LastTokenLabel), Culture) ?? "Last token";

@@ -32,8 +32,6 @@ public sealed class DashboardViewModel : BaseViewModel
     private int _accrualCount;
     private int _redemptionCount;
     private int _subscriptionStatusRefreshFailures;
-    private int _subscriptionCheckoutStarts;
-    private int _subscriptionCheckoutFailures;
     private int _campaignTargetingFixAppliedCount;
     private int _campaignTargetingFixNoChangeCount;
     private int _campaignTargetingFixMetricsResetCount;
@@ -87,18 +85,6 @@ public sealed class DashboardViewModel : BaseViewModel
     {
         get => _subscriptionStatusRefreshFailures;
         private set => SetProperty(ref _subscriptionStatusRefreshFailures, value);
-    }
-
-    public int SubscriptionCheckoutStarts
-    {
-        get => _subscriptionCheckoutStarts;
-        private set => SetProperty(ref _subscriptionCheckoutStarts, value);
-    }
-
-    public int SubscriptionCheckoutFailures
-    {
-        get => _subscriptionCheckoutFailures;
-        private set => SetProperty(ref _subscriptionCheckoutFailures, value);
     }
 
     /// <summary>
@@ -227,8 +213,6 @@ public sealed class DashboardViewModel : BaseViewModel
                 AccrualCount = snapshot.AccrualCount;
                 RedemptionCount = snapshot.RedemptionCount;
                 SubscriptionStatusRefreshFailures = snapshot.SubscriptionStatusRefreshFailures;
-                SubscriptionCheckoutStarts = snapshot.SubscriptionCheckoutStarts;
-                SubscriptionCheckoutFailures = snapshot.SubscriptionCheckoutFailures;
                 CampaignTargetingFixAppliedCount = snapshot.CampaignTargetingFixAppliedCount;
                 CampaignTargetingFixNoChangeCount = snapshot.CampaignTargetingFixNoChangeCount;
                 CampaignTargetingFixMetricsResetCount = snapshot.CampaignTargetingFixMetricsResetCount;
@@ -339,8 +323,6 @@ public sealed class DashboardViewModel : BaseViewModel
         builder.AppendLine($"Summary,AccrualCount,{snapshot.AccrualCount}");
         builder.AppendLine($"Summary,RedemptionCount,{snapshot.RedemptionCount}");
         builder.AppendLine($"Summary,SubscriptionStatusRefreshFailures,{snapshot.SubscriptionStatusRefreshFailures}");
-        builder.AppendLine($"Summary,SubscriptionCheckoutStarts,{snapshot.SubscriptionCheckoutStarts}");
-        builder.AppendLine($"Summary,SubscriptionCheckoutFailures,{snapshot.SubscriptionCheckoutFailures}");
         builder.AppendLine($"Summary,CampaignTargetingFixAppliedCount,{snapshot.CampaignTargetingFixAppliedCount}");
         builder.AppendLine($"Summary,CampaignTargetingFixNoChangeCount,{snapshot.CampaignTargetingFixNoChangeCount}");
         builder.AppendLine($"Summary,CampaignTargetingFixMetricsResetCount,{snapshot.CampaignTargetingFixMetricsResetCount}");
@@ -434,8 +416,6 @@ public sealed class DashboardViewModel : BaseViewModel
             $"- Accrual count: {snapshot.AccrualCount}",
             $"- Redemption count: {snapshot.RedemptionCount}",
             $"- Subscription refresh failures: {snapshot.SubscriptionStatusRefreshFailures}",
-            $"- Subscription checkout starts: {snapshot.SubscriptionCheckoutStarts}",
-            $"- Subscription checkout failures: {snapshot.SubscriptionCheckoutFailures}",
             $"- Campaign quick-fix applied: {snapshot.CampaignTargetingFixAppliedCount}",
             $"- Campaign quick-fix no-change: {snapshot.CampaignTargetingFixNoChangeCount}",
             $"- Campaign quick-fix resets: {snapshot.CampaignTargetingFixMetricsResetCount}",

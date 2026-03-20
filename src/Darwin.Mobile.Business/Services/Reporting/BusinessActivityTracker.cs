@@ -43,36 +43,6 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             pointsDelta: 0,
             cancellationToken);
 
-    public Task RecordSubscriptionPlansLoadedAsync(int availablePlansCount, CancellationToken cancellationToken)
-        => AppendAsync(
-            BusinessActivityKind.SubscriptionPlansLoaded,
-            customerDisplayName: "Subscription settings",
-            pointsDelta: Math.Max(0, availablePlansCount),
-            cancellationToken);
-
-    public Task RecordSubscriptionCheckoutStartedAsync(string? targetPlanCode, CancellationToken cancellationToken)
-        => AppendAsync(
-            BusinessActivityKind.SubscriptionCheckoutStarted,
-            customerDisplayName: string.IsNullOrWhiteSpace(targetPlanCode) ? "Subscription checkout" : targetPlanCode,
-            pointsDelta: 0,
-            cancellationToken);
-
-    public Task RecordSubscriptionCheckoutFailedAsync(string? targetPlanCode, CancellationToken cancellationToken)
-        => AppendAsync(
-            BusinessActivityKind.SubscriptionCheckoutFailed,
-            customerDisplayName: string.IsNullOrWhiteSpace(targetPlanCode) ? "Subscription checkout" : targetPlanCode,
-            pointsDelta: 0,
-            cancellationToken);
-
-    public Task RecordSubscriptionCancelPreferenceChangedAsync(bool cancelAtPeriodEnd, CancellationToken cancellationToken)
-        => AppendAsync(
-            cancelAtPeriodEnd
-                ? BusinessActivityKind.SubscriptionCancelAtPeriodEndEnabled
-                : BusinessActivityKind.SubscriptionCancelAtPeriodEndDisabled,
-            customerDisplayName: "Subscription settings",
-            pointsDelta: 0,
-            cancellationToken);
-
     public Task RecordCampaignTargetingSchemaFixAsync(bool changed, CancellationToken cancellationToken)
         => AppendAsync(
             changed
@@ -105,8 +75,6 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
         var accrualEntries = entries.Where(x => x.Kind == BusinessActivityKind.AccrualConfirmed).ToList();
         var redemptionEntries = entries.Where(x => x.Kind == BusinessActivityKind.RedemptionConfirmed).ToList();
         var subscriptionRefreshFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionStatusRefreshFailed);
-        var subscriptionCheckoutStarts = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutStarted);
-        var subscriptionCheckoutFailures = entries.Count(x => x.Kind == BusinessActivityKind.SubscriptionCheckoutFailed);
         var campaignTargetingFixAppliedCount = entries.Count(x => x.Kind == BusinessActivityKind.CampaignTargetingFixApplied);
         var campaignTargetingFixNoChangeCount = entries.Count(x => x.Kind == BusinessActivityKind.CampaignTargetingFixNoChange);
         var campaignTargetingFixMetricsResetCount = entries.Count(x => x.Kind == BusinessActivityKind.CampaignTargetingFixMetricsReset);
@@ -140,8 +108,6 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             AccrualCount = accrualEntries.Count,
             RedemptionCount = redemptionEntries.Count,
             SubscriptionStatusRefreshFailures = subscriptionRefreshFailures,
-            SubscriptionCheckoutStarts = subscriptionCheckoutStarts,
-            SubscriptionCheckoutFailures = subscriptionCheckoutFailures,
             CampaignTargetingFixAppliedCount = campaignTargetingFixAppliedCount,
             CampaignTargetingFixNoChangeCount = campaignTargetingFixNoChangeCount,
             CampaignTargetingFixMetricsResetCount = campaignTargetingFixMetricsResetCount,
@@ -232,6 +198,8 @@ internal enum BusinessActivityKind
     RedemptionConfirmed = 2,
     SubscriptionStatusRefreshSucceeded = 3,
     SubscriptionStatusRefreshFailed = 4,
+    // Legacy values are intentionally preserved so previously persisted local telemetry
+    // can still deserialize without remapping when older app versions recorded them.
     SubscriptionPlansLoaded = 5,
     SubscriptionCheckoutStarted = 6,
     SubscriptionCheckoutFailed = 7,
