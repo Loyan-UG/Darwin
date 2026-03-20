@@ -104,16 +104,6 @@ namespace Darwin.Mobile.Business.Resources {
                 return ResourceManager.GetString("ChangePasswordTitle", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Coming soon.
-        /// </summary>
-        internal static string ComingSoonTitle {
-            get {
-                return ResourceManager.GetString("ComingSoonTitle", resourceCulture);
-            }
-        }
-        
         /// <summary>
         ///   Looks up a localized string similar to Confirm Accrual.
         /// </summary>

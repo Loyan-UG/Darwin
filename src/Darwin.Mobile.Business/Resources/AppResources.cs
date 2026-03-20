@@ -19,7 +19,6 @@ public static class AppResources
     // Navigation / generic
     public static string HomeTitle => ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
     public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
-    public static string ComingSoonTitle => ResourceManager.GetString(nameof(ComingSoonTitle), Culture) ?? "Coming soon";
     public static string LogoutButtonText => ResourceManager.GetString(nameof(LogoutButtonText), Culture) ?? "Logout";
 
     // Scanner / actions

@@ -123,9 +123,6 @@
   <data name="AccrualHelpText" xml:space="preserve">
     <value>Fügt dem Kundenkonto für diesen Besuch Punkte hinzu.</value>
   </data>
-  <data name="ComingSoonTitle" xml:space="preserve">
-    <value>Bald verfügbar</value>
-  </data>
   <data name="ConfirmAccrualButton" xml:space="preserve">
     <value>Punkte bestätigen</value>
   </data>
