@@ -279,23 +279,24 @@ It is designed as the **single source of truth** for development planning.
 - [x] Inactive reminder orchestration now includes explicit cooldown-suppressed candidate logging (`CooldownActive`) and split suppression counters (`SuppressedByCooldownCount` vs `SuppressedByMissingDestinationCount`) for cleaner dispatch/suppression measurement.
 - [x] Inactive reminder background worker observability hardened with split suppression/failure rates and configurable warning thresholds (`HighFailureRateWarningThresholdPercent`, `HighCooldownSuppressionWarningThresholdPercent`) for proactive operations alerting.
 - [x] Inactive reminder HTTP gateway dispatcher now applies bounded retry with exponential backoff+jitter for transient failures (408/429/5xx/transport timeout), improving provider-native sender hardening without changing non-transient failure taxonomy.
+- [x] Inactive reminder gateway dispatch now forwards provider-native routing metadata (`Fcm` / `Apns`, channel/topic, collapse key, analytics label, deep link) and worker logs now emit per-code failure/suppression breakdowns for remediation playbooks.
 
 ## 3.9 Mobile Execution Queue (Updated for next chat continuation)
 1. **P1 — Promotions verification & hardening (testing stream):** add/finish automated tests for lifecycle resolution (`Draft/Scheduled/Active/Expired`), priority extraction, and eligibility-rules parsing paths in promotions handlers (`DarwinTesting.md` track).
-2. **P2 — Inactive reminders completion:** finalize provider-native sender integration behind gateway and expand failure taxonomy mapping + observability for remediation playbooks.
-3. **P2 — Delivery evidence:** attach fresh mobile/server build + test evidence from current branch state (tracked in `DarwinTesting.md`) after environment baseline re-check.
+2. **P2 — Delivery evidence:** attach fresh mobile/server build + test evidence from current branch state (tracked in `DarwinTesting.md`) after environment baseline re-check.
+3. **P3 — Inactive reminders rollout follow-up:** monitor new per-code reminder breakdown logs and only extend provider mappings if fresh production/provider codes appear.
 4. **P3 — Promotions operations polish (follow-up only if new UX gaps are reported):** keep as a feedback-driven backlog bucket after current diagnostics hardening baseline.
 
 ### 3.9.1 Handoff Status (Prepared for next chat)
 - Current iteration status: **Closed cleanly** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
-- Last delivered increment: mobile diagnostics hardening (Consumer Feed + Business Rewards) including snapshot visibility in empty-list scenarios, visible-item previews, and freshness signals in UI + clipboard payloads.
-- Next recommended starting point in new chat: run a fresh repository baseline validation, then start from **3.9 / P2 Inactive reminders completion** while keeping P1 verification in the dedicated testing stream.
+- Last delivered increment: inactive-reminder gateway/provider hardening with native routing metadata and per-code remediation breakdown logs, plus README/license cleanup.
+- Next recommended starting point in new chat: run a fresh repository baseline validation, then start from **3.9 / P2 Delivery evidence** while keeping P1 verification in the dedicated testing stream.
 
 ### 3.9.2 Ready-to-continue checklist (next chat)
 1. Re-open docs and code from latest `dev` snapshot (no cached assumptions) and refresh done/pending flags.
 2. Execute a focused mobile/server build+test pass and capture only currently-active blockers.
 3. Close blocker fixes in isolated increments (small commits) before resuming feature delivery.
-4. Continue planned queue in order: **P1 verification (testing stream)** → **P2 reminders completion** → **P2 delivery evidence** → **P3 operations polish (if needed)**.
+4. Continue planned queue in order: **P1 verification (testing stream)** → **P2 delivery evidence** → **P3 reminders follow-up (if new provider codes appear)** → **P3 operations polish (if needed)**.
 
 > Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
 

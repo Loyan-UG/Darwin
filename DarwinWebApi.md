@@ -128,32 +128,77 @@ Response observability includes diagnostics counters:
 
 ---
 
-## 7) Postman Verification Playbook
+## 7) Inactive Reminder Gateway Contract & Remediation
 
-### 7.1 Login (consumer)
+Inactive reminder delivery is executed by the WebApi background worker and dispatched through the configurable HTTP gateway defined under `Notifications:InactiveReminderPushGateway`.
+
+### 7.1 Gateway request shape
+
+The dispatcher now sends a provider-ready payload with:
+
+- user/device targeting: `userId`, `deviceId`, `pushToken`
+- routing hints: `platform`, normalized `provider` (`Fcm` / `Apns`)
+- notification content: `title`, `body`, `inactiveDays`
+- native-delivery hints: `androidChannelId`, `apnsTopic`, `collapseKey`, `analyticsLabel`, `deepLinkUrl`
+
+This keeps Darwin.WebApi provider-agnostic while still giving the downstream gateway enough context to fan out directly to FCM/APNs without guessing bundle ids, Android channels, or reminder tap destinations.
+
+### 7.2 Failure taxonomy
+
+Stable failure codes are persisted into engagement metadata and surfaced in worker logs. Current families:
+
+| Family | Examples | Typical remediation |
+|---|---|---|
+| Validation | `Validation.PushTokenRequired`, `Validation.DestinationDeviceIdRequired` | Inspect mobile registration payloads and user/device snapshot integrity. |
+| Gateway HTTP/auth | `Gateway.Unauthorized`, `Gateway.Forbidden`, `Gateway.EndpointNotFound`, `Gateway.ServerError` | Verify gateway URL, auth token, deployment routing, and service health. |
+| Gateway transport | `Gateway.Timeout`, `Gateway.TransportError`, `Gateway.RateLimited` | Check network path, transient provider availability, and retry budgets. |
+| Provider-native FCM | `Gateway.Provider.Fcm.TokenUnregistered`, `Gateway.Provider.Fcm.SenderIdMismatch`, `Gateway.Provider.Fcm.QuotaExceeded` | Remove stale tokens, confirm Firebase project alignment, and inspect rate limiting. |
+| Provider-native APNs | `Gateway.Provider.Apns.TokenInvalid`, `Gateway.Provider.Apns.TopicInvalid`, `Gateway.Provider.Apns.AuthTokenInvalid` | Verify APNs topic/bundle id, token validity, and signing credentials. |
+
+### 7.3 Worker observability
+
+`InactiveReminderBackgroundService` logs:
+
+- evaluated / dispatched / suppressed / failed counters
+- split suppression counters (`CooldownActive` vs `NoPushDestination`)
+- aggregate failure and suppression breakdown strings for remediation playbooks
+- warning events when failure-rate or cooldown-suppression thresholds exceed configured percentages
+
+Operational guidance:
+
+1. Treat `Gateway.Provider.*Token*` as destination hygiene work (remove stale tokens / re-register device).
+2. Treat `Gateway.Provider.*Auth*` and `Gateway.Unauthorized` as credential or topic drift.
+3. Treat `Gateway.RateLimited`, `Gateway.Provider.Fcm.QuotaExceeded`, and `Gateway.Provider.Apns.RateLimited` as retry/backoff pressure.
+4. Treat `CooldownActive` spikes as expected policy behavior unless the share is unexpectedly high for the campaign window.
+
+---
+
+## 8) Postman Verification Playbook
+
+### 8.1 Login (consumer)
 
 - `POST /api/v1/auth/login`
 - save `accessToken` / `refreshToken`.
 
-### 7.2 Discover list
+### 8.2 Discover list
 
 - `POST /api/v1/businesses/list`
 - expected: seeded businesses in `items`.
 
-### 7.3 Business detail
+### 8.3 Business detail
 
 - `GET /api/v1/businesses/{businessId}`
 
-### 7.4 Join loyalty
+### 8.4 Join loyalty
 
 - `POST /api/v1/loyalty/account/{businessId}/join`
 
-### 7.5 Prepare scan session
+### 8.5 Prepare scan session
 
 - `POST /api/v1/loyalty/scan/prepare`
 - expected: session token + expiry.
 
-### 7.6 Business-side process
+### 8.6 Business-side process
 
 - login as business account
 - `POST /api/v1/loyalty/scan/process`
@@ -162,7 +207,7 @@ Response observability includes diagnostics counters:
 
 ---
 
-## 8) Documentation Ownership
+## 9) Documentation Ownership
 
 When API contracts or policies change, update these together in one PR:
 

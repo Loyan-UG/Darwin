@@ -489,6 +489,8 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - HTTP gateway dispatcher now maps provider transport/HTTP errors to stable outcome codes (for example `Gateway.Unauthorized`, `Gateway.RateLimited`, `Gateway.ServerError`) to improve reminder analytics quality.
 - When gateway returns provider reason payload, dispatcher now emits normalized `Gateway.Provider.*` codes to preserve APNs/FCM-specific failure semantics in analytics.
 - Dispatcher now canonicalizes common FCM/APNs reasons into stable categories (for example `Gateway.Provider.Fcm.TokenUnregistered`, `Gateway.Provider.Apns.TokenInvalid`) for clearer operational actions.
+- Inactive reminder gateway payloads now include provider-routing hints (`Fcm` / `Apns`) plus native delivery metadata (`androidChannelId`, `apnsTopic`, `collapseKey`, `analyticsLabel`, `deepLinkUrl`) so the downstream gateway can dispatch without provider-specific guesswork.
+- Reminder worker observability now includes per-code failure/suppression breakdowns in batch logs, making remediation playbooks easier to apply during operations incidents.
 - Promotions analytics tracking is now wired end-to-end for `Impression` and `Open` events (mobile feed emits events to WebApi; Application persists counters in `UserEngagementSnapshot` metadata).
 - Promotions `Claim` tracking is now hooked from redemption QR generation (`RewardClaimIntent`) so conversion funnel has event coverage for all three stages.
 - Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
@@ -531,18 +533,17 @@ Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and
 - Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
 
 ### Remaining / follow-up
-- **Handoff note (this chat):** current iteration is paused cleanly for continuation in a new chat; latest completed increment hardened mobile diagnostics UX (Consumer Feed + Business Rewards) with snapshot-context visibility in empty-list scenarios, visible-item preview lines, and freshness signals in both UI and clipboard export payloads.
-- **Recommended next step (new chat):** start with a fresh baseline validation from latest repository state, then continue from inactive-reminder completion workstream (provider-native sender integration + taxonomy/remediation observability), while Promotions verification remains in the dedicated testing stream.
+- **Handoff note (this chat):** current iteration is paused cleanly for continuation in a new chat; latest completed increment hardened inactive-reminder gateway routing metadata and remediation observability, and removed repository license references from the top-level docs/readme surface.
+- **Recommended next step (new chat):** start with a fresh baseline validation from latest repository state, then continue from delivery-evidence collection for the inactive-reminder stack, while Promotions verification remains in the dedicated testing stream.
 - Testing coverage and execution evidence are tracked in `DarwinTesting.md` (dedicated testing stream); update that file alongside status changes.
 - Keep Promotions operations polish as feedback-driven follow-up (address only newly reported UX gaps) on top of the delivered diagnostics baseline.
-- Finalize inactive-reminder provider-native sender integration behind gateway (FCM/APNs), and extend provider-specific failure taxonomy/remediation mapping.
 - Re-run end-to-end mobile/server build + test evidence collection from current branch before rollout decisions.
 
 ### Next-chat startup checklist
 1. Re-read `BACKLOG.md`, `DarwinMobile.md`, and current mobile ViewModels from disk before coding.
 2. Run mobile-only compile/build checks to capture only active failures from latest branch state.
 3. Resolve blocker errors in small isolated commits, then resume promotions/reminders queue delivery.
-4. If no new promotions UX gap is reported, prioritize inactive-reminder completion and release-evidence collection before opening new UI polish tasks.
+4. If no new promotions UX gap is reported, prioritize release-evidence collection and reminder rollout validation before opening new UI polish tasks.
 
 ## 19) Contributor Checklist
 

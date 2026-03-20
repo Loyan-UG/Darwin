@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
@@ -62,13 +63,15 @@ public sealed class ProcessInactiveReminderBatchHandler
 
             if (candidate.IsSuppressed)
             {
+                var suppressionCode = candidate.SuppressionCode ?? "CooldownActive";
                 summary.SuppressedCount++;
                 summary.SuppressedByCooldownCount++;
+                IncrementCount(summary.SuppressionCodeCounts, suppressionCode);
                 await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
                 {
                     UserId = candidate.UserId,
                     Outcome = "Suppressed",
-                    OutcomeCode = candidate.SuppressionCode ?? "CooldownActive"
+                    OutcomeCode = suppressionCode
                 }, ct).ConfigureAwait(false);
 
                 continue;
@@ -77,13 +80,15 @@ public sealed class ProcessInactiveReminderBatchHandler
             if (string.IsNullOrWhiteSpace(candidate.PushDestinationDeviceId)
                 || string.IsNullOrWhiteSpace(candidate.PushToken))
             {
+                const string missingDestinationCode = "NoPushDestination";
                 summary.SuppressedCount++;
                 summary.SuppressedByMissingDestinationCount++;
+                IncrementCount(summary.SuppressionCodeCounts, missingDestinationCode);
                 await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
                 {
                     UserId = candidate.UserId,
                     Outcome = "Suppressed",
-                    OutcomeCode = "NoPushDestination"
+                    OutcomeCode = missingDestinationCode
                 }, ct).ConfigureAwait(false);
 
                 continue;
@@ -95,12 +100,16 @@ public sealed class ProcessInactiveReminderBatchHandler
 
             if (!dispatchResult.Succeeded)
             {
+                var failureCode = string.IsNullOrWhiteSpace(dispatchResult.Error)
+                    ? "Gateway.UnknownFailure"
+                    : dispatchResult.Error;
                 summary.FailedCount++;
+                IncrementCount(summary.FailureCodeCounts, failureCode);
                 await _markAttemptHandler.HandleAsync(new MarkInactiveReminderAttemptDto
                 {
                     UserId = candidate.UserId,
                     Outcome = "Failed",
-                    OutcomeCode = dispatchResult.Error
+                    OutcomeCode = failureCode
                 }, ct).ConfigureAwait(false);
 
                 continue;
@@ -124,5 +133,20 @@ public sealed class ProcessInactiveReminderBatchHandler
         }
 
         return Result<ProcessInactiveReminderBatchResultDto>.Ok(summary);
+    }
+
+    /// <summary>
+    /// Increments one aggregate observability counter in a case-insensitive dictionary.
+    /// </summary>
+    private static void IncrementCount(IDictionary<string, int> counters, string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return;
+        }
+
+        counters[code] = counters.TryGetValue(code, out var current)
+            ? current + 1
+            : 1;
     }
 }

@@ -195,7 +195,7 @@ Mobile developers **must** use the Mobile solution filter to avoid loading serve
 
 ...
 
-# 11. License & Ownership
+# 11. Ownership
 
 All code is private and owned by Darwin’s core team.  
 Commercial re-use outside the organization is prohibited.
