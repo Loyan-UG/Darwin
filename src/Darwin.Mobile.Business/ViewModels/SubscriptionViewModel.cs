@@ -7,22 +7,19 @@ using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 using Microsoft.Maui.ApplicationModel;
 using System;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
 /// <summary>
-/// Coordinates business subscription self-service actions from mobile settings.
+/// Presents a read-only subscription snapshot for the Business app.
 /// 
-/// Current scope:
-/// - Display subscription status snapshot from server (plan/status/renewal fields).
-/// - Let business operators toggle cancel-at-period-end intent with optimistic concurrency.
-/// - Validate portal URL policy (absolute + HTTPS + optional host allowlist).
-/// - Open/copy billing portal URL for secure provider-managed operations.
+/// Product policy:
+/// - Mobile operators may view the current subscription state only.
+/// - Plan changes, payment methods, invoicing, and cancellation management are intentionally
+///   moved to the public Loyan website instead of being executed inside the mobile app.
+/// - The mobile experience therefore exposes only a status refresh action and a website link.
 /// </summary>
 public sealed class SubscriptionViewModel : BaseViewModel
 {
@@ -30,86 +27,49 @@ public sealed class SubscriptionViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly IBusinessActivityTracker _activityTracker;
 
-    private bool _isPortalConfigured;
-    private string _portalHint = string.Empty;
-    private string _portalUrlText = string.Empty;
-    private string _portalConfigurationDetails = string.Empty;
-
     private bool _hasSubscriptionStatus;
     private string _subscriptionSummaryText = string.Empty;
     private string _subscriptionDatesText = string.Empty;
-    private bool _cancelAtPeriodEnd;
-    private string _currentPlanCodeNormalized = string.Empty;
-    private string _availablePlansText = string.Empty;
-    private readonly ObservableCollection<PlanOptionItem> _planOptions = new();
-    private PlanOptionItem? _selectedPlanOption;
-    private string _selectedPlanSummaryText = string.Empty;
+    private string _subscriptionPolicyNotice = string.Empty;
+    private bool _isManagementWebsiteConfigured;
+    private string _managementWebsiteHint = string.Empty;
+    private string _managementWebsiteUrlText = string.Empty;
+    private string _managementWebsiteDetails = string.Empty;
 
-    private Guid _subscriptionId;
-    private byte[] _subscriptionRowVersion = Array.Empty<byte>();
-
-    public SubscriptionViewModel(ApiOptions apiOptions, ILoyaltyService loyaltyService, IBusinessActivityTracker activityTracker)
+    public SubscriptionViewModel(
+        ApiOptions apiOptions,
+        ILoyaltyService loyaltyService,
+        IBusinessActivityTracker activityTracker)
     {
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
 
         RefreshSubscriptionStatusCommand = new AsyncCommand(RefreshSubscriptionStatusAsync, () => !IsBusy);
-        ToggleCancelAtPeriodEndCommand = new AsyncCommand(ToggleCancelAtPeriodEndAsync, () => !IsBusy && HasSubscriptionStatus);
-        StartUpgradeCheckoutCommand = new AsyncCommand(StartUpgradeCheckoutAsync, () => !IsBusy && _selectedPlanOption is not null);
-        OpenBillingPortalCommand = new AsyncCommand(OpenBillingPortalAsync, () => !IsBusy && IsPortalConfigured);
-        CopyBillingPortalUrlCommand = new AsyncCommand(CopyBillingPortalUrlAsync, () => !IsBusy && IsPortalConfigured);
+        OpenManagementWebsiteCommand = new AsyncCommand(OpenManagementWebsiteAsync, () => !IsBusy && IsManagementWebsiteConfigured);
     }
 
-    public bool IsPortalConfigured
-    {
-        get => _isPortalConfigured;
-        private set
-        {
-            if (SetProperty(ref _isPortalConfigured, value))
-            {
-                OpenBillingPortalCommand.RaiseCanExecuteChanged();
-                CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
-            }
-        }
-    }
-
-    public string PortalHint
-    {
-        get => _portalHint;
-        private set => SetProperty(ref _portalHint, value);
-    }
-
-    public string PortalUrlText
-    {
-        get => _portalUrlText;
-        private set => SetProperty(ref _portalUrlText, value);
-    }
-
-    public string PortalConfigurationDetails
-    {
-        get => _portalConfigurationDetails;
-        private set => SetProperty(ref _portalConfigurationDetails, value);
-    }
-
+    /// <summary>
+    /// Gets a value indicating whether the current business has a subscription snapshot available.
+    /// </summary>
     public bool HasSubscriptionStatus
     {
         get => _hasSubscriptionStatus;
-        private set
-        {
-            if (SetProperty(ref _hasSubscriptionStatus, value))
-            {
-                ToggleCancelAtPeriodEndCommand.RaiseCanExecuteChanged();
-            }
-        }
+        private set => SetProperty(ref _hasSubscriptionStatus, value);
     }
 
+    /// <summary>
+    /// Gets the localized one-line summary of the current subscription plan.
+    /// </summary>
     public string SubscriptionSummaryText
     {
         get => _subscriptionSummaryText;
         private set => SetProperty(ref _subscriptionSummaryText, value);
     }
 
+    /// <summary>
+    /// Gets the localized secondary text containing current period/trial dates.
+    /// </summary>
     public string SubscriptionDatesText
     {
         get => _subscriptionDatesText;
@@ -117,82 +77,70 @@ public sealed class SubscriptionViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Gets compact list of available plans for upgrade/checkout decision support.
+    /// Gets a policy reminder explaining that management actions moved to the website.
     /// </summary>
-    public string AvailablePlansText
+    public string SubscriptionPolicyNotice
     {
-        get => _availablePlansText;
-        private set => SetProperty(ref _availablePlansText, value);
-    }
-
-    public string SelectedPlanSummaryText
-    {
-        get => _selectedPlanSummaryText;
-        private set => SetProperty(ref _selectedPlanSummaryText, value);
+        get => _subscriptionPolicyNotice;
+        private set => SetProperty(ref _subscriptionPolicyNotice, value);
     }
 
     /// <summary>
-    /// Gets strongly-typed plan options for picker binding.
-    /// Each option carries both the underlying <see cref="BillingPlanSummary"/> payload
-    /// and a user-friendly display text to avoid ambiguous name-only rendering.
+    /// Gets a value indicating whether the management website URL passed validation.
     /// </summary>
-    public IReadOnlyList<PlanOptionItem> PlanOptions => _planOptions;
-
-    /// <summary>
-    /// Gets or sets the currently selected plan option used for checkout intent creation.
-    /// </summary>
-    public PlanOptionItem? SelectedPlanOption
+    public bool IsManagementWebsiteConfigured
     {
-        get => _selectedPlanOption;
-        set
+        get => _isManagementWebsiteConfigured;
+        private set
         {
-            if (!SetProperty(ref _selectedPlanOption, value))
+            if (SetProperty(ref _isManagementWebsiteConfigured, value))
             {
-                return;
-            }
-
-            UpdateSelectedPlanSummary();
-            StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether at least one checkout plan option is available.
-    /// </summary>
-    public bool HasPlanOptions => _planOptions.Count > 0;
-
-    /// <summary>
-    /// Gets current button label for cancel-at-period-end action.
-    /// </summary>
-    public string ToggleCancelAtPeriodEndButtonText
-        => CancelAtPeriodEnd
-            ? AppResources.SubscriptionUndoCancelAtPeriodEndButton
-            : AppResources.SubscriptionSetCancelAtPeriodEndButton;
-
-    private bool CancelAtPeriodEnd
-    {
-        get => _cancelAtPeriodEnd;
-        set
-        {
-            if (SetProperty(ref _cancelAtPeriodEnd, value))
-            {
-                OnPropertyChanged(nameof(ToggleCancelAtPeriodEndButtonText));
+                OpenManagementWebsiteCommand.RaiseCanExecuteChanged();
             }
         }
+    }
+
+    /// <summary>
+    /// Gets the explanatory text shown above the management website action.
+    /// </summary>
+    public string ManagementWebsiteHint
+    {
+        get => _managementWebsiteHint;
+        private set => SetProperty(ref _managementWebsiteHint, value);
+    }
+
+    /// <summary>
+    /// Gets the absolute management website URL rendered in the page.
+    /// </summary>
+    public string ManagementWebsiteUrlText
+    {
+        get => _managementWebsiteUrlText;
+        private set => SetProperty(ref _managementWebsiteUrlText, value);
+    }
+
+    /// <summary>
+    /// Gets additional diagnostics about the configured management website host.
+    /// </summary>
+    public string ManagementWebsiteDetails
+    {
+        get => _managementWebsiteDetails;
+        private set => SetProperty(ref _managementWebsiteDetails, value);
     }
 
     public AsyncCommand RefreshSubscriptionStatusCommand { get; }
-    public AsyncCommand ToggleCancelAtPeriodEndCommand { get; }
-    public AsyncCommand StartUpgradeCheckoutCommand { get; }
-    public AsyncCommand OpenBillingPortalCommand { get; }
-    public AsyncCommand CopyBillingPortalUrlCommand { get; }
+
+    public AsyncCommand OpenManagementWebsiteCommand { get; }
 
     public override async Task OnAppearingAsync()
     {
-        ApplyPortalValidationState();
+        ApplyManagementWebsiteState();
         await RefreshSubscriptionStatusAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Loads the server-backed subscription snapshot so operators can confirm the current
+    /// plan, provider, price, and renewal window without leaving the app.
+    /// </summary>
     private async Task RefreshSubscriptionStatusAsync()
     {
         if (IsBusy)
@@ -222,7 +170,7 @@ public sealed class SubscriptionViewModel : BaseViewModel
                     HasSubscriptionStatus = false;
                     SubscriptionSummaryText = AppResources.SubscriptionStatusUnavailable;
                     SubscriptionDatesText = string.Empty;
-                    ResetPlanOptionsState();
+                    SubscriptionPolicyNotice = AppResources.SubscriptionReadOnlyNotice;
                     ErrorMessage = result.Error ?? AppResources.SubscriptionStatusUnavailable;
                 });
                 return;
@@ -230,7 +178,6 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
             await TrackSubscriptionStatusRefreshAsync(succeeded: true).ConfigureAwait(false);
             RunOnMain(() => ApplySubscriptionStatus(result.Value));
-            await LoadBillingPlansAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -242,117 +189,20 @@ public sealed class SubscriptionViewModel : BaseViewModel
         }
     }
 
-    private async Task ToggleCancelAtPeriodEndAsync()
+    /// <summary>
+    /// Opens the public Loyan website where subscription changes and financial operations are handled.
+    /// </summary>
+    private async Task OpenManagementWebsiteAsync()
     {
-        if (IsBusy || !HasSubscriptionStatus || _subscriptionId == Guid.Empty || _subscriptionRowVersion.Length == 0)
+        if (IsBusy)
         {
             return;
         }
 
-        var requestedValue = !CancelAtPeriodEnd;
-
-        RunOnMain(() =>
+        var websiteValidation = ValidateManagementWebsiteConfiguration();
+        if (websiteValidation.WebsiteUri is null)
         {
-            IsBusy = true;
-            ErrorMessage = null;
-            RaiseCommandStates();
-        });
-
-        try
-        {
-            var result = await _loyaltyService
-                .SetCancelAtPeriodEndAsync(
-                    new SetCancelAtPeriodEndRequest
-                    {
-                        SubscriptionId = _subscriptionId,
-                        CancelAtPeriodEnd = requestedValue,
-                        RowVersion = _subscriptionRowVersion
-                    },
-                    CancellationToken.None)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                RunOnMain(() => ErrorMessage = result.Error ?? AppResources.SubscriptionCancelAtPeriodEndUpdateFailed);
-                return;
-            }
-
-            await TrackCancelPreferenceChangedAsync(result.Value.CancelAtPeriodEnd).ConfigureAwait(false);
-
-            RunOnMain(() =>
-            {
-                CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd;
-                _subscriptionRowVersion = result.Value.RowVersion ?? Array.Empty<byte>();
-                PortalHint = result.Value.CancelAtPeriodEnd
-                    ? AppResources.SubscriptionCancelAtPeriodEndScheduled
-                    : AppResources.SubscriptionCancelAtPeriodEndCleared;
-            });
-
-            // Reload full snapshot to keep date/status fields in sync with server-side business rules.
-            await RefreshSubscriptionStatusAsync().ConfigureAwait(false);
-        }
-        finally
-        {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RaiseCommandStates();
-            });
-        }
-    }
-
-    private async Task LoadBillingPlansAsync()
-    {
-        var plansResult = await _loyaltyService
-            .GetBillingPlansAsync(activeOnly: true, CancellationToken.None)
-            .ConfigureAwait(false);
-
-        if (!plansResult.Succeeded || plansResult.Value?.Items is null)
-        {
-            await TrackPlansLoadedAsync(availableCount: 0).ConfigureAwait(false);
-
-            RunOnMain(() =>
-            {
-                ResetPlanOptionsState();
-            });
-            return;
-        }
-
-        var plans = plansResult.Value.Items
-            .Where(static x => x.IsActive && x.Id != Guid.Empty)
-            .Where(x => !IsCurrentPlanCode(x.Code))
-            .OrderBy(static x => x.PriceMinor)
-            .ThenBy(static x => x.Name)
-            .ToList();
-
-        await TrackPlansLoadedAsync(plans.Count).ConfigureAwait(false);
-
-        RunOnMain(() =>
-        {
-            _planOptions.Clear();
-            foreach (var plan in plans)
-            {
-                // Keep display text precomputed for predictable picker UI rendering and localization.
-                _planOptions.Add(new PlanOptionItem(plan, FormatPlanOption(plan)));
-            }
-
-            // Auto-select cheapest plan (already sorted by price/name) for a low-friction default path.
-            SelectedPlanOption = _planOptions.FirstOrDefault();
-
-            AvailablePlansText = plans.Count == 0
-                ? GetPlansEmptyMessage()
-                : string.Join(Environment.NewLine, plans.Select(p => $"• {FormatPlanOption(p)}"));
-
-            UpdateSelectedPlanSummary();
-            OnPropertyChanged(nameof(HasPlanOptions));
-            StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
-        });
-    }
-
-    private async Task StartUpgradeCheckoutAsync()
-    {
-        if (IsBusy || _selectedPlanOption?.Plan is null)
-        {
+            RunOnMain(() => ErrorMessage = websiteValidation.Details);
             return;
         }
 
@@ -365,34 +215,11 @@ public sealed class SubscriptionViewModel : BaseViewModel
 
         try
         {
-            await TrackCheckoutStartedAsync(_selectedPlanOption.Plan.Code).ConfigureAwait(false);
-
-            var result = await _loyaltyService
-                .CreateSubscriptionCheckoutIntentAsync(
-                    new CreateSubscriptionCheckoutIntentRequest { PlanId = _selectedPlanOption.Plan.Id },
-                    CancellationToken.None)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null || string.IsNullOrWhiteSpace(result.Value.CheckoutUrl))
-            {
-                await TrackCheckoutFailedAsync(_selectedPlanOption.Plan.Code).ConfigureAwait(false);
-                RunOnMain(() => ErrorMessage = result.Error ?? AppResources.SubscriptionPlansUnavailable);
-                return;
-            }
-
-            if (!Uri.TryCreate(result.Value.CheckoutUrl, UriKind.Absolute, out var checkoutUri))
-            {
-                await TrackCheckoutFailedAsync(_selectedPlanOption.Plan.Code).ConfigureAwait(false);
-                RunOnMain(() => ErrorMessage = AppResources.SubscriptionCheckoutUrlInvalid);
-                return;
-            }
-
-            await Browser.OpenAsync(checkoutUri, BrowserLaunchMode.SystemPreferred);
+            await Browser.OpenAsync(websiteValidation.WebsiteUri, BrowserLaunchMode.SystemPreferred);
         }
         catch
         {
-            await TrackCheckoutFailedAsync(_selectedPlanOption?.Plan.Code).ConfigureAwait(false);
-            RunOnMain(() => ErrorMessage = AppResources.SubscriptionCheckoutStartFailed);
+            RunOnMain(() => ErrorMessage = AppResources.SubscriptionManagementWebsiteOpenFailed);
         }
         finally
         {
@@ -404,26 +231,21 @@ public sealed class SubscriptionViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Applies the server snapshot to the UI while keeping management actions read-only.
+    /// </summary>
     private void ApplySubscriptionStatus(BusinessSubscriptionStatusResponse status)
     {
-        _subscriptionId = status.SubscriptionId;
-        _subscriptionRowVersion = status.RowVersion ?? Array.Empty<byte>();
-        _currentPlanCodeNormalized = string.IsNullOrWhiteSpace(status.PlanCode)
-            ? string.Empty
-            : status.PlanCode.Trim().ToUpperInvariant();
-
         if (!status.HasSubscription)
         {
             HasSubscriptionStatus = false;
-            CancelAtPeriodEnd = false;
-            _currentPlanCodeNormalized = string.Empty;
             SubscriptionSummaryText = AppResources.SubscriptionNoActivePlan;
             SubscriptionDatesText = string.Empty;
+            SubscriptionPolicyNotice = AppResources.SubscriptionReadOnlyNotice;
             return;
         }
 
         HasSubscriptionStatus = true;
-        CancelAtPeriodEnd = status.CancelAtPeriodEnd;
 
         var planName = string.IsNullOrWhiteSpace(status.PlanName) ? status.PlanCode : status.PlanName;
         if (string.IsNullOrWhiteSpace(planName))
@@ -431,8 +253,12 @@ public sealed class SubscriptionViewModel : BaseViewModel
             planName = AppResources.SubscriptionUnknownPlan;
         }
 
-        var provider = string.IsNullOrWhiteSpace(status.Provider) ? AppResources.SubscriptionUnknownProvider : status.Provider;
-        var statusName = string.IsNullOrWhiteSpace(status.Status) ? AppResources.SubscriptionUnknownStatus : status.Status;
+        var provider = string.IsNullOrWhiteSpace(status.Provider)
+            ? AppResources.SubscriptionUnknownProvider
+            : status.Provider;
+        var statusName = string.IsNullOrWhiteSpace(status.Status)
+            ? AppResources.SubscriptionUnknownStatus
+            : status.Status;
 
         SubscriptionSummaryText = string.Format(
             AppResources.SubscriptionStatusSummaryFormat,
@@ -441,244 +267,70 @@ public sealed class SubscriptionViewModel : BaseViewModel
             provider,
             FormatMoney(status.UnitPriceMinor, status.Currency));
 
-        var periodEnd = status.CurrentPeriodEndUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? AppResources.SubscriptionDateUnknown;
-        var trialEnd = status.TrialEndsAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? AppResources.SubscriptionDateUnknown;
-        SubscriptionDatesText = string.Format(AppResources.SubscriptionStatusDatesFormat, periodEnd, trialEnd);
+        var periodEnd = status.CurrentPeriodEndUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+            ?? AppResources.SubscriptionDateUnknown;
+        var trialEnd = status.TrialEndsAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+            ?? AppResources.SubscriptionDateUnknown;
+
+        SubscriptionDatesText = string.Format(
+            AppResources.SubscriptionStatusDatesFormat,
+            periodEnd,
+            trialEnd);
+
+        SubscriptionPolicyNotice = status.CancelAtPeriodEnd
+            ? AppResources.SubscriptionReadOnlyCancellationNotice
+            : AppResources.SubscriptionReadOnlyNotice;
     }
 
-    private static string FormatMoney(long minor, string? currency)
-    {
-        var c = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency.Trim().ToUpperInvariant();
-        var major = minor / 100m;
-        return $"{major:0.00} {c}";
-    }
-
-    private void ApplyPortalValidationState()
+    /// <summary>
+    /// Evaluates the configured management website URL and prepares the page-level hint text.
+    /// </summary>
+    private void ApplyManagementWebsiteState()
     {
         RunOnMain(() =>
         {
-            var portalValidation = ValidatePortalConfiguration();
-            IsPortalConfigured = portalValidation.PortalUri is not null;
-            PortalUrlText = portalValidation.PortalUri?.AbsoluteUri ?? string.Empty;
-            PortalConfigurationDetails = portalValidation.Details;
-
-            PortalHint = IsPortalConfigured
-                ? AppResources.SubscriptionPortalReadyHint
-                : AppResources.SubscriptionPortalMissingHint;
+            var websiteValidation = ValidateManagementWebsiteConfiguration();
+            IsManagementWebsiteConfigured = websiteValidation.WebsiteUri is not null;
+            ManagementWebsiteUrlText = websiteValidation.WebsiteUri?.AbsoluteUri ?? string.Empty;
+            ManagementWebsiteDetails = websiteValidation.Details;
+            ManagementWebsiteHint = IsManagementWebsiteConfigured
+                ? AppResources.SubscriptionManagementWebsiteHint
+                : AppResources.SubscriptionManagementWebsiteMissingHint;
         });
     }
 
-    private async Task OpenBillingPortalAsync()
+    /// <summary>
+    /// Validates the public Loyan website configuration.
+    /// The mobile app intentionally accepts only an absolute HTTPS website URL here because
+    /// no in-app billing or provider-specific direct portal flow is allowed anymore.
+    /// </summary>
+    private WebsiteValidationResult ValidateManagementWebsiteConfiguration()
     {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        var portalUri = ValidatePortalConfiguration().PortalUri;
-        if (portalUri is null)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
-            return;
-        }
-
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            RaiseCommandStates();
-        });
-
-        try
-        {
-            await Browser.OpenAsync(portalUri, BrowserLaunchMode.SystemPreferred);
-        }
-        catch
-        {
-            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalOpenFailed);
-        }
-        finally
-        {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RaiseCommandStates();
-            });
-        }
-    }
-
-    private async Task CopyBillingPortalUrlAsync()
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        var portalUri = ValidatePortalConfiguration().PortalUri;
-        if (portalUri is null)
-        {
-            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalMissingHint);
-            return;
-        }
-
-        RunOnMain(() =>
-        {
-            IsBusy = true;
-            ErrorMessage = null;
-            RaiseCommandStates();
-        });
-
-        try
-        {
-            await Clipboard.SetTextAsync(portalUri.AbsoluteUri);
-            RunOnMain(() => PortalHint = AppResources.SubscriptionPortalCopiedHint);
-        }
-        catch
-        {
-            RunOnMain(() => ErrorMessage = AppResources.SubscriptionPortalCopyFailed);
-        }
-        finally
-        {
-            RunOnMain(() =>
-            {
-                IsBusy = false;
-                RaiseCommandStates();
-            });
-        }
-    }
-
-    private PortalValidationResult ValidatePortalConfiguration()
-    {
-        var rawUrl = _apiOptions.BusinessBillingPortalUrl?.Trim();
+        var rawUrl = _apiOptions.BusinessManagementWebsiteUrl?.Trim();
         if (string.IsNullOrWhiteSpace(rawUrl))
         {
-            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationMissingUrl);
+            return new WebsiteValidationResult(null, AppResources.SubscriptionManagementWebsiteMissingUrl);
         }
 
-        if (!Uri.TryCreate(rawUrl, UriKind.Absolute, out var portalUri))
+        if (!Uri.TryCreate(rawUrl, UriKind.Absolute, out var websiteUri))
         {
-            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationInvalidUrl);
+            return new WebsiteValidationResult(null, AppResources.SubscriptionManagementWebsiteInvalidUrl);
         }
 
-        if (!string.Equals(portalUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(websiteUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
-            return new PortalValidationResult(null, AppResources.SubscriptionPortalValidationRequiresHttps);
+            return new WebsiteValidationResult(null, AppResources.SubscriptionManagementWebsiteRequiresHttps);
         }
 
-        var allowedHosts = _apiOptions.BusinessBillingPortalAllowedHosts?
-            .Where(static host => !string.IsNullOrWhiteSpace(host))
-            .Select(static host => host.Trim())
-            .ToArray();
-
-        if (allowedHosts is { Length: > 0 } &&
-            !allowedHosts.Any(host => string.Equals(host, portalUri.Host, StringComparison.OrdinalIgnoreCase)))
-        {
-            return new PortalValidationResult(
-                null,
-                string.Format(AppResources.SubscriptionPortalValidationHostNotAllowedFormat, portalUri.Host));
-        }
-
-        var details = string.Format(AppResources.SubscriptionPortalValidationReadyFormat, portalUri.Host);
-        return new PortalValidationResult(portalUri, details);
+        return new WebsiteValidationResult(
+            websiteUri,
+            string.Format(AppResources.SubscriptionManagementWebsiteReadyFormat, websiteUri.Host));
     }
 
     private void RaiseCommandStates()
     {
         RefreshSubscriptionStatusCommand.RaiseCanExecuteChanged();
-        ToggleCancelAtPeriodEndCommand.RaiseCanExecuteChanged();
-        StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
-        OpenBillingPortalCommand.RaiseCanExecuteChanged();
-        CopyBillingPortalUrlCommand.RaiseCanExecuteChanged();
-    }
-
-    private sealed record PortalValidationResult(Uri? PortalUri, string Details);
-
-    private static string FormatPlanOption(BillingPlanSummary plan)
-    {
-        return string.Format(
-            AppResources.SubscriptionPlanLineFormat,
-            !string.IsNullOrWhiteSpace(plan.Name) ? plan.Name : plan.Code,
-            (plan.PriceMinor / 100m).ToString("0.00"),
-            string.IsNullOrWhiteSpace(plan.Currency) ? "EUR" : plan.Currency.Trim().ToUpperInvariant(),
-            plan.IntervalCount,
-            string.IsNullOrWhiteSpace(plan.Interval) ? "period" : plan.Interval);
-    }
-
-    public sealed class PlanOptionItem
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PlanOptionItem"/> class.
-        /// </summary>
-        /// <param name="plan">Underlying contract payload used for checkout API calls.</param>
-        /// <param name="displayText">Localized UI label used in picker rows.</param>
-        public PlanOptionItem(BillingPlanSummary plan, string displayText)
-        {
-            Plan = plan ?? throw new ArgumentNullException(nameof(plan));
-            DisplayText = string.IsNullOrWhiteSpace(displayText) ? plan.Code : displayText;
-        }
-
-        /// <summary>
-        /// Gets the raw billing plan payload used by checkout intent request.
-        /// </summary>
-        public BillingPlanSummary Plan { get; }
-
-        /// <summary>
-        /// Gets formatted display text for UI picker rendering.
-        /// </summary>
-        public string DisplayText { get; }
-    }
-
-    private void UpdateSelectedPlanSummary()
-    {
-        var selectedPlan = _selectedPlanOption?.Plan;
-
-        SelectedPlanSummaryText = selectedPlan is null
-            ? AppResources.SubscriptionCheckoutNoPlanSelected
-            : string.Format(
-                AppResources.SubscriptionCheckoutSelectedPlanFormat,
-                !string.IsNullOrWhiteSpace(selectedPlan.Name) ? selectedPlan.Name : selectedPlan.Code,
-                FormatMoney(selectedPlan.PriceMinor, selectedPlan.Currency));
-    }
-
-    /// <summary>
-    /// Clears plan options and checkout selection after failed status/plan refresh
-    /// to prevent stale upgrade actions in the UI.
-    /// </summary>
-    private void ResetPlanOptionsState()
-    {
-        _planOptions.Clear();
-        SelectedPlanOption = null;
-        AvailablePlansText = AppResources.SubscriptionPlansUnavailable;
-        UpdateSelectedPlanSummary();
-        OnPropertyChanged(nameof(HasPlanOptions));
-        StartUpgradeCheckoutCommand.RaiseCanExecuteChanged();
-    }
-
-    /// <summary>
-    /// Returns contextual empty-state message for plan list.
-    /// If current subscription exists and no alternative plans remain,
-    /// guide operators that an upgrade target is not currently available.
-    /// </summary>
-    private string GetPlansEmptyMessage()
-        => HasSubscriptionStatus
-            ? AppResources.SubscriptionNoAlternativePlans
-            : AppResources.SubscriptionPlansUnavailable;
-
-    /// <summary>
-    /// Returns whether candidate code points to currently active subscription plan.
-    /// Used to keep checkout options focused on alternative plans only.
-    /// </summary>
-    private bool IsCurrentPlanCode(string? candidateCode)
-    {
-        if (string.IsNullOrWhiteSpace(_currentPlanCodeNormalized) || string.IsNullOrWhiteSpace(candidateCode))
-        {
-            return false;
-        }
-
-        return string.Equals(
-            _currentPlanCodeNormalized,
-            candidateCode.Trim().ToUpperInvariant(),
-            StringComparison.Ordinal);
+        OpenManagementWebsiteCommand.RaiseCanExecuteChanged();
     }
 
     private async Task TrackSubscriptionStatusRefreshAsync(bool succeeded)
@@ -689,55 +341,16 @@ public sealed class SubscriptionViewModel : BaseViewModel
         }
         catch
         {
-            // Telemetry should not impact user-facing subscription operations.
+            // Telemetry must never block operators from viewing the current subscription snapshot.
         }
     }
 
-    private async Task TrackPlansLoadedAsync(int availableCount)
+    private static string FormatMoney(long minor, string? currency)
     {
-        try
-        {
-            await _activityTracker.RecordSubscriptionPlansLoadedAsync(availableCount, CancellationToken.None).ConfigureAwait(false);
-        }
-        catch
-        {
-            // Telemetry should not impact user-facing subscription operations.
-        }
+        var normalizedCurrency = string.IsNullOrWhiteSpace(currency) ? "EUR" : currency.Trim().ToUpperInvariant();
+        var major = minor / 100m;
+        return $"{major:0.00} {normalizedCurrency}";
     }
 
-    private async Task TrackCheckoutStartedAsync(string? targetPlanCode)
-    {
-        try
-        {
-            await _activityTracker.RecordSubscriptionCheckoutStartedAsync(targetPlanCode, CancellationToken.None).ConfigureAwait(false);
-        }
-        catch
-        {
-            // Telemetry should not impact user-facing subscription operations.
-        }
-    }
-
-    private async Task TrackCheckoutFailedAsync(string? targetPlanCode)
-    {
-        try
-        {
-            await _activityTracker.RecordSubscriptionCheckoutFailedAsync(targetPlanCode, CancellationToken.None).ConfigureAwait(false);
-        }
-        catch
-        {
-            // Telemetry should not impact user-facing subscription operations.
-        }
-    }
-
-    private async Task TrackCancelPreferenceChangedAsync(bool cancelAtPeriodEnd)
-    {
-        try
-        {
-            await _activityTracker.RecordSubscriptionCancelPreferenceChangedAsync(cancelAtPeriodEnd, CancellationToken.None).ConfigureAwait(false);
-        }
-        catch
-        {
-            // Telemetry should not impact user-facing subscription operations.
-        }
-    }
+    private sealed record WebsiteValidationResult(Uri? WebsiteUri, string Details);
 }
