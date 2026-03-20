@@ -40,4 +40,29 @@ public sealed class InactiveReminderPushGatewayOptions
     /// Subsequent attempts use exponential backoff.
     /// </summary>
     public int InitialBackoffMilliseconds { get; set; } = 300;
+
+    /// <summary>
+    /// Optional Android notification channel id forwarded to the gateway for FCM-native dispatch.
+    /// </summary>
+    public string? AndroidChannelId { get; set; }
+
+    /// <summary>
+    /// Optional APNs topic (bundle identifier) forwarded to the gateway for APNs-native dispatch.
+    /// </summary>
+    public string? ApnsTopic { get; set; }
+
+    /// <summary>
+    /// Optional deep-link URL that the mobile client should open when the reminder is tapped.
+    /// </summary>
+    public string? DeepLinkUrl { get; set; }
+
+    /// <summary>
+    /// Optional collapse key or collapse identifier to de-duplicate reminder notifications.
+    /// </summary>
+    public string? CollapseKey { get; set; }
+
+    /// <summary>
+    /// Optional analytics label forwarded to the downstream gateway/provider payload.
+    /// </summary>
+    public string? AnalyticsLabel { get; set; }
 }
