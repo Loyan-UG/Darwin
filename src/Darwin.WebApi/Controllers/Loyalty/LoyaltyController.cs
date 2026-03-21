@@ -1402,7 +1402,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 StartsAtUtc = request.StartsAtUtc,
                 EndsAtUtc = request.EndsAtUtc,
                 TargetingJson = request.TargetingJson,
-                EligibilityRules = request.EligibilityRules.Select(rule => new PromotionEligibilityRuleDto
+                EligibilityRules = request.EligibilityRules.Select(rule => new Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
                 {
                     AudienceKind = rule.AudienceKind,
                     MinPoints = rule.MinPoints,
@@ -1454,7 +1454,7 @@ namespace Darwin.WebApi.Controllers.Loyalty
                 StartsAtUtc = request.StartsAtUtc,
                 EndsAtUtc = request.EndsAtUtc,
                 TargetingJson = request.TargetingJson,
-                EligibilityRules = request.EligibilityRules.Select(rule => new PromotionEligibilityRuleDto
+                EligibilityRules = request.EligibilityRules.Select(rule => new Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
                 {
                     AudienceKind = rule.AudienceKind,
                     MinPoints = rule.MinPoints,
