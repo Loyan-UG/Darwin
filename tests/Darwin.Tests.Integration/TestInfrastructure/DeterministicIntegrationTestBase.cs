@@ -1,7 +1,7 @@
 using Darwin.Tests.Common.TestInfrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace Darwin.Tests.Integration.TestInfrastructure;
+namespace Darwin.Tests.Integration.Support;
 
 /// <summary>
 ///     Provides a deterministic integration-test base with shared host configuration,

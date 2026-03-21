@@ -2,14 +2,14 @@ using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
-using Darwin.Tests.Integration.TestInfrastructure;
+using Darwin.Tests.Integration.Support;
 using IdentityFlowTestHelper = Darwin.Tests.Common.TestInfrastructure.IdentityFlowTestHelper;
 
 namespace Darwin.Tests.Integration.Loyalty;
@@ -281,12 +281,7 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : DeterministicIntegration
         var parts = accessToken.Split('.');
         parts.Length.Should().BeGreaterThanOrEqualTo(2);
 
-        var payload = parts[1]
-            .Replace("-", "+", StringComparison.Ordinal)
-            .Replace("_", "/", StringComparison.Ordinal);
-
-        var paddedPayload = payload.PadRight(payload.Length + ((4 - payload.Length % 4) % 4), '=');
-        var json = Encoding.UTF8.GetString(Convert.FromBase64String(paddedPayload));
+        var json = DecodeBase64UrlPayload(parts[1]);
 
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.TryGetProperty("business_id", out var businessIdProp).Should().BeTrue();
@@ -297,68 +292,17 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : DeterministicIntegration
     }
 
     /// <summary>
-    /// Returns <c>root.data</c> when the response uses <see cref="ApiEnvelope{T}"/> shape;
-    /// otherwise returns the root object itself.
+    ///     Decodes a Base64Url-encoded JWT payload segment into its JSON text without relying on
+    ///     string replacement overloads that can vary across target frameworks and analyzer contexts.
     /// </summary>
-    private static JsonElement UnwrapApiEnvelopeDataIfPresent(JsonElement root)
+    /// <param name="payloadSegment">Middle JWT segment encoded with Base64Url semantics.</param>
+    /// <returns>Decoded JSON payload text.</returns>
+    private static string DecodeBase64UrlPayload(string payloadSegment)
     {
-        if (root.ValueKind != JsonValueKind.Object)
-        {
-            return root;
-        }
+        payloadSegment.Should().NotBeNullOrWhiteSpace();
 
-        if (TryGetPropertyIgnoreCase(root, "data", out var dataElement))
-        {
-            return dataElement;
-        }
-
-        return root;
-    }
-
-    /// <summary>
-    /// Reads a required object property (case-insensitive) from a JSON object.
-    /// </summary>
-    private static JsonElement GetRequiredObjectProperty(JsonElement owner, string propertyName)
-    {
-        TryGetPropertyIgnoreCase(owner, propertyName, out var value).Should().BeTrue(
-            $"property '{propertyName}' must exist in promotions response payload.");
-
-        value.ValueKind.Should().Be(JsonValueKind.Object, $"property '{propertyName}' must be a JSON object.");
-        return value;
-    }
-
-    /// <summary>
-    /// Reads a required integer property (case-insensitive) from a JSON object.
-    /// </summary>
-    private static int GetRequiredInt32Property(JsonElement owner, string propertyName)
-    {
-        TryGetPropertyIgnoreCase(owner, propertyName, out var value).Should().BeTrue(
-            $"property '{propertyName}' must exist in promotions response payload.");
-
-        value.ValueKind.Should().Be(JsonValueKind.Number, $"property '{propertyName}' must be numeric.");
-        value.TryGetInt32(out var intValue).Should().BeTrue($"property '{propertyName}' must fit Int32 range.");
-        return intValue;
-    }
-
-    /// <summary>
-    /// Performs case-insensitive property lookup for JSON object nodes.
-    /// </summary>
-    private static bool TryGetPropertyIgnoreCase(JsonElement owner, string propertyName, out JsonElement value)
-    {
-        if (owner.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in owner.EnumerateObject())
-            {
-                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
-                {
-                    value = property.Value;
-                    return true;
-                }
-            }
-        }
-
-        value = default;
-        return false;
+        var payloadBytes = WebEncoders.Base64UrlDecode(payloadSegment);
+        return System.Text.Encoding.UTF8.GetString(payloadBytes);
     }
 
     private const string SeedConsumerEmail = "cons1@darwin.de";
