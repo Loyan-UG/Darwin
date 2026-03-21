@@ -649,8 +649,8 @@ Backlog update rule:
 
 - [x] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
 - [x] Add unit-level coverage for campaign lifecycle resolution (`Draft` / `Scheduled` / `Active` / `Expired`), priority extraction, and eligibility parsing helper paths in `GetMyPromotionsHandler`. Pending CLI/CI execution evidence.
-- [ ] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream.
-- [ ] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows.
+- [x] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream. Implemented in `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsCampaignParsingTests.cs` (reflection-based contract round-trip assertion); pending CLI/CI execution evidence.
+- [x] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows. Implemented in `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`; pending CLI/CI execution evidence.
 
 ---
 
