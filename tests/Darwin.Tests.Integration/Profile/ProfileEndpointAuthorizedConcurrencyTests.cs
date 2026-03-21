@@ -7,7 +7,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
-using Darwin.Tests.Integration.TestInfrastructure;
+using Darwin.Tests.Integration.Support;
+using IdentityFlowTestHelper = Darwin.Tests.Common.TestInfrastructure.IdentityFlowTestHelper;
 
 namespace Darwin.Tests.Integration.Profile;
 
@@ -151,7 +152,7 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
         problem.Should().NotBeNull();
         problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
         problem.Detail.Should().NotBeNullOrWhiteSpace();
-        problem.Detail.Should().Contain("Concurrency", StringComparison.OrdinalIgnoreCase);
+        problem.Detail.Should().ContainEquivalentOf("Concurrency");
     }
 
     /// <summary>

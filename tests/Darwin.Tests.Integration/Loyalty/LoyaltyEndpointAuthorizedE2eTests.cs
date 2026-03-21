@@ -2,14 +2,15 @@ using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
-using Darwin.Tests.Integration.TestInfrastructure;
+using Darwin.Tests.Integration.Support;
+using IdentityFlowTestHelper = Darwin.Tests.Common.TestInfrastructure.IdentityFlowTestHelper;
 
 namespace Darwin.Tests.Integration.Loyalty;
 
@@ -280,12 +281,7 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : DeterministicIntegration
         var parts = accessToken.Split('.');
         parts.Length.Should().BeGreaterThanOrEqualTo(2);
 
-        var payload = parts[1]
-            .Replace('-', '+', StringComparison.Ordinal)
-            .Replace('_', '/', StringComparison.Ordinal);
-
-        var paddedPayload = payload.PadRight(payload.Length + ((4 - payload.Length % 4) % 4), '=');
-        var json = Encoding.UTF8.GetString(Convert.FromBase64String(paddedPayload));
+        var json = DecodeBase64UrlPayload(parts[1]);
 
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.TryGetProperty("business_id", out var businessIdProp).Should().BeTrue();
@@ -293,6 +289,20 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : DeterministicIntegration
         var businessIdText = businessIdProp.GetString();
         Guid.TryParse(businessIdText, out var businessId).Should().BeTrue();
         return businessId;
+    }
+
+    /// <summary>
+    ///     Decodes a Base64Url-encoded JWT payload segment into its JSON text without relying on
+    ///     string replacement overloads that can vary across target frameworks and analyzer contexts.
+    /// </summary>
+    /// <param name="payloadSegment">Middle JWT segment encoded with Base64Url semantics.</param>
+    /// <returns>Decoded JSON payload text.</returns>
+    private static string DecodeBase64UrlPayload(string payloadSegment)
+    {
+        payloadSegment.Should().NotBeNullOrWhiteSpace();
+
+        var payloadBytes = WebEncoders.Base64UrlDecode(payloadSegment);
+        return System.Text.Encoding.UTF8.GetString(payloadBytes);
     }
 
     private const string SeedConsumerEmail = "cons1@darwin.de";

@@ -1,7 +1,7 @@
 using Darwin.Tests.Common.TestInfrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace Darwin.Tests.Integration.TestInfrastructure;
+namespace Darwin.Tests.Integration.Support;
 
 /// <summary>
 ///     Provides a deterministic integration-test base with shared host configuration,
@@ -33,10 +33,10 @@ public abstract class DeterministicIntegrationTestBase : IAsyncLifetime
     ///     Recreates and seeds the database before each test class to guarantee
     ///     deterministic state regardless of execution order across suites.
     /// </summary>
-    public Task InitializeAsync() => IntegrationTestDatabaseReset.ResetAndSeedAsync(Factory);
+    public ValueTask InitializeAsync() => new(IntegrationTestDatabaseReset.ResetAndSeedAsync(Factory));
 
     /// <summary>
     ///     No asynchronous class-level cleanup is required by the shared fixture.
     /// </summary>
-    public Task DisposeAsync() => Task.CompletedTask;
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

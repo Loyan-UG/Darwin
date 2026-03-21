@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 
-using Darwin.Tests.Integration.TestInfrastructure;
+using Darwin.Tests.Integration.Support;
 
 namespace Darwin.Tests.Integration.Meta;
 
