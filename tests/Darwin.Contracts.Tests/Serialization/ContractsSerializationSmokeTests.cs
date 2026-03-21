@@ -34,7 +34,7 @@ public sealed class ContractsSerializationSmokeTests
             RefreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7),
             UserId = Guid.NewGuid(),
             Email = "user@example.test",
-            SecurityStamp = "stamp-1"
+            Scopes = ["member.read", "member.write"]
         };
 
         // Act
@@ -47,12 +47,12 @@ public sealed class ContractsSerializationSmokeTests
         roundTrip.RefreshToken.Should().Be("refresh-token");
         roundTrip.UserId.Should().Be(model.UserId);
         roundTrip.Email.Should().Be("user@example.test");
-        roundTrip.SecurityStamp.Should().Be("stamp-1");
+        roundTrip.Scopes.Should().Equal(["member.read", "member.write"]);
     }
 
     /// <summary>
     ///     Verifies map discovery request and business summary contracts keep
-    ///     coordinate and optional numeric fields stable across JSON boundaries.
+    ///     viewport, paging, and location/rating fields stable across JSON boundaries.
     /// </summary>
     [Fact]
     public void BusinessDiscoveryContracts_Should_RoundTripCoordinatesAndRatingFields()
@@ -60,13 +60,18 @@ public sealed class ContractsSerializationSmokeTests
         // Arrange
         var request = new BusinessMapDiscoveryRequest
         {
-            Center = new GeoCoordinateModel { Latitude = 52.52, Longitude = 13.40, AltitudeMeters = 34.2 },
-            RadiusKm = 3.5,
+            Bounds = new GeoBoundsModel
+            {
+                NorthLat = 52.60,
+                SouthLat = 52.50,
+                EastLon = 13.50,
+                WestLon = 13.30
+            },
+            Page = 2,
+            PageSize = 100,
             Query = "coffee",
             Category = "Cafe",
-            MinRating = 4.2,
-            HasActiveLoyaltyProgram = true,
-            MaxResults = 100
+            CountryCode = "DE"
         };
 
         var summary = new BusinessSummary
@@ -89,9 +94,12 @@ public sealed class ContractsSerializationSmokeTests
 
         // Assert
         requestRoundTrip.Should().NotBeNull();
-        requestRoundTrip!.Center.Should().NotBeNull();
-        requestRoundTrip.Center!.Latitude.Should().Be(52.52);
-        requestRoundTrip.MinRating.Should().Be(4.2);
+        requestRoundTrip!.Bounds.Should().NotBeNull();
+        requestRoundTrip.Bounds!.NorthLat.Should().Be(52.60);
+        requestRoundTrip.Bounds.WestLon.Should().Be(13.30);
+        requestRoundTrip.Page.Should().Be(2);
+        requestRoundTrip.PageSize.Should().Be(100);
+        requestRoundTrip.CountryCode.Should().Be("DE");
 
         summaryRoundTrip.Should().NotBeNull();
         summaryRoundTrip!.Location.Should().NotBeNull();
@@ -199,7 +207,14 @@ public sealed class ContractsSerializationSmokeTests
                     CampaignState = PromotionCampaignState.Active,
                     StartsAtUtc = DateTime.UtcNow.AddHours(-1),
                     EndsAtUtc = DateTime.UtcNow.AddDays(1),
-                    EligibilityRules = [new PromotionEligibilityRule { Key = "JoinedBusiness", Value = "true" }]
+                    EligibilityRules =
+                    [
+                        new PromotionEligibilityRule
+                        {
+                            AudienceKind = PromotionAudienceKind.JoinedMembers,
+                            Note = "Available to joined loyalty members."
+                        }
+                    ]
                 }
             ],
             AppliedPolicy = new PromotionFeedPolicy

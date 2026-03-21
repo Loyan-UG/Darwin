@@ -1,6 +1,7 @@
 using System.IO;
 using Darwin.Infrastructure.Persistence.Db;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Infrastructure.Tests.Persistence;
 
