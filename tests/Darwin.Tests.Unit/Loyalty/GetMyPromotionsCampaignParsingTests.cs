@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
+using Darwin.Contracts.Common;
 using Darwin.Domain.Entities.Marketing;
 using FluentAssertions;
 
@@ -222,5 +225,102 @@ public sealed class GetMyPromotionsCampaignParsingTests
         raw.Should().NotBeNull();
         return raw as List<PromotionEligibilityRuleDto>
                ?? throw new InvalidOperationException("BuildEligibilityRulesFromTargeting did not return the expected rule list.");
+    }
+
+    /// <summary>
+    /// Verifies that the promotions diagnostics contract keeps a stable JSON shape for the
+    /// operational counters consumed by mobile troubleshooting workflows:
+    /// <c>initialCandidates</c>, <c>suppressedByFrequency</c>, <c>deduplicated</c>,
+    /// <c>trimmedByCap</c>, and <c>finalCount</c>.
+    ///
+    /// The test discovers the diagnostics DTO via reflection to avoid coupling this unit-test file
+    /// to a specific type name while still enforcing the required contract fields and round-trip behavior.
+    /// </summary>
+    [Fact]
+    public void PromotionsDiagnosticsContract_Should_SerializeAndDeserialize_WithStableCounterPropertyNames()
+    {
+        // Arrange
+        var diagnosticsType = FindPromotionsDiagnosticsContractType();
+        var diagnostics = Activator.CreateInstance(diagnosticsType)
+            ?? throw new InvalidOperationException("Could not create diagnostics DTO instance.");
+
+        SetRequiredInt32Property(diagnosticsType, diagnostics, "InitialCandidates", 11);
+        SetRequiredInt32Property(diagnosticsType, diagnostics, "SuppressedByFrequency", 4);
+        SetRequiredInt32Property(diagnosticsType, diagnostics, "Deduplicated", 2);
+        SetRequiredInt32Property(diagnosticsType, diagnostics, "TrimmedByCap", 1);
+        SetRequiredInt32Property(diagnosticsType, diagnostics, "FinalCount", 4);
+
+        var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+        // Act
+        var json = JsonSerializer.Serialize(diagnostics, diagnosticsType, jsonOptions);
+        var roundTripped = JsonSerializer.Deserialize(json, diagnosticsType, jsonOptions);
+
+        // Assert
+        json.Should().Contain("\"initialCandidates\":11");
+        json.Should().Contain("\"suppressedByFrequency\":4");
+        json.Should().Contain("\"deduplicated\":2");
+        json.Should().Contain("\"trimmedByCap\":1");
+        json.Should().Contain("\"finalCount\":4");
+
+        roundTripped.Should().NotBeNull();
+        GetRequiredInt32Property(diagnosticsType, roundTripped!, "InitialCandidates").Should().Be(11);
+        GetRequiredInt32Property(diagnosticsType, roundTripped!, "SuppressedByFrequency").Should().Be(4);
+        GetRequiredInt32Property(diagnosticsType, roundTripped!, "Deduplicated").Should().Be(2);
+        GetRequiredInt32Property(diagnosticsType, roundTripped!, "TrimmedByCap").Should().Be(1);
+        GetRequiredInt32Property(diagnosticsType, roundTripped!, "FinalCount").Should().Be(4);
+    }
+
+    /// <summary>
+    /// Locates the promotions diagnostics DTO in <c>Darwin.Contracts.Loyalty</c> by required
+    /// integer counter properties instead of relying on a hard-coded type name.
+    /// </summary>
+    private static Type FindPromotionsDiagnosticsContractType()
+    {
+        var contractsAssembly = typeof(ApiEnvelope<object>).Assembly;
+        var requiredProperties = new[]
+        {
+            "InitialCandidates",
+            "SuppressedByFrequency",
+            "Deduplicated",
+            "TrimmedByCap",
+            "FinalCount"
+        };
+
+        var diagnosticsType = contractsAssembly
+            .GetTypes()
+            .Where(x => string.Equals(x.Namespace, "Darwin.Contracts.Loyalty", StringComparison.Ordinal))
+            .FirstOrDefault(x =>
+                requiredProperties.All(propertyName =>
+                {
+                    var property = x.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                    return property?.PropertyType == typeof(int);
+                }));
+
+        diagnosticsType.Should().NotBeNull("a loyalty diagnostics DTO with required counter properties must exist in Darwin.Contracts.");
+        return diagnosticsType!;
+    }
+
+    /// <summary>
+    /// Sets a required integer property on a reflected DTO instance with explicit guardrails.
+    /// </summary>
+    private static void SetRequiredInt32Property(Type ownerType, object instance, string propertyName, int value)
+    {
+        var property = ownerType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        property.Should().NotBeNull($"property '{propertyName}' must exist on {ownerType.FullName}.");
+        property!.PropertyType.Should().Be(typeof(int), $"property '{propertyName}' must be Int32 for stable counter transport.");
+        property.SetValue(instance, value);
+    }
+
+    /// <summary>
+    /// Reads a required integer property from a reflected DTO instance.
+    /// </summary>
+    private static int GetRequiredInt32Property(Type ownerType, object instance, string propertyName)
+    {
+        var property = ownerType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        property.Should().NotBeNull($"property '{propertyName}' must exist on {ownerType.FullName}.");
+        property!.PropertyType.Should().Be(typeof(int), $"property '{propertyName}' must be Int32 for stable counter transport.");
+        return (int)(property.GetValue(instance)
+               ?? throw new InvalidOperationException($"Property '{propertyName}' value was null."));
     }
 }
