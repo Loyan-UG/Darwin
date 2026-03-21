@@ -281,8 +281,8 @@ public sealed class LoyaltyEndpointAuthorizedE2eTests : DeterministicIntegration
         parts.Length.Should().BeGreaterThanOrEqualTo(2);
 
         var payload = parts[1]
-            .Replace('-', '+', StringComparison.Ordinal)
-            .Replace('_', '/', StringComparison.Ordinal);
+            .Replace('-', '+')
+            .Replace('_', '/');
 
         var paddedPayload = payload.PadRight(payload.Length + ((4 - payload.Length % 4) % 4), '=');
         var json = Encoding.UTF8.GetString(Convert.FromBase64String(paddedPayload));
