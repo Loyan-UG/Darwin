@@ -8,6 +8,7 @@ using System.Net.Http.Json;
 
 using Darwin.Tests.Common.TestInfrastructure;
 using Darwin.Tests.Integration.TestInfrastructure;
+using IdentityFlowTestHelper = Darwin.Tests.Common.TestInfrastructure.IdentityFlowTestHelper;
 
 namespace Darwin.Tests.Integration.Identity;
 
