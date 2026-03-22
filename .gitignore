@@ -379,3 +379,4 @@ FodyWeavers.xsd
 /src/Darwin.Web/appsettings.Development.json
 /src/Darwin.Mobile.Consumer/google-services.json
 /src/Darwin.Mobile.Consumer/Directory.Build.props
+/tests/Darwin.Tests.Common/appsettings.Testing.Development.json
