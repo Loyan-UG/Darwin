@@ -23,6 +23,8 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task GetResultAsync_Should_ApplyBearerHeader_WhenStoredTokenIsValid()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var tokenStore = new FakeTokenStore(
             accessToken: "valid-access-token",
@@ -38,7 +40,7 @@ public sealed class ApiClientReliabilityTests
         var client = CreateApiClient(handler, tokenStore);
 
         // Act
-        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/meta/info", CancellationToken.None);
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/meta/info", cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeTrue();
@@ -54,6 +56,8 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task GetResultAsync_Should_ClearBearerHeader_WhenStoredTokenIsExpired()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var tokenStore = new FakeTokenStore(
             accessToken: "expired-access-token",
@@ -69,7 +73,39 @@ public sealed class ApiClientReliabilityTests
         var client = CreateApiClient(handler, tokenStore);
 
         // Act
-        var result = await client.GetResultAsync<Dictionary<string, bool>>("/api/v1/meta/health", CancellationToken.None);
+        var result = await client.GetResultAsync<Dictionary<string, bool>>("/api/v1/meta/health", cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+        observedAuthorization.Should().BeNull();
+    }
+
+    /// <summary>
+    ///     Verifies that when no access token is stored, the API client does not send
+    ///     an Authorization header. This protects anonymous/bootstrap endpoints from
+    ///     accidental credential leakage.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_NotApplyBearerHeader_WhenStoredTokenIsMissing()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var tokenStore = new FakeTokenStore(
+            accessToken: null,
+            accessExpiresUtc: null);
+
+        AuthenticationHeaderValue? observedAuthorization = new("Bearer", "placeholder");
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            observedAuthorization = request.Headers.Authorization;
+            return CreateJsonResponse(HttpStatusCode.OK, new { ok = true });
+        });
+
+        var client = CreateApiClient(handler, tokenStore);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, bool>>("/api/v1/meta/health", cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeTrue();
@@ -83,12 +119,14 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task GetResultAsync_Should_ReturnNoContentFailureMarker_WhenServerReturns204()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
         var client = CreateApiClient(handler);
 
         // Act
-        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/empty", CancellationToken.None);
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/empty", cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeFalse();
@@ -102,12 +140,14 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task PutNoContentAsync_Should_ReturnSuccess_WhenServerReturns204()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
         var client = CreateApiClient(handler);
 
         // Act
-        var result = await client.PutNoContentAsync("/api/v1/profile/me", new { firstName = "Ada" }, CancellationToken.None);
+        var result = await client.PutNoContentAsync("/api/v1/profile/me", new { firstName = "Ada" }, cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeTrue();
@@ -120,12 +160,14 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task PostNoContentAsync_Should_ReturnSuccess_WhenServerReturns204()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NoContent));
         var client = CreateApiClient(handler);
 
         // Act
-        var result = await client.PostNoContentAsync("/api/v1/auth/password/request-reset", new { email = "x@y.z" }, CancellationToken.None);
+        var result = await client.PostNoContentAsync("/api/v1/auth/password/request-reset", new { email = "x@y.z" }, cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeTrue();
@@ -139,6 +181,8 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task GetResultAsync_Should_RetryTransientFailure_AndSucceedOnNextAttempt()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var attempts = 0;
         var handler = new StubHttpMessageHandler(_ =>
@@ -157,7 +201,7 @@ public sealed class ApiClientReliabilityTests
         var client = CreateApiClient(handler, retryPolicy: retryPolicy);
 
         // Act
-        var result = await client.GetResultAsync<Dictionary<string, int>>("/api/v1/retry-test", CancellationToken.None);
+        var result = await client.GetResultAsync<Dictionary<string, int>>("/api/v1/retry-test", cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeTrue();
@@ -174,6 +218,8 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task GetResultAsync_Should_FailFast_WhenRouteIsEmpty()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var sendCount = 0;
         var handler = new StubHttpMessageHandler(_ =>
@@ -185,7 +231,7 @@ public sealed class ApiClientReliabilityTests
         var client = CreateApiClient(handler);
 
         // Act
-        var result = await client.GetResultAsync<Dictionary<string, bool>>(string.Empty, CancellationToken.None);
+        var result = await client.GetResultAsync<Dictionary<string, bool>>(string.Empty, cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeFalse();
@@ -200,6 +246,8 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task PostResultAsync_Should_FailFast_WhenRequestPayloadIsNull()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var sendCount = 0;
         var handler = new StubHttpMessageHandler(_ =>
@@ -211,7 +259,7 @@ public sealed class ApiClientReliabilityTests
         var client = CreateApiClient(handler);
 
         // Act
-        var result = await client.PostResultAsync<object, Dictionary<string, bool>>("/api/v1/test", request: null!, CancellationToken.None);
+        var result = await client.PostResultAsync<object, Dictionary<string, bool>>("/api/v1/test", request: null!, cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeFalse();
@@ -226,6 +274,8 @@ public sealed class ApiClientReliabilityTests
     [Fact]
     public async Task GetResultAsync_Should_ReturnFailure_WhenSuccessPayloadJsonIsInvalid()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         // Arrange
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -235,11 +285,197 @@ public sealed class ApiClientReliabilityTests
         var client = CreateApiClient(handler);
 
         // Act
-        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/invalid-json", CancellationToken.None);
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/invalid-json", cancellationToken);
 
         // Assert
         result.Succeeded.Should().BeFalse();
         result.Error.Should().StartWith("Invalid JSON payload:");
+    }
+
+    /// <summary>
+    ///     Verifies retry exhaustion behavior: when all attempts fail with transport exceptions,
+    ///     the client must return a failed result instead of throwing to UI callers.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_ReturnFailure_WhenTransientFailureExceedsRetryAttempts()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var attempts = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            attempts++;
+            throw new HttpRequestException("Persistent network outage.");
+        });
+
+        var retryPolicy = new ExponentialBackoffRetryPolicy(maxAttempts: 2, baseDelay: TimeSpan.FromMilliseconds(1));
+        var client = CreateApiClient(handler, retryPolicy: retryPolicy);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/retry-fail", cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        attempts.Should().Be(2);
+    }
+
+    /// <summary>
+    ///     Verifies that command-style no-content helper surfaces failure for non-success HTTP status.
+    /// </summary>
+    [Fact]
+    public async Task PostNoContentAsync_Should_ReturnFailure_WhenServerReturnsBadRequest()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("{\"message\":\"validation failed\"}", Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PostNoContentAsync("/api/v1/failing-command", new { any = "payload" }, cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     Verifies that generic command-style POST calls return a failed result when
+    ///     the server returns Unauthorized. The client must normalize HTTP status failures
+    ///     to <c>Result.Fail(...)</c> instead of throwing into UI call paths.
+    /// </summary>
+    [Fact]
+    public async Task PostResultAsync_Should_ReturnFailure_WhenServerReturnsUnauthorized()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized)
+        {
+            Content = new StringContent("{\"message\":\"unauthorized\"}", Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PostResultAsync<object, Dictionary<string, string>>(
+            "/api/v1/protected",
+            new { any = "payload" },
+            cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     Verifies retry exhaustion behavior for command-style no-content operations:
+    ///     persistent transport failures should surface as failed results after all retry attempts.
+    /// </summary>
+    [Fact]
+    public async Task PutNoContentAsync_Should_ReturnFailure_WhenTransportFailureExceedsRetryAttempts()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var attempts = 0;
+        var handler = new StubHttpMessageHandler(_ =>
+        {
+            attempts++;
+            throw new HttpRequestException("Persistent transport failure.");
+        });
+
+        var retryPolicy = new ExponentialBackoffRetryPolicy(maxAttempts: 2, baseDelay: TimeSpan.FromMilliseconds(1));
+        var client = CreateApiClient(handler, retryPolicy: retryPolicy);
+
+        // Act
+        var result = await client.PutNoContentAsync("/api/v1/profile/me", new { firstName = "Ada" }, cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        attempts.Should().Be(2);
+    }
+
+    /// <summary>
+    ///     Verifies that command-style POST result calls normalize malformed success JSON
+    ///     into a deterministic failure result instead of throwing to callers.
+    /// </summary>
+    [Fact]
+    public async Task PostResultAsync_Should_ReturnFailure_WhenSuccessPayloadJsonIsInvalid()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{invalid-json", Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PostResultAsync<object, Dictionary<string, string>>(
+            "/api/v1/invalid-json-post",
+            new { any = "payload" },
+            cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().StartWith("Invalid JSON payload:");
+    }
+
+    /// <summary>
+    ///     Verifies that HTTP 5xx responses are normalized to failed result values
+    ///     for generic GET calls, preserving reliability expectations for UI consumers.
+    /// </summary>
+    [Fact]
+    public async Task GetResultAsync_Should_ReturnFailure_WhenServerReturnsInternalServerError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError)
+        {
+            Content = new StringContent("{\"message\":\"unexpected failure\"}", Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.GetResultAsync<Dictionary<string, string>>("/api/v1/server-error", cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     Verifies that HTTP 5xx responses are normalized to failed result values
+    ///     for command-style POST result calls.
+    /// </summary>
+    [Fact]
+    public async Task PostResultAsync_Should_ReturnFailure_WhenServerReturnsInternalServerError()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Arrange
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError)
+        {
+            Content = new StringContent("{\"message\":\"unexpected failure\"}", Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateApiClient(handler);
+
+        // Act
+        var result = await client.PostResultAsync<object, Dictionary<string, string>>(
+            "/api/v1/server-error-post",
+            new { any = "payload" },
+            cancellationToken);
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
     }
 
     /// <summary>

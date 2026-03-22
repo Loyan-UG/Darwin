@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Darwin.Tests.Common.TestInfrastructure;
 
@@ -22,6 +24,17 @@ public static class IntegrationTestHostFactory
             throw new ArgumentNullException(nameof(factory));
         }
 
-        return factory.WithWebHostBuilder(builder => builder.UseEnvironment("Testing"));
+        return factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+
+            builder.ConfigureAppConfiguration((context, config) =>
+            {
+                // English comments required by your rule
+                config.AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: false);
+                config.AddJsonFile("appsettings.Testing.Development.json", optional: true, reloadOnChange: false);
+                config.AddEnvironmentVariables();
+            });
+        });
     }
 }

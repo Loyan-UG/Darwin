@@ -35,7 +35,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         using var client = CreateHttpsClient();
 
         // Act
-        using var response = await client.GetAsync("/api/v1/loyalty/my/businesses");
+        using var response = await client.GetAsync("/api/v1/loyalty/my/businesses", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -52,7 +52,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         using var client = CreateHttpsClient();
 
         // Act
-        using var response = await client.GetAsync("/api/v1/loyalty/my/accounts");
+        using var response = await client.GetAsync("/api/v1/loyalty/my/accounts", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -75,7 +75,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/prepare", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/prepare", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -96,7 +96,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/process", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/process", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -119,7 +119,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/confirm-accrual", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/confirm-accrual", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -140,7 +140,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/confirm-redemption", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/scan/confirm-redemption", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -164,7 +164,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/my/timeline", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/my/timeline", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -186,7 +186,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/my/promotions", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/loyalty/my/promotions", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -204,7 +204,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         var businessId = Guid.NewGuid();
 
         // Act
-        using var response = await client.GetAsync($"/api/v1/loyalty/account/{businessId}");
+        using var response = await client.GetAsync($"/api/v1/loyalty/account/{businessId}", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -226,7 +226,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync($"/api/v1/loyalty/account/{businessId}/join", request);
+        using var response = await client.PostAsJsonAsync($"/api/v1/loyalty/account/{businessId}/join", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -244,7 +244,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         var businessId = Guid.NewGuid();
 
         // Act
-        using var response = await client.GetAsync($"/api/v1/loyalty/account/{businessId}/next-reward");
+        using var response = await client.GetAsync($"/api/v1/loyalty/account/{businessId}/next-reward", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -262,7 +262,7 @@ public sealed class LoyaltyEndpointBaselineTests : DeterministicIntegrationTestB
         var businessId = Guid.NewGuid();
 
         // Act
-        using var response = await client.GetAsync($"/api/v1/loyalty/my/history/{businessId}");
+        using var response = await client.GetAsync($"/api/v1/loyalty/my/history/{businessId}", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);

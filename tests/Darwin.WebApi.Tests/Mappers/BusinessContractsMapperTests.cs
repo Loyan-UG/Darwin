@@ -1,5 +1,6 @@
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Common.DTOs;
+using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Enums;
 using Darwin.WebApi.Mappers;
 using FluentAssertions;
@@ -128,7 +129,7 @@ public sealed class BusinessContractsMapperTests
             {
                 Id = Guid.NewGuid(),
                 Name = "Darwin Market",
-                Category = BusinessCategoryKind.Grocery,
+                Category = BusinessCategoryKind.Cafe,
                 DefaultCurrency = "EUR",
                 DefaultCulture = "de-DE",
                 Locations =

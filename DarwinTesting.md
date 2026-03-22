@@ -649,8 +649,15 @@ Backlog update rule:
 
 - [x] Add unit-level coverage for promotions policy precedence (`FrequencyWindowMinutes` vs `SuppressionWindowMinutes`) in the dedicated testing stream.
 - [x] Add unit-level coverage for campaign lifecycle resolution (`Draft` / `Scheduled` / `Active` / `Expired`), priority extraction, and eligibility parsing helper paths in `GetMyPromotionsHandler`. Pending CLI/CI execution evidence.
-- [x] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream. Implemented in `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsCampaignParsingTests.cs` (reflection-based contract round-trip assertion); pending CLI/CI execution evidence.
+- [x] Add serialization compatibility assertions for promotions diagnostics payload (`initialCandidates`, `suppressedByFrequency`, `deduplicated`, `trimmedByCap`, `finalCount`) in the dedicated testing stream. Implemented in `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsCampaignParsingTests.cs`; pending CLI/CI execution evidence.
 - [x] Add integration assertion for `POST /api/v1/loyalty/my/promotions` to verify applied policy + diagnostics shape for authenticated member flows. Implemented in `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`; pending CLI/CI execution evidence.
+- [x] Expanded policy normalization edge-case coverage in `tests/Darwin.Tests.Unit/Loyalty/GetMyPromotionsPolicyResolutionTests.cs` (max-card bounding matrix, omitted-window defaults, negative-window lower-bound normalization); pending CLI/CI execution evidence.
+- [x] Applied xUnit cancellation responsiveness rule (`xUnit1051`) to touched async loyalty test paths by propagating `TestContext.Current.CancellationToken` through:
+  - `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`
+  - `tests/Darwin.Tests.Common/TestInfrastructure/IdentityFlowTestHelper.cs`
+  Pending CLI/CI execution evidence.
+- [x] Added promotions diagnostics/item-count coherence integration coverage in `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs` to validate `diagnostics.finalCount` against visible returned collection size and policy cap; pending CLI/CI execution evidence.
+- [x] Added additional authenticated promotions integration coverage for strict max-card policy enforcement and distinct frequency/suppression window round-trip in `tests/Darwin.Tests.Integration/Loyalty/LoyaltyEndpointAuthorizedE2eTests.cs`; pending CLI/CI execution evidence.
 
 ---
 
@@ -701,7 +708,6 @@ Operational context and constraints:
 2. Keep mapper and contract compatibility tests expanding with each new mobile-facing DTO/change.
 3. Tune lane coverage thresholds based on first green baseline only when justified by CI evidence.
 
-
 ## 18) CI troubleshooting notes
 
 Use these notes when CI lanes fail before merge or during gate restoration:
@@ -718,3 +724,11 @@ Use these notes when CI lanes fail before merge or during gate restoration:
 - **Coverage gate script expects all lane artifacts.**
   - If one lane does not upload `coverage.cobertura.xml`, coverage gate will fail by design.
   - Verify each lane writes to its own `TestResults/<lane>` directory and uploads that directory.
+
+- [x] Added contracts-project serialization compatibility coverage for promotions diagnostics/policy JSON shape in `tests/Darwin.Contracts.Tests/Serialization/PromotionsContractSerializationCompatibilityTests.cs` (reflection-based, stable camelCase property assertions); pending CLI/CI execution evidence.
+- [x] Added loyalty business mutation contracts compatibility coverage in `tests/Darwin.Contracts.Tests/Serialization/LoyaltyBusinessMutationContractsCompatibilityTests.cs` for `RowVersion` base64 transport and stable core campaign/reward editor fields; pending CLI/CI execution evidence.
+- [x] Added campaign contract compatibility coverage in `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` for stable item core fields, `RowVersion` base64 transport, and schedule field (`startsAtUtc`/`endsAtUtc`) round-trip behavior; pending CLI/CI execution evidence.
+- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with update-like DTO coverage (`Id` + `RowVersion` round-trip/base64) and nullable schedule null-transport assertions (`startsAtUtc`/`endsAtUtc`); pending CLI/CI execution evidence.
+- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with optional content null-transport coverage (`subtitle/body/mediaUrl/landingUrl`) and campaign lifecycle state round-trip (`campaignState`) compatibility checks; pending CLI/CI execution evidence.
+- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with raw `targetingJson/payloadJson` round-trip checks, supported channel-value (`1`/`3`) transport checks, and explicit null `rowVersion` serialization coverage; pending CLI/CI execution evidence.
+- [x] Expanded `tests/Darwin.Contracts.Tests/Serialization/LoyaltyCampaignContractsCompatibilityTests.cs` with `BusinessId` GUID round-trip compatibility and raw schedule value-preservation checks (`StartsAtUtc`/`EndsAtUtc`), including intentionally inverted ranges to enforce non-mutating DTO transport; pending CLI/CI execution evidence.

@@ -168,7 +168,7 @@ public sealed class ContractSerializationCompatibilityTests
             BusinessId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
             BusinessLocationId = Guid.Parse("66666666-6666-6666-6666-666666666666"),
             CustomerDisplayName = "Member #104",
-            AllowedActions = LoyaltyScanAllowedActions.CanAccruePoints,
+            AllowedActions = default,
             AccountSummary = new BusinessLoyaltyAccountSummary
             {
                 LoyaltyAccountId = Guid.Parse("77777777-7777-7777-7777-777777777777"),
@@ -1009,7 +1009,7 @@ public sealed class ContractSerializationCompatibilityTests
                   "rewardTierId": "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd",
                   "pointsRequired": 120,
                   "rewardType": "FreeDrink",
-                  "rewardValue": "small",
+                  "rewardValue": 1.5,
                   "description": "One small coffee",
                   "allowSelfRedemption": true,
                   "rowVersion": "CQkJ"
@@ -1031,7 +1031,7 @@ public sealed class ContractSerializationCompatibilityTests
         dto.RewardTiers[0].RewardTierId.Should().Be(Guid.Parse("cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd"));
         dto.RewardTiers[0].PointsRequired.Should().Be(120);
         dto.RewardTiers[0].RewardType.Should().Be("FreeDrink");
-        dto.RewardTiers[0].RewardValue.Should().Be("small");
+        dto.RewardTiers[0].RewardValue.Should().Be(1.5m);
         dto.RewardTiers[0].AllowSelfRedemption.Should().BeTrue();
         dto.RewardTiers[0].RowVersion.Should().Equal(9, 9, 9);
     }

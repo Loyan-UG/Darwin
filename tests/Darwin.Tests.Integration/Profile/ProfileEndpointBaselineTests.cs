@@ -34,7 +34,7 @@ public sealed class ProfileEndpointBaselineTests : DeterministicIntegrationTestB
         using var client = CreateHttpsClient();
 
         // Act
-        using var response = await client.GetAsync("/api/v1/profile/me");
+        using var response = await client.GetAsync("/api/v1/profile/me", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -62,7 +62,7 @@ public sealed class ProfileEndpointBaselineTests : DeterministicIntegrationTestB
         };
 
         // Act
-        using var response = await client.PutAsJsonAsync("/api/v1/profile/me", request);
+        using var response = await client.PutAsJsonAsync("/api/v1/profile/me", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);

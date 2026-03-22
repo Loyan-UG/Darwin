@@ -37,16 +37,16 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
-        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId, TestContext.Current.CancellationToken);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         // Act
-        using var response = await client.GetAsync("/api/v1/profile/me");
+        using var response = await client.GetAsync("/api/v1/profile/me", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var profile = await response.Content.ReadFromJsonAsync<CustomerProfile>();
+        var profile = await response.Content.ReadFromJsonAsync<CustomerProfile>(cancellationToken: TestContext.Current.CancellationToken);
         profile.Should().NotBeNull();
         profile!.Id.Should().NotBe(Guid.Empty);
         profile.Email.Should().Be(credentials.Email);
@@ -64,8 +64,8 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
-        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId, TestContext.Current.CancellationToken);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         var currentProfile = await GetCurrentProfileAsync(client);
@@ -83,7 +83,7 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
         };
 
         // Act
-        using var updateResponse = await client.PutAsJsonAsync("/api/v1/profile/me", updateRequest);
+        using var updateResponse = await client.PutAsJsonAsync("/api/v1/profile/me", updateRequest, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         updateResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -110,8 +110,8 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password);
-        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "ProfileTester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId, TestContext.Current.CancellationToken);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         var initialProfile = await GetCurrentProfileAsync(client);
@@ -128,7 +128,7 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
             Timezone = initialProfile.Timezone,
             Currency = initialProfile.Currency,
             RowVersion = initialProfile.RowVersion
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         firstUpdateResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
@@ -144,11 +144,11 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
             Timezone = initialProfile.Timezone,
             Currency = initialProfile.Currency,
             RowVersion = initialProfile.RowVersion
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         staleUpdateResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var problem = await staleUpdateResponse.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await staleUpdateResponse.Content.ReadFromJsonAsync<ProblemDetails>(cancellationToken: TestContext.Current.CancellationToken);
         problem.Should().NotBeNull();
         problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
         problem.Detail.Should().NotBeNullOrWhiteSpace();

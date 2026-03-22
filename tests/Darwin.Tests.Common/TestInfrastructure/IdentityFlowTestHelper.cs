@@ -2,6 +2,7 @@ using Darwin.Contracts.Identity;
 using FluentAssertions;
 using System.Net;
 using System.Net.Http.Json;
+using System.Threading;
 
 namespace Darwin.Tests.Common.TestInfrastructure;
 
@@ -19,15 +20,25 @@ public static class IdentityFlowTestHelper
     /// <param name="lastName">Last name used for registration.</param>
     /// <param name="email">Unique email address used for registration.</param>
     /// <param name="password">Password satisfying registration policy.</param>
-    public static async Task RegisterExpectSuccessAsync(HttpClient client, string firstName, string lastName, string email, string password)
+    /// <param name="cancellationToken">Cancellation token used by test orchestration.</param>
+    public static async Task RegisterExpectSuccessAsync(
+        HttpClient client,
+        string firstName,
+        string lastName,
+        string email,
+        string password,
+        CancellationToken cancellationToken = default)
     {
-        using var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest
-        {
-            FirstName = firstName,
-            LastName = lastName,
-            Email = email,
-            Password = password
-        });
+        using var registerResponse = await client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new RegisterRequest
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                Password = password
+            },
+            cancellationToken);
 
         registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -39,19 +50,28 @@ public static class IdentityFlowTestHelper
     /// <param name="email">Email used for login.</param>
     /// <param name="password">Password used for login.</param>
     /// <param name="deviceId">Device id for refresh-token binding scenarios.</param>
+    /// <param name="cancellationToken">Cancellation token used by test orchestration.</param>
     /// <returns>Validated token response payload.</returns>
-    public static async Task<TokenResponse> LoginExpectSuccessAsync(HttpClient client, string email, string password, string? deviceId)
+    public static async Task<TokenResponse> LoginExpectSuccessAsync(
+        HttpClient client,
+        string email,
+        string password,
+        string? deviceId,
+        CancellationToken cancellationToken = default)
     {
-        using var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new PasswordLoginRequest
-        {
-            Email = email,
-            Password = password,
-            DeviceId = deviceId
-        });
+        using var loginResponse = await client.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new PasswordLoginRequest
+            {
+                Email = email,
+                Password = password,
+                DeviceId = deviceId
+            },
+            cancellationToken);
 
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var token = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>();
+        var token = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>(cancellationToken);
         token.Should().NotBeNull();
         token!.AccessToken.Should().NotBeNullOrWhiteSpace();
         token.RefreshToken.Should().NotBeNullOrWhiteSpace();

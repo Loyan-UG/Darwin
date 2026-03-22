@@ -37,7 +37,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
 
         // Act
         using var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new PasswordLoginRequest
@@ -45,11 +45,11 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
             Email = credentials.Email,
             Password = credentials.Password,
             DeviceId = credentials.DeviceId
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var token = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>();
+        var token = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>(cancellationToken: TestContext.Current.CancellationToken);
         token.Should().NotBeNull();
         token!.AccessToken.Should().NotBeNullOrWhiteSpace();
         token.RefreshToken.Should().NotBeNullOrWhiteSpace();
@@ -68,19 +68,19 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
-        var loginToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
+        var loginToken = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId, TestContext.Current.CancellationToken);
 
         // Act
         using var refreshResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshTokenRequest
         {
             RefreshToken = loginToken.RefreshToken,
             DeviceId = credentials.DeviceId
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         refreshResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var refreshToken = await refreshResponse.Content.ReadFromJsonAsync<TokenResponse>();
+        var refreshToken = await refreshResponse.Content.ReadFromJsonAsync<TokenResponse>(cancellationToken: TestContext.Current.CancellationToken);
         refreshToken.Should().NotBeNull();
         refreshToken!.AccessToken.Should().NotBeNullOrWhiteSpace();
         refreshToken.RefreshToken.Should().NotBeNullOrWhiteSpace();
@@ -97,8 +97,8 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
-        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId, TestContext.Current.CancellationToken);
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
         var newPassword = "N3wP@ssw0rd!Bb2";
@@ -108,7 +108,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         {
             CurrentPassword = credentials.Password,
             NewPassword = newPassword
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         changePasswordResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -119,10 +119,10 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
             Email = credentials.Email,
             Password = credentials.Password,
             DeviceId = credentials.DeviceId
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         oldPasswordLoginResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var oldPasswordProblem = await oldPasswordLoginResponse.Content.ReadFromJsonAsync<ProblemDetails>();
+        var oldPasswordProblem = await oldPasswordLoginResponse.Content.ReadFromJsonAsync<ProblemDetails>(cancellationToken: TestContext.Current.CancellationToken);
         oldPasswordProblem.Should().NotBeNull();
 
         // The new password must authenticate successfully.
@@ -131,7 +131,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
             Email = credentials.Email,
             Password = newPassword,
             DeviceId = credentials.DeviceId
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         newPasswordLoginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -145,8 +145,8 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
-        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
+        var token = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId, TestContext.Current.CancellationToken);
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
@@ -154,7 +154,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         using var logoutResponse = await client.PostAsJsonAsync("/api/v1/auth/logout", new LogoutRequest
         {
             RefreshToken = token.RefreshToken
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         logoutResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -164,7 +164,7 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         {
             RefreshToken = token.RefreshToken,
             DeviceId = credentials.DeviceId
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         refreshAfterLogoutResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -178,15 +178,15 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         // Arrange
         using var client = CreateHttpsClient();
         var credentials = CreateUniqueCredentials();
-        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password);
+        await IdentityFlowTestHelper.RegisterExpectSuccessAsync(client, "Integration", "Tester", credentials.Email, credentials.Password, TestContext.Current.CancellationToken);
 
-        var firstSession = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId);
-        var secondSession = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, $"{credentials.DeviceId}-second");
+        var firstSession = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, credentials.DeviceId, TestContext.Current.CancellationToken);
+        var secondSession = await IdentityFlowTestHelper.LoginExpectSuccessAsync(client, credentials.Email, credentials.Password, $"{credentials.DeviceId}-second", TestContext.Current.CancellationToken);
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", secondSession.AccessToken);
 
         // Act
-        using var logoutAllResponse = await client.PostAsync("/api/v1/auth/logout-all", content: null);
+        using var logoutAllResponse = await client.PostAsync("/api/v1/auth/logout-all", content: null, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         logoutAllResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -196,13 +196,13 @@ public sealed class AuthIdentityEndpointAuthorizedMatrixTests : DeterministicInt
         {
             RefreshToken = firstSession.RefreshToken,
             DeviceId = credentials.DeviceId
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         using var secondRefreshResponse = await client.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshTokenRequest
         {
             RefreshToken = secondSession.RefreshToken,
             DeviceId = $"{credentials.DeviceId}-second"
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         firstRefreshResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         secondRefreshResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);

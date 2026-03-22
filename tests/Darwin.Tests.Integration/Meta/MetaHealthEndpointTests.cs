@@ -33,12 +33,12 @@ public sealed class MetaHealthEndpointTests : DeterministicIntegrationTestBase, 
         using var client = CreateHttpsClient();
 
         // Act
-        using var response = await client.GetAsync("/api/v1/meta/health");
+        using var response = await client.GetAsync("/api/v1/meta/health", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
-        var payload = await response.Content.ReadFromJsonAsync<HealthResponse>();
+        var payload = await response.Content.ReadFromJsonAsync<HealthResponse>(cancellationToken: TestContext.Current.CancellationToken);
         payload.Should().NotBeNull();
         payload!.Status.Should().Be("Healthy");
     }

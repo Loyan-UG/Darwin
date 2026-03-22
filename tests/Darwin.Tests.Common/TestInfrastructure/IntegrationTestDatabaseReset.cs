@@ -29,38 +29,33 @@ public static class IntegrationTestDatabaseReset
     /// <exception cref="InvalidOperationException">
     ///     Thrown when reset guardrails detect a potentially non-test database target.
     /// </exception>
-    public static async Task ResetAndSeedAsync(WebApplicationFactory<Program> factory, CancellationToken ct = default)
+    public static async Task ResetAndSeedAsync(WebApplicationFactory<Program> factory, CancellationToken ct)
     {
-        if (factory is null)
+        EnsureIntegrationConnectionStringIsProvided();
+        using var scope = factory.Services.CreateScope();
+        var services = scope.ServiceProvider;
+
+        var hostEnv = services.GetRequiredService<IHostEnvironment>();
+        if (!string.Equals(hostEnv.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentNullException(nameof(factory));
+            throw new InvalidOperationException(
+                $"Refusing database reset outside Testing environment. Current environment: '{hostEnv.EnvironmentName}'.");
+        }
+
+        var db = services.GetRequiredService<DarwinDbContext>();
+        var connectionString = db.Database.GetConnectionString() ?? string.Empty;
+
+        // Guardrail: only allow destructive reset on clearly test-scoped databases.
+        // This protects local/dev/prod data from accidental truncation.
+        if (!IsSafeTestConnectionString(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Refusing database reset because connection string does not look test-scoped.");
         }
 
         await ResetGate.WaitAsync(ct).ConfigureAwait(false);
-
         try
         {
-            using var scope = factory.Services.CreateScope();
-            var services = scope.ServiceProvider;
-
-            var hostEnv = services.GetRequiredService<IHostEnvironment>();
-            if (!string.Equals(hostEnv.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(
-                    $"Refusing database reset outside Testing environment. Current environment: '{hostEnv.EnvironmentName}'.");
-            }
-
-            var db = services.GetRequiredService<DarwinDbContext>();
-            var connectionString = db.Database.GetConnectionString() ?? string.Empty;
-
-            // Guardrail: only allow destructive reset on clearly test-scoped databases.
-            // This protects local/dev/prod data from accidental truncation.
-            if (!IsSafeTestConnectionString(connectionString))
-            {
-                throw new InvalidOperationException(
-                    "Refusing database reset because connection string does not look test-scoped.");
-            }
-
             await db.Database.EnsureDeletedAsync(ct).ConfigureAwait(false);
             await db.Database.MigrateAsync(ct).ConfigureAwait(false);
 
@@ -90,5 +85,23 @@ public static class IntegrationTestDatabaseReset
             || connectionString.Contains("(localdb)", StringComparison.OrdinalIgnoreCase)
             || connectionString.Contains("localhost", StringComparison.OrdinalIgnoreCase)
             || connectionString.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Ensures integration tests always run with an explicit SQL connection string.
+    /// This avoids implicit Windows-auth fallbacks that can trigger SSPI failures.
+    /// </summary>
+    private static void EnsureIntegrationConnectionStringIsProvided()
+    {
+        const string key = "ConnectionStrings__DefaultConnection";
+        var value = Environment.GetEnvironmentVariable(key);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException(
+                "Integration DB connection string is missing. " +
+                "Set environment variable 'ConnectionStrings__DefaultConnection' " +
+                "or provide it via appsettings.Testing.local.json.");
+        }
     }
 }

@@ -94,8 +94,8 @@ public sealed class DesignTimeDbContextFactoryTests
 
             // Assert
             connectionString.Should().NotBeNullOrWhiteSpace();
-            connectionString!.Should().Contain("(localdb)\\MSSQLLocalDB", StringComparison.OrdinalIgnoreCase);
-            connectionString.Should().Contain("Database=Darwin", StringComparison.OrdinalIgnoreCase);
+            connectionString!.Should().ContainEquivalentOf("(localdb)\\MSSQLLocalDB");
+            connectionString.Should().ContainEquivalentOf("Database=Darwin");
         }
         finally
         {

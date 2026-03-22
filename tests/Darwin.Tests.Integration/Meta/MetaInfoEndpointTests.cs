@@ -33,12 +33,12 @@ public sealed class MetaInfoEndpointTests : DeterministicIntegrationTestBase, IC
         using var client = CreateHttpsClient();
 
         // Act
-        using var response = await client.GetAsync("/api/v1/meta/info");
+        using var response = await client.GetAsync("/api/v1/meta/info", TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
-        var payload = await response.Content.ReadFromJsonAsync<MetaInfoResponse>();
+        var payload = await response.Content.ReadFromJsonAsync<MetaInfoResponse>(cancellationToken: TestContext.Current.CancellationToken);
         payload.Should().NotBeNull();
         payload!.Application.Should().NotBeNullOrWhiteSpace();
         payload.Environment.Should().NotBeNullOrWhiteSpace();

@@ -40,7 +40,7 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/auth/password/request-reset", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/password/request-reset", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -62,7 +62,7 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/auth/password/change", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/password/change", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -84,12 +84,12 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/auth/login", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/login", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(cancellationToken: TestContext.Current.CancellationToken);
         problem.Should().NotBeNull();
         problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
         problem.Title.Should().NotBeNullOrWhiteSpace();
@@ -111,12 +111,12 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/refresh", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(cancellationToken: TestContext.Current.CancellationToken);
         problem.Should().NotBeNull();
         problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
         problem.Title.Should().NotBeNullOrWhiteSpace();
@@ -139,12 +139,12 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/auth/password/reset", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/password/reset", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(cancellationToken: TestContext.Current.CancellationToken);
         problem.Should().NotBeNull();
         problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
         problem.Title.Should().NotBeNullOrWhiteSpace();
@@ -165,7 +165,7 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         };
 
         // Act
-        using var response = await client.PostAsJsonAsync("/api/v1/auth/logout", request);
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/logout", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -182,7 +182,7 @@ public sealed class AuthIdentityEndpointBaselineTests : DeterministicIntegration
         using var client = CreateHttpsClient();
 
         // Act
-        using var response = await client.PostAsync("/api/v1/auth/logout-all", content: null);
+        using var response = await client.PostAsync("/api/v1/auth/logout-all", content: null, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);

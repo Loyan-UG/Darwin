@@ -33,7 +33,7 @@ public abstract class DeterministicIntegrationTestBase : IAsyncLifetime
     ///     Recreates and seeds the database before each test class to guarantee
     ///     deterministic state regardless of execution order across suites.
     /// </summary>
-    public ValueTask InitializeAsync() => new(IntegrationTestDatabaseReset.ResetAndSeedAsync(Factory));
+    public ValueTask InitializeAsync() => new(IntegrationTestDatabaseReset.ResetAndSeedAsync(Factory, default));
 
     /// <summary>
     ///     No asynchronous class-level cleanup is required by the shared fixture.
