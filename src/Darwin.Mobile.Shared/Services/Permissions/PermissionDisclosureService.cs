@@ -76,7 +76,8 @@ public sealed class PermissionDisclosureService : IPermissionDisclosureService
                 if (!openResult.Succeeded)
                 {
                     await MainThread.InvokeOnMainThreadAsync(async () =>
-                        await page.DisplayAlertAsync(request.Title, openResult.Error ?? "The referenced legal page could not be opened.", request.CancelButtonText).ConfigureAwait(false);
+                        await page.DisplayAlertAsync(request.Title, openResult.Error ?? "The referenced legal page could not be opened.", 
+                        request.CancelButtonText).ConfigureAwait(false));
                 }
 
                 continue;
