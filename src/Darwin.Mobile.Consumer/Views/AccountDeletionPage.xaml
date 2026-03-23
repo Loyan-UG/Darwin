@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    x:Class="Darwin.Mobile.Consumer.Views.AccountDeletionPage"
+    x:DataType="vm:AccountDeletionViewModel"
+    Title="{x:Static res:AppResources.AccountDeletionTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.AccountDeletionTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{x:Static res:AppResources.AccountDeletionWarningTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="DarkRed" />
+
+                    <Label Text="{x:Static res:AppResources.AccountDeletionWarningBody}"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{x:Static res:AppResources.AccountDeletionExternalHint}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           Opacity="0.8" />
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="Red"
+                           IsVisible="{Binding HasError}" />
+
+                    <Button Text="{x:Static res:AppResources.AccountDeletionContinueButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding ContinueCommand}" />
+
+                    <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                       IsRunning="{Binding IsBusy}"
+                                       Color="{StaticResource BrandGold500}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

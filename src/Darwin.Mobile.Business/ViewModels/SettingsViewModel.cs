@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Constants;
 using Darwin.Mobile.Shared.Commands;
@@ -9,12 +9,6 @@ namespace Darwin.Mobile.Business.ViewModels;
 
 /// <summary>
 /// Business settings hub view model.
-/// 
-/// This class keeps navigation intent explicit and future-proof:
-/// - Profile action goes to a dedicated profile edit page.
-/// - Password action goes to a dedicated password change page.
-/// - Staff badge action opens a rotating QR code for internal access workflows.
-/// - Subscription action opens billing management entry page for plan/payment operations.
 /// </summary>
 public sealed class SettingsViewModel : BaseViewModel
 {
@@ -28,6 +22,8 @@ public sealed class SettingsViewModel : BaseViewModel
         OpenChangePasswordCommand = new AsyncCommand(OpenChangePasswordAsync, () => !IsBusy);
         OpenStaffAccessBadgeCommand = new AsyncCommand(OpenStaffAccessBadgeAsync, () => !IsBusy);
         OpenSubscriptionCommand = new AsyncCommand(OpenSubscriptionAsync, () => !IsBusy);
+        OpenLegalHubCommand = new AsyncCommand(OpenLegalHubAsync, () => !IsBusy);
+        OpenAccountDeletionCommand = new AsyncCommand(OpenAccountDeletionAsync, () => !IsBusy);
     }
 
     public AsyncCommand OpenProfileCommand { get; }
@@ -38,7 +34,23 @@ public sealed class SettingsViewModel : BaseViewModel
 
     public AsyncCommand OpenSubscriptionCommand { get; }
 
-    private async Task OpenProfileAsync()
+    public AsyncCommand OpenLegalHubCommand { get; }
+
+    public AsyncCommand OpenAccountDeletionCommand { get; }
+
+    private async Task OpenProfileAsync() => await NavigateAsync(Routes.SettingsProfile).ConfigureAwait(false);
+
+    private async Task OpenChangePasswordAsync() => await NavigateAsync(Routes.SettingsChangePassword).ConfigureAwait(false);
+
+    private async Task OpenStaffAccessBadgeAsync() => await NavigateAsync(Routes.SettingsStaffAccessBadge).ConfigureAwait(false);
+
+    private async Task OpenSubscriptionAsync() => await NavigateAsync(Routes.SettingsSubscription).ConfigureAwait(false);
+
+    private async Task OpenLegalHubAsync() => await NavigateAsync(Routes.SettingsLegalHub).ConfigureAwait(false);
+
+    private async Task OpenAccountDeletionAsync() => await NavigateAsync(Routes.SettingsAccountDeletion).ConfigureAwait(false);
+
+    private async Task NavigateAsync(string route)
     {
         if (IsBusy)
         {
@@ -48,65 +60,17 @@ public sealed class SettingsViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            await _navigationService.GoToAsync(Routes.SettingsProfile);
+            await _navigationService.GoToAsync(route);
         }
         finally
         {
             IsBusy = false;
-        }
-    }
-
-    private async Task OpenChangePasswordAsync()
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            await _navigationService.GoToAsync(Routes.SettingsChangePassword);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private async Task OpenStaffAccessBadgeAsync()
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            await _navigationService.GoToAsync(Routes.SettingsStaffAccessBadge);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private async Task OpenSubscriptionAsync()
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        IsBusy = true;
-        try
-        {
-            await _navigationService.GoToAsync(Routes.SettingsSubscription);
-        }
-        finally
-        {
-            IsBusy = false;
+            OpenProfileCommand.RaiseCanExecuteChanged();
+            OpenChangePasswordCommand.RaiseCanExecuteChanged();
+            OpenStaffAccessBadgeCommand.RaiseCanExecuteChanged();
+            OpenSubscriptionCommand.RaiseCanExecuteChanged();
+            OpenLegalHubCommand.RaiseCanExecuteChanged();
+            OpenAccountDeletionCommand.RaiseCanExecuteChanged();
         }
     }
 }

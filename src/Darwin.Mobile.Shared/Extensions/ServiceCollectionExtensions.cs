@@ -3,15 +3,21 @@
 
 using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Common;
+using Darwin.Mobile.Shared.Configuration;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Resilience;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Legal;
 using Darwin.Mobile.Shared.Services.Loyalty;
-using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.Services.Notifications;
+using Darwin.Mobile.Shared.Services.Permissions;
+using Darwin.Mobile.Shared.Services.Privacy;
+using Darwin.Mobile.Shared.Services.Profile;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 
 namespace Darwin.Mobile.Shared.Extensions
@@ -36,13 +42,18 @@ namespace Darwin.Mobile.Shared.Extensions
         /// </summary>
         /// <param name="services">The service collection to populate.</param>
         /// <param name="options">API bootstrap options (base URL, audience, refresh cadence).</param>
+        /// <param name="legalLinksOptions">Legal/compliance URLs used by both mobile apps.</param>
         /// <returns>The same service collection for chaining.</returns>
-        public static IServiceCollection AddDarwinMobileShared(this IServiceCollection services, ApiOptions options)
+        public static IServiceCollection AddDarwinMobileShared(this IServiceCollection services, ApiOptions options, LegalLinksOptions legalLinksOptions)
         {
             if (services is null) throw new ArgumentNullException(nameof(services));
             if (options is null) throw new ArgumentNullException(nameof(options));
+            if (legalLinksOptions is null) throw new ArgumentNullException(nameof(legalLinksOptions));
 
             services.AddSingleton(options);
+            services.AddSingleton(legalLinksOptions);
+
+            ValidateLegalLinksConfiguration(legalLinksOptions);
 
             // Retry policy: small attempt count + exponential backoff with jitter to limit battery/network impact.
             services.AddSingleton<IRetryPolicy>(_ => new ExponentialBackoffRetryPolicy(maxAttempts: 3));
@@ -122,10 +133,35 @@ namespace Darwin.Mobile.Shared.Extensions
             services.AddSingleton<IBusinessService, BusinessService>();
             services.AddSingleton<IProfileService, ProfileService>();
             services.AddSingleton<IPushRegistrationService, PushRegistrationService>();
+            services.AddSingleton<ILegalLinkService, LegalLinkService>();
+            services.AddSingleton<IPermissionDisclosureService, PermissionDisclosureService>();
+            services.AddSingleton<IOptionalPrivacyPreferencesStore, OptionalPrivacyPreferencesStore>();
 
             // NOTE: QrTokenRefresher is opt-in; pages/viewmodels can new it up or register as needed.
 
             return services;
+        }
+
+        private static void ValidateLegalLinksConfiguration(LegalLinksOptions options)
+        {
+            var errors = LegalLinkService.ValidateConfiguration(options);
+            if (errors.Count == 0)
+            {
+                return;
+            }
+
+#if DEBUG
+            foreach (var error in errors)
+            {
+                Debug.WriteLine($"Legal link configuration warning: {error}");
+            }
+#endif
+
+            if (options.FailFastOnMissingRequiredLinks)
+            {
+                throw new InvalidOperationException(
+                    $"Legal link configuration is invalid: {string.Join(" | ", errors.Where(static error => !string.IsNullOrWhiteSpace(error)))}");
+            }
         }
     }
 }

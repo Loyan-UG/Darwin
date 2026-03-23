@@ -28,6 +28,8 @@ public partial class AppShell : Shell
         Routing.RegisterRoute($"{Routes.BusinessDetail}/{{businessId}}", typeof(BusinessDetailPage));
         Routing.RegisterRoute(Routes.ProfileEdit, typeof(ProfilePage));
         Routing.RegisterRoute(Routes.ChangePassword, typeof(ChangePasswordPage));
+        Routing.RegisterRoute(Routes.LegalHub, typeof(LegalHubPage));
+        Routing.RegisterRoute(Routes.AccountDeletion, typeof(AccountDeletionPage));
     }
 
     private async void OnLogoutClicked(object sender, EventArgs e)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,28 +8,30 @@ using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Legal;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Business.ViewModels;
 
 /// <summary>
 /// Handles Business app login flow.
-/// 
+/// </summary>
+/// <remarks>
 /// Important behavior:
 /// - This ViewModel is Business-app specific and must not affect Consumer/Web flows.
 /// - It translates technical auth/network exceptions into user-friendly messages.
-/// - It can emit compact diagnostics in test builds when EnableVerboseNetworkDiagnostics is true.
-/// </summary>
+/// - It exposes legal entry points before login so the app remains compliant even for unauthenticated users.
+/// </remarks>
 public sealed partial class LoginViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
     private readonly INavigationService _navigationService;
     private readonly ApiOptions _apiOptions;
+    private readonly ILegalLinkService _legalLinkService;
 
     private string? _email;
     private string? _password;
 
-    // I keep this message centralized to make future localization/resource migration easy.
     private const string NoBusinessMembershipUserMessage =
         "Your username and password are correct, but your account is not assigned to any business yet. Please contact support.";
 
@@ -48,16 +50,14 @@ public sealed partial class LoginViewModel : BaseViewModel
     public LoginViewModel(
         IAuthService authService,
         INavigationService navigationService,
-        ApiOptions apiOptions)
+        ApiOptions apiOptions,
+        ILegalLinkService legalLinkService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _apiOptions = apiOptions ?? throw new ArgumentNullException(nameof(apiOptions));
+        _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
 
-        // Manual QA acceleration policy:
-        // Keep seeded credentials prefilled in DEBUG builds for faster regression cycles.
-        // IMPORTANT: this behavior is intentionally retained and must not be changed here.
-        // Final removal will be handled manually when release hardening is explicitly requested.
 #if DEBUG
         Email = "biz1@darwin.de";
         Password = "Business123!";
@@ -67,39 +67,38 @@ public sealed partial class LoginViewModel : BaseViewModel
 #endif
 
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
+        OpenImpressumCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.Impressum), () => !IsBusy);
+        OpenPrivacyPolicyCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy), () => !IsBusy);
+        OpenTermsCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.BusinessTerms), () => !IsBusy);
+        OpenLegalHubCommand = new AsyncCommand(OpenLegalHubAsync, () => !IsBusy);
     }
 
-    /// <summary>
-    /// Gets or sets the user email.
-    /// </summary>
     public string? Email
     {
         get => _email;
         set => SetProperty(ref _email, value);
     }
 
-    /// <summary>
-    /// Gets or sets the user password.
-    /// </summary>
     public string? Password
     {
         get => _password;
         set => SetProperty(ref _password, value);
     }
 
-    /// <summary>
-    /// Login command.
-    /// </summary>
     public AsyncCommand LoginCommand { get; }
+
+    public AsyncCommand OpenImpressumCommand { get; }
+
+    public AsyncCommand OpenPrivacyPolicyCommand { get; }
+
+    public AsyncCommand OpenTermsCommand { get; }
+
+    public AsyncCommand OpenLegalHubCommand { get; }
 
     private bool CanLogin() => !IsBusy;
 
-    /// <summary>
-    /// Executes login.
-    /// </summary>
     private async Task LoginAsync()
     {
-        // I always clear previous errors before a new submit.
         ErrorMessage = null;
 
         if (string.IsNullOrWhiteSpace(Email))
@@ -117,21 +116,17 @@ public sealed partial class LoginViewModel : BaseViewModel
         }
 
         IsBusy = true;
-        LoginCommand.RaiseCanExecuteChanged();
+        RaiseCommandStates();
 
         try
         {
             await _authService.LoginAsync(Email.Trim(), Password, deviceId: null, CancellationToken.None);
-
             await _navigationService.GoToAsync($"//{Routes.Home}");
-
-            // I clear credentials after success for privacy and to avoid stale inputs.
             Email = string.Empty;
             Password = string.Empty;
         }
         catch (Exception ex)
         {
-            // Convert technical/internal errors to a user-facing message appropriate for the Business app.
             var resolvedMessage = ResolveBusinessLoginErrorMessage(ex, _apiOptions);
 
             RunOnMain(() =>
@@ -145,14 +140,53 @@ public sealed partial class LoginViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
-                LoginCommand.RaiseCanExecuteChanged();
+                RaiseCommandStates();
             });
         }
     }
 
-    /// <summary>
-    /// Maps exceptions to Business-app-specific user messages.
-    /// </summary>
+    private async Task OpenLegalHubAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        RaiseCommandStates();
+
+        try
+        {
+            await _navigationService.GoToAsync(Routes.SettingsLegalHub);
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
+        }
+    }
+
+    private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
+    {
+        var result = await _legalLinkService.OpenAsync(linkKind, CancellationToken.None).ConfigureAwait(false);
+        if (!result.Succeeded)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
+        }
+    }
+
+    private void RaiseCommandStates()
+    {
+        LoginCommand.RaiseCanExecuteChanged();
+        OpenImpressumCommand.RaiseCanExecuteChanged();
+        OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
+        OpenTermsCommand.RaiseCanExecuteChanged();
+        OpenLegalHubCommand.RaiseCanExecuteChanged();
+    }
+
     private static string ResolveBusinessLoginErrorMessage(Exception ex, ApiOptions apiOptions)
     {
         var raw = ex.Message ?? string.Empty;
@@ -177,9 +211,6 @@ public sealed partial class LoginViewModel : BaseViewModel
         return AppResources.InvalidCredentials;
     }
 
-    /// <summary>
-    /// Detects typical transport/network failures from exception message or type.
-    /// </summary>
     private static bool LooksLikeConnectivityError(string raw, Exception ex)
     {
         if (raw.Contains("Network error", StringComparison.OrdinalIgnoreCase) ||
@@ -193,7 +224,6 @@ public sealed partial class LoginViewModel : BaseViewModel
             return true;
         }
 
-        // Defensive fallback based on exception types often used by HttpClient stack.
         var typeName = ex.GetType().FullName ?? string.Empty;
         return typeName.Contains("HttpRequestException", StringComparison.OrdinalIgnoreCase) ||
                typeName.Contains("SocketException", StringComparison.OrdinalIgnoreCase) ||
@@ -201,9 +231,6 @@ public sealed partial class LoginViewModel : BaseViewModel
                typeName.Contains("TaskCanceledException", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>
-    /// Builds a compact diagnostic hint for test builds.
-    /// </summary>
     private static string BuildNetworkDiagnosticHint(Exception ex, string baseUrl, string rawMessage)
     {
         var sb = new StringBuilder();

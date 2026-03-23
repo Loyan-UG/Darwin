@@ -10,7 +10,7 @@
 
     <ScrollView x:Name="RootScrollView">
         <VerticalStackLayout Padding="24" Spacing="20">
-            <Image Source="Loyan_Logo.PNG"
+            <Image Source="loyan_logo.png"
                    WidthRequest="120" HeightRequest="120"
                    HorizontalOptions="Center" />
 
@@ -49,6 +49,36 @@
                         BackgroundColor="Transparent"
                         TextColor="{StaticResource BrandGold500}" />
             </HorizontalStackLayout>
+
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{x:Static res:AppResources.AuthLegalSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.AuthLegalSectionSubtitle}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           Opacity="0.85" />
+
+                    <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding OpenImpressumCommand}" />
+
+                    <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding OpenPrivacyPolicyCommand}" />
+
+                    <Button Text="{x:Static res:AppResources.LegalTermsButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding OpenTermsCommand}" />
+
+                    <Button Text="{x:Static res:AppResources.LegalHubTitle}"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource BrandGold500}"
+                            Clicked="OnLegalHubClicked" />
+                </VerticalStackLayout>
+            </Border>
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"

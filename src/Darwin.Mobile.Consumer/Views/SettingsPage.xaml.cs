@@ -8,12 +8,6 @@ namespace Darwin.Mobile.Consumer.Views;
 
 /// <summary>
 /// Settings hub page.
-///
-/// Why this page is intentionally code-behind driven:
-/// - Shell creates tab-root pages during fragment lifecycle on Android.
-/// - Keeping constructor parameterless and avoiding early DI usage reduces null-race risk
-///   in ShellSectionRenderer.OnCreateView.
-/// - Navigation actions are dispatched on main thread explicitly for safety.
 /// </summary>
 public partial class SettingsPage : ContentPage
 {
@@ -32,10 +26,16 @@ public partial class SettingsPage : ContentPage
         await NavigateSafelyAsync(Routes.ChangePassword);
     }
 
-    /// <summary>
-    /// Navigates through Shell on the UI thread with defensive guards.
-    /// This avoids race conditions between Android fragment creation and Shell tree mutations.
-    /// </summary>
+    private async void OnLegalHubClicked(object sender, EventArgs e)
+    {
+        await NavigateSafelyAsync(Routes.LegalHub);
+    }
+
+    private async void OnAccountDeletionClicked(object sender, EventArgs e)
+    {
+        await NavigateSafelyAsync(Routes.AccountDeletion);
+    }
+
     private static Task NavigateSafelyAsync(string route)
     {
         if (string.IsNullOrWhiteSpace(route))
@@ -56,7 +56,6 @@ public partial class SettingsPage : ContentPage
             }
             catch (Exception ex)
             {
-                // Non-fatal guard: we log and keep app alive instead of letting fragment lifecycle crash.
                 System.Diagnostics.Debug.WriteLine($"Settings navigation to '{route}' failed: {ex}");
             }
         });
