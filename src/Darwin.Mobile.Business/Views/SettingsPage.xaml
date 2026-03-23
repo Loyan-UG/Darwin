@@ -28,6 +28,12 @@
 
             <Button Text="{x:Static res:AppResources.SettingsSubscriptionButton}"
                     Command="{Binding OpenSubscriptionCommand}" />
+
+            <Button Text="{x:Static res:AppResources.SettingsLegalHubButton}"
+                    Command="{Binding OpenLegalHubCommand}" />
+
+            <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                    Command="{Binding OpenAccountDeletionCommand}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

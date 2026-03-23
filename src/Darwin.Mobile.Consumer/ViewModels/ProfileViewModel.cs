@@ -5,6 +5,7 @@ using Darwin.Contracts.Profile;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Commands;
+using Darwin.Mobile.Shared.Services.Privacy;
 using Darwin.Mobile.Shared.Services.Profile;
 using Darwin.Mobile.Shared.ViewModels;
 using Microsoft.Maui.ApplicationModel;
@@ -24,6 +25,8 @@ public sealed class ProfileViewModel : BaseViewModel
     private readonly IProfileService _profileService;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private readonly IConsumerPushTokenProvider _pushTokenProvider;
+    private readonly IConsumerNotificationPermissionService _notificationPermissionService;
+    private readonly IOptionalPrivacyPreferencesStore _optionalPrivacyPreferencesStore;
 
     private Guid _profileId;
     private byte[]? _rowVersion;
@@ -43,15 +46,23 @@ public sealed class ProfileViewModel : BaseViewModel
     private bool _isPushSyncBusy;
     private string _pushPermissionStateText = AppResources.ProfilePushPermissionUnknown;
     private string _pushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
+    private bool _allowPromotionalPushNotifications;
+    private bool _allowOptionalAnalyticsTracking;
 
     public ProfileViewModel(
         IProfileService profileService,
         IConsumerPushRegistrationCoordinator pushRegistrationCoordinator,
-        IConsumerPushTokenProvider pushTokenProvider)
+        IConsumerPushTokenProvider pushTokenProvider,
+        IConsumerNotificationPermissionService notificationPermissionService,
+        IOptionalPrivacyPreferencesStore optionalPrivacyPreferencesStore)
     {
         _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
         _pushTokenProvider = pushTokenProvider ?? throw new ArgumentNullException(nameof(pushTokenProvider));
+        _notificationPermissionService = notificationPermissionService ?? throw new ArgumentNullException(nameof(notificationPermissionService));
+        _optionalPrivacyPreferencesStore = optionalPrivacyPreferencesStore ?? throw new ArgumentNullException(nameof(optionalPrivacyPreferencesStore));
+
+        ApplyOptionalPrivacyPreferences(_optionalPrivacyPreferencesStore.GetCurrent());
 
         RefreshCommand = new AsyncCommand(RefreshAsync, () => !IsBusy);
         SaveProfileCommand = new AsyncCommand(SaveProfileAsync, () => !IsBusy);
@@ -152,6 +163,31 @@ public sealed class ProfileViewModel : BaseViewModel
         private set => SetProperty(ref _pushTokenAvailabilityText, value);
     }
 
+
+    public bool AllowPromotionalPushNotifications
+    {
+        get => _allowPromotionalPushNotifications;
+        set
+        {
+            if (SetProperty(ref _allowPromotionalPushNotifications, value))
+            {
+                SaveOptionalPrivacyPreferences();
+            }
+        }
+    }
+
+    public bool AllowOptionalAnalyticsTracking
+    {
+        get => _allowOptionalAnalyticsTracking;
+        set
+        {
+            if (SetProperty(ref _allowOptionalAnalyticsTracking, value))
+            {
+                SaveOptionalPrivacyPreferences();
+            }
+        }
+    }
+
     public bool IsPushSyncBusy
     {
         get => _isPushSyncBusy;
@@ -175,6 +211,7 @@ public sealed class ProfileViewModel : BaseViewModel
             return;
         }
 
+        ApplyOptionalPrivacyPreferences(_optionalPrivacyPreferencesStore.GetCurrent());
         await RefreshAsync();
         await RefreshPushRuntimeStateAsync();
         _isLoaded = true;
@@ -319,14 +356,36 @@ public sealed class ProfileViewModel : BaseViewModel
 
         try
         {
-            var result = await _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None)
+            var permissionResult = await _notificationPermissionService
+                .EnsurePermissionAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (!permissionResult.Succeeded)
+            {
+                RunOnMain(() =>
+                {
+                    PushRegistrationStatus = AppResources.ProfilePushRegistrationStatusFailed;
+                    ErrorMessage = AppResources.ProfilePushPermissionRequestFailed;
+                });
+
+                return;
+            }
+
+            if (!permissionResult.Value)
+            {
+                RunOnMain(() => PushRegistrationStatus = AppResources.ProfilePushPermissionNotGranted);
+                return;
+            }
+
+            var result = await _pushRegistrationCoordinator
+                .TryRegisterCurrentDeviceAsync(CancellationToken.None)
                 .ConfigureAwait(false);
 
             RunOnMain(() =>
             {
                 PushRegistrationStatus = result.Succeeded
                     ? AppResources.ProfilePushRegistrationStatusSuccess
-                    : (result.Error ?? AppResources.ProfilePushRegistrationStatusFailed);
+                    : AppResources.ProfilePushRegistrationStatusFailed;
 
                 LastPushSyncAtText = string.Format(
                     AppResources.ProfilePushRegistrationLastSyncFormat,
@@ -348,6 +407,22 @@ public sealed class ProfileViewModel : BaseViewModel
             await RefreshPushRuntimeStateAsync();
             RunOnMain(() => IsPushSyncBusy = false);
         }
+    }
+
+
+    private void ApplyOptionalPrivacyPreferences(OptionalPrivacyPreferences preferences)
+    {
+        AllowPromotionalPushNotifications = preferences.AllowPromotionalPushNotifications;
+        AllowOptionalAnalyticsTracking = preferences.AllowOptionalAnalyticsTracking;
+    }
+
+    private void SaveOptionalPrivacyPreferences()
+    {
+        _optionalPrivacyPreferencesStore.Save(new OptionalPrivacyPreferences
+        {
+            AllowPromotionalPushNotifications = AllowPromotionalPushNotifications,
+            AllowOptionalAnalyticsTracking = AllowOptionalAnalyticsTracking
+        });
     }
 
     private async Task RefreshPushRuntimeStateAsync()

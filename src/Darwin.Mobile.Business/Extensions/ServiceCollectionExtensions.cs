@@ -1,6 +1,7 @@
 ﻿using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Common;
+using Darwin.Mobile.Shared.Configuration;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.Configuration;
@@ -18,13 +19,14 @@ public static class ServiceCollectionExtensions
     {
         var config = new ConfigurationBuilder()
             .AddJsonFileFromMauiAsset("appsettings.mobile.json", optional: false)
-#if DEBUG
-            .AddJsonFileFromMauiAsset("appsettings.mobile.Development.json", optional: true)
-#endif
+            .AddJsonFileFromMauiAsset($"appsettings.mobile.{ResolveEnvironmentName()}.json", optional: true)
             .Build();
 
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
             ?? throw new InvalidOperationException("Missing 'Api' section in appsettings.mobile.json");
+
+        var legalLinksOptions = config.GetSection("LegalLinks").Get<LegalLinksOptions>()
+            ?? throw new InvalidOperationException("Missing 'LegalLinks' section in appsettings.mobile.json");
 
 
         if (string.IsNullOrWhiteSpace(apiOptions.BaseUrl))
@@ -38,7 +40,7 @@ public static class ServiceCollectionExtensions
         // Ensure app role is explicitly set for client-side validation (defensive).
         apiOptions.AppRole = MobileAppRole.Business;
 
-        services.AddDarwinMobileShared(apiOptions);
+        services.AddDarwinMobileShared(apiOptions, legalLinksOptions);
 
         services.AddSingleton<IScanner, Services.Platform.ScannerPlatformService>();
         services.AddSingleton<ILocation, Services.Platform.LocationPlatformService>();
@@ -83,8 +85,32 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<ViewModels.SubscriptionViewModel>();
         services.AddTransient<Views.SubscriptionPage>();
+        services.AddTransient<ViewModels.LegalHubViewModel>();
+        services.AddTransient<Views.LegalHubPage>();
+        services.AddTransient<ViewModels.AccountDeletionViewModel>();
+        services.AddTransient<Views.AccountDeletionPage>();
 
         return services;
+    }
+
+    private static string ResolveEnvironmentName()
+    {
+        var configured = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        if (string.IsNullOrWhiteSpace(configured))
+        {
+            configured = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        }
+
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            return configured.Trim();
+        }
+
+#if DEBUG
+        return "Development";
+#else
+        return "Production";
+#endif
     }
 
     private static IConfigurationBuilder AddJsonFileFromMauiAsset(

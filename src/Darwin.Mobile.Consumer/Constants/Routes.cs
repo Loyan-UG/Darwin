@@ -50,6 +50,17 @@ public static class Routes
     /// </summary>
     public const string ChangePassword = "change-password";
 
+
+    /// <summary>
+    /// Dedicated legal hub route.
+    /// </summary>
+    public const string LegalHub = "legal-hub";
+
+    /// <summary>
+    /// Dedicated account deletion warning route.
+    /// </summary>
+    public const string AccountDeletion = "account-deletion";
+
     /// <summary>
     /// Route prefix for the business detail page.
     /// The page may receive additional route/query parameters (for example a business identifier).

@@ -1,636 +1,591 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<root>
-	<!-- 
-    Microsoft ResX Schema 
-    
-    Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
-    associated with the data types.
-    
-    Example:
-    
-    ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
-    There are any number of "resheader" rows that contain simple 
-    name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
-    mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
-    extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
-    read any of the formats listed below.
-    
-    mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            : and then encoded with base64 encoding.
-    
-    mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-            : and then encoded with base64 encoding.
-
-    mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
-            : using a System.ComponentModel.TypeConverter
-            : and then encoded with base64 encoding.
-    -->
-	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-		<xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-		<xsd:element name="root" msdata:IsDataSet="true">
-			<xsd:complexType>
-				<xsd:choice maxOccurs="unbounded">
-					<xsd:element name="metadata">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" />
-							</xsd:sequence>
-							<xsd:attribute name="name" use="required" type="xsd:string" />
-							<xsd:attribute name="type" type="xsd:string" />
-							<xsd:attribute name="mimetype" type="xsd:string" />
-							<xsd:attribute ref="xml:space" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="assembly">
-						<xsd:complexType>
-							<xsd:attribute name="alias" type="xsd:string" />
-							<xsd:attribute name="name" type="xsd:string" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="data">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-							<xsd:attribute ref="xml:space" />
-						</xsd:complexType>
-					</xsd:element>
-					<xsd:element name="resheader">
-						<xsd:complexType>
-							<xsd:sequence>
-								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-							</xsd:sequence>
-							<xsd:attribute name="name" type="xsd:string" use="required" />
-						</xsd:complexType>
-					</xsd:element>
-				</xsd:choice>
-			</xsd:complexType>
-		</xsd:element>
-	</xsd:schema>
-	<resheader name="resmimetype">
-		<value>text/microsoft-resx</value>
-	</resheader>
-	<resheader name="version">
-		<value>2.0</value>
-	</resheader>
-	<resheader name="reader">
-		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<resheader name="writer">
-		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-	</resheader>
-	<data name="AccountSummaryLabel" xml:space="preserve">
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="metadata">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0"/>
+              </xs:sequence>
+              <xs:attribute name="name" use="required" type="xsd:string"/>
+              <xs:attribute name="type" type="xsd:string"/>
+              <xs:attribute name="mimetype" type="xsd:string"/>
+              <xs:attribute ref="xml:space"/>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="assembly">
+            <xs:complexType>
+              <xs:attribute name="alias" type="xsd:string"/>
+              <xs:attribute name="name" type="xsd:string"/>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1"/>
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2"/>
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" ns1:Ordinal="1"/>
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3"/>
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4"/>
+              <xs:attribute ref="xml:space"/>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1"/>
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AccountSummaryLabel" xml:space="preserve">
     <value>Account summary</value>
   </data>
-	<data name="AccrueButton" xml:space="preserve">
+  <data name="AccrueButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>
-
-	<data name="RewardsOverviewTitle" xml:space="preserve">
+  <data name="RewardsOverviewTitle" xml:space="preserve">
     <value>Multi-business overview</value>
   </data>
-
-	<data name="RewardsOverviewJoinedBusinessesFormat" xml:space="preserve">
+  <data name="RewardsOverviewJoinedBusinessesFormat" xml:space="preserve">
     <value>Joined businesses: {0}</value>
   </data>
-
-	<data name="RewardsOverviewTotalPointsFormat" xml:space="preserve">
+  <data name="RewardsOverviewTotalPointsFormat" xml:space="preserve">
     <value>Total points across businesses: {0}</value>
   </data>
-
-	<data name="RewardsOverviewTopBusinessFormat" xml:space="preserve">
+  <data name="RewardsOverviewTopBusinessFormat" xml:space="preserve">
     <value>Top business by points: {0}</value>
   </data>
-
-	<data name="RewardsOpenSelectedBusinessQrButton" xml:space="preserve">
+  <data name="RewardsOpenSelectedBusinessQrButton" xml:space="preserve">
     <value>Open selected business QR</value>
   </data>
-	<data name="BusinessCategoryFormat" xml:space="preserve">
+  <data name="BusinessCategoryFormat" xml:space="preserve">
     <value>Category: {0}</value>
   </data>
-	<data name="BusinessDetailsPlaceholder" xml:space="preserve">
+  <data name="BusinessDetailsPlaceholder" xml:space="preserve">
     <value>Additional details coming soon.</value>
   </data>
-	<data name="BusinessDetailsTitle" xml:space="preserve">
+  <data name="BusinessDetailsTitle" xml:space="preserve">
     <value>Business</value>
   </data>
-	<data name="ConfirmAccrualButton" xml:space="preserve">
+  <data name="ConfirmAccrualButton" xml:space="preserve">
     <value>Confirm Accrual</value>
   </data>
-	<data name="ConfirmRedemptionButton" xml:space="preserve">
+  <data name="ConfirmRedemptionButton" xml:space="preserve">
     <value>Confirm Redemption</value>
   </data>
-	<data name="CustomerLabel" xml:space="preserve">
+  <data name="CustomerLabel" xml:space="preserve">
     <value>Customer</value>
   </data>
-	<data name="DiscoverTitle" xml:space="preserve">
+  <data name="DiscoverTitle" xml:space="preserve">
     <value>Discover</value>
   </data>
-	<data name="EmailLabel" xml:space="preserve">
+  <data name="EmailLabel" xml:space="preserve">
     <value>Email</value>
   </data>
-	<data name="EmailRequired" xml:space="preserve">
+  <data name="EmailRequired" xml:space="preserve">
     <value>Email is required.</value>
   </data>
-	<data name="ErrorLabel" xml:space="preserve">
+  <data name="ErrorLabel" xml:space="preserve">
     <value>Error</value>
   </data>
-	<data name="HomeTitle" xml:space="preserve">
+  <data name="HomeTitle" xml:space="preserve">
     <value>Home</value>
   </data>
-	<data name="InvalidCredentials" xml:space="preserve">
+  <data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
   </data>
-	<data name="JoinProgramButton" xml:space="preserve">
+  <data name="JoinProgramButton" xml:space="preserve">
     <value>Join Loyalty Program</value>
   </data>
-	<data name="LastTokenLabel" xml:space="preserve">
+  <data name="LastTokenLabel" xml:space="preserve">
     <value>Last token</value>
   </data>
-	<data name="LoginButton" xml:space="preserve">
+  <data name="LoginButton" xml:space="preserve">
     <value>Sign in</value>
   </data>
-	<data name="LoginTitle" xml:space="preserve">
+  <data name="LoginTitle" xml:space="preserve">
     <value>Login</value>
   </data>
-	<data name="LogoutButtonText" xml:space="preserve">
+  <data name="LogoutButtonText" xml:space="preserve">
     <value>Logout</value>
   </data>
-	<data name="PasswordLabel" xml:space="preserve">
+  <data name="PasswordLabel" xml:space="preserve">
     <value>Password</value>
   </data>
-	<data name="PasswordRequired" xml:space="preserve">
+  <data name="PasswordRequired" xml:space="preserve">
     <value>Password is required.</value>
   </data>
-	<data name="PointsBalanceFormat" xml:space="preserve">
+  <data name="PointsBalanceFormat" xml:space="preserve">
     <value>Points: {0}</value>
   </data>
-	<data name="PointsLabel" xml:space="preserve">
+  <data name="PointsLabel" xml:space="preserve">
     <value>Points</value>
   </data>
-	<data name="PointsPlaceholder" xml:space="preserve">
+  <data name="PointsPlaceholder" xml:space="preserve">
     <value>Enter points</value>
   </data>
-	<data name="ProfileTitle" xml:space="preserve">
+  <data name="ProfileTitle" xml:space="preserve">
     <value>Profile</value>
   </data>
-	<data name="QrTitle" xml:space="preserve">
+  <data name="QrTitle" xml:space="preserve">
     <value>QR</value>
   </data>
-	<data name="RedeemButton" xml:space="preserve">
+  <data name="RedeemButton" xml:space="preserve">
     <value>Confirm Redemption</value>
   </data>
-	<data name="RefreshAccrualButton" xml:space="preserve">
+  <data name="RefreshAccrualButton" xml:space="preserve">
     <value>Refresh Accrual</value>
   </data>
-	<data name="RefreshRedemptionButton" xml:space="preserve">
+  <data name="RefreshRedemptionButton" xml:space="preserve">
     <value>Refresh Redemption</value>
   </data>
-	<data name="RewardCostFormat" xml:space="preserve">
+  <data name="RewardCostFormat" xml:space="preserve">
     <value>Cost: {0} pts</value>
   </data>
-	<data name="RewardsTitle" xml:space="preserve">
+  <data name="RewardsTitle" xml:space="preserve">
     <value>Rewards</value>
-		</data>
-	<data name="RewardsBusinessPickerLabel" xml:space="preserve">
+  </data>
+  <data name="RewardsBusinessPickerLabel" xml:space="preserve">
     <value>Business</value>
   </data>
-	<data name="RewardsAvailableRewardsLabel" xml:space="preserve">
+  <data name="RewardsAvailableRewardsLabel" xml:space="preserve">
     <value>Available rewards</value>
   </data>
-	<data name="RewardsHistoryLabel" xml:space="preserve">
+  <data name="RewardsHistoryLabel" xml:space="preserve">
     <value>Rewards history</value>
   </data>
-	<data name="RewardsNoHistoryMessage" xml:space="preserve">
+  <data name="RewardsNoHistoryMessage" xml:space="preserve">
     <value>No reward history available yet.</value>
   </data>
-	<data name="RewardsNoAccountsFound" xml:space="preserve">
+  <data name="RewardsNoAccountsFound" xml:space="preserve">
     <value>No loyalty accounts found yet.</value>
   </data>
-	<data name="RewardsLoadAccountsFailed" xml:space="preserve">
+  <data name="RewardsLoadAccountsFailed" xml:space="preserve">
     <value>Unable to load your loyalty accounts.</value>
   </data>
-	<data name="RewardsLoadAccountSummaryFailed" xml:space="preserve">
+  <data name="RewardsLoadAccountSummaryFailed" xml:space="preserve">
     <value>Unable to load account summary.</value>
   </data>
-	<data name="RewardsLoadRewardsFailed" xml:space="preserve">
+  <data name="RewardsLoadRewardsFailed" xml:space="preserve">
     <value>Unable to load available rewards.</value>
   </data>
-	<data name="RewardsLoadHistoryFailed" xml:space="preserve">
+  <data name="RewardsLoadHistoryFailed" xml:space="preserve">
     <value>Unable to load reward history.</value>
   </data>
-	<data name="ScanTitle" xml:space="preserve">
+  <data name="ScanTitle" xml:space="preserve">
     <value>Scan</value>
   </data>
-	<data name="ServerUnreachableMessage" xml:space="preserve">
+  <data name="ServerUnreachableMessage" xml:space="preserve">
     <value>Unable to connect to server. Please check your internet connection and server URL, then try again.</value>
   </data>
-	<data name="SessionTitle" xml:space="preserve">
+  <data name="SessionTitle" xml:space="preserve">
     <value>Session</value>
   </data>
-	<data name="StartButton" xml:space="preserve">
+  <data name="StartButton" xml:space="preserve">
     <value>Start</value>
   </data>
-	<data name="ProfileSectionTitle" xml:space="preserve">
+  <data name="ProfileSectionTitle" xml:space="preserve">
     <value>My profile</value>
   </data>
-	<data name="FirstNameLabel" xml:space="preserve">
+  <data name="FirstNameLabel" xml:space="preserve">
     <value>First name</value>
   </data>
-	<data name="LastNameLabel" xml:space="preserve">
+  <data name="LastNameLabel" xml:space="preserve">
     <value>Last name</value>
   </data>
-	<data name="PhoneLabel" xml:space="preserve">
+  <data name="PhoneLabel" xml:space="preserve">
     <value>Phone</value>
   </data>
-	<data name="LocaleLabel" xml:space="preserve">
+  <data name="LocaleLabel" xml:space="preserve">
     <value>Locale</value>
   </data>
-	<data name="TimezoneLabel" xml:space="preserve">
+  <data name="TimezoneLabel" xml:space="preserve">
     <value>Timezone</value>
   </data>
-	<data name="CurrencyLabel" xml:space="preserve">
+  <data name="CurrencyLabel" xml:space="preserve">
     <value>Currency</value>
   </data>
-	<data name="SaveProfileButton" xml:space="preserve">
+  <data name="SaveProfileButton" xml:space="preserve">
     <value>Save profile</value>
   </data>
-	<data name="ProfilePushRegistrationSectionTitle" xml:space="preserve">
+  <data name="ProfilePushRegistrationSectionTitle" xml:space="preserve">
     <value>Push registration</value>
   </data>
-	<data name="ProfilePushRegistrationSyncButton" xml:space="preserve">
+  <data name="ProfilePushRegistrationSyncButton" xml:space="preserve">
     <value>Sync push registration</value>
   </data>
-	<data name="ProfilePushRegistrationStatusIdle" xml:space="preserve">
+  <data name="ProfilePushRegistrationStatusIdle" xml:space="preserve">
     <value>Push registration has not been synced yet.</value>
   </data>
-	<data name="ProfilePushRegistrationStatusSuccess" xml:space="preserve">
+  <data name="ProfilePushRegistrationStatusSuccess" xml:space="preserve">
     <value>Push registration synced successfully.</value>
   </data>
-	<data name="ProfilePushRegistrationStatusFailed" xml:space="preserve">
+  <data name="ProfilePushRegistrationStatusFailed" xml:space="preserve">
     <value>Push registration sync failed.</value>
   </data>
-	<data name="ProfilePushRegistrationLastSyncFormat" xml:space="preserve">
+  <data name="ProfilePushRegistrationLastSyncFormat" xml:space="preserve">
     <value>Last sync: {0}</value>
   </data>
-
-	<data name="ProfilePushOpenSettingsButton" xml:space="preserve">
+  <data name="ProfilePushOpenSettingsButton" xml:space="preserve">
     <value>Open notification settings</value>
   </data>
-
-	<data name="ProfilePushOpenSettingsHint" xml:space="preserve">
+  <data name="ProfilePushOpenSettingsHint" xml:space="preserve">
     <value>If notifications are blocked, open system settings and allow notifications for Loyan.</value>
   </data>
-
-	<data name="ProfilePushOpenSettingsFailed" xml:space="preserve">
+  <data name="ProfilePushOpenSettingsFailed" xml:space="preserve">
     <value>Could not open notification settings. Please open app settings manually.</value>
   </data>
-
-	<data name="ProfilePushPermissionEnabled" xml:space="preserve">
+  <data name="ProfilePushPermissionEnabled" xml:space="preserve">
     <value>Notifications permission: enabled</value>
   </data>
-
-	<data name="ProfilePushPermissionDisabled" xml:space="preserve">
+  <data name="ProfilePushPermissionDisabled" xml:space="preserve">
     <value>Notifications permission: disabled</value>
   </data>
-
-	<data name="ProfilePushPermissionUnknown" xml:space="preserve">
+  <data name="ProfilePushPermissionUnknown" xml:space="preserve">
     <value>Notifications permission: unknown</value>
   </data>
-
-	<data name="ProfilePushTokenAvailabilityReady" xml:space="preserve">
+  <data name="ProfilePushTokenAvailabilityReady" xml:space="preserve">
     <value>Push token status: ready</value>
   </data>
-
-	<data name="ProfilePushTokenAvailabilityMissing" xml:space="preserve">
+  <data name="ProfilePushTokenAvailabilityMissing" xml:space="preserve">
     <value>Push token status: missing</value>
   </data>
-
-	<data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
+  <data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
     <value>Push token status: unknown</value>
   </data>
-	<data name="ChangePasswordTitle" xml:space="preserve">
+  <data name="ChangePasswordTitle" xml:space="preserve">
     <value>Change password</value>
   </data>
-	<data name="CurrentPasswordLabel" xml:space="preserve">
+  <data name="CurrentPasswordLabel" xml:space="preserve">
     <value>Current password</value>
   </data>
-	<data name="NewPasswordLabel" xml:space="preserve">
+  <data name="NewPasswordLabel" xml:space="preserve">
     <value>New password</value>
   </data>
-	<data name="ConfirmNewPasswordLabel" xml:space="preserve">
+  <data name="ConfirmNewPasswordLabel" xml:space="preserve">
     <value>Confirm new password</value>
   </data>
-	<data name="ChangePasswordButton" xml:space="preserve">
+  <data name="ChangePasswordButton" xml:space="preserve">
     <value>Update password</value>
   </data>
-	<data name="ProfileLoadFailed" xml:space="preserve">
+  <data name="ProfileLoadFailed" xml:space="preserve">
     <value>Unable to load profile data.</value>
   </data>
-	<data name="ProfileSaveFailed" xml:space="preserve">
+  <data name="ProfileSaveFailed" xml:space="preserve">
     <value>Unable to save profile changes.</value>
   </data>
-	<data name="ProfileSaveSuccess" xml:space="preserve">
+  <data name="ProfileSaveSuccess" xml:space="preserve">
     <value>Profile updated successfully.</value>
   </data>
-	<data name="ProfileRequiredNames" xml:space="preserve">
+  <data name="ProfileRequiredNames" xml:space="preserve">
     <value>First name and last name are required.</value>
   </data>
-	<data name="ProfileRequiredFields" xml:space="preserve">
+  <data name="ProfileRequiredFields" xml:space="preserve">
     <value>Please fill all required profile fields before saving.</value>
   </data>
-	<data name="PasswordMismatch" xml:space="preserve">
+  <data name="PasswordMismatch" xml:space="preserve">
     <value>New password and confirmation do not match.</value>
   </data>
-	<data name="PasswordMinLength" xml:space="preserve">
+  <data name="PasswordMinLength" xml:space="preserve">
     <value>New password must be at least 8 characters long.</value>
   </data>
-	<data name="PasswordChangeFailed" xml:space="preserve">
+  <data name="PasswordChangeFailed" xml:space="preserve">
     <value>Unable to change password. Please check your current password.</value>
   </data>
-	<data name="PasswordChangeSuccess" xml:space="preserve">
+  <data name="PasswordChangeSuccess" xml:space="preserve">
     <value>Password changed successfully.</value>
   </data>
-	<data name="SessionExpiredReLogin" xml:space="preserve">
+  <data name="SessionExpiredReLogin" xml:space="preserve">
     <value>Your session has expired. Please log in again.</value>
   </data>
-	<data name="ProfileNotLoadedYet" xml:space="preserve">
+  <data name="ProfileNotLoadedYet" xml:space="preserve">
     <value>Profile is not loaded yet. Please refresh and try again.</value>
   </data>
-	<data name="SettingsTitle" xml:space="preserve">
+  <data name="SettingsTitle" xml:space="preserve">
     <value>Settings</value>
   </data>
-	<data name="SettingsSubtitle" xml:space="preserve">
+  <data name="SettingsSubtitle" xml:space="preserve">
     <value>Manage your account preferences.</value>
   </data>
-	<data name="SettingsProfileButton" xml:space="preserve">
+  <data name="SettingsProfileButton" xml:space="preserve">
     <value>Profile</value>
   </data>
-	<data name="SettingsChangePasswordButton" xml:space="preserve">
+  <data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Change password</value>
   </data>
-	<data name="RegisterTitle" xml:space="preserve">
-  <value>Create account</value>
-</data>
-	<data name="RegisterDescription" xml:space="preserve">
-  <value>Create your consumer account to start collecting points and rewards.</value>
-</data>
-	<data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
-  <value>Joined businesses</value>
-</data>
-	<data name="RegisterButton" xml:space="preserve">
-  <value>Register</value>
-</data>
-	<data name="RegisterFailed" xml:space="preserve">
-  <value>Unable to create your account right now. Please try again.</value>
-</data>
-	<data name="RegisterSuccess" xml:space="preserve">
-  <value>Your account has been created successfully.</value>
-</data>
-	<data name="RegisterSuccessConfirmationSent" xml:space="preserve">
-  <value>Your account has been created. Please check your email for confirmation.</value>
-</data>
-	<data name="RegisterEmailAlreadyUsed" xml:space="preserve">
-  <value>An account with this email already exists.</value>
-</data>
-	<data name="FirstNameRequired" xml:space="preserve">
-  <value>First name is required.</value>
-</data>
-	<data name="LastNameRequired" xml:space="preserve">
-  <value>Last name is required.</value>
-</data>
-	<data name="ForgotPasswordTitle" xml:space="preserve">
-  <value>Forgot password</value>
-</data>
-	<data name="ForgotPasswordDescription" xml:space="preserve">
-  <value>Enter your email and we will send you password reset instructions if an account exists.</value>
-</data>
-	<data name="ForgotPasswordButton" xml:space="preserve">
-  <value>Forgot password?</value>
-</data>
-	<data name="ForgotPasswordSendButton" xml:space="preserve">
-  <value>Send reset instructions</value>
-</data>
-	<data name="ForgotPasswordSuccess" xml:space="preserve">
-  <value>If the email exists, password reset instructions have been sent.</value>
-</data>
-	<data name="ForgotPasswordFailed" xml:space="preserve">
-  <value>Unable to request password reset right now. Please try again.</value>
-</data>
-	<data name="RegisterAutoLoginFailed" xml:space="preserve">
-  <value>Your account was created, but automatic sign-in failed. Please login manually.</value>
-</data>
-	<data name="DiscoverMyBusinessesTab" xml:space="preserve">
-  <value>My Businesses</value>
-</data>
-	<data name="DiscoverExploreTab" xml:space="preserve">
-  <value>Explore</value>
-</data>
-	<data name="DiscoverMyBusinessesHeadline" xml:space="preserve">
-  <value>Your joined businesses</value>
-</data>
-	<data name="DiscoverExploreHeadline" xml:space="preserve">
-  <value>Explore businesses</value>
-</data>
-	<data name="DiscoverSearchPlaceholder" xml:space="preserve">
-  <value>Search by business name or address</value>
-</data>
-	<data name="DiscoverMyBusinessesEmpty" xml:space="preserve">
-  <value>You have not joined any business yet. Use Explore to join one.</value>
-</data>
-	<data name="DiscoverExploreEmpty" xml:space="preserve">
-  <value>No businesses found for the current search.</value>
-</data>
-	<data name="DiscoverOpenQrButton" xml:space="preserve">
-  <value>Open QR</value>
-</data>
-	<data name="DiscoverOpenRewardsButton" xml:space="preserve">
-  <value>Open Rewards</value>
-</data>
-	<data name="DiscoverAlreadyJoinedLabel" xml:space="preserve">
-  <value>Already joined</value>
-</data>
-	<data name="DiscoverLoadJoinedFailed" xml:space="preserve">
-  <value>Unable to load your joined businesses.</value>
-</data>
-	<data name="DiscoverLoadExploreFailed" xml:space="preserve">
-  <value>Unable to load explore businesses.</value>
-</data>
-	<data name="DiscoverCategoryFilterLabel" xml:space="preserve">
-  <value>Category</value>
-</data>
-	<data name="DiscoverSearchButton" xml:space="preserve">
-  <value>Search</value>
-</data>
-	<data name="DiscoverClearFiltersButton" xml:space="preserve">
-  <value>Clear</value>
-</data>
-	<data name="DiscoverNearbyOnlyLabel" xml:space="preserve">
-  <value>Nearby only</value>
-</data>
-	<data name="DiscoverLocationUnavailable" xml:space="preserve">
-  <value>Location is unavailable. Showing broad results instead.</value>
-</data>
-	<data name="DiscoverNearbyRadiusLabel" xml:space="preserve">
-  <value>Radius</value>
-</data>
-	<data name="FeedTitle" xml:space="preserve">
-  <value>Feed</value>
-</data>
-	<data name="FeedEmptyMessage" xml:space="preserve">
-  <value>No feed items yet.</value>
-</data>
-	<data name="FeedLoadFailed" xml:space="preserve">
-  <value>Unable to load feed right now.</value>
-</data>
-	<data name="FeedLoadMoreButton" xml:space="preserve">
-  <value>Load more</value>
-</data>
-	<data name="FeedNoAccountsMessage" xml:space="preserve">
-  <value>Join a business first to see your feed.</value>
-</data>
-	<data name="BusinessDetailsNotFound" xml:space="preserve"><value>Business not found.</value></data>
-	<data name="BusinessDetailsLoadFailed" xml:space="preserve"><value>Unable to load business details.</value></data>
-	<data name="BusinessEngagementTitle" xml:space="preserve"><value>Engagement</value></data>
-	<data name="BusinessEngagementLoadFailed" xml:space="preserve"><value>Unable to load engagement details.</value></data>
-	<data name="BusinessLikeButton" xml:space="preserve"><value>Like / Unlike</value></data>
-	<data name="BusinessFavoriteButton" xml:space="preserve"><value>Favorite / Unfavorite</value></data>
-	<data name="BusinessLikeToggleFailed" xml:space="preserve"><value>Unable to update like state.</value></data>
-	<data name="BusinessFavoriteToggleFailed" xml:space="preserve"><value>Unable to update favorite state.</value></data>
-	<data name="BusinessMyReviewTitle" xml:space="preserve"><value>My review</value></data>
-	<data name="BusinessMyReviewRatingLabel" xml:space="preserve"><value>Rating</value></data>
-	<data name="BusinessMyReviewCommentPlaceholder" xml:space="preserve"><value>Write your feedback (optional).</value></data>
-	<data name="BusinessSaveReviewButton" xml:space="preserve"><value>Save review</value></data>
-	<data name="BusinessReviewSaveFailed" xml:space="preserve"><value>Unable to save your review.</value></data>
-	<data name="BusinessRecentReviewsTitle" xml:space="preserve"><value>Recent reviews</value></data>
-	<data name="BusinessJoinFailed" xml:space="preserve"><value>Unable to join the loyalty program.</value></data>
-	<data name="BusinessScanSessionPrepareFailed" xml:space="preserve"><value>Unable to create scan session.</value></data>
-	<data name="BusinessCityFormat" xml:space="preserve">
-  <value>City: {0}</value>
-</data>
-	<data name="BusinessWebsiteFormat" xml:space="preserve">
-  <value>Website: {0}</value>
-</data>
-	<data name="BusinessPhoneFormat" xml:space="preserve">
-  <value>Phone: {0}</value>
-</data>
-	<data name="BusinessEmailFormat" xml:space="preserve">
-  <value>Email: {0}</value>
-</data>
-	<data name="BusinessInformationTitle" xml:space="preserve">
-  <value>Business Information</value>
-</data>
-	<data name="BusinessLoyaltyProgramTitle" xml:space="preserve">
-  <value>Loyalty Program</value>
-</data>
-	<data name="BusinessRewardTiersTitle" xml:space="preserve">
-  <value>Reward Tiers</value>
-</data>
-	<data name="BusinessPointsFormat" xml:space="preserve">
-  <value>Points: {0}</value>
-</data>
-	<data name="BusinessRewardTypeFormat" xml:space="preserve">
-  <value>Type: {0}</value>
-</data>
-	<data name="BusinessRewardValueFormat" xml:space="preserve">
-  <value>Value: {0}</value>
-</data>
-	<data name="BusinessSelfRedemptionFormat" xml:space="preserve">
-  <value>Self Redemption: {0}</value>
-</data>
-	<data name="BusinessLikesCountFormat" xml:space="preserve">
-  <value>Likes: {0}</value>
-</data>
-	<data name="BusinessFavoritesCountFormat" xml:space="preserve">
-  <value>Favorites: {0}</value>
-</data>
-	<data name="BusinessRatingFormat" xml:space="preserve">
-  <value>Rating: {0}</value>
-</data>
-	<data name="BusinessReviewsCountFormat" xml:space="preserve">
-  <value>Reviews: {0}</value>
-</data>
-	<data name="BusinessCurrentRatingFormat" xml:space="preserve">
-  <value>Current rating: {0}/5</value>
-</data>
-	<data name="BusinessReviewRatingFormat" xml:space="preserve">
-  <value>Rating: {0}/5</value>
-</data>
-	<data name="FeedOpenQrButton" xml:space="preserve">
-  <value>Open QR</value>
-</data>
-	<data name="FeedOpenRewardsButton" xml:space="preserve">
-  <value>Open Rewards</value>
-</data>
-	<data name="FeedSelectedBusinessPointsFormat" xml:space="preserve">
-  <value>Points: {0}</value>
-</data>
-	<data name="FeedPromotionsTitle" xml:space="preserve">
-  <value>Promotions for you</value>
-</data>
-	<data name="FeedRefreshButton" xml:space="preserve">
-  <value>Refresh feed</value>
-</data>
-	<data name="FeedBusinessPickerLabel" xml:space="preserve">
-  <value>Business</value>
-</data>
-
-	<data name="FeedPromotionScopeSelectedBusinessButton" xml:space="preserve">
+  <data name="RegisterTitle" xml:space="preserve">
+    <value>Create account</value>
+  </data>
+  <data name="RegisterDescription" xml:space="preserve">
+    <value>Create your consumer account to start collecting points and rewards.</value>
+  </data>
+  <data name="RewardsJoinedBusinessesLabel" xml:space="preserve">
+    <value>Joined businesses</value>
+  </data>
+  <data name="RegisterButton" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="RegisterFailed" xml:space="preserve">
+    <value>Unable to create your account right now. Please try again.</value>
+  </data>
+  <data name="RegisterSuccess" xml:space="preserve">
+    <value>Your account has been created successfully.</value>
+  </data>
+  <data name="RegisterSuccessConfirmationSent" xml:space="preserve">
+    <value>Your account has been created. Please check your email for confirmation.</value>
+  </data>
+  <data name="RegisterEmailAlreadyUsed" xml:space="preserve">
+    <value>An account with this email already exists.</value>
+  </data>
+  <data name="FirstNameRequired" xml:space="preserve">
+    <value>First name is required.</value>
+  </data>
+  <data name="LastNameRequired" xml:space="preserve">
+    <value>Last name is required.</value>
+  </data>
+  <data name="ForgotPasswordTitle" xml:space="preserve">
+    <value>Forgot password</value>
+  </data>
+  <data name="ForgotPasswordDescription" xml:space="preserve">
+    <value>Enter your email and we will send you password reset instructions if an account exists.</value>
+  </data>
+  <data name="ForgotPasswordButton" xml:space="preserve">
+    <value>Forgot password?</value>
+  </data>
+  <data name="ForgotPasswordSendButton" xml:space="preserve">
+    <value>Send reset instructions</value>
+  </data>
+  <data name="ForgotPasswordSuccess" xml:space="preserve">
+    <value>If the email exists, password reset instructions have been sent.</value>
+  </data>
+  <data name="ForgotPasswordFailed" xml:space="preserve">
+    <value>Unable to request password reset right now. Please try again.</value>
+  </data>
+  <data name="RegisterAutoLoginFailed" xml:space="preserve">
+    <value>Your account was created, but automatic sign-in failed. Please login manually.</value>
+  </data>
+  <data name="DiscoverMyBusinessesTab" xml:space="preserve">
+    <value>My Businesses</value>
+  </data>
+  <data name="DiscoverExploreTab" xml:space="preserve">
+    <value>Explore</value>
+  </data>
+  <data name="DiscoverMyBusinessesHeadline" xml:space="preserve">
+    <value>Your joined businesses</value>
+  </data>
+  <data name="DiscoverExploreHeadline" xml:space="preserve">
+    <value>Explore businesses</value>
+  </data>
+  <data name="DiscoverSearchPlaceholder" xml:space="preserve">
+    <value>Search by business name or address</value>
+  </data>
+  <data name="DiscoverMyBusinessesEmpty" xml:space="preserve">
+    <value>You have not joined any business yet. Use Explore to join one.</value>
+  </data>
+  <data name="DiscoverExploreEmpty" xml:space="preserve">
+    <value>No businesses found for the current search.</value>
+  </data>
+  <data name="DiscoverOpenQrButton" xml:space="preserve">
+    <value>Open QR</value>
+  </data>
+  <data name="DiscoverOpenRewardsButton" xml:space="preserve">
+    <value>Open Rewards</value>
+  </data>
+  <data name="DiscoverAlreadyJoinedLabel" xml:space="preserve">
+    <value>Already joined</value>
+  </data>
+  <data name="DiscoverLoadJoinedFailed" xml:space="preserve">
+    <value>Unable to load your joined businesses.</value>
+  </data>
+  <data name="DiscoverLoadExploreFailed" xml:space="preserve">
+    <value>Unable to load explore businesses.</value>
+  </data>
+  <data name="DiscoverCategoryFilterLabel" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="DiscoverSearchButton" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="DiscoverClearFiltersButton" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="DiscoverNearbyOnlyLabel" xml:space="preserve">
+    <value>Nearby only</value>
+  </data>
+  <data name="DiscoverLocationUnavailable" xml:space="preserve">
+    <value>Location is unavailable. Showing broad results instead.</value>
+  </data>
+  <data name="DiscoverNearbyRadiusLabel" xml:space="preserve">
+    <value>Radius</value>
+  </data>
+  <data name="FeedTitle" xml:space="preserve">
+    <value>Feed</value>
+  </data>
+  <data name="FeedEmptyMessage" xml:space="preserve">
+    <value>No feed items yet.</value>
+  </data>
+  <data name="FeedLoadFailed" xml:space="preserve">
+    <value>Unable to load feed right now.</value>
+  </data>
+  <data name="FeedLoadMoreButton" xml:space="preserve">
+    <value>Load more</value>
+  </data>
+  <data name="FeedNoAccountsMessage" xml:space="preserve">
+    <value>Join a business first to see your feed.</value>
+  </data>
+  <data name="BusinessDetailsNotFound" xml:space="preserve">
+    <value>Business not found.</value>
+  </data>
+  <data name="BusinessDetailsLoadFailed" xml:space="preserve">
+    <value>Unable to load business details.</value>
+  </data>
+  <data name="BusinessEngagementTitle" xml:space="preserve">
+    <value>Engagement</value>
+  </data>
+  <data name="BusinessEngagementLoadFailed" xml:space="preserve">
+    <value>Unable to load engagement details.</value>
+  </data>
+  <data name="BusinessLikeButton" xml:space="preserve">
+    <value>Like / Unlike</value>
+  </data>
+  <data name="BusinessFavoriteButton" xml:space="preserve">
+    <value>Favorite / Unfavorite</value>
+  </data>
+  <data name="BusinessLikeToggleFailed" xml:space="preserve">
+    <value>Unable to update like state.</value>
+  </data>
+  <data name="BusinessFavoriteToggleFailed" xml:space="preserve">
+    <value>Unable to update favorite state.</value>
+  </data>
+  <data name="BusinessMyReviewTitle" xml:space="preserve">
+    <value>My review</value>
+  </data>
+  <data name="BusinessMyReviewRatingLabel" xml:space="preserve">
+    <value>Rating</value>
+  </data>
+  <data name="BusinessMyReviewCommentPlaceholder" xml:space="preserve">
+    <value>Write your feedback (optional).</value>
+  </data>
+  <data name="BusinessSaveReviewButton" xml:space="preserve">
+    <value>Save review</value>
+  </data>
+  <data name="BusinessReviewSaveFailed" xml:space="preserve">
+    <value>Unable to save your review.</value>
+  </data>
+  <data name="BusinessRecentReviewsTitle" xml:space="preserve">
+    <value>Recent reviews</value>
+  </data>
+  <data name="BusinessJoinFailed" xml:space="preserve">
+    <value>Unable to join the loyalty program.</value>
+  </data>
+  <data name="BusinessScanSessionPrepareFailed" xml:space="preserve">
+    <value>Unable to create scan session.</value>
+  </data>
+  <data name="BusinessCityFormat" xml:space="preserve">
+    <value>City: {0}</value>
+  </data>
+  <data name="BusinessWebsiteFormat" xml:space="preserve">
+    <value>Website: {0}</value>
+  </data>
+  <data name="BusinessPhoneFormat" xml:space="preserve">
+    <value>Phone: {0}</value>
+  </data>
+  <data name="BusinessEmailFormat" xml:space="preserve">
+    <value>Email: {0}</value>
+  </data>
+  <data name="BusinessInformationTitle" xml:space="preserve">
+    <value>Business Information</value>
+  </data>
+  <data name="BusinessLoyaltyProgramTitle" xml:space="preserve">
+    <value>Loyalty Program</value>
+  </data>
+  <data name="BusinessRewardTiersTitle" xml:space="preserve">
+    <value>Reward Tiers</value>
+  </data>
+  <data name="BusinessPointsFormat" xml:space="preserve">
+    <value>Points: {0}</value>
+  </data>
+  <data name="BusinessRewardTypeFormat" xml:space="preserve">
+    <value>Type: {0}</value>
+  </data>
+  <data name="BusinessRewardValueFormat" xml:space="preserve">
+    <value>Value: {0}</value>
+  </data>
+  <data name="BusinessSelfRedemptionFormat" xml:space="preserve">
+    <value>Self Redemption: {0}</value>
+  </data>
+  <data name="BusinessLikesCountFormat" xml:space="preserve">
+    <value>Likes: {0}</value>
+  </data>
+  <data name="BusinessFavoritesCountFormat" xml:space="preserve">
+    <value>Favorites: {0}</value>
+  </data>
+  <data name="BusinessRatingFormat" xml:space="preserve">
+    <value>Rating: {0}</value>
+  </data>
+  <data name="BusinessReviewsCountFormat" xml:space="preserve">
+    <value>Reviews: {0}</value>
+  </data>
+  <data name="BusinessCurrentRatingFormat" xml:space="preserve">
+    <value>Current rating: {0}/5</value>
+  </data>
+  <data name="BusinessReviewRatingFormat" xml:space="preserve">
+    <value>Rating: {0}/5</value>
+  </data>
+  <data name="FeedOpenQrButton" xml:space="preserve">
+    <value>Open QR</value>
+  </data>
+  <data name="FeedOpenRewardsButton" xml:space="preserve">
+    <value>Open Rewards</value>
+  </data>
+  <data name="FeedSelectedBusinessPointsFormat" xml:space="preserve">
+    <value>Points: {0}</value>
+  </data>
+  <data name="FeedPromotionsTitle" xml:space="preserve">
+    <value>Promotions for you</value>
+  </data>
+  <data name="FeedRefreshButton" xml:space="preserve">
+    <value>Refresh feed</value>
+  </data>
+  <data name="FeedBusinessPickerLabel" xml:space="preserve">
+    <value>Business</value>
+  </data>
+  <data name="FeedPromotionScopeSelectedBusinessButton" xml:space="preserve">
     <value>Selected business promotions</value>
   </data>
-
-	<data name="FeedPromotionScopeAllBusinessesButton" xml:space="preserve">
+  <data name="FeedPromotionScopeAllBusinessesButton" xml:space="preserve">
     <value>All businesses promotions</value>
   </data>
-
-	<data name="FeedPromotionScopeSelectedBusiness" xml:space="preserve">
+  <data name="FeedPromotionScopeSelectedBusiness" xml:space="preserve">
     <value>Promotion scope: selected business</value>
   </data>
-
-	<data name="FeedPromotionScopeAllBusinesses" xml:space="preserve">
+  <data name="FeedPromotionScopeAllBusinesses" xml:space="preserve">
     <value>Promotion scope: all joined businesses</value>
   </data>
-		<data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
-			<value>Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}</value>
-		</data>
+  <data name="FeedPromotionPolicyDiagnosticsSummaryFormat" xml:space="preserve">
+    <value>Policy: suppression {0} min · cap {1} | Diagnostics: initial {2}, suppressed {3}, dedup {4}, capped {5}, final {6}</value>
+  </data>
   <data name="FeedPromotionDiagnosticsTitle" xml:space="preserve">
     <value>Promotion diagnostics</value>
   </data>
@@ -664,9 +619,9 @@
   <data name="FeedPromotionDiagnosticsClearStatusButton" xml:space="preserve">
     <value>Clear diagnostics status</value>
   </data>
-<data name="FeedOpenPromotionButton" xml:space="preserve">
-  <value>Open</value>
-</data>
+  <data name="FeedOpenPromotionButton" xml:space="preserve">
+    <value>Open</value>
+  </data>
   <data name="ResetPasswordTitle" xml:space="preserve">
     <value>Reset password</value>
   </data>
@@ -705,5 +660,122 @@
   </data>
   <data name="DiscoverTopBalanceBusinessFormat" xml:space="preserve">
     <value>Top balance at: {0}</value>
+  </data>
+  <data name="AuthLegalSectionTitle" xml:space="preserve">
+    <value>Rechtliches &amp; Datenschutz</value>
+  </data>
+  <data name="AuthLegalSectionSubtitle" xml:space="preserve">
+    <value>Review the legal pages before creating an account or signing in.</value>
+  </data>
+  <data name="LegalHubTitle" xml:space="preserve">
+    <value>Rechtliches &amp; Datenschutz</value>
+  </data>
+  <data name="LegalHubSubtitle" xml:space="preserve">
+    <value>Open the current legal and privacy pages maintained on loyan.de.</value>
+  </data>
+  <data name="LegalImpressumButton" xml:space="preserve">
+    <value>Impressum</value>
+  </data>
+  <data name="LegalPrivacyNoticeButton" xml:space="preserve">
+    <value>Datenschutzhinweise</value>
+  </data>
+  <data name="LegalTermsButton" xml:space="preserve">
+    <value>Nutzungsbedingungen</value>
+  </data>
+  <data name="LegalAccountDeletionButton" xml:space="preserve">
+    <value>Konto löschen</value>
+  </data>
+  <data name="LegalOpenFailed" xml:space="preserve">
+    <value>The legal page could not be opened right now. Please try again shortly.</value>
+  </data>
+  <data name="SettingsLegalHubButton" xml:space="preserve">
+    <value>Rechtliches &amp; Datenschutz</value>
+  </data>
+  <data name="SettingsDeleteAccountButton" xml:space="preserve">
+    <value>Konto löschen</value>
+  </data>
+  <data name="RegisterAcknowledgementsTitle" xml:space="preserve">
+    <value>Required acknowledgements</value>
+  </data>
+  <data name="RegisterTermsAcknowledgementLabel" xml:space="preserve">
+    <value>I accept the consumer terms before creating my account.</value>
+  </data>
+  <data name="RegisterPrivacyAcknowledgementLabel" xml:space="preserve">
+    <value>I confirm that I have reviewed the privacy notice before creating my account.</value>
+  </data>
+  <data name="RegisterTermsAcceptanceRequired" xml:space="preserve">
+    <value>Please accept the terms before creating your account.</value>
+  </data>
+  <data name="RegisterPrivacyAcknowledgementRequired" xml:space="preserve">
+    <value>Please acknowledge the privacy notice before creating your account.</value>
+  </data>
+  <data name="OptionalPrivacyChoicesTitle" xml:space="preserve">
+    <value>Optional privacy choices</value>
+  </data>
+  <data name="OptionalPrivacyChoicesPlaceholderNote" xml:space="preserve">
+    <value>These optional controls are kept separate from the required legal acknowledgements and are stored locally until final backend privacy settings are delivered.</value>
+  </data>
+  <data name="OptionalPromotionalPushLabel" xml:space="preserve">
+    <value>Allow promotional push notifications (optional)</value>
+  </data>
+  <data name="OptionalAnalyticsLabel" xml:space="preserve">
+    <value>Allow optional analytics and tracking (optional)</value>
+  </data>
+  <data name="AccountDeletionTitle" xml:space="preserve">
+    <value>Konto löschen</value>
+  </data>
+  <data name="AccountDeletionWarningTitle" xml:space="preserve">
+    <value>Before you continue</value>
+  </data>
+  <data name="AccountDeletionWarningBody" xml:space="preserve">
+    <value>Account deletion is completed on the external Loyan website. Review the information carefully before continuing.</value>
+  </data>
+  <data name="AccountDeletionExternalHint" xml:space="preserve">
+    <value>The app will open https://loyan.de/konto-loeschen in the in-app browser when possible.</value>
+  </data>
+  <data name="AccountDeletionContinueButton" xml:space="preserve">
+    <value>Open deletion page</value>
+  </data>
+  <data name="AccountDeletionOpenFailed" xml:space="preserve">
+    <value>The account deletion page could not be opened right now. Please try again shortly.</value>
+  </data>
+  <data name="PermissionDisclosureContinueButton" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="PermissionDisclosureCancelButton" xml:space="preserve">
+    <value>Not now</value>
+  </data>
+  <data name="PermissionDisclosurePrivacyButton" xml:space="preserve">
+    <value>Open privacy notice</value>
+  </data>
+  <data name="LocationDisclosureTitle" xml:space="preserve">
+    <value>Location access</value>
+  </data>
+  <data name="LocationDisclosurePermissionName" xml:space="preserve">
+    <value>Location permission</value>
+  </data>
+  <data name="LocationDisclosurePurpose" xml:space="preserve">
+    <value>Darwin uses your location to show nearby businesses and improve local discovery results.</value>
+  </data>
+  <data name="LocationDisclosureRequirement" xml:space="preserve">
+    <value>This feature is optional. You can continue using the app without nearby results if you do not allow location access.</value>
+  </data>
+  <data name="NotificationDisclosureTitle" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="NotificationDisclosurePermissionName" xml:space="preserve">
+    <value>Notification permission</value>
+  </data>
+  <data name="NotificationDisclosurePurpose" xml:space="preserve">
+    <value>Darwin requests notification access so the app can deliver loyalty and account-related push messages when you enable them.</value>
+  </data>
+  <data name="NotificationDisclosureRequirement" xml:space="preserve">
+    <value>Notifications are optional. If you do not allow them, loyalty updates will remain available inside the app only.</value>
+  </data>
+  <data name="ProfilePushPermissionNotGranted" xml:space="preserve">
+    <value>Notification permission was not granted. Push registration was not updated.</value>
+  </data>
+  <data name="ProfilePushPermissionRequestFailed" xml:space="preserve">
+    <value>Notification permission could not be requested right now. Please try again.</value>
   </data>
 </root>

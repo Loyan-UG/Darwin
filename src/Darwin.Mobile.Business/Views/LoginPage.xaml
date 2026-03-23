@@ -1,17 +1,13 @@
-<!-- File: src/Darwin.Mobile.Business/Views/LoginPage.xaml -->
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     x:Class="Darwin.Mobile.Business.Views.LoginPage"
+    x:DataType="vm:LoginViewModel"
     Title="{x:Static res:AppResources.LoginTitle}"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-    <!--
-      Named root scroll view:
-      The code-behind scrolls this to top when error appears,
-      so error is never hidden under keyboard on smaller screens.
-    -->
     <ScrollView x:Name="RootScrollView" VerticalOptions="Fill" HorizontalOptions="Fill">
         <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*" Padding="24">
             <StackLayout Grid.Row="1" Spacing="20" HorizontalOptions="Center" WidthRequest="360">
@@ -27,29 +23,18 @@
                        FontAttributes="Bold"
                        HorizontalOptions="Center" />
 
-                <!-- Email entry -->
                 <Entry Placeholder="{x:Static res:AppResources.EmailLabel}"
                        Keyboard="Email"
                        Text="{Binding Email}"
                        ReturnType="Next"
                        AutomationId="EmailEntry" />
 
-                <!-- Password entry -->
                 <Entry Placeholder="{x:Static res:AppResources.PasswordLabel}"
                        IsPassword="True"
                        Text="{Binding Password}"
                        ReturnType="Done"
                        AutomationId="PasswordEntry" />
 
-                <!-- Error label -->
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="Crimson"
-                       FontSize="14"
-                       LineBreakMode="WordWrap"
-                       IsVisible="{Binding HasError}"
-                       AutomationId="ErrorLabel" />
-
-                <!-- Sign in button -->
                 <Button Text="{x:Static res:AppResources.LoginButton}"
                         Command="{Binding LoginCommand}"
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
@@ -57,11 +42,38 @@
                         CornerRadius="6"
                         AutomationId="SignInButton" />
 
-                <!-- Optional version/footer -->
-                <Label Text="{Binding AppVersion, FallbackValue=''}"
-                       FontSize="12"
-                       HorizontalOptions="Center"
-                       Opacity="0.6" />
+                <Border StrokeThickness="1" Padding="16">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="{x:Static res:AppResources.AuthLegalSectionTitle}"
+                               FontAttributes="Bold"
+                               FontSize="16" />
+
+                        <Label Text="{x:Static res:AppResources.AuthLegalSectionSubtitle}"
+                               FontSize="13"
+                               LineBreakMode="WordWrap"
+                               Opacity="0.85" />
+
+                        <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
+                                Command="{Binding OpenImpressumCommand}" />
+
+                        <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
+                                Command="{Binding OpenPrivacyPolicyCommand}" />
+
+                        <Button Text="{x:Static res:AppResources.LegalTermsButton}"
+                                Command="{Binding OpenTermsCommand}" />
+
+                        <Button Text="{x:Static res:AppResources.LegalHubTitle}"
+                                Command="{Binding OpenLegalHubCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="{Binding ErrorMessage}"
+                       TextColor="Crimson"
+                       FontSize="14"
+                       LineBreakMode="WordWrap"
+                       IsVisible="{Binding HasError}"
+                       AutomationId="ErrorLabel" />
+
             </StackLayout>
         </Grid>
     </ScrollView>

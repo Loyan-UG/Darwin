@@ -1,4 +1,6 @@
+using System;
 using Darwin.Mobile.Consumer.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Darwin.Mobile.Consumer.Views;
 
@@ -7,11 +9,18 @@ namespace Darwin.Mobile.Consumer.Views;
 /// </summary>
 public partial class RegisterPage : ContentPage
 {
-    public RegisterPage(RegisterViewModel viewModel)
+    private readonly IServiceProvider _serviceProvider;
+
+    public RegisterPage(RegisterViewModel viewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
-
-        // Resolve and assign view model via DI so constructor dependencies stay centralized.
         BindingContext = viewModel;
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+    }
+
+    private async void OnLegalHubClicked(object? sender, EventArgs e)
+    {
+        var page = _serviceProvider.GetRequiredService<LegalHubPage>();
+        await Navigation.PushAsync(page);
     }
 }

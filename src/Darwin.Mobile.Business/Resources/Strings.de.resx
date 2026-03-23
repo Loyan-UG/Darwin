@@ -1,110 +1,51 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<root>
-  <!-- 
-    Microsoft ResX Schema 
-    
-    Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
-    associated with the data types.
-    
-    Example:
-    
-    ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
-    There are any number of "resheader" rows that contain simple 
-    name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
-    mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
-    extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
-    read any of the formats listed below.
-    
-    mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            : and then encoded with base64 encoding.
-    
-    mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-            : and then encoded with base64 encoding.
-
-    mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
-            : using a System.ComponentModel.TypeConverter
-            : and then encoded with base64 encoding.
-    -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="metadata">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
-              </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="assembly">
-            <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string" />
-              <xsd:attribute name="name" type="xsd:string" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="metadata">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0"/>
+              </xs:sequence>
+              <xs:attribute name="name" use="required" type="xsd:string"/>
+              <xs:attribute name="type" type="xsd:string"/>
+              <xs:attribute name="mimetype" type="xsd:string"/>
+              <xs:attribute ref="xml:space"/>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="assembly">
+            <xs:complexType>
+              <xs:attribute name="alias" type="xsd:string"/>
+              <xs:attribute name="name" type="xsd:string"/>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1"/>
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2"/>
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" ns1:Ordinal="1"/>
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3"/>
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4"/>
+              <xs:attribute ref="xml:space"/>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1"/>
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required"/>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -216,22 +157,22 @@
   <data name="NoBusinessMembershipMessage" xml:space="preserve">
     <value>Benutzername und Passwort sind korrekt, aber Ihr Konto ist noch keinem Unternehmen zugeordnet. Bitte kontaktieren Sie den Support.</value>
   </data>
-	<data name="SettingsTitle" xml:space="preserve">
+  <data name="SettingsTitle" xml:space="preserve">
     <value>Einstellungen</value>
   </data>
-	<data name="SettingsSubtitle" xml:space="preserve">
+  <data name="SettingsSubtitle" xml:space="preserve">
     <value>Verwalten Sie Ihre Kontoeinstellungen.</value>
   </data>
-	<data name="SettingsProfileButton" xml:space="preserve">
+  <data name="SettingsProfileButton" xml:space="preserve">
     <value>Profil</value>
   </data>
-	<data name="SettingsChangePasswordButton" xml:space="preserve">
+  <data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>
-	<data name="SettingsStaffAccessBadgeButton" xml:space="preserve">
+  <data name="SettingsStaffAccessBadgeButton" xml:space="preserve">
     <value>Mitarbeiterzugangs-Badge</value>
   </data>
-	  <data name="SettingsSubscriptionButton" xml:space="preserve">
+  <data name="SettingsSubscriptionButton" xml:space="preserve">
     <value>Abonnement</value>
   </data>
   <data name="SubscriptionTitle" xml:space="preserve">
@@ -385,7 +326,7 @@
     <value>Die URL des Abrechnungsportals muss HTTPS verwenden.</value>
   </data>
   <data name="SubscriptionPortalValidationHostNotAllowedFormat" xml:space="preserve">
-    <value>Der Host des Abrechnungsportals "{0}" ist für diese Umgebung nicht zugelassen.</value>
+    <value>Der Host des Abrechnungsportals &quot;{0}&quot; ist für diese Umgebung nicht zugelassen.</value>
   </data>
   <data name="SubscriptionPortalValidationReadyFormat" xml:space="preserve">
     <value>Konfigurierter Host: {0}</value>
@@ -396,106 +337,103 @@
   <data name="SubscriptionCopyPortalUrlButton" xml:space="preserve">
     <value>Portal-URL kopieren</value>
   </data>
-<data name="StaffAccessBadgeTitle" xml:space="preserve">
+  <data name="StaffAccessBadgeTitle" xml:space="preserve">
     <value>Mitarbeiterzugangs-Badge</value>
   </data>
-	<data name="StaffAccessBadgeDescription" xml:space="preserve">
+  <data name="StaffAccessBadgeDescription" xml:space="preserve">
     <value>Verwenden Sie diesen kurzlebigen QR-Code für interne Mitarbeiter-Checkpoints und kontrollierte Betriebsabläufe.</value>
   </data>
-	<data name="StaffAccessBadgeSummaryFormat" xml:space="preserve">
+  <data name="StaffAccessBadgeSummaryFormat" xml:space="preserve">
     <value>{0} · {1}</value>
   </data>
-	<data name="StaffAccessBadgeRoleFormat" xml:space="preserve">
+  <data name="StaffAccessBadgeRoleFormat" xml:space="preserve">
     <value>Rolle: {0}</value>
   </data>
-	<data name="StaffAccessBadgeExpiresInFormat" xml:space="preserve">
+  <data name="StaffAccessBadgeExpiresInFormat" xml:space="preserve">
     <value>Läuft ab in {0}</value>
   </data>
-	<data name="StaffAccessBadgeExpired" xml:space="preserve">
+  <data name="StaffAccessBadgeExpired" xml:space="preserve">
     <value>Badge abgelaufen. Wird aktualisiert…</value>
   </data>
-	<data name="StaffAccessBadgeRefreshButton" xml:space="preserve">
+  <data name="StaffAccessBadgeRefreshButton" xml:space="preserve">
     <value>Badge aktualisieren</value>
   </data>
-	<data name="StaffAccessBadgeLoadFailed" xml:space="preserve">
+  <data name="StaffAccessBadgeLoadFailed" xml:space="preserve">
     <value>Mitarbeiter-Badge kann derzeit nicht vorbereitet werden.</value>
   </data>
-	<data name="StaffAccessBadgeUnknownRole" xml:space="preserve">
+  <data name="StaffAccessBadgeUnknownRole" xml:space="preserve">
     <value>Unbekannt</value>
   </data>
-
-
-	<data name="ProfileTitle" xml:space="preserve">
+  <data name="ProfileTitle" xml:space="preserve">
     <value>Profil</value>
   </data>
-	<data name="ProfileSectionTitle" xml:space="preserve">
+  <data name="ProfileSectionTitle" xml:space="preserve">
     <value>Mein Profil</value>
   </data>
-	<data name="FirstNameLabel" xml:space="preserve">
+  <data name="FirstNameLabel" xml:space="preserve">
     <value>Vorname</value>
   </data>
-	<data name="LastNameLabel" xml:space="preserve">
+  <data name="LastNameLabel" xml:space="preserve">
     <value>Nachname</value>
   </data>
-	<data name="PhoneLabel" xml:space="preserve">
+  <data name="PhoneLabel" xml:space="preserve">
     <value>Telefon</value>
   </data>
-	<data name="LocaleLabel" xml:space="preserve">
+  <data name="LocaleLabel" xml:space="preserve">
     <value>Sprache</value>
   </data>
-	<data name="TimezoneLabel" xml:space="preserve">
+  <data name="TimezoneLabel" xml:space="preserve">
     <value>Zeitzone</value>
   </data>
-	<data name="CurrencyLabel" xml:space="preserve">
+  <data name="CurrencyLabel" xml:space="preserve">
     <value>Währung</value>
   </data>
-	<data name="SaveProfileButton" xml:space="preserve">
+  <data name="SaveProfileButton" xml:space="preserve">
     <value>Profil speichern</value>
   </data>
-	<data name="ProfileLoadFailed" xml:space="preserve">
+  <data name="ProfileLoadFailed" xml:space="preserve">
     <value>Profildaten konnten nicht geladen werden.</value>
   </data>
-	<data name="ProfileSaveFailed" xml:space="preserve">
+  <data name="ProfileSaveFailed" xml:space="preserve">
     <value>Profiländerungen konnten nicht gespeichert werden.</value>
   </data>
-	<data name="ProfileSaveSuccess" xml:space="preserve">
+  <data name="ProfileSaveSuccess" xml:space="preserve">
     <value>Profil wurde erfolgreich aktualisiert.</value>
   </data>
-	<data name="ProfileRequiredFields" xml:space="preserve">
+  <data name="ProfileRequiredFields" xml:space="preserve">
     <value>Bitte füllen Sie alle erforderlichen Profilfelder aus.</value>
   </data>
-		<data name="ProfileNotLoadedYet" xml:space="preserve">
+  <data name="ProfileNotLoadedYet" xml:space="preserve">
     <value>Profil ist noch nicht geladen. Bitte aktualisieren und erneut versuchen.</value>
   </data>
-		<data name="ProfileConcurrencyConflict" xml:space="preserve">
+  <data name="ProfileConcurrencyConflict" xml:space="preserve">
     <value>Ihr Profil wurde zwischenzeitlich geändert. Bitte aktualisieren und erneut versuchen.</value>
   </data>
-
-		<data name="ChangePasswordTitle" xml:space="preserve">
+  <data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
   </data>
-	<data name="CurrentPasswordLabel" xml:space="preserve">
+  <data name="CurrentPasswordLabel" xml:space="preserve">
     <value>Aktuelles Passwort</value>
   </data>
-	<data name="NewPasswordLabel" xml:space="preserve">
+  <data name="NewPasswordLabel" xml:space="preserve">
     <value>Neues Passwort</value>
   </data>
-	<data name="ConfirmNewPasswordLabel" xml:space="preserve">
+  <data name="ConfirmNewPasswordLabel" xml:space="preserve">
     <value>Neues Passwort bestätigen</value>
   </data>
-	<data name="ChangePasswordButton" xml:space="preserve">
+  <data name="ChangePasswordButton" xml:space="preserve">
     <value>Passwort aktualisieren</value>
   </data>
-	<data name="PasswordMismatch" xml:space="preserve">
+  <data name="PasswordMismatch" xml:space="preserve">
     <value>Neues Passwort und Bestätigung stimmen nicht überein.</value>
   </data>
-	<data name="PasswordMinLength" xml:space="preserve">
+  <data name="PasswordMinLength" xml:space="preserve">
     <value>Das neue Passwort muss mindestens 8 Zeichen lang sein.</value>
   </data>
-	<data name="PasswordChangeFailed" xml:space="preserve">
+  <data name="PasswordChangeFailed" xml:space="preserve">
     <value>Passwort konnte nicht geändert werden. Bitte prüfen Sie Ihr aktuelles Passwort.</value>
   </data>
-	<data name="PasswordChangeSuccess" xml:space="preserve">
+  <data name="PasswordChangeSuccess" xml:space="preserve">
     <value>Passwort wurde erfolgreich geändert.</value>
   </data>
   <data name="RewardsTitle" xml:space="preserve">
@@ -691,13 +629,13 @@
     <value>Zielgruppe: beigetretene Mitglieder (Standard).</value>
   </data>
   <data name="RewardsCampaignTargetingHintJoinedMembers" xml:space="preserve">
-    <value>Mitglieder-Vorlage: {"audienceKind":"JoinedMembers"} beibehalten.</value>
+    <value>Mitglieder-Vorlage: {&quot;audienceKind&quot;:&quot;JoinedMembers&quot;} beibehalten.</value>
   </data>
   <data name="RewardsCampaignTargetingHintTierSegment" xml:space="preserve">
-    <value>Stufen-Vorlage: tier-Wert angeben, z. B. {"audienceKind":"TierSegment","tier":"Gold"}.</value>
+    <value>Stufen-Vorlage: tier-Wert angeben, z. B. {&quot;audienceKind&quot;:&quot;TierSegment&quot;,&quot;tier&quot;:&quot;Gold&quot;}.</value>
   </data>
   <data name="RewardsCampaignTargetingHintPointsThreshold" xml:space="preserve">
-    <value>Punkte-Vorlage: minimumPoints angeben, z. B. {"audienceKind":"PointsThreshold","minimumPoints":100}.</value>
+    <value>Punkte-Vorlage: minimumPoints angeben, z. B. {&quot;audienceKind&quot;:&quot;PointsThreshold&quot;,&quot;minimumPoints&quot;:100}.</value>
   </data>
   <data name="RewardsCampaignTargetingHintDateWindow" xml:space="preserve">
     <value>Datumsfenster-Vorlage: eligibleFromUtc und eligibleToUtc im ISO-8601-UTC-Format angeben.</value>
@@ -706,13 +644,13 @@
     <value>Targeting-JSON ist ungültig. Vorlagen oder ein gültiges JSON-Objekt verwenden.</value>
   </data>
   <data name="RewardsCampaignTargetingSchemaTierMissing" xml:space="preserve">
-    <value>Stufen-Zielgruppe erfordert einen nicht-leeren "tier"-Wert.</value>
+    <value>Stufen-Zielgruppe erfordert einen nicht-leeren &quot;tier&quot;-Wert.</value>
   </data>
   <data name="RewardsCampaignTargetingSchemaMinimumPointsMissing" xml:space="preserve">
-    <value>Punkte-Zielgruppe erfordert einen nicht-negativen "minimumPoints"-Wert.</value>
+    <value>Punkte-Zielgruppe erfordert einen nicht-negativen &quot;minimumPoints&quot;-Wert.</value>
   </data>
   <data name="RewardsCampaignTargetingSchemaDateWindowMissing" xml:space="preserve">
-    <value>Datumsfenster-Zielgruppe erfordert gültige UTC-Werte für "eligibleFromUtc" und "eligibleToUtc".</value>
+    <value>Datumsfenster-Zielgruppe erfordert gültige UTC-Werte für &quot;eligibleFromUtc&quot; und &quot;eligibleToUtc&quot;.</value>
   </data>
   <data name="RewardsCampaignTargetingSchemaDateWindowRangeInvalid" xml:space="preserve">
     <value>Datumsfenster-Zielgruppe erfordert, dass eligibleFromUtc kleiner oder gleich eligibleToUtc ist.</value>
@@ -896,5 +834,101 @@
   </data>
   <data name="DashboardCampaignTargetingFixMetricsFormat" xml:space="preserve">
     <value>Kampagnen-Schnellkorrektur — angewendet: {0} · unverändert: {1} · Zurücksetzungen: {2}</value>
+  </data>
+  <data name="AuthLegalSectionTitle" xml:space="preserve">
+    <value>Rechtliches &amp; Datenschutz</value>
+  </data>
+  <data name="AuthLegalSectionSubtitle" xml:space="preserve">
+    <value>Prüfen Sie die rechtlichen Seiten, bevor Sie sich in der Business-App anmelden.</value>
+  </data>
+  <data name="LegalHubTitle" xml:space="preserve">
+    <value>Rechtliches &amp; Datenschutz</value>
+  </data>
+  <data name="LegalHubSubtitle" xml:space="preserve">
+    <value>Öffnen Sie die aktuellen Rechts- und Datenschutzseiten, die auf loyan.de gepflegt werden.</value>
+  </data>
+  <data name="LegalImpressumButton" xml:space="preserve">
+    <value>Impressum</value>
+  </data>
+  <data name="LegalPrivacyNoticeButton" xml:space="preserve">
+    <value>Datenschutzhinweise</value>
+  </data>
+  <data name="LegalTermsButton" xml:space="preserve">
+    <value>Nutzungsbedingungen</value>
+  </data>
+  <data name="LegalAccountDeletionButton" xml:space="preserve">
+    <value>Konto löschen</value>
+  </data>
+  <data name="LegalOpenFailed" xml:space="preserve">
+    <value>Die rechtliche Seite konnte derzeit nicht geöffnet werden. Bitte versuchen Sie es in Kürze erneut.</value>
+  </data>
+  <data name="SettingsLegalHubButton" xml:space="preserve">
+    <value>Rechtliches &amp; Datenschutz</value>
+  </data>
+  <data name="SettingsDeleteAccountButton" xml:space="preserve">
+    <value>Konto löschen</value>
+  </data>
+  <data name="AccountDeletionTitle" xml:space="preserve">
+    <value>Konto löschen</value>
+  </data>
+  <data name="AccountDeletionWarningTitle" xml:space="preserve">
+    <value>Bevor Sie fortfahren</value>
+  </data>
+  <data name="AccountDeletionWarningBody" xml:space="preserve">
+    <value>Die Löschung eines Business-Kontos wird auf der externen Loyan-Website abgeschlossen. Prüfen Sie die Hinweise sorgfältig, bevor Sie fortfahren.</value>
+  </data>
+  <data name="AccountDeletionExternalHint" xml:space="preserve">
+    <value>Die App öffnet nach Möglichkeit https://loyan.de/konto-loeschen in einem In-App-Browser.</value>
+  </data>
+  <data name="AccountDeletionContinueButton" xml:space="preserve">
+    <value>Löschseite öffnen</value>
+  </data>
+  <data name="AccountDeletionOpenFailed" xml:space="preserve">
+    <value>Die Seite zur Kontolöschung konnte derzeit nicht geöffnet werden. Bitte versuchen Sie es in Kürze erneut.</value>
+  </data>
+  <data name="PermissionDisclosureContinueButton" xml:space="preserve">
+    <value>Weiter</value>
+  </data>
+  <data name="PermissionDisclosureCancelButton" xml:space="preserve">
+    <value>Jetzt nicht</value>
+  </data>
+  <data name="PermissionDisclosurePrivacyButton" xml:space="preserve">
+    <value>Datenschutzhinweise öffnen</value>
+  </data>
+  <data name="CameraDisclosureTitle" xml:space="preserve">
+    <value>Kamerazugriff</value>
+  </data>
+  <data name="CameraDisclosurePermissionName" xml:space="preserve">
+    <value>Kameraberechtigung</value>
+  </data>
+  <data name="CameraDisclosurePurpose" xml:space="preserve">
+    <value>Loyan Business verwendet die Kamera, um Loyalty-QR-Codes zu scannen und die richtige Scan-Session zur Verarbeitung zu laden.</value>
+  </data>
+  <data name="CameraDisclosureRequirement" xml:space="preserve">
+    <value>Der Kamerazugriff ist für das Scannen auf dem Gerät funktional erforderlich, eine manuelle Token-Eingabe bleibt jedoch verfügbar, wenn die Berechtigung nicht erteilt wird.</value>
+  </data>
+  <data name="CameraDisclosureDeniedTitle" xml:space="preserve">
+    <value>Kameraberechtigung verweigert</value>
+  </data>
+  <data name="CameraDisclosureDeniedBody" xml:space="preserve">
+    <value>Der Kamerazugriff wurde verweigert. Sie können ihn in den App-Einstellungen aktivieren oder mit der manuellen Token-Eingabe fortfahren.</value>
+  </data>
+  <data name="CameraDisclosureOpenSettingsButton" xml:space="preserve">
+    <value>Einstellungen öffnen</value>
+  </data>
+  <data name="ScannerManualTokenTitle" xml:space="preserve">
+    <value>Manueller Scan-Token</value>
+  </data>
+  <data name="ScannerManualTokenMessage" xml:space="preserve">
+    <value>Kamera nicht verfügbar. Fügen Sie den ScanSessionToken ein oder brechen Sie ab.</value>
+  </data>
+  <data name="ScannerManualTokenAccept" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ScannerManualTokenCancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="ScannerManualTokenPlaceholder" xml:space="preserve">
+    <value>Token hier einfügen</value>
   </data>
 </root>
