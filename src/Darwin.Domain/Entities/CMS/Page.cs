@@ -10,6 +10,24 @@ namespace Darwin.Domain.Entities.CMS
     /// </summary>
     public sealed class Page : BaseEntity
     {
+        /// <summary>Default page title.</summary>
+        public string Title { get; set; } = string.Empty;
+
+        /// <summary>Default slug.</summary>
+        public string Slug { get; set; } = string.Empty;
+
+        /// <summary>Default HTML content.</summary>
+        public string ContentHtml { get; set; } = string.Empty;
+
+        /// <summary>Default meta title.</summary>
+        public string MetaTitle { get; set; } = string.Empty;
+
+        /// <summary>Default meta description.</summary>
+        public string MetaDescription { get; set; } = string.Empty;
+
+        /// <summary>Publish flag.</summary>
+        public bool IsPublished { get; set; }
+
         /// <summary>Publishing status of the page (Draft/Published/...)</summary>
         public PageStatus Status { get; set; } = PageStatus.Draft;
 
