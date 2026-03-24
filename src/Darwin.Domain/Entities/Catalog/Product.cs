@@ -126,22 +126,7 @@ namespace Darwin.Domain.Entities.Catalog
         public Guid TaxCategoryId { get; set; }
 
 
-        // Inventory (single-warehouse in phase 1)
-        /// <summary>Total physical stock on hand available.</summary>
-        public int StockOnHand { get; set; }
-        /// <summary>Quantity reserved for open orders (not yet shipped).</summary>
-        public int StockReserved { get; set; }
-        /// <summary>Minimum stock level triggering replenishment recommendations.</summary>
-        public int? ReorderPoint { get; set; }
-        /// <summary>Allow selling when stock is below zero.</summary>
-        public bool BackorderAllowed { get; set; }
-        /// <summary>Minimum quantity per order line.</summary>
-        public int? MinOrderQty { get; set; }
-        /// <summary>Maximum quantity per order line.</summary>
-        public int? MaxOrderQty { get; set; }
-        /// <summary>Step/increment for quantity selection (e.g., 5 → 5,10,15...).</summary>
-        public int? StepOrderQty { get; set; }
-
+        // Inventory is managed in the Inventory module (Warehouse/StockLevel).
 
         // Logistics — persist SI base units, *do not* encode units in property names
         /// <summary>Package weight stored in grams (display conversion per site settings).</summary>
