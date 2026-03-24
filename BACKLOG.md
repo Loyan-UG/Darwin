@@ -1,402 +1,115 @@
-# Darwin Backlog & Roadmap
+# Darwin Backlog (Refined Plan)
 
-This document defines the **current status, active work, and planned roadmap**
-for the Darwin Platform:
+This document presents a refined backlog and roadmap for the Darwin platform. It condenses the large historical backlog into a concise set of completed work, current priorities and future phases. The goal is to give a clear, actionable plan for evolving the system into a complete CMS + commerce + CRM solution while preserving the existing Clean Architecture. No reference to AI is made; this is purely a planning document for developers.
 
-- CMS + E-Commerce + CRM (Web)
-- Public REST API (WebApi)
-- Loyalty System (shared between Web & Mobile)
-- Mobile Suite (Business + Consumer)
-- Shared packages (Contracts + Mobile.Shared)
+## 1 â€“ Completed (Stable)
 
-It is designed as the **single source of truth** for development planning.
+The core foundations of Darwin are already in place and should not require major re-work. These items are summarised for context only:
 
+- **Architecture & Infrastructure**: the solution uses a Clean Architecture structure (Domain â†’ Application â†’ Infrastructure â†’ Web/WebApi/Mobile). Major cross-cutting concerns (soft delete, audit fields, concurrency, translation pattern) and EF Core configurations are complete. The solution builds, migrates and seeds the database correctly.
+- **Domain models**: catalog entities (Product, Variant, Category, Brand, Add-ons), CMS pages/menus, pricing (Promotions/Taxes), cart/checkout, partial order/payment/shipment, users & addresses, identity (Role/Permission), settings and SEO are all implemented.
+- **Security**: password hashing (Argon2id), two-factor (TOTP), WebAuthn, external logins, password reset flows and security stamp rotation are complete.
+- **Application layer**: command/query handlers, validators and a `Result<T>` pattern exist for all current modules.
+- **Admin panel (Back-office)**: pages for managing catalog (products, categories, brands), CMS (pages, menus), site settings (partial), robots/sitemap, canonical URL service and some shared UI components are implemented.
+- **Mobile baseline**: the initial mobile apps (consumer and business) implement basic account flows, loyalty scanning, QR token handling and baseline discovery. These are considered stable and separate from web work.
 
----
+> **Note**: Many additional mobile and marketing features exist in the historical backlog, but they remain stable and outside the scope of the web and domain work described here. See the original historical backlog details in repository history if needed.
 
-# 1. ? Completed (Stable)
+## 2 â€“ Phase 1: Project Refactor & Domain Completion
 
-## 1.1 Architecture & Core Infrastructure
-- Clean Architecture solution structure  
-  (`Domain`, `Application`, `Infrastructure`, `Web`)
-- Complete domain model:
-  - Catalog: Product, Variant, Category, Brand, Add-ons
-  - CMS: Pages, Menus
-  - Pricing: Promotions, Taxes
-  - Cart & Checkout: Cart, CartItem
-  - Orders: Order, OrderLine, Payment, Shipment (partial)
-  - Users & Addresses
-  - Identity: Role, Permission, UserRole, RolePermission
-  - SEO: RedirectRule
-  - Settings: SiteSetting (general + SEO + analytics + WebAuthn + SMTP)
-- Core cross-cutting concerns:
-  - Soft-delete (`IsDeleted`)
-  - Audit fields
-  - Concurrency (`RowVersion`)
-  - Translation pattern for multilingual content
+The first phase focuses on preparing the existing solution for growth and finishing the domain layer so future work does not require major refactoring. The high-level goal is to rename and reorganise the admin project, design and implement the missing domain modules (CRM, inventory, billing) and introduce simple extensibility patterns.
 
-## 1.2 Security
-- Argon2id password hashing
-- TOTP (2FA) with Data Protection encryption
-- WebAuthn (FIDO2) registration + login
-- External logins (Google, Microsoft)
-- SecurityStamp rotation
-- Password reset workflows
+### Epic: Rename `Darwin.Web` to `Darwin.WebAdmin`
 
-## 1.3 Application Layer
-- Command/Query Handlers for all modules
-- FluentValidation validators
-- Result<T> pattern (Darwin.Shared)
-- Abstractions for Persistence, Clock, Auth, Email
+- **Task**: rename the project folder `src/Darwin.Web` to `src/Darwin.WebAdmin` and the project file to `Darwin.WebAdmin.csproj`. Update the solution file (`Darwin.sln`) so it references the new project name. Adjust `ProjectReference` entries in other projects accordingly.
+- **Task**: change all namespaces starting with `Darwin.Web` to `Darwin.WebAdmin` throughout the code base. This includes controllers, views, tag helpers and any referenced classes.
+- **Task**: move the existing `Areas/Admin` structure to the project root so admin controllers and views are no longer under an MVC area. Update routing and `_ViewImports.cshtml` accordingly. Ensure all links and URL helpers point to the new root paths.
+- **Task**: update documentation (README, solution filter files) to reflect the new project name and folder layout.
 
-## 1.4 Infrastructure Layer
-- EF Core configurations for all entities
-- DbContext + Migrations
-- DataSeeder (Identity + Catalog)
-- SMTP email sender
-- Data Protection key ring support for shared hosting
-- Secret-protection converters (TOTP, sensitive fields)
+### Epic: Domain completion and new modules
 
-## 1.5 Admin Panel (Darwin.WebAdmin)
-- Pages, Categories, Products, Brands, Menus
-- Multilingual fields (Brand, Product, Page)
-- Quill rich text editor
-- Site Settings (partial)
-- Robots.txt + Sitemap generation
-- Canonical URL service
-- Shared admin UI components (`_Alerts.cshtml`, TagHelpers)
+The current domain lacks CRM, multi-warehouse inventory and billing. Designing and implementing them now avoids conflict later.
 
-## 1.6 Mobile Phase-1 Account & Loyalty Baseline
-- Consumer account flows completed in app:
-  - Register (self-service)
-  - Forgot password request
-  - Login + refresh token handling
-  - Profile read/update (`GET/PUT /api/v1/profile/me` with `RowVersion`)
-  - Change password (`POST /api/v1/auth/password/change`)
-- Consumer QR behavior baseline documented and implemented:
-  - Countdown/UI tick ~1s for smooth display
-  - Minimum automatic network refresh interval = 5 minutes while token still valid
-- Business scanner flow baseline completed:
-  - Scan token ? process session ? confirm accrual/redemption
+- **Task**: design and implement a CRM bounded context (Customer, Address, Segment, Interaction, Consent, LoyaltyPointEntry, Invoice). Each entity should be sealed with `Guid` keys and non-nullable strings. See the domain design document for field details.
+- **Task**: design and implement multi-warehouse inventory. Introduce Warehouse, StockLevel and StockTransfer entities. Remove stock fields from ProductVariant and migrate data to StockLevel. Seed a default warehouse named â€œMain warehouseâ€ for small companies. Handlers for reserving, releasing and transferring stock should be added.
+- **Task**: design and implement a billing module. Create Invoice and InvoiceLine entities (for CRM invoices) and Payment entities to track invoice payments. Provide handlers to generate an invoice for an order, record payments and cancel invoices.
+- **Task**: expose appropriate commands/queries in the Application layer and REST endpoints in WebApi. Document DTOs and validation rules.
 
-	- 
----
+### Epic: Admin UI foundation upgrades
 
-# 2. ?? In Progress
+- **Task**: add support for HTMX or Alpine.js to the admin panel to enable lightweight dynamic interactions without a full SPA. Configure bundling (using LibMan or npm) and create sample partial views that update via HTMX (e.g., inline editing of site settings).
+- **Task**: complete Site Settings UI (SMTP, analytics, WebAuthn origins, social links, etc.) with caching and concurrency handling.
+- **Task**: build full role/permission and user management screens using existing handlers. Include WebAuthn registration management, 2FA enabling/disabling and concurrency conflict alerts.
+- **Task**: add grid/pages for new domain modules: customers, segments, interactions, warehouses, stock levels, invoices and payments. Use shared table/list components and modals for create/edit.
 
-## 2.1 WebApi (High Priority — ACTIVE)
-- JWT Authentication (already implemented in Infrastructure)
-- Contracts-first endpoints using `Darwin.Contracts`
-- Identity endpoints: login, refresh token, logout, logout-all, register, password reset/change
-- Business endpoints:
-  - Business info
-  - Business locations
-  - Loyalty program definitions
-  - Customer lookup & reward snapshot
-- Consumer endpoints:
-  - QR token generation (short-lived)
-  - Reward accrual (+1 point)
-  - Reward redemption
-  - Discover (map + list)
-  - Profile (basic editable info)
+## 3 â€“ Phase 2: Back-office Completion
 
-## 2.2 Mobile.Shared (ACTIVE)
-- HTTP client (AddHttpClient) with retry policy (Polly-style)
-- Token storage (secure)
-- QR token refresher
-- Shared API facades (AuthService, LoyaltyService, BusinessService)
-- Abstractions for Scanner + Location
-- DI composition (`AddDarwinMobileShared`)
+Once the domain is complete, the admin panel can be extended to cover all core business operations. This phase aims to provide a polished experience for staff.
 
-## 2.3 Mobile Consumer App (ACTIVE)
-- Stabilization and UX refinement of completed Phase-1 flows
-- Register / forgot-password / reset-password end-user journey hardening
-- Profile UX refinements (clearer inline feedback placement)
-- Rotating QR polish (countdown smoothness vs battery trade-off)
-- Discovery + rewards performance tuning and small UX fixes
-- Discover IA finalized: separate "My Businesses" (joined accounts + quick actions) from "Explore" (search/join flow).
-- Explore discovery finalized with category + nearby filters and joined-state routing to rewards.
-- Wire-up to Shared services
+### Epic: Inventory and order management
 
-## 2.4 Mobile Business App (ACTIVE)
-- Login
-- QR Scan ? Loyalty API ? Add point
-- Redemption workflow
-- Customer snapshot display
-- Wire-up to Shared services
+- **Task**: implement an inventory ledger UI showing current stock and history per variant across warehouses. Include stock adjustments and transfer logs.
+- **Task**: finish order management screens: view orders, update order status, add shipments/payments, refund or cancel orders. Integrate invoice/billing data.
+- **Task**: add management pages for shipping methods, taxes, coupon/promotions and add-on groups.
+- **Task**: create dashboards with simple charts showing sales totals, order counts, customer counts and loyalty points accrual using a lightweight charting library (e.g., Chart.js via HTMX).
 
-## 2.5 Admin Panel Enhancements (ONGOING)
-- SiteSettings: full completion (SMTP, analytics, WebAuthn origins, WhatsApp)
-- Role & permission UI
-- User management + 2FA + WebAuthn management
-- Consistent Quill integration across full CMS
+### Epic: CRM management
 
----
+- **Task**: build pages for viewing and editing customers, their addresses and segments. Implement search, filtering and pagination.
+- **Task**: create views to log and review interactions (email, call, meeting, order) and show customer timelines. Provide forms to add notes and set consents (GDPR compliant).
+- **Task**: develop a segmentation editor: allow administrators to create customer segments by selecting criteria (lifetime spend, last purchase date, region, etc.). Each segment membership should be persisted in the `CustomerSegmentMembership` table.
+- **Task**: implement invoice and payment management UI. Show open invoices, overdue invoices, paid invoices and allow recording manual payments or refunds.
 
-# 3. ?? Planned Next
+### Epic: Back-office usability improvements
 
-## 3.1 WebApi Extensions
-- [x] Business onboarding endpoints
-- [x] Reward configuration endpoints
-- [x] Push notification registration (device tokens)
-- [x] Extended discovery filters
-- Public Catalog endpoints for future storefront use
+- **Task**: standardise table/list components across the admin panel with consistent sorting, filtering, search, pagination and actions. Abstract them into a reusable partial view.
+- **Task**: ensure all pages are accessible (ARIA labels, keyboard navigation) and responsive. Document a style guide for admin UI to maintain consistency.
+- **Task**: implement concurrency handling across admin forms (using row versions) and display user-friendly conflict messages with the ability to reload data.
 
-## 3.2 Mobile Consumer App – Phase 2
-- [x] Full map integration (Google Maps / Apple MapKit)
-- [x] Business detail page
-- [x] Favorites, reviews, likes
-- [x] Feed/promotions module (timeline-backed + promotions endpoint)
-- [x] Rewards history
-- [x] Discover IA split: My Businesses + Explore (search/category/nearby)
+## 4 â€“ Phase 3: Front-office Implementation
 
-## 3.3 Mobile Business App – Phase 2
-- [x] Business dashboard
-- [x] Simple reporting (visits, top customers, upcoming rewards)
-- [x] Reward editing interface
-- [x] Staff roles & permissions
+This phase introduces a new, customer-facing web experience. The front-office will be built as a separate project (suggested name `Darwin.Web` or `Darwin.Frontend`) using Next.js. It will consume the public REST API and deliver a modern, SEO-friendly storefront.
 
-## 3.4 Mobile Consumer App – Phase 3
-### Completed
-- [x] Push registration infrastructure end-to-end baseline (contracts, API endpoint, shared/mobile services, coordinator wiring).
-- [x] Manual push registration sync UX in Consumer Profile (status + last sync timestamp + retry action).
+### Epic: Frontend project setup
 
-### Remaining
-- [x] Native platform push token providers (FCM/APNs production integration) replacing fallback/noop behavior.
-- [x] Multi-business loyalty overview (aggregated balances, quick actions, and state transitions).
-- [x] Promotion campaigns integration in consumer timeline.
-- [x] Inactive user reminder strategy (triggering + suppression + measurement).
+- **Task**: create a new folder `src/Darwin.Frontend` and run `npx create-next-app@latest --typescript` to scaffold a Next.js project. Install Tailwind CSS, headless UI, axios and other required packages. Configure ESLint/Prettier and set up a basic layout with header/footer.
+- **Task**: define environment variables (`NEXT_PUBLIC_API_URL`) and create an API client using axios. Set up SWR or React Query for data fetching and caching.
+- **Task**: add the Next.js project to the Visual Studio solution: either as an â€œExisting Projectâ€ of type â€œNode.js projectâ€ or by treating it as an external folder and using VS Code for JavaScript development. Ensure Git integration works for both C# and Next.js projects.
 
-## 3.5 Mobile Business App – Phase 3
-- [x] Full analytics module (CSV/PDF export)
-- [x] Business subscription visibility — mobile settings now expose a read-only subscription status snapshot and redirect operators to the Loyan website for full billing/subscription management outside the app.
-- [x] Staff QR codes for internal access
+### Epic: Public pages and storefront
 
-## 3.6 Backlog Additions from Recent Mobile Implementation
-- [x] Push provider operational readiness checklist per environment (Firebase `google-services.json`, Apple Push entitlement/certificate, runtime permission verification, and token rotation monitoring dashboard).
-- [x] Consumer Register UX: auto-login after successful registration (or explicit redirect to login as fallback).
-- [x] Shared mobile error mapping policy: avoid showing raw exception messages in UI-bound ViewModels.
-- [x] API client no-content contract cleanup: add first-class helpers for success responses with empty body to reduce per-service workarounds.
-- [x] QR countdown UX decision finalized: keep 1s display refresh (smoother UI) with a 5-minute minimum automatic network refresh limit.
-- [x] Consumer Profile push registration self-service sync: added manual sync action with user-visible status and last-sync timestamp.
+- **Task**: implement the home page, product list pages and product detail pages. Use server-side rendering (SSR) for SEO and incremental static regeneration (ISR) for scalability. Fetch data from `/api/v1/catalog/products` and related endpoints.
+- **Task**: build CMS pages (About, Contact, custom pages) by fetching content from `/api/v1/cms/pages` and menu definitions from `/api/v1/cms/menus`. Render them on the server.
+- **Task**: implement cart functionality: display cart items, allow quantity changes, apply promotions and calculate totals. Connect to `/api/v1/cart` endpoints.
+- **Task**: integrate a checkout flow: choose shipping method and payment method, confirm order and redirect to payment provider (e.g., Stripe). Handle success and failure callbacks.
 
-- [x] Externalize mobile map API keys (Android Google Maps) to secure secret providers, with Android build-time validation (warn in Debug, fail in Release) and documented iOS/MapKit requirements per environment.
+### Epic: Customer portal
 
-## 3.7 Promotions Phase Upgrade (Next High-Value Workstream)
-- [x] Introduce campaign-driven promotions model (instead of only derived/tier-based cards).
-- [x] Add business-manageable campaign lifecycle (draft, scheduled, active, expired).
-- [x] Add eligibility + audience rules (joined members, tier, points threshold, date window).
-- [x] Add feed delivery guardrails (priority, cap, de-duplication, frequency policy).
-- [x] Add tracking events for impression/open/claim to measure conversion.
-- [x] Add admin/business APIs and minimal management UI for campaign CRUD and activation.
+- **Task**: implement authentication using JWT tokens returned from `/api/v1/auth/login` and store tokens in HTTP-only cookies. Provide registration and password reset flows.
+- **Task**: build a customer account area: view/edit profile, manage addresses, view loyalty balance, view order history (`/api/v1/orders`) and invoices (`/api/v1/invoices`).
+- **Task**: implement a loyalty wallet: show points balance and transaction history by consuming `/api/v1/loyalty/points` and `/api/v1/loyalty/rewards`.
 
+## 5 â€“ Phase 4: Advanced CRM & Marketing
 
-## 3.8 Quality Findings & Follow-up
-- [x] Fixed: `ProfileViewModel.SaveProfileAsync` metadata refresh dead-path (refresh was previously skipped when `IsBusy == true`).
-- [x] Fixed: `ProfileViewModel.SyncPushRegistrationAsync` busy-flag updates now marshaled via UI thread helper for safer property change notifications.
-- [?] Testing coverage for Profile save fallback metadata flow and push-sync command reentrancy/busy-state behavior moved to `DarwinTesting.md` (handled in dedicated testing track).
-- [x] Confirmed production token-provider strategy (`ConsumerPlatformPushTokenProvider` with Android FCM + iOS/MacCatalyst APNs bridges) and removed fallback registration path from DI.
-- [x] Hardened platform build wiring (Android-only Firebase package + explicit iOS/MacCatalyst entitlements binding) to prevent cross-target restore/signing misconfiguration.
-- [x] Added Android 13+ startup notification-permission request bootstrap with one-time prompt persistence, and removed legacy fallback push token providers to reduce production ambiguity.
-- [x] Added release-safe APNs entitlement split (Debug=development, Release=production) and Android Release guard for missing `google-services.json`.
-- [x] Business dashboard now supports CSV export (summary KPIs + top customers + recent activities) through native share flow for lightweight operator reporting.
-- [x] Business dashboard now supports PDF export (single-page operational snapshot) through native share flow for lightweight operator reporting handoff.
-- [x] Business settings now include a rotating staff access badge page that emits short-lived internal QR payloads with expiry countdown and manual refresh.
-- [x] Added Profile push "Open notification settings" self-service action to improve recovery after notification permission denial.
-- [x] Added runtime push diagnostics labels in Profile (permission state + token availability) to speed up operational troubleshooting.
-- [x] Profile push diagnostics refresh on every page appearance so state updates after returning from system settings.
-- [x] Published environment-specific push readiness checklist in `DarwinMobile.md` for Dev/Staging/Production release gating.
-- [x] Rewards page now includes aggregated multi-business overview metrics and a quick QR action for the selected business context.
-- [x] Feed promotions now support scope switching (selected business vs all joined businesses) with context-aware cards.
-- [x] Feed promotions now enforce initial guardrails in mobile rendering (de-duplication by business/title/CTA, 6-card cap, and 8-hour suppression window with fallback behavior).
-- [x] Device registration heartbeat now updates `UserEngagementSnapshot` baseline fields (`LastActivityAtUtc`, `EventCount`, compact snapshot metadata) to support inactive-reminder triggering and measurement.
-- [x] Added Application handlers for inactive-reminder candidate selection and per-outcome measurement metadata recording (sent/failed/suppressed with cooldown-ready baseline).
-- [x] Added WebApi background worker scaffold for inactive reminders (`InactiveReminderBackgroundService`) with configurable interval/threshold/cooldown and batch observability counters.
-- [x] Inactive reminder batch orchestration now records every attempt outcome (`Sent`, `Failed`, `Suppressed`) in engagement snapshot metadata for measurement dashboards.
-- [x] Replaced no-op reminder dispatcher with HTTP push gateway dispatcher (`HttpInactiveReminderDispatcher`) using push token + platform payload and configurable auth/templates.
-- [x] Added stable inactive-reminder gateway failure taxonomy codes (`Gateway.*`, `Validation.*`) for cleaner suppression/failure measurement and dashboards.
-- [x] Gateway dispatcher now extracts provider-native reason fields (`providerCode`/`providerReason`/`code`/`reason`) and emits normalized `Gateway.Provider.*` taxonomy codes.
-- [x] Added canonical provider mappings for common FCM/APNs reason codes (token invalid, auth/topic mismatch, rate-limit, service unavailable) to improve remediation signals.
-- [x] Added promotion interaction tracking endpoint + mobile client calls for `Impression` and `Open` events (engagement snapshot metadata updates).
-- [x] Added `Claim` event hook from redemption QR generation flow (`RewardClaimIntent`) to complete promotions conversion funnel telemetry coverage.
-- [x] Added campaign-foundation promotion payload fields in Contracts/Application/WebApi mapping (`CampaignState`, campaign window, and normalized eligibility rules) while keeping backward-compatible derived cards active.
-- [x] Promotions query now reads active in-app `Marketing.Campaign` entities (global + joined-business scoped), resolves lifecycle state, and merges campaign cards with derived loyalty cards for gradual migration.
-- [x] Promotions feed now applies server-side guardrails with contract-exposed policy (`EnableDeduplication`, `MaxCards`, `SuppressionWindowMinutes`, `FrequencyWindowMinutes`) and campaign suppression/frequency controls based on recent in-app delivery attempts.
-- [x] Added business campaign management WebApi endpoints (list/create/update/activation) with business-scope ownership checks and RowVersion concurrency for update/activation paths.
-- [x] Wired business campaign management contracts into `Darwin.Mobile.Shared` loyalty facade (list/create/update/activation) so mobile business workflows can consume the new WebApi surface.
-- [x] Business mobile Rewards screen now includes campaign list, in-app activation toggle, and minimal create/update campaign editor wired to shared campaign APIs.
-- [x] Business campaign editor now supports optional UTC start/end inputs with client-side format/range validation before create/update API calls.
-- [x] Business campaign editor now supports delivery-channel selection (In-App / In-App+Push) with explicit validation and localized labels in mobile UI.
-- [x] Business campaign editor now validates and submits optional `targeting/payload` JSON object fields (with localized validation feedback) to reduce malformed mutation payloads.
-- [x] Business campaign editor now performs client-side duplicate internal-name guardrails before create/update API calls to reduce avoidable round-trips and operator confusion.
-- [x] Business campaign operations list now supports local search + lifecycle-state filtering (Draft/Scheduled/Active/Expired) to improve operator navigation in larger campaign sets.
-- [x] Business campaign operations list now shows filter-result summary (visible/total) and includes one-tap filter reset for faster operator recovery in dense campaign sets.
-- [x] Business campaign operations list now supports configurable client-side sort options (start date and title asc/desc) for faster operator triage workflows.
-- [x] Business campaign operations list now surfaces lifecycle KPI counters (Draft/Scheduled/Active/Expired) to give operators a fast health snapshot before drilling into details.
-- [x] Business campaign lifecycle KPI counters are now actionable chips that apply state filter in one tap for faster drill-down workflows.
-- [x] Business campaign lifecycle KPI chips now support toggle behavior (tap active chip again to clear state filter) and include an "All" chip for one-tap reset.
-- [x] "All" KPI chip now resets only lifecycle-state filter (preserving active search/sort context) for faster iterative campaign triage.
-- [x] Campaign toolbar now includes a dedicated "Clear search" action that resets only search query while preserving state/sort context.
-- [x] Business campaign local search now also matches campaign body text (in addition to internal name/title) for better operator discovery in dense lists.
-- [x] Business campaign list now surfaces localized audience/eligibility summary parsed from targeting JSON (including rule-array fallback) for faster operator segmentation checks without opening editor.
-- [x] Business campaign operations list now supports audience-kind filtering (all/joined/tier/points/date-window) for faster segmentation-focused triage during daily operations.
-- [x] Business campaign audience KPIs now render as actionable chips (with toggle-to-clear and all-audiences reset) to speed up segmentation-focused drill-down without reopening filter pickers.
-- [x] Business campaign editor now provides one-tap audience targeting JSON presets (joined/tier/points/date-window) to reduce operator setup time and malformed targeting payloads.
-- [x] Business campaign editor now shows inline targeting guidance derived from targeting JSON (`audienceKind`) so operators can validate segmentation intent before saving.
-- [x] Business campaign editor now enforces audience-specific targeting schema validation (tier/minimumPoints/date-window UTC range) with inline localized feedback before save.
-- [x] Business campaign editor now includes one-tap targeting schema quick-fix action for common audience errors (tier/minimumPoints/date-window fields), reducing manual JSON correction overhead.
-- [x] Business campaign editor quick-fix now reports localized success/no-change status so operators can confirm whether auto-correction changed targeting JSON.
-- [x] Business campaign editor now surfaces quick-fix applied/no-change counters to improve operator visibility into targeting correction patterns during daily operations.
-- [x] Business campaign editor now includes a reset action for quick-fix counters, enabling per-shift/per-session diagnostics hygiene for operations teams.
-- [x] Quick-fix telemetry now includes monitoring-window context (window start + last reset timestamps) for clearer interpretation of applied/no-change counters in operations.
-- [x] Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
-- [x] Promotions feed now supports explicit frequency policy input (`FrequencyWindowMinutes`) and response diagnostics counters for suppression/dedup/cap observability in operations dashboards.
-- [x] Business Settings subscription flow now keeps billing actions out of mobile and shows only the current server-backed subscription snapshot plus a handoff link to `https://www.loyan.de` for full account management.
-- [x] Business dashboard/report exports continue to expose subscription status refresh telemetry for mobile-side operational troubleshooting.
-- [x] Testing-phase login acceleration policy locked: QA credentials remain prefilled only in DEBUG mobile builds (Consumer/Business), while non-DEBUG builds default to empty credentials; this behavior must not be changed in routine backlog work and will be removed only by explicit manual owner decision.
-- [x] UI-thread stability guardrail documented from production crash pattern: command `CanExecuteChanged` notifications and final busy-state/property updates must be marshaled to Main Thread in MAUI ViewModels/commands (especially after `ConfigureAwait(false)` continuations) to prevent Android `CalledFromWrongThreadException` / `AndroidRuntimeException` screen crashes.
-- [x] `BaseViewModel.OnPropertyChanged` now enforces main-thread marshaling for property change notifications to reduce repeated MAUI cross-thread UI crashes in view-model continuations.
-- [x] Promotions P0 contracts/app wiring expanded with explicit campaign eligibility rules (`EligibilityRules`) across Business campaign APIs (Contracts, Application handlers, WebApi mapping) while preserving backward compatibility with existing `TargetingJson` payloads.
-- [x] Fixed Business rewards diagnostics compile regression after `RewardsViewModel` partial-file split by restoring backward-compatible `DisplayName` aliases on campaign filter/sort option models.
-- [x] Fixed `Darwin.MobileOnly.slnf` so the mobile-focused solution filter now points to the actual mobile projects (`Darwin.Contracts`, `Darwin.Mobile.Shared`, `Darwin.Mobile.Consumer`, `Darwin.Mobile.Business`).
-- [x] Removed the obsolete Business "Team" placeholder tab from production shell navigation to keep the final mobile IA aligned with actually implemented operator features.
-- [x] Hardened committed Business mobile defaults by disabling TLS trust bypass and using the public Loyan website (`https://www.loyan.de`) as the only subscription-management handoff from mobile.
-- [x] Removed obsolete mobile `ComingSoonPage` assets and localization entries that were no longer reachable after production navigation cleanup.
-- [x] Business mobile dashboard/report exports no longer surface subscription checkout KPIs now that checkout and in-app billing mutations were removed from the mobile product surface.
-- [x] Consumer feed suppression/cap guardrails now honor server-applied promotion policy (`AppliedPolicy.FrequencyWindowMinutes` / `SuppressionWindowMinutes` / `MaxCards`) instead of relying only on fixed client constants, improving delivery consistency between mobile and API.
-- [x] Consumer feed now captures server promotion diagnostics counters (`InitialCandidates`, `SuppressedByFrequency`, `Deduplicated`, `TrimmedByCap`, `FinalCount`) and effective applied policy values in ViewModel state for operational observability and troubleshooting workflows.
-- [x] Mobile profile save flow now uses `Result`-based update responses in shared profile service and maps optimistic-concurrency conflicts to explicit localized retry guidance (Consumer + Business), while keeping non-concurrency failures generic to avoid raw technical error leakage in profile UIs.
-- [x] Consumer Feed UI now surfaces a localized promotion policy/diagnostics summary line (suppression window, cap, and guardrail counters) to make server delivery behavior visible during operations validation.
-- [x] Consumer Feed promotions diagnostics now include one-tap clipboard export (localized success/failure status), and export remains available even when no promotion card is currently visible (using latest diagnostics snapshot) so operations/support teams can share current guardrail policy/counter snapshot without screenshots.
-- [x] Consumer Feed diagnostics section now stays visible from latest snapshot context (scope + diagnostics title/summary) even when no promotion card is currently rendered, keeping troubleshooting context explicit for operators.
-- [x] Consumer Feed diagnostics copy payload now includes localized visible-promotions preview (top titles + remaining count/empty state) to improve support handoff context beyond counters alone.
-- [x] Consumer Feed diagnostics now surfaces snapshot freshness text (fresh vs stale warning threshold) and includes freshness context in clipboard export payload for safer operations interpretation.
-- [x] Consumer Feed diagnostics now display localized "snapshot at" timestamp and include that timestamp in clipboard export payload for clearer operations context during incident handoff.
-- [x] Consumer Feed diagnostics UX now includes one-tap status-clear action after clipboard export so operators can quickly reset transient success/failure banners during repeated troubleshooting cycles.
-- [x] Business Scanner now disables scan action when operator lacks processing permissions (or while busy) to reduce invalid scan attempts and tighten permission-first UX guidance.
-- [x] Business Rewards campaign operations now include one-tap diagnostics clipboard export (active filters, KPI summaries, channel-distribution summary, snapshot timestamp, visible-campaign preview, localized copy-status feedback), and export remains available even when the current filtered view is empty (as long as campaign dataset exists) for faster support handoff and troubleshooting.
-- [x] Business Rewards diagnostics now surface snapshot freshness (fresh vs stale warning threshold) and include freshness context in campaign diagnostics clipboard export for safer operations interpretation.
-- [x] Inactive reminder orchestration now includes explicit cooldown-suppressed candidate logging (`CooldownActive`) and split suppression counters (`SuppressedByCooldownCount` vs `SuppressedByMissingDestinationCount`) for cleaner dispatch/suppression measurement.
-- [x] Inactive reminder background worker observability hardened with split suppression/failure rates and configurable warning thresholds (`HighFailureRateWarningThresholdPercent`, `HighCooldownSuppressionWarningThresholdPercent`) for proactive operations alerting.
-- [x] Inactive reminder HTTP gateway dispatcher now applies bounded retry with exponential backoff+jitter for transient failures (408/429/5xx/transport timeout), improving provider-native sender hardening without changing non-transient failure taxonomy.
-- [x] Inactive reminder gateway dispatch now forwards provider-native routing metadata (`Fcm` / `Apns`, channel/topic, collapse key, analytics label, deep link) and worker logs now emit per-code failure/suppression breakdowns for remediation playbooks.
+After the core system is operational, advanced CRM and marketing features can be added incrementally.
 
-## 3.8.1 Mobile Legal & Compliance UX (Delivered)
-- [x] Added centralized legal-links configuration (`LegalLinksOptions`) for Consumer/Business mobile apps with required canonical URLs for impressum, privacy policy, consumer terms, business terms, and account deletion, plus future-ready optional fields for privacy choices/pre-contract/business legal info.
-- [x] Legal-link configuration is now DI-registered, environment-aware (`appsettings.mobile.{Environment}.json` override support), validated for required HTTPS URLs, and supports optional fail-fast startup hardening through `FailFastOnMissingRequiredLinks`.
-- [x] Added reusable shared legal opener infrastructure (`ILegalLinkService`) so legal pages are never hardcoded inside pages/view models and are opened with in-app-browser-first behavior plus system-browser fallback.
-- [x] Added a dedicated **`Rechtliches & Datenschutz`** hub in both mobile apps and made it reachable from both pre-login auth flows and post-login settings flows.
-- [x] Legal hub now exposes `Impressum`, `Datenschutzhinweise`, `Nutzungsbedingungen`, and `Konto löschen`, with Consumer opening consumer terms and Business opening business terms.
-- [x] Added Consumer registration legal acknowledgements: account creation remains blocked until terms are accepted and privacy notice is acknowledged, with tappable links to canonical external pages; privacy acknowledgement is modeled as notice-read acknowledgement, not blanket processing consent.
-- [x] Added future-ready optional privacy controls (promotional push / optional analytics) in Consumer registration/profile flows as local revocable state separate from mandatory acknowledgements until final backend/domain handling is available.
-- [x] Added warning-first account deletion entry points in Consumer and Business settings/legal flows and routed deletion handoff to `https://loyan.de/konto-loeschen` without fake in-app success messaging.
-- [x] Consumer account deletion now performs an authenticated in-app deactivation/anonymization request (no hard delete), signs the user out locally after success, and preserves related rows for audit/business integrity.
-- [x] Business account deletion remains an external legal-link handoff only and continues to open the configured centralized deletion URL rather than attempting in-app deletion.
-- [x] Added reusable just-in-time privacy disclosures before sensitive OS permission prompts: Consumer location + notifications, Business camera/scanner; each disclosure explains purpose/necessity and links to Datenschutzhinweise.
-- [x] Removed startup-time auto-request behavior for Consumer notification permission so permission prompts only happen from explicit, user-driven in-app disclosure flows.
-- [x] Updated mobile documentation to describe legal configuration, hub routes, pre-login availability, account deletion handoff, permission-disclosure behavior, and the rule that canonical legal text stays externally maintained on loyan.de.
+- **Task**: design a rules-based segmentation engine allowing administrators to define conditions (e.g., lifetime spend > X, last visit within Y days, specific tags) and assign customers to segments automatically.
+- **Task**: implement a campaign management system: create campaigns, schedule them, define audience rules and deliver messages via email/SMS/push notifications. Integrate with third-party delivery providers where necessary.
+- **Task**: add analytics dashboards summarising customer behaviour, purchase frequency, churn risk and campaign effectiveness. Use the analytics export jobs and files already present in the integration domain as a basis.
 
-## 3.9 Mobile Execution Queue (Updated for next chat continuation)
-1. **P1 — Promotions verification & hardening (testing stream):** add/finish automated tests for lifecycle resolution (`Draft/Scheduled/Active/Expired`), priority extraction, and eligibility-rules parsing paths in promotions handlers (`DarwinTesting.md` track).
-2. **P2 — Delivery evidence:** attach fresh mobile/server build + test evidence from current branch state (tracked in `DarwinTesting.md`) after environment baseline re-check.
-3. **P3 — Inactive reminders rollout follow-up:** monitor new per-code reminder breakdown logs and only extend provider mappings if fresh production/provider codes appear.
-4. **P3 — Promotions operations polish (follow-up only if new UX gaps are reported):** keep as a feedback-driven backlog bucket after current diagnostics hardening baseline.
+## 6 â€“ Phase 5: Infrastructure & Operations
 
-### 3.9.1 Handoff Status (Prepared for next chat)
-- Current iteration status: **Closed cleanly** for chat handoff; no open in-progress code task is left half-implemented in this iteration.
-- Last delivered increment: inactive-reminder gateway/provider hardening with native routing metadata and per-code remediation breakdown logs, plus README/license cleanup.
-- Next recommended starting point in new chat: run a fresh repository baseline validation, then start from **3.9 / P2 Delivery evidence** while keeping P1 verification in the dedicated testing stream.
+The final phase covers tooling, deployment and operational concerns.
 
-### 3.9.2 Ready-to-continue checklist (next chat)
-1. Re-open docs and code from latest `dev` snapshot (no cached assumptions) and refresh done/pending flags.
-2. Execute a focused mobile/server build+test pass and capture only currently-active blockers.
-3. Close blocker fixes in isolated increments (small commits) before resuming feature delivery.
-4. Continue planned queue in order: **P1 verification (testing stream)** ? **P2 delivery evidence** ? **P3 reminders follow-up (if new provider codes appear)** ? **P3 operations polish (if needed)**.
+- **Task**: set up CI/CD pipelines to build and test all projects (Admin, WebApi, Frontend, Mobile) and deploy them to staging/production environments. Each project should have its own build step to avoid coupling.
+- **Task**: implement cloud-native data protection (Azure Blob/AWS S3) for key storage, with backup/restore across environments.
+- **Task**: document multi-instance deployment guidelines: running multiple web instances behind a load balancer, caching strategies and sticky sessions if needed.
+- **Task**: design a plugin mechanism (e.g., via NuGet packages) for future extensibility (e.g., POS integration, AI recommendations) and document the requirements for multi-tenant support.
 
-> Note: Testing workstreams are intentionally tracked in `DarwinTesting.md` and excluded from the main delivery queue in this backlog.
+## Status Legend
 
----
+- **Completed** â€“ work done and stable; no major changes expected.
+- **Phase 1â€“5** â€“ approved, scheduled phases (to be executed in order but tasks within a phase may run in parallel).
+- **Future** â€“ ideas not yet scheduled; may be pulled into later phases when resources allow.
 
-# 4. ?? Identity & Security Roadmap
-
-- Enforce TOTP for Admin users
-- Add magic-link login capability
-- Harden Admin cookie security
-- Expand UserToken purposes (email verification, device pairing)
-- Documentation for Data Protection key rotation
-- Token versioning to support session revocation
-- Short-lived QR token (already planned in Contracts)
-
----
-
-# 5. ?? Data Protection & Key Management
-
-### Completed
-- Encrypted secrets for TOTP and WebAuthn
-- Configurable key directory for shared hosting
-- Automatic key rotation
-
-### TODO
-1. Cloud-native key storage (Azure Blob, AWS S3, Redis)
-2. Deployment checklist for Data Protection folders
-3. Document multi-instance setup fully
-4. Support backup/restore of key ring across environments
-
----
-
-# 6. ?? CRM Module (Future)
-
-- Business-level customer segmentation
-- Visit frequency tracking
-- Customer activity timeline
-- Loyalty + CRM integration
-- Automated reachout: email/SMS/WhatsApp templates
-- GDPR data export/deletion workflow
-
----
-
-# 7. ?? Storefront (Future)
-
-- Public storefront website
-- Catalog browsing, product detail, filters
-- Cart + checkout (consumer-facing)
-- User account area
-- Order history
-- Loyalty points from purchases
-
----
-
-# 8. ?? Long-term Ideas
-
-- Plugin system (NuGet-based)
-- Branching promotions (A/B tests)
-- Multi-tenant mode
-- POS integration
-- Restaurant table management
-- AI-based product recommendations
-- Receipt OCR for reward auto-accrual
-
----
-
-# 9. ?? Status Legend
-- **Completed** — Stable, no major changes expected  
-- **Active / In Progress** — Currently being worked on  
-- **Planned Next** — Approved, scheduled  
-- **Future** — Not yet scheduled  
-
----
-
-# 10. Summary
-
-The Darwin platform now consists of **five major pillars**:
-
-1. Web CMS & E-Commerce  
-2. REST API  
-3. Loyalty System  
-4. Mobile Consumer App  
-5. Mobile Business App  
-
-All new development must follow strict **Contracts-first**,  
-**Clean Architecture**, **Data Protection**, and **Consistency** rules.
-
-This backlog is updated continuously as components evolve.
+This refined backlog replaces the verbose backlog in the repository for the web and domain portions of Darwin. It deliberately omits the detailed mobile and marketing tasks already delivered and focuses on the tasks required to finish the back-office, complete the domain and build the front-office.
