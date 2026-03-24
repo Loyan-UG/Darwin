@@ -247,4 +247,49 @@ public static class AppResources
     public static string FeedPromotionDiagnosticsCopyFailed => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopyFailed), Culture) ?? "Unable to copy promotion diagnostics right now.";
     public static string FeedPromotionDiagnosticsClearStatusButton => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsClearStatusButton), Culture) ?? "Clear diagnostics status";
 
+
+    public static string AuthLegalSectionTitle => ResourceManager.GetString(nameof(AuthLegalSectionTitle), Culture) ?? "Rechtliches & Datenschutz";
+    public static string AuthLegalSectionSubtitle => ResourceManager.GetString(nameof(AuthLegalSectionSubtitle), Culture) ?? "Review the legal pages before creating an account or signing in.";
+    public static string LegalHubTitle => ResourceManager.GetString(nameof(LegalHubTitle), Culture) ?? "Rechtliches & Datenschutz";
+    public static string LegalHubSubtitle => ResourceManager.GetString(nameof(LegalHubSubtitle), Culture) ?? "Open the current legal and privacy pages maintained on loyan.de.";
+    public static string LegalImpressumButton => ResourceManager.GetString(nameof(LegalImpressumButton), Culture) ?? "Impressum";
+    public static string LegalPrivacyNoticeButton => ResourceManager.GetString(nameof(LegalPrivacyNoticeButton), Culture) ?? "Datenschutzhinweise";
+    public static string LegalTermsButton => ResourceManager.GetString(nameof(LegalTermsButton), Culture) ?? "Nutzungsbedingungen";
+    public static string LegalAccountDeletionButton => ResourceManager.GetString(nameof(LegalAccountDeletionButton), Culture) ?? "Konto löschen";
+    public static string LegalOpenFailed => ResourceManager.GetString(nameof(LegalOpenFailed), Culture) ?? "The legal page could not be opened right now. Please try again shortly.";
+    public static string SettingsLegalHubButton => ResourceManager.GetString(nameof(SettingsLegalHubButton), Culture) ?? "Rechtliches & Datenschutz";
+    public static string SettingsDeleteAccountButton => ResourceManager.GetString(nameof(SettingsDeleteAccountButton), Culture) ?? "Konto löschen";
+    public static string RegisterAcknowledgementsTitle => ResourceManager.GetString(nameof(RegisterAcknowledgementsTitle), Culture) ?? "Required acknowledgements";
+    public static string RegisterTermsAcknowledgementLabel => ResourceManager.GetString(nameof(RegisterTermsAcknowledgementLabel), Culture) ?? "I accept the consumer terms before creating my account.";
+    public static string RegisterPrivacyAcknowledgementLabel => ResourceManager.GetString(nameof(RegisterPrivacyAcknowledgementLabel), Culture) ?? "I confirm that I have reviewed the privacy notice before creating my account.";
+    public static string RegisterTermsAcceptanceRequired => ResourceManager.GetString(nameof(RegisterTermsAcceptanceRequired), Culture) ?? "Please accept the terms before creating your account.";
+    public static string RegisterPrivacyAcknowledgementRequired => ResourceManager.GetString(nameof(RegisterPrivacyAcknowledgementRequired), Culture) ?? "Please acknowledge the privacy notice before creating your account.";
+    public static string OptionalPrivacyChoicesTitle => ResourceManager.GetString(nameof(OptionalPrivacyChoicesTitle), Culture) ?? "Optional privacy choices";
+    public static string OptionalPrivacyChoicesPlaceholderNote => ResourceManager.GetString(nameof(OptionalPrivacyChoicesPlaceholderNote), Culture) ?? "These optional controls are kept separate from the required legal acknowledgements and are stored locally until final backend privacy settings are delivered.";
+    public static string OptionalPromotionalPushLabel => ResourceManager.GetString(nameof(OptionalPromotionalPushLabel), Culture) ?? "Allow promotional push notifications (optional)";
+    public static string OptionalAnalyticsLabel => ResourceManager.GetString(nameof(OptionalAnalyticsLabel), Culture) ?? "Allow optional analytics and tracking (optional)";
+    public static string AccountDeletionTitle => ResourceManager.GetString(nameof(AccountDeletionTitle), Culture) ?? "Konto löschen";
+    public static string AccountDeletionWarningTitle => ResourceManager.GetString(nameof(AccountDeletionWarningTitle), Culture) ?? "Before you continue";
+    public static string AccountDeletionWarningBody => ResourceManager.GetString(nameof(AccountDeletionWarningBody), Culture) ?? "This action permanently deactivates your account and anonymizes personal data where it is safe to do so.";
+    public static string AccountDeletionRetentionHint => ResourceManager.GetString(nameof(AccountDeletionRetentionHint), Culture) ?? "Some transaction and history records may remain for legal or technical reasons, but direct personal data will be removed or replaced.";
+    public static string AccountDeletionLogoutHint => ResourceManager.GetString(nameof(AccountDeletionLogoutHint), Culture) ?? "After completion you will be signed out and future login with this account will no longer be possible.";
+    public static string AccountDeletionConfirmationLabel => ResourceManager.GetString(nameof(AccountDeletionConfirmationLabel), Culture) ?? "I understand that this request is irreversible and want to permanently deactivate and anonymize my account.";
+    public static string AccountDeletionContinueButton => ResourceManager.GetString(nameof(AccountDeletionContinueButton), Culture) ?? "Send deletion request";
+    public static string AccountDeletionOpenFailed => ResourceManager.GetString(nameof(AccountDeletionOpenFailed), Culture) ?? "The account deletion request could not be submitted right now. Please try again shortly.";
+    public static string AccountDeletionConfirmationRequired => ResourceManager.GetString(nameof(AccountDeletionConfirmationRequired), Culture) ?? "Please confirm that you understand the irreversible consequences before continuing.";
+    public static string AccountDeletionRequestFailed => ResourceManager.GetString(nameof(AccountDeletionRequestFailed), Culture) ?? "Your account deletion request could not be completed right now. Please try again shortly.";
+    public static string PermissionDisclosureContinueButton => ResourceManager.GetString(nameof(PermissionDisclosureContinueButton), Culture) ?? "Continue";
+    public static string PermissionDisclosureCancelButton => ResourceManager.GetString(nameof(PermissionDisclosureCancelButton), Culture) ?? "Not now";
+    public static string PermissionDisclosurePrivacyButton => ResourceManager.GetString(nameof(PermissionDisclosurePrivacyButton), Culture) ?? "Open privacy notice";
+    public static string LocationDisclosureTitle => ResourceManager.GetString(nameof(LocationDisclosureTitle), Culture) ?? "Location access";
+    public static string LocationDisclosurePermissionName => ResourceManager.GetString(nameof(LocationDisclosurePermissionName), Culture) ?? "Location permission";
+    public static string LocationDisclosurePurpose => ResourceManager.GetString(nameof(LocationDisclosurePurpose), Culture) ?? "Darwin uses your location to show nearby businesses and improve local discovery results.";
+    public static string LocationDisclosureRequirement => ResourceManager.GetString(nameof(LocationDisclosureRequirement), Culture) ?? "This feature is optional. You can continue using the app without nearby results if you do not allow location access.";
+    public static string NotificationDisclosureTitle => ResourceManager.GetString(nameof(NotificationDisclosureTitle), Culture) ?? "Notifications";
+    public static string NotificationDisclosurePermissionName => ResourceManager.GetString(nameof(NotificationDisclosurePermissionName), Culture) ?? "Notification permission";
+    public static string NotificationDisclosurePurpose => ResourceManager.GetString(nameof(NotificationDisclosurePurpose), Culture) ?? "Darwin requests notification access so the app can deliver loyalty and account-related push messages when you enable them.";
+    public static string NotificationDisclosureRequirement => ResourceManager.GetString(nameof(NotificationDisclosureRequirement), Culture) ?? "Notifications are optional. If you do not allow them, loyalty updates will remain available inside the app only.";
+    public static string ProfilePushPermissionNotGranted => ResourceManager.GetString(nameof(ProfilePushPermissionNotGranted), Culture) ?? "Notification permission was not granted. Push registration was not updated.";
+    public static string ProfilePushPermissionRequestFailed => ResourceManager.GetString(nameof(ProfilePushPermissionRequestFailed), Culture) ?? "Notification permission could not be requested right now. Please try again.";
+
 }

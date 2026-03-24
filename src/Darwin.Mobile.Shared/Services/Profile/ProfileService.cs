@@ -35,5 +35,18 @@ namespace Darwin.Mobile.Shared.Services.Profile
 
             return await _api.PutNoContentAsync(ApiRoutes.Profile.UpdateMe, profile, ct).ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Requests deactivation and anonymization of the current authenticated user account.
+        /// </summary>
+        /// <param name="request">Deletion confirmation payload.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>A functional result indicating whether the server accepted the deletion request.</returns>
+        public async Task<Result> RequestAccountDeletionAsync(RequestAccountDeletionRequest request, CancellationToken ct)
+        {
+            if (request is null) throw new ArgumentNullException(nameof(request));
+
+            return await _api.PostNoContentAsync(ApiRoutes.Profile.RequestAccountDeletion, request, ct).ConfigureAwait(false);
+        }
     }
 }

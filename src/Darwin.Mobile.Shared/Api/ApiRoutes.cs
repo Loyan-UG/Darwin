@@ -58,6 +58,7 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string GetMe = "api/v1/profile/me";
             public const string UpdateMe = "api/v1/profile/me";
+            public const string RequestAccountDeletion = "api/v1/profile/me/deletion-request";
         }
 
         /// <summary>

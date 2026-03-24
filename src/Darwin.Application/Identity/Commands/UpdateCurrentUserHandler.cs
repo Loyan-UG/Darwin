@@ -47,7 +47,7 @@ namespace Darwin.Application.Identity.Commands
             if (userId == Guid.Empty || userId != dto.Id)
                 return Result.Fail("Unauthorized.");
 
-            var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.Id && !u.IsDeleted, ct);
+            var user = await _db.Set<User>().FirstOrDefaultAsync(u => u.Id == dto.Id && !u.IsDeleted && u.IsActive, ct);
             if (user is null)
                 return Result.Fail("User not found.");
 

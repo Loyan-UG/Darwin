@@ -292,4 +292,38 @@ public static class AppResources
     public static string RewardsCampaignDiagnosticsCopyFailed => ResourceManager.GetString(nameof(RewardsCampaignDiagnosticsCopyFailed), Culture) ?? "Unable to copy campaign diagnostics right now.";
 
 
+
+    public static string AuthLegalSectionTitle => ResourceManager.GetString(nameof(AuthLegalSectionTitle), Culture) ?? "Rechtliches & Datenschutz";
+    public static string AuthLegalSectionSubtitle => ResourceManager.GetString(nameof(AuthLegalSectionSubtitle), Culture) ?? "Review the legal pages before signing in to the business app.";
+    public static string LegalHubTitle => ResourceManager.GetString(nameof(LegalHubTitle), Culture) ?? "Rechtliches & Datenschutz";
+    public static string LegalHubSubtitle => ResourceManager.GetString(nameof(LegalHubSubtitle), Culture) ?? "Open the current legal and privacy pages maintained on loyan.de.";
+    public static string LegalImpressumButton => ResourceManager.GetString(nameof(LegalImpressumButton), Culture) ?? "Impressum";
+    public static string LegalPrivacyNoticeButton => ResourceManager.GetString(nameof(LegalPrivacyNoticeButton), Culture) ?? "Datenschutzhinweise";
+    public static string LegalTermsButton => ResourceManager.GetString(nameof(LegalTermsButton), Culture) ?? "Nutzungsbedingungen";
+    public static string LegalAccountDeletionButton => ResourceManager.GetString(nameof(LegalAccountDeletionButton), Culture) ?? "Konto löschen";
+    public static string LegalOpenFailed => ResourceManager.GetString(nameof(LegalOpenFailed), Culture) ?? "The legal page could not be opened right now. Please try again shortly.";
+    public static string SettingsLegalHubButton => ResourceManager.GetString(nameof(SettingsLegalHubButton), Culture) ?? "Rechtliches & Datenschutz";
+    public static string SettingsDeleteAccountButton => ResourceManager.GetString(nameof(SettingsDeleteAccountButton), Culture) ?? "Konto löschen";
+    public static string AccountDeletionTitle => ResourceManager.GetString(nameof(AccountDeletionTitle), Culture) ?? "Konto löschen";
+    public static string AccountDeletionWarningTitle => ResourceManager.GetString(nameof(AccountDeletionWarningTitle), Culture) ?? "Before you continue";
+    public static string AccountDeletionWarningBody => ResourceManager.GetString(nameof(AccountDeletionWarningBody), Culture) ?? "Business-account deletion is completed on the external Loyan website. Review the information carefully before continuing.";
+    public static string AccountDeletionExternalHint => ResourceManager.GetString(nameof(AccountDeletionExternalHint), Culture) ?? "The app will open https://loyan.de/konto-loeschen in the in-app browser when possible.";
+    public static string AccountDeletionContinueButton => ResourceManager.GetString(nameof(AccountDeletionContinueButton), Culture) ?? "Open deletion page";
+    public static string AccountDeletionOpenFailed => ResourceManager.GetString(nameof(AccountDeletionOpenFailed), Culture) ?? "The account deletion page could not be opened right now. Please try again shortly.";
+    public static string PermissionDisclosureContinueButton => ResourceManager.GetString(nameof(PermissionDisclosureContinueButton), Culture) ?? "Continue";
+    public static string PermissionDisclosureCancelButton => ResourceManager.GetString(nameof(PermissionDisclosureCancelButton), Culture) ?? "Not now";
+    public static string PermissionDisclosurePrivacyButton => ResourceManager.GetString(nameof(PermissionDisclosurePrivacyButton), Culture) ?? "Open privacy notice";
+    public static string CameraDisclosureTitle => ResourceManager.GetString(nameof(CameraDisclosureTitle), Culture) ?? "Camera access";
+    public static string CameraDisclosurePermissionName => ResourceManager.GetString(nameof(CameraDisclosurePermissionName), Culture) ?? "Camera permission";
+    public static string CameraDisclosurePurpose => ResourceManager.GetString(nameof(CameraDisclosurePurpose), Culture) ?? "Loyan Business uses the camera to scan loyalty QR codes and load the correct scan session for processing.";
+    public static string CameraDisclosureRequirement => ResourceManager.GetString(nameof(CameraDisclosureRequirement), Culture) ?? "Camera access is functionally required for on-device scanning, but manual token entry remains available when permission is not granted.";
+    public static string CameraDisclosureDeniedTitle => ResourceManager.GetString(nameof(CameraDisclosureDeniedTitle), Culture) ?? "Camera permission denied";
+    public static string CameraDisclosureDeniedBody => ResourceManager.GetString(nameof(CameraDisclosureDeniedBody), Culture) ?? "Camera access has been denied. You can enable it in app settings or continue with manual token entry.";
+    public static string CameraDisclosureOpenSettingsButton => ResourceManager.GetString(nameof(CameraDisclosureOpenSettingsButton), Culture) ?? "Open settings";
+    public static string ScannerManualTokenTitle => ResourceManager.GetString(nameof(ScannerManualTokenTitle), Culture) ?? "Manual scan token";
+    public static string ScannerManualTokenMessage => ResourceManager.GetString(nameof(ScannerManualTokenMessage), Culture) ?? "Camera unavailable. Paste the ScanSessionToken or cancel.";
+    public static string ScannerManualTokenAccept => ResourceManager.GetString(nameof(ScannerManualTokenAccept), Culture) ?? "OK";
+    public static string ScannerManualTokenCancel => ResourceManager.GetString(nameof(ScannerManualTokenCancel), Culture) ?? "Cancel";
+    public static string ScannerManualTokenPlaceholder => ResourceManager.GetString(nameof(ScannerManualTokenPlaceholder), Culture) ?? "paste token here";
+
 }

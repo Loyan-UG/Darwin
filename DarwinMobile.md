@@ -81,6 +81,50 @@ Key principles for the loyalty flow:
 
 ---
 
+### 1.5 Legal & Compliance UX (Consumer + Business)
+
+The mobile apps now implement a configuration-driven legal/compliance navigation layer on top of the existing auth/settings flows:
+
+- **Canonical source**: legal content stays external and is hosted on the Loyan website. The apps do **not** embed legal text bodies in code.
+- **Configured paths (canonical production URLs)**:
+  - `https://loyan.de/impressum`
+  - `https://loyan.de/datenschutz`
+  - `https://loyan.de/nutzungsbedingungen-consumer`
+  - `https://loyan.de/nutzungsbedingungen-business`
+  - `https://loyan.de/konto-loeschen`
+- **Central configuration model**: `LegalLinksOptions` in `Darwin.Mobile.Shared.Configuration` with required fields:
+  - `ImpressumUrl`, `PrivacyPolicyUrl`, `ConsumerTermsUrl`, `BusinessTermsUrl`, `AccountDeletionUrl`
+  - future-ready optional fields: `PrivacyChoicesUrl`, `ConsumerPreContractInfoUrl`, `BusinessLegalInfoUrl`
+- **DI / environment behavior**:
+  - bound from app configuration (`LegalLinks` section) and registered through `AddDarwinMobileShared(ApiOptions, LegalLinksOptions)`
+  - supports environment-specific overrides through `appsettings.mobile.{Environment}.json` when present
+  - validates required HTTPS links at startup, with debug diagnostics and optional fail-fast (`FailFastOnMissingRequiredLinks`)
+- **Shared opener behavior**:
+  - `ILegalLinkService` resolves validated URLs and opens them via MAUI browser abstractions
+  - preferred behavior is in-app browser experience (`BrowserLaunchMode.SystemPreferred`) with launcher fallback when needed
+- **Shared legal hub**:
+  - both apps expose a screen named exactly **`Rechtliches & Datenschutz`**
+  - available from **pre-login auth** and from **post-login settings**
+  - items: `Impressum`, `Datenschutzhinweise`, `Nutzungsbedingungen`, `Konto löschen`
+  - Consumer terms item opens `ConsumerTermsUrl`; Business terms item opens `BusinessTermsUrl`
+- **Account deletion entry**:
+  - **Consumer** exposes an authenticated in-app deletion-request flow that deactivates the current account and anonymizes direct personal data without physically deleting the user row
+  - **Business** keeps the warning-first handoff page and opens `https://loyan.de/konto-loeschen` through the centralized legal-links configuration
+  - no fake in-app deletion success is shown; Consumer signs the user out locally after a successful in-app request, while Business deletion remains externally completed on the website
+- **Consumer registration acknowledgements**:
+  - registration is blocked until the user accepts `Nutzungsbedingungen` and acknowledges `Datenschutzhinweise`
+  - the privacy item is an acknowledgement/notice-read pattern, **not** blanket consent for all processing
+  - each acknowledgement row includes a tappable link to the configured canonical page
+- **Optional future-ready privacy choices**:
+  - registration/profile expose local placeholder controls for promotional push and optional analytics preferences
+  - these controls are independent from required legal acknowledgements, default to off, and remain revocable later
+- **Permission disclosures (just-in-time)**:
+  - Consumer: shown before location permission and before notification permission request
+  - Business: shown before camera/scanner permission request
+  - each disclosure explains what is requested, why it is needed, whether the feature is optional/required, and links to `Datenschutzhinweise`
+
+---
+
 ## 2) Solution Structure & Solution Filters
 
 - Keep mobile and web in **one repo**, but use two **Solution Filters**:

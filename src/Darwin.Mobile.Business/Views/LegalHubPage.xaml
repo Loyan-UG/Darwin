@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    x:Class="Darwin.Mobile.Business.Views.LegalHubPage"
+    x:DataType="vm:LegalHubViewModel"
+    Title="{x:Static res:AppResources.LegalHubTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.LegalHubTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.LegalHubSubtitle}"
+                   FontSize="14"
+                   LineBreakMode="WordWrap"
+                   Opacity="0.85" />
+
+            <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
+                    Command="{Binding OpenImpressumCommand}" />
+
+            <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
+                    Command="{Binding OpenPrivacyPolicyCommand}" />
+
+            <Button Text="{x:Static res:AppResources.LegalTermsButton}"
+                    Command="{Binding OpenTermsCommand}" />
+
+            <Button Text="{x:Static res:AppResources.LegalAccountDeletionButton}"
+                    Clicked="OnAccountDeletionClicked" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   IsVisible="{Binding HasError}" />
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

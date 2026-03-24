@@ -184,6 +184,24 @@ public sealed class ContractsSerializationSmokeTests
     }
 
     /// <summary>
+    ///     Verifies that the authenticated account-deletion request contract preserves the explicit confirmation flag.
+    /// </summary>
+    [Fact]
+    public void RequestAccountDeletionRequest_Should_RoundTrip()
+    {
+        // Arrange
+        var request = new Darwin.Contracts.Profile.RequestAccountDeletionRequest(true);
+
+        // Act
+        var json = JsonSerializer.Serialize(request, JsonOptions);
+        var roundTrip = JsonSerializer.Deserialize<Darwin.Contracts.Profile.RequestAccountDeletionRequest>(json, JsonOptions);
+
+        // Assert
+        roundTrip.Should().NotBeNull();
+        roundTrip!.ConfirmIrreversibleDeletion.Should().BeTrue();
+    }
+
+    /// <summary>
     ///     Verifies promotion feed contracts preserve policy diagnostics and campaign-aware
     ///     payload fields used by mobile feed rendering and suppression behavior.
     /// </summary>

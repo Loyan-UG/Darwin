@@ -281,6 +281,21 @@ It is designed as the **single source of truth** for development planning.
 - [x] Inactive reminder HTTP gateway dispatcher now applies bounded retry with exponential backoff+jitter for transient failures (408/429/5xx/transport timeout), improving provider-native sender hardening without changing non-transient failure taxonomy.
 - [x] Inactive reminder gateway dispatch now forwards provider-native routing metadata (`Fcm` / `Apns`, channel/topic, collapse key, analytics label, deep link) and worker logs now emit per-code failure/suppression breakdowns for remediation playbooks.
 
+## 3.8.1 Mobile Legal & Compliance UX (Delivered)
+- [x] Added centralized legal-links configuration (`LegalLinksOptions`) for Consumer/Business mobile apps with required canonical URLs for impressum, privacy policy, consumer terms, business terms, and account deletion, plus future-ready optional fields for privacy choices/pre-contract/business legal info.
+- [x] Legal-link configuration is now DI-registered, environment-aware (`appsettings.mobile.{Environment}.json` override support), validated for required HTTPS URLs, and supports optional fail-fast startup hardening through `FailFastOnMissingRequiredLinks`.
+- [x] Added reusable shared legal opener infrastructure (`ILegalLinkService`) so legal pages are never hardcoded inside pages/view models and are opened with in-app-browser-first behavior plus system-browser fallback.
+- [x] Added a dedicated **`Rechtliches & Datenschutz`** hub in both mobile apps and made it reachable from both pre-login auth flows and post-login settings flows.
+- [x] Legal hub now exposes `Impressum`, `Datenschutzhinweise`, `Nutzungsbedingungen`, and `Konto löschen`, with Consumer opening consumer terms and Business opening business terms.
+- [x] Added Consumer registration legal acknowledgements: account creation remains blocked until terms are accepted and privacy notice is acknowledged, with tappable links to canonical external pages; privacy acknowledgement is modeled as notice-read acknowledgement, not blanket processing consent.
+- [x] Added future-ready optional privacy controls (promotional push / optional analytics) in Consumer registration/profile flows as local revocable state separate from mandatory acknowledgements until final backend/domain handling is available.
+- [x] Added warning-first account deletion entry points in Consumer and Business settings/legal flows and routed deletion handoff to `https://loyan.de/konto-loeschen` without fake in-app success messaging.
+- [x] Consumer account deletion now performs an authenticated in-app deactivation/anonymization request (no hard delete), signs the user out locally after success, and preserves related rows for audit/business integrity.
+- [x] Business account deletion remains an external legal-link handoff only and continues to open the configured centralized deletion URL rather than attempting in-app deletion.
+- [x] Added reusable just-in-time privacy disclosures before sensitive OS permission prompts: Consumer location + notifications, Business camera/scanner; each disclosure explains purpose/necessity and links to Datenschutzhinweise.
+- [x] Removed startup-time auto-request behavior for Consumer notification permission so permission prompts only happen from explicit, user-driven in-app disclosure flows.
+- [x] Updated mobile documentation to describe legal configuration, hub routes, pre-login availability, account deletion handoff, permission-disclosure behavior, and the rule that canonical legal text stays externally maintained on loyan.de.
+
 ## 3.9 Mobile Execution Queue (Updated for next chat continuation)
 1. **P1 — Promotions verification & hardening (testing stream):** add/finish automated tests for lifecycle resolution (`Draft/Scheduled/Active/Expired`), priority extraction, and eligibility-rules parsing paths in promotions handlers (`DarwinTesting.md` track).
 2. **P2 — Delivery evidence:** attach fresh mobile/server build + test evidence from current branch state (tracked in `DarwinTesting.md`) after environment baseline re-check.

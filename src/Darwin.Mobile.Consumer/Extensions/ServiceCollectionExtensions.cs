@@ -3,6 +3,7 @@ using Darwin.Mobile.Consumer.Views;
 using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Common;
+using Darwin.Mobile.Shared.Configuration;
 using Darwin.Mobile.Shared.Extensions;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Extensions.Configuration;
@@ -23,15 +24,16 @@ public static class ServiceCollectionExtensions
     {
         var config = new ConfigurationBuilder()
             .AddJsonFileFromMauiAsset("appsettings.mobile.json", optional: false)
-#if DEBUG
-            .AddJsonFileFromMauiAsset("appsettings.mobile.Development.json", optional: true)
-#endif
+            .AddJsonFileFromMauiAsset($"appsettings.mobile.{ResolveEnvironmentName()}.json", optional: true)
             .Build();
 
         services.AddSingleton<IConfiguration>(config);
 
         var apiOptions = config.GetSection("Api").Get<ApiOptions>()
             ?? throw new InvalidOperationException("Missing 'Api' section in appsettings.mobile.json");
+
+        var legalLinksOptions = config.GetSection("LegalLinks").Get<LegalLinksOptions>()
+            ?? throw new InvalidOperationException("Missing 'LegalLinks' section in appsettings.mobile.json");
 
         if (string.IsNullOrWhiteSpace(apiOptions.BaseUrl))
         {
@@ -46,12 +48,13 @@ public static class ServiceCollectionExtensions
         apiOptions.AppRole = MobileAppRole.Consumer;
 
         // Register shared services (ApiClient, AuthService, LoyaltyService, etc.)
-        services.AddDarwinMobileShared(apiOptions);
+        services.AddDarwinMobileShared(apiOptions, legalLinksOptions);
 
         // Root navigation service for window-aware app root switching.
         services.AddSingleton<IAppRootNavigator, AppRootNavigator>();
         services.AddSingleton<IConsumerPushTokenProvider, ConsumerPlatformPushTokenProvider>();
         services.AddSingleton<IConsumerPushRegistrationCoordinator, ConsumerPushRegistrationCoordinator>();
+        services.AddSingleton<IConsumerNotificationPermissionService, ConsumerNotificationPermissionService>();
 
         // Platform services (scanner, location)
         services.AddSingleton<IScanner, Services.Platform.ScannerPlatformService>();
@@ -70,6 +73,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<RegisterViewModel>();
         services.AddTransient<ForgotPasswordViewModel>();
         services.AddTransient<ResetPasswordViewModel>();
+        services.AddTransient<LegalHubViewModel>();
+        services.AddTransient<AccountDeletionViewModel>();
 
         // Pages
         services.AddTransient<LoginPage>();
@@ -84,11 +89,33 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ResetPasswordPage>();
         services.AddTransient<ChangePasswordPage>();
         services.AddTransient<BusinessDetailPage>();
+        services.AddTransient<LegalHubPage>();
+        services.AddTransient<AccountDeletionPage>();
 
 
         return services;
     }
 
+
+    private static string ResolveEnvironmentName()
+    {
+        var configured = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        if (string.IsNullOrWhiteSpace(configured))
+        {
+            configured = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        }
+
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            return configured.Trim();
+        }
+
+#if DEBUG
+        return "Development";
+#else
+        return "Production";
+#endif
+    }
 
     private static IConfigurationBuilder AddJsonFileFromMauiAsset(
         this IConfigurationBuilder builder,

@@ -15,15 +15,21 @@
                    FontSize="14"
                    Opacity="0.85" />
 
-            <!-- Profile settings entry point -->
             <Button Text="{x:Static res:AppResources.SettingsProfileButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Clicked="OnProfileClicked" />
 
-            <!-- Password settings entry point -->
             <Button Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Clicked="OnChangePasswordClicked" />
+
+            <Button Text="{x:Static res:AppResources.SettingsLegalHubButton}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Clicked="OnLegalHubClicked" />
+
+            <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Clicked="OnAccountDeletionClicked" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

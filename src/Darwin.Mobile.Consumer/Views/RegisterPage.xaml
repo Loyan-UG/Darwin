@@ -54,6 +54,75 @@
                    TextColor="{StaticResource Neutral900}"
                    PlaceholderColor="Gray" />
 
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{x:Static res:AppResources.RegisterAcknowledgementsTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <CheckBox IsChecked="{Binding AcceptConsumerTerms}" VerticalOptions="Start" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                            <Label Text="{x:Static res:AppResources.RegisterTermsAcknowledgementLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Button Text="{x:Static res:AppResources.LegalTermsButton}"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource BrandGold500}"
+                                    HorizontalOptions="Start"
+                                    Command="{Binding OpenTermsCommand}" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <CheckBox IsChecked="{Binding AcknowledgePrivacyNotice}" VerticalOptions="Start" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                            <Label Text="{x:Static res:AppResources.RegisterPrivacyAcknowledgementLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource BrandGold500}"
+                                    HorizontalOptions="Start"
+                                    Command="{Binding OpenPrivacyPolicyCommand}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{x:Static res:AppResources.OptionalPrivacyChoicesTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.OptionalPrivacyChoicesPlaceholderNote}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           Opacity="0.85" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label Text="{x:Static res:AppResources.OptionalPromotionalPushLabel}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding AllowPromotionalPushNotifications}" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label Text="{x:Static res:AppResources.OptionalAnalyticsLabel}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding AllowOptionalAnalyticsTracking}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="{x:Static res:AppResources.LegalHubTitle}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource BrandGold500}"
+                    HorizontalOptions="Start"
+                    Clicked="OnLegalHubClicked" />
+
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
                    IsVisible="{Binding HasError}" />

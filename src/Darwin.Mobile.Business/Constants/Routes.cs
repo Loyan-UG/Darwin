@@ -24,6 +24,8 @@ public static class Routes
     public const string SettingsChangePassword = "SettingsChangePassword";
     public const string SettingsStaffAccessBadge = "SettingsStaffAccessBadge";
     public const string SettingsSubscription = "SettingsSubscription";
+    public const string SettingsLegalHub = "SettingsLegalHub";
+    public const string SettingsAccountDeletion = "SettingsAccountDeletion";
 
     // Active business operations tabs
     public const string Dashboard = "Dashboard";

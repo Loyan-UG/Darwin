@@ -1,9 +1,9 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using Darwin.Contracts.Meta;
+using CommunityToolkit.Mvvm.Input;
 using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.Services.Notifications;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Legal;
 using Darwin.Mobile.Shared.ViewModels;
 using System;
 using System.Threading;
@@ -20,6 +20,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
+    private readonly ILegalLinkService _legalLinkService;
 
     /// <summary>
     /// Raised when the page should reveal the error area (for example: scroll to top).
@@ -33,16 +34,19 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// </summary>
     /// <param name="authService">Service used to authenticate users.</param>
     /// <param name="appRootNavigator">Service that performs window-safe root navigation.</param>
-    public LoginViewModel(IAuthService authService, IAppRootNavigator appRootNavigator, IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
+    /// <param name="pushRegistrationCoordinator">Best-effort push registration coordinator.</param>
+    /// <param name="legalLinkService">Service used to open configured legal links from the pre-login area.</param>
+    public LoginViewModel(
+        IAuthService authService,
+        IAppRootNavigator appRootNavigator,
+        IConsumerPushRegistrationCoordinator pushRegistrationCoordinator,
+        ILegalLinkService legalLinkService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
+        _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
 
-        // Manual QA acceleration policy:
-        // Keep seeded credentials prefilled in DEBUG builds for faster integration loops.
-        // IMPORTANT: this behavior is intentionally retained and must not be changed here.
-        // Final removal will be handled manually when release hardening is explicitly requested.
 #if DEBUG
         Email = "cons1@darwin.de";
         Password = "Consumer123!";
@@ -79,7 +83,6 @@ public sealed partial class LoginViewModel : BaseViewModel
 
         try
         {
-            // Keep client-side validation explicit so users get fast feedback without roundtrip.
             if (string.IsNullOrWhiteSpace(Email))
             {
                 ErrorMessage = AppResources.EmailRequired;
@@ -94,24 +97,18 @@ public sealed partial class LoginViewModel : BaseViewModel
                 return;
             }
 
-            // Attempt login with email/password credentials.
-            // DeviceId remains null until a dedicated device identity workflow is added.
             _ = await _authService.LoginAsync(
                 Email.Trim(),
                 Password,
                 deviceId: null,
                 CancellationToken.None);
 
-            // Register current installation in backend device registry (best-effort, non-blocking for login).
             _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
 
-            // Enter authenticated mode by switching the root page via the window-aware navigator.
             await _appRootNavigator.NavigateToAuthenticatedShellAsync();
         }
         catch (Exception ex)
         {
-            // We intentionally map transport failures to a connectivity message.
-            // This prevents misleading "invalid credentials" errors when server is unreachable.
             ErrorMessage = ResolveLoginErrorMessage(ex);
             ErrorBecameVisibleRequested?.Invoke();
         }
@@ -121,13 +118,29 @@ public sealed partial class LoginViewModel : BaseViewModel
         }
     }
 
+    [RelayCommand]
+    private async Task OpenImpressumAsync() => await OpenLegalLinkAsync(LegalLinkKind.Impressum).ConfigureAwait(false);
+
+    [RelayCommand]
+    private async Task OpenPrivacyPolicyAsync() => await OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy).ConfigureAwait(false);
+
+    [RelayCommand]
+    private async Task OpenTermsAsync() => await OpenLegalLinkAsync(LegalLinkKind.ConsumerTerms).ConfigureAwait(false);
+
+    private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
+    {
+        var result = await _legalLinkService.OpenAsync(linkKind, CancellationToken.None).ConfigureAwait(false);
+        if (!result.Succeeded)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
+        }
+    }
+
     /// <summary>
     /// Maps technical exceptions to end-user login messages.
     /// </summary>
     private static string ResolveLoginErrorMessage(Exception ex)
     {
-        // Keep credential failures generic for security for non-connectivity failures.
-        var mapped = ViewModelErrorMapper.ToUserMessage(ex, AppResources.InvalidCredentials);
-        return mapped;
+        return ViewModelErrorMapper.ToUserMessage(ex, AppResources.InvalidCredentials);
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Identity;
@@ -6,42 +6,72 @@ using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Legal;
+using Darwin.Mobile.Shared.Services.Privacy;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// Handles customer self-service registration with an auto-login continuation.
-///
-/// UX contract:
-/// - Registration should not leave the user stranded on the same screen after success.
-/// - After account creation, the app attempts to sign in immediately and enters authenticated shell.
-/// - If auto-login fails after successful registration, the user gets a clear non-technical message
-///   and can still login manually without losing control of the flow.
+/// Handles customer self-service registration with legal acknowledgements and an auto-login continuation.
 /// </summary>
+/// <remarks>
+/// Legal/compliance rules implemented here:
+/// - Account creation is blocked until the user accepts the consumer terms.
+/// - Account creation is blocked until the user acknowledges the privacy notice.
+/// - Optional privacy-related choices remain separate from the required legal acknowledgements and default to off.
+/// </remarks>
 public sealed class RegisterViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
+    private readonly ILegalLinkService _legalLinkService;
+    private readonly IOptionalPrivacyPreferencesStore _optionalPrivacyPreferencesStore;
 
     private string _firstName = string.Empty;
     private string _lastName = string.Empty;
     private string _email = string.Empty;
     private string _password = string.Empty;
     private string _confirmPassword = string.Empty;
+    private bool _acceptConsumerTerms;
+    private bool _acknowledgePrivacyNotice;
+    private bool _allowPromotionalPushNotifications;
+    private bool _allowOptionalAnalyticsTracking;
 
-    public RegisterViewModel(IAuthService authService, IAppRootNavigator appRootNavigator)
+    public RegisterViewModel(
+        IAuthService authService,
+        IAppRootNavigator appRootNavigator,
+        ILegalLinkService legalLinkService,
+        IOptionalPrivacyPreferencesStore optionalPrivacyPreferencesStore)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
+        _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
+        _optionalPrivacyPreferencesStore = optionalPrivacyPreferencesStore ?? throw new ArgumentNullException(nameof(optionalPrivacyPreferencesStore));
 
-        RegisterCommand = new AsyncCommand(RegisterAsync, () => !IsBusy);
+        var preferences = _optionalPrivacyPreferencesStore.GetCurrent();
+        _allowPromotionalPushNotifications = preferences.AllowPromotionalPushNotifications;
+        _allowOptionalAnalyticsTracking = preferences.AllowOptionalAnalyticsTracking;
+
+        RegisterCommand = new AsyncCommand(RegisterAsync, CanRegister);
+        OpenTermsCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.ConsumerTerms), () => !IsBusy);
+        OpenPrivacyPolicyCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy), () => !IsBusy);
     }
 
     /// <summary>
-    /// Registration action command.
+    /// Gets the registration action command.
     /// </summary>
     public AsyncCommand RegisterCommand { get; }
+
+    /// <summary>
+    /// Gets the command that opens the consumer terms page.
+    /// </summary>
+    public AsyncCommand OpenTermsCommand { get; }
+
+    /// <summary>
+    /// Gets the command that opens the privacy notice page.
+    /// </summary>
+    public AsyncCommand OpenPrivacyPolicyCommand { get; }
 
     public string FirstName
     {
@@ -73,6 +103,68 @@ public sealed class RegisterViewModel : BaseViewModel
         set => SetProperty(ref _confirmPassword, value);
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the consumer terms were explicitly accepted.
+    /// </summary>
+    public bool AcceptConsumerTerms
+    {
+        get => _acceptConsumerTerms;
+        set
+        {
+            if (SetProperty(ref _acceptConsumerTerms, value))
+            {
+                RegisterCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the privacy notice was acknowledged.
+    /// </summary>
+    public bool AcknowledgePrivacyNotice
+    {
+        get => _acknowledgePrivacyNotice;
+        set
+        {
+            if (SetProperty(ref _acknowledgePrivacyNotice, value))
+            {
+                RegisterCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the user opted in to promotional push notifications.
+    /// </summary>
+    public bool AllowPromotionalPushNotifications
+    {
+        get => _allowPromotionalPushNotifications;
+        set
+        {
+            if (SetProperty(ref _allowPromotionalPushNotifications, value))
+            {
+                SaveOptionalPrivacyPreferences();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the user opted in to optional analytics/tracking.
+    /// </summary>
+    public bool AllowOptionalAnalyticsTracking
+    {
+        get => _allowOptionalAnalyticsTracking;
+        set
+        {
+            if (SetProperty(ref _allowOptionalAnalyticsTracking, value))
+            {
+                SaveOptionalPrivacyPreferences();
+            }
+        }
+    }
+
+    private bool CanRegister() => !IsBusy && AcceptConsumerTerms && AcknowledgePrivacyNotice;
+
     private async Task RegisterAsync()
     {
         if (IsBusy)
@@ -82,8 +174,8 @@ public sealed class RegisterViewModel : BaseViewModel
 
         IsBusy = true;
         ErrorMessage = null;
+        RegisterCommand.RaiseCanExecuteChanged();
 
-        // Keep normalized copies to avoid accidental drift between registration and auto-login inputs.
         var normalizedEmail = Email.Trim();
         var rawPassword = Password;
 
@@ -109,8 +201,6 @@ public sealed class RegisterViewModel : BaseViewModel
                 return;
             }
 
-            // Registration succeeded. Next step is immediate sign-in to satisfy expected UX.
-            // We intentionally do not use ConfigureAwait(false) here because this view model is UI-bound.
             try
             {
                 _ = await _authService.LoginAsync(
@@ -119,16 +209,11 @@ public sealed class RegisterViewModel : BaseViewModel
                     deviceId: null,
                     CancellationToken.None);
 
-                // Enter authenticated mode immediately after successful auto-login.
                 await _appRootNavigator.NavigateToAuthenticatedShellAsync();
             }
             catch
             {
-                // Account was created but auto-login failed.
-                // We avoid technical exception details and provide a safe user-facing fallback.
                 ErrorMessage = AppResources.RegisterAutoLoginFailed;
-
-                // Clear sensitive password fields for security hygiene.
                 Password = string.Empty;
                 ConfirmPassword = string.Empty;
             }
@@ -141,6 +226,8 @@ public sealed class RegisterViewModel : BaseViewModel
         {
             IsBusy = false;
             RegisterCommand.RaiseCanExecuteChanged();
+            OpenTermsCommand.RaiseCanExecuteChanged();
+            OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
         }
     }
 
@@ -185,7 +272,37 @@ public sealed class RegisterViewModel : BaseViewModel
             return false;
         }
 
+        if (!AcceptConsumerTerms)
+        {
+            ErrorMessage = AppResources.RegisterTermsAcceptanceRequired;
+            return false;
+        }
+
+        if (!AcknowledgePrivacyNotice)
+        {
+            ErrorMessage = AppResources.RegisterPrivacyAcknowledgementRequired;
+            return false;
+        }
+
         return true;
+    }
+
+    private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
+    {
+        var result = await _legalLinkService.OpenAsync(linkKind, CancellationToken.None).ConfigureAwait(false);
+        if (!result.Succeeded)
+        {
+            RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
+        }
+    }
+
+    private void SaveOptionalPrivacyPreferences()
+    {
+        _optionalPrivacyPreferencesStore.Save(new OptionalPrivacyPreferences
+        {
+            AllowPromotionalPushNotifications = AllowPromotionalPushNotifications,
+            AllowOptionalAnalyticsTracking = AllowOptionalAnalyticsTracking
+        });
     }
 
     /// <summary>
