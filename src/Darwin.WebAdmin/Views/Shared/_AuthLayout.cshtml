@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Darwin Admin</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-3I1H8n+..." crossorigin="anonymous" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/9da8b79f46.js" crossorigin="anonymous"></script>
+
+    <link href="~/css/main.css" rel="stylesheet" />
+    <link href="~/css/admin.css" rel="stylesheet" />
+
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Darwin" />
+    <link rel="manifest" href="/site.webmanifest" />
+</head>
+<body class="bg-light">
+    <main class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+                <div class="text-center mb-4">
+                    <a asp-controller="Account" asp-action="Login" class="text-decoration-none">
+                        <img src="~/images/Logo.png" alt="Darwin" class="img-fluid" style="max-height:56px;" />
+                    </a>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4 p-lg-5">
+                        @RenderBody()
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
