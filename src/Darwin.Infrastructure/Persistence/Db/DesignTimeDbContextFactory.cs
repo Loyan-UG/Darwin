@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +19,7 @@ namespace Darwin.Infrastructure.Persistence.Db
     ///  1) Environment variable "ConnectionStrings__DefaultConnection"
     ///  2) appsettings files discovered by probing typical locations:
     ///       - Current directory (where the command runs)
-    ///       - Sibling/parent paths like ../Darwin.Web, ../../Darwin.Web (common when startup-project is Web)
+    ///       - Sibling/parent paths like ../Darwin.WebAdmin, ../../Darwin.WebAdmin (common when startup-project is Web)
     ///       - appsettings.{Environment}.json then appsettings.json
     ///  3) Fallback LocalDB for developer machines
     ///
@@ -97,13 +97,13 @@ namespace Darwin.Infrastructure.Persistence.Db
             // Typical probe paths (ordered). Adjust if your solution layout differs.
             // - Current directory
             // - One level up (monorepo style)
-            // - ../Darwin.Web and ../../Darwin.Web (common when startup project is Web)
+            // - ../Darwin.WebAdmin and ../../Darwin.WebAdmin (common when startup project is Web)
             var probeRoots = new[]
             {
                 Directory.GetCurrentDirectory(),
                 Path.Combine(Directory.GetCurrentDirectory(), ".."),
-                Path.Combine(Directory.GetCurrentDirectory(), "../Darwin.Web"),
-                Path.Combine(Directory.GetCurrentDirectory(), "../../Darwin.Web"),
+                Path.Combine(Directory.GetCurrentDirectory(), "../Darwin.WebAdmin"),
+                Path.Combine(Directory.GetCurrentDirectory(), "../../Darwin.WebAdmin"),
             }
             .Select(p => Path.GetFullPath(p))
             .Distinct()

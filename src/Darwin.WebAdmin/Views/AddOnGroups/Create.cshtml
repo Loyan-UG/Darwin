@@ -1,0 +1,77 @@
+@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupCreateVm
+
+@{
+    ViewData["Title"] = "Create Add-on Group";
+}
+
+<h1 class="mb-3"><i class="fa fa-plus-circle"></i> New Add-on Group</h1>
+
+<form asp-controller="AddOnGroups" asp-action="Create" method="post" class="needs-validation" novalidate>
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <div class="card mb-3">
+        <div class="card-body row g-3">
+            <div class="col-md-6">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Currency" class="form-label"></label>
+                <input asp-for="Currency" class="form-control" maxlength="3" />
+                <span asp-validation-for="Currency" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="SelectionMode" class="form-label"></label>
+                <select asp-for="SelectionMode" class="form-select"
+                        asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.AddOnSelectionMode>()"></select>
+                <span asp-validation-for="SelectionMode" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="MinSelections" class="form-label"></label>
+                <input asp-for="MinSelections" class="form-control" />
+                <span asp-validation-for="MinSelections" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="MaxSelections" class="form-label"></label>
+                <input asp-for="MaxSelections" class="form-control" />
+                <span asp-validation-for="MaxSelections" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-check mt-4 pt-2">
+                    <input asp-for="IsGlobal" class="form-check-input" />
+                    <label asp-for="IsGlobal" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-check mt-4 pt-2">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("~/Views/AddOnGroups/_OptionsEditor.cshtml", Model)
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+        <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Uppercase currency input
+        const c = document.getElementById('Currency');
+        if (c) c.addEventListener('input', function () { this.value = this.value.toUpperCase(); });
+    </script>
+}

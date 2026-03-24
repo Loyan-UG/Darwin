@@ -1,0 +1,43 @@
+@model Darwin.WebAdmin.ViewModels.Identity.PermissionCreateVm
+@{
+    ViewData["Title"] = "Create Permission";
+}
+
+<h1 class="mb-3"><i class="fa fa-key"></i> Create Permission</h1>
+
+<partial name="~/Views/Shared/_Alerts.cshtml" />
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Key" class="form-label"></label>
+                <field-help title="Key" content="Unique permission identifier, e.g. Admin.Users.View." placement="right"></field-help>
+                <input asp-for="Key" class="form-control" />
+                <span asp-validation-for="Key" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <field-help title="Display name" content="Human-friendly name shown in the UI." placement="right"></field-help>
+                <input asp-for="DisplayName" class="form-control" />
+                <span asp-validation-for="DisplayName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="fa fa-arrow-left"></i> Back</a>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Create</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

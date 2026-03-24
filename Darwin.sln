@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Infrastructure", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Shared", "src\Darwin.Shared\Darwin.Shared.csproj", "{B976DF74-D99A-4C21-9465-73450DF3F3A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.Web", "src\Darwin.Web\Darwin.Web.csproj", "{74A4F4CE-D66B-4608-99E9-ACDEDC9807A4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.WebAdmin", "src\Darwin.WebAdmin\Darwin.WebAdmin.csproj", "{74A4F4CE-D66B-4608-99E9-ACDEDC9807A4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Darwin.WebApi", "src\Darwin.WebApi\Darwin.WebApi.csproj", "{C7113437-7914-44EC-8ED1-6B541D1371A9}"
 EndProject
@@ -49,7 +49,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		Darwin.MobileOnly.slnf = Darwin.MobileOnly.slnf
-		Darwin.WebOnly.slnf = Darwin.WebOnly.slnf
+		Darwin.WebAdminOnly.slnf = Darwin.WebAdminOnly.slnf
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mobile", "Mobile", "{19DD8962-0A65-48C1-90EF-DA11158FCFAC}"
