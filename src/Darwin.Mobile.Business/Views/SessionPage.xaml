@@ -11,7 +11,7 @@
     <ScrollView x:Name="RootScrollView">
         <VerticalStackLayout Padding="24" Spacing="16">
 
-            <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
+            <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
                    FontSize="12"
                    Opacity="0.8"
                    TextColor="{StaticResource BrushOnSurface}" />
@@ -39,7 +39,7 @@
                     Command="{Binding ConfirmAccrualCommand}"
                     IsVisible="{Binding CanExecuteAccrual}"
                     Clicked="OnActionClicked" />
-            <Label Text="Adds points to the customer account for this visit."
+            <Label Text="{x:Static res:AppResources.AccrualHelpText}"
                    IsVisible="{Binding CanExecuteAccrual}"
                    FontSize="12"
                    Opacity="0.75"
@@ -50,7 +50,7 @@
                     Command="{Binding ConfirmRedemptionCommand}"
                     IsVisible="{Binding CanExecuteRedemption}"
                     Clicked="OnActionClicked" />
-            <Label Text="Confirms reward redemption and deducts required points."
+            <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
                    IsVisible="{Binding CanExecuteRedemption}"
                    FontSize="12"
                    Opacity="0.75"

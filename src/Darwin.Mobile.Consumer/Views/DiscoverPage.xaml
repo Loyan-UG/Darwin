@@ -124,7 +124,7 @@
                             ItemsSource="{Binding NearbyRadiusOptions}"
                             SelectedItem="{Binding SelectedNearbyRadiusMeters}">
                         <Picker.ItemDisplayBinding>
-                            <Binding Path="." StringFormat="{}{0} m" />
+                            <Binding Path="." StringFormat="{x:Static res:AppResources.DiscoverNearbyRadiusMetersFormat}" />
                         </Picker.ItemDisplayBinding>
                     </Picker>
                 </Grid>

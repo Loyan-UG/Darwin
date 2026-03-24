@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -317,33 +317,44 @@ public sealed class DashboardViewModel : BaseViewModel
     private static string BuildDashboardCsv(BusinessDashboardSnapshot snapshot, int lookbackDays)
     {
         var builder = new StringBuilder();
-        builder.AppendLine("Section,Metric,Value");
-        builder.AppendLine($"Summary,LookbackDays,{lookbackDays}");
-        builder.AppendLine($"Summary,TotalSessions,{snapshot.TotalSessions}");
-        builder.AppendLine($"Summary,AccrualCount,{snapshot.AccrualCount}");
-        builder.AppendLine($"Summary,RedemptionCount,{snapshot.RedemptionCount}");
-        builder.AppendLine($"Summary,SubscriptionStatusRefreshFailures,{snapshot.SubscriptionStatusRefreshFailures}");
-        builder.AppendLine($"Summary,CampaignTargetingFixAppliedCount,{snapshot.CampaignTargetingFixAppliedCount}");
-        builder.AppendLine($"Summary,CampaignTargetingFixNoChangeCount,{snapshot.CampaignTargetingFixNoChangeCount}");
-        builder.AppendLine($"Summary,CampaignTargetingFixMetricsResetCount,{snapshot.CampaignTargetingFixMetricsResetCount}");
-        builder.AppendLine($"Summary,TotalAccruedPoints,{snapshot.TotalAccruedPoints}");
-        builder.AppendLine($"Summary,TotalRedeemedPoints,{snapshot.TotalRedeemedPoints}");
+        builder.AppendLine(string.Join(',',
+            AppResources.DashboardCsvSectionHeader,
+            AppResources.DashboardCsvMetricHeader,
+            AppResources.DashboardCsvValueHeader));
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvLookbackDaysMetric},{lookbackDays}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvTotalSessionsMetric},{snapshot.TotalSessions}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvAccrualCountMetric},{snapshot.AccrualCount}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvRedemptionCountMetric},{snapshot.RedemptionCount}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvSubscriptionRefreshFailuresMetric},{snapshot.SubscriptionStatusRefreshFailures}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvCampaignFixAppliedMetric},{snapshot.CampaignTargetingFixAppliedCount}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvCampaignFixNoChangeMetric},{snapshot.CampaignTargetingFixNoChangeCount}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvCampaignFixResetMetric},{snapshot.CampaignTargetingFixMetricsResetCount}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvTotalAccruedPointsMetric},{snapshot.TotalAccruedPoints}");
+        builder.AppendLine($"{AppResources.DashboardCsvSummarySection},{AppResources.DashboardCsvTotalRedeemedPointsMetric},{snapshot.TotalRedeemedPoints}");
 
         builder.AppendLine();
-        builder.AppendLine("TopCustomers,CustomerDisplayName,InteractionsCount");
+        builder.AppendLine(string.Join(',',
+            AppResources.DashboardCsvTopCustomersSection,
+            AppResources.DashboardCsvCustomerDisplayNameHeader,
+            AppResources.DashboardCsvInteractionsCountHeader));
         foreach (var customer in snapshot.TopCustomers)
         {
-            builder.Append("TopCustomers,")
+            builder.Append(AppResources.DashboardCsvTopCustomersSection).Append(',')
                 .Append(EscapeCsv(customer.CustomerDisplayName)).Append(',')
                 .Append(customer.InteractionsCount.ToString(CultureInfo.InvariantCulture))
                 .AppendLine();
         }
 
         builder.AppendLine();
-        builder.AppendLine("RecentActivities,OccurredAtUtc,ActivityKind,CustomerDisplayName,PointsDelta");
+        builder.AppendLine(string.Join(',',
+            AppResources.DashboardCsvRecentActivitiesSection,
+            AppResources.DashboardCsvOccurredAtUtcHeader,
+            AppResources.DashboardCsvActivityKindHeader,
+            AppResources.DashboardCsvCustomerDisplayNameHeader,
+            AppResources.DashboardCsvPointsDeltaHeader));
         foreach (var activity in snapshot.RecentActivities.OrderByDescending(x => x.OccurredAtUtc))
         {
-            builder.Append("RecentActivities,")
+            builder.Append(AppResources.DashboardCsvRecentActivitiesSection).Append(',')
                 .Append(EscapeCsv(activity.OccurredAtUtc.ToString("O", CultureInfo.InvariantCulture))).Append(',')
                 .Append(EscapeCsv(activity.ActivityKind)).Append(',')
                 .Append(EscapeCsv(activity.CustomerDisplayName)).Append(',')
@@ -407,45 +418,52 @@ public sealed class DashboardViewModel : BaseViewModel
     {
         var lines = new List<string>
         {
-            "Darwin Business Dashboard Report",
-            $"Generated (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
-            $"Window: {lookbackDays} day(s)",
+            AppResources.DashboardPdfTitle,
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfGeneratedAtFormat, AppResources.DashboardPdfGeneratedAtTimezoneLabel, DateTime.UtcNow),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfWindowFormat, lookbackDays),
             string.Empty,
-            "Summary",
-            $"- Total sessions: {snapshot.TotalSessions}",
-            $"- Accrual count: {snapshot.AccrualCount}",
-            $"- Redemption count: {snapshot.RedemptionCount}",
-            $"- Subscription refresh failures: {snapshot.SubscriptionStatusRefreshFailures}",
-            $"- Campaign quick-fix applied: {snapshot.CampaignTargetingFixAppliedCount}",
-            $"- Campaign quick-fix no-change: {snapshot.CampaignTargetingFixNoChangeCount}",
-            $"- Campaign quick-fix resets: {snapshot.CampaignTargetingFixMetricsResetCount}",
-            $"- Total accrued points: {snapshot.TotalAccruedPoints}",
-            $"- Total redeemed points: {snapshot.TotalRedeemedPoints}",
+            AppResources.DashboardPdfSummarySectionTitle,
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfTotalSessionsFormat, snapshot.TotalSessions),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfAccrualCountFormat, snapshot.AccrualCount),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfRedemptionCountFormat, snapshot.RedemptionCount),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfSubscriptionRefreshFailuresFormat, snapshot.SubscriptionStatusRefreshFailures),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfCampaignFixAppliedFormat, snapshot.CampaignTargetingFixAppliedCount),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfCampaignFixNoChangeFormat, snapshot.CampaignTargetingFixNoChangeCount),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfCampaignFixResetFormat, snapshot.CampaignTargetingFixMetricsResetCount),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfTotalAccruedPointsFormat, snapshot.TotalAccruedPoints),
+            string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfTotalRedeemedPointsFormat, snapshot.TotalRedeemedPoints),
             string.Empty,
-            "Top customers"
+            AppResources.DashboardPdfTopCustomersSectionTitle
         };
 
         if (snapshot.TopCustomers.Count == 0)
         {
-            lines.Add("- No customer interactions in selected window.");
+            lines.Add(AppResources.DashboardPdfNoCustomerInteractions);
         }
         else
         {
-            lines.AddRange(snapshot.TopCustomers.Select(c => $"- {c.CustomerDisplayName} ({c.InteractionsCount})"));
+            lines.AddRange(snapshot.TopCustomers.Select(c =>
+                string.Format(CultureInfo.CurrentCulture, AppResources.DashboardPdfTopCustomerLineFormat, c.CustomerDisplayName, c.InteractionsCount)));
         }
 
         lines.Add(string.Empty);
-        lines.Add("Recent activity");
+        lines.Add(AppResources.DashboardPdfRecentActivitySectionTitle);
 
         if (snapshot.RecentActivities.Count == 0)
         {
-            lines.Add("- No recent activity recorded.");
+            lines.Add(AppResources.DashboardPdfNoRecentActivity);
         }
         else
         {
             lines.AddRange(snapshot.RecentActivities
                 .OrderByDescending(x => x.OccurredAtUtc)
-                .Select(a => $"- {a.OccurredAtUtc:yyyy-MM-dd HH:mm} | {a.ActivityKind} | {a.CustomerDisplayName} | Δ {a.PointsDelta}"));
+                .Select(a => string.Format(
+                    CultureInfo.CurrentCulture,
+                    AppResources.DashboardPdfRecentActivityLineFormat,
+                    a.OccurredAtUtc,
+                    a.ActivityKind,
+                    a.CustomerDisplayName,
+                    a.PointsDelta)));
         }
 
         return lines;

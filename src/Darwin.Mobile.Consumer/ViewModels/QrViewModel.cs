@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Models.Loyalty;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -44,9 +45,6 @@ public sealed class QrViewModel : BaseViewModel
     /// </summary>
     private static readonly TimeSpan MinimumAutoRotationInterval = TimeSpan.FromMinutes(5);
 
-    private const string DiscoverGuidanceMessage = "To generate a QR code, first go to Discover, open a business, and join its loyalty program.";
-    private const string RefreshGuidanceMessage = "Accrual creates a QR for earning points. Redemption creates a QR for spending points/rewards.";
-
     private readonly ILoyaltyService _loyaltyService;
 
     private string _qrToken = string.Empty;
@@ -56,7 +54,7 @@ public sealed class QrViewModel : BaseViewModel
     private Guid _businessId;
     private string _businessDisplayName = string.Empty;
     private string _statusMessage = string.Empty;
-    private string _guidanceMessage = DiscoverGuidanceMessage;
+    private string _guidanceMessage = AppResources.QrDiscoverGuidanceMessage;
     private string _expiresInText = string.Empty;
 
     private DateTimeOffset? _lastSuccessfulSessionRefreshUtc;
@@ -177,7 +175,7 @@ public sealed class QrViewModel : BaseViewModel
         RunOnMain(() =>
         {
             StatusMessage = justJoined
-                ? "You have successfully joined this loyalty program. Show this QR code to the business scanner."
+                ? AppResources.QrJoinedStatusMessage
                 : string.Empty;
         });
     }
@@ -215,7 +213,7 @@ public sealed class QrViewModel : BaseViewModel
         {
             RunOnMain(() =>
             {
-                ErrorMessage = "No business selected yet. Please go to Discover, open a business, and join first.";
+                ErrorMessage = AppResources.QrNoBusinessSelectedMessage;
                 UpdateGuidanceMessage();
             });
             return;
@@ -252,7 +250,7 @@ public sealed class QrViewModel : BaseViewModel
     {
         if (!result.Succeeded || result.Value is null)
         {
-            ErrorMessage = result.Error ?? "Failed to prepare scan session.";
+            ErrorMessage = result.Error ?? AppResources.BusinessScanSessionPrepareFailed;
             QrToken = string.Empty;
             ExpiresAtUtc = null;
             return;
@@ -289,7 +287,7 @@ public sealed class QrViewModel : BaseViewModel
             await _loyaltyService.TrackPromotionInteractionAsync(new TrackPromotionInteractionRequest
             {
                 BusinessId = _businessId,
-                BusinessName = string.IsNullOrWhiteSpace(BusinessDisplayName) ? "Unknown" : BusinessDisplayName,
+                BusinessName = string.IsNullOrWhiteSpace(BusinessDisplayName) ? string.Empty : BusinessDisplayName,
                 Title = "RewardClaimIntent",
                 CtaKind = "OpenRedemptionQr",
                 EventType = PromotionInteractionEventType.Claim,
@@ -409,7 +407,7 @@ public sealed class QrViewModel : BaseViewModel
 
         if (remaining <= TimeSpan.Zero)
         {
-            ExpiresInText = "Auto refresh is due now.";
+            ExpiresInText = AppResources.QrAutoRefreshDueNow;
             return;
         }
 
@@ -417,13 +415,13 @@ public sealed class QrViewModel : BaseViewModel
         var seconds = Math.Max(0, (int)Math.Floor(remaining.TotalSeconds));
         var display = TimeSpan.FromSeconds(seconds);
 
-        ExpiresInText = $"Auto refresh in {display:mm\\:ss}";
+        ExpiresInText = string.Format(AppResources.QrAutoRefreshInFormat, display.ToString(@"mm\:ss"));
     }
 
     private void UpdateGuidanceMessage()
     {
         GuidanceMessage = _businessId == Guid.Empty
-            ? DiscoverGuidanceMessage
-            : RefreshGuidanceMessage;
+            ? AppResources.QrDiscoverGuidanceMessage
+            : AppResources.QrRefreshGuidanceMessage;
     }
 }

@@ -103,6 +103,9 @@
   <data name="EmailLabel" xml:space="preserve">
     <value>Email</value>
   </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>user@example.com</value>
+  </data>
   <data name="EmailRequired" xml:space="preserve">
     <value>Email is required.</value>
   </data>
@@ -111,6 +114,9 @@
   </data>
   <data name="HomeTitle" xml:space="preserve">
     <value>Home</value>
+  </data>
+  <data name="HomeGreeting" xml:space="preserve">
+    <value>Welcome to Darwin</value>
   </data>
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
@@ -674,25 +680,25 @@
     <value>Open the current legal and privacy pages maintained on loyan.de.</value>
   </data>
   <data name="LegalImpressumButton" xml:space="preserve">
-    <value>Impressum</value>
+    <value>Legal notice</value>
   </data>
   <data name="LegalPrivacyNoticeButton" xml:space="preserve">
-    <value>Datenschutzhinweise</value>
+    <value>Privacy notice</value>
   </data>
   <data name="LegalTermsButton" xml:space="preserve">
-    <value>Nutzungsbedingungen</value>
+    <value>Terms of use</value>
   </data>
   <data name="LegalAccountDeletionButton" xml:space="preserve">
-    <value>Konto löschen</value>
+    <value>Delete account</value>
   </data>
   <data name="LegalOpenFailed" xml:space="preserve">
     <value>The legal page could not be opened right now. Please try again shortly.</value>
   </data>
   <data name="SettingsLegalHubButton" xml:space="preserve">
-    <value>Rechtliches &amp; Datenschutz</value>
+    <value>Legal &amp; Privacy</value>
   </data>
   <data name="SettingsDeleteAccountButton" xml:space="preserve">
-    <value>Konto löschen</value>
+    <value>Delete account</value>
   </data>
   <data name="RegisterAcknowledgementsTitle" xml:space="preserve">
     <value>Required acknowledgements</value>
@@ -722,7 +728,7 @@
     <value>Allow optional analytics and tracking (optional)</value>
   </data>
   <data name="AccountDeletionTitle" xml:space="preserve">
-    <value>Konto löschen</value>
+    <value>Delete account</value>
   </data>
   <data name="AccountDeletionWarningTitle" xml:space="preserve">
     <value>Before you continue</value>
@@ -792,5 +798,86 @@
   </data>
   <data name="ProfilePushPermissionRequestFailed" xml:space="preserve">
     <value>Notification permission could not be requested right now. Please try again.</value>
+  </data>
+  <data name="LoginEmailPlaceholder" xml:space="preserve">
+    <value>user@example.com</value>
+  </data>
+  <data name="LoginPasswordPlaceholder" xml:space="preserve">
+    <value>••••••</value>
+  </data>
+  <data name="BusinessActiveFormat" xml:space="preserve">
+    <value>Active: {0}</value>
+  </data>
+  <data name="DiscoverNearbyRadiusMetersFormat" xml:space="preserve">
+    <value>{0} m</value>
+  </data>
+  <data name="FeedPointsDeltaFormat" xml:space="preserve">
+    <value>{0:+#;-#;0} pts</value>
+  </data>
+  <data name="FeedPointsSpentFormat" xml:space="preserve">
+    <value>Spent: {0} pts</value>
+  </data>
+  <data name="QrBusinessFormat" xml:space="preserve">
+    <value>Business: {0}</value>
+  </data>
+  <data name="QrExpiresAtFormat" xml:space="preserve">
+    <value>Expires at: {0:HH:mm:ss}</value>
+  </data>
+  <data name="QrAccrualHelpText" xml:space="preserve">
+    <value>Use this when the business should add new points to your account.</value>
+  </data>
+  <data name="QrRedemptionHelpText" xml:space="preserve">
+    <value>Use this when you want to redeem points or claim an available reward.</value>
+  </data>
+  <data name="QrDiscoverGuidanceMessage" xml:space="preserve">
+    <value>To generate a QR code, first go to Discover, open a business, and join its loyalty program.</value>
+  </data>
+  <data name="QrRefreshGuidanceMessage" xml:space="preserve">
+    <value>Accrual creates a QR for earning points. Redemption creates a QR for spending points or rewards.</value>
+  </data>
+  <data name="QrJoinedStatusMessage" xml:space="preserve">
+    <value>You have successfully joined this loyalty program. Show this QR code to the business scanner.</value>
+  </data>
+  <data name="QrNoBusinessSelectedMessage" xml:space="preserve">
+    <value>No business is selected yet. Please open a business in Discover and join it first.</value>
+  </data>
+  <data name="QrAutoRefreshDueNow" xml:space="preserve">
+    <value>Auto refresh is due now.</value>
+  </data>
+  <data name="QrAutoRefreshInFormat" xml:space="preserve">
+    <value>Auto refresh in {0}</value>
+  </data>
+  <data name="ScannerCameraAccessRequiredTitle" xml:space="preserve">
+    <value>Camera access required</value>
+  </data>
+  <data name="ScannerCameraAccessRequiredMessage" xml:space="preserve">
+    <value>Loyan needs camera access to scan QR codes for loyalty sessions. Please allow camera access or continue with manual token entry.</value>
+  </data>
+  <data name="ScannerCameraAccessAllowButton" xml:space="preserve">
+    <value>Allow</value>
+  </data>
+  <data name="ScannerPermissionDeniedTitle" xml:space="preserve">
+    <value>Camera permission denied</value>
+  </data>
+  <data name="ScannerPermissionDeniedMessage" xml:space="preserve">
+    <value>Camera access has been denied. You can enable it in app settings to scan QR codes, or continue with manual token entry.</value>
+  </data>
+  <data name="ScannerOpenSettingsButton" xml:space="preserve">
+    <value>Open settings</value>
+  </data>
+  <data name="ScannerManualTokenTitle" xml:space="preserve">
+    <value>Manual scan token</value>
+  </data>
+  <data name="ScannerManualTokenMessage" xml:space="preserve">
+    <value>No camera is available. Paste the ScanSessionToken or cancel.</value>
+  </data>
+  <data name="ScannerManualTokenAccept" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ScannerManualTokenCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ScannerManualTokenPlaceholder" xml:space="preserve">
+    <value>Paste token here</value>
   </data>
 </root>

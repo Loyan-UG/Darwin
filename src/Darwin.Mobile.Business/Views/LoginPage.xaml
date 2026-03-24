@@ -16,7 +16,7 @@
                        HeightRequest="160"
                        HorizontalOptions="Center"
                        Aspect="AspectFit"
-                       SemanticProperties.Description="Darwin app logo" />
+                       SemanticProperties.Description="{x:Static res:AppResources.LoginLogoDescription}" />
 
                 <Label Text="{x:Static res:AppResources.LoginTitle}"
                        FontSize="22"

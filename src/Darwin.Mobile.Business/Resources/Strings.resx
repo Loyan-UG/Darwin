@@ -836,40 +836,40 @@
     <value>Campaign quick-fix — applied: {0} · no-change: {1} · resets: {2}</value>
   </data>
   <data name="AuthLegalSectionTitle" xml:space="preserve">
-    <value>Rechtliches &amp; Datenschutz</value>
+    <value>Legal &amp; Privacy</value>
   </data>
   <data name="AuthLegalSectionSubtitle" xml:space="preserve">
     <value>Review the legal pages before signing in to the business app.</value>
   </data>
   <data name="LegalHubTitle" xml:space="preserve">
-    <value>Rechtliches &amp; Datenschutz</value>
+    <value>Legal &amp; Privacy</value>
   </data>
   <data name="LegalHubSubtitle" xml:space="preserve">
     <value>Open the current legal and privacy pages maintained on loyan.de.</value>
   </data>
   <data name="LegalImpressumButton" xml:space="preserve">
-    <value>Impressum</value>
+    <value>Legal notice</value>
   </data>
   <data name="LegalPrivacyNoticeButton" xml:space="preserve">
-    <value>Datenschutzhinweise</value>
+    <value>Privacy notice</value>
   </data>
   <data name="LegalTermsButton" xml:space="preserve">
-    <value>Nutzungsbedingungen</value>
+    <value>Terms of use</value>
   </data>
   <data name="LegalAccountDeletionButton" xml:space="preserve">
-    <value>Konto löschen</value>
+    <value>Delete account</value>
   </data>
   <data name="LegalOpenFailed" xml:space="preserve">
     <value>The legal page could not be opened right now. Please try again shortly.</value>
   </data>
   <data name="SettingsLegalHubButton" xml:space="preserve">
-    <value>Rechtliches &amp; Datenschutz</value>
+    <value>Legal &amp; Privacy</value>
   </data>
   <data name="SettingsDeleteAccountButton" xml:space="preserve">
-    <value>Konto löschen</value>
+    <value>Delete account</value>
   </data>
   <data name="AccountDeletionTitle" xml:space="preserve">
-    <value>Konto löschen</value>
+    <value>Delete account</value>
   </data>
   <data name="AccountDeletionWarningTitle" xml:space="preserve">
     <value>Before you continue</value>
@@ -930,5 +930,275 @@
   </data>
   <data name="ScannerManualTokenPlaceholder" xml:space="preserve">
     <value>paste token here</value>
+  </data>
+  <data name="LoginLogoDescription" xml:space="preserve">
+    <value>Loyan Business app logo</value>
+  </data>
+  <data name="DashboardSessionsFormat" xml:space="preserve">
+    <value>Sessions: {0}</value>
+  </data>
+  <data name="DashboardAccrualsFormat" xml:space="preserve">
+    <value>Accruals: {0}</value>
+  </data>
+  <data name="DashboardRedemptionsFormat" xml:space="preserve">
+    <value>Redemptions: {0}</value>
+  </data>
+  <data name="DashboardAccruedPointsFormat" xml:space="preserve">
+    <value>Accrued points: {0}</value>
+  </data>
+  <data name="DashboardRedeemedPointsFormat" xml:space="preserve">
+    <value>Redeemed points: {0}</value>
+  </data>
+  <data name="DashboardSubscriptionRefreshFailuresFormat" xml:space="preserve">
+    <value>Subscription refresh failures: {0}</value>
+  </data>
+  <data name="DashboardInteractionsCountFormat" xml:space="preserve">
+    <value>({0})</value>
+  </data>
+  <data name="DashboardActivityPointsFormat" xml:space="preserve">
+    <value>Points: {0}</value>
+  </data>
+  <data name="DashboardCsvSectionHeader" xml:space="preserve">
+    <value>Section</value>
+  </data>
+  <data name="DashboardCsvMetricHeader" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="DashboardCsvValueHeader" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="DashboardCsvSummarySection" xml:space="preserve">
+    <value>Summary</value>
+  </data>
+  <data name="DashboardCsvLookbackDaysMetric" xml:space="preserve">
+    <value>LookbackDays</value>
+  </data>
+  <data name="DashboardCsvTotalSessionsMetric" xml:space="preserve">
+    <value>TotalSessions</value>
+  </data>
+  <data name="DashboardCsvAccrualCountMetric" xml:space="preserve">
+    <value>AccrualCount</value>
+  </data>
+  <data name="DashboardCsvRedemptionCountMetric" xml:space="preserve">
+    <value>RedemptionCount</value>
+  </data>
+  <data name="DashboardCsvSubscriptionRefreshFailuresMetric" xml:space="preserve">
+    <value>SubscriptionRefreshFailures</value>
+  </data>
+  <data name="DashboardCsvCampaignFixAppliedMetric" xml:space="preserve">
+    <value>CampaignTargetingFixAppliedCount</value>
+  </data>
+  <data name="DashboardCsvCampaignFixNoChangeMetric" xml:space="preserve">
+    <value>CampaignTargetingFixNoChangeCount</value>
+  </data>
+  <data name="DashboardCsvCampaignFixResetMetric" xml:space="preserve">
+    <value>CampaignTargetingFixMetricsResetCount</value>
+  </data>
+  <data name="DashboardCsvTotalAccruedPointsMetric" xml:space="preserve">
+    <value>TotalAccruedPoints</value>
+  </data>
+  <data name="DashboardCsvTotalRedeemedPointsMetric" xml:space="preserve">
+    <value>TotalRedeemedPoints</value>
+  </data>
+  <data name="DashboardCsvTopCustomersSection" xml:space="preserve">
+    <value>TopCustomers</value>
+  </data>
+  <data name="DashboardCsvCustomerDisplayNameHeader" xml:space="preserve">
+    <value>CustomerDisplayName</value>
+  </data>
+  <data name="DashboardCsvInteractionsCountHeader" xml:space="preserve">
+    <value>InteractionsCount</value>
+  </data>
+  <data name="DashboardCsvRecentActivitiesSection" xml:space="preserve">
+    <value>RecentActivities</value>
+  </data>
+  <data name="DashboardCsvOccurredAtUtcHeader" xml:space="preserve">
+    <value>OccurredAtUtc</value>
+  </data>
+  <data name="DashboardCsvActivityKindHeader" xml:space="preserve">
+    <value>ActivityKind</value>
+  </data>
+  <data name="DashboardCsvPointsDeltaHeader" xml:space="preserve">
+    <value>PointsDelta</value>
+  </data>
+  <data name="DashboardPdfTitle" xml:space="preserve">
+    <value>Loyan Business Dashboard Report</value>
+  </data>
+  <data name="DashboardPdfGeneratedAtFormat" xml:space="preserve">
+    <value>Generated ({0}): {1:yyyy-MM-dd HH:mm:ss}</value>
+  </data>
+  <data name="DashboardPdfGeneratedAtTimezoneLabel" xml:space="preserve">
+    <value>UTC</value>
+  </data>
+  <data name="DashboardPdfWindowFormat" xml:space="preserve">
+    <value>Window: {0} day(s)</value>
+  </data>
+  <data name="DashboardPdfSummarySectionTitle" xml:space="preserve">
+    <value>Summary</value>
+  </data>
+  <data name="DashboardPdfTotalSessionsFormat" xml:space="preserve">
+    <value>- Total sessions: {0}</value>
+  </data>
+  <data name="DashboardPdfAccrualCountFormat" xml:space="preserve">
+    <value>- Accrual count: {0}</value>
+  </data>
+  <data name="DashboardPdfRedemptionCountFormat" xml:space="preserve">
+    <value>- Redemption count: {0}</value>
+  </data>
+  <data name="DashboardPdfSubscriptionRefreshFailuresFormat" xml:space="preserve">
+    <value>- Subscription refresh failures: {0}</value>
+  </data>
+  <data name="DashboardPdfCampaignFixAppliedFormat" xml:space="preserve">
+    <value>- Campaign quick-fix applied: {0}</value>
+  </data>
+  <data name="DashboardPdfCampaignFixNoChangeFormat" xml:space="preserve">
+    <value>- Campaign quick-fix no-change: {0}</value>
+  </data>
+  <data name="DashboardPdfCampaignFixResetFormat" xml:space="preserve">
+    <value>- Campaign quick-fix resets: {0}</value>
+  </data>
+  <data name="DashboardPdfTotalAccruedPointsFormat" xml:space="preserve">
+    <value>- Total accrued points: {0}</value>
+  </data>
+  <data name="DashboardPdfTotalRedeemedPointsFormat" xml:space="preserve">
+    <value>- Total redeemed points: {0}</value>
+  </data>
+  <data name="DashboardPdfTopCustomersSectionTitle" xml:space="preserve">
+    <value>Top customers</value>
+  </data>
+  <data name="DashboardPdfNoCustomerInteractions" xml:space="preserve">
+    <value>- No customer interactions in the selected window.</value>
+  </data>
+  <data name="DashboardPdfTopCustomerLineFormat" xml:space="preserve">
+    <value>- {0} ({1})</value>
+  </data>
+  <data name="DashboardPdfRecentActivitySectionTitle" xml:space="preserve">
+    <value>Recent activity</value>
+  </data>
+  <data name="DashboardPdfNoRecentActivity" xml:space="preserve">
+    <value>- No recent activity recorded.</value>
+  </data>
+  <data name="DashboardPdfRecentActivityLineFormat" xml:space="preserve">
+    <value>- {0:yyyy-MM-dd HH:mm} | {1} | {2} | Δ {3}</value>
+  </data>
+  <data name="DashboardActivityKindSessionLoaded" xml:space="preserve">
+    <value>Session loaded</value>
+  </data>
+  <data name="DashboardActivityKindAccrualConfirmed" xml:space="preserve">
+    <value>Accrual confirmed</value>
+  </data>
+  <data name="DashboardActivityKindRedemptionConfirmed" xml:space="preserve">
+    <value>Redemption confirmed</value>
+  </data>
+  <data name="DashboardActivityKindSubscriptionRefreshSucceeded" xml:space="preserve">
+    <value>Subscription status refresh succeeded</value>
+  </data>
+  <data name="DashboardActivityKindSubscriptionRefreshFailed" xml:space="preserve">
+    <value>Subscription status refresh failed</value>
+  </data>
+  <data name="DashboardActivityKindSubscriptionPlansLoaded" xml:space="preserve">
+    <value>Subscription plans loaded</value>
+  </data>
+  <data name="DashboardActivityKindSubscriptionCheckoutStarted" xml:space="preserve">
+    <value>Subscription checkout started</value>
+  </data>
+  <data name="DashboardActivityKindSubscriptionCheckoutFailed" xml:space="preserve">
+    <value>Subscription checkout failed</value>
+  </data>
+  <data name="DashboardActivityKindSubscriptionCancelAtPeriodEndEnabled" xml:space="preserve">
+    <value>Subscription cancellation scheduled</value>
+  </data>
+  <data name="DashboardActivityKindSubscriptionCancelAtPeriodEndDisabled" xml:space="preserve">
+    <value>Subscription cancellation cleared</value>
+  </data>
+  <data name="DashboardActivityKindCampaignTargetingFixApplied" xml:space="preserve">
+    <value>Campaign targeting quick fix applied</value>
+  </data>
+  <data name="DashboardActivityKindCampaignTargetingFixNoChange" xml:space="preserve">
+    <value>Campaign targeting quick fix not needed</value>
+  </data>
+  <data name="DashboardActivityKindCampaignTargetingFixMetricsReset" xml:space="preserve">
+    <value>Campaign targeting quick-fix metrics reset</value>
+  </data>
+  <data name="RewardsOperatorRoleFormat" xml:space="preserve">
+    <value>Operator role: {0}</value>
+  </data>
+  <data name="RewardsTierPointsFormat" xml:space="preserve">
+    <value>{0} pts</value>
+  </data>
+  <data name="RewardsTierValueFormat" xml:space="preserve">
+    <value>Value: {0}</value>
+  </data>
+  <data name="RewardsTierSelfRedemptionFormat" xml:space="preserve">
+    <value>Self redemption: {0}</value>
+  </data>
+  <data name="RewardsCampaignStateFormat" xml:space="preserve">
+    <value>State: {0}</value>
+  </data>
+  <data name="RewardsCampaignStartAtFormat" xml:space="preserve">
+    <value>Start: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="RewardsCampaignEndAtFormat" xml:space="preserve">
+    <value>End: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="HomeDashboardSubtitle" xml:space="preserve">
+    <value>Business dashboard</value>
+  </data>
+  <data name="HomeStatusTitle" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="HomeCurrentBusinessContextTitle" xml:space="preserve">
+    <value>Current business context</value>
+  </data>
+  <data name="HomeOperatorLabel" xml:space="preserve">
+    <value>Operator:</value>
+  </data>
+  <data name="HomeOperatorRoleLabel" xml:space="preserve">
+    <value>Operator role:</value>
+  </data>
+  <data name="HomeTestingHintTitle" xml:space="preserve">
+    <value>Testing hint</value>
+  </data>
+  <data name="HomeTestingHintBody" xml:space="preserve">
+    <value>Before scanning a QR code, ensure the Consumer account joined this same business.</value>
+  </data>
+  <data name="HomeRefreshContextButton" xml:space="preserve">
+    <value>Refresh context</value>
+  </data>
+  <data name="HomeUnavailableValue" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="HomeResolveCurrentBusinessContextFailed" xml:space="preserve">
+    <value>Unable to resolve the current business context.</value>
+  </data>
+  <data name="HomeLoadBusinessInfoFailed" xml:space="preserve">
+    <value>Unable to load business information right now. Please try again.</value>
+  </data>
+  <data name="ReportingSubscriptionSettingsDisplayName" xml:space="preserve">
+    <value>Subscription settings</value>
+  </data>
+  <data name="ReportingCampaignTargetingDisplayName" xml:space="preserve">
+    <value>Campaign targeting</value>
+  </data>
+  <data name="ReportingUnknownCustomer" xml:space="preserve">
+    <value>Unknown customer</value>
+  </data>
+  <data name="AuthorizationRoleUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="AuthorizationRoleAdministrator" xml:space="preserve">
+    <value>Administrator</value>
+  </data>
+  <data name="AuthorizationRoleBusinessOperator" xml:space="preserve">
+    <value>Business operator</value>
+  </data>
+  <data name="AuthorizationRoleBusinessOperatorLegacy" xml:space="preserve">
+    <value>Business operator (legacy token)</value>
+  </data>
+  <data name="AuthorizationRoleRestricted" xml:space="preserve">
+    <value>Restricted</value>
+  </data>
+  <data name="OperatorRoleFormat" xml:space="preserve">
+    <value>Operator role: {0}</value>
   </data>
 </root>

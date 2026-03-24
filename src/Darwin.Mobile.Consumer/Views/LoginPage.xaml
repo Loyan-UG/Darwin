@@ -22,7 +22,7 @@
                    TextColor="{StaticResource Neutral900}" />
             <Entry Text="{Binding Email}"
                    Keyboard="Email"
-                   Placeholder="user@example.com"
+                   Placeholder="{x:Static res:AppResources.LoginEmailPlaceholder}"
                    TextColor="{StaticResource Neutral900}"
                    PlaceholderColor="Gray" />
 
@@ -30,7 +30,7 @@
                    TextColor="{StaticResource Neutral900}" />
             <Entry Text="{Binding Password}"
                    IsPassword="True"
-                   Placeholder="••••••"
+                   Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
                    TextColor="{StaticResource Neutral900}"
                    PlaceholderColor="Gray" />
 

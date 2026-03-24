@@ -24,7 +24,7 @@
                            FontSize="26"
                            FontAttributes="Bold"
                            TextColor="{StaticResource BrushOnSurface}" />
-                    <Label Text="Business Dashboard"
+                    <Label Text="{x:Static res:AppResources.HomeDashboardSubtitle}"
                            FontSize="13"
                            TextColor="{StaticResource BrushOnSurface}"
                            Opacity="0.70" />
@@ -45,7 +45,7 @@
                     <RoundRectangle CornerRadius="10" />
                 </Border.StrokeShape>
                 <VerticalStackLayout Padding="12" Spacing="4">
-                    <Label Text="Status"
+                    <Label Text="{x:Static res:AppResources.HomeStatusTitle}"
                            FontAttributes="Bold"
                            TextColor="#FFB4B4" />
                     <Label Text="{Binding ErrorMessage}"
@@ -64,7 +64,7 @@
 
                 <VerticalStackLayout Padding="14" Spacing="10">
 
-                    <Label Text="Current Business Context"
+                    <Label Text="{x:Static res:AppResources.HomeCurrentBusinessContextTitle}"
                            FontSize="14"
                            FontAttributes="Bold"
                            TextColor="{StaticResource BrushOnSurface}" />
@@ -105,7 +105,7 @@
                            LineBreakMode="WordWrap" />
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                        <Label Text="Operator:"
+                        <Label Text="{x:Static res:AppResources.HomeOperatorLabel}"
                                FontSize="13"
                                FontAttributes="Bold"
                                TextColor="{StaticResource BrushOnSurface}" />
@@ -116,7 +116,7 @@
                     </Grid>
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                        <Label Text="Operator role:"
+                        <Label Text="{x:Static res:AppResources.HomeOperatorRoleLabel}"
                                FontSize="13"
                                FontAttributes="Bold"
                                TextColor="{StaticResource BrushOnSurface}" />
@@ -137,10 +137,10 @@
                     <RoundRectangle CornerRadius="10" />
                 </Border.StrokeShape>
                 <VerticalStackLayout Padding="12" Spacing="6">
-                    <Label Text="Testing Hint"
+                    <Label Text="{x:Static res:AppResources.HomeTestingHintTitle}"
                            FontAttributes="Bold"
                            TextColor="{StaticResource Neutral0}" />
-                    <Label Text="Before scanning a QR, ensure the Consumer account joined this same business."
+                    <Label Text="{x:Static res:AppResources.HomeTestingHintBody}"
                            FontSize="13"
                            TextColor="{StaticResource Neutral0}"
                            Opacity="0.82"
@@ -151,7 +151,7 @@
             <!-- Actions -->
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                 <Button Grid.Column="0"
-                        Text="Refresh Context"
+                        Text="{x:Static res:AppResources.HomeRefreshContextButton}"
                         Command="{Binding LoadContextCommand}"
                         CornerRadius="8"
                         FontAttributes="Bold"

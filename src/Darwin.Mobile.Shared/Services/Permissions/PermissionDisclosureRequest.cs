@@ -43,6 +43,11 @@ public sealed class PermissionDisclosureRequest
     public string LegalReferenceButtonText { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the localized fallback message shown when the referenced legal page cannot be opened.
+    /// </summary>
+    public string LegalReferenceOpenFailedMessage { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the legal destination that should open when the user asks for more privacy detail.
     /// </summary>
     public LegalLinkKind LegalReferenceKind { get; set; } = LegalLinkKind.PrivacyPolicy;

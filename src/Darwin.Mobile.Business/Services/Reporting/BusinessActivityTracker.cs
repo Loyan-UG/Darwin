@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Mobile.Business.Resources;
 using Microsoft.Maui.Storage;
 
 namespace Darwin.Mobile.Business.Services.Reporting;
@@ -39,7 +40,7 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     public Task RecordSubscriptionStatusRefreshAsync(bool succeeded, CancellationToken cancellationToken)
         => AppendAsync(
             succeeded ? BusinessActivityKind.SubscriptionStatusRefreshSucceeded : BusinessActivityKind.SubscriptionStatusRefreshFailed,
-            customerDisplayName: "Subscription settings",
+            customerDisplayName: AppResources.ReportingSubscriptionSettingsDisplayName,
             pointsDelta: 0,
             cancellationToken);
 
@@ -48,14 +49,14 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             changed
                 ? BusinessActivityKind.CampaignTargetingFixApplied
                 : BusinessActivityKind.CampaignTargetingFixNoChange,
-            customerDisplayName: "Campaign targeting",
+            customerDisplayName: AppResources.ReportingCampaignTargetingDisplayName,
             pointsDelta: 0,
             cancellationToken);
 
     public Task RecordCampaignTargetingFixMetricsResetAsync(CancellationToken cancellationToken)
         => AppendAsync(
             BusinessActivityKind.CampaignTargetingFixMetricsReset,
-            customerDisplayName: "Campaign targeting",
+            customerDisplayName: AppResources.ReportingCampaignTargetingDisplayName,
             pointsDelta: 0,
             cancellationToken);
 
@@ -96,7 +97,7 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
             .Select(x => new BusinessActivityFeedItem
             {
                 OccurredAtUtc = x.OccurredAtUtc,
-                ActivityKind = x.Kind.ToString(),
+                ActivityKind = ResolveActivityKindDisplayName(x.Kind),
                 CustomerDisplayName = NormalizeCustomer(x.CustomerDisplayName),
                 PointsDelta = x.PointsDelta
             })
@@ -172,8 +173,32 @@ public sealed class BusinessActivityTracker : IBusinessActivityTracker
     private static string NormalizeCustomer(string? customerDisplayName)
     {
         return string.IsNullOrWhiteSpace(customerDisplayName)
-            ? "Unknown customer"
+            ? AppResources.ReportingUnknownCustomer
             : customerDisplayName.Trim();
+    }
+
+    /// <summary>
+    /// Resolves localized activity captions for dashboard and export projections.
+    /// </summary>
+    private static string ResolveActivityKindDisplayName(BusinessActivityKind kind)
+    {
+        return kind switch
+        {
+            BusinessActivityKind.SessionLoaded => AppResources.DashboardActivityKindSessionLoaded,
+            BusinessActivityKind.AccrualConfirmed => AppResources.DashboardActivityKindAccrualConfirmed,
+            BusinessActivityKind.RedemptionConfirmed => AppResources.DashboardActivityKindRedemptionConfirmed,
+            BusinessActivityKind.SubscriptionStatusRefreshSucceeded => AppResources.DashboardActivityKindSubscriptionRefreshSucceeded,
+            BusinessActivityKind.SubscriptionStatusRefreshFailed => AppResources.DashboardActivityKindSubscriptionRefreshFailed,
+            BusinessActivityKind.SubscriptionPlansLoaded => AppResources.DashboardActivityKindSubscriptionPlansLoaded,
+            BusinessActivityKind.SubscriptionCheckoutStarted => AppResources.DashboardActivityKindSubscriptionCheckoutStarted,
+            BusinessActivityKind.SubscriptionCheckoutFailed => AppResources.DashboardActivityKindSubscriptionCheckoutFailed,
+            BusinessActivityKind.SubscriptionCancelAtPeriodEndEnabled => AppResources.DashboardActivityKindSubscriptionCancelAtPeriodEndEnabled,
+            BusinessActivityKind.SubscriptionCancelAtPeriodEndDisabled => AppResources.DashboardActivityKindSubscriptionCancelAtPeriodEndDisabled,
+            BusinessActivityKind.CampaignTargetingFixApplied => AppResources.DashboardActivityKindCampaignTargetingFixApplied,
+            BusinessActivityKind.CampaignTargetingFixNoChange => AppResources.DashboardActivityKindCampaignTargetingFixNoChange,
+            BusinessActivityKind.CampaignTargetingFixMetricsReset => AppResources.DashboardActivityKindCampaignTargetingFixMetricsReset,
+            _ => kind.ToString()
+        };
     }
 }
 

@@ -126,7 +126,7 @@
                            FontAttributes="Bold"
                            FontSize="16" />
 
-                    <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, StringFormat='Active: {0}'}" />
+                    <Label Text="{Binding Business.LoyaltyProgramPublic.IsActive, StringFormat={x:Static res:AppResources.BusinessActiveFormat}}" />
 
                     <Label Text="{x:Static res:AppResources.BusinessRewardTiersTitle}" FontAttributes="Bold" />
 

@@ -40,26 +40,26 @@
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
                 <Border Grid.Row="0" Grid.Column="0" StrokeThickness="1" Stroke="#555555" Padding="10">
-                    <Label Text="{Binding TotalSessions, StringFormat='Sessions: {0}'}" FontAttributes="Bold" />
+                    <Label Text="{Binding TotalSessions, StringFormat='{x:Static res:AppResources.DashboardSessionsFormat}'}" FontAttributes="Bold" />
                 </Border>
 
                 <Border Grid.Row="0" Grid.Column="1" StrokeThickness="1" Stroke="#555555" Padding="10">
-                    <Label Text="{Binding AccrualCount, StringFormat='Accruals: {0}'}" FontAttributes="Bold" />
+                    <Label Text="{Binding AccrualCount, StringFormat='{x:Static res:AppResources.DashboardAccrualsFormat}'}" FontAttributes="Bold" />
                 </Border>
 
                 <Border Grid.Row="1" Grid.Column="0" StrokeThickness="1" Stroke="#555555" Padding="10">
-                    <Label Text="{Binding RedemptionCount, StringFormat='Redemptions: {0}'}" FontAttributes="Bold" />
+                    <Label Text="{Binding RedemptionCount, StringFormat='{x:Static res:AppResources.DashboardRedemptionsFormat}'}" FontAttributes="Bold" />
                 </Border>
 
                 <Border Grid.Row="1" Grid.Column="1" StrokeThickness="1" Stroke="#555555" Padding="10">
                     <VerticalStackLayout Spacing="2">
-                        <Label Text="{Binding TotalAccruedPoints, StringFormat='Accrued points: {0}'}" FontAttributes="Bold" FontSize="13" />
-                        <Label Text="{Binding TotalRedeemedPoints, StringFormat='Redeemed points: {0}'}" FontSize="13" />
+                        <Label Text="{Binding TotalAccruedPoints, StringFormat='{x:Static res:AppResources.DashboardAccruedPointsFormat}'}" FontAttributes="Bold" FontSize="13" />
+                        <Label Text="{Binding TotalRedeemedPoints, StringFormat='{x:Static res:AppResources.DashboardRedeemedPointsFormat}'}" FontSize="13" />
                     </VerticalStackLayout>
                 </Border>
 
                 <Border Grid.Row="2" Grid.Column="0" StrokeThickness="1" Stroke="#555555" Padding="10">
-                    <Label Text="{Binding SubscriptionStatusRefreshFailures, StringFormat='Subscription refresh failures: {0}'}" FontAttributes="Bold" FontSize="13" />
+                    <Label Text="{Binding SubscriptionStatusRefreshFailures, StringFormat='{x:Static res:AppResources.DashboardSubscriptionRefreshFailuresFormat}'}" FontAttributes="Bold" FontSize="13" />
                 </Border>
 
                 <Border Grid.Row="2" Grid.ColumnSpan="2" StrokeThickness="1" Stroke="#555555" Padding="10">
@@ -77,7 +77,7 @@
                     <DataTemplate x:DataType="vm:BusinessTopCustomerItem">
                         <HorizontalStackLayout Padding="0,4" Spacing="8">
                             <Label Text="{Binding CustomerDisplayName}" />
-                            <Label Text="{Binding InteractionsCount, StringFormat='({0})'}" Opacity="0.7" />
+                            <Label Text="{Binding InteractionsCount, StringFormat='{x:Static res:AppResources.DashboardInteractionsCountFormat}'}" Opacity="0.7" />
                         </HorizontalStackLayout>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
@@ -95,7 +95,7 @@
                             <VerticalStackLayout Spacing="2">
                                 <Label Text="{Binding ActivityKind}" FontAttributes="Bold" FontSize="13" />
                                 <Label Text="{Binding CustomerDisplayName}" FontSize="13" />
-                                <Label Text="{Binding PointsDelta, StringFormat='Points: {0}'}" FontSize="12" Opacity="0.75" />
+                                <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.DashboardActivityPointsFormat}'}" FontSize="12" Opacity="0.75" />
                                 <Label Text="{Binding OccurredAtUtc, StringFormat='{0:u}'}" FontSize="11" Opacity="0.6" />
                             </VerticalStackLayout>
                         </Border>

@@ -25,12 +25,12 @@ namespace Darwin.Mobile.Business.ViewModels
         private readonly IBusinessAuthorizationService _businessAuthorizationService;
 
         private bool _loadedOnce;
-        private string _businessName = "—";
-        private string _businessCategory = "—";
-        private string _businessCity = "—";
-        private string _operatorEmail = "—";
+        private string _businessName = AppResources.HomeUnavailableValue;
+        private string _businessCategory = AppResources.HomeUnavailableValue;
+        private string _businessCity = AppResources.HomeUnavailableValue;
+        private string _operatorEmail = AppResources.HomeUnavailableValue;
         private string _businessDescription = string.Empty;
-        private string _operatorRole = "—";
+        private string _operatorRole = AppResources.HomeUnavailableValue;
 
         public HomeViewModel(
             INavigationService navigationService,
@@ -108,7 +108,7 @@ namespace Darwin.Mobile.Business.ViewModels
         /// <summary>
         /// Indicates whether a business context has been resolved.
         /// </summary>
-        public bool HasBusinessContext => !string.IsNullOrWhiteSpace(BusinessName) && BusinessName != "—";
+        public bool HasBusinessContext => !string.IsNullOrWhiteSpace(BusinessName) && BusinessName != AppResources.HomeUnavailableValue;
 
         public AsyncCommand LoadContextCommand { get; }
         public AsyncCommand ScanCommand { get; }
@@ -141,14 +141,14 @@ namespace Darwin.Mobile.Business.ViewModels
                     RunOnMain(() =>
                     {
                         // Keep fallback placeholders visible so UI remains stable.
-                        BusinessName = "—";
-                        BusinessCategory = "—";
-                        BusinessCity = "—";
-                        OperatorEmail = "—";
+                        BusinessName = AppResources.HomeUnavailableValue;
+                        BusinessCategory = AppResources.HomeUnavailableValue;
+                        BusinessCity = AppResources.HomeUnavailableValue;
+                        OperatorEmail = AppResources.HomeUnavailableValue;
                         BusinessDescription = string.Empty;
-                        OperatorRole = "—";
+                        OperatorRole = AppResources.HomeUnavailableValue;
 
-                        ErrorMessage = result.Error ?? "Unable to resolve current business context.";
+                        ErrorMessage = result.Error ?? AppResources.HomeResolveCurrentBusinessContextFailed;
                         OnPropertyChanged(nameof(HasBusinessContext));
                     });
 
@@ -160,9 +160,9 @@ namespace Darwin.Mobile.Business.ViewModels
                 RunOnMain(() =>
                 {
                     BusinessName = context.BusinessName;
-                    BusinessCategory = string.IsNullOrWhiteSpace(context.Category) ? "—" : context.Category;
-                    BusinessCity = string.IsNullOrWhiteSpace(context.City) ? "—" : context.City;
-                    OperatorEmail = string.IsNullOrWhiteSpace(context.OperatorEmail) ? "—" : context.OperatorEmail;
+                    BusinessCategory = string.IsNullOrWhiteSpace(context.Category) ? AppResources.HomeUnavailableValue : context.Category;
+                    BusinessCity = string.IsNullOrWhiteSpace(context.City) ? AppResources.HomeUnavailableValue : context.City;
+                    OperatorEmail = string.IsNullOrWhiteSpace(context.OperatorEmail) ? AppResources.HomeUnavailableValue : context.OperatorEmail;
                     BusinessDescription = context.ShortDescription ?? string.Empty;
 
                     ErrorMessage = null;
@@ -180,15 +180,15 @@ namespace Darwin.Mobile.Business.ViewModels
                     }
                     else
                     {
-                        OperatorRole = "—";
+                        OperatorRole = AppResources.HomeUnavailableValue;
                     }
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 RunOnMain(() =>
                 {
-                    ErrorMessage = $"Unable to load business information. {ex.Message}";
+                    ErrorMessage = AppResources.HomeLoadBusinessInfoFailed;
                     OnPropertyChanged(nameof(HasBusinessContext));
                 });
             }

@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Darwin.Mobile.Consumer.Resources;
 using System.Windows.Input;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
@@ -20,7 +21,7 @@ public sealed partial class HomeViewModel : ObservableObject
     /// <summary>
     /// Gets a greeting message displayed on the home page.
     /// </summary>
-    public string Greeting => "Welcome to DarwinMobile!";
+    public string Greeting => AppResources.HomeGreeting;
 
     /// <summary>
     /// Command executed when the user taps the start button.

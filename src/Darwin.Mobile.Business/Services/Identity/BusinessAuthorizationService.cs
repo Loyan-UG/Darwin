@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Shared.Results;
@@ -30,7 +31,7 @@ public interface IBusinessAuthorizationService
 /// </summary>
 public sealed class BusinessAuthorizationSnapshot
 {
-    public string RoleDisplayName { get; init; } = "Unknown";
+    public string RoleDisplayName { get; init; } = AppResources.AuthorizationRoleUnknown;
     public bool CanEditRewards { get; init; }
     public bool CanConfirmRedemption { get; init; }
     public bool CanConfirmAccrual { get; init; }
@@ -73,12 +74,12 @@ public sealed class BusinessAuthorizationService : IBusinessAuthorizationService
             var snapshot = new BusinessAuthorizationSnapshot
             {
                 RoleDisplayName = isFullAdmin
-                    ? "Administrator"
+                    ? AppResources.AuthorizationRoleAdministrator
                     : hasBusinessAccess
-                        ? "Business Operator"
+                        ? AppResources.AuthorizationRoleBusinessOperator
                         : useLegacyCompatibility
-                            ? "Business Operator (Legacy token)"
-                            : "Restricted",
+                            ? AppResources.AuthorizationRoleBusinessOperatorLegacy
+                            : AppResources.AuthorizationRoleRestricted,
 
                 // Compatibility mode: for old tokens without scope claims, keep existing app behavior.
                 CanEditRewards = useLegacyCompatibility || isFullAdmin || hasBusinessAccess,

@@ -103,6 +103,9 @@
   <data name="EmailLabel" xml:space="preserve">
     <value>E-Mail</value>
   </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>user@example.com</value>
+  </data>
   <data name="EmailRequired" xml:space="preserve">
     <value>E-Mail ist erforderlich</value>
   </data>
@@ -111,6 +114,9 @@
   </data>
   <data name="HomeTitle" xml:space="preserve">
     <value>Startseite</value>
+  </data>
+  <data name="HomeGreeting" xml:space="preserve">
+    <value>Willkommen bei Darwin</value>
   </data>
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Ungültige E-Mail oder Passwort</value>
@@ -792,5 +798,86 @@
   </data>
   <data name="ProfilePushPermissionRequestFailed" xml:space="preserve">
     <value>Die Benachrichtigungsberechtigung konnte derzeit nicht angefordert werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="LoginEmailPlaceholder" xml:space="preserve">
+    <value>user@example.com</value>
+  </data>
+  <data name="LoginPasswordPlaceholder" xml:space="preserve">
+    <value>••••••</value>
+  </data>
+  <data name="BusinessActiveFormat" xml:space="preserve">
+    <value>Aktiv: {0}</value>
+  </data>
+  <data name="DiscoverNearbyRadiusMetersFormat" xml:space="preserve">
+    <value>{0} m</value>
+  </data>
+  <data name="FeedPointsDeltaFormat" xml:space="preserve">
+    <value>{0:+#;-#;0} Punkte</value>
+  </data>
+  <data name="FeedPointsSpentFormat" xml:space="preserve">
+    <value>Eingelöst: {0} Punkte</value>
+  </data>
+  <data name="QrBusinessFormat" xml:space="preserve">
+    <value>Unternehmen: {0}</value>
+  </data>
+  <data name="QrExpiresAtFormat" xml:space="preserve">
+    <value>Gültig bis: {0:HH:mm:ss}</value>
+  </data>
+  <data name="QrAccrualHelpText" xml:space="preserve">
+    <value>Verwenden Sie dies, wenn das Unternehmen Ihrem Konto neue Punkte gutschreiben soll.</value>
+  </data>
+  <data name="QrRedemptionHelpText" xml:space="preserve">
+    <value>Verwenden Sie dies, wenn Sie Punkte einlösen oder eine verfügbare Prämie beanspruchen möchten.</value>
+  </data>
+  <data name="QrDiscoverGuidanceMessage" xml:space="preserve">
+    <value>Um einen QR-Code zu erzeugen, gehen Sie zuerst zu Entdecken, öffnen Sie ein Unternehmen und treten Sie dessen Treueprogramm bei.</value>
+  </data>
+  <data name="QrRefreshGuidanceMessage" xml:space="preserve">
+    <value>Punkte sammeln erzeugt einen QR-Code zum Sammeln von Punkten. Einlösen erzeugt einen QR-Code zum Einlösen von Punkten oder Prämien.</value>
+  </data>
+  <data name="QrJoinedStatusMessage" xml:space="preserve">
+    <value>Sie sind diesem Treueprogramm erfolgreich beigetreten. Zeigen Sie diesen QR-Code dem Scanner des Unternehmens.</value>
+  </data>
+  <data name="QrNoBusinessSelectedMessage" xml:space="preserve">
+    <value>Es ist noch kein Unternehmen ausgewählt. Bitte öffnen Sie zuerst in Entdecken ein Unternehmen und treten Sie ihm bei.</value>
+  </data>
+  <data name="QrAutoRefreshDueNow" xml:space="preserve">
+    <value>Die automatische Aktualisierung ist jetzt fällig.</value>
+  </data>
+  <data name="QrAutoRefreshInFormat" xml:space="preserve">
+    <value>Automatische Aktualisierung in {0}</value>
+  </data>
+  <data name="ScannerCameraAccessRequiredTitle" xml:space="preserve">
+    <value>Kamerazugriff erforderlich</value>
+  </data>
+  <data name="ScannerCameraAccessRequiredMessage" xml:space="preserve">
+    <value>Loyan benötigt Kamerazugriff, um QR-Codes für Treuesitzungen zu scannen. Bitte erlauben Sie den Kamerazugriff oder fahren Sie mit der manuellen Token-Eingabe fort.</value>
+  </data>
+  <data name="ScannerCameraAccessAllowButton" xml:space="preserve">
+    <value>Zulassen</value>
+  </data>
+  <data name="ScannerPermissionDeniedTitle" xml:space="preserve">
+    <value>Kameraberechtigung verweigert</value>
+  </data>
+  <data name="ScannerPermissionDeniedMessage" xml:space="preserve">
+    <value>Der Kamerazugriff wurde verweigert. Sie können ihn in den App-Einstellungen aktivieren, um QR-Codes zu scannen, oder mit der manuellen Token-Eingabe fortfahren.</value>
+  </data>
+  <data name="ScannerOpenSettingsButton" xml:space="preserve">
+    <value>Einstellungen öffnen</value>
+  </data>
+  <data name="ScannerManualTokenTitle" xml:space="preserve">
+    <value>Manueller Scan-Token</value>
+  </data>
+  <data name="ScannerManualTokenMessage" xml:space="preserve">
+    <value>Keine Kamera verfügbar. Fügen Sie den ScanSessionToken ein oder brechen Sie ab.</value>
+  </data>
+  <data name="ScannerManualTokenAccept" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ScannerManualTokenCancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="ScannerManualTokenPlaceholder" xml:space="preserve">
+    <value>Token hier einfügen</value>
   </data>
 </root>

@@ -18,7 +18,7 @@
                    FontSize="13"
                    Opacity="0.8" />
 
-            <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
+            <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.RewardsOperatorRoleFormat}'}"
                    FontSize="12"
                    Opacity="0.8" />
 
@@ -93,7 +93,7 @@
                             </Border.StrokeShape>
 
                             <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding PointsRequired, StringFormat='{}{0} pts'}"
+                                <Label Text="{Binding PointsRequired, StringFormat='{x:Static res:AppResources.RewardsTierPointsFormat}'}"
                                        FontAttributes="Bold"
                                        FontSize="15" />
 
@@ -101,7 +101,7 @@
                                        FontSize="13"
                                        Opacity="0.85" />
 
-                                <Label Text="{Binding RewardValue, StringFormat='Value: {0}'}"
+                                <Label Text="{Binding RewardValue, StringFormat='{x:Static res:AppResources.RewardsTierValueFormat}'}"
                                        FontSize="13"
                                        IsVisible="{Binding RewardValue, Converter={StaticResource NullCheckConverter}}" />
 
@@ -109,7 +109,7 @@
                                        FontSize="13"
                                        IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
 
-                                <Label Text="{Binding AllowSelfRedemption, StringFormat='Self redemption: {0}'}"
+                                <Label Text="{Binding AllowSelfRedemption, StringFormat='{x:Static res:AppResources.RewardsTierSelfRedemptionFormat}'}"
                                        FontSize="12"
                                        Opacity="0.7" />
                             </VerticalStackLayout>
@@ -373,11 +373,11 @@
                             <VerticalStackLayout Spacing="6">
                                 <Label Text="{Binding Title}" FontAttributes="Bold" />
                                 <Label Text="{Binding Name}" Opacity="0.8" FontSize="13" />
-                                <Label Text="{Binding CampaignState, StringFormat='State: {0}'}" FontSize="12" Opacity="0.8" />
+                                <Label Text="{Binding CampaignState, StringFormat='{x:Static res:AppResources.RewardsCampaignStateFormat}'}" FontSize="12" Opacity="0.8" />
                                 <Label Text="{Binding AudienceSummary}" FontSize="12" Opacity="0.8" />
                                 <Label Text="{Binding ChannelSummary}" FontSize="12" Opacity="0.8" />
-                                <Label Text="{Binding StartsAtUtc, StringFormat='Start: {0:yyyy-MM-dd HH:mm}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />
-                                <Label Text="{Binding EndsAtUtc, StringFormat='End: {0:yyyy-MM-dd HH:mm}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding EndsAtUtc, Converter={StaticResource NullCheckConverter}}" />
+                                <Label Text="{Binding StartsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignStartAtFormat}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />
+                                <Label Text="{Binding EndsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignEndAtFormat}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding EndsAtUtc, Converter={StaticResource NullCheckConverter}}" />
                                 <Button Text="{Binding ActivationButtonText}"
                                         Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.ToggleCampaignActivationCommand}"
                                         CommandParameter="{Binding .}"

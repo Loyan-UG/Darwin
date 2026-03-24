@@ -18,7 +18,7 @@
                     IsEnabled="{Binding CanStartScan}"
                     HorizontalOptions="Fill" />
 
-            <Label Text="{Binding OperatorRole, StringFormat='Operator role: {0}'}"
+            <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
                    FontSize="12"
                    Opacity="0.8"
                    TextColor="{StaticResource BrushOnSurface}" />

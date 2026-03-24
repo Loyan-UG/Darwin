@@ -16,7 +16,7 @@
                    LineBreakMode="WordWrap"
                    HorizontalTextAlignment="Center" />
 
-            <Label Text="{Binding BusinessDisplayName, StringFormat='Business: {0}'}"
+            <Label Text="{Binding BusinessDisplayName, StringFormat='{x:Static res:AppResources.QrBusinessFormat}'}"
                    FontSize="16"
                    FontAttributes="Bold"
                    HorizontalOptions="Center"
@@ -43,7 +43,7 @@
                    IsVisible="{Binding HasBusinessContext}" />
 
             <!-- Show expiry countdown -->
-            <Label Text="{Binding ExpiresAtUtc, StringFormat='Expires at: {0:HH:mm:ss}'}"
+            <Label Text="{Binding ExpiresAtUtc, StringFormat='{x:Static res:AppResources.QrExpiresAtFormat}'}"
                    FontSize="16"
                    TextColor="{StaticResource Neutral900}"
                    HorizontalOptions="Center"
@@ -60,7 +60,7 @@
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding RefreshAccrualSessionCommand}"
                     IsEnabled="{Binding HasBusinessContext}" />
-            <Label Text="Use this when the business should add new points to your account."
+            <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
                    FontSize="12"
                    TextColor="{StaticResource Neutral900}"
                    HorizontalTextAlignment="Center"
@@ -71,7 +71,7 @@
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding RefreshRedemptionSessionCommand}"
                     IsEnabled="{Binding HasBusinessContext}" />
-            <Label Text="Use this when you want to redeem points or claim an available reward."
+            <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
                    FontSize="12"
                    TextColor="{StaticResource Neutral900}"
                    HorizontalTextAlignment="Center"

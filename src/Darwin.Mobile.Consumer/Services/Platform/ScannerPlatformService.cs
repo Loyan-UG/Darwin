@@ -1,4 +1,5 @@
 ﻿using System;
+using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Shared.Integration;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
@@ -53,10 +54,10 @@ namespace Darwin.Mobile.Consumer.Services.Platform
                     var proceed = await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
                         return await Shell.Current!.DisplayAlertAsync(
-                            "Camera access required",
-                            "Darwin needs access to the camera to scan QR codes for loyalty sessions. Please allow camera access.",
-                            "Allow",
-                            "Cancel").ConfigureAwait(false);
+                            AppResources.ScannerCameraAccessRequiredTitle,
+                            AppResources.ScannerCameraAccessRequiredMessage,
+                            AppResources.ScannerCameraAccessAllowButton,
+                            AppResources.ScannerManualTokenCancel).ConfigureAwait(false);
                     }).ConfigureAwait(false);
 
                     if (!proceed)
@@ -80,10 +81,10 @@ namespace Darwin.Mobile.Consumer.Services.Platform
                     await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
                         var open = await Shell.Current!.DisplayAlertAsync(
-                            "Camera permission denied",
-                            "Camera access has been denied. You can enable it in app settings to scan QR codes.",
-                            "Open settings",
-                            "Cancel").ConfigureAwait(false);
+                            AppResources.ScannerPermissionDeniedTitle,
+                            AppResources.ScannerPermissionDeniedMessage,
+                            AppResources.ScannerOpenSettingsButton,
+                            AppResources.ScannerManualTokenCancel).ConfigureAwait(false);
 
                         if (open)
                         {
@@ -196,13 +197,14 @@ namespace Darwin.Mobile.Consumer.Services.Platform
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                // Note: In a production app, localize these strings (German for Phase 1).
+                // Manual token entry is part of the production fallback path, so the prompt
+                // must remain localized just like the camera-permission experience.
                 promptResult = await Shell.Current!.DisplayPromptAsync(
-                    title: "Enter scan token",
-                    message: "No camera available. Paste ScanSessionToken (or cancel).",
-                    accept: "OK",
-                    cancel: "Cancel",
-                    placeholder: "paste token here",
+                    title: AppResources.ScannerManualTokenTitle,
+                    message: AppResources.ScannerManualTokenMessage,
+                    accept: AppResources.ScannerManualTokenAccept,
+                    cancel: AppResources.ScannerManualTokenCancel,
+                    placeholder: AppResources.ScannerManualTokenPlaceholder,
                     keyboard: Keyboard.Text).ConfigureAwait(false);
             }).ConfigureAwait(false);
 

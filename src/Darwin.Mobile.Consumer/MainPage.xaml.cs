@@ -1,24 +1,16 @@
-﻿namespace Darwin.Mobile.Consumer
+namespace Darwin.Mobile.Consumer;
+
+/// <summary>
+/// Provides a localized placeholder page for designer and tooling scenarios.
+/// The production navigation flow enters the application through the shell pages.
+/// </summary>
+public partial class MainPage : ContentPage
 {
-    public partial class MainPage : ContentPage
+    /// <summary>
+    /// Initializes the placeholder page used outside the primary shell flow.
+    /// </summary>
+    public MainPage()
     {
-        int count = 0;
-
-        public MainPage()
-        {
-            InitializeComponent();
-        }
-
-        private void OnCounterClicked(object? sender, EventArgs e)
-        {
-            count++;
-
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
-
-            SemanticScreenReader.Announce(CounterBtn.Text);
-        }
+        InitializeComponent();
     }
 }

@@ -17,6 +17,7 @@ public static class AppResources
         new ResourceManager("Darwin.Mobile.Consumer.Resources.Strings", typeof(AppResources).Assembly);
 
     public static string HomeTitle => ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
+    public static string HomeGreeting => ResourceManager.GetString(nameof(HomeGreeting), Culture) ?? "Welcome to Darwin";
     public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
     // keys for scanner functionality
     public static string ScanTitle => ResourceManager.GetString(nameof(ScanTitle), Culture) ?? "Scan";
@@ -30,10 +31,16 @@ public static class AppResources
     ResourceManager.GetString(nameof(LoginTitle), Culture) ?? "Login";
     public static string EmailLabel =>
         ResourceManager.GetString(nameof(EmailLabel), Culture) ?? "Email";
+    public static string EmailPlaceholder =>
+        ResourceManager.GetString(nameof(EmailPlaceholder), Culture) ?? "user@example.com";
     public static string PasswordLabel =>
         ResourceManager.GetString(nameof(PasswordLabel), Culture) ?? "Password";
     public static string LoginButton =>
         ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Sign in";
+    public static string LoginEmailPlaceholder =>
+        ResourceManager.GetString(nameof(LoginEmailPlaceholder), Culture) ?? "user@example.com";
+    public static string LoginPasswordPlaceholder =>
+        ResourceManager.GetString(nameof(LoginPasswordPlaceholder), Culture) ?? "••••••";
     public static string InvalidCredentials =>
         ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
     public static string EmailRequired =>
@@ -79,6 +86,7 @@ public static class AppResources
     public static string RewardsOverviewTotalPointsFormat => ResourceManager.GetString(nameof(RewardsOverviewTotalPointsFormat), Culture) ?? "Total points across businesses: {0}";
     public static string RewardsOverviewTopBusinessFormat => ResourceManager.GetString(nameof(RewardsOverviewTopBusinessFormat), Culture) ?? "Top business by points: {0}";
     public static string RewardsOpenSelectedBusinessQrButton => ResourceManager.GetString(nameof(RewardsOpenSelectedBusinessQrButton), Culture) ?? "Open selected business QR";
+    public static string BusinessActiveFormat => ResourceManager.GetString(nameof(BusinessActiveFormat), Culture) ?? "Active: {0}";
 
     public static string BusinessDetailsTitle => ResourceManager.GetString(nameof(BusinessDetailsTitle), Culture) ?? "Business";
     public static string BusinessDetailsPlaceholder => ResourceManager.GetString(nameof(BusinessDetailsPlaceholder), Culture) ?? "Additional details coming soon.";
@@ -185,6 +193,7 @@ public static class AppResources
     public static string DiscoverNearbyOnlyLabel => ResourceManager.GetString(nameof(DiscoverNearbyOnlyLabel), Culture) ?? "Nearby only";
     public static string DiscoverLocationUnavailable => ResourceManager.GetString(nameof(DiscoverLocationUnavailable), Culture) ?? "Location is unavailable. Showing broad results instead.";
     public static string DiscoverNearbyRadiusLabel => ResourceManager.GetString(nameof(DiscoverNearbyRadiusLabel), Culture) ?? "Radius";
+    public static string DiscoverNearbyRadiusMetersFormat => ResourceManager.GetString(nameof(DiscoverNearbyRadiusMetersFormat), Culture) ?? "{0} m";
     public static string FeedTitle => ResourceManager.GetString(nameof(FeedTitle), Culture) ?? "Feed";
     public static string FeedEmptyMessage => ResourceManager.GetString(nameof(FeedEmptyMessage), Culture) ?? "No feed items yet.";
     public static string FeedLoadFailed => ResourceManager.GetString(nameof(FeedLoadFailed), Culture) ?? "Unable to load feed right now.";
@@ -246,19 +255,42 @@ public static class AppResources
     public static string FeedPromotionDiagnosticsCopied => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopied), Culture) ?? "Promotion diagnostics copied.";
     public static string FeedPromotionDiagnosticsCopyFailed => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsCopyFailed), Culture) ?? "Unable to copy promotion diagnostics right now.";
     public static string FeedPromotionDiagnosticsClearStatusButton => ResourceManager.GetString(nameof(FeedPromotionDiagnosticsClearStatusButton), Culture) ?? "Clear diagnostics status";
+    public static string FeedPointsDeltaFormat => ResourceManager.GetString(nameof(FeedPointsDeltaFormat), Culture) ?? "{0:+#;-#;0} pts";
+    public static string FeedPointsSpentFormat => ResourceManager.GetString(nameof(FeedPointsSpentFormat), Culture) ?? "Spent: {0} pts";
 
+    public static string QrBusinessFormat => ResourceManager.GetString(nameof(QrBusinessFormat), Culture) ?? "Business: {0}";
+    public static string QrExpiresAtFormat => ResourceManager.GetString(nameof(QrExpiresAtFormat), Culture) ?? "Expires at: {0:HH:mm:ss}";
+    public static string QrAccrualHelpText => ResourceManager.GetString(nameof(QrAccrualHelpText), Culture) ?? "Use this when the business should add new points to your account.";
+    public static string QrRedemptionHelpText => ResourceManager.GetString(nameof(QrRedemptionHelpText), Culture) ?? "Use this when you want to redeem points or claim an available reward.";
+    public static string QrDiscoverGuidanceMessage => ResourceManager.GetString(nameof(QrDiscoverGuidanceMessage), Culture) ?? "To generate a QR code, first go to Discover, open a business, and join its loyalty program.";
+    public static string QrRefreshGuidanceMessage => ResourceManager.GetString(nameof(QrRefreshGuidanceMessage), Culture) ?? "Accrual creates a QR for earning points. Redemption creates a QR for spending points or rewards.";
+    public static string QrJoinedStatusMessage => ResourceManager.GetString(nameof(QrJoinedStatusMessage), Culture) ?? "You have successfully joined this loyalty program. Show this QR code to the business scanner.";
+    public static string QrNoBusinessSelectedMessage => ResourceManager.GetString(nameof(QrNoBusinessSelectedMessage), Culture) ?? "No business is selected yet. Please open a business in Discover and join it first.";
+    public static string QrAutoRefreshDueNow => ResourceManager.GetString(nameof(QrAutoRefreshDueNow), Culture) ?? "Auto refresh is due now.";
+    public static string QrAutoRefreshInFormat => ResourceManager.GetString(nameof(QrAutoRefreshInFormat), Culture) ?? "Auto refresh in {0}";
+    public static string ScannerCameraAccessRequiredTitle => ResourceManager.GetString(nameof(ScannerCameraAccessRequiredTitle), Culture) ?? "Camera access required";
+    public static string ScannerCameraAccessRequiredMessage => ResourceManager.GetString(nameof(ScannerCameraAccessRequiredMessage), Culture) ?? "Loyan needs camera access to scan QR codes for loyalty sessions. Please allow camera access or continue with manual token entry.";
+    public static string ScannerCameraAccessAllowButton => ResourceManager.GetString(nameof(ScannerCameraAccessAllowButton), Culture) ?? "Allow";
+    public static string ScannerPermissionDeniedTitle => ResourceManager.GetString(nameof(ScannerPermissionDeniedTitle), Culture) ?? "Camera permission denied";
+    public static string ScannerPermissionDeniedMessage => ResourceManager.GetString(nameof(ScannerPermissionDeniedMessage), Culture) ?? "Camera access has been denied. You can enable it in app settings to scan QR codes, or continue with manual token entry.";
+    public static string ScannerOpenSettingsButton => ResourceManager.GetString(nameof(ScannerOpenSettingsButton), Culture) ?? "Open settings";
+    public static string ScannerManualTokenTitle => ResourceManager.GetString(nameof(ScannerManualTokenTitle), Culture) ?? "Manual scan token";
+    public static string ScannerManualTokenMessage => ResourceManager.GetString(nameof(ScannerManualTokenMessage), Culture) ?? "No camera is available. Paste the ScanSessionToken or cancel.";
+    public static string ScannerManualTokenAccept => ResourceManager.GetString(nameof(ScannerManualTokenAccept), Culture) ?? "OK";
+    public static string ScannerManualTokenCancel => ResourceManager.GetString(nameof(ScannerManualTokenCancel), Culture) ?? "Cancel";
+    public static string ScannerManualTokenPlaceholder => ResourceManager.GetString(nameof(ScannerManualTokenPlaceholder), Culture) ?? "Paste token here";
 
-    public static string AuthLegalSectionTitle => ResourceManager.GetString(nameof(AuthLegalSectionTitle), Culture) ?? "Rechtliches & Datenschutz";
+    public static string AuthLegalSectionTitle => ResourceManager.GetString(nameof(AuthLegalSectionTitle), Culture) ?? "Legal & Privacy";
     public static string AuthLegalSectionSubtitle => ResourceManager.GetString(nameof(AuthLegalSectionSubtitle), Culture) ?? "Review the legal pages before creating an account or signing in.";
-    public static string LegalHubTitle => ResourceManager.GetString(nameof(LegalHubTitle), Culture) ?? "Rechtliches & Datenschutz";
+    public static string LegalHubTitle => ResourceManager.GetString(nameof(LegalHubTitle), Culture) ?? "Legal & Privacy";
     public static string LegalHubSubtitle => ResourceManager.GetString(nameof(LegalHubSubtitle), Culture) ?? "Open the current legal and privacy pages maintained on loyan.de.";
-    public static string LegalImpressumButton => ResourceManager.GetString(nameof(LegalImpressumButton), Culture) ?? "Impressum";
-    public static string LegalPrivacyNoticeButton => ResourceManager.GetString(nameof(LegalPrivacyNoticeButton), Culture) ?? "Datenschutzhinweise";
-    public static string LegalTermsButton => ResourceManager.GetString(nameof(LegalTermsButton), Culture) ?? "Nutzungsbedingungen";
-    public static string LegalAccountDeletionButton => ResourceManager.GetString(nameof(LegalAccountDeletionButton), Culture) ?? "Konto löschen";
+    public static string LegalImpressumButton => ResourceManager.GetString(nameof(LegalImpressumButton), Culture) ?? "Legal notice";
+    public static string LegalPrivacyNoticeButton => ResourceManager.GetString(nameof(LegalPrivacyNoticeButton), Culture) ?? "Privacy notice";
+    public static string LegalTermsButton => ResourceManager.GetString(nameof(LegalTermsButton), Culture) ?? "Terms of use";
+    public static string LegalAccountDeletionButton => ResourceManager.GetString(nameof(LegalAccountDeletionButton), Culture) ?? "Delete account";
     public static string LegalOpenFailed => ResourceManager.GetString(nameof(LegalOpenFailed), Culture) ?? "The legal page could not be opened right now. Please try again shortly.";
-    public static string SettingsLegalHubButton => ResourceManager.GetString(nameof(SettingsLegalHubButton), Culture) ?? "Rechtliches & Datenschutz";
-    public static string SettingsDeleteAccountButton => ResourceManager.GetString(nameof(SettingsDeleteAccountButton), Culture) ?? "Konto löschen";
+    public static string SettingsLegalHubButton => ResourceManager.GetString(nameof(SettingsLegalHubButton), Culture) ?? "Legal & Privacy";
+    public static string SettingsDeleteAccountButton => ResourceManager.GetString(nameof(SettingsDeleteAccountButton), Culture) ?? "Delete account";
     public static string RegisterAcknowledgementsTitle => ResourceManager.GetString(nameof(RegisterAcknowledgementsTitle), Culture) ?? "Required acknowledgements";
     public static string RegisterTermsAcknowledgementLabel => ResourceManager.GetString(nameof(RegisterTermsAcknowledgementLabel), Culture) ?? "I accept the consumer terms before creating my account.";
     public static string RegisterPrivacyAcknowledgementLabel => ResourceManager.GetString(nameof(RegisterPrivacyAcknowledgementLabel), Culture) ?? "I confirm that I have reviewed the privacy notice before creating my account.";
@@ -268,7 +300,7 @@ public static class AppResources
     public static string OptionalPrivacyChoicesPlaceholderNote => ResourceManager.GetString(nameof(OptionalPrivacyChoicesPlaceholderNote), Culture) ?? "These optional controls are kept separate from the required legal acknowledgements and are stored locally until final backend privacy settings are delivered.";
     public static string OptionalPromotionalPushLabel => ResourceManager.GetString(nameof(OptionalPromotionalPushLabel), Culture) ?? "Allow promotional push notifications (optional)";
     public static string OptionalAnalyticsLabel => ResourceManager.GetString(nameof(OptionalAnalyticsLabel), Culture) ?? "Allow optional analytics and tracking (optional)";
-    public static string AccountDeletionTitle => ResourceManager.GetString(nameof(AccountDeletionTitle), Culture) ?? "Konto löschen";
+    public static string AccountDeletionTitle => ResourceManager.GetString(nameof(AccountDeletionTitle), Culture) ?? "Delete account";
     public static string AccountDeletionWarningTitle => ResourceManager.GetString(nameof(AccountDeletionWarningTitle), Culture) ?? "Before you continue";
     public static string AccountDeletionWarningBody => ResourceManager.GetString(nameof(AccountDeletionWarningBody), Culture) ?? "This action permanently deactivates your account and anonymizes personal data where it is safe to do so.";
     public static string AccountDeletionRetentionHint => ResourceManager.GetString(nameof(AccountDeletionRetentionHint), Culture) ?? "Some transaction and history records may remain for legal or technical reasons, but direct personal data will be removed or replaced.";

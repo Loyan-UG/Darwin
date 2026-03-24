@@ -144,9 +144,9 @@
                             <VerticalStackLayout Spacing="4">
                                 <Label Text="{Binding Kind}" FontAttributes="Bold" />
                                 <Label Text="{Binding Note}" IsVisible="{Binding Note, Converter={StaticResource NullCheckConverter}}" />
-                                <Label Text="{Binding PointsDelta, StringFormat='{0:+#;-#;0} pts'}"
+                                <Label Text="{Binding PointsDelta, StringFormat='{x:Static res:AppResources.FeedPointsDeltaFormat}'}"
                                        IsVisible="{Binding PointsDelta, Converter={StaticResource NullCheckConverter}}" />
-                                <Label Text="{Binding PointsSpent, StringFormat='Spent: {0} pts'}"
+                                <Label Text="{Binding PointsSpent, StringFormat='{x:Static res:AppResources.FeedPointsSpentFormat}'}"
                                        IsVisible="{Binding PointsSpent, Converter={StaticResource NullCheckConverter}}" />
                                 <Label Text="{Binding OccurredAtUtc, StringFormat='{0:yyyy-MM-dd HH:mm}'}"
                                        FontSize="12"

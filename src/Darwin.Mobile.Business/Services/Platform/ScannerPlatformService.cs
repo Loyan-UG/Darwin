@@ -57,6 +57,7 @@ public sealed class ScannerPlatformService : IScanner
                 ContinueButtonText = AppResources.PermissionDisclosureContinueButton,
                 CancelButtonText = AppResources.PermissionDisclosureCancelButton,
                 LegalReferenceButtonText = AppResources.PermissionDisclosurePrivacyButton,
+                LegalReferenceOpenFailedMessage = AppResources.LegalOpenFailed,
                 LegalReferenceKind = Darwin.Mobile.Shared.Services.Legal.LegalLinkKind.PrivacyPolicy
             }, ct).ConfigureAwait(false);
 
