@@ -1,4 +1,5 @@
-﻿using Darwin.Application.Identity.Commands;
+﻿using System;
+using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Queries;
 using Darwin.Contracts.Profile;
@@ -19,6 +20,7 @@ namespace Darwin.WebApi.Controllers.Profile
     {
         private readonly GetCurrentUserProfileHandler _getCurrentUserProfileHandler;
         private readonly UpdateCurrentUserHandler _updateCurrentUserHandler;
+        private readonly RequestCurrentUserAccountDeletionHandler _requestCurrentUserAccountDeletionHandler;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProfileController"/> class.
@@ -28,13 +30,17 @@ namespace Darwin.WebApi.Controllers.Profile
         /// <exception cref="ArgumentNullException">Thrown when any dependency is null.</exception>
         public ProfileController(
             GetCurrentUserProfileHandler getCurrentUserProfileHandler,
-            UpdateCurrentUserHandler updateCurrentUserHandler)
+            UpdateCurrentUserHandler updateCurrentUserHandler,
+            RequestCurrentUserAccountDeletionHandler requestCurrentUserAccountDeletionHandler)
         {
             _getCurrentUserProfileHandler =
                 getCurrentUserProfileHandler ?? throw new ArgumentNullException(nameof(getCurrentUserProfileHandler));
 
             _updateCurrentUserHandler =
                 updateCurrentUserHandler ?? throw new ArgumentNullException(nameof(updateCurrentUserHandler));
+
+            _requestCurrentUserAccountDeletionHandler =
+                requestCurrentUserAccountDeletionHandler ?? throw new ArgumentNullException(nameof(requestCurrentUserAccountDeletionHandler));
         }
 
         /// <summary>
@@ -142,6 +148,39 @@ namespace Darwin.WebApi.Controllers.Profile
 
             if (!result.Succeeded)
                 return ProblemFromResult(result);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Requests irreversible deactivation and anonymization of the current authenticated consumer account.
+        /// </summary>
+        /// <param name="request">Confirmation payload for the deletion request.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>No content on success.</returns>
+        [HttpPost("me/deletion-request")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RequestAccountDeletionAsync([FromBody] RequestAccountDeletionRequest? request, CancellationToken ct)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            if (!request.ConfirmIrreversibleDeletion)
+            {
+                return BadRequestProblem("Explicit deletion confirmation is required.");
+            }
+
+            var result = await _requestCurrentUserAccountDeletionHandler
+                .HandleAsync(request.ConfirmIrreversibleDeletion, ct)
+                .ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
 
             return NoContent();
         }

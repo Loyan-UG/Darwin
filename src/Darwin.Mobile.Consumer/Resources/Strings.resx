@@ -728,16 +728,31 @@
     <value>Before you continue</value>
   </data>
   <data name="AccountDeletionWarningBody" xml:space="preserve">
-    <value>Account deletion is completed on the external Loyan website. Review the information carefully before continuing.</value>
+    <value>This action permanently deactivates your account and anonymizes personal data where it is safe to do so.</value>
   </data>
   <data name="AccountDeletionExternalHint" xml:space="preserve">
     <value>The app will open https://loyan.de/konto-loeschen in the in-app browser when possible.</value>
   </data>
   <data name="AccountDeletionContinueButton" xml:space="preserve">
-    <value>Open deletion page</value>
+    <value>Send deletion request</value>
   </data>
   <data name="AccountDeletionOpenFailed" xml:space="preserve">
-    <value>The account deletion page could not be opened right now. Please try again shortly.</value>
+    <value>The account deletion request could not be submitted right now. Please try again shortly.</value>
+  </data>
+  <data name="AccountDeletionRetentionHint" xml:space="preserve">
+    <value>Some transaction and history records may remain for legal or technical reasons, but direct personal data will be removed or replaced.</value>
+  </data>
+  <data name="AccountDeletionLogoutHint" xml:space="preserve">
+    <value>After completion you will be signed out and future login with this account will no longer be possible.</value>
+  </data>
+  <data name="AccountDeletionConfirmationLabel" xml:space="preserve">
+    <value>I understand that this request is irreversible and want to permanently deactivate and anonymize my account.</value>
+  </data>
+  <data name="AccountDeletionConfirmationRequired" xml:space="preserve">
+    <value>Please confirm that you understand the irreversible consequences before continuing.</value>
+  </data>
+  <data name="AccountDeletionRequestFailed" xml:space="preserve">
+    <value>Your account deletion request could not be completed right now. Please try again shortly.</value>
   </data>
   <data name="PermissionDisclosureContinueButton" xml:space="preserve">
     <value>Continue</value>

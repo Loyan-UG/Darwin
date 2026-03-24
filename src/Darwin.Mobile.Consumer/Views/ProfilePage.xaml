@@ -53,6 +53,10 @@
                             Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding SaveProfileCommand}" />
 
+                    <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Clicked="OnAccountDeletionClicked" />
+
                     <BoxView HeightRequest="1"
                              Color="{StaticResource Neutral300}" />
 

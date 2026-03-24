@@ -53,7 +53,7 @@ namespace Darwin.Application.Identity.Queries
             // Read-only query: project directly to DTO to avoid materializing the aggregate.
             var dto = await _db.Set<User>()
                 .AsNoTracking()
-                .Where(u => u.Id == userId && !u.IsDeleted)
+                .Where(u => u.Id == userId && !u.IsDeleted && u.IsActive)
                 .Select(u => new UserProfileEditDto
                 {
                     Id = u.Id,

@@ -50,6 +50,9 @@
                     <Button Text="{x:Static res:AppResources.SaveProfileButton}"
                             Command="{Binding SaveCommand}" />
 
+                    <Button Text="{x:Static res:AppResources.SettingsDeleteAccountButton}"
+                            Clicked="OnAccountDeletionClicked" />
+
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}" />
                 </VerticalStackLayout>

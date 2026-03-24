@@ -108,8 +108,9 @@ The mobile apps now implement a configuration-driven legal/compliance navigation
   - items: `Impressum`, `Datenschutzhinweise`, `Nutzungsbedingungen`, `Konto löschen`
   - Consumer terms item opens `ConsumerTermsUrl`; Business terms item opens `BusinessTermsUrl`
 - **Account deletion entry**:
-  - both apps expose a warning-first in-app handoff page before opening `https://loyan.de/konto-loeschen`
-  - no fake in-app deletion success is shown; deletion remains externally completed on the website
+  - **Consumer** exposes an authenticated in-app deletion-request flow that deactivates the current account and anonymizes direct personal data without physically deleting the user row
+  - **Business** keeps the warning-first handoff page and opens `https://loyan.de/konto-loeschen` through the centralized legal-links configuration
+  - no fake in-app deletion success is shown; Consumer signs the user out locally after a successful in-app request, while Business deletion remains externally completed on the website
 - **Consumer registration acknowledgements**:
   - registration is blocked until the user accepts `Nutzungsbedingungen` and acknowledges `Datenschutzhinweise`
   - the privacy item is an acknowledgement/notice-read pattern, **not** blanket consent for all processing

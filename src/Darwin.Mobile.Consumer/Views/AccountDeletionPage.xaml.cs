@@ -3,7 +3,7 @@ using Darwin.Mobile.Consumer.ViewModels;
 namespace Darwin.Mobile.Consumer.Views;
 
 /// <summary>
-/// Consumer account deletion warning page.
+/// Consumer account deletion request page.
 /// </summary>
 public partial class AccountDeletionPage : ContentPage
 {

@@ -728,16 +728,31 @@
     <value>Bevor Sie fortfahren</value>
   </data>
   <data name="AccountDeletionWarningBody" xml:space="preserve">
-    <value>Die Kontolöschung wird auf der externen Loyan-Website abgeschlossen. Prüfen Sie die Hinweise sorgfältig, bevor Sie fortfahren.</value>
+    <value>Diese Aktion deaktiviert Ihr Konto unwiderruflich und anonymisiert personenbezogene Daten, soweit dies sicher möglich ist.</value>
   </data>
   <data name="AccountDeletionExternalHint" xml:space="preserve">
     <value>Die App öffnet nach Möglichkeit https://loyan.de/konto-loeschen in einem In-App-Browser.</value>
   </data>
   <data name="AccountDeletionContinueButton" xml:space="preserve">
-    <value>Löschseite öffnen</value>
+    <value>Löschanfrage senden</value>
   </data>
   <data name="AccountDeletionOpenFailed" xml:space="preserve">
-    <value>Die Seite zur Kontolöschung konnte derzeit nicht geöffnet werden. Bitte versuchen Sie es in Kürze erneut.</value>
+    <value>Ihre Löschanfrage konnte derzeit nicht übermittelt werden. Bitte versuchen Sie es in Kürze erneut.</value>
+  </data>
+  <data name="AccountDeletionRetentionHint" xml:space="preserve">
+    <value>Bestimmte Transaktions- und Verlaufseinträge können aus rechtlichen oder technischen Gründen erhalten bleiben, direkte personenbezogene Daten werden jedoch entfernt oder ersetzt.</value>
+  </data>
+  <data name="AccountDeletionLogoutHint" xml:space="preserve">
+    <value>Nach Abschluss werden Sie lokal abgemeldet und eine spätere Anmeldung mit diesem Konto ist nicht mehr möglich.</value>
+  </data>
+  <data name="AccountDeletionConfirmationLabel" xml:space="preserve">
+    <value>Ich verstehe, dass diese Anfrage unwiderruflich ist, und möchte mein Konto dauerhaft deaktivieren und anonymisieren.</value>
+  </data>
+  <data name="AccountDeletionConfirmationRequired" xml:space="preserve">
+    <value>Bitte bestätigen Sie vor dem Fortfahren, dass Sie die unwiderruflichen Folgen verstanden haben.</value>
+  </data>
+  <data name="AccountDeletionRequestFailed" xml:space="preserve">
+    <value>Ihre Kontolöschungsanfrage konnte derzeit nicht abgeschlossen werden. Bitte versuchen Sie es in Kürze erneut.</value>
   </data>
   <data name="PermissionDisclosureContinueButton" xml:space="preserve">
     <value>Weiter</value>

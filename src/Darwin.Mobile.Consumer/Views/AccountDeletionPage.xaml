@@ -23,10 +23,24 @@
                     <Label Text="{x:Static res:AppResources.AccountDeletionWarningBody}"
                            LineBreakMode="WordWrap" />
 
-                    <Label Text="{x:Static res:AppResources.AccountDeletionExternalHint}"
+                    <Label Text="{x:Static res:AppResources.AccountDeletionRetentionHint}"
                            FontSize="13"
                            LineBreakMode="WordWrap"
                            Opacity="0.8" />
+
+                    <Label Text="{x:Static res:AppResources.AccountDeletionLogoutHint}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           Opacity="0.8" />
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <CheckBox IsChecked="{Binding ConfirmIrreversibleDeletion}"
+                                  VerticalOptions="Start" />
+                        <Label Grid.Column="1"
+                               Text="{x:Static res:AppResources.AccountDeletionConfirmationLabel}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                    </Grid>
 
                     <Label Text="{Binding ErrorMessage}"
                            TextColor="Red"
@@ -34,7 +48,8 @@
 
                     <Button Text="{x:Static res:AppResources.AccountDeletionContinueButton}"
                             Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding ContinueCommand}" />
+                            IsEnabled="{Binding ConfirmIrreversibleDeletion}"
+                            Command="{Binding SubmitDeletionRequestCommand}" />
 
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}"
