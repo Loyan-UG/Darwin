@@ -25,6 +25,7 @@ Both web experiences sit on top of the same business platform, share the same do
 Use this README as the entry point, then jump to the focused documents:
 
 - **Backlog & roadmap (source of truth)**: [`BACKLOG.md`](BACKLOG.md)
+- **Domain design guide (CRM, inventory, billing, loyalty boundaries)**: [`DarwinDomainDesign.md`](DarwinDomainDesign.md)
 - **WebApi guide (surfaces, policies, endpoint matrix, implementation rules)**: [`DarwinWebApi.md`](DarwinWebApi.md)
 - **Front-end guide (Next.js app structure, SSR/SSG/ISR, auth flow)**: [`DarwinFrontEnd.md`](DarwinFrontEnd.md)
 - **Mobile guide (Consumer/Business apps + Contracts)**: [`DarwinMobile.md`](DarwinMobile.md)
@@ -80,7 +81,7 @@ The member portal is part of the front-office. It is not a second admin area.
 - **Pricing & tax**: VAT, promotions, coupons, shipping/payment rules
 - **Orders**: order lifecycle, payment/shipment handling, back-office order operations
 - **Identity & access**: roles, permissions, JWT, cookies, WebAuthn, TOTP
-- **Loyalty**: session-based QR flows, accrual/redemption, rewards, campaigns
+- **Loyalty**: session-based QR flows, accrual/redemption, rewards, campaigns, with points managed solely by the Loyalty module
 - **Front-office**: React/Next.js storefront and member portal with SSR/SSG/ISR-ready architecture
 - **Mobile**: consumer and business MAUI applications sharing `Darwin.Contracts`
 - **API & contracts**: contracts-first delivery through `Darwin.WebApi`
@@ -160,6 +161,8 @@ A Backend-for-Frontend layer is not required immediately, but the architecture m
 - **API security**: JWT/cookie token flows, policy-based authorization, concurrency and audit concerns
 
 Front-office authentication still depends on `Darwin.WebApi` and must follow the same token, policy, and security standards as the rest of the platform.
+
+Loyalty points must be managed only through `LoyaltyAccount` and `LoyaltyPointsTransaction`. CRM must not introduce parallel loyalty ledgers or duplicate point-balance fields.
 
 ## Getting Started
 
@@ -250,6 +253,7 @@ At a high level:
 ## Documentation
 
 - [`BACKLOG.md`](BACKLOG.md)
+- [`DarwinDomainDesign.md`](DarwinDomainDesign.md)
 - [`DarwinWebApi.md`](DarwinWebApi.md)
 - [`DarwinFrontEnd.md`](DarwinFrontEnd.md)
 - [`DarwinMobile.md`](DarwinMobile.md)

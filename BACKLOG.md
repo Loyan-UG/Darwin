@@ -30,9 +30,9 @@ The first phase focuses on preparing the existing solution for growth and finish
 
 The current domain lacks CRM, multi-warehouse inventory and billing. Designing and implementing them now avoids conflict later.
 
-- **Task**: design and implement a CRM bounded context (Customer, Address, Segment, Interaction, Consent, LoyaltyPointEntry, Invoice). Each entity should be sealed with `Guid` keys and non-nullable strings. See the domain design document for field details.
+- **Task**: design and implement a CRM bounded context (Customer, CustomerAddress, Segment, Interaction, Consent, Lead, Opportunity, Invoice). Each entity should be sealed with `Guid` keys and non-nullable strings. See the domain design document for field details.
 - **Task**: design and implement multi-warehouse inventory. Introduce Warehouse, StockLevel and StockTransfer entities. Remove stock fields from ProductVariant and migrate data to StockLevel. Seed a default warehouse named "Main warehouse" for small companies. Handlers for reserving, releasing and transferring stock should be added.
-- **Task**: design and implement a billing module. Create Invoice and InvoiceLine entities (for CRM invoices) and Payment entities to track invoice payments. Provide handlers to generate an invoice for an order, record payments and cancel invoices.
+- **Task**: design and implement a billing module. Extend Invoice and InvoiceLine for CRM and order scenarios, add Payment plus lightweight accounting entities (FinancialAccount, JournalEntry, Expense), and provide handlers to generate invoices, record payments, and prepare ERP-aligned bookkeeping.
 - **Task**: expose appropriate commands/queries in the Application layer and REST endpoints in WebApi. Document DTOs and validation rules.
 
 ### Epic: Admin UI foundation upgrades
@@ -56,6 +56,7 @@ Once the domain is complete, the admin panel can be extended to cover all core b
 ### Epic: CRM management
 
 - **Task**: build pages for viewing and editing customers, their addresses and segments. Implement search, filtering and pagination.
+- **Task**: build lead and opportunity management flows, including assignment, qualification stages, and conversion from lead to customer.
 - **Task**: create views to log and review interactions (email, call, meeting, order) and show customer timelines. Provide forms to add notes and set consents (GDPR compliant).
 - **Task**: develop a segmentation editor: allow administrators to create customer segments by selecting criteria (lifetime spend, last purchase date, region, etc.). Each segment membership should be persisted in the `CustomerSegmentMembership` table.
 - **Task**: implement invoice and payment management UI. Show open invoices, overdue invoices, paid invoices and allow recording manual payments or refunds.

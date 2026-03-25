@@ -72,12 +72,13 @@ namespace Darwin.WebApi.Controllers
             // blocking work is performed here.
             var nowUtc = _clock.UtcNow;
             var uptime = nowUtc - ProcessStartUtc;
+            var uptimeSeconds = Math.Max(0d, uptime.TotalSeconds);
 
             var payload = new
             {
                 status = "Healthy",
                 serverTimeUtc = nowUtc,
-                uptimeSeconds = uptime.TotalSeconds,
+                uptimeSeconds,
                 environment = _hostEnvironment.EnvironmentName,
                 application = ResolveApplicationName()
             };
@@ -104,6 +105,7 @@ namespace Darwin.WebApi.Controllers
         {
             var nowUtc = _clock.UtcNow;
             var uptime = nowUtc - ProcessStartUtc;
+            var uptimeSeconds = Math.Max(0d, uptime.TotalSeconds);
 
             var assembly = Assembly.GetExecutingAssembly();
             var version = assembly.GetName().Version?.ToString() ?? "unknown";
@@ -121,7 +123,7 @@ namespace Darwin.WebApi.Controllers
                 commitHash,
                 serverTimeUtc = nowUtc,
                 startedAtUtc = ProcessStartUtc,
-                uptimeSeconds = uptime.TotalSeconds
+                uptimeSeconds
             };
 
             _logger.LogInformation(

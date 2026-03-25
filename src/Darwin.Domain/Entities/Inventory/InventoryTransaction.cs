@@ -254,17 +254,6 @@ namespace Darwin.Domain.Entities.Inventory
         public Guid ProductVariantId { get; set; }
 
         /// <summary>
-        /// Gets or sets the related product variant id using the legacy inventory naming convention.
-        /// This alias is kept temporarily so existing inventory handlers can move to
-        /// <see cref="ProductVariantId"/> incrementally without blocking the broader domain refactor.
-        /// </summary>
-        public Guid VariantId
-        {
-            get => ProductVariantId;
-            set => ProductVariantId = value;
-        }
-
-        /// <summary>
         /// Gets or sets the signed quantity delta applied to available stock.
         /// </summary>
         public int QuantityDelta { get; set; }

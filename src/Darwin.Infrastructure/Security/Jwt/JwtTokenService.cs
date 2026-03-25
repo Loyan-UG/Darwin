@@ -247,22 +247,21 @@ namespace Darwin.Infrastructure.Security.Jwt
                 .AsNoTracking()
                 .First();
 
-            string? effectiveDeviceId = null;
-            if (settings.JwtRequireDeviceBinding)
+            var tokens = _db.Set<UserToken>();
+            UserToken? row;
+
+            if (settings.JwtRequireDeviceBinding && !string.IsNullOrWhiteSpace(deviceId))
             {
-                // Without a device id we cannot reliably find the correct device-bound token.
-                if (string.IsNullOrWhiteSpace(deviceId))
-                {
-                    return;
-                }
-
-                effectiveDeviceId = deviceId;
+                var purpose = BuildRefreshPurpose(deviceId);
+                row = tokens.FirstOrDefault(x => x.Purpose == purpose && x.Value == refreshToken);
             }
-
-            var purpose = BuildRefreshPurpose(effectiveDeviceId);
-
-            var row = _db.Set<UserToken>()
-                .FirstOrDefault(x => x.Purpose == purpose && x.Value == refreshToken);
+            else
+            {
+                // Logout payloads do not always carry the device id. Refresh tokens are opaque, high-entropy,
+                // and unique enough to revoke by value across refresh-token purposes without relying on the client
+                // to re-submit device binding metadata.
+                row = tokens.FirstOrDefault(x => x.Value == refreshToken && x.Purpose.StartsWith("JwtRefresh"));
+            }
 
             if (row is null)
             {

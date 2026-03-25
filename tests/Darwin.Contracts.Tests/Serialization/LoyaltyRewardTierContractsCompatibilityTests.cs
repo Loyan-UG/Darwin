@@ -178,7 +178,8 @@ public sealed class LoyaltyRewardTierContractsCompatibilityTests
 
     /// <summary>
     /// Verifies that loyalty mutation-result-like contracts exposing a boolean status field
-    /// (<c>Succeeded</c>) and a textual status detail (<c>Error</c> or <c>Message</c>)
+    /// (<c>Success</c> or <c>Succeeded</c>) and a textual status detail
+    /// (<c>Error</c>, <c>Message</c>, or <c>ErrorMessage</c>)
     /// keep stable camelCase transport and round-trip behavior.
     ///
     /// Why this matters:
@@ -186,55 +187,58 @@ public sealed class LoyaltyRewardTierContractsCompatibilityTests
     /// - Contract-level drift in status fields can silently break error rendering logic.
     /// </summary>
     [Fact]
-    public void LoyaltyMutationResultLikeContracts_Should_RoundTripSucceededAndStatusTextFields()
+    public void LoyaltyMutationResultLikeContracts_Should_RoundTripStatusAndStatusTextFields()
     {
         // Arrange
         var loyaltyTypes = GetLoyaltyContractTypes();
 
         var mutationResultLikeTypes = loyaltyTypes
-            .Where(t => IsBooleanProperty(t, "Succeeded") &&
-                        (IsStringLikeProperty(t, "Error") || IsStringLikeProperty(t, "Message")))
+            .Where(t => ResolveSuccessPropertyName(t) is not null &&
+                        ResolveStatusTextPropertyName(t) is not null)
             .ToList();
 
         mutationResultLikeTypes.Should().NotBeEmpty(
-            "at least one loyalty mutation-result-like DTO with Succeeded + Error/Message must exist.");
+            "at least one loyalty mutation-result-like DTO with Success/Succeeded + Error/Message/ErrorMessage must exist.");
 
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
         // Act + Assert
         foreach (var dtoType in mutationResultLikeTypes)
         {
-            var statusTextPropertyName = ResolveStatusTextPropertyName(dtoType);
+            var successPropertyName = ResolveSuccessPropertyName(dtoType)
+                ?? throw new InvalidOperationException($"Type '{dtoType.FullName}' does not expose Success/Succeeded status field.");
+            var statusTextPropertyName = ResolveStatusTextPropertyName(dtoType)
+                ?? throw new InvalidOperationException($"Type '{dtoType.FullName}' does not expose Error/Message/ErrorMessage status text field.");
 
             // --- Success payload ---
             var successInstance = Activator.CreateInstance(dtoType)
                 ?? throw new InvalidOperationException($"Could not create instance for {dtoType.FullName}.");
 
-            SetIfPresent(dtoType, successInstance, "Succeeded", true);
+            SetIfPresent(dtoType, successInstance, successPropertyName, true);
             SetIfPresent(dtoType, successInstance, statusTextPropertyName, null);
 
             var successJson = JsonSerializer.Serialize(successInstance, dtoType, options);
             var successRoundTrip = JsonSerializer.Deserialize(successJson, dtoType, options);
 
-            successJson.Should().Contain("\"succeeded\":true");
+            successJson.Should().Contain($"\"{char.ToLowerInvariant(successPropertyName[0])}{successPropertyName[1..]}\":true");
             successRoundTrip.Should().NotBeNull();
-            GetRequiredProperty<bool>(dtoType, successRoundTrip!, "Succeeded").Should().BeTrue();
+            GetRequiredProperty<bool>(dtoType, successRoundTrip!, successPropertyName).Should().BeTrue();
 
             // --- Failure payload ---
             var failureInstance = Activator.CreateInstance(dtoType)
                 ?? throw new InvalidOperationException($"Could not create instance for {dtoType.FullName}.");
 
-            SetIfPresent(dtoType, failureInstance, "Succeeded", false);
+            SetIfPresent(dtoType, failureInstance, successPropertyName, false);
             SetIfPresent(dtoType, failureInstance, statusTextPropertyName, "validation-failed");
 
             var failureJson = JsonSerializer.Serialize(failureInstance, dtoType, options);
             var failureRoundTrip = JsonSerializer.Deserialize(failureJson, dtoType, options);
 
-            failureJson.Should().Contain("\"succeeded\":false");
+            failureJson.Should().Contain($"\"{char.ToLowerInvariant(successPropertyName[0])}{successPropertyName[1..]}\":false");
             failureJson.Should().Contain($"\"{char.ToLowerInvariant(statusTextPropertyName[0])}{statusTextPropertyName[1..]}\":\"validation-failed\"");
 
             failureRoundTrip.Should().NotBeNull();
-            GetRequiredProperty<bool>(dtoType, failureRoundTrip!, "Succeeded").Should().BeFalse();
+            GetRequiredProperty<bool>(dtoType, failureRoundTrip!, successPropertyName).Should().BeFalse();
             GetRawPropertyValue(dtoType, failureRoundTrip!, statusTextPropertyName)
                 ?.ToString().Should().Be("validation-failed");
         }
@@ -321,7 +325,22 @@ public sealed class LoyaltyRewardTierContractsCompatibilityTests
         return property!.GetValue(instance);
     }
 
-    private static string ResolveStatusTextPropertyName(Type ownerType)
+    private static string? ResolveSuccessPropertyName(Type ownerType)
+    {
+        if (HasProperty(ownerType, "Success"))
+        {
+            return "Success";
+        }
+
+        if (HasProperty(ownerType, "Succeeded"))
+        {
+            return "Succeeded";
+        }
+
+        return null;
+    }
+
+    private static string? ResolveStatusTextPropertyName(Type ownerType)
     {
         if (HasProperty(ownerType, "Error"))
         {
@@ -333,6 +352,11 @@ public sealed class LoyaltyRewardTierContractsCompatibilityTests
             return "Message";
         }
 
-        throw new InvalidOperationException($"Type '{ownerType.FullName}' does not expose Error/Message status text field.");
+        if (HasProperty(ownerType, "ErrorMessage"))
+        {
+            return "ErrorMessage";
+        }
+
+        return null;
     }
 }

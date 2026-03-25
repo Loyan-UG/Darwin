@@ -48,7 +48,7 @@ namespace Darwin.Application.Inventory.Commands
             // Ledger: reservation itself does not change on-hand; write a zero-delta row for traceability (optional).
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
-                VariantId = dto.VariantId,
+                ProductVariantId = dto.VariantId,
                 QuantityDelta = 0,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId

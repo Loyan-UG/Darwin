@@ -807,7 +807,7 @@ public sealed class ContractSerializationCompatibilityTests
 
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("rewardTierId").GetString().Should().Be("11111111-2222-3333-4444-555555555555");
-        doc.RootElement.GetProperty("rowVersion").GetString().Should().Be("BAQDAg==");
+        doc.RootElement.GetProperty("rowVersion").GetString().Should().Be("BAMCAQ==");
     }
 
 
@@ -885,7 +885,7 @@ public sealed class ContractSerializationCompatibilityTests
         const string json = """
             {
               "rewardTierId": "11111111-2222-3333-4444-555555555555",
-              "rowVersion": "BAQDAg==",
+              "rowVersion": "BAMCAQ==",
               "futureField": "ignored"
             }
             """;
@@ -896,7 +896,7 @@ public sealed class ContractSerializationCompatibilityTests
         // Assert
         dto.Should().NotBeNull();
         dto!.RewardTierId.Should().Be(Guid.Parse("11111111-2222-3333-4444-555555555555"));
-        dto.RowVersion.Should().Equal(4, 4, 3, 2);
+        dto.RowVersion.Should().Equal(4, 3, 2, 1);
     }
 
 

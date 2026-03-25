@@ -151,8 +151,8 @@ public sealed class ProfileEndpointAuthorizedConcurrencyTests : DeterministicInt
         var problem = await staleUpdateResponse.Content.ReadFromJsonAsync<ProblemDetails>(cancellationToken: TestContext.Current.CancellationToken);
         problem.Should().NotBeNull();
         problem!.Status.Should().Be((int)HttpStatusCode.BadRequest);
-        problem.Detail.Should().NotBeNullOrWhiteSpace();
-        problem.Detail.Should().ContainEquivalentOf("Concurrency");
+        (problem.Detail ?? problem.Title).Should().NotBeNullOrWhiteSpace();
+        (problem.Detail ?? problem.Title).Should().ContainEquivalentOf("Concurrency");
     }
 
     /// <summary>

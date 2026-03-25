@@ -98,6 +98,25 @@ namespace Darwin.Domain.Enums
         TermsOfService = 2
     }
 
+    /// <summary>CRM lead lifecycle status.</summary>
+    public enum LeadStatus
+    {
+        New = 0,
+        Qualified = 1,
+        Disqualified = 2,
+        Converted = 3
+    }
+
+    /// <summary>CRM opportunity progression stage.</summary>
+    public enum OpportunityStage
+    {
+        Qualification = 0,
+        Proposal = 1,
+        Negotiation = 2,
+        ClosedWon = 3,
+        ClosedLost = 4
+    }
+
     /// <summary>Invoice lifecycle status.</summary>
     public enum InvoiceStatus
     {

@@ -21,7 +21,7 @@ namespace Darwin.Application.Inventory.Queries
 
             var q = _db.Set<InventoryTransaction>().AsNoTracking().AsQueryable();
             if (variantId.HasValue)
-                q = q.Where(t => t.VariantId == variantId.Value);
+                q = q.Where(t => t.ProductVariantId == variantId.Value);
 
             var total = await q.CountAsync(ct);
 
@@ -30,7 +30,7 @@ namespace Darwin.Application.Inventory.Queries
                 .Select(t => new InventoryTransactionRowDto
                 {
                     Id = t.Id,
-                    VariantId = t.VariantId,
+                    VariantId = t.ProductVariantId,
                     QuantityDelta = t.QuantityDelta,
                     Reason = t.Reason,
                     ReferenceId = t.ReferenceId,

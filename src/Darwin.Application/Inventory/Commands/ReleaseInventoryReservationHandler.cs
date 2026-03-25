@@ -34,7 +34,7 @@ namespace Darwin.Application.Inventory.Commands
             // Ledger: release does not change on-hand; zero-delta for traceability.
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
-                VariantId = dto.VariantId,
+                ProductVariantId = dto.VariantId,
                 QuantityDelta = 0,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId

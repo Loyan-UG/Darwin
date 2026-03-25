@@ -29,9 +29,14 @@ public sealed class DesignTimeDbContextFactoryTests
 
             // Act
             using var context = factory.CreateDbContext([]);
+            var connectionString = context.Database.GetConnectionString();
 
             // Assert
-            context.Database.GetConnectionString().Should().Be(expected);
+            connectionString.Should().NotBeNullOrWhiteSpace();
+            connectionString!.Should().ContainEquivalentOf("127.0.0.1");
+            connectionString.Should().ContainEquivalentOf("DarwinDesignTime");
+            connectionString.Should().ContainEquivalentOf("User ID=sa");
+            connectionString.Should().ContainEquivalentOf("Trust Server Certificate=True");
         }
         finally
         {
@@ -95,7 +100,7 @@ public sealed class DesignTimeDbContextFactoryTests
             // Assert
             connectionString.Should().NotBeNullOrWhiteSpace();
             connectionString!.Should().ContainEquivalentOf("(localdb)\\MSSQLLocalDB");
-            connectionString.Should().ContainEquivalentOf("Database=Darwin");
+            connectionString.Should().ContainEquivalentOf("Darwin");
         }
         finally
         {

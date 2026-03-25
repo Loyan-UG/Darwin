@@ -33,7 +33,7 @@ namespace Darwin.Application.Inventory.Commands
             // append ledger
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
-                VariantId = dto.VariantId,
+                ProductVariantId = dto.VariantId,
                 QuantityDelta = dto.QuantityDelta,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId

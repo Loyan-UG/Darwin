@@ -57,7 +57,7 @@ namespace Darwin.Application.Inventory.Commands
             // Idempotency: check existing ledger rows for this order (Reason = ShipmentAllocation)
             var alreadyAllocated = await _db.Set<InventoryTransaction>()
                 .Where(t => t.ReferenceId == dto.OrderId && t.Reason == "ShipmentAllocation")
-                .Select(t => t.VariantId)
+                .Select(t => t.ProductVariantId)
                 .ToListAsync(ct);
 
             // Process each line atomically with a guarded ExecuteUpdateAsync
@@ -86,7 +86,7 @@ namespace Darwin.Application.Inventory.Commands
                 // Append ledger: negative delta indicates stock leaves on-hand for fulfillment
                 _db.Set<InventoryTransaction>().Add(new InventoryTransaction
                 {
-                    VariantId = line.VariantId,
+                    ProductVariantId = line.VariantId,
                     QuantityDelta = -line.Quantity,
                     Reason = "ShipmentAllocation",
                     ReferenceId = dto.OrderId

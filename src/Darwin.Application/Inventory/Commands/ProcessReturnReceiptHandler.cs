@@ -36,7 +36,7 @@ namespace Darwin.Application.Inventory.Commands
                     .AsNoTracking()
                     .AnyAsync(t => t.ReferenceId == dto.ReferenceId
                                    && t.Reason == dto.Reason
-                                   && t.VariantId == dto.VariantId, ct);
+                                   && t.ProductVariantId == dto.VariantId, ct);
                 if (exists) return;
             }
 
@@ -52,7 +52,7 @@ namespace Darwin.Application.Inventory.Commands
 
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
-                VariantId = dto.VariantId,
+                ProductVariantId = dto.VariantId,
                 QuantityDelta = dto.Quantity,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId
