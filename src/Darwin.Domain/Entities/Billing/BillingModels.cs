@@ -219,4 +219,33 @@ namespace Darwin.Domain.Entities.Billing
         /// </summary>
         public string? MetadataJson { get; set; }
     }
+
+
+    /// <summary>
+    /// Payment record for CRM invoices.
+    /// </summary>
+    public sealed class InvoicePayment : BaseEntity
+    {
+        /// <summary>Linked CRM invoice identifier.</summary>
+        public Guid InvoiceId { get; set; }
+
+        /// <summary>Paid amount in minor units.</summary>
+        public long AmountMinor { get; set; }
+
+        /// <summary>ISO currency code.</summary>
+        public string Currency { get; set; } = "EUR";
+
+        /// <summary>Payment provider label (e.g., Stripe, PayPal).</summary>
+        public string Provider { get; set; } = string.Empty;
+
+        /// <summary>Provider transaction id if available.</summary>
+        public string? ProviderTransactionId { get; set; }
+
+        /// <summary>Payment lifecycle status.</summary>
+        public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
+
+        /// <summary>Timestamp when processing completed.</summary>
+        public DateTime? CompletedAtUtc { get; set; }
+    }
+
 }

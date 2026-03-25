@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Darwin.Domain.Common;
 using Darwin.Domain.Enums;
@@ -13,7 +13,7 @@ namespace Darwin.Domain.Entities.Orders
         public string OrderNumber { get; set; } = string.Empty;
         public Guid? UserId { get; set; }
         public string Currency { get; set; } = "EUR";
-        public bool PricesIncludeTax { get; set; } = false;
+        public bool PricesIncludeTax { get; set; }
 
         public long SubtotalNetMinor { get; set; }
         public long TaxTotalMinor { get; set; }
@@ -27,8 +27,6 @@ namespace Darwin.Domain.Entities.Orders
         public string ShippingAddressJson { get; set; } = "{}";
 
         public List<OrderLine> Lines { get; set; } = new();
-
-        // When Infrastructure/fulfillment/payments are ready, these can be used.
         public List<Payment> Payments { get; set; } = new();
         public List<Shipment> Shipments { get; set; } = new();
 
@@ -46,11 +44,9 @@ namespace Darwin.Domain.Entities.Orders
         public string Sku { get; set; } = string.Empty;
 
         public int Quantity { get; set; }
-
         public long UnitPriceNetMinor { get; set; }
         public decimal VatRate { get; set; }
         public long UnitPriceGrossMinor { get; set; }
-
         public long LineTaxMinor { get; set; }
         public long LineGrossMinor { get; set; }
 
@@ -60,8 +56,6 @@ namespace Darwin.Domain.Entities.Orders
         public string AddOnValueIdsJson { get; set; } = "[]";
 
         /// <summary>Snapshot of total add-on delta (minor units, net) for this line.</summary>
-        public long AddOnPriceDeltaMinor { get; set; } = 0;
+        public long AddOnPriceDeltaMinor { get; set; }
     }
-
-    // Payments/Shipment/ShipmentLine/Refund remain as you provided earlier.
 }

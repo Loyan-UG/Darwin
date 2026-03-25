@@ -16,6 +16,8 @@ namespace Darwin.Domain.Entities.Catalog
         public int SortOrder { get; set; }
         /// <summary>Activation flag to control visibility.</summary>
         public bool IsActive { get; set; } = true;
+        /// <summary>Publish flag for storefront visibility.</summary>
+        public bool IsPublished { get; set; } = true;
         /// <summary>Per-culture translations for name/slug/description/SEO.</summary>
         public List<CategoryTranslation> Translations { get; set; } = new();
     }

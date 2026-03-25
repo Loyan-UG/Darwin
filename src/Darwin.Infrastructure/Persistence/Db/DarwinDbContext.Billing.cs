@@ -19,5 +19,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Provider-synchronized invoices for <see cref="BusinessSubscription"/>.
         /// </summary>
         public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();
+
+        /// <summary>
+        /// CRM invoice payments.
+        /// </summary>
+        public DbSet<InvoicePayment> InvoicePayments => Set<InvoicePayment>();
     }
 }   
