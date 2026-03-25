@@ -1,8 +1,11 @@
-﻿using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Billing;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Infrastructure.Persistence.Db
 {
+    /// <summary>
+    /// Billing and lightweight accounting DbSets.
+    /// </summary>
     public sealed partial class DarwinDbContext
     {
         /// <summary>
@@ -16,13 +19,33 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<BusinessSubscription> BusinessSubscriptions => Set<BusinessSubscription>();
 
         /// <summary>
-        /// Provider-synchronized invoices for <see cref="BusinessSubscription"/>.
+        /// Provider-synchronized invoices for business subscriptions.
         /// </summary>
         public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();
 
         /// <summary>
-        /// CRM invoice payments.
+        /// Generic billing payments used for invoice, order, and ERP-ready accounting flows.
         /// </summary>
-        public DbSet<InvoicePayment> InvoicePayments => Set<InvoicePayment>();
+        public DbSet<Payment> BillingPayments => Set<Payment>();
+
+        /// <summary>
+        /// Financial accounts for lightweight bookkeeping.
+        /// </summary>
+        public DbSet<FinancialAccount> FinancialAccounts => Set<FinancialAccount>();
+
+        /// <summary>
+        /// Journal entries.
+        /// </summary>
+        public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+
+        /// <summary>
+        /// Journal entry lines.
+        /// </summary>
+        public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
+
+        /// <summary>
+        /// Recorded business expenses.
+        /// </summary>
+        public DbSet<Expense> Expenses => Set<Expense>();
     }
-}   
+}

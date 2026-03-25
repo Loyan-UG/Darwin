@@ -11,15 +11,12 @@ namespace Darwin.Domain.Enums
     public enum PaymentStatus
     {
         Pending = 0,
-        Completed = 1,
-        Failed = 2,
-        Refunded = 3,
-
-        // Legacy aliases kept for backward compatibility.
-        Initiated = Pending,
-        Authorized = Pending,
-        Captured = Completed,
-        PartiallyRefunded = Refunded
+        Authorized = 1,
+        Captured = 2,
+        Completed = 3,
+        Failed = 4,
+        Refunded = 5,
+        Voided = 6
     }
 
     /// <summary>Shipment lifecycle state.</summary>

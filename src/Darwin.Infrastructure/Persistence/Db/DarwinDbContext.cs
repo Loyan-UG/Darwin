@@ -6,7 +6,6 @@ using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.CMS;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Integration;
-using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
 using Darwin.Domain.Entities.SEO;
@@ -80,12 +79,6 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<ProductOptionValue> ProductOptionValues => Set<ProductOptionValue>();
         public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
         public DbSet<VariantOptionValue> VariantOptionValues => Set<VariantOptionValue>();
-
-        // Inventory
-        public DbSet<Warehouse> Warehouses => Set<Warehouse>();
-        public DbSet<StockLevel> StockLevels => Set<StockLevel>();
-        public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
-        public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
 
         // Pricing
         public DbSet<TaxCategory> TaxCategories => Set<TaxCategory>();
