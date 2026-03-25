@@ -1,0 +1,41 @@
+@model Darwin.WebAdmin.ViewModels.CRM.CrmSummaryVm
+@{
+    ViewData["Title"] = "CRM Overview";
+}
+
+<h1 class="mb-4">CRM Overview</h1>
+
+<div class="row g-3">
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Customers</div><div class="fs-3 fw-semibold">@Model.CustomerCount</div></div></div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Leads</div><div class="fs-3 fw-semibold">@Model.LeadCount</div></div></div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Qualified Leads</div><div class="fs-3 fw-semibold">@Model.QualifiedLeadCount</div></div></div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Open Opportunities</div><div class="fs-3 fw-semibold">@Model.OpenOpportunityCount</div></div></div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Segments</div><div class="fs-3 fw-semibold">@Model.SegmentCount</div></div></div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Interactions (7d)</div><div class="fs-3 fw-semibold">@Model.RecentInteractionCount</div></div></div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="text-muted small">Open Pipeline</div>
+        <div class="fs-2 fw-semibold">EUR @((Model.OpenPipelineMinor / 100.0M).ToString("0.00"))</div>
+    </div>
+</div>
+
+<div class="mt-4 d-flex gap-2 flex-wrap">
+    <a asp-action="Customers" class="btn btn-outline-primary">Customers</a>
+    <a asp-action="Leads" class="btn btn-outline-primary">Leads</a>
+    <a asp-action="Opportunities" class="btn btn-outline-primary">Opportunities</a>
+    <a asp-action="Segments" class="btn btn-outline-primary">Segments</a>
+</div>

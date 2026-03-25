@@ -119,6 +119,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
     public sealed class LeadsListVm
     {
+        public CrmSummaryVm Summary { get; set; } = new();
         public List<LeadListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
@@ -129,6 +130,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     public sealed class LeadListItemVm
     {
         public Guid Id { get; set; }
+        public Guid? CustomerId { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string? CompanyName { get; set; }
         public string Email { get; set; } = string.Empty;
@@ -172,9 +174,19 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public LeadStatus Status { get; set; } = LeadStatus.New;
         public Guid? AssignedToUserId { get; set; }
         public Guid? CustomerId { get; set; }
+        public ConvertLeadVm Conversion { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public InteractionCreateVm NewInteraction { get; set; } = new();
+    }
+
+    public sealed class ConvertLeadVm
+    {
+        public Guid LeadId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public Guid? UserId { get; set; }
+        public bool CopyNotesToCustomer { get; set; } = true;
+        public List<SelectListItem> UserOptions { get; set; } = new();
     }
 
     public sealed class OpportunitiesListVm
@@ -306,6 +318,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
     public sealed class CustomerSegmentsListVm
     {
+        public CrmSummaryVm Summary { get; set; } = new();
         public List<CustomerSegmentListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
@@ -355,5 +368,16 @@ namespace Darwin.WebAdmin.ViewModels.CRM
 
         [Required]
         public Guid CustomerSegmentId { get; set; }
+    }
+
+    public sealed class CrmSummaryVm
+    {
+        public int CustomerCount { get; set; }
+        public int LeadCount { get; set; }
+        public int QualifiedLeadCount { get; set; }
+        public int OpenOpportunityCount { get; set; }
+        public long OpenPipelineMinor { get; set; }
+        public int SegmentCount { get; set; }
+        public int RecentInteractionCount { get; set; }
     }
 }

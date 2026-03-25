@@ -106,4 +106,23 @@ namespace Darwin.Application.CRM.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
+
+    public sealed class ConvertLeadToCustomerDto
+    {
+        public Guid LeadId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public Guid? UserId { get; set; }
+        public bool CopyNotesToCustomer { get; set; } = true;
+    }
+
+    public sealed class CrmSummaryDto
+    {
+        public int CustomerCount { get; set; }
+        public int LeadCount { get; set; }
+        public int QualifiedLeadCount { get; set; }
+        public int OpenOpportunityCount { get; set; }
+        public long OpenPipelineMinor { get; set; }
+        public int SegmentCount { get; set; }
+        public int RecentInteractionCount { get; set; }
+    }
 }

@@ -19,6 +19,44 @@
 <hr class="my-4" />
 
 <div class="row g-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><strong>Lead Conversion</strong></div>
+            <div class="card-body">
+                @if (Model.CustomerId.HasValue)
+                {
+                    <p class="mb-3">This lead is already linked to a customer record.</p>
+                    <a asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="btn btn-outline-success">
+                        <i class="fa fa-user"></i> Open Customer
+                    </a>
+                }
+                else
+                {
+                    <form asp-controller="Crm" asp-action="ConvertLead" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="LeadId" value="@Model.Id" />
+                        <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                        <div class="col-md-6">
+                            <label class="form-label">Link to Existing User</label>
+                            <select name="UserId" class="form-select" asp-items="Model.Conversion.UserOptions"></select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check">
+                                <input type="checkbox" name="CopyNotesToCustomer" value="true" checked="checked" class="form-check-input" id="copyNotesToCustomer" />
+                                <label class="form-check-label" for="copyNotesToCustomer">Copy notes</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fa fa-arrow-right"></i> Convert to Customer
+                            </button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
     <div class="col-lg-5">
         <div class="card">
             <div class="card-header"><strong>Add Interaction</strong></div>

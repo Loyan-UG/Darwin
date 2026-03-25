@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.CRM.Queries
@@ -269,6 +270,42 @@ namespace Darwin.Application.CRM.Queries
                     CustomerId = x.CustomerId
                 })
                 .FirstOrDefaultAsync(ct);
+        }
+    }
+
+    public sealed class GetCrmSummaryHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetCrmSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public async Task<CrmSummaryDto> HandleAsync(CancellationToken ct = default)
+        {
+            var customerCount = await _db.Set<Customer>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
+            var leadCount = await _db.Set<Lead>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
+            var qualifiedLeadCount = await _db.Set<Lead>().AsNoTracking().CountAsync(x => x.Status == LeadStatus.Qualified, ct).ConfigureAwait(false);
+            var openOpportunityCount = await _db.Set<Opportunity>().AsNoTracking()
+                .CountAsync(x => x.Stage != OpportunityStage.ClosedWon && x.Stage != OpportunityStage.ClosedLost, ct)
+                .ConfigureAwait(false);
+            var openPipelineMinor = await _db.Set<Opportunity>().AsNoTracking()
+                .Where(x => x.Stage != OpportunityStage.ClosedWon && x.Stage != OpportunityStage.ClosedLost)
+                .SumAsync(x => (long?)x.EstimatedValueMinor, ct)
+                .ConfigureAwait(false) ?? 0L;
+            var segmentCount = await _db.Set<CustomerSegment>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
+            var recentInteractionCount = await _db.Set<Interaction>().AsNoTracking()
+                .CountAsync(x => x.CreatedAtUtc >= DateTime.UtcNow.AddDays(-7), ct)
+                .ConfigureAwait(false);
+
+            return new CrmSummaryDto
+            {
+                CustomerCount = customerCount,
+                LeadCount = leadCount,
+                QualifiedLeadCount = qualifiedLeadCount,
+                OpenOpportunityCount = openOpportunityCount,
+                OpenPipelineMinor = openPipelineMinor,
+                SegmentCount = segmentCount,
+                RecentInteractionCount = recentInteractionCount
+            };
         }
     }
 }

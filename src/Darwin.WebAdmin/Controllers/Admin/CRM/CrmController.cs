@@ -16,6 +16,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
     {
         private readonly GetCustomersPageHandler _getCustomersPage;
         private readonly GetCustomerForEditHandler _getCustomerForEdit;
+        private readonly GetCrmSummaryHandler _getCrmSummary;
         private readonly GetCustomerInteractionsPageHandler _getCustomerInteractionsPage;
         private readonly GetCustomerConsentsPageHandler _getCustomerConsentsPage;
         private readonly GetCustomerSegmentMembershipsHandler _getCustomerSegmentMemberships;
@@ -26,6 +27,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly GetLeadInteractionsPageHandler _getLeadInteractionsPage;
         private readonly CreateLeadHandler _createLead;
         private readonly UpdateLeadHandler _updateLead;
+        private readonly ConvertLeadToCustomerHandler _convertLeadToCustomer;
         private readonly GetOpportunitiesPageHandler _getOpportunitiesPage;
         private readonly GetOpportunityForEditHandler _getOpportunityForEdit;
         private readonly GetOpportunityInteractionsPageHandler _getOpportunityInteractionsPage;
@@ -44,6 +46,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public CrmController(
             GetCustomersPageHandler getCustomersPage,
             GetCustomerForEditHandler getCustomerForEdit,
+            GetCrmSummaryHandler getCrmSummary,
             GetCustomerInteractionsPageHandler getCustomerInteractionsPage,
             GetCustomerConsentsPageHandler getCustomerConsentsPage,
             GetCustomerSegmentMembershipsHandler getCustomerSegmentMemberships,
@@ -54,6 +57,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             GetLeadInteractionsPageHandler getLeadInteractionsPage,
             CreateLeadHandler createLead,
             UpdateLeadHandler updateLead,
+            ConvertLeadToCustomerHandler convertLeadToCustomer,
             GetOpportunitiesPageHandler getOpportunitiesPage,
             GetOpportunityForEditHandler getOpportunityForEdit,
             GetOpportunityInteractionsPageHandler getOpportunityInteractionsPage,
@@ -71,6 +75,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             _getCustomersPage = getCustomersPage;
             _getCustomerForEdit = getCustomerForEdit;
+            _getCrmSummary = getCrmSummary;
             _getCustomerInteractionsPage = getCustomerInteractionsPage;
             _getCustomerConsentsPage = getCustomerConsentsPage;
             _getCustomerSegmentMemberships = getCustomerSegmentMemberships;
@@ -81,6 +86,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _getLeadInteractionsPage = getLeadInteractionsPage;
             _createLead = createLead;
             _updateLead = updateLead;
+            _convertLeadToCustomer = convertLeadToCustomer;
             _getOpportunitiesPage = getOpportunitiesPage;
             _getOpportunityForEdit = getOpportunityForEdit;
             _getOpportunityInteractionsPage = getOpportunityInteractionsPage;
@@ -98,7 +104,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public IActionResult Index() => RedirectToAction(nameof(Customers));
+        public async Task<IActionResult> Index(CancellationToken ct = default)
+        {
+            var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            return View("Overview", MapSummary(summary));
+        }
 
         [HttpGet]
         public async Task<IActionResult> Customers(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
@@ -298,8 +308,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> Leads(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             var (items, total) = await _getLeadsPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var vm = new LeadsListVm
             {
+                Summary = MapSummary(summary),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -307,6 +319,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Items = items.Select(x => new LeadListItemVm
                 {
                     Id = x.Id,
+                    CustomerId = x.CustomerId,
                     FullName = (x.FirstName + " " + x.LastName).Trim(),
                     CompanyName = x.CompanyName,
                     Email = x.Email,
@@ -389,6 +402,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Status = dto.Status,
                 AssignedToUserId = dto.AssignedToUserId,
                 CustomerId = dto.CustomerId,
+                Conversion = new ConvertLeadVm
+                {
+                    LeadId = dto.Id,
+                    RowVersion = dto.RowVersion,
+                    CopyNotesToCustomer = true
+                },
                 NewInteraction = new InteractionCreateVm { LeadId = dto.Id }
             };
 
@@ -607,8 +626,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> Segments(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             var (items, total) = await _getCustomerSegmentsPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var vm = new CustomerSegmentsListVm
             {
+                Summary = MapSummary(summary),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -624,6 +645,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
 
             return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConvertLead(ConvertLeadVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                var customerId = await _convertLeadToCustomer.HandleAsync(new ConvertLeadToCustomerDto
+                {
+                    LeadId = vm.LeadId,
+                    RowVersion = vm.RowVersion,
+                    UserId = vm.UserId,
+                    CopyNotesToCustomer = vm.CopyNotesToCustomer
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Lead converted to customer.";
+                return RedirectToAction(nameof(EditCustomer), new { id = customerId });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["Error"] = "Concurrency conflict. Reload the lead and try again.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(EditLead), new { id = vm.LeadId });
         }
 
         [HttpGet]
@@ -919,6 +969,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.AssignedToUserId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.CustomerOptions = await _referenceData.GetCustomerOptionsAsync(vm.CustomerId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.NewInteraction.UserOptions = await _referenceData.GetUserOptionsAsync(vm.NewInteraction.UserId, includeEmpty: true, ct).ConfigureAwait(false);
+            vm.Conversion.UserOptions = await _referenceData.GetUserOptionsAsync(vm.Conversion.UserId, includeEmpty: true, ct).ConfigureAwait(false);
         }
 
         private async Task PopulateOpportunityOptionsAsync(OpportunityEditVm vm, CancellationToken ct)
@@ -994,6 +1045,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Subject = dto.Subject,
                 Content = dto.Content,
                 CreatedAtUtc = dto.CreatedAtUtc
+            };
+        }
+
+        private static CrmSummaryVm MapSummary(CrmSummaryDto dto)
+        {
+            return new CrmSummaryVm
+            {
+                CustomerCount = dto.CustomerCount,
+                LeadCount = dto.LeadCount,
+                QualifiedLeadCount = dto.QualifiedLeadCount,
+                OpenOpportunityCount = dto.OpenOpportunityCount,
+                OpenPipelineMinor = dto.OpenPipelineMinor,
+                SegmentCount = dto.SegmentCount,
+                RecentInteractionCount = dto.RecentInteractionCount
             };
         }
     }

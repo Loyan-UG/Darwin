@@ -229,6 +229,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<UpdateOrderStatusHandler>();
             services.AddScoped<GetCustomersPageHandler>();
             services.AddScoped<GetCustomerForEditHandler>();
+            services.AddScoped<GetCrmSummaryHandler>();
             services.AddScoped<GetCustomerInteractionsPageHandler>();
             services.AddScoped<GetLeadInteractionsPageHandler>();
             services.AddScoped<GetOpportunityInteractionsPageHandler>();
@@ -242,6 +243,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetLeadForEditHandler>();
             services.AddScoped<CreateLeadHandler>();
             services.AddScoped<UpdateLeadHandler>();
+            services.AddScoped<ConvertLeadToCustomerHandler>();
             services.AddScoped<GetOpportunitiesPageHandler>();
             services.AddScoped<GetOpportunityForEditHandler>();
             services.AddScoped<CreateOpportunityHandler>();

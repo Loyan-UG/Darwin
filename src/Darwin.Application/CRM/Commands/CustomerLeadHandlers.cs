@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -262,6 +263,99 @@ namespace Darwin.Application.CRM.Commands
             lead.CustomerId = dto.CustomerId;
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+
+        private static string? NormalizeOptional(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    public sealed class ConvertLeadToCustomerHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<ConvertLeadToCustomerDto> _validator;
+
+        public ConvertLeadToCustomerHandler(IAppDbContext db, IValidator<ConvertLeadToCustomerDto> validator)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        }
+
+        public async Task<Guid> HandleAsync(ConvertLeadToCustomerDto dto, CancellationToken ct = default)
+        {
+            await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
+
+            var lead = await _db.Set<Lead>()
+                .FirstOrDefaultAsync(x => x.Id == dto.LeadId, ct)
+                .ConfigureAwait(false);
+
+            if (lead is null)
+            {
+                throw new InvalidOperationException("Lead not found.");
+            }
+
+            if (!lead.RowVersion.SequenceEqual(dto.RowVersion))
+            {
+                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+            }
+
+            if (lead.CustomerId.HasValue)
+            {
+                lead.Status = LeadStatus.Converted;
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+                return lead.CustomerId.Value;
+            }
+
+            if (dto.UserId.HasValue)
+            {
+                var userExists = await _db.Set<User>()
+                    .AsNoTracking()
+                    .AnyAsync(x => x.Id == dto.UserId.Value && !x.IsDeleted, ct)
+                    .ConfigureAwait(false);
+
+                if (!userExists)
+                {
+                    throw new InvalidOperationException("Linked user not found.");
+                }
+            }
+
+            var existingCustomer = await _db.Set<Customer>()
+                .FirstOrDefaultAsync(x =>
+                    !x.IsDeleted &&
+                    ((dto.UserId.HasValue && x.UserId == dto.UserId.Value) ||
+                     (!dto.UserId.HasValue && x.Email == lead.Email)), ct)
+                .ConfigureAwait(false);
+
+            if (existingCustomer is null)
+            {
+                existingCustomer = new Customer
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = dto.UserId,
+                    FirstName = lead.FirstName.Trim(),
+                    LastName = lead.LastName.Trim(),
+                    Email = lead.Email.Trim(),
+                    Phone = lead.Phone.Trim(),
+                    CompanyName = NormalizeOptional(lead.CompanyName),
+                    Notes = dto.CopyNotesToCustomer ? NormalizeOptional(lead.Notes) : null
+                };
+
+                _db.Set<Customer>().Add(existingCustomer);
+            }
+            else if (dto.CopyNotesToCustomer && string.IsNullOrWhiteSpace(existingCustomer.Notes) && !string.IsNullOrWhiteSpace(lead.Notes))
+            {
+                existingCustomer.Notes = NormalizeOptional(lead.Notes);
+            }
+
+            if (dto.UserId.HasValue && !existingCustomer.UserId.HasValue)
+            {
+                existingCustomer.UserId = dto.UserId;
+            }
+
+            lead.CustomerId = existingCustomer.Id;
+            lead.Status = LeadStatus.Converted;
+
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return existingCustomer.Id;
         }
 
         private static string? NormalizeOptional(string? value) =>

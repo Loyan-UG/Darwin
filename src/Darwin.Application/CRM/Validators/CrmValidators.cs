@@ -73,6 +73,15 @@ namespace Darwin.Application.CRM.Validators
         }
     }
 
+    public sealed class ConvertLeadToCustomerValidator : AbstractValidator<ConvertLeadToCustomerDto>
+    {
+        public ConvertLeadToCustomerValidator()
+        {
+            RuleFor(x => x.LeadId).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
     public sealed class OpportunityItemValidator : AbstractValidator<OpportunityItemDto>
     {
         public OpportunityItemValidator()

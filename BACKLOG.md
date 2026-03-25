@@ -65,7 +65,9 @@ The immediate direction is:
 - Completed: build opportunity management with stages, projected value, and product lines.
 - Completed: build interaction timeline and consent management screens.
 - Completed: build segmentation definitions and membership management screens.
-- Task: add explicit lead-to-customer conversion workflows and richer CRM dashboard/reporting.
+- Completed: add explicit lead-to-customer conversion workflows in WebAdmin and Application.
+- Completed: add a lightweight CRM overview with pipeline and activity summary cards.
+- Task: deepen CRM dashboard/reporting with owner-based, source-based, and conversion-rate breakdowns.
 
 ### Epic: Inventory and procurement admin
 

@@ -5,6 +5,21 @@
 
 <h1 class="mb-3">Leads</h1>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Customers</div><div class="fs-4 fw-semibold">@Model.Summary.CustomerCount</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Leads</div><div class="fs-4 fw-semibold">@Model.Summary.LeadCount</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Qualified</div><div class="fs-4 fw-semibold">@Model.Summary.QualifiedLeadCount</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body"><div class="text-muted small">Open Pipeline</div><div class="fs-4 fw-semibold">EUR @((Model.Summary.OpenPipelineMinor / 100.0M).ToString("0.00"))</div></div></div>
+    </div>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Leads" method="get" class="d-flex gap-2">
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search leads">
@@ -46,6 +61,12 @@
                     <td><span class="badge text-bg-light">@item.Status</span></td>
                     <td>@item.InteractionCount</td>
                     <td class="text-end">
+                        @if (item.CustomerId.HasValue)
+                        {
+                            <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="btn btn-sm btn-outline-success">
+                                <i class="fa fa-user"></i> Customer
+                            </a>
+                        }
                         <a asp-action="EditLead" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> Edit
                         </a>
