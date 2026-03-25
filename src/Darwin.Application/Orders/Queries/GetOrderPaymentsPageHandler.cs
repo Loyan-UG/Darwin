@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
-using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Entities.Billing;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Queries
@@ -35,9 +35,9 @@ namespace Darwin.Application.Orders.Queries
                 .Select(p => new PaymentListItemDto
                 {
                     Id = p.Id,
-                    OrderId = p.OrderId,
+                    OrderId = p.OrderId ?? Guid.Empty,
                     Provider = p.Provider,
-                    ProviderReference = p.ProviderReference,
+                    ProviderReference = p.ProviderTransactionRef,
                     AmountMinor = p.AmountMinor,
                     Currency = p.Currency,
                     Status = p.Status,

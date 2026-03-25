@@ -23,7 +23,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
                    .IsUnique()
                    .HasDatabaseName("UX_ResetToken_User_Token");
 
-            builder.HasOne<User>()
+            builder.HasOne(p => p.User)
                    .WithMany()
                    .HasForeignKey(p => p.UserId)
                    .OnDelete(DeleteBehavior.Cascade);

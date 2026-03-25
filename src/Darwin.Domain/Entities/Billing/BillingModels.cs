@@ -70,7 +70,7 @@ namespace Darwin.Domain.Entities.Billing
         /// <summary>
         /// Gets or sets the owning business id.
         /// </summary>
-        public Guid BusinessId { get; set; }
+        public Guid? BusinessId { get; set; }
 
         /// <summary>
         /// Gets or sets the linked billing plan id.
@@ -233,8 +233,9 @@ namespace Darwin.Domain.Entities.Billing
     {
         /// <summary>
         /// Gets or sets the owning business id.
+        /// This can be null for platform-level order payments that are not yet scoped to a tenant business.
         /// </summary>
-        public Guid BusinessId { get; set; }
+        public Guid? BusinessId { get; set; }
 
         /// <summary>
         /// Gets or sets the optional order id associated with the payment.
@@ -286,6 +287,12 @@ namespace Darwin.Domain.Entities.Billing
         /// Gets or sets the UTC timestamp when funds were actually paid or captured.
         /// </summary>
         public DateTime? PaidAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional provider or operator-supplied failure reason.
+        /// This is useful for support and reconciliation when a payment is declined or voided.
+        /// </summary>
+        public string? FailureReason { get; set; }
     }
 
     /// <summary>

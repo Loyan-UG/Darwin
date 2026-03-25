@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Darwin.Domain.Common;
+using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Enums;
 
 namespace Darwin.Domain.Entities.Orders

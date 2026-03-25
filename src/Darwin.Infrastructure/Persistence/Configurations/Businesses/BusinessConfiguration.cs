@@ -75,18 +75,23 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
 
             // Engagement (Favorites / Likes / Reviews / Stats)
             builder.HasMany(x => x.Favorites)
-                .WithOne()
+                .WithOne(x => x.Business)
                 .HasForeignKey(f => f.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(x => x.Likes)
-                .WithOne()
+                .WithOne(x => x.Business)
                 .HasForeignKey(l => l.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(x => x.Reviews)
-                .WithOne()
+                .WithOne(x => x.Business)
                 .HasForeignKey(r => r.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.Invitations)
+                .WithOne()
+                .HasForeignKey(i => i.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 

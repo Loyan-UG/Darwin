@@ -1,3 +1,4 @@
+using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Inventory;
 using Darwin.Domain.Entities.Orders;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Orders
         {
             b.ToTable("OrderLines", schema: "Orders");
             b.Property(x => x.Sku).IsRequired().HasMaxLength(100);
+            b.Property(x => x.VatRate).HasPrecision(9, 4);
             b.HasIndex(x => x.WarehouseId).HasDatabaseName("IX_OrderLines_WarehouseId");
             b.HasOne<Warehouse>()
                 .WithMany()

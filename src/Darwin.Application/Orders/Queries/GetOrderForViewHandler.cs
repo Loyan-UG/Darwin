@@ -56,11 +56,11 @@ namespace Darwin.Application.Orders.Queries
                     {
                         Id = p.Id,
                         Provider = p.Provider,
-                        ProviderReference = p.ProviderReference,
+                        ProviderReference = p.ProviderTransactionRef ?? string.Empty,
                         AmountMinor = p.AmountMinor,
                         Currency = p.Currency,
                         Status = p.Status,
-                        CapturedAtUtc = p.CapturedAtUtc,
+                        CapturedAtUtc = p.PaidAtUtc,
                         FailureReason = p.FailureReason
                     }).ToList(),
                     Shipments = x.Shipments.Select(s => new ShipmentDetailDto

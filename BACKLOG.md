@@ -55,8 +55,9 @@ The immediate direction is:
 - Completed: build billing management screens for payments, financial accounts, expenses, and journal entries.
 - Completed: add shipment, refund, and invoice management screens to order administration.
 - Completed: add order detail tabs for payments, shipments, refunds, and invoices.
+- Completed: converge duplicated order-payment and billing-payment concepts into a single `Billing.Payment` aggregate.
+- Completed: remove legacy shadow foreign-key columns from business/identity joins and align `OrderLine.VatRate` precision in the database model.
 - Task: expose CRM-linked invoices more deeply in the admin UI and connect them to payment workflows.
-- Task: converge duplicated order-payment and billing-payment concepts into a single financial aggregate.
 
 ### Epic: CRM admin
 

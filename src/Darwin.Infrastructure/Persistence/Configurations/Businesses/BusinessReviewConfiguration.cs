@@ -39,6 +39,16 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
             // Useful for discovery lists: fetch reviews for a business while respecting moderation & soft delete.
             builder.HasIndex(x => new { x.BusinessId, x.IsHidden, x.IsDeleted })
                 .HasDatabaseName("IX_BusinessReviews_Business_Visibility");
+
+            builder.HasOne(x => x.Business)
+                .WithMany(x => x.Reviews)
+                .HasForeignKey(x => x.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.User)
+                .WithMany(x => x.BusinessReviews)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -32,8 +32,15 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => x.UserId);
 
-            // Relationships are anchored from BusinessConfiguration via navigation properties.
-            // No extra navigation configuration is required here.
+            builder.HasOne(x => x.Business)
+                .WithMany(x => x.Favorites)
+                .HasForeignKey(x => x.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.User)
+                .WithMany(x => x.BusinessFavorites)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

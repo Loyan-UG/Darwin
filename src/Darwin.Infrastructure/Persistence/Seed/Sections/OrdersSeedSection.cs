@@ -119,16 +119,18 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 order.Lines.Add(line);
 
                 // Create payment (attach via navigation).
-                var payment = new Payment
+                var payment = new Darwin.Domain.Entities.Billing.Payment
                 {
                     Id = Guid.NewGuid(),
+                    BusinessId = null,
                     OrderId = order.Id, // explicit is OK; navigation also set below
+                    UserId = order.UserId,
                     Provider = "PayPal",
-                    ProviderReference = $"PAY-{Guid.NewGuid():N}",
+                    ProviderTransactionRef = $"PAY-{Guid.NewGuid():N}",
                     AmountMinor = grandTotal,
                     Currency = "EUR",
                     Status = PaymentStatus.Captured,
-                    CapturedAtUtc = DateTime.UtcNow.AddDays(-i)
+                    PaidAtUtc = DateTime.UtcNow.AddDays(-i)
                 };
                 order.Payments.Add(payment);
 

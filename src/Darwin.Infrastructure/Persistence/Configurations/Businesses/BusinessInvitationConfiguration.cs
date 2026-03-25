@@ -68,7 +68,7 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
 
             // Relationship is intentionally configured without depending on Business navigation properties.
             builder.HasOne<Darwin.Domain.Entities.Businesses.Business>()
-                .WithMany()
+                .WithMany(x => x.Invitations)
                 .HasForeignKey(x => x.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
         }

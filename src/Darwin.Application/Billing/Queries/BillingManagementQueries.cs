@@ -33,7 +33,7 @@ namespace Darwin.Application.Billing.Queries
                 .Select(x => new PaymentListItemDto
                 {
                     Id = x.Id,
-                    BusinessId = x.BusinessId,
+                    BusinessId = x.BusinessId!.Value,
                     OrderId = x.OrderId,
                     InvoiceId = x.InvoiceId,
                     CustomerId = x.CustomerId,
@@ -68,7 +68,7 @@ namespace Darwin.Application.Billing.Queries
                 {
                     Id = x.Id,
                     RowVersion = x.RowVersion,
-                    BusinessId = x.BusinessId,
+                    BusinessId = x.BusinessId!.Value,
                     OrderId = x.OrderId,
                     InvoiceId = x.InvoiceId,
                     CustomerId = x.CustomerId,

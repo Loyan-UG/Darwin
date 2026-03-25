@@ -27,6 +27,16 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
 
             builder.HasIndex(x => x.BusinessId);
             builder.HasIndex(x => x.UserId);
+
+            builder.HasOne(x => x.Business)
+                .WithMany(x => x.Likes)
+                .HasForeignKey(x => x.BusinessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.User)
+                .WithMany(x => x.BusinessLikes)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

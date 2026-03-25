@@ -21,12 +21,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
                    .IsUnique()
                    .HasDatabaseName("UX_UserRole_User_Role");
 
-            builder.HasOne<Role>()
+            builder.HasOne(ur => ur.Role)
                    .WithMany(r => r.UserRoles)
                    .HasForeignKey(ur => ur.RoleId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasOne<User>()
+            builder.HasOne(ur => ur.User)
                    .WithMany(u => u.UserRoles)
                    .HasForeignKey(ur => ur.UserId)
                    .OnDelete(DeleteBehavior.Cascade);

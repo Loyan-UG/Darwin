@@ -127,10 +127,16 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             for (var i = 0; i < subscriptions.Count && i < 10; i++)
             {
+                var businessId = subscriptions[i].BusinessId;
+                if (!businessId.HasValue)
+                {
+                    continue;
+                }
+
                 invoices.Add(new SubscriptionInvoice
                 {
                     BusinessSubscriptionId = subscriptions[i].Id,
-                    BusinessId = subscriptions[i].BusinessId,
+                    BusinessId = businessId.Value,
                     Provider = "Stripe",
                     ProviderInvoiceId = $"inv_{Guid.NewGuid():N}",
                     IssuedAtUtc = DateTime.UtcNow.AddDays(-15 - i),

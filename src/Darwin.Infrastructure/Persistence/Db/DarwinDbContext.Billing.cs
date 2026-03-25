@@ -9,6 +9,11 @@ namespace Darwin.Infrastructure.Persistence.Db
     public sealed partial class DarwinDbContext
     {
         /// <summary>
+        /// Payments used by billing, orders, and CRM invoice settlement flows.
+        /// </summary>
+        public DbSet<Payment> Payments => Set<Payment>();
+
+        /// <summary>
         /// Commercial subscription plans offered by the platform.
         /// </summary>
         public DbSet<BillingPlan> BillingPlans => Set<BillingPlan>();

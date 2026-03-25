@@ -1,6 +1,7 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
+using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;

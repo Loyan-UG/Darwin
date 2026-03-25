@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Validators;
+using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentValidation;
@@ -58,15 +59,16 @@ namespace Darwin.Application.Orders.Commands
             // Map to domain entity.
             var payment = new Payment
             {
+                BusinessId = null,
                 OrderId = order.Id,
+                UserId = order.UserId,
                 Provider = dto.Provider,
-                ProviderReference = dto.ProviderReference,
+                ProviderTransactionRef = dto.ProviderReference,
                 AmountMinor = dto.AmountMinor,
                 Currency = dto.Currency,
                 Status = dto.Status,
                 FailureReason = dto.Status == PaymentStatus.Failed ? dto.FailureReason : null,
-                // CapturedAtUtc is set only when immediately captured.
-                CapturedAtUtc = dto.Status == PaymentStatus.Captured ? DateTime.UtcNow : null
+                PaidAtUtc = dto.Status == PaymentStatus.Captured ? DateTime.UtcNow : null
             };
 
             await _db.Set<Payment>().AddAsync(payment, ct);

@@ -46,8 +46,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Identity
                 .IsRequired();
 
             // Relationship: configured without relying on User.Devices navigation name.
-            builder.HasOne<User>()
-                .WithMany()
+            builder.HasOne(x => x.User)
+                .WithMany(x => x.Devices)
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 

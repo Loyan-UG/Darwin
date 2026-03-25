@@ -92,7 +92,6 @@ namespace Darwin.Infrastructure.Persistence.Db
         // Orders
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderLine> OrderLines => Set<OrderLine>();
-        public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Shipment> Shipments => Set<Shipment>();
         public DbSet<ShipmentLine> ShipmentLines => Set<ShipmentLine>();
         public DbSet<Refund> Refunds => Set<Refund>();

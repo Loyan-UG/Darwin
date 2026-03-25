@@ -27,6 +27,9 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Billing
             builder.Property(x => x.ProviderTransactionRef)
                 .HasMaxLength(256);
 
+            builder.Property(x => x.FailureReason)
+                .HasMaxLength(1000);
+
             builder.Property(x => x.AmountMinor)
                 .IsRequired();
 
