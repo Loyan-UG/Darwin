@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    [Migration("20260325214613_RuntimeModelAlignment")]
-    partial class RuntimeModelAlignment
+    [Migration("20260325220806_InitialUnifiedPayments")]
+    partial class InitialUnifiedPayments
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -734,9 +734,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("BusinessId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -765,8 +762,6 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("BusinessId");
 
-                    b.HasIndex("BusinessId1");
-
                     b.HasIndex("UserId");
 
                     b.HasIndex("UserId", "BusinessId")
@@ -789,9 +784,6 @@ namespace Darwin.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("BusinessId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -851,8 +843,6 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BusinessId1");
-
                     b.HasIndex("ExpiresAtUtc")
                         .HasDatabaseName("IX_BusinessInvitations_ExpiresAtUtc");
 
@@ -876,9 +866,6 @@ namespace Darwin.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("BusinessId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -908,8 +895,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessId");
-
-                    b.HasIndex("BusinessId1");
 
                     b.HasIndex("UserId");
 
@@ -1116,9 +1101,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<Guid>("BusinessId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("BusinessId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Comment")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
@@ -1158,8 +1140,6 @@ namespace Darwin.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BusinessId1");
 
                     b.HasIndex("UserId", "BusinessId")
                         .IsUnique()
@@ -3478,12 +3458,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId1");
 
                     b.HasIndex("UserId", "Token")
                         .IsUnique()
@@ -3634,13 +3609,7 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<Guid>("PermissionId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("PermissionId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("RoleId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("RoleId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
@@ -3652,10 +3621,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PermissionId");
-
-                    b.HasIndex("PermissionId1");
-
-                    b.HasIndex("RoleId1");
 
                     b.HasIndex("RoleId", "PermissionId")
                         .IsUnique()
@@ -3889,9 +3854,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
                     b.HasIndex("IsActive")
@@ -3902,8 +3864,6 @@ namespace Darwin.Infrastructure.Migrations
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("IX_UserDevices_UserId");
-
-                    b.HasIndex("UserId1");
 
                     b.HasIndex("UserId", "DeviceId")
                         .IsUnique()
@@ -4064,9 +4024,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("RoleId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -4076,16 +4033,9 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("RoleId1");
-
-                    b.HasIndex("UserId1");
 
                     b.HasIndex("UserId", "RoleId")
                         .IsUnique()
@@ -5861,7 +5811,8 @@ namespace Darwin.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("VatRate")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
 
                     b.Property<Guid?>("WarehouseId")
                         .HasColumnType("uniqueidentifier");
@@ -6720,15 +6671,11 @@ namespace Darwin.Infrastructure.Migrations
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.BusinessFavorite", b =>
                 {
-                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
+                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", "Business")
                         .WithMany("Favorites")
                         .HasForeignKey("BusinessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", "Business")
-                        .WithMany()
-                        .HasForeignKey("BusinessId1");
 
                     b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
                         .WithMany("BusinessFavorites")
@@ -6744,27 +6691,19 @@ namespace Darwin.Infrastructure.Migrations
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.BusinessInvitation", b =>
                 {
                     b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
-                        .WithMany()
+                        .WithMany("Invitations")
                         .HasForeignKey("BusinessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
-                        .WithMany("Invitations")
-                        .HasForeignKey("BusinessId1");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.BusinessLike", b =>
                 {
-                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
+                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", "Business")
                         .WithMany("Likes")
                         .HasForeignKey("BusinessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", "Business")
-                        .WithMany()
-                        .HasForeignKey("BusinessId1");
 
                     b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
                         .WithMany("BusinessLikes")
@@ -6824,15 +6763,11 @@ namespace Darwin.Infrastructure.Migrations
 
             modelBuilder.Entity("Darwin.Domain.Entities.Businesses.BusinessReview", b =>
                 {
-                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", null)
+                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", "Business")
                         .WithMany("Reviews")
                         .HasForeignKey("BusinessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Businesses.Business", "Business")
-                        .WithMany()
-                        .HasForeignKey("BusinessId1");
 
                     b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
                         .WithMany("BusinessReviews")
@@ -7126,40 +7061,28 @@ namespace Darwin.Infrastructure.Migrations
 
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.PasswordResetToken", b =>
                 {
-                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId1");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.RolePermission", b =>
                 {
-                    b.HasOne("Darwin.Domain.Entities.Identity.Permission", null)
+                    b.HasOne("Darwin.Domain.Entities.Identity.Permission", "Permission")
                         .WithMany()
                         .HasForeignKey("PermissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Darwin.Domain.Entities.Identity.Permission", "Permission")
-                        .WithMany()
-                        .HasForeignKey("PermissionId1");
-
-                    b.HasOne("Darwin.Domain.Entities.Identity.Role", null)
+                    b.HasOne("Darwin.Domain.Entities.Identity.Role", "Role")
                         .WithMany("RolePermissions")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Identity.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId1");
 
                     b.Navigation("Permission");
 
@@ -7168,15 +7091,11 @@ namespace Darwin.Infrastructure.Migrations
 
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.UserDevice", b =>
                 {
-                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
-                        .WithMany()
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
+                        .WithMany("Devices")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
-                        .WithMany("Devices")
-                        .HasForeignKey("UserId1");
 
                     b.Navigation("User");
                 });
@@ -7205,25 +7124,17 @@ namespace Darwin.Infrastructure.Migrations
 
             modelBuilder.Entity("Darwin.Domain.Entities.Identity.UserRole", b =>
                 {
-                    b.HasOne("Darwin.Domain.Entities.Identity.Role", null)
+                    b.HasOne("Darwin.Domain.Entities.Identity.Role", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Darwin.Domain.Entities.Identity.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId1");
-
-                    b.HasOne("Darwin.Domain.Entities.Identity.User", null)
+                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Darwin.Domain.Entities.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId1");
 
                     b.Navigation("Role");
 

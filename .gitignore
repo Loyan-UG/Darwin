@@ -16,6 +16,9 @@ obj/
 # Logs
 *.log
 logs/
+.codex-build/
+.codex-obj/
+.codex-*.log
 
 # User-specific files
 *.rsuser

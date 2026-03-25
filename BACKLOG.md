@@ -33,6 +33,7 @@ The immediate direction is:
 - Completed: expand WebApi documentation around public/member/business/admin surfaces and BFF direction.
 - Completed: add a dedicated `DarwinWebAdmin.md` guide for MVC/Razor + HTMX patterns.
 - Completed: update identity/how-to documentation to reflect HTMX-backed address flows.
+- Completed: rebuild the EF Core migration history into a fresh initial migration aligned with the current domain and infrastructure model.
 
 ## 4. Phase 2 - WebAdmin Rewrite
 

@@ -1355,7 +1355,6 @@ namespace Darwin.Infrastructure.Migrations
                     AcceptedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     RevokedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Note = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
-                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -1373,12 +1372,6 @@ namespace Darwin.Infrastructure.Migrations
                         principalTable: "Businesses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BusinessInvitations_Businesses_BusinessId1",
-                        column: x => x.BusinessId1,
-                        principalSchema: "Businesses",
-                        principalTable: "Businesses",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -2047,8 +2040,6 @@ namespace Darwin.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PermissionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RoleId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    PermissionId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -2067,24 +2058,12 @@ namespace Darwin.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_RolePermissions_Permissions_PermissionId1",
-                        column: x => x.PermissionId1,
-                        principalSchema: "Identity",
-                        principalTable: "Permissions",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_RolePermissions_Roles_RoleId",
                         column: x => x.RoleId,
                         principalSchema: "Identity",
                         principalTable: "Roles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RolePermissions_Roles_RoleId1",
-                        column: x => x.RoleId1,
-                        principalSchema: "Identity",
-                        principalTable: "Roles",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -2219,7 +2198,6 @@ namespace Darwin.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -2238,12 +2216,6 @@ namespace Darwin.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_BusinessFavorites_Businesses_BusinessId1",
-                        column: x => x.BusinessId1,
-                        principalSchema: "Businesses",
-                        principalTable: "Businesses",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_BusinessFavorites_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "Identity",
@@ -2260,7 +2232,6 @@ namespace Darwin.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -2278,12 +2249,6 @@ namespace Darwin.Infrastructure.Migrations
                         principalTable: "Businesses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BusinessLikes_Businesses_BusinessId1",
-                        column: x => x.BusinessId1,
-                        principalSchema: "Businesses",
-                        principalTable: "Businesses",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_BusinessLikes_Users_UserId",
                         column: x => x.UserId,
@@ -2305,7 +2270,6 @@ namespace Darwin.Infrastructure.Migrations
                     Comment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
                     IsHidden = table.Column<bool>(type: "bit", nullable: false),
                     HiddenReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    BusinessId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -2323,12 +2287,6 @@ namespace Darwin.Infrastructure.Migrations
                         principalTable: "Businesses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BusinessReviews_Businesses_BusinessId1",
-                        column: x => x.BusinessId1,
-                        principalSchema: "Businesses",
-                        principalTable: "Businesses",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_BusinessReviews_Users_UserId",
                         column: x => x.UserId,
@@ -2381,7 +2339,6 @@ namespace Darwin.Infrastructure.Migrations
                     ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UsedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     RequestedByMeta = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -2399,12 +2356,6 @@ namespace Darwin.Infrastructure.Migrations
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PasswordResetTokens_Users_UserId1",
-                        column: x => x.UserId1,
-                        principalSchema: "Identity",
-                        principalTable: "Users",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -2423,7 +2374,6 @@ namespace Darwin.Infrastructure.Migrations
                     AppVersion = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
                     DeviceModel = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    UserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -2441,12 +2391,6 @@ namespace Darwin.Infrastructure.Migrations
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UserDevices_Users_UserId1",
-                        column: x => x.UserId1,
-                        principalSchema: "Identity",
-                        principalTable: "Users",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -2520,8 +2464,6 @@ namespace Darwin.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    RoleId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -2540,24 +2482,12 @@ namespace Darwin.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserRoles_Roles_RoleId1",
-                        column: x => x.RoleId1,
-                        principalSchema: "Identity",
-                        principalTable: "Roles",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_UserRoles_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "Identity",
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UserRoles_Users_UserId1",
-                        column: x => x.UserId1,
-                        principalSchema: "Identity",
-                        principalTable: "Users",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -2633,7 +2563,7 @@ namespace Darwin.Infrastructure.Migrations
                     Sku = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     UnitPriceNetMinor = table.Column<long>(type: "bigint", nullable: false),
-                    VatRate = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    VatRate = table.Column<decimal>(type: "decimal(9,4)", precision: 9, scale: 4, nullable: false),
                     UnitPriceGrossMinor = table.Column<long>(type: "bigint", nullable: false),
                     LineTaxMinor = table.Column<long>(type: "bigint", nullable: false),
                     LineGrossMinor = table.Column<long>(type: "bigint", nullable: false),
@@ -3431,12 +3361,6 @@ namespace Darwin.Infrastructure.Migrations
                 column: "BusinessId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BusinessFavorites_BusinessId1",
-                schema: "Businesses",
-                table: "BusinessFavorites",
-                column: "BusinessId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_BusinessFavorites_UserId",
                 schema: "Businesses",
                 table: "BusinessFavorites",
@@ -3454,12 +3378,6 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Businesses",
                 table: "BusinessInvitations",
                 columns: new[] { "BusinessId", "NormalizedEmail" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BusinessInvitations_BusinessId1",
-                schema: "Businesses",
-                table: "BusinessInvitations",
-                column: "BusinessId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BusinessInvitations_ExpiresAtUtc",
@@ -3485,12 +3403,6 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Businesses",
                 table: "BusinessLikes",
                 column: "BusinessId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BusinessLikes_BusinessId1",
-                schema: "Businesses",
-                table: "BusinessLikes",
-                column: "BusinessId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BusinessLikes_UserId",
@@ -3553,12 +3465,6 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Businesses",
                 table: "BusinessReviews",
                 columns: new[] { "BusinessId", "IsHidden", "IsDeleted" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BusinessReviews_BusinessId1",
-                schema: "Businesses",
-                table: "BusinessReviews",
-                column: "BusinessId1");
 
             migrationBuilder.CreateIndex(
                 name: "UX_BusinessReviews_User_Business",
@@ -4113,12 +4019,6 @@ namespace Darwin.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_PasswordResetTokens_UserId1",
-                schema: "Identity",
-                table: "PasswordResetTokens",
-                column: "UserId1");
-
-            migrationBuilder.CreateIndex(
                 name: "UX_ResetToken_User_Token",
                 schema: "Identity",
                 table: "PasswordResetTokens",
@@ -4313,18 +4213,6 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Identity",
                 table: "RolePermissions",
                 column: "PermissionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RolePermissions_PermissionId1",
-                schema: "Identity",
-                table: "RolePermissions",
-                column: "PermissionId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RolePermissions_RoleId1",
-                schema: "Identity",
-                table: "RolePermissions",
-                column: "RoleId1");
 
             migrationBuilder.CreateIndex(
                 name: "UX_RolePermission_Role_Permission",
@@ -4549,12 +4437,6 @@ namespace Darwin.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserDevices_UserId1",
-                schema: "Identity",
-                table: "UserDevices",
-                column: "UserId1");
-
-            migrationBuilder.CreateIndex(
                 name: "UX_UserDevices_User_DeviceId",
                 schema: "Identity",
                 table: "UserDevices",
@@ -4605,18 +4487,6 @@ namespace Darwin.Infrastructure.Migrations
                 schema: "Identity",
                 table: "UserRoles",
                 column: "RoleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserRoles_RoleId1",
-                schema: "Identity",
-                table: "UserRoles",
-                column: "RoleId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserRoles_UserId1",
-                schema: "Identity",
-                table: "UserRoles",
-                column: "UserId1");
 
             migrationBuilder.CreateIndex(
                 name: "UX_UserRole_User_Role",
