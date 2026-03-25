@@ -1,4 +1,4 @@
-﻿// DependencyInjection.cs
+// DependencyInjection.cs
 // Composition root for Darwin.WebApi
 //
 // The registration below makes sure all framework, infrastructure and application
@@ -116,7 +116,7 @@ namespace Darwin.WebApi.Extensions
             // 7) Explicit registrations for Application-level helper services
             // ------------------------------------------------------------
             // Some application handlers depend on helper services that are normally registered
-            // by the Web composition root (Darwin.Web). When WebApi uses application handlers
+            // by the Web composition root (Darwin.WebAdmin). When WebApi uses application handlers
             // directly, those helpers must be present as well.
 
             // HTML sanitizer: create a singleton configured sanitizer the same way Web does.

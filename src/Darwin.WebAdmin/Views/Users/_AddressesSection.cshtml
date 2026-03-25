@@ -1,0 +1,127 @@
+@model Darwin.WebAdmin.ViewModels.Identity.UserAddressesSectionVm
+@{
+    // Defensive: ensure we have a model instance even if the controller returns null for Items.
+    var items = Model?.Items ?? new List<Darwin.WebAdmin.ViewModels.Identity.UserAddressListItemVm>();
+}
+
+<!-- Hidden anti-forgery container for AJAX posts in this section -->
+<form id="addresses-af" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="mb-0">User Addresses</h5>
+
+    <!-- Add Address: opens the modal in CREATE mode -->
+    <button type="button"
+            class="btn btn-sm btn-outline-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addressEditModal"
+            data-mode="create"
+            data-action="@Url.Action("CreateAddress", "Users")"
+            data-userid="@Model?.UserId">
+        <i class="fa fa-plus"></i> Add Address
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Company</th>
+                <th>Street</th>
+                <th>Postal</th>
+                <th>City</th>
+                <th>Country</th>
+                <th class="text-center">Default</th>
+                <th class="text-end" style="width:380px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (items.Count > 0)
+            {
+                foreach (var a in items)
+                {
+                    <tr>
+                        <td>@a.FullName</td>
+                        <td>@a.Company</td>
+                        <td>@($"{a.Street1} {a.Street2}".Trim())</td>
+                        <td>@a.PostalCode</td>
+                        <td>@a.City</td>
+                        <td>@a.CountryCode</td>
+                        <td class="text-center">
+                            <span class="badge @(a.IsDefaultBilling ? "text-bg-primary" : "text-bg-light")">B</span>
+                            <span class="badge @(a.IsDefaultShipping ? "text-bg-success" : "text-bg-light")">S</span>
+                        </td>
+                        <td class="text-end">
+
+                            <!-- Set default Billing -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary"
+                                    data-setdefault
+                                    data-kind="Billing"
+                                    data-userid="@Model.UserId"
+                                    data-id="@a.Id"
+                                    data-action="@Url.Action("SetDefaultAddress", "Users")">
+                                <i class="fa fa-credit-card"></i> Set Billing
+                            </button>
+
+                            <!-- Set default Shipping -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-success"
+                                    data-setdefault
+                                    data-kind="Shipping"
+                                    data-userid="@Model.UserId"
+                                    data-id="@a.Id"
+                                    data-action="@Url.Action("SetDefaultAddress", "Users")">
+                                <i class="fa fa-truck"></i> Set Shipping
+                            </button>
+
+                            <!-- Edit (opens modal with populated data) -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#addressEditModal"
+                                    data-mode="edit"
+                                    data-action="@Url.Action("EditAddress", "Users")"
+                                    data-id="@a.Id"
+                                    data-userid="@Model.UserId"
+                                    data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
+                                    data-fullname="@a.FullName"
+                                    data-company="@a.Company"
+                                    data-street1="@a.Street1"
+                                    data-street2="@a.Street2"
+                                    data-postalcode="@a.PostalCode"
+                                    data-city="@a.City"
+                                    data-state="@a.State"
+                                    data-countrycode="@a.CountryCode"
+                                    data-phonee164="@a.PhoneE164"
+                                    data-defaultbilling="@(a.IsDefaultBilling ? "true" : "false")"
+                                    data-defaultshipping="@(a.IsDefaultShipping ? "true" : "false")">
+                                <i class="fa fa-pen"></i> Edit
+                            </button>
+
+                            <!-- Delete (shared confirm modal) -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("DeleteAddress", "Users")"
+                                    data-id="@a.Id"
+                                    data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
+                                    data-userid="@Model.UserId"
+                                    data-name="@($"{a.FullName} / {a.City} / {a.Street1}")">
+                                <i class="fa fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="8" class="text-center text-muted">No addresses.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

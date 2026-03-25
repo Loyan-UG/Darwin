@@ -1,4 +1,4 @@
-﻿# Contributing Guide
+# Contributing Guide
 
 Thank you for considering contributing to **Darwin**.  
 This document describes the project structure, coding standards, branching rules, review expectations, and the current development status across all modules.
@@ -32,7 +32,7 @@ src/
 Darwin.Domain
 Darwin.Application
 Darwin.Infrastructure
-Darwin.Web
+Darwin.WebAdmin
 Darwin.WebApi
 Darwin.Shared
 Darwin.Contracts
@@ -52,7 +52,7 @@ Darwin.Tests.Integration
 | **Darwin.Domain** | Entities, Value Objects, Enums, domain rules | **Stable / Complete** |
 | **Darwin.Application** | Handlers, DTOs, Validators | **Active** (ongoing additions when new features are added) |
 | **Darwin.Infrastructure** | EF Core, DbContexts, Seed, DI composition, security, Data Protection | **Stable / Complete** |
-| **Darwin.Web** | MVC Admin panel, CMS, Store modules | **Active** |
+| **Darwin.WebAdmin** | MVC back-office, CMS, catalog, orders, settings | **Active** |
 | **Darwin.WebApi** | Public API for mobile / storefront | **In Progress** |
 
 ### 2.2 Shared Libraries
@@ -86,7 +86,7 @@ All code **must** follow:
   - On important internal code blocks  
 - **No Persian comments inside code**
 - **TODO only for long-term tasks**, not for cleanup or things that should be done now
-- **Never use “magic strings”**—everything must be constant, enum, or strongly typed
+- **Never use Ã¢â‚¬Å“magic stringsÃ¢â‚¬Â**Ã¢â‚¬â€everything must be constant, enum, or strongly typed
 
 ## 3.2 Architecture Rules
 
@@ -96,13 +96,13 @@ All code **must** follow:
 - **Web and WebApi depend on both Application + Infrastructure**
 - **Mobile apps depend only on Darwin.Contracts + Darwin.Mobile.Shared**
 
-No project may “reach across” layers.  
+No project may Ã¢â‚¬Å“reach acrossÃ¢â‚¬Â layers.  
 No Domain type should ever leak into WebApi or Mobile.
 
 ## 3.3 Git & Branching
 
-- `main` — stable, deployable
-- `develop` — active integration branch
+- `main` Ã¢â‚¬â€ stable, deployable
+- `develop` Ã¢â‚¬â€ active integration branch
 - feature branches:  
   `feature/`  
 - bugfix branches:  
@@ -130,7 +130,7 @@ Before submitting a PR:
    - No large objects in Shared projects
 4. All public changes must match the Contracts-first approach:
    - Any request/response that leaves the server **must** be defined in `Darwin.Contracts`.
-   - WebApi may never expose Application DTOs.
+   - WebAdminApi may never expose Application DTOs.
 
 ---
 
@@ -138,13 +138,13 @@ Before submitting a PR:
 
 Two predefined Solution Filters help reduce IDE load:
 
-### `Darwin.WebOnly.slnf`
+### `Darwin.WebAdminOnly.slnf`
 Contains:
 - Domain
 - Application
 - Infrastructure
-- Web
-- WebApi
+- WebAdmin
+- WebAdminApi
 - Shared
 - Contracts
 
@@ -161,7 +161,7 @@ Mobile developers **must** use the Mobile solution filter to avoid loading serve
 
 # 6. Current Development Status (Important)
 
-### ✔ Completed
+### ? Completed
 - Core Domain model
 - Application architecture
 - Infrastructure (EF, security, DP, seed)
@@ -170,16 +170,16 @@ Mobile developers **must** use the Mobile solution filter to avoid loading serve
 - Shared libraries (Darwin.Shared)
 - JWT, WebAuthn, TOTP authentication stack
 
-### 🟡 In Progress (Active Work)
+### ?? In Progress (Active Work)
 - **Darwin.WebApi**
 - **Darwin.Contracts expansion** (Loyalty, Discovery, Maps)
 - **Darwin.Mobile.Shared** (retry, storage, integration abstractions)
 - **Darwin.Mobile.Consumer** UI + integration
 - **Darwin.Mobile.Business** QR scanning & loyalty operations
 - Admin improvements
-- Web storefront (initial scaffolding)
+- WebAdmin storefront (initial scaffolding)
 
-### ⛔ Not Started Yet
+### ? Not Started Yet
 - Native push notifications (mobile)
 - Full analytics dashboard
 - In-app payments (Stripe)
@@ -191,13 +191,13 @@ Mobile developers **must** use the Mobile solution filter to avoid loading serve
 
 # 7. Mobile Contribution Rules
 
-(unchanged — same as previous version; omitted here for brevity in this excerpt, but the file contains full section in the repo)
+(unchanged Ã¢â‚¬â€ same as previous version; omitted here for brevity in this excerpt, but the file contains full section in the repo)
 
 ...
 
 # 11. Ownership
 
-All code is private and owned by Darwin’s core team.  
+All code is private and owned by DarwinÃ¢â‚¬â„¢s core team.  
 Commercial re-use outside the organization is prohibited.
 
 ---

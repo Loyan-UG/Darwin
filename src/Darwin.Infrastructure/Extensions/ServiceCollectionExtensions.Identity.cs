@@ -1,4 +1,4 @@
-﻿using Darwin.Application.Abstractions.Auth;
+using Darwin.Application.Abstractions.Auth;
 using Darwin.Infrastructure.Auth.WebAuthn;
 using Darwin.Infrastructure.Persistence.Converters;
 using Darwin.Application.Identity.Services;
@@ -21,7 +21,7 @@ namespace Darwin.Infrastructure.Extensions
     {
         /// <summary>
         /// Adds identity-related infrastructure into DI container.
-        /// Call from Darwin.Web startup composition.
+        /// Call from Darwin.WebAdmin startup composition.
         /// </summary>
         public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services)
         {
@@ -50,7 +50,7 @@ namespace Darwin.Infrastructure.Extensions
                 return protector; // keep DI happy
             });
 
-            // Permissions — required by Darwin.Web.Auth.PermissionAuthorizationHandler
+            // Permissions � required by Darwin.WebAdmin.Auth.PermissionAuthorizationHandler
             // IMPORTANT: Interface must be the Application-layer type to satisfy the Web handler's constructor.
             services.AddScoped<IPermissionService, PermissionService>();
 
