@@ -1,145 +1,187 @@
-﻿# identity-access-howto.md
+# Identity Access How-To
 
-> **Scope:** Admin Identity module (Users, Roles, Permissions) — how data is modeled, how the Admin UI flows work, which Application-layer APIs (Handlers + DTOs) the Web layer calls, what security policies we enforce, and how we handle optimistic concurrency + common error patterns.
+> Scope: admin identity, users, roles, permissions, addresses, and the current HTMX-backed interaction model inside `Darwin.WebAdmin`.
 
-## 1) Data Schema (conceptual)
+## Purpose
 
-**Entities**
-- **User**: identity record (email, name fields, flags like `IsActive`), audit + `RowVersion`.
-- **Role**: named bundle of permissions; not soft-deleted; audit + `RowVersion`.
-- **Permission**: atomic capability with `Key`, `DisplayName`, `Description`, flags like `IsSystem`; audit + `RowVersion`.
+The identity module is responsible for:
 
-**Join tables (many-to-many)**
-- **UserRoles**: (UserId, RoleId, RowVersion).
-- **RolePermissions**: (RoleId, PermissionId, RowVersion).
+- user administration
+- role administration
+- permission administration
+- user-to-role assignments
+- role-to-permission assignments
+- admin-managed user addresses
 
-> The Web layer never manipulates Domain entities directly. It only speaks to the Application layer through commands/queries (Handlers) and DTOs. Optimistic concurrency is enforced by `RowVersion` where applicable.
+It is implemented in `Darwin.WebAdmin` over application handlers in `Darwin.Application`.
 
-## 2) Admin UI Flows
+## Core Rules
 
-### 2.1 Users
+- the web layer must never manipulate domain entities directly
+- all mutations must go through application handlers and DTOs
+- optimistic concurrency is enforced with `RowVersion`
+- sensitive actions must be protected by permission checks
+- admin identity DTOs must not be reused as public/member API contracts
 
-**Index**
-- Grid with paging/filtering (query by email/name).
-- Row actions: **Edit**, **Change Password**, **Roles**, **Delete** (soft delete via modal).
-- Use `TempData["Success"|"Error"|"Warning"|"Info"]` to show alerts via the shared `_Alerts.cshtml`.
+## Conceptual Schema
 
-**Edit**
-- Profile fields only (email and roles are edited elsewhere).
-- User addresses section embedded (`_AddressesSection.cshtml`), with Add/Edit/Delete in modal, and “Set as Default Billing/Shipping”.
-- Concurrency conflicts surface as user-friendly messages; user can reload and retry.
+### User
 
-**Change Password (by Admin)**
-- Admin sets a new password without knowing the current one. Uses the Application handler that rotates the security stamp and invalidates prior sessions.
+Identity record with audit fields and `RowVersion`.
 
-**Assign Roles to a User**
-- Page `/Admin/Identity/Users/Roles/{userId}` shows:
-  - Header with user identity (e.g., email).
-  - Checklist of all roles, with current selections.
-  - Save posts back the selection.
-  - On success, redirect to Users/Index with success alert.
+Typical fields:
 
-### 2.2 Roles
+- `Email`
+- `FirstName`
+- `LastName`
+- `IsActive`
+- `Locale`
+- `Currency`
+- `Timezone`
+- `PhoneE164`
 
-**Index**
-- Grid with paging/filtering.
-- Row actions: **Edit**, **Permissions**, **Delete** (if allowed), etc.
+### Role
 
-**Assign Permissions to a Role**
-- Page `/Admin/Identity/Roles/Permissions/{roleId}` shows:
-  - Header with role display name.
-  - Checklist of all permissions (Key, DisplayName, Description).
-  - Save posts back the selected permissions.
-  - On success, redirect to Roles/Index with success alert.
+Named permission bundle with audit fields and `RowVersion`.
 
-> **Deep-linking & Active Nav**
-> - All screens accept query-string parameters for state (page, pageSize, query). Pages should preserve and round-trip these parameters in links and forms so that when the admin navigates back, they land where they were (deep-linkable list state).
-> - The left navigation highlights the active route using `ActiveNavLinkTagHelper` (area/controller/action) to keep user orientation consistent.
+### Permission
 
-## 3) Application API (Handlers & DTOs)
+Atomic capability such as:
 
-> The Web layer must call only Handlers with concrete DTOs; never hydrate entities itself. For new features, add new Handlers/DTOs in Application and wire them through DI in Web.
+- `FullAdminAccess`
+- `ManageUsers`
+- `ManageRoles`
+- `ManagePermissions`
+- `AccessMemberArea`
+- `AccessLoyaltyBusiness`
+
+### Join Tables
+
+- `UserRoles`
+- `RolePermissions`
+
+## Admin UI Model
 
 ### Users
-- **Get paged users**: `GetUsersPageHandler.HandleAsync(page, pageSize, query, ct)` → `(Items, Total)`.
-- **Get user + addresses for edit**: `GetUserWithAddressesForEditHandler.HandleAsync(userId, ct)` → combined edit DTO (user profile + addresses).
-- **Update user**: `UpdateUserHandler.HandleAsync(UserEditDto, ct)`.
-- **Soft-delete user**: `SoftDeleteUserHandler.HandleAsync(UserDeleteDto, ct)`.
-- **Change password by Admin**: `SetUserPasswordByAdminHandler.HandleAsync(UserAdminSetPasswordDto, ct)` (Id, NewPassword).
 
-### Roles & Permissions
-- **Get role + permissions for edit**: `GetRoleWithPermissionsForEditHandler.HandleAsync(roleId, ct)` → `{ RoleId, RowVersion, PermissionIds, AllPermissions[...] }`.
-- **Update role-permissions**: `UpdateRolePermissionsHandler.HandleAsync(RolePermissionsUpdateDto, ct)`.
-- **Get user + roles for edit**: `GetUserWithRolesForEditHandler.HandleAsync(userId, ct)` → `{ UserId, RowVersion, RoleIds, AllRoles[...] }`.
-- **Update user-roles**: `UpdateUserRolesHandler.HandleAsync(UserRolesUpdateDto, ct)`.
+Current back-office user flows:
 
-> **Naming & results**
-> - Handlers return `Result` or raw values depending on operation type. Web must check `result.Succeeded` and read `result.Value` (not `Data`), and use `result.Error` for alerts when `Succeeded == false`.
+- paged list
+- create
+- edit
+- change email
+- change password
+- assign roles
+- soft delete
+- manage addresses
 
-## 4) Security Policies
+### Roles and Permissions
 
-- **Authorization in Controllers**
-  - Gate admin-only actions with policy/permission checks (e.g., `ManageUsers`, `ManageRoles`, `ManagePermissions`).
-  - For Razor, use `PermissionRazorHelper` to conditionally render sensitive links and action buttons.
+Current back-office role flows:
 
-- **Razor Helper**
-  - Example usage:
-    ```cshtml
-    @if (await Perms.HasAsync("FullAdminAccess")) {
-        <!-- secure link(s) -->
-    }
-    ```
-  - Keep menu items and settings links inside permission checks to prevent accidental exposure.
+- paged list
+- edit
+- assign permissions
+- delete where allowed
 
-- **Password Change by Admin**
-  - No need for current password.
-  - Security stamp rotates; previous sessions are invalidated.
+## HTMX Usage in Identity Screens
 
-## 5) Concurrency Pattern & Common Errors
+The Users screen now uses HTMX as the preferred interaction model for address management.
 
-- **RowVersion** (byte[]) is included in edit/delete DTOs:
-  - On edit: controller posts back hidden `RowVersion`. If mismatch occurs, Application throws/returns a concurrency error; Web displays `TempData["Error"] = "Concurrency conflict..."` and suggests reload.
-  - On delete from list: modal posts `Id` + `RowVersion`. If mismatch, show concurrency error and keep user on the list.
+### Address create/edit
 
-- **Result pattern**
-  - Always check `result.Succeeded`. For failure, surface `result.Error` in `_Alerts.cshtml`.
-  - Avoid assuming message strings; the Application already produces short, user-facing messages.
+- the modal form posts with `hx-post`
+- the target is `#addresses-section`
+- the returned server partial replaces only the address section
+- alerts are refreshed through a server-rendered alerts partial
 
-## 6) UI Conventions
+Example pattern:
 
-- **Alerts**: shared partial `_Alerts.cshtml` reads:
-  - `TempData["Success"]`, `TempData["Error"]`, `TempData["Warning"]`, `TempData["Info"]`.
-- **Delete buttons**: Always use the shared confirmation modal `_ConfirmDeleteModal.cshtml`, with data attributes:
-  - `data-action`, `data-id`, `data-name`, `data-rowversion` (Base64).
-- **Paging**: Use the `PagerTagHelper` with `Page`, `PageSize`, `Total`, `Query`, `PageSizeItems` on VMs.
-- **Deep-linking**: always pass through `page`, `pageSize`, `query` in action links to preserve state.
-- **Active navigation**: keep menu highlighting via `ActiveNavLinkTagHelper`.
+```html
+<form hx-post="/Users/CreateAddress"
+      hx-target="#addresses-section"
+      hx-swap="innerHTML">
+    ...
+</form>
+```
 
----
+### Default billing/shipping
 
+The “Set Billing” and “Set Shipping” buttons use `hx-post` and replace the address section without reloading the page.
 
-## 7) Appendix — Mobile Member Identity (Consumer App)
+### Delete
 
-> This document is admin-focused, but recent implementation added member self-service identity flows in mobile.
-> Keep this appendix synchronized with `DarwinMobile.md` and `README.md` whenever endpoints/contracts change.
+Delete still uses the shared confirmation modal and the existing AJAX flow. It can be moved to full HTMX in a later cleanup pass.
 
-### Mobile endpoints now actively used
-- `POST /api/v1/auth/register` (AllowAnonymous)
-- `POST /api/v1/auth/password/request-reset` (AllowAnonymous, intentionally generic response)
-- `POST /api/v1/auth/password/reset` (AllowAnonymous)
-- `POST /api/v1/auth/password/change` (Authorize)
-- `GET /api/v1/profile/me` (perm:AccessMemberArea)
-- `PUT /api/v1/profile/me` (perm:AccessMemberArea, requires `Id` + `RowVersion`)
+## Application Handlers Used by WebAdmin
 
-### Client behavior notes (important for support/debug)
-- Password reset request may return HTTP 200 with an empty body by design (anti-user-enumeration).
-  Mobile shared client normalizes this known response shape as success so UI can show a generic confirmation message.
-- Profile updates are optimistic-concurrency based (`RowVersion`), so stale data can cause update failures and should prompt refresh/retry UX.
+### Users
 
-### Contract ownership rule
-- `Darwin.Contracts` remains the only payload contract source for WebApi and mobile clients.
-- If any endpoint request/response changes, update:
-  1) `Darwin.Contracts`
-  2) WebApi controller/handler mapping
-  3) `Darwin.Mobile.Shared` services
-  4) This appendix + `DarwinMobile.md` API matrix
+- `GetUsersPageHandler`
+- `RegisterUserHandler`
+- `GetUserWithAddressesForEditHandler`
+- `UpdateUserHandler`
+- `ChangeUserEmailHandler`
+- `SetUserPasswordByAdminHandler`
+- `SoftDeleteUserHandler`
+
+### Addresses
+
+- `CreateUserAddressHandler`
+- `UpdateUserAddressHandler`
+- `SoftDeleteUserAddressHandler`
+- `SetDefaultUserAddressHandler`
+
+### Roles and Permissions
+
+- `GetRolesPageHandler`
+- `GetRoleWithPermissionsForEditHandler`
+- `UpdateRolePermissionsHandler`
+- `GetUserWithRolesForEditHandler`
+- `UpdateUserRolesHandler`
+
+## Authorization Guidance
+
+### Controller protection
+
+Admin controllers should enforce permission-based access, not just authenticated access.
+
+### Razor protection
+
+Use `PermissionRazorHelper` to hide links and actions that should not render for the current operator.
+
+Example:
+
+```cshtml
+@if (await Perms.HasAsync("FullAdminAccess"))
+{
+    <a asp-controller="Users" asp-action="Index">Users</a>
+}
+```
+
+## Concurrency Guidance
+
+Any edit or delete path that depends on the current stored state must include `RowVersion`.
+
+Behavior:
+
+- stale `RowVersion` should result in a deterministic failure
+- the UI should show a clear conflict message
+- the operator should be able to reload and retry
+
+## Relationship to WebApi
+
+Identity administration belongs to `Darwin.WebAdmin`, but the user-facing identity and profile experience must be exposed through `Darwin.WebApi`.
+
+Rule:
+
+- admin screens use WebAdmin + Application handlers
+- front-office and mobile use `Darwin.WebApi` contracts
+- do not share admin operational DTOs with public/member consumers
+
+## Developer Notes
+
+- keep nullable reference types enabled
+- initialize non-nullable strings
+- keep code comments and XML docs in English
+- avoid embedding front-office assumptions into back-office identity models

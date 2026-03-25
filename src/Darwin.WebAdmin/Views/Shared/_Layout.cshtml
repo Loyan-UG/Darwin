@@ -184,7 +184,7 @@
     <!-- Footer -->
     <footer class="border-top bg-white mt-4">
         <div class="container-fluid py-3 text-center text-muted">
-            © @DateTime.UtcNow.Year Darwin — Admin Panel
+            &copy; @DateTime.UtcNow.Year Darwin - Admin Panel
         </div>
     </footer>
 
@@ -195,17 +195,35 @@
 
     <!-- Quill v2 FULL build (must be before per-view section Scripts) -->
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"></script>
 
     <script>
-        // Bootstrap tooltip/popover init (for FieldHelpTagHelper and any future help icons)
+        window.darwinAdmin = window.darwinAdmin || {};
+
+        window.darwinAdmin.initBootstrapUi = function (root) {
+            const scope = root || document;
+            scope.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
+                bootstrap.Popover.getOrCreateInstance(el);
+            });
+            scope.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+                bootstrap.Tooltip.getOrCreateInstance(el);
+            });
+        };
+
         document.addEventListener('DOMContentLoaded', function () {
-            // Enable all Bootstrap popovers on the page (for <field-help>)
-            document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
-            new bootstrap.Popover(el);
-            });
-            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
-                new bootstrap.Tooltip(el);
-            });
+            window.darwinAdmin.initBootstrapUi(document);
+        });
+
+        document.body.addEventListener('htmx:configRequest', function (event) {
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenInput ? tokenInput.value : '';
+            if (token) {
+                event.detail.headers['RequestVerificationToken'] = token;
+            }
+        });
+
+        document.body.addEventListener('htmx:afterSwap', function (event) {
+            window.darwinAdmin.initBootstrapUi(event.target);
         });
     </script>
 

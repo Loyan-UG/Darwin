@@ -1,267 +1,236 @@
-# Darwin WebApi - Technical Guide
+# Darwin WebApi Guide
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
+[![REST](https://img.shields.io/badge/API-REST-0A66C2)](https://restfulapi.net/)
 
-> Scope: **Darwin.WebApi**, its Application/Contracts integration, security/policy model, and API operations guidance.
+> Scope: `Darwin.WebApi`, its audience segmentation, contract rules, security model, BFF direction, and delivery expectations.
 
----
+## Purpose
 
-## 1) Purpose and Boundaries
+`Darwin.WebApi` is the shared HTTP delivery boundary for:
 
-`Darwin.WebApi` is the public REST surface consumed by:
+- `Darwin.Web` (public storefront and member portal)
+- MAUI mobile applications
+- future isolated consumers such as SharePoint web parts or other external systems
+- selected admin/integration workflows where HTTP delivery is explicitly required
 
-- mobile apps (`Darwin.Mobile.Consumer`, `Darwin.Mobile.Business`) through `Darwin.Mobile.Shared`
-- the front-office web application (`Darwin.Web`)
-- future external clients where contracts-first integration is required
+`Darwin.WebApi` is not a thin EF façade and it is not a transport layer for back-office DTO reuse. It must remain contracts-first and audience-aware.
 
-Core rules:
+## Composition
 
-- `Darwin.Contracts` is the request/response source of truth.
-- Domain/EF internals stay private in Application/Infrastructure.
-- Handler results use `Darwin.Shared.Results` (`Result` / `Result<T>`), then controllers map failures to API problem responses.
-- Public/member-facing contracts must remain separate from back-office operational DTOs.
+- composition root: `src/Darwin.WebApi/Extensions/DependencyInjection.cs`
+- controllers: `src/Darwin.WebApi/Controllers`
+- business logic: `src/Darwin.Application`
+- persistence/security: `src/Darwin.Infrastructure`
+- API contracts: `src/Darwin.Contracts`
 
----
+## Audience Segmentation
 
-## 2) Composition and Architecture
+The API must be designed as separate logical surfaces sharing a common host.
 
-- Composition root: `src/Darwin.WebApi/Extensions/DependencyInjection.cs`
-- Controller surface: `src/Darwin.WebApi/Controllers/**`
-- Business logic: `src/Darwin.Application/**`
-- Persistence and auth infra: `src/Darwin.Infrastructure/**`
-- Public contract schema: `src/Darwin.Contracts/**`
+### 1. Public API
 
-### Audience Segmentation
+For anonymous or low-friction browsing scenarios:
 
-`Darwin.WebApi` should be treated as multiple logical API surfaces sharing one host:
-
-- **public storefront surface** for CMS pages, menus, SEO metadata, product/category discovery, and anonymous commerce browsing
-- **member surface** for authenticated customer/profile/order/invoice/loyalty operations used by `Darwin.Web`
-- **business/mobile surface** for loyalty scanning, campaigns, subscriptions, and mobile-specific flows
-- **admin/integration surface** only where HTTP delivery is explicitly required
-
-Do not combine public storefront concerns and admin operational concerns inside the same contract shape unless there is a strong, documented reason.
-
-Execution pattern:
-
-1. Controller validates HTTP/auth context.
-2. Controller maps Contracts request DTO -> Application request DTO/command/query.
-3. Handler executes use case and returns `Result`.
-4. Controller maps success to Contracts response, failure to Problem payload.
-
----
-
-## 3) Security Model
-
-- Auth: JWT bearer.
-- Policies (current core):
-  - `perm:AccessMemberArea`
-  - `perm:AccessLoyaltyBusiness`
-- Claims-based current user resolution through `ICurrentUserService`.
-- Login/refresh routes may be rate-limited depending on active configuration.
-
-### Device binding note
-
-If device binding is enabled in your environment, login/refresh must carry device identity fields expected by auth contracts and server validation.
-
----
-
-## 4) Mobile-facing Endpoint Matrix (v1)
-
-> This section is the API source of truth referenced by mobile docs.
-
-| Area | Endpoint | Policy | Primary Client |
-|---|---|---|---|
-| Auth | `POST /api/v1/auth/login` | AllowAnonymous | Both |
-| Auth | `POST /api/v1/auth/refresh` | AllowAnonymous | Both |
-| Auth | `POST /api/v1/auth/logout` | Authorize | Both |
-| Auth | `POST /api/v1/auth/logout-all` | Authorize | Both |
-| Auth | `POST /api/v1/auth/register` | AllowAnonymous | Consumer |
-| Auth | `POST /api/v1/auth/password/request-reset` | AllowAnonymous | Consumer |
-| Auth | `POST /api/v1/auth/password/reset` | AllowAnonymous | Consumer |
-| Auth | `POST /api/v1/auth/password/change` | Authorize | Both |
-| Notifications | `POST /api/v1/notifications/devices/register` | Authorize | Both |
-| Profile | `GET /api/v1/profile/me` | `perm:AccessMemberArea` | Consumer |
-| Profile | `PUT /api/v1/profile/me` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `POST /api/v1/loyalty/scan/prepare` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `POST /api/v1/loyalty/scan/process` | `perm:AccessLoyaltyBusiness` | Business |
-| Loyalty | `POST /api/v1/loyalty/scan/confirm-accrual` | `perm:AccessLoyaltyBusiness` | Business |
-| Loyalty | `POST /api/v1/loyalty/scan/confirm-redemption` | `perm:AccessLoyaltyBusiness` | Business |
-| Loyalty | `GET /api/v1/loyalty/my/accounts` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `GET /api/v1/loyalty/my/history/{businessId}` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `GET /api/v1/loyalty/account/{businessId}` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `GET /api/v1/loyalty/business/{id}/rewards` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `GET /api/v1/loyalty/my/businesses` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `POST /api/v1/loyalty/my/timeline` | `perm:AccessMemberArea` | Consumer |
-| Loyalty | `GET /api/v1/loyalty/business/campaigns` | `perm:AccessLoyaltyBusiness` | Business |
-| Loyalty | `POST /api/v1/loyalty/business/campaigns` | `perm:AccessLoyaltyBusiness` | Business |
-| Loyalty | `PUT /api/v1/loyalty/business/campaigns/{id}` | `perm:AccessLoyaltyBusiness` | Business |
-| Loyalty | `POST /api/v1/loyalty/business/campaigns/{id}/activation` | `perm:AccessLoyaltyBusiness` | Business |
-| Discovery | `POST /api/v1/businesses/list` | AllowAnonymous | Consumer |
-| Discovery | `POST /api/v1/businesses/map` | AllowAnonymous | Consumer |
-| Discovery | `GET /api/v1/businesses/{id}` | AllowAnonymous | Consumer |
-| Discovery | `GET /api/v1/businesses/{id}/with-my-account` | `perm:AccessMemberArea` | Consumer |
-| Business | `POST /api/v1/businesses/onboarding` | Authorize | Both |
-| Billing | `GET /api/v1/billing/business/subscription/current` | `perm:AccessLoyaltyBusiness` | Business |
-| Billing | `GET /api/v1/billing/plans` | `perm:AccessLoyaltyBusiness` | Business |
-| Billing | `POST /api/v1/billing/business/subscription/cancel-at-period-end` | `perm:AccessLoyaltyBusiness` | Business |
-| Billing | `POST /api/v1/billing/business/subscription/checkout-intent` | `perm:AccessLoyaltyBusiness` | Business |
-
----
-
-## 4.1 Front-Office API Direction
-
-The front-office (`Darwin.Web`) is a separate Next.js application and should consume API-friendly contracts rather than back-office MVC models.
-
-Required design rules:
-
-- CMS content must be deliverable through HTTP contracts.
-- Public storefront DTOs must be presentation-oriented.
-- Member/account DTOs must be separate from admin DTOs.
-- Endpoint grouping should remain clear by audience.
-
-Typical front-office API groups include:
-
-- CMS pages and structured content
-- navigation menus
+- CMS pages
+- menus and navigation
 - SEO metadata
-- product/category/catalog browsing
-- customer account/profile
-- loyalty balances and rewards
-- invoices and order history
+- product, category, and storefront discovery
+- anonymous cart bootstrap where required
 
-When concrete storefront endpoints are introduced, document them in this file with the same level of detail as the mobile-facing matrix above.
+This surface is consumed primarily by `Darwin.Web` and future public widgets.
 
-### BFF Readiness
+### 2. Member API
 
-The API design should remain compatible with a future Backend-for-Frontend layer for:
+For authenticated end users:
 
-- authentication/session handling
-- response composition
-- caching
-- reducing chatty front-end API traffic
+- profile and account settings
+- addresses
+- order history
+- invoice history
+- loyalty balances, rewards, and transaction history
+- support- and CRM-adjacent customer views
 
-This does not require immediate implementation, but current endpoint and contract design must not make that pattern difficult later.
+This surface is consumed by the member portal in `Darwin.Web` and by consumer mobile apps.
 
----
+### 3. Business / Mobile API
 
-## 5) Promotions Feed Policy & Diagnostics
+For authenticated business-side or operational mobile scenarios:
 
-Promotions feed supports contract-driven server guardrails:
+- loyalty scan flows
+- loyalty accrual and redemption processing
+- campaigns
+- subscriptions
+- business discovery and onboarding
 
-- `EnableDeduplication`
-- `MaxCards`
-- `SuppressionWindowMinutes` (legacy)
-- `FrequencyWindowMinutes` (preferred)
+This surface is consumed by `Darwin.Mobile.Business` and business-oriented workflows.
 
-Precedence:
+### 4. Admin API
 
-- When `FrequencyWindowMinutes` is supplied, it is used as primary repeat-delivery control.
-- If absent, server falls back to `SuppressionWindowMinutes` behavior.
+This surface should exist only where the back-office genuinely benefits from HTTP delivery instead of direct application-handler usage.
 
-Response observability includes diagnostics counters:
+Use it for:
 
-- `InitialCandidates`
-- `SuppressedByFrequency`
-- `Deduplicated`
-- `TrimmedByCap`
-- `FinalCount`
+- integration-oriented admin tasks
+- future BFF/admin gateway scenarios
+- cross-system automation
 
----
+Do not mix Admin API contracts with public/member contracts.
 
-## 6) Error Shape & Concurrency
+## Contract Rules
 
-- Problem responses follow shared API problem contracts.
-- Profile update uses optimistic concurrency (`Id` + `RowVersion`) and should return deterministic conflict semantics.
-- Password reset may intentionally return success-like behavior for anti-enumeration scenarios.
+- `Darwin.Contracts` is the source of truth for external request/response models
+- public/member contracts must not reuse admin operational DTOs
+- member DTOs must be consumer-friendly and presentation-oriented
+- CRM admin DTOs must remain separate from public CRM/customer-facing projections
+- inventory and billing DTOs must be designed per audience, not per table
 
----
+Examples:
 
-## 7) Inactive Reminder Gateway Contract & Remediation
+- public product cards are not admin product edit DTOs
+- member invoice summaries are not admin invoice management DTOs
+- loyalty totals must be projected from loyalty transactions, not copied from CRM entities
 
-Inactive reminder delivery is executed by the WebApi background worker and dispatched through the configurable HTTP gateway defined under `Notifications:InactiveReminderPushGateway`.
+## Current and Planned Endpoint Groups
 
-### 7.1 Gateway request shape
+### Existing active groups
 
-The dispatcher now sends a provider-ready payload with:
+- auth
+- profile
+- loyalty
+- notifications
+- businesses/discovery
+- billing subscriptions
+- meta/health
 
-- user/device targeting: `userId`, `deviceId`, `pushToken`
-- routing hints: `platform`, normalized `provider` (`Fcm` / `Apns`)
-- notification content: `title`, `body`, `inactiveDays`
-- native-delivery hints: `androidChannelId`, `apnsTopic`, `collapseKey`, `analyticsLabel`, `deepLinkUrl`
+### Required public groups
 
-This keeps Darwin.WebApi provider-agnostic while still giving the downstream gateway enough context to fan out directly to FCM/APNs without guessing bundle ids, Android channels, or reminder tap destinations.
+These should be documented and expanded as implementation continues:
 
-### 7.2 Failure taxonomy
+- `/api/v1/cms/pages`
+- `/api/v1/cms/menus`
+- `/api/v1/seo/*`
+- `/api/v1/catalog/products`
+- `/api/v1/catalog/categories`
+- `/api/v1/storefront/*`
 
-Stable failure codes are persisted into engagement metadata and surfaced in worker logs. Current families:
+### Required member groups
 
-| Family | Examples | Typical remediation |
-|---|---|---|
-| Validation | `Validation.PushTokenRequired`, `Validation.DestinationDeviceIdRequired` | Inspect mobile registration payloads and user/device snapshot integrity. |
-| Gateway HTTP/auth | `Gateway.Unauthorized`, `Gateway.Forbidden`, `Gateway.EndpointNotFound`, `Gateway.ServerError` | Verify gateway URL, auth token, deployment routing, and service health. |
-| Gateway transport | `Gateway.Timeout`, `Gateway.TransportError`, `Gateway.RateLimited` | Check network path, transient provider availability, and retry budgets. |
-| Provider-native FCM | `Gateway.Provider.Fcm.TokenUnregistered`, `Gateway.Provider.Fcm.SenderIdMismatch`, `Gateway.Provider.Fcm.QuotaExceeded` | Remove stale tokens, confirm Firebase project alignment, and inspect rate limiting. |
-| Provider-native APNs | `Gateway.Provider.Apns.TokenInvalid`, `Gateway.Provider.Apns.TopicInvalid`, `Gateway.Provider.Apns.AuthTokenInvalid` | Verify APNs topic/bundle id, token validity, and signing credentials. |
+- `/api/v1/profile/*`
+- `/api/v1/orders/*`
+- `/api/v1/invoices/*`
+- `/api/v1/loyalty/*`
+- `/api/v1/member/*`
 
-### 7.3 Worker observability
+### Required CRM admin/integration groups
 
-`InactiveReminderBackgroundService` logs:
+- `/api/v1/admin/crm/customers/*`
+- `/api/v1/admin/crm/leads/*`
+- `/api/v1/admin/crm/opportunities/*`
+- `/api/v1/admin/crm/interactions/*`
 
-- evaluated / dispatched / suppressed / failed counters
-- split suppression counters (`CooldownActive` vs `NoPushDestination`)
-- aggregate failure and suppression breakdown strings for remediation playbooks
-- warning events when failure-rate or cooldown-suppression thresholds exceed configured percentages
+### Required inventory and billing groups
 
-Operational guidance:
+- `/api/v1/admin/inventory/warehouses/*`
+- `/api/v1/admin/inventory/stock-levels/*`
+- `/api/v1/admin/inventory/transfers/*`
+- `/api/v1/admin/billing/payments/*`
+- `/api/v1/admin/billing/invoices/*`
+- `/api/v1/admin/accounting/*`
 
-1. Treat `Gateway.Provider.*Token*` as destination hygiene work (remove stale tokens / re-register device).
-2. Treat `Gateway.Provider.*Auth*` and `Gateway.Unauthorized` as credential or topic drift.
-3. Treat `Gateway.RateLimited`, `Gateway.Provider.Fcm.QuotaExceeded`, and `Gateway.Provider.Apns.RateLimited` as retry/backoff pressure.
-4. Treat `CooldownActive` spikes as expected policy behavior unless the share is unexpectedly high for the campaign window.
+## REST Design Rules
 
----
+The current focus remains REST.
 
-## 8) Postman Verification Playbook
+Requirements:
 
-### 8.1 Login (consumer)
+- use resource-oriented routes
+- use standard HTTP methods correctly
+- return standard HTTP status codes
+- return problem details for validation and operational errors
+- support filtering, sorting, and paging where list endpoints are expected to grow
+- keep idempotent operations idempotent where possible
 
-- `POST /api/v1/auth/login`
-- save `accessToken` / `refreshToken`.
+Typical conventions:
 
-### 8.2 Discover list
+- `200 OK` for successful reads and updates with response payload
+- `201 Created` for creation with location metadata where appropriate
+- `204 No Content` for successful command-style operations without a payload
+- `400 Bad Request` for validation and malformed request issues
+- `401 Unauthorized` for missing/invalid auth
+- `403 Forbidden` for policy failures
+- `404 Not Found` when the resource does not exist
+- `409 Conflict` for deterministic concurrency or state conflicts
 
-- `POST /api/v1/businesses/list`
-- expected: seeded businesses in `items`.
+## Security Model
 
-### 8.3 Business detail
+`Darwin.WebApi` must support shared security patterns across multiple consumers.
 
-- `GET /api/v1/businesses/{businessId}`
+Current direction:
 
-### 8.4 Join loyalty
+- JWT bearer authentication for API-native clients
+- cookie-backed token/session delivery where a BFF or web-oriented transport needs it
+- policy-based authorization
+- claims-based current-user resolution
+- optimistic concurrency via `RowVersion` where update collisions matter
 
-- `POST /api/v1/loyalty/account/{businessId}/join`
+Front-office, mobile, and future consumers must all rely on the same core authorization model, even if the transport pattern differs.
 
-### 8.5 Prepare scan session
+## BFF Direction
 
-- `POST /api/v1/loyalty/scan/prepare`
-- expected: session token + expiry.
+The architecture must remain compatible with a future Backend-for-Frontend layer.
 
-### 8.6 Business-side process
+### Why BFF may be introduced
 
-- login as business account
-- `POST /api/v1/loyalty/scan/process`
+- centralize cookie/session handling for `Darwin.Web`
+- reduce chatty API traffic from React pages
+- compose multiple API calls into one web-optimized response
+- enforce edge caching and response shaping
+- isolate external clients such as SharePoint web parts from internal service complexity
 
-> Keep concrete payload examples in your team Postman collection/environment and update alongside Contracts changes.
+### ASP.NET Core BFF options
 
----
+Likely future approaches:
 
-## 9) Documentation Ownership
+- a dedicated ASP.NET Core BFF host
+- a reverse-proxy/gateway pattern using YARP
+- route-specific composition endpoints for front-office delivery
 
-When API contracts or policies change, update these together in one PR:
+The current WebApi design must not block this future split. Keep contracts clean, keep audience separation explicit, and avoid coupling all clients to the same operational DTOs.
+
+## Extensibility Direction
+
+The primary delivery style is REST today, but the architecture should remain extensible toward:
+
+- gRPC for high-efficiency service-to-service integration
+- GraphQL for selective front-end query composition where justified
+
+These are future options only. Do not dilute the current REST design by prematurely mixing paradigms into the main delivery path.
+
+## Front-Office and CMS Guidance
+
+For `Darwin.Web`:
+
+- CMS pages, menus, and SEO metadata must come from WebApi
+- public storefront endpoints must be stable and cache-friendly
+- member endpoints must remain distinct from public endpoints
+- storefront contracts must be designed for SSR/SSG/ISR use cases, not for admin edit screens
+
+## CRM, Billing, and Inventory Guidance
+
+The new domain modules must also be reflected in API design:
+
+- CRM surfaces should expose leads, opportunities, interactions, and customer summaries through explicit contracts
+- billing surfaces should expose payments, invoices, and accounting-adjacent summaries per audience
+- inventory surfaces should expose warehouses, stock levels, and transfers for admin/integration use
+- warehouse-aware order fulfillment should propagate through contracts when order and fulfillment APIs are expanded
+
+## Delivery Checklist for Any New Endpoint
+
+When adding or changing an endpoint, update these together:
 
 1. `Darwin.Contracts`
-2. `Darwin.Application` mapping/handler logic
-3. `Darwin.WebApi` controller mapping
-4. `DarwinWebApi.md`
-5. related mobile docs (`DarwinMobile.md`) only for app-side impact summaries
+2. `Darwin.Application`
+3. `Darwin.WebApi`
+4. this document
+5. any affected consumer docs (`DarwinFrontEnd.md`, `DarwinMobile.md`, `DarwinWebAdmin.md`)

@@ -1,22 +1,36 @@
 # Darwin Domain Design
 
-This document defines the current target domain model for Darwin. It replaces older CRM and billing notes that relied on duplicated loyalty state or narrower accounting concepts.
+This document defines the current target domain model for Darwin and replaces older designs that duplicated loyalty state in CRM or assumed a narrower commerce-only model.
 
-Core rules:
+## Core Standards
 
-- All entities live in `Darwin.Domain`.
-- Entities are `sealed`, inherit from `BaseEntity`, and use `Guid` keys.
-- Non-nullable reference properties must be initialized.
-- Loyalty points are managed only by the Loyalty module.
-- CRM must not duplicate loyalty balances or loyalty ledgers.
+- all entities live in `Darwin.Domain`
+- all entities are `sealed` and inherit from `BaseEntity`
+- `Guid` is used for identifiers
+- nullable reference types remain enabled
+- non-nullable strings must be initialized
+- XML documentation must remain complete and English-only
+- TODO markers are reserved for genuinely later-phase work
 
-## Identity and CRM Link
+## Bounded Modules
+
+The current domain is organized around these major modules:
+
+- Identity
+- CRM
+- Loyalty
+- Catalog and CMS
+- Orders and fulfillment
+- Inventory and procurement
+- Billing and accounting
+
+## CRM
 
 ### Customer
 
-`Customer` is the CRM profile for a person or company and may optionally link to a registered identity user through `UserId`.
+`Customer` is the CRM profile for a person or company. It may optionally point to an identity user through `UserId`.
 
-Current shape:
+Current fields:
 
 - `UserId`
 - `FirstName`
@@ -34,16 +48,19 @@ Current shape:
 
 Rules:
 
-- When `UserId` is present, application queries should prefer identity-owned profile and contact data from `User`.
-- CRM fallback fields (`FirstName`, `LastName`, `Email`, `Phone`) remain for guest, imported, or pre-registration records.
-- CRM does not contain `LoyaltyPointsTotal`.
-- CRM does not contain `LoyaltyPointEntry`.
+- if `UserId` is present, application queries should prefer profile/contact data from `User`
+- CRM fallback contact fields remain valid for guest, imported, or pre-registration records
+- CRM does not store loyalty balances
+- CRM does not contain `LoyaltyPointsTotal`
+- CRM does not contain `LoyaltyPointEntry`
+
+Whenever a loyalty total is needed for a CRM customer, it must be derived from `LoyaltyPointsTransaction` and/or projected from `LoyaltyAccount`. Any previous logic that referenced `Customer.LoyaltyPointsTotal` must be rewritten as a query-side aggregation.
 
 ### CustomerAddress
 
-`CustomerAddress` is used for CRM-managed addresses when the customer does not rely entirely on identity-owned addresses.
+`CustomerAddress` remains the CRM-owned address record for leads or customers that do not rely entirely on identity-managed addresses.
 
-Current shape:
+Current fields:
 
 - `CustomerId`
 - `AddressId`
@@ -58,9 +75,9 @@ Current shape:
 
 ### Lead
 
-`Lead` represents a pre-customer CRM record.
+`Lead` is the pre-customer CRM record.
 
-Current shape:
+Current fields:
 
 - `FirstName`
 - `LastName`
@@ -76,9 +93,9 @@ Current shape:
 
 ### Opportunity
 
-`Opportunity` represents a sales opportunity linked to a customer.
+`Opportunity` represents a commercial opportunity linked to a customer.
 
-Current shape:
+Current fields:
 
 - `CustomerId`
 - `Title`
@@ -91,9 +108,9 @@ Current shape:
 
 ### OpportunityItem
 
-`OpportunityItem` represents a quoted or discussed product line inside an opportunity.
+`OpportunityItem` is a quoted or negotiated product line attached to an opportunity.
 
-Current shape:
+Current fields:
 
 - `OpportunityId`
 - `ProductVariantId`
@@ -102,9 +119,9 @@ Current shape:
 
 ### Interaction
 
-`Interaction` is the shared CRM timeline record for calls, emails, meetings, support notes, and sales notes.
+`Interaction` is the shared CRM timeline entity for calls, emails, meetings, notes, support touchpoints, and sales touchpoints.
 
-Current shape:
+Current fields:
 
 - `CustomerId`
 - `LeadId`
@@ -117,9 +134,9 @@ Current shape:
 
 ### Consent
 
-`Consent` remains customer-scoped and stores privacy or marketing decisions.
+`Consent` records privacy, marketing, and similar customer-facing opt-in or opt-out choices.
 
-Current shape:
+Current fields:
 
 - `CustomerId`
 - `Type`
@@ -127,24 +144,175 @@ Current shape:
 - `GrantedAtUtc`
 - `RevokedAtUtc`
 
-### CustomerSegment and Membership
+### Segmentation
 
-Segmentation remains explicit through `CustomerSegment` and `CustomerSegmentMembership`.
+`CustomerSegment` and `CustomerSegmentMembership` remain the explicit segmentation model.
 
-Current shape:
+Current fields:
 
 - `CustomerSegment.Name`
 - `CustomerSegment.Description`
 - `CustomerSegmentMembership.CustomerId`
 - `CustomerSegmentMembership.CustomerSegmentId`
 
+## Loyalty Boundary
+
+Loyalty remains a distinct bounded area and is the only place where loyalty point balances and ledgers exist.
+
+Relevant entities:
+
+- `LoyaltyProgram`
+- `LoyaltyAccount`
+- `LoyaltyPointsTransaction`
+- `LoyaltyReward`
+- `LoyaltyRewardTier`
+- `LoyaltyRewardRedemption`
+
+Rules:
+
+- do not reintroduce loyalty totals into CRM
+- do not create a second loyalty ledger outside the loyalty module
+- derive any “current points balance” from loyalty transactions or dedicated loyalty projections
+
+## Orders and Fulfillment
+
+### Order
+
+`Order` is the commerce snapshot of a purchase.
+
+Current fields include:
+
+- `OrderNumber`
+- `UserId`
+- `Currency`
+- `PricesIncludeTax`
+- `SubtotalNetMinor`
+- `TaxTotalMinor`
+- `ShippingTotalMinor`
+- `DiscountTotalMinor`
+- `GrandTotalGrossMinor`
+- `Status`
+- `BillingAddressJson`
+- `ShippingAddressJson`
+- `Lines`
+- `Payments`
+- `Shipments`
+- `InternalNotes`
+
+### OrderLine
+
+`OrderLine` is the immutable purchase snapshot of a variant at order time.
+
+Current fields include:
+
+- `OrderId`
+- `VariantId`
+- `WarehouseId`
+- `Name`
+- `Sku`
+- `Quantity`
+- `UnitPriceNetMinor`
+- `VatRate`
+- `UnitPriceGrossMinor`
+- `LineTaxMinor`
+- `LineGrossMinor`
+- `AddOnValueIdsJson`
+- `AddOnPriceDeltaMinor`
+
+`WarehouseId` is optional, but when it is set it becomes the fulfillment context for downstream reservation/allocation work. This prevents later order transitions from resolving a different warehouse than the one chosen operationally.
+
+## Inventory and Procurement
+
+### Warehouse
+
+Current fields:
+
+- `BusinessId`
+- `Name`
+- `Description`
+- `Location`
+- `IsDefault`
+- `StockLevels`
+
+### StockLevel
+
+Current fields:
+
+- `WarehouseId`
+- `ProductVariantId`
+- `AvailableQuantity`
+- `ReservedQuantity`
+- `ReorderPoint`
+- `ReorderQuantity`
+- `InTransitQuantity`
+
+### StockTransfer
+
+Current fields:
+
+- `FromWarehouseId`
+- `ToWarehouseId`
+- `Status`
+- `Lines`
+
+### StockTransferLine
+
+Current fields:
+
+- `StockTransferId`
+- `ProductVariantId`
+- `Quantity`
+
+### Supplier
+
+Current fields:
+
+- `BusinessId`
+- `Name`
+- `Email`
+- `Phone`
+- `Address`
+- `Notes`
+- `PurchaseOrders`
+
+### PurchaseOrder
+
+Current fields:
+
+- `SupplierId`
+- `BusinessId`
+- `OrderNumber`
+- `OrderedAtUtc`
+- `Status`
+- `Lines`
+
+### PurchaseOrderLine
+
+Current fields:
+
+- `PurchaseOrderId`
+- `ProductVariantId`
+- `Quantity`
+- `UnitCostMinor`
+- `TotalCostMinor`
+
+### InventoryTransaction
+
+Current fields:
+
+- `WarehouseId`
+- `ProductVariantId`
+- `QuantityDelta`
+- `Reason`
+- `ReferenceId`
+
 ## Billing and Accounting
 
-### CRM and Order Invoice
+### Invoice
 
-`Invoice` is shared across CRM and order-driven billing flows.
+`Invoice` is shared between CRM billing scenarios and order-linked billing scenarios.
 
-Current shape:
+Current fields:
 
 - `BusinessId`
 - `CustomerId`
@@ -161,7 +329,7 @@ Current shape:
 
 ### InvoiceLine
 
-Current shape:
+Current fields:
 
 - `InvoiceId`
 - `Description`
@@ -173,9 +341,7 @@ Current shape:
 
 ### Payment
 
-`Billing.Payment` is the generic accounting-facing payment record.
-
-Current shape:
+Current fields:
 
 - `BusinessId`
 - `OrderId`
@@ -191,7 +357,7 @@ Current shape:
 
 ### FinancialAccount
 
-Current shape:
+Current fields:
 
 - `BusinessId`
 - `Name`
@@ -200,7 +366,7 @@ Current shape:
 
 ### JournalEntry
 
-Current shape:
+Current fields:
 
 - `BusinessId`
 - `EntryDateUtc`
@@ -209,7 +375,7 @@ Current shape:
 
 ### JournalEntryLine
 
-Current shape:
+Current fields:
 
 - `JournalEntryId`
 - `AccountId`
@@ -219,7 +385,7 @@ Current shape:
 
 ### Expense
 
-Current shape:
+Current fields:
 
 - `BusinessId`
 - `SupplierId`
@@ -228,126 +394,13 @@ Current shape:
 - `AmountMinor`
 - `ExpenseDateUtc`
 
-## Inventory and Procurement
+## API and Projection Guidance
 
-### Warehouse
-
-Current shape:
-
-- `BusinessId`
-- `Name`
-- `Description`
-- `Location`
-- `IsDefault`
-- `StockLevels`
-
-### StockLevel
-
-Current shape:
-
-- `WarehouseId`
-- `ProductVariantId`
-- `AvailableQuantity`
-- `ReservedQuantity`
-- `ReorderPoint`
-- `ReorderQuantity`
-- `InTransitQuantity`
-
-### StockTransfer
-
-Current shape:
-
-- `FromWarehouseId`
-- `ToWarehouseId`
-- `Status`
-- `Lines`
-
-### StockTransferLine
-
-Current shape:
-
-- `StockTransferId`
-- `ProductVariantId`
-- `Quantity`
-
-### Supplier
-
-Current shape:
-
-- `BusinessId`
-- `Name`
-- `Email`
-- `Phone`
-- `Address`
-- `Notes`
-- `PurchaseOrders`
-
-### PurchaseOrder
-
-Current shape:
-
-- `SupplierId`
-- `BusinessId`
-- `OrderNumber`
-- `OrderedAtUtc`
-- `Status`
-- `Lines`
-
-### PurchaseOrderLine
-
-Current shape:
-
-- `PurchaseOrderId`
-- `ProductVariantId`
-- `Quantity`
-- `UnitCostMinor`
-- `TotalCostMinor`
-
-### InventoryTransaction
-
-Current shape:
-
-- `WarehouseId`
-- `ProductVariantId`
-- `QuantityDelta`
-- `Reason`
-- `ReferenceId`
-
-## Loyalty Boundary
-
-Loyalty remains its own bounded area and is the only place where point balances and point ledgers exist.
-
-Relevant entities:
-
-- `LoyaltyAccount`
-- `LoyaltyPointsTransaction`
-- `LoyaltyProgram`
-- `LoyaltyRewardTier`
-- `LoyaltyRewardRedemption`
-- `QrCodeToken`
-- `ScanSession`
+The domain is not the delivery contract.
 
 Rules:
 
-- Use `LoyaltyAccount.PointsBalance` and `LoyaltyPointsTransaction` for balances and history.
-- Do not add customer-side loyalty totals inside CRM.
-- Do not create a second points ledger in CRM or Billing.
-
-## Enums
-
-Important enum additions and updates:
-
-- `LeadStatus`
-- `OpportunityStage`
-- `TransferStatus`
-- `PurchaseOrderStatus`
-- `AccountType`
-- `PaymentStatus` now explicitly includes `Authorized`, `Captured`, and `Voided`
-
-## Implementation Notes
-
-- Prefer one canonical property name per relationship or timestamp.
-- Avoid alias properties in domain entities.
-- Use `long` minor units for money values.
-- Use `decimal` for tax or discount rates.
-- Use EF Core configuration to enforce indexes, uniqueness, precision, and delete behavior.
+- public storefront DTOs must be different from admin DTOs
+- CRM operational DTOs must not leak directly into public/member surfaces
+- loyalty totals must be projected from loyalty data, not read from CRM fields
+- warehouse-aware fulfillment should be carried through application queries and API contracts where needed, not reconstructed from ad hoc UI rules

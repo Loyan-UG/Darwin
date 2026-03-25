@@ -64,7 +64,11 @@
                                     data-kind="Billing"
                                     data-userid="@userId"
                                     data-id="@a.Id"
-                                    data-action="@Url.Action("SetDefaultAddress", "Users")">
+                                    hx-post="@Url.Action("SetDefaultAddress", "Users")"
+                                    hx-target="#addresses-section"
+                                    hx-swap="innerHTML"
+                                    hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Billing"}'
+                                    hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); }">
                                 <i class="fa fa-credit-card"></i> Set Billing
                             </button>
 
@@ -75,7 +79,11 @@
                                     data-kind="Shipping"
                                     data-userid="@userId"
                                     data-id="@a.Id"
-                                    data-action="@Url.Action("SetDefaultAddress", "Users")">
+                                    hx-post="@Url.Action("SetDefaultAddress", "Users")"
+                                    hx-target="#addresses-section"
+                                    hx-swap="innerHTML"
+                                    hx-vals='{"id":"@a.Id","userId":"@userId","kind":"Shipping"}'
+                                    hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); }">
                                 <i class="fa fa-truck"></i> Set Shipping
                             </button>
 

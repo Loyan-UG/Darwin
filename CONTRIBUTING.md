@@ -1,6 +1,6 @@
 # Contributing Guide
 
-This guide gives new contributors enough context to work effectively in the Darwin repository without prior chat or handover context.
+This guide gives new contributors enough context to work effectively in the Darwin repository without prior handover context.
 
 ## Project Overview
 
@@ -8,140 +8,90 @@ Darwin is a modular platform spanning:
 
 - CMS
 - commerce
+- CRM
 - loyalty
-- CRM planning
-- mobile apps
-- two separate web applications
+- inventory and procurement
+- billing and accounting
+- two distinct web applications
+- mobile applications
 
-The delivery layer is split as follows:
+Delivery applications:
 
-- `Darwin.WebAdmin`: ASP.NET Core MVC/Razor back-office for administrators and staff
-- `Darwin.Web`: Next.js/React front-office for the public storefront and authenticated member portal
-- `Darwin.WebApi`: contracts-first HTTP API for mobile, front-office, and integration use cases
+- `Darwin.WebAdmin`: ASP.NET Core MVC/Razor back-office using HTMX
+- `Darwin.Web`: Next.js/React front-office for storefront and member portal
+- `Darwin.WebApi`: contracts-first HTTP boundary for front-office, mobile, and future external clients
 
 ## Repository Structure
 
 ```text
 src/
-|-- Darwin.Domain
-|-- Darwin.Application
-|-- Darwin.Infrastructure
-|-- Darwin.WebAdmin
-|-- Darwin.WebApi
-|-- Darwin.Web
-|-- Darwin.Worker
-|-- Darwin.Shared
-|-- Darwin.Contracts
-|-- Darwin.Mobile.Shared
-|-- Darwin.Mobile.Consumer
-`-- Darwin.Mobile.Business
+├── Darwin.Domain
+├── Darwin.Application
+├── Darwin.Infrastructure
+├── Darwin.WebAdmin
+├── Darwin.WebApi
+├── Darwin.Web
+├── Darwin.Worker
+├── Darwin.Shared
+├── Darwin.Contracts
+├── Darwin.Mobile.Shared
+├── Darwin.Mobile.Consumer
+└── Darwin.Mobile.Business
 
 tests/
-|-- Darwin.Tests.Unit
-|-- Darwin.Tests.Integration
-|-- Darwin.Contracts.Tests
-|-- Darwin.Infrastructure.Tests
-`-- Darwin.WebApi.Tests
+├── Darwin.Tests.Unit
+├── Darwin.Tests.Integration
+├── Darwin.Contracts.Tests
+├── Darwin.Infrastructure.Tests
+└── Darwin.WebApi.Tests
 ```
-
-## Core Platform
-
-| Project | Description | Status |
-| --- | --- | --- |
-| `Darwin.Domain` | Entities, value objects, enums, business rules | Stable |
-| `Darwin.Application` | Handlers, DTOs, validators, use cases | Active |
-| `Darwin.Infrastructure` | EF Core, security, persistence, composition helpers | Stable |
-| `Darwin.WebAdmin` | MVC/Razor back-office | Active |
-| `Darwin.WebApi` | Public/member/business/mobile API surfaces | Active |
-| `Darwin.Web` | Next.js front-office and member portal | In Progress |
-
-## Shared Libraries
-
-| Project | Description |
-| --- | --- |
-| `Darwin.Shared` | Result wrappers, helpers, constants |
-| `Darwin.Contracts` | Shared API contracts for WebApi + mobile |
-| `Darwin.Mobile.Shared` | Shared mobile services, auth, HTTP, integration abstractions |
 
 ## Architecture Rules
 
-- Domain must not depend on application, infrastructure, web, or mobile code.
+- Domain must not depend on Application, Infrastructure, Web, or Mobile code.
 - Application depends on Domain only.
 - Infrastructure depends on Application.
-- `Darwin.WebAdmin` depends on Application + Infrastructure.
-- `Darwin.WebApi` depends on Application + Infrastructure.
-- `Darwin.Web` is a Node/React app and does not build as part of the .NET solution.
-- Mobile apps depend on `Darwin.Contracts` and `Darwin.Mobile.Shared`.
+- `Darwin.WebAdmin` depends on Application and Infrastructure.
+- `Darwin.WebApi` depends on Application and Infrastructure.
+- `Darwin.Web` is a Node/React project and does not build inside the .NET solution pipeline.
 
-Additional delivery rules:
+Delivery rules:
 
-- CMS data for the public site must be API-friendly.
-- Do not reuse admin DTOs for public delivery.
-- Keep public/member/business/admin API surfaces distinct.
-- Keep the architecture compatible with a future BFF layer.
+- CMS data for the public site must be delivered through `Darwin.WebApi`.
+- do not reuse admin DTOs for public/member delivery.
+- keep public, member, business, and admin API surfaces distinct.
+- keep the architecture compatible with a future BFF layer.
 
 ## Coding Standards
 
-- C# 14 and nullable reference types are expected in .NET projects.
-- Use async/await consistently where appropriate.
-- Prefer strongly typed constants/enums over magic strings.
-- Keep comments professional and English-only.
-- Keep new code aligned with the repository's existing conventions.
+- keep nullable reference types enabled
+- initialize non-nullable strings with `string.Empty`
+- mark optional references with `?`
+- use English XML documentation for new public classes and members
+- keep code comments English-only
+- avoid alias properties and duplicate state
+- reserve TODO markers for genuinely later-phase work
+- do not write Persian inside source code
 
-For `Darwin.Web`:
+## Loyalty Rule
 
-- follow the current Next.js app-router structure
-- keep front-office code separate from back-office assumptions
-- do not document `dotnet build` as a way to build the front-end
+CRM does not own loyalty balances.
 
-## Solution Filters
+- `Customer.LoyaltyPointsTotal` is removed
+- `LoyaltyPointEntry` is removed
+- loyalty balances must come from `LoyaltyAccount` and `LoyaltyPointsTransaction`
 
-### `Darwin.WebAdminOnly.slnf`
+## WebAdmin Rule
 
-Use this for most .NET web/server work. It contains:
+When adding new back-office interactions:
 
-- Domain
-- Application
-- Infrastructure
-- WebAdmin
-- WebApi
-- Shared
-- Contracts
+- prefer HTMX for partial rendering and form posts
+- keep Bootstrap-focused JavaScript minimal
+- do not introduce Alpine.js unless a specific UI state problem justifies it
 
-### `Darwin.MobileOnly.slnf`
+## Front-End Rule
 
-Use this for mobile-focused work. It contains:
-
-- Mobile.Shared
-- Mobile.Business
-- Mobile.Consumer
-- Contracts
-
-`Darwin.Web` is a Node project and is intentionally not part of the .NET solution filters.
-
-## Local Development Expectations
-
-Before opening a PR:
-
-1. Build the relevant project(s).
-2. Run the relevant tests.
-3. Update documentation when architecture, API shape, or developer workflows change.
-4. Keep contract changes synchronized across:
-   - `Darwin.Contracts`
-   - `Darwin.Application`
-   - `Darwin.WebApi`
-   - related docs
-
-## Pull Request Requirements
-
-- No unrelated cleanup mixed into architectural changes.
-- No breaking API changes without corresponding contract/doc updates.
-- No front-office assumptions embedded in back-office DTOs or views.
-- No admin-only concerns exposed in public/member API contracts.
-
-## Front-End Note
-
-`Darwin.Web` currently lives under `src/Darwin.Web` and uses:
+`Darwin.Web` is the front-office and is built with:
 
 - Next.js
 - React
@@ -149,8 +99,36 @@ Before opening a PR:
 - Tailwind CSS
 - Node/npm tooling
 
-Use `npm install`, `npm run dev`, `npm run build`, and `npm run start` there. Do not expect it to participate in `dotnet build`.
+Use:
 
-## Ownership
+- `npm install`
+- `npm run dev`
+- `npm run build`
+- `npm run start`
 
-All code in this repository is private to the Darwin project team unless stated otherwise.
+Do not document or expect `dotnet build` to compile the front-office.
+
+## Change Discipline
+
+When changing architecture, API shape, or developer workflow:
+
+1. update code
+2. update migrations if needed
+3. update the relevant docs
+4. update `BACKLOG.md`
+5. run the relevant builds and tests
+
+When contracts change, keep these synchronized:
+
+1. `Darwin.Contracts`
+2. `Darwin.Application`
+3. `Darwin.WebApi`
+4. consumer documentation
+5. affected clients
+
+## Pull Request Expectations
+
+- no unrelated cleanup mixed into architectural work
+- no breaking API changes without matching contract and doc updates
+- no front-office assumptions in back-office DTOs or views
+- no admin-only DTOs exposed to public/member consumers

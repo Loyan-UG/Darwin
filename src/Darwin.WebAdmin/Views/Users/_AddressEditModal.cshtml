@@ -15,7 +15,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form id="addressEditForm" method="post">
+            <form id="addressEditForm"
+                  method="post"
+                  hx-target="#addresses-section"
+                  hx-swap="innerHTML"
+                  hx-on::after-request="if(event.detail.successful){ window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideAddressModal(); }">
                 @Html.AntiForgeryToken()
 
                 <!--
@@ -80,10 +84,12 @@
 
                         <div class="col-md-4">
                             <div class="form-check mt-4 pt-2">
+                                <input type="hidden" name="IsDefaultBilling" value="false" />
                                 <input id="addrDefaultBilling" class="form-check-input" type="checkbox" name="IsDefaultBilling" value="true" />
                                 <label class="form-check-label" for="addrDefaultBilling">Default Billing</label>
                             </div>
                             <div class="form-check mt-2 pt-0">
+                                <input type="hidden" name="IsDefaultShipping" value="false" />
                                 <input id="addrDefaultShipping" class="form-check-input" type="checkbox" name="IsDefaultShipping" value="true" />
                                 <label class="form-check-label" for="addrDefaultShipping">Default Shipping</label>
                             </div>

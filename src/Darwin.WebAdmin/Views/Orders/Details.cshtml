@@ -114,24 +114,21 @@
 </ul>
 <div class="tab-content border border-top-0 p-3">
     <div class="tab-pane fade show active" id="payments" role="tabpanel">
-        <div id="payments-grid" data-url="@Url.Action("Payments", "Orders", new { orderId = Model.Id })"></div>
+        <div id="payments-grid"
+             hx-get="@Url.Action("Payments", "Orders", new { orderId = Model.Id })"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+        </div>
     </div>
     <div class="tab-pane fade" id="shipments" role="tabpanel">
-        <div id="shipments-grid" data-url="@Url.Action("Shipments", "Orders", new { orderId = Model.Id })"></div>
+        <div id="shipments-grid"
+             hx-get="@Url.Action("Shipments", "Orders", new { orderId = Model.Id })"
+             hx-trigger="revealed"
+             hx-swap="innerHTML">
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        // Loads a partial into a target element
-        async function loadPartial(el) {
-          const url = el.getAttribute('data-url');
-          const resp = await fetch(url, { method: 'GET' });
-          el.innerHTML = await resp.text();
-        }
-        // initial load
-        loadPartial(document.getElementById('payments-grid'));
-        loadPartial(document.getElementById('shipments-grid'));
-    </script>
 }

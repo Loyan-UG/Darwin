@@ -88,39 +88,19 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        /**
-         * Refresh the alerts container by fetching the server-side alerts partial.
-         * TempData messages set on the previous POST will be consumed and displayed.
-         */
-        async function refreshAlerts() {
-            try {
-                const url = '@Url.Action("AlertsFragment", "Users")';
-                const resp = await fetch(url, { method: 'GET' });
-                if (!resp.ok) return;
-                const html = await resp.text();
-                const container = document.getElementById('alerts-container');
-                if (container) container.innerHTML = html;
-            } catch { /* swallow */ }
-        }
+        window.darwinAdmin = window.darwinAdmin || {};
+        window.darwinAdmin.refreshAlerts = function () {
+            htmx.ajax('GET', '@Url.Action("AlertsFragment", "Users")', '#alerts-container');
+        };
+        window.darwinAdmin.hideAddressModal = function () {
+            const modalEl = document.getElementById('addressEditModal');
+            if (!modalEl) {
+                return;
+            }
 
-        /**
-         * Refresh the addresses grid for the given user without leaving the page.
-         */
-        async function refreshAddresses(userId) {
-            const url = '@Url.Action("AddressesSection", "Users")' + `?userId=${userId}`;
-            const resp = await fetch(url, { method: 'GET' });
-            const html = await resp.text();
-            document.getElementById('addresses-section').innerHTML = html;
-        }
-
-        /**
-         * Get anti-forgery token rendered inside the addresses section.
-         * The token is rendered through: <form id="addresses-af"> @Html.AntiForgeryToken() </form>
-         */
-        function getAddressesAntiForgeryToken() {
-            const tokenInput = document.querySelector('#addresses-section #addresses-af input[name="__RequestVerificationToken"]');
-            return tokenInput ? tokenInput.value : '';
-        }
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.hide();
+        };
 
         // --- Delete modal wiring (already in your page, kept as-is) ---
         const confirmModal = document.getElementById('confirmDeleteModal');
@@ -155,12 +135,6 @@
                     const action = form.getAttribute('action');
                     const formData = new FormData(form);
 
-                    // If the anti-counterfeiting token is not in the modal form, get it from the addresses section (defensive)
-                    if (!formData.has('__RequestVerificationToken')) {
-                        const token = getAddressesAntiForgeryToken();
-                        if (token) formData.set('__RequestVerificationToken', token);
-                    }
-
                     // Send AJAX
                     const resp = await fetch(action, { method: 'POST', body: formData });
                     if (resp.ok) {
@@ -184,7 +158,6 @@
 
         // --- Address Edit/Create modal wiring ---
         const addrModalEl = document.getElementById('addressEditModal');
-        let addrModal = addrModalEl ? bootstrap.Modal.getOrCreateInstance(addrModalEl) : null;
 
         if (addrModalEl) {
             addrModalEl.addEventListener('show.bs.modal', function (event) {
@@ -202,6 +175,7 @@
                 // Action based on mode (CreateAddress / EditAddress)
                 const action = btn.getAttribute('data-action');
                 form.setAttribute('action', action);
+                form.setAttribute('hx-post', action);
 
                 // Always set UserId
                 const userId = btn.getAttribute('data-userid') || '';
@@ -260,74 +234,6 @@
                     cc.addEventListener('input', function () { this.value = this.value.toUpperCase(); });
                 }
             });
-
-            // AJAX submit (Create/Edit)
-            const addrForm = document.getElementById('addressEditForm');
-            if (addrForm) {
-                addrForm.addEventListener('submit', async function (e) {
-                    e.preventDefault();
-                    const form = e.currentTarget;
-                    const action = form.getAttribute('action');
-                    const formData = new FormData(form);
-
-                    // Ensure we never send empty Id/RowVersion keys
-                    if (formData.has('Id') && !formData.get('Id')) formData.delete('Id');
-                    if (formData.has('RowVersion') && !formData.get('RowVersion')) formData.delete('RowVersion');
-
-                    // Ensure unchecked checkboxes submit false
-                    if (!form.querySelector('input[name="IsDefaultBilling"]').checked)  formData.set('IsDefaultBilling', 'false');
-                    if (!form.querySelector('input[name="IsDefaultShipping"]').checked) formData.set('IsDefaultShipping', 'false');
-
-                    const resp = await fetch(action, { method: 'POST', body: formData });
-                    if (resp.ok) {
-                        const html = await resp.text();
-                        document.getElementById('addresses-section').innerHTML = html;
-
-                        // Show success alert via alerts partial refresh
-                        await refreshAlerts();
-
-                        if (addrModal) addrModal.hide();
-                    } else {
-                        const msg = await resp.text();
-                        alert(msg || 'Failed to submit address.');
-                    }
-                });
-            }
         }
-
-        // --- Set Billing / Set Shipping via AJAX (stay on page + show alerts) ---
-        (function wireSetDefaultButtons() {
-            const container = document.getElementById('addresses-section');
-            container?.addEventListener('click', async function (e) {
-                const btn = e.target.closest('[data-setdefault]');
-                if (!btn) return;
-
-                const action = btn.getAttribute('data-action');
-                const userId = btn.getAttribute('data-userid');
-                const id     = btn.getAttribute('data-id');
-                const kind   = btn.getAttribute('data-kind');
-
-                // Anti-forgery token located inside addresses section
-                const token = getAddressesAntiForgeryToken();
-
-                const formData = new FormData();
-                if (token) formData.set('__RequestVerificationToken', token);
-                formData.set('id', id);
-                formData.set('userId', userId);
-                formData.set('kind', kind);
-
-                const resp = await fetch(action, { method: 'POST', body: formData });
-                if (resp.ok) {
-                    const html = await resp.text();
-                    document.getElementById('addresses-section').innerHTML = html;
-
-                    // Display TempData message through alerts partial
-                    await refreshAlerts();
-                } else {
-                    const msg = await resp.text();
-                    alert(msg || 'Failed to set default address.');
-                }
-            });
-        })();
     </script>
 }
