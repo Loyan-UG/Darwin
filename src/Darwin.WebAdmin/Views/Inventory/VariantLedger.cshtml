@@ -13,6 +13,7 @@
         <thead>
             <tr>
                 <th style="width:140px;">When (UTC)</th>
+                <th style="width:220px;">Warehouse</th>
                 <th style="width:120px;" class="text-end">? Qty</th>
                 <th>Reason</th>
                 <th style="width:320px;">Reference</th>
@@ -25,6 +26,7 @@
                 {
                     <tr>
                         <td>@r.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@r.WarehouseName</td>
                         <td class="text-end">@r.QuantityDelta</td>
                         <td>@r.Reason</td>
                         <td>@(r.ReferenceId?.ToString() ?? "-")</td>
@@ -33,7 +35,7 @@
             }
             else
             {
-                <tr><td colspan="4" class="text-center text-muted">No ledger entries.</td></tr>
+                <tr><td colspan="5" class="text-center text-muted">No ledger entries.</td></tr>
             }
         </tbody>
     </table>
@@ -45,7 +47,8 @@
       
        asp-controller="Inventory"
        asp-action="VariantLedger"
-       asp-route-variantId="@Model.VariantId">
+       asp-route-variantId="@Model.VariantId"
+       asp-route-warehouseId="@Model.WarehouseId">
 </pager>
 
 <div class="mt-3">

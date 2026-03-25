@@ -20,6 +20,7 @@ using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.Queries;
 using Darwin.Application.Inventory.Commands;
+using Darwin.Application.Inventory.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.Queries;
 using Darwin.Application.Settings.Commands;
@@ -202,6 +203,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetOrderForViewHandler>();
             services.AddScoped<GetOrderPaymentsPageHandler>();
             services.AddScoped<GetOrderShipmentsPageHandler>();
+            services.AddScoped<GetWarehouseLookupHandler>();
 
             // Orders – commands
             services.AddScoped<AddPaymentHandler>();

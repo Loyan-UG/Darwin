@@ -11,6 +11,12 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     /// </summary>
     public sealed class InventoryLedgerItemVm
     {
+        /// <summary>Associated warehouse identifier.</summary>
+        public Guid WarehouseId { get; set; }
+
+        /// <summary>Warehouse display name.</summary>
+        public string WarehouseName { get; set; } = string.Empty;
+
         /// <summary>Associated product variant identifier.</summary>
         public Guid VariantId { get; set; }
 
@@ -35,6 +41,9 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     {
         /// <summary>Optional filter by variant id.</summary>
         public Guid? VariantId { get; set; }
+
+        /// <summary>Optional filter by warehouse id.</summary>
+        public Guid? WarehouseId { get; set; }
 
         /// <summary>Optional start date (UTC) filter.</summary>
         public DateTime? FromUtc { get; set; }

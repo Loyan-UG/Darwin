@@ -42,6 +42,7 @@ namespace Darwin.Application.Orders.Queries
                     {
                         Id = l.Id,
                         VariantId = l.VariantId,
+                        WarehouseId = l.WarehouseId,
                         Name = l.Name,
                         Sku = l.Sku,
                         Quantity = l.Quantity,

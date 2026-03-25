@@ -28,6 +28,7 @@ namespace Darwin.Application.Orders.DTOs
     public sealed class OrderLineCreateDto
     {
         public Guid VariantId { get; set; }
+        public Guid? WarehouseId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Sku { get; set; } = string.Empty;
         public int Quantity { get; set; }
@@ -98,6 +99,7 @@ namespace Darwin.Application.Orders.DTOs
     {
         public Guid Id { get; set; }
         public Guid VariantId { get; set; }
+        public Guid? WarehouseId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Sku { get; set; } = string.Empty;
         public int Quantity { get; set; }
@@ -195,6 +197,7 @@ namespace Darwin.Application.Orders.DTOs
         public Guid OrderId { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public OrderStatus NewStatus { get; set; }
+        public Guid? WarehouseId { get; set; }
     }
 
     /// <summary>

@@ -23,13 +23,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         /// Paged ledger for a single variant.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> VariantLedger(Guid variantId, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> VariantLedger(Guid variantId, Guid? warehouseId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             // Application handler returns a paged projection; map to VM 
-            var dto = await _getLedger.HandleAsync(variantId, page, pageSize, ct);
+            var dto = await _getLedger.HandleAsync(variantId, page, pageSize, warehouseId, ct);
 
             var items = dto.Items.Select(x => new InventoryLedgerItemVm
             {
+                WarehouseId = x.WarehouseId,
+                WarehouseName = x.WarehouseName,
                 VariantId = x.VariantId,
                 QuantityDelta = x.QuantityDelta,
                 Reason = x.Reason,
@@ -40,6 +42,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = new InventoryLedgerListVm
             {
                 VariantId = variantId,
+                WarehouseId = warehouseId,
                 Items = items,
                 Page = page,
                 PageSize = pageSize,

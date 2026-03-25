@@ -63,7 +63,11 @@ namespace Darwin.Application.Inventory.Commands
             // Process each line atomically with a guarded ExecuteUpdateAsync
             foreach (var line in dto.Lines)
             {
-                var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, line.VariantId, dto.WarehouseId, ct);
+                var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(
+                    _db,
+                    line.VariantId,
+                    line.WarehouseId ?? dto.WarehouseId,
+                    ct);
 
                 if (alreadyAllocated.Any(x => x.ProductVariantId == line.VariantId && x.WarehouseId == warehouseId))
                     continue; // skip idempotent duplicate

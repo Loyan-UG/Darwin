@@ -16,6 +16,13 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="OrderId" value="@Model.Id" />
                     <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <select name="WarehouseId" class="form-select form-select-sm d-inline w-auto me-2">
+                        <option value="">Warehouse (Auto)</option>
+                        @foreach (var warehouse in Model.WarehouseOptions)
+                        {
+                            <option value="@warehouse.Value" selected="@warehouse.Selected">@warehouse.Text</option>
+                        }
+                    </select>
                     <select name="NewStatus" class="form-select form-select-sm d-inline w-auto me-2">
                         <!-- Use only valid statuses or only allowed transitions -->
                         @* <option value="Pending">Pending</option> *@
@@ -48,6 +55,13 @@
             <input type="hidden" name="OrderId" value="@Model.Id" />
             <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
             <input type="hidden" name="NewStatus" value="Shipped" />
+            <select name="WarehouseId" class="form-select d-inline w-auto me-2">
+                <option value="">Warehouse (Auto)</option>
+                @foreach (var warehouse in Model.WarehouseOptions)
+                {
+                    <option value="@warehouse.Value" selected="@warehouse.Selected">@warehouse.Text</option>
+                }
+            </select>
             <button type="submit" class="btn btn-outline-primary">
                 <i class="fa fa-dolly"></i> Allocate Now
             </button>
@@ -68,6 +82,7 @@
             <tr>
                 <th>SKU</th>
                 <th>Name</th>
+                <th>Warehouse</th>
                 <th class="text-end">Qty</th>
                 <th class="text-end">Unit</th>
                 <th class="text-end">Line</th>
@@ -79,6 +94,7 @@
                 <tr>
                     <td>@l.Sku</td>
                     <td>@l.Name</td>
+                    <td>@(string.IsNullOrWhiteSpace(l.WarehouseName) ? "Auto" : l.WarehouseName)</td>
                     <td class="text-end">@l.Quantity</td>
                     <td class="text-end">@((l.UnitPriceGrossMinor / 100.0M).ToString("0.00"))</td>
                     <td class="text-end">@((l.LineGrossMinor / 100.0M).ToString("0.00"))</td>

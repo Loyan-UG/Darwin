@@ -2,6 +2,7 @@
 @{
     // Defensive: ensure we have a model instance even if the controller returns null for Items.
     var items = Model?.Items ?? new List<Darwin.WebAdmin.ViewModels.Identity.UserAddressListItemVm>();
+    var userId = Model?.UserId ?? Guid.Empty;
 }
 
 <!-- Hidden anti-forgery container for AJAX posts in this section -->
@@ -19,7 +20,7 @@
             data-bs-target="#addressEditModal"
             data-mode="create"
             data-action="@Url.Action("CreateAddress", "Users")"
-            data-userid="@Model?.UserId">
+            data-userid="@userId">
         <i class="fa fa-plus"></i> Add Address
     </button>
 </div>
@@ -61,7 +62,7 @@
                                     class="btn btn-sm btn-outline-primary"
                                     data-setdefault
                                     data-kind="Billing"
-                                    data-userid="@Model.UserId"
+                                    data-userid="@userId"
                                     data-id="@a.Id"
                                     data-action="@Url.Action("SetDefaultAddress", "Users")">
                                 <i class="fa fa-credit-card"></i> Set Billing
@@ -72,7 +73,7 @@
                                     class="btn btn-sm btn-outline-success"
                                     data-setdefault
                                     data-kind="Shipping"
-                                    data-userid="@Model.UserId"
+                                    data-userid="@userId"
                                     data-id="@a.Id"
                                     data-action="@Url.Action("SetDefaultAddress", "Users")">
                                 <i class="fa fa-truck"></i> Set Shipping
@@ -86,7 +87,7 @@
                                     data-mode="edit"
                                     data-action="@Url.Action("EditAddress", "Users")"
                                     data-id="@a.Id"
-                                    data-userid="@Model.UserId"
+                                    data-userid="@userId"
                                     data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
                                     data-fullname="@a.FullName"
                                     data-company="@a.Company"
@@ -110,7 +111,7 @@
                                     data-action="@Url.Action("DeleteAddress", "Users")"
                                     data-id="@a.Id"
                                     data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
-                                    data-userid="@Model.UserId"
+                                    data-userid="@userId"
                                     data-name="@($"{a.FullName} / {a.City} / {a.Street1}")">
                                 <i class="fa fa-trash"></i> Delete
                             </button>

@@ -1,10 +1,12 @@
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
+using Darwin.Application.Inventory.Queries;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Darwin.WebAdmin.ViewModels.Orders;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Linq;
 using System.Threading;
@@ -23,6 +25,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private readonly GetOrderForViewHandler _getOrderForView;
         private readonly GetOrderPaymentsPageHandler _getOrderPaymentsPage;
         private readonly GetOrderShipmentsPageHandler _getOrderShipmentsPage;
+        private readonly GetWarehouseLookupHandler _getWarehouseLookup;
 
         // Commands
         private readonly AddPaymentHandler _addPayment;
@@ -33,6 +36,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             GetOrderForViewHandler getOrderForView,
             GetOrderPaymentsPageHandler getOrderPaymentsPage,
             GetOrderShipmentsPageHandler getOrderShipmentsPage,
+            GetWarehouseLookupHandler getWarehouseLookup,
             AddPaymentHandler addPayment,
             UpdateOrderStatusHandler updateOrderStatus)
         {
@@ -40,6 +44,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             _getOrderForView = getOrderForView;
             _getOrderPaymentsPage = getOrderPaymentsPage;
             _getOrderShipmentsPage = getOrderShipmentsPage;
+            _getWarehouseLookup = getWarehouseLookup;
             _addPayment = addPayment;
             _updateOrderStatus = updateOrderStatus;
         }
@@ -77,11 +82,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         public async Task<IActionResult> Details(Guid id, CancellationToken ct = default)
         {
             var dto = await _getOrderForView.HandleAsync(id, ct);
+            var warehouses = await _getWarehouseLookup.HandleAsync(ct);
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            var assignedWarehouseIds = dto.Lines
+                .Select(x => x.WarehouseId)
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .Distinct()
+                .ToList();
+            Guid? selectedWarehouseId = assignedWarehouseIds.Count == 1 ? assignedWarehouseIds[0] : null;
+            var warehouseMap = warehouses.ToDictionary(x => x.Id, x => x.Name);
 
             var vm = new OrderDetailVm
             {
@@ -91,9 +106,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 Currency = dto.Currency,
                 GrandTotalGrossMinor = dto.GrandTotalGrossMinor,
                 RowVersion = dto.RowVersion,
+                SelectedWarehouseId = selectedWarehouseId,
+                WarehouseOptions = warehouses
+                    .Select(x => new SelectListItem
+                    {
+                        Value = x.Id.ToString(),
+                        Text = x.IsDefault
+                            ? $"{x.Name} (Default{(string.IsNullOrWhiteSpace(x.Location) ? string.Empty : $", {x.Location}")})"
+                            : string.IsNullOrWhiteSpace(x.Location)
+                                ? x.Name
+                                : $"{x.Name} ({x.Location})",
+                        Selected = selectedWarehouseId == x.Id
+                    })
+                    .ToList(),
                 Lines = dto.Lines.Select(l => new OrderLineVm
                 {
                     VariantId = l.VariantId,
+                    WarehouseId = l.WarehouseId,
+                    WarehouseName = l.WarehouseId.HasValue && warehouseMap.TryGetValue(l.WarehouseId.Value, out var warehouseName)
+                        ? warehouseName
+                        : string.Empty,
                     Name = l.Name,
                     Sku = l.Sku,
                     Quantity = l.Quantity,
@@ -242,7 +274,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             {
                 OrderId = vm.OrderId,
                 RowVersion = vm.RowVersion,
-                NewStatus = vm.NewStatus
+                NewStatus = vm.NewStatus,
+                WarehouseId = vm.WarehouseId
             };
 
             try

@@ -18,7 +18,6 @@ namespace Darwin.WebAdmin.Controllers
     /// Handles authentication flows (email/password, TOTP 2FA, and WebAuthn) plus self-service registration.
     /// Cookie issuance happens here. Post-login navigation is decided by effective permissions.
     /// </summary>
-    [AllowAnonymous]
     public sealed class AccountController : Controller
     {
         private readonly SignInHandler _signIn;
@@ -54,6 +53,7 @@ namespace Darwin.WebAdmin.Controllers
         }
 
         /// <summary>Renders the login page.</summary>
+        [AllowAnonymous]
         [HttpGet("/account/login")]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -65,6 +65,7 @@ namespace Darwin.WebAdmin.Controllers
         /// Processes email/password login. If 2FA is required, redirects to the TOTP step.
         /// On success, issues the auth cookie and navigates based on effective permissions.
         /// </summary>
+        [AllowAnonymous]
         [HttpPost("/account/login")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoginPost(
@@ -115,6 +116,7 @@ namespace Darwin.WebAdmin.Controllers
         }
 
         /// <summary>Renders the TOTP verification form during a 2FA login.</summary>
+        [AllowAnonymous]
         [HttpGet("/account/login-2fa")]
         public IActionResult LoginTwoFactor()
         {
@@ -130,6 +132,7 @@ namespace Darwin.WebAdmin.Controllers
         /// <summary>
         /// Verifies the TOTP code and completes the sign-in by issuing the auth cookie.
         /// </summary>
+        [AllowAnonymous]
         [HttpPost("/account/login-2fa")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoginTwoFactorPost(
@@ -165,6 +168,7 @@ namespace Darwin.WebAdmin.Controllers
         }
 
         /// <summary>Begins a WebAuthn (passkey) login ceremony.</summary>
+        [AllowAnonymous]
         [HttpPost("/account/webauthn/begin-login")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WebAuthnBeginLogin([FromForm] Guid userId, CancellationToken ct = default)
@@ -179,6 +183,7 @@ namespace Darwin.WebAdmin.Controllers
         /// <summary>
         /// Finishes WebAuthn login. On success, retrieves stamp and issues the auth cookie.
         /// </summary>
+        [AllowAnonymous]
         [HttpPost("/account/webauthn/finish-login")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WebAuthnFinishLogin(
@@ -209,6 +214,7 @@ namespace Darwin.WebAdmin.Controllers
         }
 
         /// <summary>Renders the end-user registration page.</summary>
+        [AllowAnonymous]
         [HttpGet("/account/register")]
         public IActionResult Register(string? returnUrl = null)
         {
@@ -219,6 +225,7 @@ namespace Darwin.WebAdmin.Controllers
         /// <summary>
         /// Creates a new user, assigns default "Members" role if present, then signs the user in.
         /// </summary>
+        [AllowAnonymous]
         [HttpPost("/account/register")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegisterPost(

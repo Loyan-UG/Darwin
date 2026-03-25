@@ -6,6 +6,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Inventory.Queries
 {
+    public sealed class GetWarehouseLookupHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetWarehouseLookupHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public Task<List<WarehouseLookupItemDto>> HandleAsync(CancellationToken ct = default)
+        {
+            return _db.Set<Warehouse>()
+                .AsNoTracking()
+                .OrderByDescending(x => x.IsDefault)
+                .ThenBy(x => x.Name)
+                .Select(x => new WarehouseLookupItemDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Location = x.Location,
+                    IsDefault = x.IsDefault
+                })
+                .ToListAsync(ct);
+        }
+    }
+
     public sealed class GetWarehousesPageHandler
     {
         private readonly IAppDbContext _db;

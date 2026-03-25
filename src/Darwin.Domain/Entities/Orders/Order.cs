@@ -40,6 +40,12 @@ namespace Darwin.Domain.Entities.Orders
     {
         public Guid OrderId { get; set; }
         public Guid VariantId { get; set; }
+        /// <summary>
+        /// Optional fulfillment warehouse chosen for this line.
+        /// Keeping it on the order snapshot prevents later status transitions from
+        /// re-resolving stock against a different warehouse.
+        /// </summary>
+        public Guid? WarehouseId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Sku { get; set; } = string.Empty;
 

@@ -19,25 +19,29 @@ namespace Darwin.Application.Inventory.Queries
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 50;
 
-            var q = _db.Set<InventoryTransaction>().AsNoTracking().AsQueryable();
+            var q =
+                from transaction in _db.Set<InventoryTransaction>().AsNoTracking()
+                join warehouse in _db.Set<Warehouse>().AsNoTracking() on transaction.WarehouseId equals warehouse.Id
+                select new { transaction, warehouse };
             if (variantId.HasValue)
-                q = q.Where(t => t.ProductVariantId == variantId.Value);
+                q = q.Where(x => x.transaction.ProductVariantId == variantId.Value);
             if (warehouseId.HasValue)
-                q = q.Where(t => t.WarehouseId == warehouseId.Value);
+                q = q.Where(x => x.transaction.WarehouseId == warehouseId.Value);
 
             var total = await q.CountAsync(ct);
 
-            var items = await q.OrderByDescending(t => t.CreatedAtUtc)
+            var items = await q.OrderByDescending(x => x.transaction.CreatedAtUtc)
                 .Skip((page - 1) * pageSize).Take(pageSize)
-                .Select(t => new InventoryTransactionRowDto
+                .Select(x => new InventoryTransactionRowDto
                 {
-                    Id = t.Id,
-                    WarehouseId = t.WarehouseId,
-                    VariantId = t.ProductVariantId,
-                    QuantityDelta = t.QuantityDelta,
-                    Reason = t.Reason,
-                    ReferenceId = t.ReferenceId,
-                    CreatedAtUtc = t.CreatedAtUtc
+                    Id = x.transaction.Id,
+                    WarehouseId = x.transaction.WarehouseId,
+                    WarehouseName = x.warehouse.Name,
+                    VariantId = x.transaction.ProductVariantId,
+                    QuantityDelta = x.transaction.QuantityDelta,
+                    Reason = x.transaction.Reason,
+                    ReferenceId = x.transaction.ReferenceId,
+                    CreatedAtUtc = x.transaction.CreatedAtUtc
                 })
                 .ToListAsync(ct);
 

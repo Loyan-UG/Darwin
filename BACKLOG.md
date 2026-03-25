@@ -8,6 +8,7 @@ The core foundations of Darwin are already in place and should not require major
 
 - **Architecture & Infrastructure**: the solution uses a Clean Architecture structure (Domain -> Application -> Infrastructure -> Web/WebApi/Mobile). Major cross-cutting concerns (soft delete, audit fields, concurrency, translation pattern) and EF Core configurations are complete. The solution builds, migrates and seeds the database correctly.
 - **Domain models**: catalog entities (Product, Variant, Category, Brand, Add-ons), CMS pages/menus, pricing (Promotions/Taxes), cart/checkout, partial order/payment/shipment, users & addresses, identity (Role/Permission), settings and SEO are all implemented.
+- **Warehouse-aware order fulfillment**: order lines now persist an optional `WarehouseId`, admin status transitions can explicitly choose a warehouse, inventory allocation/reservation flows honor stored warehouse context, and the latest migration (`OrderLineWarehouseAssignment`) has been applied to the development database.
 - **Security**: password hashing (Argon2id), two-factor (TOTP), WebAuthn, external logins, password reset flows and security stamp rotation are complete.
 - **Application layer**: command/query handlers, validators and a `Result<T>` pattern exist for all current modules.
 - **Admin panel (Back-office)**: pages for managing catalog (products, categories, brands), CMS (pages, menus), site settings (partial), robots/sitemap, canonical URL service and some shared UI components are implemented.
@@ -48,8 +49,8 @@ Once the domain is complete, the admin panel can be extended to cover all core b
 
 ### Epic: Inventory and order management
 
-- **Task**: implement an inventory ledger UI showing current stock and history per variant across warehouses. Include stock adjustments and transfer logs.
-- **Task**: finish order management screens: view orders, update order status, add shipments/payments, refund or cancel orders. Integrate invoice/billing data.
+- **Task**: expand the inventory ledger UI from the current warehouse-aware variant ledger baseline. Warehouse filtering and warehouse surfacing in admin are complete; stock adjustments, transfer logs and cross-warehouse reporting remain.
+- **Task**: continue order management screens from the current warehouse-aware status workflow baseline. Viewing orders, changing status with an explicit warehouse, and adding payments are complete; shipments, refunds/cancellations UX polish and invoice/billing integration remain.
 - **Task**: add management pages for shipping methods, taxes, coupon/promotions and add-on groups.
 - **Task**: create dashboards with simple charts showing sales totals, order counts, customer counts and loyalty points accrual using a lightweight charting library (e.g., Chart.js via HTMX).
 
@@ -89,6 +90,7 @@ This phase introduces a new, customer-facing web experience. The front-office no
 - **Task**: implement authentication using JWT tokens returned from `/api/v1/auth/login` and store tokens in HTTP-only cookies. Provide registration and password reset flows.
 - **Task**: build a customer account area: view/edit profile, manage addresses, view loyalty balance, view order history (`/api/v1/orders`) and invoices (`/api/v1/invoices`).
 - **Task**: implement a loyalty wallet: show points balance and transaction history by consuming `/api/v1/loyalty/points` and `/api/v1/loyalty/rewards`.
+- **Task**: propagate warehouse context into public order/cart contracts and WebApi endpoints when storefront checkout and fulfillment flows are opened up beyond the current admin-managed workflow.
 
 ## 5 - Phase 4: Advanced CRM & Marketing
 

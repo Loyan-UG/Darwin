@@ -40,6 +40,7 @@ namespace Darwin.Application.Inventory.DTOs
     {
         public Guid Id { get; set; }
         public Guid WarehouseId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
         public Guid VariantId { get; set; }
         public int QuantityDelta { get; set; }
         public string Reason { get; set; } = string.Empty;
@@ -73,8 +74,25 @@ namespace Darwin.Application.Inventory.DTOs
         /// <summary>Target variant id.</summary>
         public Guid VariantId { get; set; }
 
+        /// <summary>
+        /// Optional line-specific warehouse selection.
+        /// When present, it takes precedence over the parent request warehouse.
+        /// </summary>
+        public Guid? WarehouseId { get; set; }
+
         /// <summary>Quantity to allocate (must be positive).</summary>
         public int Quantity { get; set; }
+    }
+
+    /// <summary>
+    /// Lightweight warehouse lookup item for dropdowns and command forms.
+    /// </summary>
+    public sealed class WarehouseLookupItemDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Location { get; set; }
+        public bool IsDefault { get; set; }
     }
 
     /// <summary>

@@ -43,6 +43,7 @@ namespace Darwin.Application.Orders.Commands
                 return new OrderLine
                 {
                     VariantId = l.VariantId,
+                    WarehouseId = l.WarehouseId,
                     Name = l.Name.Trim(),
                     Sku = l.Sku.Trim(),
                     Quantity = l.Quantity,

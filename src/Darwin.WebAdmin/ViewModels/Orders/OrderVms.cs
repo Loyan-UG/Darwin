@@ -35,12 +35,16 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public long GrandTotalGrossMinor { get; set; }
         public OrderStatus Status { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public Guid? SelectedWarehouseId { get; set; }
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<OrderLineVm> Lines { get; set; } = new();
     }
 
     public sealed class OrderLineVm
     {
         public Guid VariantId { get; set; }
+        public Guid? WarehouseId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Sku { get; set; } = string.Empty;
         public int Quantity { get; set; }
@@ -173,6 +177,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public Guid OrderId { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public OrderStatus NewStatus { get; set; }
+        public Guid? WarehouseId { get; set; }
     }
 
 

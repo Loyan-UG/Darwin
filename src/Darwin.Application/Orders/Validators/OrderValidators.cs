@@ -1,4 +1,5 @@
-﻿using Darwin.Application.Orders.DTOs;
+using System;
+using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Enums;
 using FluentValidation;
 
@@ -24,6 +25,9 @@ namespace Darwin.Application.Orders.Validators
         public OrderLineCreateValidator()
         {
             RuleFor(x => x.VariantId).NotEmpty();
+            RuleFor(x => x.WarehouseId)
+                .Must(x => !x.HasValue || x.Value != Guid.Empty)
+                .WithMessage("WarehouseId must be a valid identifier when provided.");
             RuleFor(x => x.Name).NotEmpty().MaximumLength(512);
             RuleFor(x => x.Sku).NotEmpty().MaximumLength(128);
             RuleFor(x => x.Quantity).GreaterThan(0);
@@ -43,7 +47,6 @@ namespace Darwin.Application.Orders.Validators
             RuleFor(x => x.Currency).NotEmpty().Length(3);
             RuleFor(x => x.Status).IsInEnum();
 
-            // FailureReason is required only when the payment failed.
             When(x => x.Status == PaymentStatus.Failed, () =>
             {
                 RuleFor(x => x.FailureReason)
@@ -80,6 +83,9 @@ namespace Darwin.Application.Orders.Validators
             RuleFor(x => x.OrderId).NotEmpty();
             RuleFor(x => x.RowVersion).NotNull();
             RuleFor(x => x.NewStatus).IsInEnum();
+            RuleFor(x => x.WarehouseId)
+                .Must(x => !x.HasValue || x.Value != Guid.Empty)
+                .WithMessage("WarehouseId must be a valid identifier when provided.");
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Entities.Inventory;
+using Darwin.Domain.Entities.Orders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -25,6 +26,11 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Orders
         {
             b.ToTable("OrderLines", schema: "Orders");
             b.Property(x => x.Sku).IsRequired().HasMaxLength(100);
+            b.HasIndex(x => x.WarehouseId).HasDatabaseName("IX_OrderLines_WarehouseId");
+            b.HasOne<Warehouse>()
+                .WithMany()
+                .HasForeignKey(x => x.WarehouseId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

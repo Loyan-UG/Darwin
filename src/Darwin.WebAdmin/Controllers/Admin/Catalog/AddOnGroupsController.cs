@@ -1,4 +1,4 @@
-using Darwin.Application.Catalog.Commands;
+﻿using Darwin.Application.Catalog.Commands;
 // Application layer
 using Darwin.Application.Catalog.DTOs;
 using Darwin.Application.Catalog.Queries;
@@ -184,6 +184,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
             var dto = await _getForEdit.HandleAsync(id, ct); // returns DTO directly
+            if (dto is null)
+            {
+                TempData["Error"] = "Add-on group not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var vm = new AddOnGroupEditVm
             {
                 Id = dto.Id,
@@ -483,7 +489,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 AddOnGroupId = dto.Id,
                 RowVersion = dto.RowVersion,
                 AddOnGroupName = dto.Name,
-                Query = q,
+                Query = q ?? string.Empty,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -491,7 +497,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     .Select(v => new SelectableItemVm
                     {
                         Id = v.Id,
-                        Display = $"{v.Sku} � {v.ProductName ?? "(no name)"}",
+                        Display = $"{v.Sku} — {v.ProductName ?? "(no name)"}",
                         Selected = attachedSet.Contains(v.Id) /* isSelected: handled client-side via hidden inputs to persist across pages */
                     }).ToList(),
                 SelectedVariantIds = attached.ToList()
@@ -522,3 +528,4 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         }
     }
 }
+

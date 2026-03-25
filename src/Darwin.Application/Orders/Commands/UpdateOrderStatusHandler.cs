@@ -72,6 +72,14 @@ namespace Darwin.Application.Orders.Commands
             if (!_policy.IsAllowed(order.Status, dto.NewStatus))
                 throw new ValidationException($"Transition {order.Status} → {dto.NewStatus} is not allowed.");
 
+            if (dto.WarehouseId.HasValue)
+            {
+                foreach (var line in order.Lines.Where(l => !l.IsDeleted && !l.WarehouseId.HasValue))
+                {
+                    line.WarehouseId = dto.WarehouseId.Value;
+                }
+            }
+
             // Execute inventory side-effects depending on the target status.
             switch (dto.NewStatus)
             {
@@ -87,6 +95,7 @@ namespace Darwin.Application.Orders.Commands
                             {
                                 var reserveDto = new InventoryReserveDto
                                 {
+                                    WarehouseId = line.WarehouseId ?? dto.WarehouseId,
                                     VariantId = line.VariantId,
                                     Quantity = line.Quantity,
                                     Reason = "OrderPaid-Reserve",
@@ -110,6 +119,7 @@ namespace Darwin.Application.Orders.Commands
                             {
                                 var releaseDto = new InventoryReleaseReservationDto
                                 {
+                                    WarehouseId = line.WarehouseId ?? dto.WarehouseId,
                                     VariantId = line.VariantId,
                                     Quantity = line.Quantity,
                                     Reason = "OrderCancelled-Release",
@@ -131,6 +141,7 @@ namespace Darwin.Application.Orders.Commands
                                 .Where(l => !l.IsDeleted)
                                 .Select(l => new InventoryAllocateForOrderLineDto
                                 {
+                                    WarehouseId = l.WarehouseId ?? dto.WarehouseId,
                                     VariantId = l.VariantId,
                                     Quantity = l.Quantity
                                 })
