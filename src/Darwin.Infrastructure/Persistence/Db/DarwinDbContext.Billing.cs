@@ -24,11 +24,6 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();
 
         /// <summary>
-        /// Generic billing payments used for invoice, order, and ERP-ready accounting flows.
-        /// </summary>
-        public DbSet<Payment> BillingPayments => Set<Payment>();
-
-        /// <summary>
         /// Financial accounts for lightweight bookkeeping.
         /// </summary>
         public DbSet<FinancialAccount> FinancialAccounts => Set<FinancialAccount>();

@@ -42,8 +42,8 @@ namespace Darwin.Tests.Unit.CMS
                 Culture = "de-DE",
                 Slug = "about-us",
                 Title = "Existing"
-            });
-            await ctx.SaveChangesAsync();
+            }, TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a new DTO with a duplicate slug for the same culture
             var dto = new PageCreateDto
@@ -62,7 +62,7 @@ namespace Darwin.Tests.Unit.CMS
             var sut = new PageCreateUniqueSlugValidator(ctx);
 
             // Act
-            var result = await sut.ValidateAsync(dto, CancellationToken.None);
+            var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
 
             // Assert: validation should fail due to duplicate slug
             result.IsValid.Should().BeFalse();
@@ -87,8 +87,8 @@ namespace Darwin.Tests.Unit.CMS
                 Culture = "de-DE",
                 Slug = "about-us",
                 Title = "About Us"
-            });
-            await ctx.SaveChangesAsync();
+            }, TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Create a new page DTO with a different slug in the same culture
             var dto = new PageCreateDto
@@ -104,7 +104,7 @@ namespace Darwin.Tests.Unit.CMS
                 }
             };
             var sut = new PageCreateUniqueSlugValidator(ctx);
-            var result = await sut.ValidateAsync(dto, CancellationToken.None);
+            var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeTrue();
         }
 
@@ -127,8 +127,8 @@ namespace Darwin.Tests.Unit.CMS
                 Culture = "en-US",
                 Slug = "contact",
                 Title = "Contact"
-            });
-            await ctx.SaveChangesAsync();
+            }, TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dto = new PageEditDto
             {
@@ -144,7 +144,7 @@ namespace Darwin.Tests.Unit.CMS
                 }
             };
             var sut = new PageEditUniqueSlugValidator(ctx);
-            var result = await sut.ValidateAsync(dto, CancellationToken.None);
+            var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeTrue();
         }
 
@@ -165,24 +165,27 @@ namespace Darwin.Tests.Unit.CMS
 
             // Seed two pages with distinct slugs
             await ctx.Set<PageTranslation>().AddRangeAsync(
-                new PageTranslation
+                new[]
                 {
-                    Id = Guid.NewGuid(),
-                    PageId = pageId1,
-                    Culture = "en-US",
-                    Slug = "about",
-                    Title = "About"
+                    new PageTranslation
+                    {
+                        Id = Guid.NewGuid(),
+                        PageId = pageId1,
+                        Culture = "en-US",
+                        Slug = "about",
+                        Title = "About"
+                    },
+                    new PageTranslation
+                    {
+                        Id = Guid.NewGuid(),
+                        PageId = pageId2,
+                        Culture = "en-US",
+                        Slug = "faq",
+                        Title = "FAQ"
+                    }
                 },
-                new PageTranslation
-                {
-                    Id = Guid.NewGuid(),
-                    PageId = pageId2,
-                    Culture = "en-US",
-                    Slug = "faq",
-                    Title = "FAQ"
-                }
-            );
-            await ctx.SaveChangesAsync();
+                TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Attempt to change the second page's slug to "about", creating a conflict
             var dto = new PageEditDto
@@ -199,7 +202,7 @@ namespace Darwin.Tests.Unit.CMS
                 }
             };
             var sut = new PageEditUniqueSlugValidator(ctx);
-            var result = await sut.ValidateAsync(dto, CancellationToken.None);
+            var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeFalse();
         }
 
@@ -217,24 +220,27 @@ namespace Darwin.Tests.Unit.CMS
             var pageId1 = Guid.NewGuid();
             var pageId2 = Guid.NewGuid();
             await ctx.Set<PageTranslation>().AddRangeAsync(
-                new PageTranslation
+                new[]
                 {
-                    Id = Guid.NewGuid(),
-                    PageId = pageId1,
-                    Culture = "en-US",
-                    Slug = "about",
-                    Title = "About"
+                    new PageTranslation
+                    {
+                        Id = Guid.NewGuid(),
+                        PageId = pageId1,
+                        Culture = "en-US",
+                        Slug = "about",
+                        Title = "About"
+                    },
+                    new PageTranslation
+                    {
+                        Id = Guid.NewGuid(),
+                        PageId = pageId2,
+                        Culture = "en-US",
+                        Slug = "faq",
+                        Title = "FAQ"
+                    }
                 },
-                new PageTranslation
-                {
-                    Id = Guid.NewGuid(),
-                    PageId = pageId2,
-                    Culture = "en-US",
-                    Slug = "faq",
-                    Title = "FAQ"
-                }
-            );
-            await ctx.SaveChangesAsync();
+                TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             // Change second page's slug to a unique value
             var dto = new PageEditDto
@@ -251,7 +257,7 @@ namespace Darwin.Tests.Unit.CMS
                 }
             };
             var sut = new PageEditUniqueSlugValidator(ctx);
-            var result = await sut.ValidateAsync(dto, CancellationToken.None);
+            var result = await sut.ValidateAsync(dto, TestContext.Current.CancellationToken);
             result.IsValid.Should().BeTrue();
         }
     }

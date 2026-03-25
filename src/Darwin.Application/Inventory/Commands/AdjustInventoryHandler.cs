@@ -27,18 +27,27 @@ namespace Darwin.Application.Inventory.Commands
             var variant = await _db.Set<ProductVariant>().FirstOrDefaultAsync(vr => vr.Id == dto.VariantId, ct);
             if (variant is null) throw new InvalidOperationException("Variant not found.");
 
-            // apply delta
-            variant.StockOnHand = checked(variant.StockOnHand + dto.QuantityDelta);
+            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, ct);
+            var stockLevel = await Darwin.Application.Inventory.InventoryStockHelper.GetOrCreateStockLevelAsync(_db, warehouseId, dto.VariantId, ct);
+
+            if (dto.QuantityDelta < 0 && stockLevel.AvailableQuantity < Math.Abs(dto.QuantityDelta))
+            {
+                throw new InvalidOperationException("Insufficient available stock.");
+            }
+
+            stockLevel.AvailableQuantity = checked(stockLevel.AvailableQuantity + dto.QuantityDelta);
 
             // append ledger
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
+                WarehouseId = warehouseId,
                 ProductVariantId = dto.VariantId,
                 QuantityDelta = dto.QuantityDelta,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId
             });
 
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, ct);
             await _db.SaveChangesAsync(ct);
         }
     }

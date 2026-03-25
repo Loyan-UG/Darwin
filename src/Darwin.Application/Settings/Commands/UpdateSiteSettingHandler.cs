@@ -43,10 +43,10 @@ namespace Darwin.Application.Settings.Commands
             // -------- Basics --------
             s.Title = dto.Title.Trim();
             s.LogoUrl = dto.LogoUrl;
-            s.ContactEmail = dto.ContactEmail;
+            s.ContactEmail = dto.ContactEmail ?? string.Empty;
 
             // -------- Routing --------
-            s.HomeSlug = dto.HomeSlug;
+            s.HomeSlug = dto.HomeSlug ?? "home";
 
             // -------- Localization --------
             s.DefaultCulture = dto.DefaultCulture.Trim();
@@ -54,11 +54,11 @@ namespace Darwin.Application.Settings.Commands
                 (dto.SupportedCulturesCsv ?? string.Empty)
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Distinct());
-            s.DefaultCountry = dto.DefaultCountry;
+            s.DefaultCountry = dto.DefaultCountry ?? "DE";
             s.DefaultCurrency = dto.DefaultCurrency;
-            s.TimeZone = dto.TimeZone;
-            s.DateFormat = dto.DateFormat;
-            s.TimeFormat = dto.TimeFormat;
+            s.TimeZone = dto.TimeZone ?? "Europe/Berlin";
+            s.DateFormat = dto.DateFormat ?? "yyyy-MM-dd";
+            s.TimeFormat = dto.TimeFormat ?? "HH:mm";
 
             // -------- Security / JWT --------
             s.JwtEnabled = dto.JwtEnabled;
@@ -87,8 +87,8 @@ namespace Darwin.Application.Settings.Commands
 
             // -------- Units & Formatting --------
             s.MeasurementSystem = dto.MeasurementSystem;
-            s.DisplayWeightUnit = dto.DisplayWeightUnit;
-            s.DisplayLengthUnit = dto.DisplayLengthUnit;
+            s.DisplayWeightUnit = dto.DisplayWeightUnit ?? "kg";
+            s.DisplayLengthUnit = dto.DisplayLengthUnit ?? "cm";
             s.MeasurementSettingsJson = dto.MeasurementSettingsJson;
             s.NumberFormattingOverridesJson = dto.NumberFormattingOverridesJson;
 
@@ -113,8 +113,8 @@ namespace Darwin.Application.Settings.Commands
             s.WhatsAppAdminRecipientsCsv = dto.WhatsAppAdminRecipientsCsv;
 
             // -------- WebAuthn --------
-            s.WebAuthnRelyingPartyId = dto.WebAuthnRelyingPartyId.Trim();
-            s.WebAuthnRelyingPartyName = dto.WebAuthnRelyingPartyName.Trim();
+            s.WebAuthnRelyingPartyId = dto.WebAuthnRelyingPartyId?.Trim() ?? "localhost";
+            s.WebAuthnRelyingPartyName = dto.WebAuthnRelyingPartyName?.Trim() ?? "Darwin";
             s.WebAuthnAllowedOriginsCsv = string.Join(",",
                 (dto.WebAuthnAllowedOriginsCsv ?? string.Empty)
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

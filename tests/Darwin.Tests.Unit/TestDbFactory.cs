@@ -50,10 +50,10 @@ namespace Darwin.Tests.Unit
                 : base(options) { }
 
             /// <inheritdoc/>
-            public DbSet<T> Set<T>() where T : class => base.Set<T>();
+            public new DbSet<T> Set<T>() where T : class => base.Set<T>();
 
             /// <inheritdoc/>
-            public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
                 base.SaveChangesAsync(cancellationToken);
 
             protected override void OnModelCreating(ModelBuilder modelBuilder)

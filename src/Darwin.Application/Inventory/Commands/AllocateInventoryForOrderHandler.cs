@@ -44,53 +44,51 @@ namespace Darwin.Application.Inventory.Commands
             if (order is null)
                 throw new InvalidOperationException("Order not found.");
 
-            // Fetch variants impacted (track minimal state)
             var variantIds = dto.Lines.Select(l => l.VariantId).Distinct().ToList();
-            var variants = await _db.Set<ProductVariant>()
+            var existingVariantIds = await _db.Set<ProductVariant>()
+                .AsNoTracking()
                 .Where(vr => variantIds.Contains(vr.Id))
-                .Select(vr => new { vr.Id, vr.StockOnHand, vr.StockReserved })
+                .Select(vr => vr.Id)
                 .ToListAsync(ct);
 
-            if (variants.Count != variantIds.Count)
+            if (existingVariantIds.Count != variantIds.Count)
                 throw new ValidationException("One or more variants do not exist.");
 
             // Idempotency: check existing ledger rows for this order (Reason = ShipmentAllocation)
             var alreadyAllocated = await _db.Set<InventoryTransaction>()
                 .Where(t => t.ReferenceId == dto.OrderId && t.Reason == "ShipmentAllocation")
-                .Select(t => t.ProductVariantId)
+                .Select(t => new { t.ProductVariantId, t.WarehouseId })
                 .ToListAsync(ct);
 
             // Process each line atomically with a guarded ExecuteUpdateAsync
             foreach (var line in dto.Lines)
             {
-                if (alreadyAllocated.Contains(line.VariantId))
+                var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, line.VariantId, dto.WarehouseId, ct);
+
+                if (alreadyAllocated.Any(x => x.ProductVariantId == line.VariantId && x.WarehouseId == warehouseId))
                     continue; // skip idempotent duplicate
 
-                // First, ensure current snapshot has enough reserved to move out
-                var snap = variants.First(x => x.Id == line.VariantId);
-                if (snap.StockReserved < line.Quantity)
-                    throw new ValidationException($"Insufficient reserved stock for variant {line.VariantId}.");
-
-                // Apply: StockOnHand -= qty, StockReserved -= qty (guard with WHERE to avoid race)
-                var affected = await _db.Set<ProductVariant>()
-                    .Where(vr => vr.Id == line.VariantId
-                                 && vr.StockReserved >= line.Quantity)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(vr => vr.StockOnHand, vr => vr.StockOnHand - line.Quantity)
-                        .SetProperty(vr => vr.StockReserved, vr => vr.StockReserved - line.Quantity),
+                var stockLevel = await _db.Set<StockLevel>()
+                    .FirstOrDefaultAsync(
+                        x => x.WarehouseId == warehouseId && x.ProductVariantId == line.VariantId,
                         ct);
 
-                if (affected == 0)
-                    throw new DbUpdateConcurrencyException("Allocation failed due to concurrent change. Retry the operation.");
+                if (stockLevel is null || stockLevel.ReservedQuantity < line.Quantity)
+                    throw new ValidationException($"Insufficient reserved stock for variant {line.VariantId}.");
+
+                stockLevel.ReservedQuantity -= line.Quantity;
 
                 // Append ledger: negative delta indicates stock leaves on-hand for fulfillment
                 _db.Set<InventoryTransaction>().Add(new InventoryTransaction
                 {
+                    WarehouseId = warehouseId,
                     ProductVariantId = line.VariantId,
                     QuantityDelta = -line.Quantity,
                     Reason = "ShipmentAllocation",
                     ReferenceId = dto.OrderId
                 });
+
+                await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, line.VariantId, ct);
             }
 
             await _db.SaveChangesAsync(ct);

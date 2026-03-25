@@ -69,6 +69,7 @@ namespace Darwin.Infrastructure.Extensions
 
             // Mobile-first seed sections
             services.AddScoped<BusinessesSeedSection>();
+            services.AddScoped<CrmSeedSection>();
             services.AddScoped<LoyaltySeedSection>();
 
             services.AddScoped<BillingSeedSection>();

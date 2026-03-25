@@ -1,6 +1,5 @@
 ﻿using Darwin.Infrastructure.Persistence.Db;
 using Darwin.Infrastructure.Persistence.Seed.Sections;
-using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,7 +8,6 @@ namespace Darwin.Infrastructure.Persistence.Seed
     public sealed class DataSeeder
     {
         private readonly DarwinDbContext _db;
-
         private readonly IdentitySeedSection _identity;
         private readonly PricingSeedSection _pricing;
         private readonly CmsSeedSection _cms;
@@ -20,6 +18,7 @@ namespace Darwin.Infrastructure.Persistence.Seed
         private readonly SiteSettingsSeedSection _siteSettings;
         private readonly CatalogSeedSection _catalog;
         private readonly BusinessesSeedSection _businesses;
+        private readonly CrmSeedSection _crm;
         private readonly LoyaltySeedSection _loyalty;
         private readonly BillingSeedSection _billing;
         private readonly MarketingSeedSection _marketing;
@@ -38,6 +37,7 @@ namespace Darwin.Infrastructure.Persistence.Seed
             SiteSettingsSeedSection siteSettings,
             CatalogSeedSection catalog,
             BusinessesSeedSection businesses,
+            CrmSeedSection crm,
             LoyaltySeedSection loyalty,
             BillingSeedSection billing,
             MarketingSeedSection marketing,
@@ -55,6 +55,7 @@ namespace Darwin.Infrastructure.Persistence.Seed
             _siteSettings = siteSettings;
             _catalog = catalog;
             _businesses = businesses;
+            _crm = crm;
             _loyalty = loyalty;
             _billing = billing;
             _marketing = marketing;
@@ -64,8 +65,6 @@ namespace Darwin.Infrastructure.Persistence.Seed
 
         public async Task SeedAsync(CancellationToken ct = default)
         {
-            await _db.Database.MigrateAsync(ct);
-
             await _identity.SeedAsync(_db, ct);
             await _siteSettings.SeedAsync(_db, ct);
             await _pricing.SeedAsync(_db, ct);
@@ -73,14 +72,14 @@ namespace Darwin.Infrastructure.Persistence.Seed
             await _catalog.SeedAsync(_db, ct);
 
             await _businesses.SeedAsync(_db, ct);
+            await _inventory.SeedAsync(_db, ct);
+            await _crm.SeedAsync(_db, ct);
             await _loyalty.SeedAsync(_db, ct);
 
             await _billing.SeedAsync(_db, ct);
             await _marketing.SeedAsync(_db, ct);
             await _shipping.SeedAsync(_db, ct);
             await _orders.SeedAsync(_db, ct);
-
-            await _inventory.SeedAsync(_db, ct);
             await _integration.SeedAsync(_db, ct);
             await _seo.SeedAsync(_db, ct);
             await _cart.SeedAsync(_db, ct);

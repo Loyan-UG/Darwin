@@ -34,8 +34,8 @@ namespace Darwin.Tests.Unit.Catalog
                 Culture = "de-DE",
                 Slug = "test-product",
                 Name = "Existing"
-            });
-            await ctx.SaveChangesAsync();
+            }, TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dto = new ProductCreateDto
             {
@@ -57,7 +57,7 @@ namespace Darwin.Tests.Unit.Catalog
             var validator = new ProductCreateUniqueSlugValidator(ctx);
 
             // Act
-            var result = await validator.ValidateAsync(dto, CancellationToken.None);
+            var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
 
             // Assert
             result.IsValid.Should().BeFalse();
@@ -77,8 +77,8 @@ namespace Darwin.Tests.Unit.Catalog
                 Culture = "en-US",
                 Slug = "sample",
                 Name = "Existing"
-            });
-            await ctx.SaveChangesAsync();
+            }, TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dto = new ProductEditDto
             {
@@ -102,7 +102,7 @@ namespace Darwin.Tests.Unit.Catalog
             var validator = new ProductEditUniqueSlugValidator(ctx);
 
             // Act
-            var result = await validator.ValidateAsync(dto, CancellationToken.None);
+            var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
 
             // Assert
             result.IsValid.Should().BeFalse();
@@ -127,8 +127,8 @@ namespace Darwin.Tests.Unit.Catalog
                 Culture = "en-US",
                 Slug = "old",
                 Name = "Existing"
-            });
-            await ctx.SaveChangesAsync();
+            }, TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dto = new ProductCreateDto
             {
@@ -149,7 +149,7 @@ namespace Darwin.Tests.Unit.Catalog
             };
             var validator = new ProductCreateUniqueSlugValidator(ctx);
             // Act
-            var result = await validator.ValidateAsync(dto, CancellationToken.None);
+            var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
             // Assert
             result.IsValid.Should().BeTrue("unique (culture, slug) combinations should pass validation");
         }
@@ -174,8 +174,8 @@ namespace Darwin.Tests.Unit.Catalog
                 Culture = "en-US",
                 Slug = "same",
                 Name = "Original"
-            });
-            await ctx.SaveChangesAsync();
+            }, TestContext.Current.CancellationToken);
+            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
 
             var dto = new ProductEditDto
             {
@@ -198,7 +198,7 @@ namespace Darwin.Tests.Unit.Catalog
             };
             var validator = new ProductEditUniqueSlugValidator(ctx);
             // Act
-            var result = await validator.ValidateAsync(dto, CancellationToken.None);
+            var result = await validator.ValidateAsync(dto, TestContext.Current.CancellationToken);
             // Assert
             result.IsValid.Should().BeTrue("editing a product without changing its slug should pass validation");
         }

@@ -47,7 +47,7 @@ namespace Darwin.Application.CartCheckout.Commands
                 {
                     UserId = dto.UserId,
                     AnonymousId = dto.AnonymousId,
-                    Currency = dto.Currency
+                    Currency = string.IsNullOrWhiteSpace(dto.Currency) ? "EUR" : dto.Currency.Trim()
                 };
                 _db.Set<Cart>().Add(cart);
                 await _db.SaveChangesAsync(ct);
@@ -58,6 +58,11 @@ namespace Darwin.Application.CartCheckout.Commands
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == dto.VariantId && !v.IsDeleted, ct)
                 ?? throw new ValidationException("Variant not found.");
+
+            if (string.IsNullOrWhiteSpace(cart.Currency))
+            {
+                cart.Currency = variant.Currency;
+            }
 
             var tax = await _db.Set<TaxCategory>()
                 .AsNoTracking()

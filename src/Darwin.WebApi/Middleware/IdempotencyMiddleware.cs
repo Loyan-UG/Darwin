@@ -80,23 +80,31 @@ namespace Darwin.WebApi.Middleware
             // Check cache
             if (_cache.TryGetValue(cacheKey, out IdempotencyEntry? existingEntry))
             {
-                if (existingEntry.IsInProgress)
+                if (existingEntry is null)
                 {
-                    _logger.LogInformation("Idempotency key {Key} is already in-progress. Returning 409.", idempotencyKey);
-                    context.Response.StatusCode = (int)HttpStatusCode.Conflict;
-                    await context.Response.WriteAsync("Request already in progress.").ConfigureAwait(false);
+                    _cache.Remove(cacheKey);
+                }
+                else
+                {
+                    if (existingEntry.IsInProgress)
+                    {
+                        _logger.LogInformation("Idempotency key {Key} is already in-progress. Returning 409.", idempotencyKey);
+                        context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                        await context.Response.WriteAsync("Request already in progress.").ConfigureAwait(false);
+                        return;
+                    }
+
+                    // Return cached response
+                    _logger.LogDebug("Idempotency key {Key} found in cache. Returning cached response.", idempotencyKey);
+                    context.Response.StatusCode = existingEntry.StatusCode;
+                    context.Response.ContentType = existingEntry.ContentType ?? "application/json";
+                    if (existingEntry.Body is not null && existingEntry.Body.Length > 0)
+                    {
+                        await context.Response.Body.WriteAsync(existingEntry.Body, 0, existingEntry.Body.Length).ConfigureAwait(false);
+                    }
+
                     return;
                 }
-
-                // Return cached response
-                _logger.LogDebug("Idempotency key {Key} found in cache. Returning cached response.", idempotencyKey);
-                context.Response.StatusCode = existingEntry.StatusCode;
-                context.Response.ContentType = existingEntry.ContentType ?? "application/json";
-                if (existingEntry.Body is not null && existingEntry.Body.Length > 0)
-                {
-                    await context.Response.Body.WriteAsync(existingEntry.Body, 0, existingEntry.Body.Length).ConfigureAwait(false);
-                }
-                return;
             }
 
             // Reserve the key as in-progress to prevent concurrent execution.

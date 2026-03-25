@@ -21,25 +21,29 @@ namespace Darwin.Application.Inventory.Commands
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new FluentValidation.ValidationException(v.Errors);
 
-            // Atomic decrement guarded to avoid going negative
-            var affected = await _db.Set<ProductVariant>()
-                .Where(vr => vr.Id == dto.VariantId && vr.StockReserved >= dto.Quantity)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(vr => vr.StockReserved, vr => vr.StockReserved - dto.Quantity),
+            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, ct);
+            var stockLevel = await _db.Set<StockLevel>()
+                .FirstOrDefaultAsync(
+                    x => x.WarehouseId == warehouseId && x.ProductVariantId == dto.VariantId,
                     ct);
 
-            if (affected == 0)
+            if (stockLevel is null || stockLevel.ReservedQuantity < dto.Quantity)
                 throw new DbUpdateConcurrencyException("Release failed due to concurrent change or insufficient reserved.");
+
+            stockLevel.ReservedQuantity -= dto.Quantity;
+            stockLevel.AvailableQuantity += dto.Quantity;
 
             // Ledger: release does not change on-hand; zero-delta for traceability.
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
+                WarehouseId = warehouseId,
                 ProductVariantId = dto.VariantId,
                 QuantityDelta = 0,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId
             });
 
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, ct);
             await _db.SaveChangesAsync(ct);
         }
     }

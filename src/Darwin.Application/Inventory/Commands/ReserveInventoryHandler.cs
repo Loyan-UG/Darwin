@@ -21,39 +21,31 @@ namespace Darwin.Application.Inventory.Commands
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new FluentValidation.ValidationException(v.Errors);
 
-            // Load a snapshot for validation (available = on-hand - reserved)
-            var snap = await _db.Set<ProductVariant>()
-                .AsNoTracking()
-                .Where(vr => vr.Id == dto.VariantId)
-                .Select(vr => new { vr.Id, vr.StockOnHand, vr.StockReserved })
-                .FirstOrDefaultAsync(ct);
-
-            if (snap is null) throw new InvalidOperationException("Variant not found.");
-
-            var available = snap.StockOnHand - snap.StockReserved;
-            if (available < dto.Quantity)
-                throw new FluentValidation.ValidationException("Insufficient available stock for reservation.");
-
-            // Atomic increment guarded by availability condition to avoid race
-            var affected = await _db.Set<ProductVariant>()
-                .Where(vr => vr.Id == dto.VariantId
-                             && (vr.StockOnHand - vr.StockReserved) >= dto.Quantity)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(vr => vr.StockReserved, vr => vr.StockReserved + dto.Quantity),
+            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, ct);
+            var stockLevel = await _db.Set<StockLevel>()
+                .FirstOrDefaultAsync(
+                    x => x.WarehouseId == warehouseId && x.ProductVariantId == dto.VariantId,
                     ct);
 
-            if (affected == 0)
-                throw new DbUpdateConcurrencyException("Reservation failed due to concurrent change. Retry the operation.");
+            if (stockLevel is null) throw new InvalidOperationException("Stock level not found.");
+
+            if (stockLevel.AvailableQuantity < dto.Quantity)
+                throw new FluentValidation.ValidationException("Insufficient available stock for reservation.");
+
+            stockLevel.AvailableQuantity -= dto.Quantity;
+            stockLevel.ReservedQuantity += dto.Quantity;
 
             // Ledger: reservation itself does not change on-hand; write a zero-delta row for traceability (optional).
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
+                WarehouseId = warehouseId,
                 ProductVariantId = dto.VariantId,
                 QuantityDelta = 0,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId
             });
 
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, ct);
             await _db.SaveChangesAsync(ct);
         }
     }

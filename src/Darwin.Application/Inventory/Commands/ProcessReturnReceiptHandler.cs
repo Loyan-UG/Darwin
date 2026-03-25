@@ -29,6 +29,8 @@ namespace Darwin.Application.Inventory.Commands
             var v = _validator.Validate(dto);
             if (!v.IsValid) throw new ValidationException(v.Errors);
 
+            var warehouseId = await Darwin.Application.Inventory.InventoryStockHelper.ResolveWarehouseIdAsync(_db, dto.VariantId, dto.WarehouseId, ct);
+
             // Idempotency: if a ReferenceId is provided and a matching ledger row exists, skip
             if (dto.ReferenceId.HasValue)
             {
@@ -36,28 +38,31 @@ namespace Darwin.Application.Inventory.Commands
                     .AsNoTracking()
                     .AnyAsync(t => t.ReferenceId == dto.ReferenceId
                                    && t.Reason == dto.Reason
-                                   && t.ProductVariantId == dto.VariantId, ct);
+                                   && t.ProductVariantId == dto.VariantId
+                                   && t.WarehouseId == warehouseId, ct);
                 if (exists) return;
             }
 
-            // Atomic increment of on-hand using ExecuteUpdateAsync
-            var affected = await _db.Set<ProductVariant>()
-                .Where(vr => vr.Id == dto.VariantId)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(vr => vr.StockOnHand, vr => vr.StockOnHand + dto.Quantity),
-                    ct);
+            var variantExists = await _db.Set<ProductVariant>()
+                .AsNoTracking()
+                .AnyAsync(vr => vr.Id == dto.VariantId, ct);
 
-            if (affected == 0)
+            if (!variantExists)
                 throw new InvalidOperationException("Variant not found.");
+
+            var stockLevel = await Darwin.Application.Inventory.InventoryStockHelper.GetOrCreateStockLevelAsync(_db, warehouseId, dto.VariantId, ct);
+            stockLevel.AvailableQuantity += dto.Quantity;
 
             _db.Set<InventoryTransaction>().Add(new InventoryTransaction
             {
+                WarehouseId = warehouseId,
                 ProductVariantId = dto.VariantId,
                 QuantityDelta = dto.Quantity,
                 Reason = dto.Reason,
                 ReferenceId = dto.ReferenceId
             });
 
+            await Darwin.Application.Inventory.InventoryStockHelper.RefreshLegacyVariantStockAsync(_db, dto.VariantId, ct);
             await _db.SaveChangesAsync(ct);
         }
     }

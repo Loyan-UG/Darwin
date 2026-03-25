@@ -14,7 +14,7 @@ namespace Darwin.Application.Inventory.Queries
         public GetInventoryLedgerHandler(IAppDbContext db) => _db = db;
 
         public async Task<(List<InventoryTransactionRowDto> Items, int Total)> HandleAsync(
-            Guid? variantId, int page, int pageSize, CancellationToken ct = default)
+            Guid? variantId, int page, int pageSize, Guid? warehouseId = null, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 50;
@@ -22,6 +22,8 @@ namespace Darwin.Application.Inventory.Queries
             var q = _db.Set<InventoryTransaction>().AsNoTracking().AsQueryable();
             if (variantId.HasValue)
                 q = q.Where(t => t.ProductVariantId == variantId.Value);
+            if (warehouseId.HasValue)
+                q = q.Where(t => t.WarehouseId == warehouseId.Value);
 
             var total = await q.CountAsync(ct);
 
@@ -30,6 +32,7 @@ namespace Darwin.Application.Inventory.Queries
                 .Select(t => new InventoryTransactionRowDto
                 {
                     Id = t.Id,
+                    WarehouseId = t.WarehouseId,
                     VariantId = t.ProductVariantId,
                     QuantityDelta = t.QuantityDelta,
                     Reason = t.Reason,

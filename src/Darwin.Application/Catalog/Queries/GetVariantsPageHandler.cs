@@ -80,7 +80,8 @@ namespace Darwin.Application.Catalog.Queries
                         ?? _db.Set<ProductTranslation>()
                               .Where(t => t.ProductId == v.ProductId && !t.IsDeleted)
                               .Select(t => t.Name)
-                              .FirstOrDefault(),
+                              .FirstOrDefault()
+                        ?? string.Empty,
                     RowVersion = v.RowVersion,
                     Gtin = v.Gtin
                 })
