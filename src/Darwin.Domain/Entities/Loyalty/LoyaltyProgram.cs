@@ -30,12 +30,19 @@ namespace Darwin.Domain.Entities.Loyalty
         /// For amount-based accrual: number of points per currency unit (minor units based in Money, but here logical).
         /// Nullable as it's irrelevant in PerVisit mode.
         /// </summary>
-        public decimal? PointsPerCurrencyUnit { get; set; }
+        public decimal PointsPerCurrencyUnit { get; set; }
 
         /// <summary>
         /// Whether this program is currently active and visible to customers in discovery.
         /// </summary>
-        public bool IsActive { get; set; } = true;
+        public bool Active { get; set; } = true;
+
+        // Legacy alias.
+        public bool IsActive
+        {
+            get => Active;
+            set => Active = value;
+        }
 
         /// <summary>
         /// JSON field to store future rule expressions, blacklists, time windows, etc. Evolvable without schema churn.
