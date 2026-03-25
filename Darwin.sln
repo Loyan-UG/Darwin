@@ -89,6 +89,7 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "Darwin.Web", "src\Darwin.We
 		Release.AspNetCompiler.FixedNames = "false"
 		Release.AspNetCompiler.Debug = "False"
 		VWDPort = "26875"
+		SlnRelativePath = "src\Darwin.Web\"
 	EndProjectSection
 EndProject
 Global

@@ -18,6 +18,9 @@ namespace Darwin.Domain.Entities.CMS
         /// </summary>
         public string Name { get; set; } = "Main";
 
+        /// <summary>Default culture for the menu payload.</summary>
+        public string Culture { get; set; } = "en-US";
+
         /// <summary>
         ///     The set of items that belong to this menu. Items can be hierarchical via <see cref="MenuItem.ParentId"/>.
         ///     Render order is determined by <see cref="MenuItem.SortOrder"/>.
@@ -43,10 +46,20 @@ namespace Darwin.Domain.Entities.CMS
         ///     Destination URL or application route for this item. This is culture-invariant; if you later
         ///     need per-culture URLs, model that explicitly in translations.
         /// </summary>
+        public string Title { get; set; } = string.Empty;
+
+        /// <summary>Destination URL or route.</summary>
         public string Url { get; set; } = string.Empty;
 
         /// <summary>Determines order among siblings; lower values render first.</summary>
-        public int SortOrder { get; set; }
+        public int Order { get; set; }
+
+        // Legacy alias.
+        public int SortOrder
+        {
+            get => Order;
+            set => Order = value;
+        }
 
         /// <summary>When false, the item is hidden from rendering without being deleted.</summary>
         public bool IsActive { get; set; } = true;
@@ -54,6 +67,9 @@ namespace Darwin.Domain.Entities.CMS
         /// <summary>
         ///     Per-culture translations carrying user-facing labels.
         /// </summary>
+        public List<MenuItem> Children { get; set; } = new();
+
+        /// <summary>Localized item labels.</summary>
         public List<MenuItemTranslation> Translations { get; set; } = new();
     }
 
@@ -71,6 +87,13 @@ namespace Darwin.Domain.Entities.CMS
         /// <summary>
         ///     User-facing label displayed in navigation for the specified culture.
         /// </summary>
-        public string Label { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+
+        // Legacy alias.
+        public string Label
+        {
+            get => Title;
+            set => Title = value;
+        }
     }
 }

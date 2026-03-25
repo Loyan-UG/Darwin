@@ -32,6 +32,9 @@ namespace Darwin.Domain.Entities.Catalog
         /// </summary>
         public Guid? LogoMediaId { get; set; }
 
+        /// <summary>Publish flag for storefront visibility.</summary>
+        public bool IsPublished { get; set; } = true;
+
         /// <summary>
         ///     Per-culture translations for brand-facing fields (Name, DescriptionHtml).
         /// </summary>

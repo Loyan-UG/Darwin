@@ -4,7 +4,10 @@
     public enum LoyaltyAccrualMode
     {
         PerVisit = 0,
-        AmountBased = 1
+        PerCurrencyUnit = 1,
+
+        // Legacy alias.
+        AmountBased = PerCurrencyUnit
     }
 
     /// <summary>Reward type offered at a tier.</summary>
@@ -35,7 +38,10 @@
     public enum LoyaltyRedemptionStatus
     {
         Pending = 0,
-        Confirmed = 1,
+        Completed = 1,
+
+        // Legacy alias.
+        Confirmed = Completed,
         Cancelled = 2
     }
 
