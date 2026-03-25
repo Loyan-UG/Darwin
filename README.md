@@ -5,318 +5,265 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![EF Core](https://img.shields.io/badge/EntityFrameworkCore-10.0-512BD4?logo=nuget)](https://learn.microsoft.com/ef/)
 [![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
 [![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
 [![Build](https://img.shields.io/github/actions/workflow/status/shahramvafadar/Darwin/build.yml?branch=master&logo=githubactions&label=CI)](../../actions)
 
-Darwin is a unified platform that combines a content management system (CMS) with robust eÃ¢â‚¬â€˜commerce, a flexible loyalty engine, a forthcoming customer relationship management (CRM) module and modern .NET MAUI mobile apps. The goal of the platform is to allow businesses to manage content, products, loyalty programmes and customer engagement from a single codebase while exposing a RESTful WebApi for integration and providing firstÃ¢â‚¬â€˜party mobile experiences for both consumers and business staff. ContractÃ¢â‚¬â€˜first development ensures that mobile apps, WebApi and web portals all stay in sync through the shared Darwin.Contracts library.
+Darwin is a unified platform for CMS, commerce, loyalty, CRM, and mobile experiences. The web layer is now split into two distinct applications:
 
-## Ã°Å¸â€œÅ’ Documentation Map (Start Here)
+- `Darwin.WebAdmin` is the ASP.NET Core MVC/Razor back-office used by staff and operators.
+- `Darwin.Web` is the Next.js/React front-office used by customers for the public storefront and member portal.
 
-Use this README as the entry point, then jump to the specialized docs:
+Both web experiences sit on top of the same business platform, share the same domain and application model, and are designed around `Darwin.WebApi` as the API-friendly integration surface for front-office, mobile, and future external clients.
 
-- **Backlog & Roadmap (source of truth)**: [`BACKLOG.md`](BACKLOG.md)
-- **WebApi technical guide (endpoints, policies, Postman playbook)**: [`DarwinWebApi.md`](DarwinWebApi.md)
-- **Mobile technical guide (Consumer/Business apps + Contracts)**: [`DarwinMobile.md`](DarwinMobile.md)
+## Documentation Map
+
+Use this README as the entry point, then jump to the focused documents:
+
+- **Backlog & roadmap (source of truth)**: [`BACKLOG.md`](BACKLOG.md)
+- **WebApi guide (surfaces, policies, endpoint matrix, implementation rules)**: [`DarwinWebApi.md`](DarwinWebApi.md)
+- **Front-end guide (Next.js app structure, SSR/SSG/ISR, auth flow)**: [`DarwinFrontEnd.md`](DarwinFrontEnd.md)
+- **Mobile guide (Consumer/Business apps + Contracts)**: [`DarwinMobile.md`](DarwinMobile.md)
 - **Mobile UI/UX guidelines**: [`DarwinMobile.Guidelines.md`](DarwinMobile.Guidelines.md)
-- **Testing strategy & test execution tracker**: [`DarwinTesting.md`](DarwinTesting.md)
-- **Admin Identity module how-to (Users/Roles/Permissions)**: [`howto-identity-access.md`](howto-identity-access.md)
-- **Contributing**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
-
-## Ã¢Å“â€¦ Current Status Snapshot
-
-This is a **high-level snapshot**. For detailed planning and the authoritative status per workstream, use `BACKLOG.md`.
-
-## Status Snapshot
-
-| Pillar                     | Status         | Notes                                                                                                                                                                                                       |
-| -------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Domain & Application**   | Ã¢Å“â€Ã¯Â¸Å½ Complete    | Clean architecture implemented with Commands/Queries, DTOs and validators.                                                                                                                                  |
-| **Infrastructure**         | Ã¢Å“â€Ã¯Â¸Å½ Complete    | Persistence (EFÃ‚Â Core), Identity & JWT, DataÃ‚Â Protection, Notifications.                                                                                                                                      |
-| **Web CMS & EÃ¢â‚¬â€˜Commerce**   | Ã¢â€“Â¶Ã¯Â¸Å½ InÃ‚Â Progress   | Content & page management, product catalogue, cart & order flows.                                                                                                                                           |
-| **Loyalty System**         | Ã¢â€“Â¶Ã¯Â¸Å½ PhaseÃ‚Â 3+    | ScanÃ¢â‚¬â€˜session based accrual/redemption, rewards & campaigns, serverÃ¢â‚¬â€˜side guardrails, push notifications and analytics implemented. Remaining work: advanced campaign editor & dispatch/suppression workflow. |
-| **REST WebApi**            | Ã¢â€“Â¶Ã¯Â¸Å½ Mature      | All mobileÃ¢â‚¬â€˜facing and admin endpoints delivered; continuous improvements & new endpoints are tracked in the backlog.                                                                                        |
-| **Mobile Apps (Consumer)** | Ã¢â€“Â¶Ã¯Â¸Å½ PhaseÃ‚Â 3+    | Login/register, QR display, discovery & map, rewards dashboard, promotions feed, push registration and analytics done; improvements in progress (multiÃ¢â‚¬â€˜business wallet, reminders).                         |
-| **Mobile Apps (Business)** | Ã¢â€“Â¶Ã¯Â¸Å½ PhaseÃ‚Â 3+    | QR scanning, point accrual/redemption, reward management, dashboard & reporting, business campaign editor implemented; enhancements to campaign editor and reminder workflows planned.                      |
-| **CRM Module**             | Ã¢Å¡â„¢Ã¯Â¸Å½ Planned     | Entities and flows for leads, contacts, opportunities and segmentation under design; integration with loyalty and commerce to follow.                                                                       |
-| **Storefront**             | Ã¢Å¡â„¢Ã¯Â¸Å½ Planned     | CustomerÃ¢â‚¬â€˜facing shop interface (ASP.NETÃ‚Â MVC/Blazor) with checkout and payment integration.                                                                                                                  |
-| **Testing & QA**           | Ã¢â€“Â¶Ã¯Â¸Å½ InÃ‚Â Progress | Integration, contract and concurrency tests exist; additional coverage for new features and pushÃ¢â‚¬â€˜sync scenarios planned.                                                                                    |
-
----
-
-## Ã¢Å“Â¨ Features
-
-- Ã°Å¸â€œÂ **CMS**: Pages, rich text editor (Quill), SEO meta, menus, media library.
-- Ã°Å¸â€ºÂÃ¯Â¸Â **Catalog**: Brands, categories, products, variants, attributes.
-- Ã°Å¸â€œÂ¦ **Inventory**: Stock tracking, reserved qty, reorder levels, warehouses (future).
-- Ã°Å¸â€™Â¶ **Pricing & Tax**: EU VAT (DE by default), promotions, coupons.
-- Ã°Å¸â€ºâ€™ **Cart & Checkout**: Guest carts, min/max qty rules, VAT calculations.
-- Ã°Å¸â€œâ€˜ **Orders**: Full lifecycle (Created Ã¢â€ â€™ Paid Ã¢â€ â€™ Shipped Ã¢â€ â€™ Refunded).
-- Ã°Å¸Å¡Å¡ **Shipping**: DHL (DE first), extensible provider model.
-- Ã°Å¸â€™Â³ **Payments**: PayPal, Klarna/Sofort, SEPA (future Stripe).
-- Ã°Å¸Å’Â **Localization**: Multi-culture content via normalized translations.
-- Ã°Å¸â€Â **SEO**: Unique slugs per culture, canonical, hreflang, sitemap, robots.
-- Ã°Å¸Â§Â© **Extensibility**: Feature flags, outgoing webhooks, modular architecture.
-- Ã°Å¸â€ºÂ¡Ã¯Â¸Â **Security**: XSS sanitization, upload hardening, GDPR consent & privacy pages.
-  - **Argon2id** password hashing
-  - **Passkeys/WebAuthn** (FIDO2 via fido2-net-lib v4) for login/registration
-  - **TOTP 2FA** (RFC 6238)
-  - **Data Protection** key ring persisted for shared hosting
-- Ã°Å¸â€œÅ  **Analytics**: Google Analytics, Tag Manager, Search Console (via settings).
-- Ã°Å¸Â§Âª **Testing**: Unit + Integration tests, GitHub Actions CI.
-- Ã°Å¸ÂªÂª **Identity & Access (Admin + Mobile)**: roles/permissions, concurrency patterns, and member self-service flows.
-- Ã°Å¸Å½Â **Loyalty & Engagement**:
-  - Session-based QR (opaque scan token), accrual, redemption
-  - Rewards tiers and business-facing management (evolving)
-  - Campaigns/promotions feed & engagement tracking (in progress; see `BACKLOG.md`)
-- Ã°Å¸â€œÂ± **Mobile (MAUI)**:
-  - Consumer app (discover, QR, rewards, profile, promotions)
-  - Business app (scan, accrue, redeem, dashboard/reporting)
-- Ã°Å¸â€â€” **API & Contracts**:
-  - Public **Darwin.WebApi** (JWT, Swagger) using **Darwin.Contracts** as the single source of request/response models for Web + Mobile.
-- Ã°Å¸Â¤Â **CRM (next major pillar)**:
-  - Customer profiles + segmentation + activity timeline
-  - Consent & GDPR workflows
-  - Outreach automations (email/SMS/WhatsApp) planned
-
----
-
-## Ã°Å¸Ââ€”Ã¯Â¸Â Architecture
-
-Darwin follows a **clean architecture** with clear separation of concerns:
-
-```
-src/
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Domain           Ã¢â€ â€™ Entities, ValueObjects, Enums, BaseEntity
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Application      Ã¢â€ â€™ Use cases, DTOs, Handlers, Validators
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Infrastructure   Ã¢â€ â€™ EF Core, DbContext, Migrations, DataSeeder
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.WebAdmin              Ã¢â€ â€™ MVC + Razor (Admin + Public), DI, Middleware
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.WebApi           Ã¢â€ â€™ Public REST API (mobile + future integrations)
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Worker           Ã¢â€ â€™ Background jobs / schedulers (where applicable)
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Shared           Ã¢â€ â€™ Result wrappers, constants, helpers
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Contracts        Ã¢â€ â€™ Shared DTOs for WebApi + Mobile (request/response contracts)
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Mobile.Shared    Ã¢â€ â€™ Mobile shared services (HTTP client, retry, auth, scanner/location abstractions)
-Ã¢â€Å“Ã¢â€â‚¬ Darwin.Mobile.Consumer  Ã¢â€ â€™ .NET MAUI consumer app (QR, discover, rewards, profile)
-Ã¢â€â€Ã¢â€â‚¬ Darwin.Mobile.Business  Ã¢â€ â€™ .NET MAUI business app (scan, accrue, redeem, dashboard)
-```
-
-### Key Principles
-- **SOLID** applied consistently.
-- **Minor units for money** (`long` cents) to avoid floating-point errors.
-- **Audit fields** (`CreatedAtUtc`, `ModifiedAtUtc`, `CreatedByUserId`, `ModifiedByUserId`).
-- **Soft delete** with `IsDeleted`.
-- **Optimistic concurrency** via `RowVersion`.
-- **Normalized translation tables** for multilingual content.
-
-### Composition
-
-- **Web composition root**: `src/Darwin.WebAdmin/Extensions/DependencyInjection.cs`
-  - `AddSharedHostingDataProtection(configuration)`
-  - `AddPersistence(configuration)`
-  - `AddIdentityInfrastructure()`
-  - `AddNotificationsInfrastructure(configuration)`
-- **WebApi composition root**: `src/Darwin.WebApi/Extensions/DependencyInjection.cs`
-  - Adds Application, Persistence, JWT auth core, HttpContextAccessor, `ICurrentUserService`, Swagger (dev), RateLimiter, Controllers.
-  - Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
-
----
-
-## Ã°Å¸â€œÂ± Mobile Overview
-
-The mobile suite consists of two .NET MAUI apps:
-
-- **Darwin.Mobile.Consumer**: end-user app with authentication, a **short-lived scan session QR** (Accrual/Redemption), discover/map, rewards dashboard, profile.
-- **Darwin.Mobile.Business**: tablet app for partners to **scan the consumer QR**, load the server-side scan session, and then **accrue points** or **confirm reward redemptions**.
-
-Shared libraries and contracts:
-
-- **Darwin.Mobile.Shared**: typed HTTP client (System.Text.Json), retry policy, token storage helpers, abstractions for camera scanning (`IScanner`) and geolocation (`ILocation`). Registered via `AddDarwinMobileShared(ApiOptions)` (requires `Microsoft.Extensions.Http`).
-- **Darwin.Contracts**: single source of **request/response DTOs** used by both WebApi and the mobile apps (identity tokens, loyalty scan flows, discovery, paging/sorting, problem details).
-
-Security highlights:
-
-- **No internal user IDs in QR**; QR is an opaque, short-lived ScanSessionToken. Short expiry and one-time semantics limit replay risk.
-- **JWT + refresh tokens** for app authentication; server uses Data Protection and Argon2/WebAuthn/TOTP.
-
-### Mobile/WebApi Quick Start (Contracts-first)
-
-Darwin.WebApi is the public surface for mobile. All payloads/errors use `Darwin.Contracts`.
-
-**Where to look (do not duplicate endpoint lists in README)**:
-- Full endpoint inventory, policies, and Postman verification: **`DarwinWebApi.md`**
-- Mobile app behavior/UX rules, phases, and platform integration: **`DarwinMobile.md`**
-
-**Auth & Bootstrap (overview)**  
-WebApi provides:
-- Member (Consumer) auth flows (login/refresh/logout/register/reset-password, etc.)
-- Business auth flows, with business-scoped authorization for sensitive endpoints
-- A mobile bootstrap/meta surface for app runtime configuration
-
-**Profile / Loyalty / Discovery (overview)**  
-WebApi provides contracts-first surfaces for:
-- Profile (`RowVersion` concurrency)
-- Loyalty scan session (prepare/process/confirm)
-- Business discovery (map + list + detail)
-- Campaign/promotion operations (evolving)
-
-**Error & Result Shape**
-- Errors: `Darwin.Contracts.Common.ProblemDetails`.
-- Handlers return `Result/Result<T>`; controllers convert failures to `ProblemDetails`.
-
-**Security (WebApi)**
-- JWT bearer auth (`JwtTokenService`); rate limiting on login/refresh (`EnableRateLimiting` policies).
-- Policies: `perm:AccessMemberArea`, `perm:AccessLoyaltyBusiness`.
-- `ICurrentUserService` resolved from claims (no admin fallback).
-
----
-
-## CRM Overview
-
-A CRM module is being designed to complement the CMS and loyalty system.  Planned capabilities include:
-
-* **Lead & Opportunity Management** Ã¢â‚¬â€œ Define lead entities with lifecycle stages, convert leads to opportunities and track opportunity pipelines.
-* **CustomerÃ‚Â 360Ã‚Â°** Ã¢â‚¬â€œ Store customer profiles, interactions, loyalty balances and purchasing history in a unified view.
-* **Segmentation & Campaigns** Ã¢â‚¬â€œ Segment customers based on attributes or behaviour (e.g. loyalty tier, purchase frequency, geography) and target them with personalised campaigns.
-* **Integration with Loyalty & Commerce** Ã¢â‚¬â€œ CRM data will feed into loyalty rules and eÃ¢â‚¬â€˜commerce workflows, enabling crossÃ¢â‚¬â€˜sell/upsell scenarios and measuring campaign ROI.
-
-
----
-
-## Ã°Å¸â€Â Security Overview
-
-- **Passwords**: Argon2id hasher with sane defaults.
-- **Passkeys/WebAuthn**: FIDO2 ceremonies via `fido2-net-lib` v4 (registration + assertion); credentials stored in `UserWebAuthnCredential`.
-- **TOTP 2FA**: RFC 6238 (30s step, 6 digits, default Ã‚Â±1 step window).
-- **Data Protection**: Key ring persisted on disk (shared-host friendly). Configure `DataProtection:KeysPath` to a writable, persistent folder.
-
----
-
-## Ã°Å¸Å¡â‚¬ Getting Started
-
-### Prerequisites
-- [.NET 10 SDK](https://dotnet.microsoft.com/)
-- SQL Server (local or hosted; LocalDB works for dev)
-- MAUI workloads (for mobile)
-- Node/npm (optional, for front-end tooling)
-
-### Local Setup
-
-```bash
-# clone the repo
-git clone https://github.com/shahramvafadar/Darwin.git
-cd Darwin
-```
-
-Configure connection string in `appsettings.Development.json`:
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=Darwin;Trusted_Connection=True;"
-}
-```
-
-Sample `appsettings.Development.json`:
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=Darwin;Trusted_Connection=True;"
-  },
-  "DataProtection": {
-    "KeysPath": "C:\\\\_shared\\\\DarwinKeys"
-  },
-  "Email": {
-    "Smtp": {
-      "Host": "smtp.example.com",
-      "Port": 587,
-      "EnableSsl": true,
-      "User": "no-reply@example.com",
-      "Password": "YOUR_STRONG_PASSWORD",
-      "From": "no-reply@example.com",
-      "FromName": "Darwin"
-    }
-  },
-  "WebAuthn": {
-    "RelyingPartyId": "localhost",
-    "RelyingPartyName": "Darwin",
-    "AllowedOriginsCsv": "https://localhost:5001,https://localhost:7170",
-    "RequireUserVerification": false
-  }
-}
-```
-
-> For production: set a persistent `DataProtection:KeysPath` (disk/share), configure SMTP, WebAuthn origins, culture/currency defaults (also editable from SiteSettings in Admin).
-
-Run migrations & seed:
-```bash
-dotnet ef database update --project src/Darwin.Infrastructure
-```
-
-Start the web app (Admin):
-```bash
-dotnet run --project src/Darwin.WebAdmin
-```
-
-Optional: start WebApi (mobile surface):
-```bash
-dotnet run --project src/Darwin.WebApi
-```
-
-Then open:
-- Web Admin: `https://localhost:7170/`
-- WebApi Swagger (dev): `/swagger` on the WebApi host (see `DarwinWebApi.md`)
-
-(default admin user is seeded Ã¢â‚¬â€ change password on first login).
-
----
-
-## Ã°Å¸â€”ÂºÃ¯Â¸Â Roadmap
-
-**Source of truth:** [`BACKLOG.md`](BACKLOG.md)
-
-This section is purposefully **high-level**, with clear status signals:
-
-- Ã¢Å“â€¦ **Core architecture + security baseline** (clean architecture, EF Core configs, DP, Argon2, WebAuthn, TOTP)
-- Ã°Å¸Å¸Â¡ **Web CMS + Admin** (core in place; UX/polish/coverage ongoing)
-- Ã°Å¸Å¸Â¡ **E-commerce end-to-end** (foundation present; checkout/orders/shipping/payments still not Ã¢â‚¬Å“final formÃ¢â‚¬Â)
-- Ã°Å¸Å¡Â§ **WebApi** (contracts-first API expanding for mobile + future integrations)
-- Ã°Å¸Å¡Â§ **Mobile suite** (Consumer + Business apps; stabilizing and expanding)
-- Ã°Å¸Å¸Â¡ **Loyalty campaigns/promotions** (delivered baseline + ongoing upgrades)
-- Ã°Å¸â€™Â¤ **CRM module** (planned after the mobile wave; must integrate with loyalty + engagement + consent)
-- Ã°Å¸â€™Â¤ **Storefront** (public consumer-facing storefront future)
-
----
-
-## Ã°Å¸â€œÅ¡ Documentation
-
-- **Backlog & Roadmap (authoritative)**: [`BACKLOG.md`](BACKLOG.md)
-- **WebApi (endpoint matrix + policies + Postman walkthroughs)**: [`DarwinWebApi.md`](DarwinWebApi.md)
-- **Mobile suite (projects, phases, contracts, platform setup)**: [`DarwinMobile.md`](DarwinMobile.md)
-- **Mobile UI/UX system & tokens**: [`DarwinMobile.Guidelines.md`](DarwinMobile.Guidelines.md)
 - **Testing strategy & execution tracker**: [`DarwinTesting.md`](DarwinTesting.md)
 - **Admin identity module how-to**: [`howto-identity-access.md`](howto-identity-access.md)
 - **Contributing**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
----
+## Status Snapshot
 
-## Ã°Å¸Â¤Â Contributing
+This is a high-level summary only. For detailed task tracking and sequencing, use `BACKLOG.md`.
 
-Contributions are welcome!
+| Pillar | Status | Notes |
+| --- | --- | --- |
+| **Domain & Application** | Complete | Clean Architecture, handlers, DTOs, validators, and core business flows are in place. |
+| **Infrastructure** | Complete | EF Core persistence, Identity/JWT, Data Protection, notifications, and shared hosting concerns are implemented. |
+| **Web CMS & E-Commerce (Admin)** | In Progress | `Darwin.WebAdmin` delivers content, catalog, pricing, order, and settings workflows for back-office staff. |
+| **Loyalty System** | Phase 3+ | Session-based accrual/redemption, rewards, campaigns, and mobile-oriented loyalty flows are implemented and evolving. |
+| **REST WebApi** | Mature | `Darwin.WebApi` is the contracts-first HTTP surface for mobile, front-office, and future integrations. |
+| **Mobile Apps** | Phase 3+ | Consumer and Business MAUI apps are active and continue to expand on loyalty, discovery, and operations flows. |
+| **CRM Module** | Planned | Customer, consent, segmentation, interactions, and CRM-linked billing remain under active design/planning. |
+| **Front-Office (`Darwin.Web`)** | In Progress | Next.js front-end for the public storefront and member portal, consuming `Darwin.WebApi`. |
+| **Testing & QA** | In Progress | Unit, integration, and contract tests exist; coverage and release evidence continue to expand. |
 
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/myfeature`
-3. Commit your changes: `git commit -m "Add feature"`
-4. Push to the branch: `git push origin feature/myfeature`
-5. Open a Pull Request
+## User Interface Segments
 
-Also see: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+### Back-Office (`Darwin.WebAdmin`)
 
----
+The back-office is the administrative portal built with ASP.NET Core MVC/Razor. It is used by staff to manage:
 
+- CMS content and menus
+- catalog and pricing
+- orders and operational workflows
+- loyalty programmes and business settings
+- identity, permissions, and future CRM administration
 
-## Ã°Å¸ÂÂ¢ About
+### Front-Office (`Darwin.Web`)
 
-Darwin is built to support small and medium businesses in Germany/EU with a system that is:
-- Easy to host (shared hosting compatible)
-- Legally compliant (GDPR, VAT rules, Impressum/Privacy pages)
-- Extensible for growth (**Loyalty**, **Mobile apps**, and upcoming **CRM**, plus WebApi integrations)
+The front-office is the public and authenticated customer-facing web application built with Next.js and React. It is where end-users:
 
-Ã°Å¸â€™Â¡ The vision: One platform to manage **content + commerce + loyalty + CRM**, future-proof and developer-friendly.
+- browse products and CMS pages
+- search and discover businesses
+- authenticate and manage their account
+- view loyalty points, rewards, invoices, and support-related interactions
+
+The member portal is part of the front-office. It is not a second admin area.
+
+## Features
+
+- **CMS**: pages, rich-text content, menus, SEO metadata, media-driven content workflows
+- **Catalog**: brands, categories, products, variants, add-ons, attributes
+- **Inventory**: stock tracking, reservations, allocation, warehouse-oriented expansion path
+- **Pricing & tax**: VAT, promotions, coupons, shipping/payment rules
+- **Orders**: order lifecycle, payment/shipment handling, back-office order operations
+- **Identity & access**: roles, permissions, JWT, cookies, WebAuthn, TOTP
+- **Loyalty**: session-based QR flows, accrual/redemption, rewards, campaigns
+- **Front-office**: React/Next.js storefront and member portal with SSR/SSG/ISR-ready architecture
+- **Mobile**: consumer and business MAUI applications sharing `Darwin.Contracts`
+- **API & contracts**: contracts-first delivery through `Darwin.WebApi`
+- **CRM direction**: customer 360, segmentation, consent, interactions, campaign enablement
+
+## Architecture
+
+Darwin follows a Clean Architecture with separate delivery applications over shared domain and application layers:
+
+```text
+src/
+|-- Darwin.Domain           - Entities, ValueObjects, Enums, BaseEntity
+|-- Darwin.Application      - Use cases, DTOs, Handlers, Validators
+|-- Darwin.Infrastructure   - EF Core, DbContext, Migrations, DataSeeder
+|-- Darwin.WebAdmin         - MVC + Razor for Back-Office (Admin portal)
+|-- Darwin.WebApi           - Public REST API (mobile + frontend)
+|-- Darwin.Web              - Next.js React app for Storefront & Member portal
+|-- Darwin.Worker           - Background jobs / schedulers
+|-- Darwin.Shared           - Result wrappers, constants, helpers
+|-- Darwin.Contracts        - Shared DTOs for WebApi + Mobile (request/response contracts)
+|-- Darwin.Mobile.Shared    - Mobile shared services (HTTP client, retry, auth, scanner/location)
+|-- Darwin.Mobile.Consumer  - .NET MAUI consumer app (QR, discover, rewards, profile)
+`-- Darwin.Mobile.Business  - .NET MAUI business app (scan, accrue, redeem, dashboard)
+```
+
+### Delivery Model
+
+- `Darwin.WebAdmin` is a .NET web application and builds with the .NET solution.
+- `Darwin.Web` is a Node/React application and is managed with `npm`, not `dotnet`.
+- `Darwin.WebApi` is the public HTTP boundary for front-office, mobile, and integration scenarios.
+- `Darwin.Contracts` remains the shared schema source for API request/response models.
+
+### Composition Roots
+
+- **Back-office composition root**: `src/Darwin.WebAdmin/Extensions/DependencyInjection.cs`
+- **WebApi composition root**: `src/Darwin.WebApi/Extensions/DependencyInjection.cs`
+- **Front-office app entry**: `src/Darwin.Web/src/app`
+
+## API-Friendly Delivery Rules
+
+These rules are non-negotiable and should guide all future work:
+
+### CMS Must Be API-Friendly
+
+Content pages, menus, SEO metadata, and structured components must be delivered through `Darwin.WebApi`. The public site must consume content via API contracts so the same content can be rendered by React and reused elsewhere.
+
+### Separate DTOs
+
+Do not reuse admin DTOs for the public site. Admin DTOs are operational. Public DTOs must be presentation-oriented, delivery-friendly, and optimized for front-office rendering.
+
+### Isolated API Surfaces
+
+`Darwin.WebApi` should expose distinct surfaces for:
+
+- public storefront content
+- authenticated member/customer operations
+- business/mobile operations
+- admin/integration workflows where appropriate
+
+Avoid mixing public and admin concerns inside the same endpoint shape.
+
+### Keep the Architecture BFF-Ready
+
+A Backend-for-Frontend layer is not required immediately, but the architecture must not block it. Future BFF adoption may be used for:
+
+- authentication/session handling
+- API response composition
+- caching and edge-friendly delivery
+- reducing chatty client-to-API traffic
+
+## Security Overview
+
+- **Passwords**: Argon2id hashing
+- **Passkeys/WebAuthn**: FIDO2 ceremonies for registration and login
+- **TOTP 2FA**: RFC 6238 compatible implementation
+- **Data Protection**: persistent key ring for shared hosting / multi-instance safety
+- **API security**: JWT/cookie token flows, policy-based authorization, concurrency and audit concerns
+
+Front-office authentication still depends on `Darwin.WebApi` and must follow the same token, policy, and security standards as the rest of the platform.
+
+## Getting Started
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/)
+- [Node.js 20+](https://nodejs.org/)
+- SQL Server (LocalDB is fine for development)
+- MAUI workloads for mobile development
+
+### Local Setup
+
+```bash
+git clone https://github.com/shahramvafadar/Darwin.git
+cd Darwin
+```
+
+Configure your .NET connection string in `src/Darwin.WebAdmin/appsettings.Development.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=Darwin;Trusted_Connection=True;"
+  }
+}
+```
+
+Run database migrations:
+
+```bash
+dotnet ef database update --project src/Darwin.Infrastructure
+```
+
+Start the back-office:
+
+```bash
+dotnet run --project src/Darwin.WebAdmin
+```
+
+Start the API:
+
+```bash
+dotnet run --project src/Darwin.WebApi
+```
+
+Initialize and run the front-office:
+
+```bash
+cd src/Darwin.Web
+npm install
+npm run dev
+```
+
+Open:
+
+- Back-office: `https://localhost:7170/`
+- WebApi Swagger (dev): `/swagger` on the WebApi host
+- Front-office: `http://localhost:3000`
+
+For a production front-office build:
+
+```bash
+cd src/Darwin.Web
+npm run build
+npm run start
+```
+
+`Darwin.Web` is managed by Node/npm and is not compiled by `dotnet build`.
+
+## Front-Office and Back-Office Interaction
+
+- `Darwin.WebAdmin` is optimized for operations, administration, and internal workflows.
+- `Darwin.Web` is optimized for SEO, content delivery, commerce UX, and authenticated member journeys.
+- `Darwin.WebApi` is the shared delivery boundary for public/member/mobile-facing data and should remain contracts-first.
+
+## Roadmap
+
+The roadmap source of truth is [`BACKLOG.md`](BACKLOG.md).
+
+At a high level:
+
+- back-office coverage continues to expand in `Darwin.WebAdmin`
+- WebApi surfaces continue to mature and separate by audience
+- mobile work remains active
+- CRM remains a major future pillar
+- front-office Next.js implementation is now underway; see `BACKLOG.md` for detailed tasks
+
+## Documentation
+
+- [`BACKLOG.md`](BACKLOG.md)
+- [`DarwinWebApi.md`](DarwinWebApi.md)
+- [`DarwinFrontEnd.md`](DarwinFrontEnd.md)
+- [`DarwinMobile.md`](DarwinMobile.md)
+- [`DarwinMobile.Guidelines.md`](DarwinMobile.Guidelines.md)
+- [`DarwinTesting.md`](DarwinTesting.md)
+- [`howto-identity-access.md`](howto-identity-access.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+
+## About
+
+Darwin is designed to support small and medium businesses in Germany/EU with a platform that is:
+
+- easy to host
+- compliant with GDPR, VAT, and legal publishing requirements
+- extensible across content, commerce, loyalty, CRM, and mobile
+
+The long-term goal is one coherent platform with distinct delivery applications for staff, customers, and mobile users, all aligned on shared business rules and contracts.

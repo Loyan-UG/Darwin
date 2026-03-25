@@ -2,11 +2,11 @@
 
 This document presents a refined backlog and roadmap for the Darwin platform. It condenses the large historical backlog into a concise set of completed work, current priorities and future phases. The goal is to give a clear, actionable plan for evolving the system into a complete CMS + commerce + CRM solution while preserving the existing Clean Architecture. No reference to AI is made; this is purely a planning document for developers.
 
-## 1 – Completed (Stable)
+## 1 - Completed (Stable)
 
 The core foundations of Darwin are already in place and should not require major re-work. These items are summarised for context only:
 
-- **Architecture & Infrastructure**: the solution uses a Clean Architecture structure (Domain → Application → Infrastructure → Web/WebApi/Mobile). Major cross-cutting concerns (soft delete, audit fields, concurrency, translation pattern) and EF Core configurations are complete. The solution builds, migrates and seeds the database correctly.
+- **Architecture & Infrastructure**: the solution uses a Clean Architecture structure (Domain -> Application -> Infrastructure -> Web/WebApi/Mobile). Major cross-cutting concerns (soft delete, audit fields, concurrency, translation pattern) and EF Core configurations are complete. The solution builds, migrates and seeds the database correctly.
 - **Domain models**: catalog entities (Product, Variant, Category, Brand, Add-ons), CMS pages/menus, pricing (Promotions/Taxes), cart/checkout, partial order/payment/shipment, users & addresses, identity (Role/Permission), settings and SEO are all implemented.
 - **Security**: password hashing (Argon2id), two-factor (TOTP), WebAuthn, external logins, password reset flows and security stamp rotation are complete.
 - **Application layer**: command/query handlers, validators and a `Result<T>` pattern exist for all current modules.
@@ -15,7 +15,7 @@ The core foundations of Darwin are already in place and should not require major
 
 > **Note**: Many additional mobile and marketing features exist in the historical backlog, but they remain stable and outside the scope of the web and domain work described here. See the original historical backlog details in repository history if needed.
 
-## 2 – Phase 1: Project Refactor & Domain Completion
+## 2 - Phase 1: Project Refactor & Domain Completion
 
 The first phase focuses on preparing the existing solution for growth and finishing the domain layer so future work does not require major refactoring. The high-level goal is to rename and reorganise the admin project, design and implement the missing domain modules (CRM, inventory, billing) and introduce simple extensibility patterns.
 
@@ -31,7 +31,7 @@ The first phase focuses on preparing the existing solution for growth and finish
 The current domain lacks CRM, multi-warehouse inventory and billing. Designing and implementing them now avoids conflict later.
 
 - **Task**: design and implement a CRM bounded context (Customer, Address, Segment, Interaction, Consent, LoyaltyPointEntry, Invoice). Each entity should be sealed with `Guid` keys and non-nullable strings. See the domain design document for field details.
-- **Task**: design and implement multi-warehouse inventory. Introduce Warehouse, StockLevel and StockTransfer entities. Remove stock fields from ProductVariant and migrate data to StockLevel. Seed a default warehouse named “Main warehouse” for small companies. Handlers for reserving, releasing and transferring stock should be added.
+- **Task**: design and implement multi-warehouse inventory. Introduce Warehouse, StockLevel and StockTransfer entities. Remove stock fields from ProductVariant and migrate data to StockLevel. Seed a default warehouse named "Main warehouse" for small companies. Handlers for reserving, releasing and transferring stock should be added.
 - **Task**: design and implement a billing module. Create Invoice and InvoiceLine entities (for CRM invoices) and Payment entities to track invoice payments. Provide handlers to generate an invoice for an order, record payments and cancel invoices.
 - **Task**: expose appropriate commands/queries in the Application layer and REST endpoints in WebApi. Document DTOs and validation rules.
 
@@ -42,7 +42,7 @@ The current domain lacks CRM, multi-warehouse inventory and billing. Designing a
 - **Task**: build full role/permission and user management screens using existing handlers. Include WebAuthn registration management, 2FA enabling/disabling and concurrency conflict alerts.
 - **Task**: add grid/pages for new domain modules: customers, segments, interactions, warehouses, stock levels, invoices and payments. Use shared table/list components and modals for create/edit.
 
-## 3 – Phase 2: Back-office Completion
+## 3 - Phase 2: Back-office Completion
 
 Once the domain is complete, the admin panel can be extended to cover all core business operations. This phase aims to provide a polished experience for staff.
 
@@ -66,15 +66,15 @@ Once the domain is complete, the admin panel can be extended to cover all core b
 - **Task**: ensure all pages are accessible (ARIA labels, keyboard navigation) and responsive. Document a style guide for admin UI to maintain consistency.
 - **Task**: implement concurrency handling across admin forms (using row versions) and display user-friendly conflict messages with the ability to reload data.
 
-## 4 – Phase 3: Front-office Implementation
+## 4 - Phase 3: Front-office Implementation
 
-This phase introduces a new, customer-facing web experience. The front-office will be built as a separate project (suggested name `Darwin.Web` or `Darwin.Frontend`) using Next.js. It will consume the public REST API and deliver a modern, SEO-friendly storefront.
+This phase introduces a new, customer-facing web experience. The front-office now lives in `src/Darwin.Web` as a separate Next.js project. It consumes the public REST API and delivers the storefront plus authenticated member portal.
 
 ### Epic: Frontend project setup
 
-- **Task**: create a new folder `src/Darwin.Frontend` and run `npx create-next-app@latest --typescript` to scaffold a Next.js project. Install Tailwind CSS, headless UI, axios and other required packages. Configure ESLint/Prettier and set up a basic layout with header/footer.
+- **Task**: continue evolving `src/Darwin.Web` as the dedicated Next.js front-office. Maintain TypeScript, Tailwind CSS, linting, and a production-ready app-router layout with clear storefront/member separation.
 - **Task**: define environment variables (`NEXT_PUBLIC_API_URL`) and create an API client using axios. Set up SWR or React Query for data fetching and caching.
-- **Task**: add the Next.js project to the Visual Studio solution: either as an “Existing Project” of type “Node.js project” or by treating it as an external folder and using VS Code for JavaScript development. Ensure Git integration works for both C# and Next.js projects.
+- **Task**: document and standardize the front-end developer workflow (`npm install`, `npm run dev`, `npm run build`, `npm run start`) and keep the project clearly outside the `dotnet build` pipeline.
 
 ### Epic: Public pages and storefront
 
@@ -89,7 +89,7 @@ This phase introduces a new, customer-facing web experience. The front-office wi
 - **Task**: build a customer account area: view/edit profile, manage addresses, view loyalty balance, view order history (`/api/v1/orders`) and invoices (`/api/v1/invoices`).
 - **Task**: implement a loyalty wallet: show points balance and transaction history by consuming `/api/v1/loyalty/points` and `/api/v1/loyalty/rewards`.
 
-## 5 – Phase 4: Advanced CRM & Marketing
+## 5 - Phase 4: Advanced CRM & Marketing
 
 After the core system is operational, advanced CRM and marketing features can be added incrementally.
 
@@ -97,7 +97,7 @@ After the core system is operational, advanced CRM and marketing features can be
 - **Task**: implement a campaign management system: create campaigns, schedule them, define audience rules and deliver messages via email/SMS/push notifications. Integrate with third-party delivery providers where necessary.
 - **Task**: add analytics dashboards summarising customer behaviour, purchase frequency, churn risk and campaign effectiveness. Use the analytics export jobs and files already present in the integration domain as a basis.
 
-## 6 – Phase 5: Infrastructure & Operations
+## 6 - Phase 5: Infrastructure & Operations
 
 The final phase covers tooling, deployment and operational concerns.
 
@@ -108,8 +108,8 @@ The final phase covers tooling, deployment and operational concerns.
 
 ## Status Legend
 
-- **Completed** – work done and stable; no major changes expected.
-- **Phase 1–5** – approved, scheduled phases (to be executed in order but tasks within a phase may run in parallel).
-- **Future** – ideas not yet scheduled; may be pulled into later phases when resources allow.
+- **Completed** - work done and stable; no major changes expected.
+- **Phase 1-5** - approved, scheduled phases (to be executed in order but tasks within a phase may run in parallel).
+- **Future** - ideas not yet scheduled; may be pulled into later phases when resources allow.
 
 This refined backlog replaces the verbose backlog in the repository for the web and domain portions of Darwin. It deliberately omits the detailed mobile and marketing tasks already delivered and focuses on the tasks required to finish the back-office, complete the domain and build the front-office.

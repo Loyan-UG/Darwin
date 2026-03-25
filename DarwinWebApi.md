@@ -1,4 +1,4 @@
-# Darwin WebApi — Technical Guide
+# Darwin WebApi - Technical Guide
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 
@@ -10,14 +10,16 @@
 
 `Darwin.WebApi` is the public REST surface consumed by:
 
-- Mobile apps (`Darwin.Mobile.Consumer`, `Darwin.Mobile.Business`) through `Darwin.Mobile.Shared`.
-- Web and future external clients where contracts-first integration is required.
+- mobile apps (`Darwin.Mobile.Consumer`, `Darwin.Mobile.Business`) through `Darwin.Mobile.Shared`
+- the front-office web application (`Darwin.Web`)
+- future external clients where contracts-first integration is required
 
 Core rules:
 
 - `Darwin.Contracts` is the request/response source of truth.
 - Domain/EF internals stay private in Application/Infrastructure.
 - Handler results use `Darwin.Shared.Results` (`Result` / `Result<T>`), then controllers map failures to API problem responses.
+- Public/member-facing contracts must remain separate from back-office operational DTOs.
 
 ---
 
@@ -28,6 +30,17 @@ Core rules:
 - Business logic: `src/Darwin.Application/**`
 - Persistence and auth infra: `src/Darwin.Infrastructure/**`
 - Public contract schema: `src/Darwin.Contracts/**`
+
+### Audience Segmentation
+
+`Darwin.WebApi` should be treated as multiple logical API surfaces sharing one host:
+
+- **public storefront surface** for CMS pages, menus, SEO metadata, product/category discovery, and anonymous commerce browsing
+- **member surface** for authenticated customer/profile/order/invoice/loyalty operations used by `Darwin.Web`
+- **business/mobile surface** for loyalty scanning, campaigns, subscriptions, and mobile-specific flows
+- **admin/integration surface** only where HTTP delivery is explicitly required
+
+Do not combine public storefront concerns and admin operational concerns inside the same contract shape unless there is a strong, documented reason.
 
 Execution pattern:
 
@@ -93,6 +106,42 @@ If device binding is enabled in your environment, login/refresh must carry devic
 | Billing | `GET /api/v1/billing/plans` | `perm:AccessLoyaltyBusiness` | Business |
 | Billing | `POST /api/v1/billing/business/subscription/cancel-at-period-end` | `perm:AccessLoyaltyBusiness` | Business |
 | Billing | `POST /api/v1/billing/business/subscription/checkout-intent` | `perm:AccessLoyaltyBusiness` | Business |
+
+---
+
+## 4.1 Front-Office API Direction
+
+The front-office (`Darwin.Web`) is a separate Next.js application and should consume API-friendly contracts rather than back-office MVC models.
+
+Required design rules:
+
+- CMS content must be deliverable through HTTP contracts.
+- Public storefront DTOs must be presentation-oriented.
+- Member/account DTOs must be separate from admin DTOs.
+- Endpoint grouping should remain clear by audience.
+
+Typical front-office API groups include:
+
+- CMS pages and structured content
+- navigation menus
+- SEO metadata
+- product/category/catalog browsing
+- customer account/profile
+- loyalty balances and rewards
+- invoices and order history
+
+When concrete storefront endpoints are introduced, document them in this file with the same level of detail as the mobile-facing matrix above.
+
+### BFF Readiness
+
+The API design should remain compatible with a future Backend-for-Frontend layer for:
+
+- authentication/session handling
+- response composition
+- caching
+- reducing chatty front-end API traffic
+
+This does not require immediate implementation, but current endpoint and contract design must not make that pattern difficult later.
 
 ---
 
