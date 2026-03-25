@@ -1,0 +1,26 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseEditVm
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="BusinessId" class="form-label"></label>
+        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-8">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Location" class="form-label"></label>
+        <input asp-for="Location" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Description" class="form-label"></label>
+        <input asp-for="Description" class="form-control" />
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="IsDefault" class="form-check-input" />
+            <label asp-for="IsDefault" class="form-check-label"></label>
+        </div>
+    </div>
+</div>

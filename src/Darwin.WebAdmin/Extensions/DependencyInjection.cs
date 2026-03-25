@@ -14,8 +14,13 @@ using Darwin.Application.CMS.Commands;
 using Darwin.Application.CMS.DTOs;
 using Darwin.Application.CMS.Queries;
 using Darwin.Application.CMS.Validators;
+using Darwin.Application.CRM.Commands;
+using Darwin.Application.CRM.Queries;
+using Darwin.Application.Common.Queries;
 using Darwin.Application.Common.Html;
 using Darwin.Application.Extensions;
+using Darwin.Application.Billing.Commands;
+using Darwin.Application.Billing.Queries;
 using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.Queries;
@@ -34,6 +39,7 @@ using Darwin.Application.Shipping.Validators;
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
 using Darwin.WebAdmin.Auth;
+using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.Services.Seo;
 using Darwin.WebAdmin.Services.Settings;
 using FluentValidation;
@@ -72,6 +78,7 @@ namespace Darwin.WebAdmin.Extensions
 
             // required by AccountController constructor
             services.AddScoped<GetSecurityStampHandler>();
+            services.AddScoped<AdminReferenceDataService>();
 
             // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
             // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
@@ -204,10 +211,64 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetOrderPaymentsPageHandler>();
             services.AddScoped<GetOrderShipmentsPageHandler>();
             services.AddScoped<GetWarehouseLookupHandler>();
+            services.AddScoped<GetBusinessLookupHandler>();
+            services.AddScoped<GetUserLookupHandler>();
+            services.AddScoped<GetCustomerLookupHandler>();
+            services.AddScoped<GetProductVariantLookupHandler>();
+            services.AddScoped<GetSupplierLookupHandler>();
+            services.AddScoped<GetFinancialAccountLookupHandler>();
 
             // Orders – commands
             services.AddScoped<AddPaymentHandler>();
             services.AddScoped<UpdateOrderStatusHandler>();
+            services.AddScoped<GetCustomersPageHandler>();
+            services.AddScoped<GetCustomerForEditHandler>();
+            services.AddScoped<CreateCustomerHandler>();
+            services.AddScoped<UpdateCustomerHandler>();
+            services.AddScoped<GetLeadsPageHandler>();
+            services.AddScoped<GetLeadForEditHandler>();
+            services.AddScoped<CreateLeadHandler>();
+            services.AddScoped<UpdateLeadHandler>();
+            services.AddScoped<GetOpportunitiesPageHandler>();
+            services.AddScoped<GetOpportunityForEditHandler>();
+            services.AddScoped<CreateOpportunityHandler>();
+            services.AddScoped<UpdateOpportunityHandler>();
+            services.AddScoped<GetPaymentsPageHandler>();
+            services.AddScoped<GetPaymentForEditHandler>();
+            services.AddScoped<CreatePaymentHandler>();
+            services.AddScoped<UpdatePaymentHandler>();
+            services.AddScoped<GetFinancialAccountsPageHandler>();
+            services.AddScoped<GetFinancialAccountForEditHandler>();
+            services.AddScoped<CreateFinancialAccountHandler>();
+            services.AddScoped<UpdateFinancialAccountHandler>();
+            services.AddScoped<GetExpensesPageHandler>();
+            services.AddScoped<GetExpenseForEditHandler>();
+            services.AddScoped<CreateExpenseHandler>();
+            services.AddScoped<UpdateExpenseHandler>();
+            services.AddScoped<GetJournalEntriesPageHandler>();
+            services.AddScoped<GetJournalEntryForEditHandler>();
+            services.AddScoped<CreateJournalEntryHandler>();
+            services.AddScoped<UpdateJournalEntryHandler>();
+            services.AddScoped<GetWarehousesPageHandler>();
+            services.AddScoped<GetWarehouseForEditHandler>();
+            services.AddScoped<CreateWarehouseHandler>();
+            services.AddScoped<UpdateWarehouseHandler>();
+            services.AddScoped<GetSuppliersPageHandler>();
+            services.AddScoped<GetSupplierForEditHandler>();
+            services.AddScoped<CreateSupplierHandler>();
+            services.AddScoped<UpdateSupplierHandler>();
+            services.AddScoped<GetStockLevelsPageHandler>();
+            services.AddScoped<GetStockLevelForEditHandler>();
+            services.AddScoped<CreateStockLevelHandler>();
+            services.AddScoped<UpdateStockLevelHandler>();
+            services.AddScoped<GetStockTransfersPageHandler>();
+            services.AddScoped<GetStockTransferForEditHandler>();
+            services.AddScoped<CreateStockTransferHandler>();
+            services.AddScoped<UpdateStockTransferHandler>();
+            services.AddScoped<GetPurchaseOrdersPageHandler>();
+            services.AddScoped<GetPurchaseOrderForEditHandler>();
+            services.AddScoped<CreatePurchaseOrderHandler>();
+            services.AddScoped<UpdatePurchaseOrderHandler>();
 
             // Inventory – commands
             services.AddScoped<ReserveInventoryHandler>();

@@ -1,0 +1,133 @@
+@model Darwin.WebAdmin.ViewModels.CRM.CustomerEditVm
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="UserId" class="form-label"></label>
+        <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
+        <div class="form-text">When a linked user is selected, contact data should be treated as identity-owned.</div>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="CompanyName" class="form-label"></label>
+        <input asp-for="CompanyName" class="form-control" />
+        <span asp-validation-for="CompanyName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="FirstName" class="form-label"></label>
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="LastName" class="form-label"></label>
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.EffectiveEmail) || !string.IsNullOrWhiteSpace(Model.EffectiveFirstName))
+{
+    <div class="alert alert-info mt-4 mb-0">
+        <strong>Effective profile</strong><br />
+        Name: @($"{Model.EffectiveFirstName} {Model.EffectiveLastName}".Trim())<br />
+        Email: @Model.EffectiveEmail<br />
+        Phone: @Model.EffectivePhone
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <h3 class="mb-0">CRM Addresses</h3>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="addCustomerAddress">
+        <i class="fa fa-plus"></i> Add address
+    </button>
+</div>
+
+<div id="customerAddresses" class="mt-3">
+@for (var i = 0; i < Model.Addresses.Count; i++)
+{
+    <div class="card mb-3 address-row">
+        <div class="card-body">
+            <input type="hidden" asp-for="Addresses[i].Id" />
+            <input type="hidden" asp-for="Addresses[i].AddressId" />
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Addresses[i].Line1" class="form-label"></label>
+                    <input asp-for="Addresses[i].Line1" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Addresses[i].Line2" class="form-label"></label>
+                    <input asp-for="Addresses[i].Line2" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Addresses[i].PostalCode" class="form-label"></label>
+                    <input asp-for="Addresses[i].PostalCode" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Addresses[i].City" class="form-label"></label>
+                    <input asp-for="Addresses[i].City" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Addresses[i].State" class="form-label"></label>
+                    <input asp-for="Addresses[i].State" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Addresses[i].Country" class="form-label"></label>
+                    <input asp-for="Addresses[i].Country" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mt-4 pt-2">
+                        <input asp-for="Addresses[i].IsDefaultBilling" class="form-check-input" />
+                        <label asp-for="Addresses[i].IsDefaultBilling" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mt-4 pt-2">
+                        <input asp-for="Addresses[i].IsDefaultShipping" class="form-check-input" />
+                        <label asp-for="Addresses[i].IsDefaultShipping" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end mt-3">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-address">Remove</button>
+            </div>
+        </div>
+    </div>
+}
+</div>
+
+<template id="customerAddressTemplate">
+    <div class="card mb-3 address-row"><div class="card-body">
+        <input type="hidden" name="Addresses[__index__].Id" value="" />
+        <input type="hidden" name="Addresses[__index__].AddressId" value="" />
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Line1</label><input class="form-control" name="Addresses[__index__].Line1" /></div>
+            <div class="col-md-6"><label class="form-label">Line2</label><input class="form-control" name="Addresses[__index__].Line2" /></div>
+            <div class="col-md-4"><label class="form-label">PostalCode</label><input class="form-control" name="Addresses[__index__].PostalCode" /></div>
+            <div class="col-md-4"><label class="form-label">City</label><input class="form-control" name="Addresses[__index__].City" /></div>
+            <div class="col-md-4"><label class="form-label">State</label><input class="form-control" name="Addresses[__index__].State" /></div>
+            <div class="col-md-4"><label class="form-label">Country</label><input class="form-control" name="Addresses[__index__].Country" value="DE" /></div>
+            <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultBilling" /><input type="hidden" name="Addresses[__index__].IsDefaultBilling" value="false" /><label class="form-check-label">IsDefaultBilling</label></div></div>
+            <div class="col-md-4"><div class="form-check mt-4 pt-2"><input class="form-check-input" type="checkbox" value="true" name="Addresses[__index__].IsDefaultShipping" /><input type="hidden" name="Addresses[__index__].IsDefaultShipping" value="false" /><label class="form-check-label">IsDefaultShipping</label></div></div>
+        </div>
+        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-address">Remove</button></div>
+    </div></div>
+</template>

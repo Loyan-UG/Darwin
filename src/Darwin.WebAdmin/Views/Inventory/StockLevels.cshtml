@@ -1,0 +1,42 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.StockLevelsListVm
+@{
+    ViewData["Title"] = "Stock Levels";
+}
+
+<h1 class="mb-3">Stock Levels</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="StockLevels" method="get" class="d-flex gap-2">
+        <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
+        <select name="warehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+    </form>
+    <a asp-action="CreateStockLevel" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary">New Stock Level</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>SKU</th><th>Available</th><th>Reserved</th><th>Reorder Point</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="5" class="text-center text-muted">No stock levels found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.VariantSku</td>
+                    <td>@item.AvailableQuantity</td>
+                    <td>@item.ReservedQuantity</td>
+                    <td>@item.ReorderPoint</td>
+                    <td class="text-end"><a asp-action="EditStockLevel" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId"></pager>

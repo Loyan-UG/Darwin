@@ -85,7 +85,7 @@
                     <active-nav class="list-group-item list-group-item-action" asp-controller="AddOnGroups" asp-action="Index">
                         <i class="fa-solid fa-puzzle-piece me-2"></i> Add-on Groups
                     </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="Index">
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="Warehouses">
                         <i class="fa-solid fa-warehouse me-2"></i> Inventory
                     </active-nav>
 
@@ -131,11 +131,50 @@
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Orders" asp-action="Index">
                         <i class="fa-solid fa-receipt me-2"></i> Orders
                     </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="Payments" asp-action="Index">
-                        <i class="fa-regular fa-credit-card me-2"></i> Payments
-                    </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Shipments" asp-action="Index">
                         <i class="fa-solid fa-boxes-packing me-2"></i> Shipments
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">CRM</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Customers">
+                        <i class="fa-solid fa-address-book me-2"></i> Customers
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Leads">
+                        <i class="fa-solid fa-filter-circle-dollar me-2"></i> Leads
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Opportunities">
+                        <i class="fa-solid fa-chart-line me-2"></i> Opportunities
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Inventory</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="Warehouses">
+                        <i class="fa-solid fa-warehouse me-2"></i> Warehouses
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="Suppliers">
+                        <i class="fa-solid fa-truck-field me-2"></i> Suppliers
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="StockLevels">
+                        <i class="fa-solid fa-boxes-stacked me-2"></i> Stock Levels
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="StockTransfers">
+                        <i class="fa-solid fa-arrow-right-arrow-left me-2"></i> Transfers
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="PurchaseOrders">
+                        <i class="fa-solid fa-file-invoice me-2"></i> Purchase Orders
+                    </active-nav>
+
+                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Billing</div>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="Payments">
+                        <i class="fa-regular fa-credit-card me-2"></i> Payments
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="FinancialAccounts">
+                        <i class="fa-solid fa-book me-2"></i> Accounts
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="Expenses">
+                        <i class="fa-solid fa-money-bill-wave me-2"></i> Expenses
+                    </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="JournalEntries">
+                        <i class="fa-solid fa-scale-balanced me-2"></i> Journal Entries
                     </active-nav>
 
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">SEO</div>

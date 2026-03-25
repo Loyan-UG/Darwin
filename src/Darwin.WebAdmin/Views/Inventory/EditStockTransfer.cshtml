@@ -1,0 +1,28 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.StockTransferEditVm
+@{
+    ViewData["Title"] = "Edit Stock Transfer";
+}
+<h1 class="mb-3">Edit Stock Transfer</h1>
+<form asp-action="EditStockTransfer" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+    <partial name="_StockTransferForm" model="Model" />
+    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="StockTransfers" asp-route-warehouseId="@Model.FromWarehouseId" class="btn btn-outline-secondary">Back</a></div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const container = document.getElementById('transferLines');
+            const template = document.getElementById('transferLineTemplate');
+            document.getElementById('addTransferLine')?.addEventListener('click', function () {
+                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
+            });
+            container?.addEventListener('click', function (event) {
+                const button = event.target.closest('.remove-line');
+                if (button) button.closest('.line-row')?.remove();
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,50 @@
+@model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="BusinessId" class="form-label"></label>
+        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="CustomerId" class="form-label"></label>
+        <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="UserId" class="form-label"></label>
+        <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Provider" class="form-label"></label>
+        <input asp-for="Provider" class="form-control" />
+        <span asp-validation-for="Provider" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.PaymentStatus>()" class="form-select"></select>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Currency" class="form-label"></label>
+        <input asp-for="Currency" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AmountMinor" class="form-label"></label>
+        <input asp-for="AmountMinor" class="form-control" />
+        <div class="form-text">Minor units.</div>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ProviderTransactionRef" class="form-label"></label>
+        <input asp-for="ProviderTransactionRef" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PaidAtUtc" class="form-label"></label>
+        <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="OrderId" class="form-label"></label>
+        <input asp-for="OrderId" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="InvoiceId" class="form-label"></label>
+        <input asp-for="InvoiceId" class="form-control" />
+    </div>
+</div>

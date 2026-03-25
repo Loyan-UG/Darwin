@@ -1,0 +1,28 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.PurchaseOrderEditVm
+@{
+    ViewData["Title"] = "Edit Purchase Order";
+}
+<h1 class="mb-3">Edit Purchase Order</h1>
+<form asp-action="EditPurchaseOrder" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+    <partial name="_PurchaseOrderForm" model="Model" />
+    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a></div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const container = document.getElementById('purchaseOrderLines');
+            const template = document.getElementById('purchaseOrderLineTemplate');
+            document.getElementById('addPurchaseOrderLine')?.addEventListener('click', function () {
+                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
+            });
+            container?.addEventListener('click', function (event) {
+                const button = event.target.closest('.remove-line');
+                if (button) button.closest('.line-row')?.remove();
+            });
+        })();
+    </script>
+}

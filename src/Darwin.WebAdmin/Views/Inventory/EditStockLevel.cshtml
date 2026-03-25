@@ -1,0 +1,13 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.StockLevelEditVm
+@{
+    ViewData["Title"] = "Edit Stock Level";
+}
+<h1 class="mb-3">Edit Stock Level</h1>
+<form asp-action="EditStockLevel" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+    <partial name="_StockLevelForm" model="Model" />
+    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Back</a></div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

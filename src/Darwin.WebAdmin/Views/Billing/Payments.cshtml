@@ -1,0 +1,44 @@
+@model Darwin.WebAdmin.ViewModels.Billing.PaymentsListVm
+@{
+    ViewData["Title"] = "Payments";
+}
+
+<h1 class="mb-3">Payments</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="Payments" method="get" class="d-flex gap-2">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
+    </form>
+    <a asp-action="CreatePayment" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">
+        <i class="fa fa-plus"></i> Record Payment
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>Provider</th><th>Status</th><th>Amount</th><th>Customer</th><th>Paid</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted">No payments found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Provider</td>
+                    <td><span class="badge text-bg-light">@item.Status</span></td>
+                    <td>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
+                    <td>@item.CustomerId</td>
+                    <td>@item.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-end"><a asp-action="EditPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.BusinessId"></pager>

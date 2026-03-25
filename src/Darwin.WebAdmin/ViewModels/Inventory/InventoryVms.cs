@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace Darwin.WebAdmin.ViewModels.Inventory
 {
@@ -143,5 +144,268 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         /// <summary>Optional correlation id to avoid duplicate releases.</summary>
         public Guid? ReferenceId { get; set; }
+    }
+
+    public sealed class WarehousesListVm
+    {
+        public Guid? BusinessId { get; set; }
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<WarehouseListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class WarehouseListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? Location { get; set; }
+        public bool IsDefault { get; set; }
+        public int StockLevelCount { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class WarehouseEditVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        public Guid BusinessId { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(1000)]
+        public string? Description { get; set; }
+
+        [StringLength(500)]
+        public string? Location { get; set; }
+
+        public bool IsDefault { get; set; }
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+    }
+
+    public sealed class SuppliersListVm
+    {
+        public Guid? BusinessId { get; set; }
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<SupplierListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class SupplierListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string? Address { get; set; }
+        public int PurchaseOrderCount { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class SupplierEditVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        public Guid BusinessId { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        [StringLength(256)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Phone { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? Address { get; set; }
+
+        [StringLength(2000)]
+        public string? Notes { get; set; }
+
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+    }
+
+    public sealed class StockLevelsListVm
+    {
+        public Guid? WarehouseId { get; set; }
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public List<StockLevelListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class StockLevelListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid WarehouseId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public string VariantSku { get; set; } = string.Empty;
+        public int AvailableQuantity { get; set; }
+        public int ReservedQuantity { get; set; }
+        public int ReorderPoint { get; set; }
+        public int ReorderQuantity { get; set; }
+        public int InTransitQuantity { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class StockLevelEditVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        public Guid WarehouseId { get; set; }
+
+        [Required]
+        public Guid ProductVariantId { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int AvailableQuantity { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int ReservedQuantity { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int ReorderPoint { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int ReorderQuantity { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int InTransitQuantity { get; set; }
+
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public List<SelectListItem> VariantOptions { get; set; } = new();
+    }
+
+    public sealed class StockTransfersListVm
+    {
+        public Guid? WarehouseId { get; set; }
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public List<StockTransferListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class StockTransferListItemVm
+    {
+        public Guid Id { get; set; }
+        public string FromWarehouseName { get; set; } = string.Empty;
+        public string ToWarehouseName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public int LineCount { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class StockTransferLineVm
+    {
+        [Required]
+        public Guid ProductVariantId { get; set; }
+
+        [Range(1, int.MaxValue)]
+        public int Quantity { get; set; } = 1;
+    }
+
+    public sealed class StockTransferEditVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        public Guid FromWarehouseId { get; set; }
+
+        [Required]
+        public Guid ToWarehouseId { get; set; }
+
+        [Required]
+        public string Status { get; set; } = "Draft";
+
+        public List<StockTransferLineVm> Lines { get; set; } = new();
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public List<SelectListItem> VariantOptions { get; set; } = new();
+    }
+
+    public sealed class PurchaseOrdersListVm
+    {
+        public Guid? BusinessId { get; set; }
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<PurchaseOrderListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class PurchaseOrderListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid SupplierId { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+        public string SupplierName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime OrderedAtUtc { get; set; }
+        public int LineCount { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class PurchaseOrderLineVm
+    {
+        [Required]
+        public Guid ProductVariantId { get; set; }
+
+        [Range(1, int.MaxValue)]
+        public int Quantity { get; set; } = 1;
+
+        [Range(0, long.MaxValue)]
+        public long UnitCostMinor { get; set; }
+
+        [Range(0, long.MaxValue)]
+        public long TotalCostMinor { get; set; }
+    }
+
+    public sealed class PurchaseOrderEditVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        public Guid SupplierId { get; set; }
+
+        [Required]
+        public Guid BusinessId { get; set; }
+
+        [Required]
+        [StringLength(64)]
+        public string OrderNumber { get; set; } = string.Empty;
+
+        public DateTime OrderedAtUtc { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        public string Status { get; set; } = "Draft";
+
+        public List<PurchaseOrderLineVm> Lines { get; set; } = new();
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<SelectListItem> SupplierOptions { get; set; } = new();
+        public List<SelectListItem> VariantOptions { get; set; } = new();
     }
 }

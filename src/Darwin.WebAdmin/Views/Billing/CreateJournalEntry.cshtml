@@ -1,0 +1,26 @@
+@model Darwin.WebAdmin.ViewModels.Billing.JournalEntryEditVm
+@{
+    ViewData["Title"] = "Create Journal Entry";
+}
+<h1 class="mb-3">Create Journal Entry</h1>
+<form asp-action="CreateJournalEntry" method="post">
+    @Html.AntiForgeryToken()
+    <partial name="_JournalEntryForm" model="Model" />
+    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="JournalEntries" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a></div>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const container = document.getElementById('journalLines');
+            const template = document.getElementById('journalLineTemplate');
+            document.getElementById('addJournalLine')?.addEventListener('click', function () {
+                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
+            });
+            container?.addEventListener('click', function (event) {
+                const button = event.target.closest('.remove-line');
+                if (button) button.closest('.line-row')?.remove();
+            });
+        })();
+    </script>
+}

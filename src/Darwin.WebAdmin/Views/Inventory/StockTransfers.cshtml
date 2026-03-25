@@ -1,0 +1,42 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.StockTransfersListVm
+@{
+    ViewData["Title"] = "Stock Transfers";
+}
+
+<h1 class="mb-3">Stock Transfers</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="StockTransfers" method="get" class="d-flex gap-2">
+        <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
+        <select name="warehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+    </form>
+    <a asp-action="CreateStockTransfer" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary">New Transfer</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>From</th><th>To</th><th>Status</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="5" class="text-center text-muted">No stock transfers found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.FromWarehouseName</td>
+                    <td>@item.ToWarehouseName</td>
+                    <td>@item.Status</td>
+                    <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-end"><a asp-action="EditStockTransfer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId"></pager>

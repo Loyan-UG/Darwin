@@ -1,0 +1,13 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseEditVm
+@{
+    ViewData["Title"] = "Edit Warehouse";
+}
+<h1 class="mb-3">Edit Warehouse</h1>
+<form asp-action="EditWarehouse" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+    <partial name="_WarehouseForm" model="Model" />
+    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="Warehouses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a></div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

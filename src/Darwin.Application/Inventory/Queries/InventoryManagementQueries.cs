@@ -21,6 +21,7 @@ namespace Darwin.Application.Inventory.Queries
                 .Select(x => new WarehouseLookupItemDto
                 {
                     Id = x.Id,
+                    BusinessId = x.BusinessId,
                     Name = x.Name,
                     Location = x.Location,
                     IsDefault = x.IsDefault

@@ -1,0 +1,17 @@
+@model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
+@{
+    ViewData["Title"] = "Create Payment";
+}
+
+<h1 class="mb-3">Create Payment</h1>
+
+<form asp-action="CreatePayment" method="post">
+    @Html.AntiForgeryToken()
+    <partial name="_PaymentForm" model="Model" />
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

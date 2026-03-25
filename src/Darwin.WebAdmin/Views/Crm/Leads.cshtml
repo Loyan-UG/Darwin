@@ -1,0 +1,66 @@
+@model Darwin.WebAdmin.ViewModels.CRM.LeadsListVm
+@{
+    ViewData["Title"] = "CRM Leads";
+}
+
+<h1 class="mb-3">Leads</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="Leads" method="get" class="d-flex gap-2">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search leads">
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+    </form>
+
+    <a asp-action="CreateLead" class="btn btn-primary">
+        <i class="fa fa-plus"></i> New Lead
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Interactions</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted">No leads found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.FullName</td>
+                    <td>@item.CompanyName</td>
+                    <td>@item.Email</td>
+                    <td>@item.Phone</td>
+                    <td><span class="badge text-bg-light">@item.Status</span></td>
+                    <td>@item.InteractionCount</td>
+                    <td class="text-end">
+                        <a asp-action="EditLead" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa fa-pen"></i> Edit
+                        </a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Crm"
+       asp-action="Leads"
+       asp-route-q="@Model.Query">
+</pager>

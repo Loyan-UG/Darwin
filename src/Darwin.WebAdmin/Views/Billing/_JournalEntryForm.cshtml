@@ -1,0 +1,50 @@
+@model Darwin.WebAdmin.ViewModels.Billing.JournalEntryEditVm
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="BusinessId" class="form-label"></label>
+        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="EntryDateUtc" class="form-label"></label>
+        <input asp-for="EntryDateUtc" type="date" class="form-control" />
+    </div>
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <input asp-for="Description" class="form-control" />
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <h3 class="mb-0">Lines</h3>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="addJournalLine">Add line</button>
+</div>
+
+<div id="journalLines" class="mt-3">
+@for (var i = 0; i < Model.Lines.Count; i++)
+{
+    <div class="card mb-3 line-row"><div class="card-body">
+        <input type="hidden" asp-for="Lines[i].Id" />
+        <div class="row g-3">
+            <div class="col-md-4"><label asp-for="Lines[i].AccountId" class="form-label"></label><select asp-for="Lines[i].AccountId" asp-items="Model.AccountOptions" class="form-select"></select></div>
+            <div class="col-md-2"><label asp-for="Lines[i].DebitMinor" class="form-label"></label><input asp-for="Lines[i].DebitMinor" class="form-control" /></div>
+            <div class="col-md-2"><label asp-for="Lines[i].CreditMinor" class="form-label"></label><input asp-for="Lines[i].CreditMinor" class="form-control" /></div>
+            <div class="col-md-4"><label asp-for="Lines[i].Memo" class="form-label"></label><input asp-for="Lines[i].Memo" class="form-control" /></div>
+        </div>
+        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line">Remove</button></div>
+    </div></div>
+}
+</div>
+
+<template id="journalLineTemplate">
+    <div class="card mb-3 line-row"><div class="card-body">
+        <input type="hidden" name="Lines[__index__].Id" value="" />
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">AccountId</label><select class="form-select" name="Lines[__index__].AccountId">@foreach (var option in Model.AccountOptions){<option value="@option.Value">@option.Text</option>}</select></div>
+            <div class="col-md-2"><label class="form-label">DebitMinor</label><input class="form-control" name="Lines[__index__].DebitMinor" value="0" /></div>
+            <div class="col-md-2"><label class="form-label">CreditMinor</label><input class="form-control" name="Lines[__index__].CreditMinor" value="0" /></div>
+            <div class="col-md-4"><label class="form-label">Memo</label><input class="form-control" name="Lines[__index__].Memo" /></div>
+        </div>
+        <div class="text-end mt-3"><button type="button" class="btn btn-sm btn-outline-danger remove-line">Remove</button></div>
+    </div></div>
+</template>

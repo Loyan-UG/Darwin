@@ -1,0 +1,21 @@
+@model Darwin.WebAdmin.ViewModels.CRM.LeadEditVm
+@{
+    ViewData["Title"] = "Edit Lead";
+}
+
+<h1 class="mb-3">Edit Lead</h1>
+
+<form asp-action="EditLead" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+    <partial name="_LeadForm" model="Model" />
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+        <a asp-action="Leads" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

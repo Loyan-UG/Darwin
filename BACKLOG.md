@@ -41,38 +41,45 @@ The immediate direction is:
 - Completed: add HTMX to the shared WebAdmin layouts.
 - Completed: replace custom `fetch`-based loading in the Orders details screen with HTMX partial loading for payments and shipments.
 - Completed: move user-address create/edit and default-address operations toward HTMX-driven partial updates.
+- Completed: expose new CRM, inventory, and billing modules in WebAdmin with MVC/Razor screens aligned to the new Application handlers.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
-- Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing modules.
+- Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
+- Task: move the new CRM, inventory, and billing create/edit flows to richer HTMX partial submission patterns where it reduces full-page postbacks.
 
 ### Epic: Orders, fulfillment, and billing admin
 
 - Completed: warehouse-aware order status changes and fulfillment context persistence.
 - Completed: warehouse-aware inventory ledger filtering in WebAdmin.
-- Task: complete shipments, refunds, manual billing flows, and invoice management screens.
-- Task: expose CRM-linked invoices and payments in the admin UI.
+- Completed: build billing management screens for payments, financial accounts, expenses, and journal entries.
+- Task: complete shipments, refunds, and invoice management screens.
+- Task: expose CRM-linked invoices more deeply in the admin UI and connect them to payment workflows.
 
 ### Epic: CRM admin
 
-- Task: build customer list, detail, and editing screens.
-- Task: build lead management with assignment, qualification, and conversion to customer.
-- Task: build opportunity management with stages, projected value, and product lines.
+- Completed: build customer list and editing screens.
+- Completed: build lead management with assignment and qualification fields.
+- Completed: build opportunity management with stages, projected value, and product lines.
 - Task: build interaction timeline and consent management screens.
 - Task: build segmentation and membership management screens.
+- Task: add explicit lead-to-customer conversion workflows and richer CRM dashboard/reporting.
 
 ### Epic: Inventory and procurement admin
 
-- Task: build warehouse management pages.
-- Task: build stock-level management and adjustment pages.
-- Task: build stock transfer management pages.
-- Task: build supplier management pages.
-- Task: build purchase order management pages.
+- Completed: build warehouse management pages.
+- Completed: build stock-level management pages.
+- Completed: build stock transfer management pages.
+- Completed: build supplier management pages.
+- Completed: build purchase order management pages.
+- Task: add manual stock adjustment, reservation/release, and receipt-specific operator flows.
+- Task: add inventory dashboards, low-stock monitoring, and transfer/purchase order workflow actions.
 
 ### Epic: Accounting admin
 
-- Task: build payment management pages.
-- Task: build expense management pages.
-- Task: build financial account management pages.
-- Task: build journal entry management pages.
+- Completed: build payment management pages.
+- Completed: build expense management pages.
+- Completed: build financial account management pages.
+- Completed: build journal entry management pages.
+- Task: add accounting summaries, balancing helpers, and safer posting workflows.
 
 ## 5. Phase 3 - WebApi Expansion
 
