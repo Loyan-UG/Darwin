@@ -35,8 +35,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly UpdateOpportunityHandler _updateOpportunity;
         private readonly GetCustomerSegmentsPageHandler _getCustomerSegmentsPage;
         private readonly GetCustomerSegmentForEditHandler _getCustomerSegmentForEdit;
+        private readonly GetInvoicesPageHandler _getInvoicesPage;
+        private readonly GetInvoiceForEditHandler _getInvoiceForEdit;
         private readonly CreateCustomerSegmentHandler _createCustomerSegment;
         private readonly UpdateCustomerSegmentHandler _updateCustomerSegment;
+        private readonly UpdateInvoiceHandler _updateInvoice;
         private readonly CreateInteractionHandler _createInteraction;
         private readonly CreateConsentHandler _createConsent;
         private readonly AssignCustomerSegmentHandler _assignCustomerSegment;
@@ -65,8 +68,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             UpdateOpportunityHandler updateOpportunity,
             GetCustomerSegmentsPageHandler getCustomerSegmentsPage,
             GetCustomerSegmentForEditHandler getCustomerSegmentForEdit,
+            GetInvoicesPageHandler getInvoicesPage,
+            GetInvoiceForEditHandler getInvoiceForEdit,
             CreateCustomerSegmentHandler createCustomerSegment,
             UpdateCustomerSegmentHandler updateCustomerSegment,
+            UpdateInvoiceHandler updateInvoice,
             CreateInteractionHandler createInteraction,
             CreateConsentHandler createConsent,
             AssignCustomerSegmentHandler assignCustomerSegment,
@@ -94,8 +100,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _updateOpportunity = updateOpportunity;
             _getCustomerSegmentsPage = getCustomerSegmentsPage;
             _getCustomerSegmentForEdit = getCustomerSegmentForEdit;
+            _getInvoicesPage = getInvoicesPage;
+            _getInvoiceForEdit = getInvoiceForEdit;
             _createCustomerSegment = createCustomerSegment;
             _updateCustomerSegment = updateCustomerSegment;
+            _updateInvoice = updateInvoice;
             _createInteraction = createInteraction;
             _createConsent = createConsent;
             _assignCustomerSegment = assignCustomerSegment;
@@ -161,7 +170,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCustomerEditor(vm, "CreateCustomer");
             }
 
             try
@@ -179,14 +188,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Customer created.";
-                return RedirectToAction(nameof(EditCustomer), new { id });
+                return RedirectOrHtmx(nameof(EditCustomer), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCustomerEditor(vm, "CreateCustomer");
             }
         }
 
@@ -257,7 +266,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             EnsureCustomerAddressRows(vm);
             await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderCustomerEditor(vm, "EditCustomer");
         }
 
         [HttpPost]
@@ -268,7 +277,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCustomerEditor(vm, nameof(EditCustomer));
             }
 
             try
@@ -288,7 +297,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Customer updated.";
-                return RedirectToAction(nameof(EditCustomer), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditCustomer), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -300,7 +309,118 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureCustomerAddressRows(vm);
                 await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCustomerEditor(vm, "EditCustomer");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Invoices(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        {
+            var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            return View(new InvoicesListVm
+            {
+                Summary = MapSummary(summary),
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = q ?? string.Empty,
+                Items = items.Select(x => new InvoiceListItemVm
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    CustomerId = x.CustomerId,
+                    CustomerDisplayName = x.CustomerDisplayName,
+                    OrderId = x.OrderId,
+                    OrderNumber = x.OrderNumber,
+                    PaymentId = x.PaymentId,
+                    PaymentSummary = x.PaymentSummary,
+                    Status = x.Status,
+                    Currency = x.Currency,
+                    TotalGrossMinor = x.TotalGrossMinor,
+                    DueDateUtc = x.DueDateUtc,
+                    PaidAtUtc = x.PaidAtUtc,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditInvoice(Guid id, CancellationToken ct = default)
+        {
+            var dto = await _getInvoiceForEdit.HandleAsync(id, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                TempData["Error"] = "Invoice not found.";
+                return RedirectToAction(nameof(Invoices));
+            }
+
+            var vm = new InvoiceEditVm
+            {
+                Id = dto.Id,
+                RowVersion = dto.RowVersion,
+                BusinessId = dto.BusinessId,
+                CustomerId = dto.CustomerId,
+                CustomerDisplayName = dto.CustomerDisplayName,
+                OrderId = dto.OrderId,
+                OrderNumber = dto.OrderNumber,
+                PaymentId = dto.PaymentId,
+                PaymentSummary = dto.PaymentSummary,
+                Status = dto.Status,
+                Currency = dto.Currency,
+                TotalNetMinor = dto.TotalNetMinor,
+                TotalTaxMinor = dto.TotalTaxMinor,
+                TotalGrossMinor = dto.TotalGrossMinor,
+                DueDateUtc = dto.DueDateUtc,
+                PaidAtUtc = dto.PaidAtUtc
+            };
+
+            await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
+            return RenderInvoiceEditor(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditInvoice(InvoiceEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
+                return RenderInvoiceEditor(vm);
+            }
+
+            try
+            {
+                await _updateInvoice.HandleAsync(new InvoiceEditDto
+                {
+                    Id = vm.Id,
+                    RowVersion = vm.RowVersion,
+                    BusinessId = vm.BusinessId,
+                    CustomerId = vm.CustomerId,
+                    OrderId = vm.OrderId,
+                    PaymentId = vm.PaymentId,
+                    Status = vm.Status,
+                    Currency = vm.Currency,
+                    TotalNetMinor = vm.TotalNetMinor,
+                    TotalTaxMinor = vm.TotalTaxMinor,
+                    TotalGrossMinor = vm.TotalGrossMinor,
+                    DueDateUtc = vm.DueDateUtc,
+                    PaidAtUtc = vm.PaidAtUtc
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Invoice updated.";
+                return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["Error"] = "Concurrency conflict. Reload the invoice and try again.";
+                return RedirectToAction(nameof(EditInvoice), new { id = vm.Id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
+                return RenderInvoiceEditor(vm);
             }
         }
 
@@ -338,7 +458,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             var vm = new LeadEditVm();
             await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderLeadEditor(vm, nameof(CreateLead));
         }
 
         [HttpPost]
@@ -348,7 +468,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (!ModelState.IsValid)
             {
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderLeadEditor(vm, nameof(CreateLead));
             }
 
             try
@@ -368,13 +488,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Lead created.";
-                return RedirectToAction(nameof(EditLead), new { id });
+                return RedirectOrHtmx(nameof(EditLead), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderLeadEditor(vm, nameof(CreateLead));
             }
         }
 
@@ -412,7 +532,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
 
             await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderLeadEditor(vm, nameof(EditLead));
         }
 
         [HttpPost]
@@ -422,7 +542,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (!ModelState.IsValid)
             {
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderLeadEditor(vm, nameof(EditLead));
             }
 
             try
@@ -444,7 +564,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Lead updated.";
-                return RedirectToAction(nameof(EditLead), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditLead), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -455,7 +575,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderLeadEditor(vm, nameof(EditLead));
             }
         }
 
@@ -492,7 +612,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var vm = new OpportunityEditVm();
             EnsureOpportunityLineRows(vm);
             await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderOpportunityEditor(vm, nameof(CreateOpportunity));
         }
 
         [HttpPost]
@@ -503,7 +623,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderOpportunityEditor(vm, nameof(CreateOpportunity));
             }
 
             try
@@ -526,14 +646,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Opportunity created.";
-                return RedirectToAction(nameof(EditOpportunity), new { id });
+                return RedirectOrHtmx(nameof(EditOpportunity), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderOpportunityEditor(vm, nameof(CreateOpportunity));
             }
         }
 
@@ -570,7 +690,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
             EnsureOpportunityLineRows(vm);
             await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderOpportunityEditor(vm, nameof(EditOpportunity));
         }
 
         [HttpPost]
@@ -581,7 +701,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             {
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderOpportunityEditor(vm, nameof(EditOpportunity));
             }
 
             try
@@ -606,7 +726,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Opportunity updated.";
-                return RedirectToAction(nameof(EditOpportunity), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditOpportunity), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -618,7 +738,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureOpportunityLineRows(vm);
                 await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderOpportunityEditor(vm, nameof(EditOpportunity));
             }
         }
 
@@ -980,6 +1100,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.NewInteraction.UserOptions = await _referenceData.GetUserOptionsAsync(vm.NewInteraction.UserId, includeEmpty: true, ct).ConfigureAwait(false);
         }
 
+        private async Task PopulateInvoiceOptionsAsync(InvoiceEditVm vm, CancellationToken ct)
+        {
+            vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
+            vm.CustomerOptions = await _referenceData.GetCustomerOptionsAsync(vm.CustomerId, includeEmpty: true, ct).ConfigureAwait(false);
+            vm.PaymentOptions = await _referenceData.GetPaymentOptionsAsync(vm.PaymentId, includeEmpty: true, ct).ConfigureAwait(false);
+        }
+
         private static void EnsureCustomerAddressRows(CustomerEditVm vm)
         {
             vm.Addresses ??= new List<CustomerAddressVm>();
@@ -1060,6 +1187,65 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 SegmentCount = dto.SegmentCount,
                 RecentInteractionCount = dto.RecentInteractionCount
             };
+        }
+
+        private IActionResult RenderCustomerEditor(CustomerEditVm vm, string actionName)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["FormAction"] = actionName;
+                return PartialView("~/Views/Crm/_CustomerEditorShell.cshtml", vm);
+            }
+
+            return actionName == nameof(CreateCustomer) ? View("CreateCustomer", vm) : View("EditCustomer", vm);
+        }
+
+        private IActionResult RenderInvoiceEditor(InvoiceEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Crm/_InvoiceEditorShell.cshtml", vm);
+            }
+
+            return View("EditInvoice", vm);
+        }
+
+        private IActionResult RenderLeadEditor(LeadEditVm vm, string actionName)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["FormAction"] = actionName;
+                return PartialView("~/Views/Crm/_LeadEditorShell.cshtml", vm);
+            }
+
+            return actionName == nameof(CreateLead) ? View("CreateLead", vm) : View("EditLead", vm);
+        }
+
+        private IActionResult RenderOpportunityEditor(OpportunityEditVm vm, string actionName)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["FormAction"] = actionName;
+                return PartialView("~/Views/Crm/_OpportunityEditorShell.cshtml", vm);
+            }
+
+            return actionName == nameof(CreateOpportunity) ? View("CreateOpportunity", vm) : View("EditOpportunity", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

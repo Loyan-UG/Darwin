@@ -1,0 +1,99 @@
+@model Darwin.WebAdmin.ViewModels.CRM.InvoiceEditVm
+
+<h1 class="mb-3">Edit Invoice</h1>
+
+<form asp-action="EditInvoice"
+      method="post"
+      hx-post="@Url.Action("EditInvoice", "Crm")"
+      hx-target="#crm-invoice-editor-shell"
+      hx-swap="outerHTML">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="RowVersion" />
+
+    <div class="alert alert-light border mb-3">
+        <div class="row g-2 small">
+            <div class="col-md-4">
+                <strong>Invoice:</strong> <code>@Model.Id</code>
+            </div>
+            <div class="col-md-4">
+                <strong>Order:</strong>
+                @if (Model.OrderId.HasValue)
+                {
+                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" class="text-decoration-none">
+                        @(string.IsNullOrWhiteSpace(Model.OrderNumber) ? Model.OrderId.Value.ToString() : Model.OrderNumber)
+                    </a>
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </div>
+            <div class="col-md-4">
+                <strong>Customer:</strong>
+                @if (Model.CustomerId.HasValue)
+                {
+                    <a asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="text-decoration-none">
+                        @(string.IsNullOrWhiteSpace(Model.CustomerDisplayName) ? Model.CustomerId.Value.ToString() : Model.CustomerDisplayName)
+                    </a>
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="BusinessId" class="form-label"></label>
+            <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CustomerId" class="form-label"></label>
+            <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="PaymentId" class="form-label"></label>
+            <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
+            @if (!string.IsNullOrWhiteSpace(Model.PaymentSummary))
+            {
+                <div class="form-text">Current: @Model.PaymentSummary</div>
+            }
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Status" class="form-label"></label>
+            <select asp-for="Status" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>()" class="form-select"></select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Currency" class="form-label"></label>
+            <input asp-for="Currency" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="DueDateUtc" class="form-label"></label>
+            <input asp-for="DueDateUtc" type="datetime-local" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="PaidAtUtc" class="form-label"></label>
+            <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="TotalNetMinor" class="form-label"></label>
+            <input asp-for="TotalNetMinor" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="TotalTaxMinor" class="form-label"></label>
+            <input asp-for="TotalTaxMinor" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="TotalGrossMinor" class="form-label"></label>
+            <input asp-for="TotalGrossMinor" class="form-control" />
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-action="Invoices" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>

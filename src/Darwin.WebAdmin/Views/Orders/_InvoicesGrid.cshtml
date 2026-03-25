@@ -65,7 +65,12 @@
                             <td class="text-end">@item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</td>
                             <td>@item.Status</td>
                             <td>@item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                            <td>@(item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                            <td>
+                                @(item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")
+                                <div class="mt-1">
+                                    <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Invoice</a>
+                                </div>
+                            </td>
                         </tr>
                     }
                 }

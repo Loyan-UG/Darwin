@@ -158,4 +158,23 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.CustomerSegmentId).NotEmpty();
         }
     }
+
+    public sealed class InvoiceEditValidator : AbstractValidator<InvoiceEditDto>
+    {
+        public InvoiceEditValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+            RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.TotalNetMinor).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.TotalTaxMinor).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.TotalGrossMinor).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.DueDateUtc).NotEmpty();
+            When(x => x.Status == Darwin.Domain.Enums.InvoiceStatus.Paid, () =>
+            {
+                RuleFor(x => x.PaidAtUtc).NotNull();
+            });
+        }
+    }
 }

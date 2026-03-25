@@ -45,9 +45,10 @@ The immediate direction is:
 - Completed: expose new CRM, inventory, and billing modules in WebAdmin with MVC/Razor screens aligned to the new Application handlers.
 - Completed: add HTMX-backed CRM interaction timelines on customer, lead, and opportunity edit screens.
 - Completed: add HTMX-backed customer consent history and segment membership management screens.
+- Completed: move customer, lead, opportunity, invoice, and payment create/edit flows onto reusable HTMX editor-shell patterns with full-page fallback.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
-- Task: move the new CRM, inventory, and billing create/edit flows to richer HTMX partial submission patterns where it reduces full-page postbacks.
+- Task: extend the HTMX editor-shell pattern to remaining inventory, accounting, and legacy admin forms where it reduces full-page postbacks.
 
 ### Epic: Orders, fulfillment, and billing admin
 
@@ -59,6 +60,8 @@ The immediate direction is:
 - Completed: converge duplicated order-payment and billing-payment concepts into a single `Billing.Payment` aggregate.
 - Completed: remove legacy shadow foreign-key columns from business/identity joins and align `OrderLine.VatRate` precision in the database model.
 - Completed: expose CRM-linked invoices, payment context, and customer/order cross-links more deeply in the admin UI so Billing and Orders screens no longer rely on raw ids.
+- Completed: add dedicated CRM invoice list/edit screens and fix invoice lifecycle persistence so order links and payment reassignments do not leave stale associations.
+- Task: deepen invoice lifecycle tooling with posting/voiding/refund-oriented operator workflows and stronger state-transition guards.
 
 ### Epic: CRM admin
 
@@ -93,6 +96,7 @@ The immediate direction is:
 
 ### Epic: Public API
 
+- Completed: add non-breaking public/member/business route aliases so the future API surface split can evolve without breaking legacy callers.
 - Task: document and implement CMS page endpoints.
 - Task: document and implement menus and storefront navigation endpoints.
 - Task: document and implement product/category/storefront browsing endpoints.

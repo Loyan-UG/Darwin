@@ -45,6 +45,7 @@ public sealed class BillingController : ApiControllerBase
     /// Returns current subscription snapshot for the authenticated business.
     /// </summary>
     [HttpGet("business/subscription/current")]
+    [HttpGet("/api/v1/business/billing/subscription/current")]
     [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
     [ProducesResponseType(typeof(BusinessSubscriptionStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -72,6 +73,7 @@ public sealed class BillingController : ApiControllerBase
     /// Updates cancel-at-period-end preference for authenticated business subscription.
     /// </summary>
     [HttpPost("business/subscription/cancel-at-period-end")]
+    [HttpPost("/api/v1/business/billing/subscription/cancel-at-period-end")]
     [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
     [ProducesResponseType(typeof(SetCancelAtPeriodEndResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -115,6 +117,7 @@ public sealed class BillingController : ApiControllerBase
     /// Returns available billing plans for subscription upgrade/checkout decisions.
     /// </summary>
     [HttpGet("plans")]
+    [HttpGet("/api/v1/business/billing/plans")]
     [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
     [ProducesResponseType(typeof(GetBillingPlansResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -157,6 +160,7 @@ public sealed class BillingController : ApiControllerBase
     /// Creates a checkout-intent URL for subscription upgrade/checkout.
     /// </summary>
     [HttpPost("business/subscription/checkout-intent")]
+    [HttpPost("/api/v1/business/billing/subscription/checkout-intent")]
     [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
     [ProducesResponseType(typeof(CreateSubscriptionCheckoutIntentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

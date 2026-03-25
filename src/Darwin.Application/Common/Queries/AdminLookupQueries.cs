@@ -199,4 +199,29 @@ namespace Darwin.Application.Common.Queries
                 .ToListAsync(ct);
         }
     }
+
+    /// <summary>
+    /// Loads payment lookup items for invoice linkage and refund selection scenarios.
+    /// </summary>
+    public sealed class GetPaymentLookupHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetPaymentLookupHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public Task<List<LookupItemDto>> HandleAsync(CancellationToken ct = default)
+        {
+            return _db.Set<Payment>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .OrderByDescending(x => x.PaidAtUtc ?? x.CreatedAtUtc)
+                .Select(x => new LookupItemDto
+                {
+                    Id = x.Id,
+                    Label = x.Provider + " - " + x.Currency + " " + ((decimal)x.AmountMinor / 100M).ToString("0.00"),
+                    SecondaryLabel = x.Status.ToString()
+                })
+                .ToListAsync(ct);
+        }
+    }
 }

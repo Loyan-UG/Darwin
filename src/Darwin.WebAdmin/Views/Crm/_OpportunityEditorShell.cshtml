@@ -1,0 +1,25 @@
+@model Darwin.WebAdmin.ViewModels.CRM.OpportunityEditVm
+@{
+    var isCreate = Model.Id == Guid.Empty;
+    var formAction = (string?)ViewData["FormAction"] ?? (isCreate ? "CreateOpportunity" : "EditOpportunity");
+}
+
+<div id="crm-opportunity-editor-shell">
+    <form asp-action="@formAction"
+          method="post"
+          hx-post="@Url.Action(formAction, "Crm")"
+          hx-target="#crm-opportunity-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+        <partial name="_OpportunityForm" model="Model" />
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+            <a asp-action="Opportunities" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </form>
+</div>

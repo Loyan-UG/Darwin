@@ -3,18 +3,12 @@
     ViewData["Title"] = "Edit Customer";
 }
 
-<h1 class="mb-3">Edit Customer</h1>
-
-<form asp-action="EditCustomer" method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="RowVersion" />
-    <partial name="_CustomerForm" model="Model" />
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
-        <a asp-action="Customers" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+<div id="crm-customer-editor-shell">
+    @{
+        ViewData["FormAction"] = "EditCustomer";
+    }
+    <partial name="~/Views/Crm/_CustomerEditorShell.cshtml" model="Model" />
+</div>
 
 <hr class="my-4" />
 

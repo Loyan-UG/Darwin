@@ -370,6 +370,67 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public Guid CustomerSegmentId { get; set; }
     }
 
+    public sealed class InvoicesListVm
+    {
+        public CrmSummaryVm Summary { get; set; } = new();
+        public List<InvoiceListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+    }
+
+    public sealed class InvoiceListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid? BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
+        public Guid? PaymentId { get; set; }
+        public string PaymentSummary { get; set; } = string.Empty;
+        public InvoiceStatus Status { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public long TotalGrossMinor { get; set; }
+        public DateTime DueDateUtc { get; set; }
+        public DateTime? PaidAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class InvoiceEditVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public Guid? BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
+        public Guid? PaymentId { get; set; }
+        public string PaymentSummary { get; set; } = string.Empty;
+        public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
+
+        [Required]
+        [StringLength(3, MinimumLength = 3)]
+        public string Currency { get; set; } = "EUR";
+
+        [Range(0, long.MaxValue)]
+        public long TotalNetMinor { get; set; }
+
+        [Range(0, long.MaxValue)]
+        public long TotalTaxMinor { get; set; }
+
+        [Range(0, long.MaxValue)]
+        public long TotalGrossMinor { get; set; }
+
+        public DateTime DueDateUtc { get; set; } = DateTime.UtcNow.AddDays(14);
+        public DateTime? PaidAtUtc { get; set; }
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<SelectListItem> CustomerOptions { get; set; } = new();
+        public List<SelectListItem> PaymentOptions { get; set; } = new();
+    }
+
     public sealed class CrmSummaryVm
     {
         public int CustomerCount { get; set; }

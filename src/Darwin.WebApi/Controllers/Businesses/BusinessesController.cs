@@ -75,6 +75,7 @@ public sealed class BusinessesController : ApiControllerBase
     /// Creates a business and links the authenticated user as owner.
     /// </summary>
     [HttpPost("onboarding")]
+    [HttpPost("/api/v1/member/businesses/onboarding")]
     [Authorize]
     [ProducesResponseType(typeof(BusinessOnboardingResponse), 200)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
@@ -158,6 +159,7 @@ public sealed class BusinessesController : ApiControllerBase
     }
 
     [HttpPost("list")]
+    [HttpPost("/api/v1/public/businesses/list")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(PagedResponse<BusinessSummary>), 200)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
@@ -231,6 +233,7 @@ public sealed class BusinessesController : ApiControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [HttpGet("/api/v1/public/businesses/{id:guid}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(BusinessDetail), 200)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 404)]
@@ -255,6 +258,7 @@ public sealed class BusinessesController : ApiControllerBase
     }
 
     [HttpGet("{id:guid}/with-my-account")]
+    [HttpGet("/api/v1/member/businesses/{id:guid}/with-my-account")]
     [Authorize(Policy = "perm:AccessMemberArea")]
     [ProducesResponseType(typeof(BusinessDetailWithMyAccount), 200)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
@@ -303,6 +307,7 @@ public sealed class BusinessesController : ApiControllerBase
     /// so mobile clients can render social proof and user state in one call.
     /// </remarks>
     [HttpGet("{id:guid}/engagement/my")]
+    [HttpGet("/api/v1/member/businesses/{id:guid}/engagement/my")]
     [Authorize(Policy = "perm:AccessMemberArea")]
     [ProducesResponseType(typeof(BusinessEngagementSummaryResponse), 200)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
@@ -365,6 +370,7 @@ public sealed class BusinessesController : ApiControllerBase
     /// without requiring an additional read request.
     /// </remarks>
     [HttpPut("{id:guid}/likes/toggle")]
+    [HttpPut("/api/v1/member/businesses/{id:guid}/likes/toggle")]
     [Authorize(Policy = "perm:AccessMemberArea")]
     [ProducesResponseType(typeof(ToggleBusinessReactionResponse), 200)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
@@ -391,6 +397,7 @@ public sealed class BusinessesController : ApiControllerBase
     /// Response returns final boolean state plus updated count for optimistic client updates.
     /// </remarks>
     [HttpPut("{id:guid}/favorites/toggle")]
+    [HttpPut("/api/v1/member/businesses/{id:guid}/favorites/toggle")]
     [Authorize(Policy = "perm:AccessMemberArea")]
     [ProducesResponseType(typeof(ToggleBusinessReactionResponse), 200)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
@@ -417,6 +424,7 @@ public sealed class BusinessesController : ApiControllerBase
     /// Returns 204 on success to keep payload minimal and deterministic.
     /// </remarks>
     [HttpPut("{id:guid}/my-review")]
+    [HttpPut("/api/v1/member/businesses/{id:guid}/my-review")]
     [Authorize(Policy = "perm:AccessMemberArea")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]

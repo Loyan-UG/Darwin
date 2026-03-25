@@ -3,16 +3,12 @@
     ViewData["Title"] = "Create Customer";
 }
 
-<h1 class="mb-3">Create Customer</h1>
-
-<form asp-action="CreateCustomer" method="post">
-    @Html.AntiForgeryToken()
-    <partial name="_CustomerForm" model="Model" />
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
-        <a asp-action="Customers" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+<div id="crm-customer-editor-shell">
+    @{
+        ViewData["FormAction"] = "CreateCustomer";
+    }
+    <partial name="~/Views/Crm/_CustomerEditorShell.cshtml" model="Model" />
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

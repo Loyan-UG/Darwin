@@ -1,0 +1,12 @@
+@model Darwin.WebAdmin.ViewModels.CRM.InvoiceEditVm
+@{
+    ViewData["Title"] = "Edit Invoice";
+}
+
+<div id="crm-invoice-editor-shell">
+    <partial name="~/Views/Crm/_InvoiceEditorShell.cshtml" model="Model" />
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

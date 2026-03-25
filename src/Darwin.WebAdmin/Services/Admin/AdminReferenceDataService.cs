@@ -17,6 +17,7 @@ namespace Darwin.WebAdmin.Services.Admin
         private readonly GetProductVariantLookupHandler _getVariants;
         private readonly GetSupplierLookupHandler _getSuppliers;
         private readonly GetFinancialAccountLookupHandler _getAccounts;
+        private readonly GetPaymentLookupHandler _getPayments;
 
         public AdminReferenceDataService(
             GetBusinessLookupHandler getBusinesses,
@@ -26,7 +27,8 @@ namespace Darwin.WebAdmin.Services.Admin
             GetCustomerSegmentLookupHandler getCustomerSegments,
             GetProductVariantLookupHandler getVariants,
             GetSupplierLookupHandler getSuppliers,
-            GetFinancialAccountLookupHandler getAccounts)
+            GetFinancialAccountLookupHandler getAccounts,
+            GetPaymentLookupHandler getPayments)
         {
             _getBusinesses = getBusinesses ?? throw new ArgumentNullException(nameof(getBusinesses));
             _getWarehouses = getWarehouses ?? throw new ArgumentNullException(nameof(getWarehouses));
@@ -36,6 +38,7 @@ namespace Darwin.WebAdmin.Services.Admin
             _getVariants = getVariants ?? throw new ArgumentNullException(nameof(getVariants));
             _getSuppliers = getSuppliers ?? throw new ArgumentNullException(nameof(getSuppliers));
             _getAccounts = getAccounts ?? throw new ArgumentNullException(nameof(getAccounts));
+            _getPayments = getPayments ?? throw new ArgumentNullException(nameof(getPayments));
         }
 
         public async Task<Guid?> ResolveBusinessIdAsync(Guid? requestedBusinessId, CancellationToken ct = default)
@@ -116,6 +119,12 @@ namespace Darwin.WebAdmin.Services.Admin
         {
             var items = await _getAccounts.HandleAsync(businessId, ct).ConfigureAwait(false);
             return BuildOptions(items, selectedAccountId, includeEmpty, "Select account");
+        }
+
+        public async Task<List<SelectListItem>> GetPaymentOptionsAsync(Guid? selectedPaymentId, bool includeEmpty = false, CancellationToken ct = default)
+        {
+            var items = await _getPayments.HandleAsync(ct).ConfigureAwait(false);
+            return BuildOptions(items, selectedPaymentId, includeEmpty, "Select payment");
         }
 
         private static Guid? ResolveSelectedId(IReadOnlyCollection<Guid> availableIds, Guid? requestedId)

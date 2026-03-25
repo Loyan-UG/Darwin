@@ -135,7 +135,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
 
             await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderPaymentEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -145,7 +145,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (!ModelState.IsValid)
             {
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPaymentEditor(vm, isCreate: true);
             }
 
             var dto = new PaymentCreateDto
@@ -167,13 +167,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 var id = await _createPayment.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Payment created.";
-                return RedirectToAction(nameof(EditPayment), new { id });
+                return RedirectOrHtmx(nameof(EditPayment), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPaymentEditor(vm, isCreate: true);
             }
         }
 
@@ -213,7 +213,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
 
             await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderPaymentEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -223,7 +223,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (!ModelState.IsValid)
             {
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPaymentEditor(vm, isCreate: false);
             }
 
             var dto = new PaymentEditDto
@@ -247,7 +247,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 await _updatePayment.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Payment updated.";
-                return RedirectToAction(nameof(EditPayment), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditPayment), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -258,7 +258,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPaymentEditor(vm, isCreate: false);
             }
         }
 
@@ -752,6 +752,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 vm.Lines.Add(new JournalEntryLineVm());
                 vm.Lines.Add(new JournalEntryLineVm());
             }
+        }
+
+        private IActionResult RenderPaymentEditor(PaymentEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Billing/_PaymentEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreatePayment", vm) : View("EditPayment", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

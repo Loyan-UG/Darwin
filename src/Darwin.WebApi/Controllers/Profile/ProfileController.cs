@@ -49,6 +49,7 @@ namespace Darwin.WebApi.Controllers.Profile
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Current user's profile.</returns>
         [HttpGet("me")]
+        [HttpGet("/api/v1/member/profile/me")]
         [ProducesResponseType(typeof(CustomerProfile), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
@@ -98,6 +99,7 @@ namespace Darwin.WebApi.Controllers.Profile
         /// <param name="ct">Cancellation token.</param>
         /// <returns>No content on success.</returns>
         [HttpPut("me")]
+        [HttpPut("/api/v1/member/profile/me")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateMe([FromBody] CustomerProfile? request, CancellationToken ct)
@@ -159,6 +161,7 @@ namespace Darwin.WebApi.Controllers.Profile
         /// <param name="ct">Cancellation token.</param>
         /// <returns>No content on success.</returns>
         [HttpPost("me/deletion-request")]
+        [HttpPost("/api/v1/member/profile/me/deletion-request")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RequestAccountDeletionAsync([FromBody] RequestAccountDeletionRequest? request, CancellationToken ct)
