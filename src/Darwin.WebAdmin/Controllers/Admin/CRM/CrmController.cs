@@ -1,60 +1,99 @@
 using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
-using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.ViewModels.CRM;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.WebAdmin.Controllers.Admin.CRM
 {
     /// <summary>
-    /// Admin CRM controller for customers, leads, and opportunities.
+    /// Admin CRM controller for customers, leads, opportunities, segments, and related timeline data.
     /// </summary>
     public sealed class CrmController : AdminBaseController
     {
         private readonly GetCustomersPageHandler _getCustomersPage;
         private readonly GetCustomerForEditHandler _getCustomerForEdit;
+        private readonly GetCustomerInteractionsPageHandler _getCustomerInteractionsPage;
+        private readonly GetCustomerConsentsPageHandler _getCustomerConsentsPage;
+        private readonly GetCustomerSegmentMembershipsHandler _getCustomerSegmentMemberships;
         private readonly CreateCustomerHandler _createCustomer;
         private readonly UpdateCustomerHandler _updateCustomer;
         private readonly GetLeadsPageHandler _getLeadsPage;
         private readonly GetLeadForEditHandler _getLeadForEdit;
+        private readonly GetLeadInteractionsPageHandler _getLeadInteractionsPage;
         private readonly CreateLeadHandler _createLead;
         private readonly UpdateLeadHandler _updateLead;
         private readonly GetOpportunitiesPageHandler _getOpportunitiesPage;
         private readonly GetOpportunityForEditHandler _getOpportunityForEdit;
+        private readonly GetOpportunityInteractionsPageHandler _getOpportunityInteractionsPage;
         private readonly CreateOpportunityHandler _createOpportunity;
         private readonly UpdateOpportunityHandler _updateOpportunity;
+        private readonly GetCustomerSegmentsPageHandler _getCustomerSegmentsPage;
+        private readonly GetCustomerSegmentForEditHandler _getCustomerSegmentForEdit;
+        private readonly CreateCustomerSegmentHandler _createCustomerSegment;
+        private readonly UpdateCustomerSegmentHandler _updateCustomerSegment;
+        private readonly CreateInteractionHandler _createInteraction;
+        private readonly CreateConsentHandler _createConsent;
+        private readonly AssignCustomerSegmentHandler _assignCustomerSegment;
+        private readonly RemoveCustomerSegmentMembershipHandler _removeCustomerSegmentMembership;
         private readonly AdminReferenceDataService _referenceData;
 
         public CrmController(
             GetCustomersPageHandler getCustomersPage,
             GetCustomerForEditHandler getCustomerForEdit,
+            GetCustomerInteractionsPageHandler getCustomerInteractionsPage,
+            GetCustomerConsentsPageHandler getCustomerConsentsPage,
+            GetCustomerSegmentMembershipsHandler getCustomerSegmentMemberships,
             CreateCustomerHandler createCustomer,
             UpdateCustomerHandler updateCustomer,
             GetLeadsPageHandler getLeadsPage,
             GetLeadForEditHandler getLeadForEdit,
+            GetLeadInteractionsPageHandler getLeadInteractionsPage,
             CreateLeadHandler createLead,
             UpdateLeadHandler updateLead,
             GetOpportunitiesPageHandler getOpportunitiesPage,
             GetOpportunityForEditHandler getOpportunityForEdit,
+            GetOpportunityInteractionsPageHandler getOpportunityInteractionsPage,
             CreateOpportunityHandler createOpportunity,
             UpdateOpportunityHandler updateOpportunity,
+            GetCustomerSegmentsPageHandler getCustomerSegmentsPage,
+            GetCustomerSegmentForEditHandler getCustomerSegmentForEdit,
+            CreateCustomerSegmentHandler createCustomerSegment,
+            UpdateCustomerSegmentHandler updateCustomerSegment,
+            CreateInteractionHandler createInteraction,
+            CreateConsentHandler createConsent,
+            AssignCustomerSegmentHandler assignCustomerSegment,
+            RemoveCustomerSegmentMembershipHandler removeCustomerSegmentMembership,
             AdminReferenceDataService referenceData)
         {
             _getCustomersPage = getCustomersPage;
             _getCustomerForEdit = getCustomerForEdit;
+            _getCustomerInteractionsPage = getCustomerInteractionsPage;
+            _getCustomerConsentsPage = getCustomerConsentsPage;
+            _getCustomerSegmentMemberships = getCustomerSegmentMemberships;
             _createCustomer = createCustomer;
             _updateCustomer = updateCustomer;
             _getLeadsPage = getLeadsPage;
             _getLeadForEdit = getLeadForEdit;
+            _getLeadInteractionsPage = getLeadInteractionsPage;
             _createLead = createLead;
             _updateLead = updateLead;
             _getOpportunitiesPage = getOpportunitiesPage;
             _getOpportunityForEdit = getOpportunityForEdit;
+            _getOpportunityInteractionsPage = getOpportunityInteractionsPage;
             _createOpportunity = createOpportunity;
             _updateOpportunity = updateOpportunity;
+            _getCustomerSegmentsPage = getCustomerSegmentsPage;
+            _getCustomerSegmentForEdit = getCustomerSegmentForEdit;
+            _createCustomerSegment = createCustomerSegment;
+            _updateCustomerSegment = updateCustomerSegment;
+            _createInteraction = createInteraction;
+            _createConsent = createConsent;
+            _assignCustomerSegment = assignCustomerSegment;
+            _removeCustomerSegmentMembership = removeCustomerSegmentMembership;
             _referenceData = referenceData;
         }
 
@@ -115,21 +154,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return View(vm);
             }
 
-            var dto = new CustomerCreateDto
-            {
-                UserId = vm.UserId,
-                FirstName = vm.FirstName,
-                LastName = vm.LastName,
-                Email = vm.Email,
-                Phone = vm.Phone,
-                CompanyName = vm.CompanyName,
-                Notes = vm.Notes,
-                Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
-            };
-
             try
             {
-                var id = await _createCustomer.HandleAsync(dto, ct).ConfigureAwait(false);
+                var id = await _createCustomer.HandleAsync(new CustomerCreateDto
+                {
+                    UserId = vm.UserId,
+                    FirstName = vm.FirstName,
+                    LastName = vm.LastName,
+                    Email = vm.Email,
+                    Phone = vm.Phone,
+                    CompanyName = vm.CompanyName,
+                    Notes = vm.Notes,
+                    Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
+                }, ct).ConfigureAwait(false);
+
                 TempData["Success"] = "Customer created.";
                 return RedirectToAction(nameof(EditCustomer), new { id });
             }
@@ -201,7 +239,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Country = x.Country,
                     IsDefaultBilling = x.IsDefaultBilling,
                     IsDefaultShipping = x.IsDefaultShipping
-                }).ToList()
+                }).ToList(),
+                NewInteraction = new InteractionCreateVm { CustomerId = dto.Id },
+                NewConsent = new ConsentCreateVm { CustomerId = dto.Id, GrantedAtUtc = DateTime.UtcNow },
+                SegmentAssignment = new AssignCustomerSegmentVm { CustomerId = dto.Id }
             };
 
             EnsureCustomerAddressRows(vm);
@@ -220,23 +261,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return View(vm);
             }
 
-            var dto = new CustomerEditDto
-            {
-                Id = vm.Id,
-                RowVersion = vm.RowVersion,
-                UserId = vm.UserId,
-                FirstName = vm.FirstName,
-                LastName = vm.LastName,
-                Email = vm.Email,
-                Phone = vm.Phone,
-                CompanyName = vm.CompanyName,
-                Notes = vm.Notes,
-                Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
-            };
-
             try
             {
-                await _updateCustomer.HandleAsync(dto, ct).ConfigureAwait(false);
+                await _updateCustomer.HandleAsync(new CustomerEditDto
+                {
+                    Id = vm.Id,
+                    RowVersion = vm.RowVersion,
+                    UserId = vm.UserId,
+                    FirstName = vm.FirstName,
+                    LastName = vm.LastName,
+                    Email = vm.Email,
+                    Phone = vm.Phone,
+                    CompanyName = vm.CompanyName,
+                    Notes = vm.Notes,
+                    Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
+                }, ct).ConfigureAwait(false);
+
                 TempData["Success"] = "Customer updated.";
                 return RedirectToAction(nameof(EditCustomer), new { id = vm.Id });
             }
@@ -298,23 +338,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return View(vm);
             }
 
-            var dto = new LeadCreateDto
-            {
-                FirstName = vm.FirstName,
-                LastName = vm.LastName,
-                CompanyName = vm.CompanyName,
-                Email = vm.Email,
-                Phone = vm.Phone,
-                Source = vm.Source,
-                Notes = vm.Notes,
-                Status = vm.Status,
-                AssignedToUserId = vm.AssignedToUserId,
-                CustomerId = vm.CustomerId
-            };
-
             try
             {
-                var id = await _createLead.HandleAsync(dto, ct).ConfigureAwait(false);
+                var id = await _createLead.HandleAsync(new LeadCreateDto
+                {
+                    FirstName = vm.FirstName,
+                    LastName = vm.LastName,
+                    CompanyName = vm.CompanyName,
+                    Email = vm.Email,
+                    Phone = vm.Phone,
+                    Source = vm.Source,
+                    Notes = vm.Notes,
+                    Status = vm.Status,
+                    AssignedToUserId = vm.AssignedToUserId,
+                    CustomerId = vm.CustomerId
+                }, ct).ConfigureAwait(false);
+
                 TempData["Success"] = "Lead created.";
                 return RedirectToAction(nameof(EditLead), new { id });
             }
@@ -349,7 +388,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Notes = dto.Notes,
                 Status = dto.Status,
                 AssignedToUserId = dto.AssignedToUserId,
-                CustomerId = dto.CustomerId
+                CustomerId = dto.CustomerId,
+                NewInteraction = new InteractionCreateVm { LeadId = dto.Id }
             };
 
             await PopulateLeadOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -366,25 +406,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return View(vm);
             }
 
-            var dto = new LeadEditDto
-            {
-                Id = vm.Id,
-                RowVersion = vm.RowVersion,
-                FirstName = vm.FirstName,
-                LastName = vm.LastName,
-                CompanyName = vm.CompanyName,
-                Email = vm.Email,
-                Phone = vm.Phone,
-                Source = vm.Source,
-                Notes = vm.Notes,
-                Status = vm.Status,
-                AssignedToUserId = vm.AssignedToUserId,
-                CustomerId = vm.CustomerId
-            };
-
             try
             {
-                await _updateLead.HandleAsync(dto, ct).ConfigureAwait(false);
+                await _updateLead.HandleAsync(new LeadEditDto
+                {
+                    Id = vm.Id,
+                    RowVersion = vm.RowVersion,
+                    FirstName = vm.FirstName,
+                    LastName = vm.LastName,
+                    CompanyName = vm.CompanyName,
+                    Email = vm.Email,
+                    Phone = vm.Phone,
+                    Source = vm.Source,
+                    Notes = vm.Notes,
+                    Status = vm.Status,
+                    AssignedToUserId = vm.AssignedToUserId,
+                    CustomerId = vm.CustomerId
+                }, ct).ConfigureAwait(false);
+
                 TempData["Success"] = "Lead updated.";
                 return RedirectToAction(nameof(EditLead), new { id = vm.Id });
             }
@@ -448,26 +487,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return View(vm);
             }
 
-            var dto = new OpportunityCreateDto
-            {
-                CustomerId = vm.CustomerId,
-                Title = vm.Title,
-                EstimatedValueMinor = vm.EstimatedValueMinor,
-                Stage = vm.Stage,
-                ExpectedCloseDateUtc = vm.ExpectedCloseDateUtc,
-                AssignedToUserId = vm.AssignedToUserId,
-                Items = vm.Items.Select(x => new OpportunityItemDto
-                {
-                    Id = x.Id,
-                    ProductVariantId = x.ProductVariantId,
-                    Quantity = x.Quantity,
-                    UnitPriceMinor = x.UnitPriceMinor
-                }).ToList()
-            };
-
             try
             {
-                var id = await _createOpportunity.HandleAsync(dto, ct).ConfigureAwait(false);
+                var id = await _createOpportunity.HandleAsync(new OpportunityCreateDto
+                {
+                    CustomerId = vm.CustomerId,
+                    Title = vm.Title,
+                    EstimatedValueMinor = vm.EstimatedValueMinor,
+                    Stage = vm.Stage,
+                    ExpectedCloseDateUtc = vm.ExpectedCloseDateUtc,
+                    AssignedToUserId = vm.AssignedToUserId,
+                    Items = vm.Items.Select(x => new OpportunityItemDto
+                    {
+                        Id = x.Id,
+                        ProductVariantId = x.ProductVariantId,
+                        Quantity = x.Quantity,
+                        UnitPriceMinor = x.UnitPriceMinor
+                    }).ToList()
+                }, ct).ConfigureAwait(false);
+
                 TempData["Success"] = "Opportunity created.";
                 return RedirectToAction(nameof(EditOpportunity), new { id });
             }
@@ -507,7 +545,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     ProductVariantId = x.ProductVariantId,
                     Quantity = x.Quantity,
                     UnitPriceMinor = x.UnitPriceMinor
-                }).ToList()
+                }).ToList(),
+                NewInteraction = new InteractionCreateVm { OpportunityId = dto.Id }
             };
 
             EnsureOpportunityLineRows(vm);
@@ -526,28 +565,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return View(vm);
             }
 
-            var dto = new OpportunityEditDto
-            {
-                Id = vm.Id,
-                RowVersion = vm.RowVersion,
-                CustomerId = vm.CustomerId,
-                Title = vm.Title,
-                EstimatedValueMinor = vm.EstimatedValueMinor,
-                Stage = vm.Stage,
-                ExpectedCloseDateUtc = vm.ExpectedCloseDateUtc,
-                AssignedToUserId = vm.AssignedToUserId,
-                Items = vm.Items.Select(x => new OpportunityItemDto
-                {
-                    Id = x.Id,
-                    ProductVariantId = x.ProductVariantId,
-                    Quantity = x.Quantity,
-                    UnitPriceMinor = x.UnitPriceMinor
-                }).ToList()
-            };
-
             try
             {
-                await _updateOpportunity.HandleAsync(dto, ct).ConfigureAwait(false);
+                await _updateOpportunity.HandleAsync(new OpportunityEditDto
+                {
+                    Id = vm.Id,
+                    RowVersion = vm.RowVersion,
+                    CustomerId = vm.CustomerId,
+                    Title = vm.Title,
+                    EstimatedValueMinor = vm.EstimatedValueMinor,
+                    Stage = vm.Stage,
+                    ExpectedCloseDateUtc = vm.ExpectedCloseDateUtc,
+                    AssignedToUserId = vm.AssignedToUserId,
+                    Items = vm.Items.Select(x => new OpportunityItemDto
+                    {
+                        Id = x.Id,
+                        ProductVariantId = x.ProductVariantId,
+                        Quantity = x.Quantity,
+                        UnitPriceMinor = x.UnitPriceMinor
+                    }).ToList()
+                }, ct).ConfigureAwait(false);
+
                 TempData["Success"] = "Opportunity updated.";
                 return RedirectToAction(nameof(EditOpportunity), new { id = vm.Id });
             }
@@ -565,15 +603,322 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Segments(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        {
+            var (items, total) = await _getCustomerSegmentsPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var vm = new CustomerSegmentsListVm
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = q ?? string.Empty,
+                Items = items.Select(x => new CustomerSegmentListItemVm
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    MemberCount = x.MemberCount,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public IActionResult CreateSegment() => View(new CustomerSegmentEditVm());
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSegment(CustomerSegmentEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(vm);
+            }
+
+            try
+            {
+                var id = await _createCustomerSegment.HandleAsync(new CustomerSegmentEditDto
+                {
+                    Name = vm.Name,
+                    Description = vm.Description
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Segment created.";
+                return RedirectToAction(nameof(EditSegment), new { id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(vm);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditSegment(Guid id, CancellationToken ct = default)
+        {
+            var dto = await _getCustomerSegmentForEdit.HandleAsync(id, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                TempData["Error"] = "Segment not found.";
+                return RedirectToAction(nameof(Segments));
+            }
+
+            return View(new CustomerSegmentEditVm
+            {
+                Id = dto.Id,
+                RowVersion = dto.RowVersion,
+                Name = dto.Name,
+                Description = dto.Description
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSegment(CustomerSegmentEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(vm);
+            }
+
+            try
+            {
+                await _updateCustomerSegment.HandleAsync(new CustomerSegmentEditDto
+                {
+                    Id = vm.Id,
+                    RowVersion = vm.RowVersion,
+                    Name = vm.Name,
+                    Description = vm.Description
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Segment updated.";
+                return RedirectToAction(nameof(EditSegment), new { id = vm.Id });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["Error"] = "Concurrency conflict. Reload the segment and try again.";
+                return RedirectToAction(nameof(EditSegment), new { id = vm.Id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(vm);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CustomerInteractions(Guid customerId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        {
+            var (items, total) = await _getCustomerInteractionsPage.HandleAsync(customerId, page, pageSize, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Crm/_InteractionsSection.cshtml", new InteractionsPageVm
+            {
+                Scope = "customer",
+                EntityId = customerId,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items.Select(MapInteraction).ToList()
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CustomerInteractions(InteractionCreateVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
+                TempData["Success"] = "Interaction added.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return await CustomerInteractions(vm.CustomerId ?? Guid.Empty, ct: ct).ConfigureAwait(false);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LeadInteractions(Guid leadId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        {
+            var (items, total) = await _getLeadInteractionsPage.HandleAsync(leadId, page, pageSize, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Crm/_InteractionsSection.cshtml", new InteractionsPageVm
+            {
+                Scope = "lead",
+                EntityId = leadId,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items.Select(MapInteraction).ToList()
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LeadInteractions(InteractionCreateVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
+                TempData["Success"] = "Interaction added.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return await LeadInteractions(vm.LeadId ?? Guid.Empty, ct: ct).ConfigureAwait(false);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> OpportunityInteractions(Guid opportunityId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        {
+            var (items, total) = await _getOpportunityInteractionsPage.HandleAsync(opportunityId, page, pageSize, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Crm/_InteractionsSection.cshtml", new InteractionsPageVm
+            {
+                Scope = "opportunity",
+                EntityId = opportunityId,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items.Select(MapInteraction).ToList()
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OpportunityInteractions(InteractionCreateVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                await _createInteraction.HandleAsync(MapInteraction(vm), ct).ConfigureAwait(false);
+                TempData["Success"] = "Interaction added.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return await OpportunityInteractions(vm.OpportunityId ?? Guid.Empty, ct: ct).ConfigureAwait(false);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CustomerConsents(Guid customerId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        {
+            var (items, total) = await _getCustomerConsentsPage.HandleAsync(customerId, page, pageSize, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Crm/_ConsentsSection.cshtml", new ConsentsPageVm
+            {
+                CustomerId = customerId,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items.Select(x => new ConsentListItemVm
+                {
+                    Id = x.Id,
+                    Type = x.Type,
+                    Granted = x.Granted,
+                    GrantedAtUtc = x.GrantedAtUtc,
+                    RevokedAtUtc = x.RevokedAtUtc
+                }).ToList()
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CustomerConsents(ConsentCreateVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                await _createConsent.HandleAsync(new ConsentCreateDto
+                {
+                    CustomerId = vm.CustomerId,
+                    Type = vm.Type,
+                    Granted = vm.Granted,
+                    GrantedAtUtc = vm.GrantedAtUtc,
+                    RevokedAtUtc = vm.RevokedAtUtc
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Consent record added.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return await CustomerConsents(vm.CustomerId, ct: ct).ConfigureAwait(false);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CustomerSegmentMemberships(Guid customerId, CancellationToken ct = default)
+        {
+            var items = await _getCustomerSegmentMemberships.HandleAsync(customerId, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Crm/_CustomerSegmentsSection.cshtml", new CustomerMembershipsVm
+            {
+                CustomerId = customerId,
+                Items = items.Select(x => new CustomerSegmentMembershipVm
+                {
+                    MembershipId = x.MembershipId,
+                    SegmentId = x.SegmentId,
+                    Name = x.Name,
+                    Description = x.Description
+                }).ToList()
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CustomerSegmentMemberships(AssignCustomerSegmentVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                await _assignCustomerSegment.HandleAsync(new AssignCustomerSegmentDto
+                {
+                    CustomerId = vm.CustomerId,
+                    CustomerSegmentId = vm.CustomerSegmentId
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Segment assigned.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return await CustomerSegmentMemberships(vm.CustomerId, ct).ConfigureAwait(false);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveCustomerSegmentMembership(Guid customerId, Guid membershipId, CancellationToken ct = default)
+        {
+            try
+            {
+                await _removeCustomerSegmentMembership.HandleAsync(membershipId, ct).ConfigureAwait(false);
+                TempData["Success"] = "Segment removed.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return await CustomerSegmentMemberships(customerId, ct).ConfigureAwait(false);
+        }
+
         private async Task PopulateCustomerOptionsAsync(CustomerEditVm vm, CancellationToken ct)
         {
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId, includeEmpty: true, ct).ConfigureAwait(false);
+            vm.NewInteraction.UserOptions = await _referenceData.GetUserOptionsAsync(vm.NewInteraction.UserId, includeEmpty: true, ct).ConfigureAwait(false);
+            vm.SegmentOptions = await _referenceData.GetCustomerSegmentOptionsAsync(vm.SegmentAssignment.CustomerSegmentId, includeEmpty: true, ct).ConfigureAwait(false);
         }
 
         private async Task PopulateLeadOptionsAsync(LeadEditVm vm, CancellationToken ct)
         {
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.AssignedToUserId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.CustomerOptions = await _referenceData.GetCustomerOptionsAsync(vm.CustomerId, includeEmpty: true, ct).ConfigureAwait(false);
+            vm.NewInteraction.UserOptions = await _referenceData.GetUserOptionsAsync(vm.NewInteraction.UserId, includeEmpty: true, ct).ConfigureAwait(false);
         }
 
         private async Task PopulateOpportunityOptionsAsync(OpportunityEditVm vm, CancellationToken ct)
@@ -581,6 +926,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             vm.CustomerOptions = await _referenceData.GetCustomerOptionsAsync(vm.CustomerId, includeEmpty: false, ct).ConfigureAwait(false);
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.AssignedToUserId, includeEmpty: true, ct).ConfigureAwait(false);
             vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(null, ct).ConfigureAwait(false);
+            vm.NewInteraction.UserOptions = await _referenceData.GetUserOptionsAsync(vm.NewInteraction.UserId, includeEmpty: true, ct).ConfigureAwait(false);
         }
 
         private static void EnsureCustomerAddressRows(CustomerEditVm vm)
@@ -620,6 +966,34 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Country = vm.Country,
                 IsDefaultBilling = vm.IsDefaultBilling,
                 IsDefaultShipping = vm.IsDefaultShipping
+            };
+        }
+
+        private static InteractionCreateDto MapInteraction(InteractionCreateVm vm)
+        {
+            return new InteractionCreateDto
+            {
+                CustomerId = vm.CustomerId,
+                LeadId = vm.LeadId,
+                OpportunityId = vm.OpportunityId,
+                Type = vm.Type,
+                Channel = vm.Channel,
+                Subject = vm.Subject,
+                Content = vm.Content,
+                UserId = vm.UserId
+            };
+        }
+
+        private static InteractionListItemVm MapInteraction(InteractionListItemDto dto)
+        {
+            return new InteractionListItemVm
+            {
+                Id = dto.Id,
+                Type = dto.Type,
+                Channel = dto.Channel,
+                Subject = dto.Subject,
+                Content = dto.Content,
+                CreatedAtUtc = dto.CreatedAtUtc
             };
         }
     }

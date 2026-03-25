@@ -48,12 +48,7 @@ namespace Darwin.Domain.Entities.Orders
     public sealed class ShipmentLine : BaseEntity
     {
         public Guid ShipmentId { get; set; }
-        public Guid VariantId { get; set; }
-        public Guid OrderLineId
-        {
-            get => VariantId;
-            set => VariantId = value;
-        }
+        public Guid OrderLineId { get; set; }
         public int Quantity { get; set; }
     }
 

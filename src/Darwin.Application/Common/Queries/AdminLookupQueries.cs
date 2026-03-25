@@ -94,6 +94,31 @@ namespace Darwin.Application.Common.Queries
     }
 
     /// <summary>
+    /// Loads CRM segment lookup items for customer assignment forms.
+    /// </summary>
+    public sealed class GetCustomerSegmentLookupHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetCustomerSegmentLookupHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public Task<List<LookupItemDto>> HandleAsync(CancellationToken ct = default)
+        {
+            return _db.Set<CustomerSegment>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.Name)
+                .Select(x => new LookupItemDto
+                {
+                    Id = x.Id,
+                    Label = x.Name,
+                    SecondaryLabel = x.Description
+                })
+                .ToListAsync(ct);
+        }
+    }
+
+    /// <summary>
     /// Loads product variant lookup items for inventory and CRM quotation forms.
     /// </summary>
     public sealed class GetProductVariantLookupHandler

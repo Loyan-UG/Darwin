@@ -88,4 +88,33 @@ namespace Darwin.Application.Orders.Validators
                 .WithMessage("WarehouseId must be a valid identifier when provided.");
         }
     }
+
+    public sealed class RefundCreateValidator : AbstractValidator<RefundCreateDto>
+    {
+        public RefundCreateValidator()
+        {
+            RuleFor(x => x.OrderId).NotEmpty();
+            RuleFor(x => x.PaymentId).NotEmpty();
+            RuleFor(x => x.AmountMinor).GreaterThan(0);
+            RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.Reason).NotEmpty().MaximumLength(256);
+        }
+    }
+
+    public sealed class OrderInvoiceCreateValidator : AbstractValidator<OrderInvoiceCreateDto>
+    {
+        public OrderInvoiceCreateValidator()
+        {
+            RuleFor(x => x.OrderId).NotEmpty();
+            RuleFor(x => x.BusinessId)
+                .Must(x => !x.HasValue || x.Value != Guid.Empty)
+                .WithMessage("BusinessId must be a valid identifier when provided.");
+            RuleFor(x => x.CustomerId)
+                .Must(x => !x.HasValue || x.Value != Guid.Empty)
+                .WithMessage("CustomerId must be a valid identifier when provided.");
+            RuleFor(x => x.PaymentId)
+                .Must(x => !x.HasValue || x.Value != Guid.Empty)
+                .WithMessage("PaymentId must be a valid identifier when provided.");
+        }
+    }
 }

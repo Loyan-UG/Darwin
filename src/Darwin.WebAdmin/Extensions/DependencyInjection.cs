@@ -210,19 +210,32 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetOrderForViewHandler>();
             services.AddScoped<GetOrderPaymentsPageHandler>();
             services.AddScoped<GetOrderShipmentsPageHandler>();
+            services.AddScoped<GetOrderRefundsPageHandler>();
+            services.AddScoped<GetOrderInvoicesPageHandler>();
             services.AddScoped<GetWarehouseLookupHandler>();
             services.AddScoped<GetBusinessLookupHandler>();
             services.AddScoped<GetUserLookupHandler>();
             services.AddScoped<GetCustomerLookupHandler>();
+            services.AddScoped<GetCustomerSegmentLookupHandler>();
             services.AddScoped<GetProductVariantLookupHandler>();
             services.AddScoped<GetSupplierLookupHandler>();
             services.AddScoped<GetFinancialAccountLookupHandler>();
 
             // Orders – commands
             services.AddScoped<AddPaymentHandler>();
+            services.AddScoped<AddShipmentHandler>();
+            services.AddScoped<AddRefundHandler>();
+            services.AddScoped<CreateOrderInvoiceHandler>();
             services.AddScoped<UpdateOrderStatusHandler>();
             services.AddScoped<GetCustomersPageHandler>();
             services.AddScoped<GetCustomerForEditHandler>();
+            services.AddScoped<GetCustomerInteractionsPageHandler>();
+            services.AddScoped<GetLeadInteractionsPageHandler>();
+            services.AddScoped<GetOpportunityInteractionsPageHandler>();
+            services.AddScoped<GetCustomerConsentsPageHandler>();
+            services.AddScoped<GetCustomerSegmentsPageHandler>();
+            services.AddScoped<GetCustomerSegmentForEditHandler>();
+            services.AddScoped<GetCustomerSegmentMembershipsHandler>();
             services.AddScoped<CreateCustomerHandler>();
             services.AddScoped<UpdateCustomerHandler>();
             services.AddScoped<GetLeadsPageHandler>();
@@ -233,6 +246,12 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetOpportunityForEditHandler>();
             services.AddScoped<CreateOpportunityHandler>();
             services.AddScoped<UpdateOpportunityHandler>();
+            services.AddScoped<CreateInteractionHandler>();
+            services.AddScoped<CreateConsentHandler>();
+            services.AddScoped<CreateCustomerSegmentHandler>();
+            services.AddScoped<UpdateCustomerSegmentHandler>();
+            services.AddScoped<AssignCustomerSegmentHandler>();
+            services.AddScoped<RemoveCustomerSegmentMembershipHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
             services.AddScoped<GetPaymentForEditHandler>();
             services.AddScoped<CreatePaymentHandler>();

@@ -1,0 +1,47 @@
+@model Darwin.WebAdmin.ViewModels.Orders.OrderRefundsPageVm
+
+<div id="refunds-grid-content"
+     hx-boost="true"
+     hx-target="this"
+     hx-swap="outerHTML">
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Payment</th>
+                    <th>Reason</th>
+                    <th class="text-end">Amount</th>
+                    <th>Status</th>
+                    <th>Created (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center text-muted">No refunds.</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><code>@item.PaymentId</code></td>
+                            <td>@item.Reason</td>
+                            <td class="text-end">@item.Currency @((item.AmountMinor / 100.0M).ToString("0.00"))</td>
+                            <td>@item.Status</td>
+                            <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <pager page="Model.Page"
+           page-size="Model.PageSize"
+           total="Model.Total"
+           asp-controller="Orders"
+           asp-action="Refunds"
+           asp-route-orderId="@Model.OrderId">
+    </pager>
+</div>

@@ -3,6 +3,7 @@ using Darwin.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Darwin.WebAdmin.ViewModels.Orders
 {
@@ -33,6 +34,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string OrderNumber { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public long GrandTotalGrossMinor { get; set; }
+        public Guid? UserId { get; set; }
         public OrderStatus Status { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? SelectedWarehouseId { get; set; }
@@ -168,6 +170,109 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public DateTime CreatedAtUtc { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class ShipmentCreateVm
+    {
+        public Guid OrderId { get; set; }
+
+        [Required]
+        [StringLength(64)]
+        public string Carrier { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(64)]
+        public string Service { get; set; } = string.Empty;
+
+        [StringLength(64)]
+        public string? TrackingNumber { get; set; }
+
+        public int? TotalWeight { get; set; }
+        public List<ShipmentLineCreateVm> Lines { get; set; } = new();
+    }
+
+    public sealed class ShipmentLineCreateVm
+    {
+        public Guid OrderLineId { get; set; }
+        public string Label { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
+        public int Quantity { get; set; } = 1;
+    }
+
+    public sealed class RefundCreateVm
+    {
+        public Guid OrderId { get; set; }
+
+        [Required]
+        public Guid PaymentId { get; set; }
+
+        [Range(1, long.MaxValue)]
+        public long AmountMinor { get; set; }
+
+        [Required]
+        [StringLength(3, MinimumLength = 3)]
+        public string Currency { get; set; } = "EUR";
+
+        [Required]
+        [StringLength(256)]
+        public string Reason { get; set; } = string.Empty;
+
+        public List<SelectListItem> PaymentOptions { get; set; } = new();
+    }
+
+    public sealed class OrderRefundsPageVm
+    {
+        public Guid OrderId { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public List<RefundListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class RefundListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid PaymentId { get; set; }
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+        public RefundStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class OrderInvoiceCreateVm
+    {
+        public Guid OrderId { get; set; }
+        public Guid? BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public Guid? PaymentId { get; set; }
+        public DateTime? DueAtUtc { get; set; }
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<SelectListItem> CustomerOptions { get; set; } = new();
+        public List<SelectListItem> PaymentOptions { get; set; } = new();
+    }
+
+    public sealed class OrderInvoicesPageVm
+    {
+        public Guid OrderId { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public List<OrderInvoiceListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class OrderInvoiceListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid? PaymentId { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public long TotalGrossMinor { get; set; }
+        public InvoiceStatus Status { get; set; }
+        public DateTime IssuedAtUtc { get; set; }
+        public DateTime? DueAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

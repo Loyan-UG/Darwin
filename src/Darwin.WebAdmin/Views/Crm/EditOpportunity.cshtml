@@ -16,6 +16,60 @@
     </div>
 </form>
 
+<hr class="my-4" />
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header"><strong>Add Interaction</strong></div>
+            <div class="card-body">
+                <form asp-controller="Crm"
+                      asp-action="OpportunityInteractions"
+                      method="post"
+                      hx-post="@Url.Action("OpportunityInteractions", "Crm")"
+                      hx-target="#opportunity-interactions-grid"
+                      hx-swap="innerHTML"
+                      class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="OpportunityId" value="@Model.Id" />
+                    <div class="col-md-6">
+                        <label class="form-label">Type</label>
+                        <select name="Type" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Channel</label>
+                        <select name="Channel" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()"></select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Subject</label>
+                        <input name="Subject" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Content</label>
+                        <textarea name="Content" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Owner</label>
+                        <select name="UserId" class="form-select" asp-items="Model.NewInteraction.UserOptions"></select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-primary">Add Interaction</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><strong>Interactions</strong></div>
+            <div class="card-body" id="opportunity-interactions-grid"
+                 hx-get="@Url.Action("OpportunityInteractions", "Crm", new { opportunityId = Model.Id })"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"></div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>

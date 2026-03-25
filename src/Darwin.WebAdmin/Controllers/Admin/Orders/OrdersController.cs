@@ -1,34 +1,34 @@
+using Darwin.Application.Common.Queries;
+using Darwin.Application.Inventory.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
-using Darwin.Application.Inventory.Queries;
-using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using Darwin.WebAdmin.ViewModels.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Orders
 {
     /// <summary>
-    /// Admin controller for Orders. 
-    /// Uses Application handlers for reads/writes and maps into lightweight Admin VMs.
+    /// Admin controller for order operations including payments, shipments, refunds, and invoices.
     /// </summary>
     public sealed class OrdersController : AdminBaseController
     {
-        // Queries
         private readonly GetOrdersPageHandler _getOrdersPage;
         private readonly GetOrderForViewHandler _getOrderForView;
         private readonly GetOrderPaymentsPageHandler _getOrderPaymentsPage;
         private readonly GetOrderShipmentsPageHandler _getOrderShipmentsPage;
+        private readonly GetOrderRefundsPageHandler _getOrderRefundsPage;
+        private readonly GetOrderInvoicesPageHandler _getOrderInvoicesPage;
         private readonly GetWarehouseLookupHandler _getWarehouseLookup;
-
-        // Commands
+        private readonly GetBusinessLookupHandler _getBusinessLookup;
+        private readonly GetCustomerLookupHandler _getCustomerLookup;
         private readonly AddPaymentHandler _addPayment;
+        private readonly AddShipmentHandler _addShipment;
+        private readonly AddRefundHandler _addRefund;
+        private readonly CreateOrderInvoiceHandler _createOrderInvoice;
         private readonly UpdateOrderStatusHandler _updateOrderStatus;
 
         public OrdersController(
@@ -36,26 +36,37 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             GetOrderForViewHandler getOrderForView,
             GetOrderPaymentsPageHandler getOrderPaymentsPage,
             GetOrderShipmentsPageHandler getOrderShipmentsPage,
+            GetOrderRefundsPageHandler getOrderRefundsPage,
+            GetOrderInvoicesPageHandler getOrderInvoicesPage,
             GetWarehouseLookupHandler getWarehouseLookup,
+            GetBusinessLookupHandler getBusinessLookup,
+            GetCustomerLookupHandler getCustomerLookup,
             AddPaymentHandler addPayment,
+            AddShipmentHandler addShipment,
+            AddRefundHandler addRefund,
+            CreateOrderInvoiceHandler createOrderInvoice,
             UpdateOrderStatusHandler updateOrderStatus)
         {
             _getOrdersPage = getOrdersPage;
             _getOrderForView = getOrderForView;
             _getOrderPaymentsPage = getOrderPaymentsPage;
             _getOrderShipmentsPage = getOrderShipmentsPage;
+            _getOrderRefundsPage = getOrderRefundsPage;
+            _getOrderInvoicesPage = getOrderInvoicesPage;
             _getWarehouseLookup = getWarehouseLookup;
+            _getBusinessLookup = getBusinessLookup;
+            _getCustomerLookup = getCustomerLookup;
             _addPayment = addPayment;
+            _addShipment = addShipment;
+            _addRefund = addRefund;
+            _createOrderInvoice = createOrderInvoice;
             _updateOrderStatus = updateOrderStatus;
         }
 
-        /// <summary>
-        /// Paged list of orders (admin). Basic starting point for Orders area.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrdersPage.HandleAsync(page, pageSize, ct); // Application returns list + total (no query in v1)
+            var (items, total) = await _getOrdersPage.HandleAsync(page, pageSize, ct).ConfigureAwait(false);
             var vm = new OrdersListVm
             {
                 Page = page,
@@ -72,17 +83,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     RowVersion = o.RowVersion
                 }).ToList()
             };
+
             return View(vm);
         }
 
-        /// <summary>
-        /// Shows order details for admin: summary + tabs for Payments and Shipments.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Details(Guid id, CancellationToken ct = default)
         {
-            var dto = await _getOrderForView.HandleAsync(id, ct);
-            var warehouses = await _getWarehouseLookup.HandleAsync(ct);
+            var dto = await _getOrderForView.HandleAsync(id, ct).ConfigureAwait(false);
+            var warehouses = await _getWarehouseLookup.HandleAsync(ct).ConfigureAwait(false);
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
@@ -95,6 +104,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 .Select(x => x!.Value)
                 .Distinct()
                 .ToList();
+
             Guid? selectedWarehouseId = assignedWarehouseIds.Count == 1 ? assignedWarehouseIds[0] : null;
             var warehouseMap = warehouses.ToDictionary(x => x.Id, x => x.Name);
 
@@ -102,6 +112,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             {
                 Id = dto.Id,
                 OrderNumber = dto.OrderNumber,
+                UserId = dto.UserId,
                 Status = dto.Status,
                 Currency = dto.Currency,
                 GrandTotalGrossMinor = dto.GrandTotalGrossMinor,
@@ -119,85 +130,135 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                         Selected = selectedWarehouseId == x.Id
                     })
                     .ToList(),
-                Lines = dto.Lines.Select(l => new OrderLineVm
+                Lines = dto.Lines.Select(x => new OrderLineVm
                 {
-                    VariantId = l.VariantId,
-                    WarehouseId = l.WarehouseId,
-                    WarehouseName = l.WarehouseId.HasValue && warehouseMap.TryGetValue(l.WarehouseId.Value, out var warehouseName)
+                    VariantId = x.VariantId,
+                    WarehouseId = x.WarehouseId,
+                    WarehouseName = x.WarehouseId.HasValue && warehouseMap.TryGetValue(x.WarehouseId.Value, out var warehouseName)
                         ? warehouseName
                         : string.Empty,
-                    Name = l.Name,
-                    Sku = l.Sku,
-                    Quantity = l.Quantity,
-                    UnitPriceGrossMinor = l.UnitPriceGrossMinor,
-                    LineGrossMinor = l.LineGrossMinor
+                    Name = x.Name,
+                    Sku = x.Sku,
+                    Quantity = x.Quantity,
+                    UnitPriceGrossMinor = x.UnitPriceGrossMinor,
+                    LineGrossMinor = x.LineGrossMinor
                 }).ToList()
             };
 
             return View(vm);
         }
 
-        /// <summary>
-        /// Renders the payments grid partial for the given order (used by Details tabs + after mutations).
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Payments(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrderPaymentsPage.HandleAsync(orderId, page, pageSize, ct);
+            var (items, total) = await _getOrderPaymentsPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
             var vm = new OrderPaymentsPageVm
             {
                 OrderId = orderId,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
-                Items = items.Select(p => new PaymentListItemVm
+                Items = items.Select(x => new PaymentListItemVm
                 {
-                    Id = p.Id,
-                    Provider = p.Provider,
-                    ProviderReference = p.ProviderReference,
-                    AmountMinor = p.AmountMinor,
-                    Currency = p.Currency,
-                    Status = p.Status,
-                    CreatedAtUtc = p.CreatedAtUtc,
-                    RowVersion = p.RowVersion
+                    Id = x.Id,
+                    OrderId = x.OrderId,
+                    Provider = x.Provider,
+                    ProviderReference = x.ProviderReference,
+                    AmountMinor = x.AmountMinor,
+                    Currency = x.Currency,
+                    Status = x.Status,
+                    FailureReason = x.FailureReason,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    RowVersion = x.RowVersion
                 }).ToList()
             };
+
             return PartialView("~/Views/Orders/_PaymentsGrid.cshtml", vm);
         }
 
-        /// <summary>
-        /// Renders the shipments grid partial for the given order (used by Details tabs).
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Shipments(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrderShipmentsPage.HandleAsync(orderId, page, pageSize, ct);
+            var (items, total) = await _getOrderShipmentsPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
             var vm = new OrderShipmentsPageVm
             {
                 OrderId = orderId,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
-                Items = items.Select(s => new ShipmentListItemVm
+                Items = items.Select(x => new ShipmentListItemVm
                 {
-                    Id = s.Id,
-                    Carrier = s.Carrier,
-                    TrackingNumber = s.TrackingNumber,
-                    Status = s.Status,
-                    CreatedAtUtc = s.CreatedAtUtc,
-                    RowVersion = s.RowVersion
+                    Id = x.Id,
+                    OrderId = x.OrderId,
+                    Carrier = x.Carrier,
+                    Service = x.Service,
+                    TrackingNumber = x.TrackingNumber,
+                    TotalWeight = x.TotalWeight,
+                    Status = x.Status,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    RowVersion = x.RowVersion
                 }).ToList()
             };
+
             return PartialView("~/Views/Orders/_ShipmentsGrid.cshtml", vm);
         }
 
-        /// <summary>
-        /// GET: Create payment page. Shows order header and a simple form.
-        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Refunds(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        {
+            var (items, total) = await _getOrderRefundsPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
+            var vm = new OrderRefundsPageVm
+            {
+                OrderId = orderId,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items.Select(x => new RefundListItemVm
+                {
+                    Id = x.Id,
+                    PaymentId = x.PaymentId,
+                    AmountMinor = x.AmountMinor,
+                    Currency = x.Currency,
+                    Reason = x.Reason,
+                    Status = x.Status,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return PartialView("~/Views/Orders/_RefundsGrid.cshtml", vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Invoices(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        {
+            var (items, total) = await _getOrderInvoicesPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
+            var vm = new OrderInvoicesPageVm
+            {
+                OrderId = orderId,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items.Select(x => new OrderInvoiceListItemVm
+                {
+                    Id = x.Id,
+                    PaymentId = x.PaymentId,
+                    Currency = x.Currency,
+                    TotalGrossMinor = x.TotalGrossMinor,
+                    Status = x.Status,
+                    IssuedAtUtc = x.IssuedAtUtc,
+                    DueAtUtc = x.DueAtUtc,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return PartialView("~/Views/Orders/_InvoicesGrid.cshtml", vm);
+        }
+
         [HttpGet]
         public async Task<IActionResult> AddPayment(Guid orderId, CancellationToken ct = default)
         {
-            var dto = await _getOrderForView.HandleAsync(orderId, ct);
+            var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
@@ -207,22 +268,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var vm = new PaymentCreateVm
             {
                 OrderId = dto.Id,
-                Currency = dto.Currency // currency must match order (validator enforces this in Application)
+                Currency = dto.Currency
             };
-            ViewBag.OrderHeader = new OrderHeaderVm
-            {
-                Id = dto.Id,
-                OrderNumber = dto.OrderNumber,
-                Currency = dto.Currency,
-                GrandTotalGrossMinor = dto.GrandTotalGrossMinor
-            };
+
+            ViewBag.OrderHeader = CreateHeader(dto);
             return View(vm);
         }
 
-        /// <summary>
-        /// POST: Creates a payment (Application validates + may auto-advance status on Captured).
-        /// After success, redirect to Details and let payments tab reload via partial.
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPayment(PaymentCreateVm vm, CancellationToken ct = default)
@@ -246,7 +298,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
             try
             {
-                await _addPayment.HandleAsync(dto, ct); // Application handler persists + optional status advance
+                await _addPayment.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Payment added.";
             }
             catch (Exception ex)
@@ -257,9 +309,196 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             return RedirectToAction(nameof(Details), new { id = vm.OrderId });
         }
 
-        /// <summary>
-        /// Changes order status with concurrency token.
-        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> AddShipment(Guid orderId, CancellationToken ct = default)
+        {
+            var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                TempData["Error"] = "Order not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var vm = new ShipmentCreateVm
+            {
+                OrderId = dto.Id,
+                Lines = dto.Lines.Select(x => new ShipmentLineCreateVm
+                {
+                    OrderLineId = x.Id,
+                    Label = $"{x.Sku} - {x.Name}",
+                    Quantity = x.Quantity
+                }).ToList()
+            };
+
+            ViewBag.OrderHeader = CreateHeader(dto);
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddShipment(ShipmentCreateVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Invalid shipment data.";
+                return RedirectToAction(nameof(AddShipment), new { orderId = vm.OrderId });
+            }
+
+            var dto = new ShipmentCreateDto
+            {
+                OrderId = vm.OrderId,
+                Carrier = vm.Carrier,
+                Service = vm.Service,
+                TrackingNumber = vm.TrackingNumber,
+                TotalWeight = vm.TotalWeight,
+                Lines = vm.Lines
+                    .Where(x => x.Quantity > 0)
+                    .Select(x => new ShipmentLineCreateDto
+                    {
+                        OrderLineId = x.OrderLineId,
+                        Quantity = x.Quantity
+                    })
+                    .ToList()
+            };
+
+            try
+            {
+                await _addShipment.HandleAsync(dto, ct).ConfigureAwait(false);
+                TempData["Success"] = "Shipment added.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AddRefund(Guid orderId, CancellationToken ct = default)
+        {
+            var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                TempData["Error"] = "Order not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var vm = new RefundCreateVm
+            {
+                OrderId = dto.Id,
+                Currency = dto.Currency,
+                PaymentOptions = dto.Payments.Select(x => new SelectListItem
+                {
+                    Value = x.Id.ToString(),
+                    Text = $"{x.Provider} | {x.Currency} {(x.AmountMinor / 100.0M):0.00} | {x.Status}"
+                }).ToList()
+            };
+
+            ViewBag.OrderHeader = CreateHeader(dto);
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddRefund(RefundCreateVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Invalid refund data.";
+                return RedirectToAction(nameof(AddRefund), new { orderId = vm.OrderId });
+            }
+
+            try
+            {
+                await _addRefund.HandleAsync(new RefundCreateDto
+                {
+                    OrderId = vm.OrderId,
+                    PaymentId = vm.PaymentId,
+                    AmountMinor = vm.AmountMinor,
+                    Currency = vm.Currency,
+                    Reason = vm.Reason
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Refund added.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateInvoice(Guid orderId, CancellationToken ct = default)
+        {
+            var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                TempData["Error"] = "Order not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var businessOptions = await _getBusinessLookup.HandleAsync(ct).ConfigureAwait(false);
+            var customerOptions = await _getCustomerLookup.HandleAsync(ct).ConfigureAwait(false);
+
+            var vm = new OrderInvoiceCreateVm
+            {
+                OrderId = dto.Id,
+                DueAtUtc = DateTime.UtcNow.AddDays(14),
+                PaymentOptions = dto.Payments.Select(x => new SelectListItem
+                {
+                    Value = x.Id.ToString(),
+                    Text = $"{x.Provider} | {x.Currency} {(x.AmountMinor / 100.0M):0.00} | {x.Status}"
+                }).Prepend(new SelectListItem { Value = string.Empty, Text = "No linked payment" }).ToList(),
+                BusinessOptions = businessOptions.Select(x => new SelectListItem
+                {
+                    Value = x.Id.ToString(),
+                    Text = x.SecondaryLabel is null ? x.Label : $"{x.Label} ({x.SecondaryLabel})"
+                }).Prepend(new SelectListItem { Value = string.Empty, Text = "No business scope" }).ToList(),
+                CustomerOptions = customerOptions.Select(x => new SelectListItem
+                {
+                    Value = x.Id.ToString(),
+                    Text = x.SecondaryLabel is null ? x.Label : $"{x.Label} ({x.SecondaryLabel})"
+                }).Prepend(new SelectListItem { Value = string.Empty, Text = "Auto-resolve from user" }).ToList()
+            };
+
+            ViewBag.OrderHeader = CreateHeader(dto);
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateInvoice(OrderInvoiceCreateVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Invalid invoice data.";
+                return RedirectToAction(nameof(CreateInvoice), new { orderId = vm.OrderId });
+            }
+
+            try
+            {
+                await _createOrderInvoice.HandleAsync(new OrderInvoiceCreateDto
+                {
+                    OrderId = vm.OrderId,
+                    BusinessId = vm.BusinessId,
+                    CustomerId = vm.CustomerId,
+                    PaymentId = vm.PaymentId,
+                    DueAtUtc = vm.DueAtUtc
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Invoice created.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeStatus(OrderStatusChangeVm vm, CancellationToken ct = default)
@@ -270,26 +509,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 return RedirectToAction(nameof(Details), new { id = vm.OrderId });
             }
 
-            var dto = new UpdateOrderStatusDto
-            {
-                OrderId = vm.OrderId,
-                RowVersion = vm.RowVersion,
-                NewStatus = vm.NewStatus,
-                WarehouseId = vm.WarehouseId
-            };
-
             try
             {
-                await _updateOrderStatus.HandleAsync(dto, ct);
+                await _updateOrderStatus.HandleAsync(new UpdateOrderStatusDto
+                {
+                    OrderId = vm.OrderId,
+                    RowVersion = vm.RowVersion,
+                    NewStatus = vm.NewStatus,
+                    WarehouseId = vm.WarehouseId
+                }, ct).ConfigureAwait(false);
+
                 TempData["Success"] = $"Order status updated to {vm.NewStatus}.";
             }
             catch (Exception ex)
             {
-                // Application throws ValidationException on policy/amount/currency/concurrency errors; we show message as-is.
                 TempData["Error"] = ex.Message;
             }
 
             return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+        }
+
+        private static OrderHeaderVm CreateHeader(OrderDetailDto dto)
+        {
+            return new OrderHeaderVm
+            {
+                Id = dto.Id,
+                OrderNumber = dto.OrderNumber,
+                Currency = dto.Currency,
+                GrandTotalGrossMinor = dto.GrandTotalGrossMinor
+            };
         }
     }
 }

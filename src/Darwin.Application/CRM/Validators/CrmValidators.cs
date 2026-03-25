@@ -1,3 +1,4 @@
+using System.Linq;
 using Darwin.Application.CRM.DTOs;
 using FluentValidation;
 
@@ -101,6 +102,51 @@ namespace Darwin.Application.CRM.Validators
             Include(new OpportunityCreateValidator());
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x.RowVersion).NotEmpty();
+        }
+    }
+
+    public sealed class InteractionCreateValidator : AbstractValidator<InteractionCreateDto>
+    {
+        public InteractionCreateValidator()
+        {
+            RuleFor(x => x.Type).IsInEnum();
+            RuleFor(x => x.Channel).IsInEnum();
+            RuleFor(x => x.Subject).MaximumLength(300);
+            RuleFor(x => x.Content).MaximumLength(4000);
+            RuleFor(x => x)
+                .Must(x => new[] { x.CustomerId, x.LeadId, x.OpportunityId }.Count(id => id.HasValue) == 1)
+                .WithMessage("Exactly one CRM target must be selected for an interaction.");
+        }
+    }
+
+    public sealed class ConsentCreateValidator : AbstractValidator<ConsentCreateDto>
+    {
+        public ConsentCreateValidator()
+        {
+            RuleFor(x => x.CustomerId).NotEmpty();
+            RuleFor(x => x.Type).IsInEnum();
+            RuleFor(x => x.GrantedAtUtc).NotEmpty();
+            RuleFor(x => x)
+                .Must(x => x.Granted || x.RevokedAtUtc.HasValue)
+                .WithMessage("Revoked consents must include a revocation timestamp.");
+        }
+    }
+
+    public sealed class CustomerSegmentEditValidator : AbstractValidator<CustomerSegmentEditDto>
+    {
+        public CustomerSegmentEditValidator()
+        {
+            RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+            RuleFor(x => x.Description).MaximumLength(2000);
+        }
+    }
+
+    public sealed class AssignCustomerSegmentValidator : AbstractValidator<AssignCustomerSegmentDto>
+    {
+        public AssignCustomerSegmentValidator()
+        {
+            RuleFor(x => x.CustomerId).NotEmpty();
+            RuleFor(x => x.CustomerSegmentId).NotEmpty();
         }
     }
 }

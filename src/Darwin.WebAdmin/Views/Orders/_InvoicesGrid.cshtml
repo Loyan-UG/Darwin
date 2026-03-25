@@ -1,0 +1,49 @@
+@model Darwin.WebAdmin.ViewModels.Orders.OrderInvoicesPageVm
+
+<div id="invoices-grid-content"
+     hx-boost="true"
+     hx-target="this"
+     hx-swap="outerHTML">
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Invoice</th>
+                    <th>Payment</th>
+                    <th class="text-end">Total</th>
+                    <th>Status</th>
+                    <th>Issued (UTC)</th>
+                    <th>Due (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-muted">No invoices.</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><code>@item.Id</code></td>
+                            <td>@(item.PaymentId?.ToString() ?? "-")</td>
+                            <td class="text-end">@item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</td>
+                            <td>@item.Status</td>
+                            <td>@item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>@(item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <pager page="Model.Page"
+           page-size="Model.PageSize"
+           total="Model.Total"
+           asp-controller="Orders"
+           asp-action="Invoices"
+           asp-route-orderId="@Model.OrderId">
+    </pager>
+</div>

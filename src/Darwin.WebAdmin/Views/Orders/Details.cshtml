@@ -35,6 +35,15 @@
                 <a asp-controller="Orders" asp-action="AddPayment" asp-route-orderId="@Model.Id" class="btn btn-sm btn-success">
                     <i class="fa fa-credit-card"></i> Add Payment
                 </a>
+                <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@Model.Id" class="btn btn-sm btn-outline-primary">
+                    <i class="fa fa-truck"></i> Add Shipment
+                </a>
+                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.Id" class="btn btn-sm btn-outline-danger">
+                    <i class="fa fa-rotate-left"></i> Add Refund
+                </a>
+                <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@Model.Id" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-file-invoice"></i> Create Invoice
+                </a>
             </div>
         </div>
     </div>
@@ -111,6 +120,12 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="shipments-tab" data-bs-toggle="tab" data-bs-target="#shipments" type="button" role="tab">Shipments</button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="refunds-tab" data-bs-toggle="tab" data-bs-target="#refunds" type="button" role="tab">Refunds</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices" type="button" role="tab">Invoices</button>
+    </li>
 </ul>
 <div class="tab-content border border-top-0 p-3">
     <div class="tab-pane fade show active" id="payments" role="tabpanel">
@@ -123,6 +138,20 @@
     <div class="tab-pane fade" id="shipments" role="tabpanel">
         <div id="shipments-grid"
              hx-get="@Url.Action("Shipments", "Orders", new { orderId = Model.Id })"
+             hx-trigger="revealed"
+             hx-swap="innerHTML">
+        </div>
+    </div>
+    <div class="tab-pane fade" id="refunds" role="tabpanel">
+        <div id="refunds-grid"
+             hx-get="@Url.Action("Refunds", "Orders", new { orderId = Model.Id })"
+             hx-trigger="revealed"
+             hx-swap="innerHTML">
+        </div>
+    </div>
+    <div class="tab-pane fade" id="invoices" role="tabpanel">
+        <div id="invoices-grid"
+             hx-get="@Url.Action("Invoices", "Orders", new { orderId = Model.Id })"
              hx-trigger="revealed"
              hx-swap="innerHTML">
         </div>

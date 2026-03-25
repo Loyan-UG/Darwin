@@ -13,6 +13,7 @@ namespace Darwin.WebAdmin.Services.Admin
         private readonly GetWarehouseLookupHandler _getWarehouses;
         private readonly GetUserLookupHandler _getUsers;
         private readonly GetCustomerLookupHandler _getCustomers;
+        private readonly GetCustomerSegmentLookupHandler _getCustomerSegments;
         private readonly GetProductVariantLookupHandler _getVariants;
         private readonly GetSupplierLookupHandler _getSuppliers;
         private readonly GetFinancialAccountLookupHandler _getAccounts;
@@ -22,6 +23,7 @@ namespace Darwin.WebAdmin.Services.Admin
             GetWarehouseLookupHandler getWarehouses,
             GetUserLookupHandler getUsers,
             GetCustomerLookupHandler getCustomers,
+            GetCustomerSegmentLookupHandler getCustomerSegments,
             GetProductVariantLookupHandler getVariants,
             GetSupplierLookupHandler getSuppliers,
             GetFinancialAccountLookupHandler getAccounts)
@@ -30,6 +32,7 @@ namespace Darwin.WebAdmin.Services.Admin
             _getWarehouses = getWarehouses ?? throw new ArgumentNullException(nameof(getWarehouses));
             _getUsers = getUsers ?? throw new ArgumentNullException(nameof(getUsers));
             _getCustomers = getCustomers ?? throw new ArgumentNullException(nameof(getCustomers));
+            _getCustomerSegments = getCustomerSegments ?? throw new ArgumentNullException(nameof(getCustomerSegments));
             _getVariants = getVariants ?? throw new ArgumentNullException(nameof(getVariants));
             _getSuppliers = getSuppliers ?? throw new ArgumentNullException(nameof(getSuppliers));
             _getAccounts = getAccounts ?? throw new ArgumentNullException(nameof(getAccounts));
@@ -89,6 +92,12 @@ namespace Darwin.WebAdmin.Services.Admin
         {
             var items = await _getCustomers.HandleAsync(ct).ConfigureAwait(false);
             return BuildOptions(items, selectedCustomerId, includeEmpty, "Select customer");
+        }
+
+        public async Task<List<SelectListItem>> GetCustomerSegmentOptionsAsync(Guid? selectedSegmentId, bool includeEmpty = false, CancellationToken ct = default)
+        {
+            var items = await _getCustomerSegments.HandleAsync(ct).ConfigureAwait(false);
+            return BuildOptions(items, selectedSegmentId, includeEmpty, "Select segment");
         }
 
         public async Task<List<SelectListItem>> GetVariantOptionsAsync(Guid? selectedVariantId, CancellationToken ct = default)

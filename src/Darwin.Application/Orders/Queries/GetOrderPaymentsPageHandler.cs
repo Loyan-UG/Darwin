@@ -35,11 +35,13 @@ namespace Darwin.Application.Orders.Queries
                 .Select(p => new PaymentListItemDto
                 {
                     Id = p.Id,
+                    OrderId = p.OrderId,
                     Provider = p.Provider,
                     ProviderReference = p.ProviderReference,
                     AmountMinor = p.AmountMinor,
                     Currency = p.Currency,
                     Status = p.Status,
+                    FailureReason = p.FailureReason,
                     CreatedAtUtc = p.CreatedAtUtc,
                     RowVersion = p.RowVersion
                 })

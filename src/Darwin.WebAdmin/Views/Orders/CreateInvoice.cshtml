@@ -1,0 +1,43 @@
+@model Darwin.WebAdmin.ViewModels.Orders.OrderInvoiceCreateVm
+@{
+    ViewData["Title"] = "Create Invoice";
+    var header = ViewBag.OrderHeader as Darwin.WebAdmin.ViewModels.Orders.OrderHeaderVm;
+}
+
+<h1 class="mb-3"><i class="fa fa-file-invoice"></i> Create Invoice</h1>
+
+@if (header is not null)
+{
+    <div class="alert alert-info">
+        <strong>Order:</strong> @header.OrderNumber
+    </div>
+}
+
+<form asp-action="CreateInvoice" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="OrderId" />
+    <div class="col-md-4">
+        <label asp-for="BusinessId" class="form-label"></label>
+        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="CustomerId" class="form-label"></label>
+        <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PaymentId" class="form-label"></label>
+        <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="DueAtUtc" class="form-label"></label>
+        <input asp-for="DueAtUtc" type="datetime-local" class="form-control" />
+    </div>
+    <div class="col-12">
+        <a asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary">Back</a>
+        <button type="submit" class="btn btn-primary">Create Invoice</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,40 @@
+@model Darwin.WebAdmin.ViewModels.CRM.ConsentsPageVm
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Granted (UTC)</th>
+                <th>Revoked (UTC)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="4" class="text-center text-muted">No consent history.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Type</td>
+                        <td>@(item.Granted ? "Granted" : "Revoked")</td>
+                        <td>@item.GrantedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@(item.RevokedAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Crm"
+       asp-action="CustomerConsents"
+       asp-route-customerId="@Model.CustomerId">
+</pager>

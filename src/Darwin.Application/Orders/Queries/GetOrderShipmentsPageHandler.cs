@@ -35,8 +35,12 @@ namespace Darwin.Application.Orders.Queries
                 .Select(s => new ShipmentListItemDto
                 {
                     Id = s.Id,
+                    OrderId = s.OrderId,
                     Carrier = s.Carrier,
                     Service = s.Service,
+                    TrackingNumber = s.TrackingNumber,
+                    TotalWeight = s.TotalWeight ?? 0,
+                    Status = s.Status,
                     CreatedAtUtc = s.CreatedAtUtc,
                     RowVersion = s.RowVersion
                 })

@@ -16,6 +16,134 @@
     </div>
 </form>
 
+<hr class="my-4" />
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><strong>Add Interaction</strong></div>
+            <div class="card-body">
+                <form asp-controller="Crm"
+                      asp-action="CustomerInteractions"
+                      method="post"
+                      hx-post="@Url.Action("CustomerInteractions", "Crm")"
+                      hx-target="#customer-interactions-grid"
+                      hx-swap="innerHTML"
+                      class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="CustomerId" value="@Model.Id" />
+                    <div class="col-md-6">
+                        <label class="form-label">Type</label>
+                        <select name="Type" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionType>()"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Channel</label>
+                        <select name="Channel" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InteractionChannel>()"></select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Subject</label>
+                        <input name="Subject" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Content</label>
+                        <textarea name="Content" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Owner</label>
+                        <select name="UserId" class="form-select" asp-items="Model.NewInteraction.UserOptions"></select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-primary">Add Interaction</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <div class="card-header"><strong>Interactions</strong></div>
+            <div class="card-body" id="customer-interactions-grid"
+                 hx-get="@Url.Action("CustomerInteractions", "Crm", new { customerId = Model.Id })"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><strong>Record Consent</strong></div>
+            <div class="card-body">
+                <form asp-controller="Crm"
+                      asp-action="CustomerConsents"
+                      method="post"
+                      hx-post="@Url.Action("CustomerConsents", "Crm")"
+                      hx-target="#customer-consents-grid"
+                      hx-swap="innerHTML"
+                      class="row g-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="CustomerId" value="@Model.Id" />
+                    <div class="col-md-6">
+                        <label class="form-label">Consent Type</label>
+                        <select name="Type" class="form-select" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.ConsentType>()"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Status</label>
+                        <select name="Granted" class="form-select">
+                            <option value="true">Granted</option>
+                            <option value="false">Revoked</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Granted At (UTC)</label>
+                        <input name="GrantedAtUtc" type="datetime-local" class="form-control" value="@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm")" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Revoked At (UTC)</label>
+                        <input name="RevokedAtUtc" type="datetime-local" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-primary">Record Consent</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <div class="card-header"><strong>Consent History</strong></div>
+            <div class="card-body" id="customer-consents-grid"
+                 hx-get="@Url.Action("CustomerConsents", "Crm", new { customerId = Model.Id })"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"></div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><strong>Segment Memberships</strong></div>
+            <div class="card-body">
+                <form asp-controller="Crm"
+                      asp-action="CustomerSegmentMemberships"
+                      method="post"
+                      hx-post="@Url.Action("CustomerSegmentMemberships", "Crm")"
+                      hx-target="#customer-segments-grid"
+                      hx-swap="innerHTML"
+                      class="row g-3 mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="CustomerId" value="@Model.Id" />
+                    <div class="col-md-6">
+                        <label class="form-label">Segment</label>
+                        <select name="CustomerSegmentId" class="form-select" asp-items="Model.SegmentOptions"></select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary">Assign Segment</button>
+                    </div>
+                </form>
+                <div id="customer-segments-grid"
+                     hx-get="@Url.Action("CustomerSegmentMemberships", "Crm", new { customerId = Model.Id })"
+                     hx-trigger="load"
+                     hx-swap="innerHTML"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>

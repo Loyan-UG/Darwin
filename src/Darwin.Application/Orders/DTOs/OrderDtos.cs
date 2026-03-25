@@ -270,4 +270,60 @@ namespace Darwin.Application.Orders.DTOs
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
+
+    /// <summary>
+    /// Input DTO used to create a refund for an existing order payment.
+    /// </summary>
+    public sealed class RefundCreateDto
+    {
+        public Guid OrderId { get; set; }
+        public Guid PaymentId { get; set; }
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Lightweight refund list row used by admin order detail tabs.
+    /// </summary>
+    public sealed class RefundListItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid OrderId { get; set; }
+        public Guid PaymentId { get; set; }
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+        public RefundStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    /// <summary>
+    /// Input DTO used to generate an order invoice snapshot in the CRM invoice table.
+    /// </summary>
+    public sealed class OrderInvoiceCreateDto
+    {
+        public Guid OrderId { get; set; }
+        public Guid? BusinessId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public Guid? PaymentId { get; set; }
+        public DateTime? DueAtUtc { get; set; }
+    }
+
+    /// <summary>
+    /// Lightweight invoice row shown on order detail screens.
+    /// </summary>
+    public sealed class OrderInvoiceListItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid? OrderId { get; set; }
+        public Guid? PaymentId { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public long TotalGrossMinor { get; set; }
+        public InvoiceStatus Status { get; set; }
+        public DateTime IssuedAtUtc { get; set; }
+        public DateTime? DueAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
 }

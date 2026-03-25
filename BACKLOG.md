@@ -42,6 +42,8 @@ The immediate direction is:
 - Completed: replace custom `fetch`-based loading in the Orders details screen with HTMX partial loading for payments and shipments.
 - Completed: move user-address create/edit and default-address operations toward HTMX-driven partial updates.
 - Completed: expose new CRM, inventory, and billing modules in WebAdmin with MVC/Razor screens aligned to the new Application handlers.
+- Completed: add HTMX-backed CRM interaction timelines on customer, lead, and opportunity edit screens.
+- Completed: add HTMX-backed customer consent history and segment membership management screens.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: move the new CRM, inventory, and billing create/edit flows to richer HTMX partial submission patterns where it reduces full-page postbacks.
@@ -51,16 +53,18 @@ The immediate direction is:
 - Completed: warehouse-aware order status changes and fulfillment context persistence.
 - Completed: warehouse-aware inventory ledger filtering in WebAdmin.
 - Completed: build billing management screens for payments, financial accounts, expenses, and journal entries.
-- Task: complete shipments, refunds, and invoice management screens.
+- Completed: add shipment, refund, and invoice management screens to order administration.
+- Completed: add order detail tabs for payments, shipments, refunds, and invoices.
 - Task: expose CRM-linked invoices more deeply in the admin UI and connect them to payment workflows.
+- Task: converge duplicated order-payment and billing-payment concepts into a single financial aggregate.
 
 ### Epic: CRM admin
 
 - Completed: build customer list and editing screens.
 - Completed: build lead management with assignment and qualification fields.
 - Completed: build opportunity management with stages, projected value, and product lines.
-- Task: build interaction timeline and consent management screens.
-- Task: build segmentation and membership management screens.
+- Completed: build interaction timeline and consent management screens.
+- Completed: build segmentation definitions and membership management screens.
 - Task: add explicit lead-to-customer conversion workflows and richer CRM dashboard/reporting.
 
 ### Epic: Inventory and procurement admin
