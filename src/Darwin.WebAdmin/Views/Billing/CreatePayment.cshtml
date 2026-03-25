@@ -1,13 +1,9 @@
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
 @{
     ViewData["Title"] = "Create Payment";
+    ViewData["IsCreate"] = true;
 }
 
-<div id="billing-payment-editor-shell">
-    @{
-        ViewData["IsCreate"] = true;
-    }
-    <partial name="~/Views/Billing/_PaymentEditorShell.cshtml" model="Model" />
-</div>
+<partial name="~/Views/Billing/_PaymentEditorShell.cshtml" model="Model" />
 
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -3,12 +3,10 @@
     ViewData["Title"] = "Create Customer";
 }
 
-<div id="crm-customer-editor-shell">
-    @{
-        ViewData["FormAction"] = "CreateCustomer";
-    }
-    <partial name="~/Views/Crm/_CustomerEditorShell.cshtml" model="Model" />
-</div>
+@{
+    ViewData["FormAction"] = "CreateCustomer";
+}
+<partial name="~/Views/Crm/_CustomerEditorShell.cshtml" model="Model" />
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

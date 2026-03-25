@@ -2,6 +2,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -96,6 +97,103 @@ namespace Darwin.Application.CRM.Commands
                 {
                     previousPayment.InvoiceId = null;
                 }
+            }
+
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+    }
+
+    public sealed class TransitionInvoiceStatusHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<InvoiceStatusTransitionDto> _validator;
+
+        public TransitionInvoiceStatusHandler(IAppDbContext db, IValidator<InvoiceStatusTransitionDto> validator)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        }
+
+        public async Task HandleAsync(InvoiceStatusTransitionDto dto, CancellationToken ct = default)
+        {
+            await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
+
+            var invoice = await _db.Set<Invoice>()
+                .FirstOrDefaultAsync(x => x.Id == dto.Id, ct)
+                .ConfigureAwait(false);
+
+            if (invoice is null)
+            {
+                throw new InvalidOperationException("Invoice not found.");
+            }
+
+            if (!invoice.RowVersion.SequenceEqual(dto.RowVersion))
+            {
+                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+            }
+
+            var payment = invoice.PaymentId.HasValue
+                ? await _db.Set<Payment>()
+                    .FirstOrDefaultAsync(x => x.Id == invoice.PaymentId.Value, ct)
+                    .ConfigureAwait(false)
+                : null;
+
+            switch (dto.TargetStatus)
+            {
+                case InvoiceStatus.Draft:
+                case InvoiceStatus.Open:
+                    invoice.Status = dto.TargetStatus;
+                    invoice.PaidAtUtc = null;
+                    break;
+
+                case InvoiceStatus.Paid:
+                {
+                    var paidAtUtc = dto.PaidAtUtc ?? DateTime.UtcNow;
+                    if (payment is not null)
+                    {
+                        if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided or PaymentStatus.Refunded)
+                        {
+                            throw new InvalidOperationException("Invoices cannot be marked as paid while the linked payment is failed, voided, or refunded.");
+                        }
+
+                        if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized)
+                        {
+                            payment.Status = PaymentStatus.Captured;
+                        }
+
+                        payment.PaidAtUtc ??= paidAtUtc;
+                        if (!payment.CustomerId.HasValue && invoice.CustomerId.HasValue)
+                        {
+                            payment.CustomerId = invoice.CustomerId;
+                        }
+                    }
+
+                    invoice.Status = InvoiceStatus.Paid;
+                    invoice.PaidAtUtc = paidAtUtc;
+                    break;
+                }
+
+                case InvoiceStatus.Cancelled:
+                    if (payment is not null)
+                    {
+                        if (payment.Status is PaymentStatus.Captured or PaymentStatus.Completed)
+                        {
+                            throw new InvalidOperationException("Paid invoices must be refunded before cancellation.");
+                        }
+
+                        if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized)
+                        {
+                            payment.Status = PaymentStatus.Voided;
+                            payment.PaidAtUtc = null;
+                        }
+                    }
+
+                    invoice.Status = InvoiceStatus.Cancelled;
+                    invoice.PaidAtUtc = null;
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Unsupported invoice status transition.");
             }
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);

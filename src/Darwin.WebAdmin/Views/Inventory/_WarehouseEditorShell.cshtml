@@ -1,0 +1,27 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.WarehouseEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true;
+    ViewData["Title"] = isCreate ? "Create Warehouse" : "Edit Warehouse";
+}
+
+<div id="inventory-warehouse-editor-shell">
+    <h1 class="mb-3">@(isCreate ? "Create Warehouse" : "Edit Warehouse")</h1>
+
+    <form asp-action="@(isCreate ? "CreateWarehouse" : "EditWarehouse")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "CreateWarehouse" : "EditWarehouse", "Inventory")"
+          hx-target="#inventory-warehouse-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+        <partial name="_WarehouseForm" model="Model" />
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Warehouses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </form>
+</div>

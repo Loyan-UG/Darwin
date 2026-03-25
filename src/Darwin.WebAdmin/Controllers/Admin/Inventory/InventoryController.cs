@@ -130,7 +130,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new WarehouseEditVm { BusinessId = businessId ?? Guid.Empty };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderWarehouseEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -140,7 +140,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderWarehouseEditor(vm, isCreate: true);
             }
 
             var dto = new WarehouseCreateDto
@@ -156,13 +156,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 var id = await _createWarehouse.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Warehouse created.";
-                return RedirectToAction(nameof(EditWarehouse), new { id });
+                return RedirectOrHtmx(nameof(EditWarehouse), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderWarehouseEditor(vm, isCreate: true);
             }
         }
 
@@ -187,7 +187,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 IsDefault = dto.IsDefault
             };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderWarehouseEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -197,7 +197,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderWarehouseEditor(vm, isCreate: false);
             }
 
             var dto = new WarehouseEditDto
@@ -226,7 +226,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderWarehouseEditor(vm, isCreate: false);
             }
         }
 
@@ -271,7 +271,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new SupplierEditVm { BusinessId = businessId ?? Guid.Empty };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderSupplierEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -281,7 +281,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderSupplierEditor(vm, isCreate: true);
             }
 
             var dto = new SupplierCreateDto
@@ -298,13 +298,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 var id = await _createSupplier.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Supplier created.";
-                return RedirectToAction(nameof(EditSupplier), new { id });
+                return RedirectOrHtmx(nameof(EditSupplier), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderSupplierEditor(vm, isCreate: true);
             }
         }
 
@@ -330,7 +330,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Notes = dto.Notes
             };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderSupplierEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -340,7 +340,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderSupplierEditor(vm, isCreate: false);
             }
 
             var dto = new SupplierEditDto
@@ -370,7 +370,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderSupplierEditor(vm, isCreate: false);
             }
         }
 
@@ -934,6 +934,44 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 vm.Lines.Add(new PurchaseOrderLineVm());
             }
+        }
+
+        private IActionResult RenderWarehouseEditor(WarehouseEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Inventory/_WarehouseEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateWarehouse", vm) : View("EditWarehouse", vm);
+        }
+
+        private IActionResult RenderSupplierEditor(SupplierEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Inventory/_SupplierEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateSupplier", vm) : View("EditSupplier", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

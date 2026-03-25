@@ -303,7 +303,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 BusinessId = businessId ?? Guid.Empty
             };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderFinancialAccountEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -313,7 +313,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderFinancialAccountEditor(vm, isCreate: true);
             }
 
             var dto = new FinancialAccountCreateDto
@@ -328,13 +328,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 var id = await _createAccount.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Financial account created.";
-                return RedirectToAction(nameof(EditFinancialAccount), new { id });
+                return RedirectOrHtmx(nameof(EditFinancialAccount), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderFinancialAccountEditor(vm, isCreate: true);
             }
         }
 
@@ -358,7 +358,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Code = dto.Code
             };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderFinancialAccountEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -368,7 +368,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderFinancialAccountEditor(vm, isCreate: false);
             }
 
             var dto = new FinancialAccountEditDto
@@ -396,7 +396,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderFinancialAccountEditor(vm, isCreate: false);
             }
         }
 
@@ -444,7 +444,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 ExpenseDateUtc = DateTime.UtcNow
             };
             await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderExpenseEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -454,7 +454,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (!ModelState.IsValid)
             {
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderExpenseEditor(vm, isCreate: true);
             }
 
             var dto = new ExpenseCreateDto
@@ -471,13 +471,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 var id = await _createExpense.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Expense created.";
-                return RedirectToAction(nameof(EditExpense), new { id });
+                return RedirectOrHtmx(nameof(EditExpense), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderExpenseEditor(vm, isCreate: true);
             }
         }
 
@@ -503,7 +503,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 ExpenseDateUtc = dto.ExpenseDateUtc
             };
             await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderExpenseEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -513,7 +513,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (!ModelState.IsValid)
             {
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderExpenseEditor(vm, isCreate: false);
             }
 
             var dto = new ExpenseEditDto
@@ -543,7 +543,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateExpenseOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderExpenseEditor(vm, isCreate: false);
             }
         }
 
@@ -763,6 +763,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
 
             return isCreate ? View("CreatePayment", vm) : View("EditPayment", vm);
+        }
+
+        private IActionResult RenderFinancialAccountEditor(FinancialAccountEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Billing/_FinancialAccountEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateFinancialAccount", vm) : View("EditFinancialAccount", vm);
+        }
+
+        private IActionResult RenderExpenseEditor(ExpenseEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Billing/_ExpenseEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateExpense", vm) : View("EditExpense", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

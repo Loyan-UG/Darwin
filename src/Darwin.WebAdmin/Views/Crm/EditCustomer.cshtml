@@ -3,12 +3,10 @@
     ViewData["Title"] = "Edit Customer";
 }
 
-<div id="crm-customer-editor-shell">
-    @{
-        ViewData["FormAction"] = "EditCustomer";
-    }
-    <partial name="~/Views/Crm/_CustomerEditorShell.cshtml" model="Model" />
-</div>
+@{
+    ViewData["FormAction"] = "EditCustomer";
+}
+<partial name="~/Views/Crm/_CustomerEditorShell.cshtml" model="Model" />
 
 <hr class="my-4" />
 

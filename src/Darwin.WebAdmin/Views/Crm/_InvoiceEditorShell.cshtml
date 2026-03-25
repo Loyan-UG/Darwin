@@ -1,15 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InvoiceEditVm
 
-<h1 class="mb-3">Edit Invoice</h1>
-
-<form asp-action="EditInvoice"
-      method="post"
-      hx-post="@Url.Action("EditInvoice", "Crm")"
-      hx-target="#crm-invoice-editor-shell"
-      hx-swap="outerHTML">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="RowVersion" />
+<div id="crm-invoice-editor-shell">
+    <h1 class="mb-3">Edit Invoice</h1>
 
     <div class="alert alert-light border mb-3">
         <div class="row g-2 small">
@@ -45,55 +37,116 @@
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-4">
-            <label asp-for="BusinessId" class="form-label"></label>
-            <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        </div>
-        <div class="col-md-4">
-            <label asp-for="CustomerId" class="form-label"></label>
-            <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
-        </div>
-        <div class="col-md-4">
-            <label asp-for="PaymentId" class="form-label"></label>
-            <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
-            @if (!string.IsNullOrWhiteSpace(Model.PaymentSummary))
-            {
-                <div class="form-text">Current: @Model.PaymentSummary</div>
-            }
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Status" class="form-label"></label>
-            <select asp-for="Status" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>()" class="form-select"></select>
-        </div>
-        <div class="col-md-3">
-            <label asp-for="Currency" class="form-label"></label>
-            <input asp-for="Currency" class="form-control" />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="DueDateUtc" class="form-label"></label>
-            <input asp-for="DueDateUtc" type="datetime-local" class="form-control" />
-        </div>
-        <div class="col-md-3">
-            <label asp-for="PaidAtUtc" class="form-label"></label>
-            <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" />
-        </div>
-        <div class="col-md-4">
-            <label asp-for="TotalNetMinor" class="form-label"></label>
-            <input asp-for="TotalNetMinor" class="form-control" />
-        </div>
-        <div class="col-md-4">
-            <label asp-for="TotalTaxMinor" class="form-label"></label>
-            <input asp-for="TotalTaxMinor" class="form-control" />
-        </div>
-        <div class="col-md-4">
-            <label asp-for="TotalGrossMinor" class="form-label"></label>
-            <input asp-for="TotalGrossMinor" class="form-control" />
+    <div class="card border-0 bg-light mb-3">
+        <div class="card-body py-3">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="small text-uppercase text-muted fw-semibold">Quick Status</span>
+
+                <form asp-action="TransitionInvoiceStatus"
+                      method="post"
+                      hx-post="@Url.Action("TransitionInvoiceStatus", "Crm")"
+                      hx-target="#crm-invoice-editor-shell"
+                      hx-swap="outerHTML"
+                      class="d-inline-flex">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Open" />
+                    <button type="submit" class="btn btn-outline-secondary btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Open ? "disabled" : null)>Mark Open</button>
+                </form>
+
+                <form asp-action="TransitionInvoiceStatus"
+                      method="post"
+                      hx-post="@Url.Action("TransitionInvoiceStatus", "Crm")"
+                      hx-target="#crm-invoice-editor-shell"
+                      hx-swap="outerHTML"
+                      class="d-inline-flex">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Paid" />
+                    <button type="submit" class="btn btn-outline-success btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Paid ? "disabled" : null)>Mark Paid</button>
+                </form>
+
+                <form asp-action="TransitionInvoiceStatus"
+                      method="post"
+                      hx-post="@Url.Action("TransitionInvoiceStatus", "Crm")"
+                      hx-target="#crm-invoice-editor-shell"
+                      hx-swap="outerHTML"
+                      class="d-inline-flex">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Cancelled" />
+                    <button type="submit" class="btn btn-outline-danger btn-sm" @(Model.Status == Darwin.Domain.Enums.InvoiceStatus.Cancelled ? "disabled" : null)>Cancel Invoice</button>
+                </form>
+
+                <span class="badge text-bg-primary-subtle border border-primary-subtle text-primary-emphasis ms-auto">
+                    Current: @Model.Status
+                </span>
+            </div>
         </div>
     </div>
 
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a asp-action="Invoices" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+    <form asp-action="EditInvoice"
+          method="post"
+          hx-post="@Url.Action("EditInvoice", "Crm")"
+          hx-target="#crm-invoice-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="RowVersion" />
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="BusinessId" class="form-label"></label>
+                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="CustomerId" class="form-label"></label>
+                <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PaymentId" class="form-label"></label>
+                <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
+                @if (!string.IsNullOrWhiteSpace(Model.PaymentSummary))
+                {
+                    <div class="form-text">Current: @Model.PaymentSummary</div>
+                }
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Status" class="form-label"></label>
+                <select asp-for="Status" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.InvoiceStatus>()" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Currency" class="form-label"></label>
+                <input asp-for="Currency" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="DueDateUtc" class="form-label"></label>
+                <input asp-for="DueDateUtc" type="datetime-local" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="PaidAtUtc" class="form-label"></label>
+                <input asp-for="PaidAtUtc" type="datetime-local" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="TotalNetMinor" class="form-label"></label>
+                <input asp-for="TotalNetMinor" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="TotalTaxMinor" class="form-label"></label>
+                <input asp-for="TotalTaxMinor" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="TotalGrossMinor" class="form-label"></label>
+                <input asp-for="TotalGrossMinor" class="form-control" />
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Invoices" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </form>
+</div>

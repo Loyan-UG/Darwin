@@ -1,13 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Billing.ExpenseEditVm
 @{
     ViewData["Title"] = "Edit Expense";
+    ViewData["IsCreate"] = false;
 }
-<h1 class="mb-3">Edit Expense</h1>
-<form asp-action="EditExpense" method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="Id" />
-    <input type="hidden" asp-for="RowVersion" />
-    <partial name="_ExpenseForm" model="Model" />
-    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a></div>
-</form>
+<partial name="~/Views/Billing/_ExpenseEditorShell.cshtml" model="Model" />
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

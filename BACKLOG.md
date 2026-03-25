@@ -46,9 +46,11 @@ The immediate direction is:
 - Completed: add HTMX-backed CRM interaction timelines on customer, lead, and opportunity edit screens.
 - Completed: add HTMX-backed customer consent history and segment membership management screens.
 - Completed: move customer, lead, opportunity, invoice, and payment create/edit flows onto reusable HTMX editor-shell patterns with full-page fallback.
+- Completed: extend the HTMX editor-shell pattern to financial account, expense, warehouse, and supplier screens so those forms no longer rely on full-page postbacks by default.
+- Completed: harden HTMX editor shells so repeated in-place submissions keep a stable target container instead of losing the shell after the first swap.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
-- Task: extend the HTMX editor-shell pattern to remaining inventory, accounting, and legacy admin forms where it reduces full-page postbacks.
+- Task: extend the HTMX editor-shell pattern to the remaining complex inventory, accounting, and legacy admin forms where it reduces full-page postbacks.
 
 ### Epic: Orders, fulfillment, and billing admin
 
@@ -61,7 +63,8 @@ The immediate direction is:
 - Completed: remove legacy shadow foreign-key columns from business/identity joins and align `OrderLine.VatRate` precision in the database model.
 - Completed: expose CRM-linked invoices, payment context, and customer/order cross-links more deeply in the admin UI so Billing and Orders screens no longer rely on raw ids.
 - Completed: add dedicated CRM invoice list/edit screens and fix invoice lifecycle persistence so order links and payment reassignments do not leave stale associations.
-- Task: deepen invoice lifecycle tooling with posting/voiding/refund-oriented operator workflows and stronger state-transition guards.
+- Completed: add explicit invoice status transition workflows in CRM so paid/open/cancelled operator actions enforce safer payment-aware guards.
+- Task: deepen invoice lifecycle tooling further with posting/voiding/refund-oriented workflows that connect more directly to refund creation and downstream reconciliation.
 
 ### Epic: CRM admin
 

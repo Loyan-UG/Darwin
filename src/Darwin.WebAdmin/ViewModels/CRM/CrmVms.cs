@@ -431,6 +431,14 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public List<SelectListItem> PaymentOptions { get; set; } = new();
     }
 
+    public sealed class InvoiceStatusTransitionVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public InvoiceStatus TargetStatus { get; set; }
+        public DateTime? PaidAtUtc { get; set; }
+    }
+
     public sealed class CrmSummaryVm
     {
         public int CustomerCount { get; set; }

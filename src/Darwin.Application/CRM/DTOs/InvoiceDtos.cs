@@ -39,4 +39,12 @@ namespace Darwin.Application.CRM.DTOs
         public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
     }
+
+    public sealed class InvoiceStatusTransitionDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public InvoiceStatus TargetStatus { get; set; }
+        public DateTime? PaidAtUtc { get; set; }
+    }
 }

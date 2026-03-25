@@ -254,6 +254,10 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<UpdateCustomerSegmentHandler>();
             services.AddScoped<AssignCustomerSegmentHandler>();
             services.AddScoped<RemoveCustomerSegmentMembershipHandler>();
+            services.AddScoped<GetInvoicesPageHandler>();
+            services.AddScoped<GetInvoiceForEditHandler>();
+            services.AddScoped<UpdateInvoiceHandler>();
+            services.AddScoped<TransitionInvoiceStatusHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
             services.AddScoped<GetPaymentForEditHandler>();
             services.AddScoped<CreatePaymentHandler>();

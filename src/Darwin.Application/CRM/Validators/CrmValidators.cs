@@ -177,4 +177,14 @@ namespace Darwin.Application.CRM.Validators
             });
         }
     }
+
+    public sealed class InvoiceStatusTransitionValidator : AbstractValidator<InvoiceStatusTransitionDto>
+    {
+        public InvoiceStatusTransitionValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+            RuleFor(x => x.TargetStatus).IsInEnum();
+        }
+    }
 }

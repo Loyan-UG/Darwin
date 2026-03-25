@@ -1,0 +1,27 @@
+@model Darwin.WebAdmin.ViewModels.Billing.ExpenseEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true;
+    ViewData["Title"] = isCreate ? "Create Expense" : "Edit Expense";
+}
+
+<div id="billing-expense-editor-shell">
+    <h1 class="mb-3">@(isCreate ? "Create Expense" : "Edit Expense")</h1>
+
+    <form asp-action="@(isCreate ? "CreateExpense" : "EditExpense")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "CreateExpense" : "EditExpense", "Billing")"
+          hx-target="#billing-expense-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+        <partial name="_ExpenseForm" model="Model" />
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Expenses" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </form>
+</div>

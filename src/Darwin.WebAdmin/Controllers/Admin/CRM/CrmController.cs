@@ -40,6 +40,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly CreateCustomerSegmentHandler _createCustomerSegment;
         private readonly UpdateCustomerSegmentHandler _updateCustomerSegment;
         private readonly UpdateInvoiceHandler _updateInvoice;
+        private readonly TransitionInvoiceStatusHandler _transitionInvoiceStatus;
         private readonly CreateInteractionHandler _createInteraction;
         private readonly CreateConsentHandler _createConsent;
         private readonly AssignCustomerSegmentHandler _assignCustomerSegment;
@@ -73,6 +74,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             CreateCustomerSegmentHandler createCustomerSegment,
             UpdateCustomerSegmentHandler updateCustomerSegment,
             UpdateInvoiceHandler updateInvoice,
+            TransitionInvoiceStatusHandler transitionInvoiceStatus,
             CreateInteractionHandler createInteraction,
             CreateConsentHandler createConsent,
             AssignCustomerSegmentHandler assignCustomerSegment,
@@ -105,6 +107,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _createCustomerSegment = createCustomerSegment;
             _updateCustomerSegment = updateCustomerSegment;
             _updateInvoice = updateInvoice;
+            _transitionInvoiceStatus = transitionInvoiceStatus;
             _createInteraction = createInteraction;
             _createConsent = createConsent;
             _assignCustomerSegment = assignCustomerSegment;
@@ -422,6 +425,34 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderInvoiceEditor(vm);
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TransitionInvoiceStatus(InvoiceStatusTransitionVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                await _transitionInvoiceStatus.HandleAsync(new InvoiceStatusTransitionDto
+                {
+                    Id = vm.Id,
+                    RowVersion = vm.RowVersion,
+                    TargetStatus = vm.TargetStatus,
+                    PaidAtUtc = vm.PaidAtUtc
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = $"Invoice marked as {vm.TargetStatus}.";
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["Error"] = "Concurrency conflict. Reload the invoice and try again.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
         }
 
         [HttpGet]

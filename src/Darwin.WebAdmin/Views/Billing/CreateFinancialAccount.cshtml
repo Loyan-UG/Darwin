@@ -1,11 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Billing.FinancialAccountEditVm
 @{
     ViewData["Title"] = "Create Financial Account";
+    ViewData["IsCreate"] = true;
 }
-<h1 class="mb-3">Create Financial Account</h1>
-<form asp-action="CreateFinancialAccount" method="post">
-    @Html.AntiForgeryToken()
-    <partial name="_FinancialAccountForm" model="Model" />
-    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a></div>
-</form>
+<partial name="~/Views/Billing/_FinancialAccountEditorShell.cshtml" model="Model" />
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

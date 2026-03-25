@@ -4,22 +4,24 @@
     var heading = formAction == "CreateCustomer" ? "Create Customer" : "Edit Customer";
 }
 
-<h1 class="mb-3">@heading</h1>
+<div id="crm-customer-editor-shell">
+    <h1 class="mb-3">@heading</h1>
 
-<form asp-action="@formAction"
-      method="post"
-      hx-post="@Url.Action(formAction, "Crm")"
-      hx-target="#crm-customer-editor-shell"
-      hx-swap="outerHTML">
-    @Html.AntiForgeryToken()
-    @if (Model.Id != Guid.Empty)
-    {
-        <input type="hidden" asp-for="Id" />
-        <input type="hidden" asp-for="RowVersion" />
-    }
-    <partial name="_CustomerForm" model="Model" />
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
-        <a asp-action="Customers" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+    <form asp-action="@formAction"
+          method="post"
+          hx-post="@Url.Action(formAction, "Crm")"
+          hx-target="#crm-customer-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (Model.Id != Guid.Empty)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+        <partial name="_CustomerForm" model="Model" />
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+            <a asp-action="Customers" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </form>
+</div>
