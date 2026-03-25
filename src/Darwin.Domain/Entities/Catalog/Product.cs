@@ -128,6 +128,16 @@ namespace Darwin.Domain.Entities.Catalog
 
         // Inventory is managed in the Inventory module (Warehouse/StockLevel).
 
+
+        // Legacy single-warehouse fields retained for backward compatibility.
+        public int StockOnHand { get; set; }
+        public int StockReserved { get; set; }
+        public int? ReorderPoint { get; set; }
+        public bool BackorderAllowed { get; set; }
+        public int? MinOrderQty { get; set; }
+        public int? MaxOrderQty { get; set; }
+        public int? StepOrderQty { get; set; }
+
         // Logistics — persist SI base units, *do not* encode units in property names
         /// <summary>Package weight stored in grams (display conversion per site settings).</summary>
         public int? PackageWeight { get; set; }

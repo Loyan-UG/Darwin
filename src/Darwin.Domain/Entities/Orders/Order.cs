@@ -46,6 +46,8 @@ namespace Darwin.Domain.Entities.Orders
         public int Quantity { get; set; }
         public long UnitPriceNetMinor { get; set; }
         public decimal VatRate { get; set; }
+        public long UnitPriceGrossMinor { get; set; }
+        public long LineTaxMinor { get; set; }
         public long LineGrossMinor { get; set; }
 
         /// <summary>

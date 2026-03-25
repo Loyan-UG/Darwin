@@ -82,6 +82,9 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<VariantOptionValue> VariantOptionValues => Set<VariantOptionValue>();
 
         // Inventory
+        public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+        public DbSet<StockLevel> StockLevels => Set<StockLevel>();
+        public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
         public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
 
         // Pricing

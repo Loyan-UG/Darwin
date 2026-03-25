@@ -232,14 +232,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                     BasePriceNetMinor = priceMinor,
                     CompareAtPriceNetMinor = compareMinor,
 
-                    // Simple stock and logistics defaults
-                    StockOnHand = 100,
-                    StockReserved = 0,
-                    ReorderPoint = 10,
-                    BackorderAllowed = false,
-                    MinOrderQty = 1,
-                    MaxOrderQty = null,
-                    StepOrderQty = null,
+                    // Inventory is managed in StockLevel (multi-warehouse model).
 
                     // Packaging: rough, realistic dimensions in mm/g
                     PackageWeight = 350,  // 350 g phones / accessories default

@@ -11,24 +11,24 @@ namespace Darwin.Domain.Entities.Loyalty
     {
         public Guid LoyaltyAccountId { get; set; }
         public Guid BusinessId { get; set; }
-        public Guid TierId { get; set; }
+        public Guid LoyaltyRewardTierId { get; set; }
         public int PointsSpent { get; set; }
-        public RedemptionStatus Status { get; set; } = RedemptionStatus.Pending;
-        public Guid? LocationId { get; set; }
+        public LoyaltyRedemptionStatus Status { get; set; } = LoyaltyRedemptionStatus.Pending;
+        public Guid? BusinessLocationId { get; set; }
         public string? MetadataJson { get; set; }
         public DateTime? RedeemedAtUtc { get; set; }
 
-        // Legacy aliases.
-        public Guid LoyaltyRewardTierId
+        // New-model aliases.
+        public Guid TierId
         {
-            get => TierId;
-            set => TierId = value;
+            get => LoyaltyRewardTierId;
+            set => LoyaltyRewardTierId = value;
         }
 
-        public Guid? BusinessLocationId
+        public Guid? LocationId
         {
-            get => LocationId;
-            set => LocationId = value;
+            get => BusinessLocationId;
+            set => BusinessLocationId = value;
         }
     }
 }
