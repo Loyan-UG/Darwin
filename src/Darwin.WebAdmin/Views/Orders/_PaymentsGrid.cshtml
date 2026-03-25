@@ -12,15 +12,17 @@
                 <tr>
                     <th>Provider</th>
                     <th>Reference</th>
+                    <th>Invoice</th>
                     <th class="text-end">Amount</th>
                     <th>Status</th>
-                    <th>Created (UTC)</th>
+                    <th>Paid (UTC)</th>
+                    <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="5" class="text-center text-muted">No payments.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted">No payments.</td></tr>
                 }
                 else
                 {
@@ -29,9 +31,26 @@
                         <tr>
                             <td>@p.Provider</td>
                             <td>@p.ProviderReference</td>
+                            <td>
+                                @if (p.InvoiceId.HasValue)
+                                {
+                                    <code>@p.InvoiceId</code>
+                                    @if (p.InvoiceStatus.HasValue)
+                                    {
+                                        <div class="small text-muted">@p.InvoiceStatus</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
                             <td class="text-end">@p.Currency @((p.AmountMinor / 100.0M).ToString("0.00"))</td>
                             <td>@p.Status</td>
-                            <td>@p.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>@(p.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? p.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"))</td>
+                            <td class="text-end">
+                                <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Open</a>
+                            </td>
                         </tr>
                     }
                 }

@@ -111,6 +111,12 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         /// <summary>Logical provider name (e.g., "PayPal", "Stripe").</summary>
         public string Provider { get; set; } = string.Empty;
 
+        /// <summary>Optional linked invoice identifier when the payment settles an invoice.</summary>
+        public Guid? InvoiceId { get; set; }
+
+        /// <summary>Optional linked invoice status.</summary>
+        public InvoiceStatus? InvoiceStatus { get; set; }
+
         /// <summary>External reference or transaction id provided by the PSP.</summary>
         public string? ProviderReference { get; set; }
 
@@ -128,6 +134,9 @@ namespace Darwin.WebAdmin.ViewModels.Orders
 
         /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
         public DateTime CreatedAtUtc { get; set; }
+
+        /// <summary>UTC timestamp when the payment was marked as paid/captured.</summary>
+        public DateTime? PaidAtUtc { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -235,6 +244,9 @@ namespace Darwin.WebAdmin.ViewModels.Orders
     {
         public Guid Id { get; set; }
         public Guid PaymentId { get; set; }
+        public string PaymentProvider { get; set; } = string.Empty;
+        public string? PaymentProviderReference { get; set; }
+        public PaymentStatus PaymentStatus { get; set; }
         public long AmountMinor { get; set; }
         public string Currency { get; set; } = "EUR";
         public string Reason { get; set; } = string.Empty;
@@ -268,6 +280,11 @@ namespace Darwin.WebAdmin.ViewModels.Orders
     {
         public Guid Id { get; set; }
         public Guid? PaymentId { get; set; }
+        public string PaymentProvider { get; set; } = string.Empty;
+        public string? PaymentProviderReference { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public long TotalGrossMinor { get; set; }
         public InvoiceStatus Status { get; set; }

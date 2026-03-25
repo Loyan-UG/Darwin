@@ -13,23 +13,31 @@
                     <th class="text-end">Amount</th>
                     <th>Status</th>
                     <th>Created (UTC)</th>
+                    <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="5" class="text-center text-muted">No refunds.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted">No refunds.</td></tr>
                 }
                 else
                 {
                     foreach (var item in Model.Items)
                     {
                         <tr>
-                            <td><code>@item.PaymentId</code></td>
+                            <td>
+                                <div class="fw-semibold">@item.PaymentProvider</div>
+                                <div class="small text-muted">@item.PaymentProviderReference</div>
+                                <div class="small text-muted">Payment status: @item.PaymentStatus</div>
+                            </td>
                             <td>@item.Reason</td>
                             <td class="text-end">@item.Currency @((item.AmountMinor / 100.0M).ToString("0.00"))</td>
                             <td>@item.Status</td>
                             <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td class="text-end">
+                                <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-secondary">Payment</a>
+                            </td>
                         </tr>
                     }
                 }

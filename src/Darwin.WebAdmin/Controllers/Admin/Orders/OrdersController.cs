@@ -163,12 +163,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     Id = x.Id,
                     OrderId = x.OrderId,
                     Provider = x.Provider,
+                    InvoiceId = x.InvoiceId,
+                    InvoiceStatus = x.InvoiceStatus,
                     ProviderReference = x.ProviderReference,
                     AmountMinor = x.AmountMinor,
                     Currency = x.Currency,
                     Status = x.Status,
                     FailureReason = x.FailureReason,
                     CreatedAtUtc = x.CreatedAtUtc,
+                    PaidAtUtc = x.PaidAtUtc,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -217,6 +220,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 {
                     Id = x.Id,
                     PaymentId = x.PaymentId,
+                    PaymentProvider = x.PaymentProvider,
+                    PaymentProviderReference = x.PaymentProviderReference,
+                    PaymentStatus = x.PaymentStatus,
                     AmountMinor = x.AmountMinor,
                     Currency = x.Currency,
                     Reason = x.Reason,
@@ -243,6 +249,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 {
                     Id = x.Id,
                     PaymentId = x.PaymentId,
+                    PaymentProvider = x.PaymentProvider,
+                    PaymentProviderReference = x.PaymentProviderReference,
+                    PaymentStatus = x.PaymentStatus,
+                    CustomerId = x.CustomerId,
+                    CustomerDisplayName = x.CustomerDisplayName,
                     Currency = x.Currency,
                     TotalGrossMinor = x.TotalGrossMinor,
                     Status = x.Status,

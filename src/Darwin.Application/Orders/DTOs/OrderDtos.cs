@@ -215,6 +215,12 @@ namespace Darwin.Application.Orders.DTOs
         /// <summary>Logical provider name (e.g., "PayPal", "Stripe").</summary>
         public string Provider { get; set; } = string.Empty;
 
+        /// <summary>Optional linked invoice identifier when this payment settles an invoice.</summary>
+        public Guid? InvoiceId { get; set; }
+
+        /// <summary>Optional invoice status of the linked invoice.</summary>
+        public InvoiceStatus? InvoiceStatus { get; set; }
+
         /// <summary>External reference or transaction id provided by the PSP.</summary>
         public string? ProviderReference { get; set; }
 
@@ -232,6 +238,9 @@ namespace Darwin.Application.Orders.DTOs
 
         /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
         public DateTime CreatedAtUtc { get; set; }
+
+        /// <summary>UTC timestamp when the payment was captured or marked as paid.</summary>
+        public DateTime? PaidAtUtc { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -291,6 +300,9 @@ namespace Darwin.Application.Orders.DTOs
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
         public Guid PaymentId { get; set; }
+        public string PaymentProvider { get; set; } = string.Empty;
+        public string? PaymentProviderReference { get; set; }
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
         public long AmountMinor { get; set; }
         public string Currency { get; set; } = "EUR";
         public string Reason { get; set; } = string.Empty;
@@ -319,6 +331,11 @@ namespace Darwin.Application.Orders.DTOs
         public Guid Id { get; set; }
         public Guid? OrderId { get; set; }
         public Guid? PaymentId { get; set; }
+        public string PaymentProvider { get; set; } = string.Empty;
+        public string? PaymentProviderReference { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public long TotalGrossMinor { get; set; }
         public InvoiceStatus Status { get; set; }

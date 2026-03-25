@@ -58,7 +58,7 @@ The immediate direction is:
 - Completed: add order detail tabs for payments, shipments, refunds, and invoices.
 - Completed: converge duplicated order-payment and billing-payment concepts into a single `Billing.Payment` aggregate.
 - Completed: remove legacy shadow foreign-key columns from business/identity joins and align `OrderLine.VatRate` precision in the database model.
-- Task: expose CRM-linked invoices more deeply in the admin UI and connect them to payment workflows.
+- Completed: expose CRM-linked invoices, payment context, and customer/order cross-links more deeply in the admin UI so Billing and Orders screens no longer rely on raw ids.
 
 ### Epic: CRM admin
 

@@ -1,5 +1,59 @@
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
 
+@if (Model.OrderId.HasValue || Model.InvoiceId.HasValue || Model.CustomerId.HasValue || Model.UserId.HasValue)
+{
+    <div class="alert alert-light border mb-3">
+        <div class="fw-semibold mb-2">Related Records</div>
+        <div class="row g-2 small">
+            @if (Model.OrderId.HasValue)
+            {
+                <div class="col-md-6">
+                    <strong>Order:</strong>
+                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" class="text-decoration-none">
+                        @(string.IsNullOrWhiteSpace(Model.OrderNumber) ? Model.OrderId.Value.ToString() : Model.OrderNumber)
+                    </a>
+                </div>
+            }
+            @if (Model.InvoiceId.HasValue)
+            {
+                <div class="col-md-6">
+                    <strong>Invoice:</strong> <code>@Model.InvoiceId</code>
+                    @if (Model.InvoiceStatus.HasValue)
+                    {
+                        <span class="text-muted">(@Model.InvoiceStatus)</span>
+                    }
+                </div>
+            }
+            @if (Model.CustomerId.HasValue)
+            {
+                <div class="col-md-6">
+                    <strong>Customer:</strong>
+                    <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="text-decoration-none">
+                        @(string.IsNullOrWhiteSpace(Model.CustomerDisplayName) ? Model.CustomerId.Value.ToString() : Model.CustomerDisplayName)
+                    </a>
+                    @if (!string.IsNullOrWhiteSpace(Model.CustomerEmail))
+                    {
+                        <span class="text-muted">(@Model.CustomerEmail)</span>
+                    }
+                </div>
+            }
+            @if (Model.UserId.HasValue)
+            {
+                <div class="col-md-6">
+                    <strong>User:</strong>
+                    <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId.Value" class="text-decoration-none">
+                        @(string.IsNullOrWhiteSpace(Model.UserDisplayName) ? Model.UserId.Value.ToString() : Model.UserDisplayName)
+                    </a>
+                    @if (!string.IsNullOrWhiteSpace(Model.UserEmail))
+                    {
+                        <span class="text-muted">(@Model.UserEmail)</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
 <div class="row g-3">
     <div class="col-md-4">
         <label asp-for="BusinessId" class="form-label"></label>
@@ -42,9 +96,26 @@
     <div class="col-md-6">
         <label asp-for="OrderId" class="form-label"></label>
         <input asp-for="OrderId" class="form-control" />
+        @if (!string.IsNullOrWhiteSpace(Model.OrderNumber))
+        {
+            <div class="form-text">Linked order: @Model.OrderNumber</div>
+        }
     </div>
     <div class="col-md-6">
         <label asp-for="InvoiceId" class="form-label"></label>
         <input asp-for="InvoiceId" class="form-control" />
+        @if (Model.InvoiceStatus.HasValue || Model.InvoiceTotalGrossMinor.HasValue)
+        {
+            <div class="form-text">
+                @if (Model.InvoiceStatus.HasValue)
+                {
+                    <span>Status: @Model.InvoiceStatus</span>
+                }
+                @if (Model.InvoiceTotalGrossMinor.HasValue)
+                {
+                    <span class="ms-2">Total: @Model.Currency @((Model.InvoiceTotalGrossMinor.Value / 100M).ToString("0.00"))</span>
+                }
+            </div>
+        }
     </div>
 </div>

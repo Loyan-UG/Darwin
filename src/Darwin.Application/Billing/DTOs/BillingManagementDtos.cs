@@ -7,9 +7,17 @@ namespace Darwin.Application.Billing.DTOs
         public Guid Id { get; set; }
         public Guid BusinessId { get; set; }
         public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
         public Guid? InvoiceId { get; set; }
+        public InvoiceStatus? InvoiceStatus { get; set; }
+        public DateTime? InvoiceDueAtUtc { get; set; }
+        public long? InvoiceTotalGrossMinor { get; set; }
         public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CustomerEmail { get; set; }
         public Guid? UserId { get; set; }
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string? UserEmail { get; set; }
         public long AmountMinor { get; set; }
         public string Currency { get; set; } = "EUR";
         public PaymentStatus Status { get; set; }
@@ -37,6 +45,14 @@ namespace Darwin.Application.Billing.DTOs
     public sealed class PaymentEditDto : PaymentCreateDto
     {
         public Guid Id { get; set; }
+        public string? OrderNumber { get; set; }
+        public InvoiceStatus? InvoiceStatus { get; set; }
+        public DateTime? InvoiceDueAtUtc { get; set; }
+        public long? InvoiceTotalGrossMinor { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CustomerEmail { get; set; }
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string? UserEmail { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

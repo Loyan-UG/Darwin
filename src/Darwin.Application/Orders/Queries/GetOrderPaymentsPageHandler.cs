@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.CRM;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Queries
@@ -37,15 +38,37 @@ namespace Darwin.Application.Orders.Queries
                     Id = p.Id,
                     OrderId = p.OrderId ?? Guid.Empty,
                     Provider = p.Provider,
+                    InvoiceId = p.InvoiceId,
                     ProviderReference = p.ProviderTransactionRef,
                     AmountMinor = p.AmountMinor,
                     Currency = p.Currency,
                     Status = p.Status,
                     FailureReason = p.FailureReason,
                     CreatedAtUtc = p.CreatedAtUtc,
+                    PaidAtUtc = p.PaidAtUtc,
                     RowVersion = p.RowVersion
                 })
                 .ToListAsync(ct);
+
+            var paymentIds = items.Select(x => x.Id).ToList();
+            if (paymentIds.Count > 0)
+            {
+                var invoiceMap = await _db.Set<Invoice>()
+                    .AsNoTracking()
+                    .Where(x => x.PaymentId.HasValue && paymentIds.Contains(x.PaymentId.Value))
+                    .Select(x => new { PaymentId = x.PaymentId!.Value, x.Id, x.Status })
+                    .ToDictionaryAsync(x => x.PaymentId, ct)
+                    .ConfigureAwait(false);
+
+                foreach (var item in items)
+                {
+                    if (invoiceMap.TryGetValue(item.Id, out var invoice))
+                    {
+                        item.InvoiceId = invoice.Id;
+                        item.InvoiceStatus = invoice.Status;
+                    }
+                }
+            }
 
             return (items, total);
         }

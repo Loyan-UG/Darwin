@@ -18,9 +18,17 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     {
         public Guid Id { get; set; }
         public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
         public Guid? InvoiceId { get; set; }
+        public InvoiceStatus? InvoiceStatus { get; set; }
+        public DateTime? InvoiceDueAtUtc { get; set; }
+        public long? InvoiceTotalGrossMinor { get; set; }
         public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CustomerEmail { get; set; }
         public Guid? UserId { get; set; }
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string? UserEmail { get; set; }
         public long AmountMinor { get; set; }
         public string Currency { get; set; } = "EUR";
         public PaymentStatus Status { get; set; }
@@ -40,12 +48,20 @@ namespace Darwin.WebAdmin.ViewModels.Billing
 
         [Display(Name = "Order id")]
         public Guid? OrderId { get; set; }
+        public string? OrderNumber { get; set; }
 
         [Display(Name = "Invoice id")]
         public Guid? InvoiceId { get; set; }
+        public InvoiceStatus? InvoiceStatus { get; set; }
+        public DateTime? InvoiceDueAtUtc { get; set; }
+        public long? InvoiceTotalGrossMinor { get; set; }
 
         public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CustomerEmail { get; set; }
         public Guid? UserId { get; set; }
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string? UserEmail { get; set; }
 
         [Range(0, long.MaxValue)]
         public long AmountMinor { get; set; }

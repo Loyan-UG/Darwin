@@ -1,6 +1,9 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Orders;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Billing.Queries
@@ -49,7 +52,101 @@ namespace Darwin.Application.Billing.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
+            await EnrichPaymentsAsync(items, ct).ConfigureAwait(false);
             return (items, total);
+        }
+
+        private async Task EnrichPaymentsAsync(List<PaymentListItemDto> items, CancellationToken ct)
+        {
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            var orderIds = items.Where(x => x.OrderId.HasValue).Select(x => x.OrderId!.Value).Distinct().ToList();
+            var invoiceIds = items.Where(x => x.InvoiceId.HasValue).Select(x => x.InvoiceId!.Value).Distinct().ToList();
+            var paymentUserIds = items.Where(x => x.UserId.HasValue).Select(x => x.UserId!.Value).Distinct().ToList();
+            var customerIds = items.Where(x => x.CustomerId.HasValue).Select(x => x.CustomerId!.Value).Distinct().ToList();
+
+            var orderMap = orderIds.Count == 0
+                ? new Dictionary<Guid, string>()
+                : await _db.Set<Order>()
+                    .AsNoTracking()
+                    .Where(x => orderIds.Contains(x.Id))
+                    .ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct)
+                    .ConfigureAwait(false);
+
+            var invoiceMap = invoiceIds.Count == 0
+                ? new Dictionary<Guid, Invoice>()
+                : await _db.Set<Invoice>()
+                    .AsNoTracking()
+                    .Where(x => invoiceIds.Contains(x.Id))
+                    .ToDictionaryAsync(x => x.Id, ct)
+                    .ConfigureAwait(false);
+
+            foreach (var customerId in invoiceMap.Values.Where(x => x.CustomerId.HasValue).Select(x => x.CustomerId!.Value))
+            {
+                if (!customerIds.Contains(customerId))
+                {
+                    customerIds.Add(customerId);
+                }
+            }
+
+            var customers = customerIds.Count == 0
+                ? new List<Customer>()
+                : await _db.Set<Customer>()
+                    .AsNoTracking()
+                    .Where(x => customerIds.Contains(x.Id))
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
+
+            var identityUserIds = paymentUserIds.ToHashSet();
+            foreach (var linkedUserId in customers.Where(x => x.UserId.HasValue).Select(x => x.UserId!.Value))
+            {
+                identityUserIds.Add(linkedUserId);
+            }
+
+            var userMap = identityUserIds.Count == 0
+                ? new Dictionary<Guid, User>()
+                : await _db.Set<User>()
+                    .AsNoTracking()
+                    .Where(x => identityUserIds.Contains(x.Id))
+                    .ToDictionaryAsync(x => x.Id, ct)
+                    .ConfigureAwait(false);
+
+            var customerMap = customers.ToDictionary(x => x.Id);
+
+            foreach (var item in items)
+            {
+                if (item.OrderId.HasValue && orderMap.TryGetValue(item.OrderId.Value, out var orderNumber))
+                {
+                    item.OrderNumber = orderNumber;
+                }
+
+                if (item.InvoiceId.HasValue && invoiceMap.TryGetValue(item.InvoiceId.Value, out var invoice))
+                {
+                    item.InvoiceStatus = invoice.Status;
+                    item.InvoiceDueAtUtc = invoice.DueDateUtc;
+                    item.InvoiceTotalGrossMinor = invoice.TotalGrossMinor;
+
+                    if (!item.CustomerId.HasValue && invoice.CustomerId.HasValue)
+                    {
+                        item.CustomerId = invoice.CustomerId;
+                    }
+                }
+
+                if (item.CustomerId.HasValue && customerMap.TryGetValue(item.CustomerId.Value, out var customer))
+                {
+                    item.CustomerDisplayName = BillingPaymentDisplayFormatter.BuildCustomerDisplayName(customer, userMap);
+                    item.CustomerEmail = BillingPaymentDisplayFormatter.ResolveCustomerEmail(customer, userMap);
+                }
+
+                if (item.UserId.HasValue && userMap.TryGetValue(item.UserId.Value, out var user))
+                {
+                    item.UserDisplayName = BillingPaymentDisplayFormatter.BuildUserDisplayName(user);
+                    item.UserEmail = user.Email;
+                }
+            }
         }
     }
 
@@ -61,7 +158,12 @@ namespace Darwin.Application.Billing.Queries
 
         public Task<PaymentEditDto?> HandleAsync(Guid id, CancellationToken ct = default)
         {
-            return _db.Set<Payment>()
+            return HandleInternalAsync(id, ct);
+        }
+
+        private async Task<PaymentEditDto?> HandleInternalAsync(Guid id, CancellationToken ct)
+        {
+            var dto = await _db.Set<Payment>()
                 .AsNoTracking()
                 .Where(x => x.Id == id)
                 .Select(x => new PaymentEditDto
@@ -80,7 +182,85 @@ namespace Darwin.Application.Billing.Queries
                     ProviderTransactionRef = x.ProviderTransactionRef,
                     PaidAtUtc = x.PaidAtUtc
                 })
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(ct)
+                .ConfigureAwait(false);
+
+            if (dto is null)
+            {
+                return null;
+            }
+
+            if (dto.OrderId.HasValue)
+            {
+                dto.OrderNumber = await _db.Set<Order>()
+                    .AsNoTracking()
+                    .Where(x => x.Id == dto.OrderId.Value)
+                    .Select(x => x.OrderNumber)
+                    .FirstOrDefaultAsync(ct)
+                    .ConfigureAwait(false);
+            }
+
+            if (dto.InvoiceId.HasValue)
+            {
+                var invoice = await _db.Set<Invoice>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == dto.InvoiceId.Value, ct)
+                    .ConfigureAwait(false);
+
+                if (invoice is not null)
+                {
+                    dto.InvoiceStatus = invoice.Status;
+                    dto.InvoiceDueAtUtc = invoice.DueDateUtc;
+                    dto.InvoiceTotalGrossMinor = invoice.TotalGrossMinor;
+
+                    if (!dto.CustomerId.HasValue && invoice.CustomerId.HasValue)
+                    {
+                        dto.CustomerId = invoice.CustomerId;
+                    }
+                }
+            }
+
+            User? paymentUser = null;
+            if (dto.UserId.HasValue)
+            {
+                paymentUser = await _db.Set<User>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == dto.UserId.Value, ct)
+                    .ConfigureAwait(false);
+
+                if (paymentUser is not null)
+                {
+                    dto.UserDisplayName = BillingPaymentDisplayFormatter.BuildUserDisplayName(paymentUser);
+                    dto.UserEmail = paymentUser.Email;
+                }
+            }
+
+            if (dto.CustomerId.HasValue)
+            {
+                var customer = await _db.Set<Customer>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == dto.CustomerId.Value, ct)
+                    .ConfigureAwait(false);
+
+                if (customer is not null)
+                {
+                    User? linkedUser = null;
+                    if (customer.UserId.HasValue)
+                    {
+                        linkedUser = paymentUser is not null && paymentUser.Id == customer.UserId.Value
+                            ? paymentUser
+                            : await _db.Set<User>()
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(x => x.Id == customer.UserId.Value, ct)
+                                .ConfigureAwait(false);
+                    }
+
+                    dto.CustomerDisplayName = BillingPaymentDisplayFormatter.BuildCustomerDisplayName(customer, linkedUser);
+                    dto.CustomerEmail = BillingPaymentDisplayFormatter.ResolveCustomerEmail(customer, linkedUser);
+                }
+            }
+
+            return dto;
         }
     }
 
@@ -300,6 +480,60 @@ namespace Darwin.Application.Billing.Queries
                     })
                     .ToList()
             };
+        }
+    }
+
+    internal static class BillingPaymentDisplayFormatter
+    {
+        public static string BuildCustomerDisplayName(Customer customer, IReadOnlyDictionary<Guid, User> users)
+        {
+            if (customer.UserId.HasValue && users.TryGetValue(customer.UserId.Value, out var linkedUser))
+            {
+                return BuildUserDisplayName(linkedUser);
+            }
+
+            return BuildFallbackDisplayName(customer.FirstName, customer.LastName, customer.Email);
+        }
+
+        public static string BuildCustomerDisplayName(Customer customer, User? linkedUser)
+        {
+            if (linkedUser is not null)
+            {
+                return BuildUserDisplayName(linkedUser);
+            }
+
+            return BuildFallbackDisplayName(customer.FirstName, customer.LastName, customer.Email);
+        }
+
+        public static string? ResolveCustomerEmail(Customer customer, IReadOnlyDictionary<Guid, User> users)
+        {
+            if (customer.UserId.HasValue && users.TryGetValue(customer.UserId.Value, out var linkedUser))
+            {
+                return linkedUser.Email;
+            }
+
+            return string.IsNullOrWhiteSpace(customer.Email) ? null : customer.Email;
+        }
+
+        public static string? ResolveCustomerEmail(Customer customer, User? linkedUser)
+        {
+            if (linkedUser is not null)
+            {
+                return linkedUser.Email;
+            }
+
+            return string.IsNullOrWhiteSpace(customer.Email) ? null : customer.Email;
+        }
+
+        public static string BuildUserDisplayName(User user)
+        {
+            return BuildFallbackDisplayName(user.FirstName, user.LastName, user.Email);
+        }
+
+        private static string BuildFallbackDisplayName(string? firstName, string? lastName, string emailFallback)
+        {
+            var fullName = $"{firstName ?? string.Empty} {lastName ?? string.Empty}".Trim();
+            return string.IsNullOrWhiteSpace(fullName) ? emailFallback : fullName;
         }
     }
 }

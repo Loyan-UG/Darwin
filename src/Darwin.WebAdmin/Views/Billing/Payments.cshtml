@@ -17,21 +17,83 @@
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>Provider</th><th>Status</th><th>Amount</th><th>Customer</th><th>Paid</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>Provider</th><th>Order</th><th>Invoice</th><th>Amount</th><th>Customer</th><th>Paid</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">No payments found.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">No payments found.</td></tr>
         }
         else
         {
             foreach (var item in Model.Items)
             {
                 <tr>
-                    <td>@item.Provider</td>
-                    <td><span class="badge text-bg-light">@item.Status</span></td>
+                    <td>
+                        <div class="fw-semibold">@item.Provider</div>
+                        <div class="small text-muted">@item.ProviderTransactionRef</div>
+                        <span class="badge text-bg-light mt-1">@item.Status</span>
+                    </td>
+                    <td>
+                        @if (item.OrderId.HasValue)
+                        {
+                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" class="text-decoration-none">
+                                @(string.IsNullOrWhiteSpace(item.OrderNumber) ? item.OrderId.Value.ToString() : item.OrderNumber)
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.InvoiceId.HasValue)
+                        {
+                            <div><code>@item.InvoiceId</code></div>
+                            @if (item.InvoiceStatus.HasValue)
+                            {
+                                <div class="small text-muted">@item.InvoiceStatus</div>
+                            }
+                            @if (item.InvoiceTotalGrossMinor.HasValue)
+                            {
+                                <div class="small text-muted">@item.Currency @((item.InvoiceTotalGrossMinor.Value / 100M).ToString("0.00"))</div>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
                     <td>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
-                    <td>@item.CustomerId</td>
+                    <td>
+                        @if (item.CustomerId.HasValue)
+                        {
+                            <div>
+                                <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none">
+                                    @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
+                                </a>
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.CustomerDisplayName))
+                        {
+                            <div>@item.CustomerDisplayName</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.CustomerEmail))
+                        {
+                            <div class="small text-muted">@item.CustomerEmail</div>
+                        }
+                        @if (item.UserId.HasValue)
+                        {
+                            <div class="small">
+                                <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId.Value" class="text-decoration-none">
+                                    @(string.IsNullOrWhiteSpace(item.UserDisplayName) ? "Open linked user" : item.UserDisplayName)
+                                </a>
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.UserDisplayName))
+                        {
+                            <div class="small text-muted">@item.UserDisplayName</div>
+                        }
+                    </td>
                     <td>@item.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="text-end"><a asp-action="EditPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
                 </tr>

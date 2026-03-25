@@ -9,6 +9,7 @@
             <thead>
                 <tr>
                     <th>Invoice</th>
+                    <th>Customer</th>
                     <th>Payment</th>
                     <th class="text-end">Total</th>
                     <th>Status</th>
@@ -19,7 +20,7 @@
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-muted">No invoices.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted">No invoices.</td></tr>
                 }
                 else
                 {
@@ -27,7 +28,40 @@
                     {
                         <tr>
                             <td><code>@item.Id</code></td>
-                            <td>@(item.PaymentId?.ToString() ?? "-")</td>
+                            <td>
+                                @if (item.CustomerId.HasValue)
+                                {
+                                    <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none">
+                                        @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
+                                    </a>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(item.CustomerDisplayName))
+                                {
+                                    @item.CustomerDisplayName
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.PaymentId.HasValue)
+                                {
+                                    <div class="fw-semibold">@item.PaymentProvider</div>
+                                    <div class="small text-muted">@item.PaymentProviderReference</div>
+                                    @if (item.PaymentStatus.HasValue)
+                                    {
+                                        <div class="small text-muted">@item.PaymentStatus</div>
+                                    }
+                                    <div class="mt-1">
+                                        <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId.Value" class="btn btn-sm btn-outline-secondary">Payment</a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
                             <td class="text-end">@item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</td>
                             <td>@item.Status</td>
                             <td>@item.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
