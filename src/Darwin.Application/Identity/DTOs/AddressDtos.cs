@@ -89,6 +89,8 @@ namespace Darwin.Application.Identity.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Email { get; set; } = string.Empty;
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string Locale { get; set; } = "de-DE";

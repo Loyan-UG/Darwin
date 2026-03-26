@@ -51,4 +51,15 @@ namespace Darwin.Application.Identity.Validators
             RuleFor(x => x.NewPassword).NotEmpty().MinimumLength(8);
         }
     }
+
+    /// <summary>
+    /// Validation rules for admin user actions that only need a target identifier.
+    /// </summary>
+    public sealed class UserAdminActionValidator : AbstractValidator<UserAdminActionDto>
+    {
+        public UserAdminActionValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty();
+        }
+    }
 }

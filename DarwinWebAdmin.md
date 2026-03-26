@@ -135,7 +135,8 @@ WebAdmin should support or coordinate:
 
 - `In Progress`: user, role, permission, password, and email-change admin tooling exists
 - `In Progress`: invite issuance/reissue/revoke now exists for business onboarding
-- `Planned / Near-term`: activation-resend, lock/unlock, and clearer support tooling remain required for go-live
+- `Completed`: WebAdmin now supports admin-triggered password reset email, lock/unlock, and email-confirm override from the user edit workflow
+- `Planned / Near-term`: resend activation still depends on a platform-level confirm-email token flow and should not be treated as complete yet
 
 ## 9. Site and System Settings Architecture
 

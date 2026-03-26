@@ -24,6 +24,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         private readonly UpdateUserHandler _updateUser;
         private readonly ChangeUserEmailHandler _changeUserEmail;
         private readonly SetUserPasswordByAdminHandler _setUserPasswordByAdmin;
+        private readonly RequestPasswordResetHandler _requestPasswordReset;
+        private readonly ConfirmUserEmailByAdminHandler _confirmUserEmail;
+        private readonly LockUserByAdminHandler _lockUser;
+        private readonly UnlockUserByAdminHandler _unlockUser;
         private readonly SoftDeleteUserHandler _softDeleteUser;
 
         // Address handlers
@@ -46,8 +50,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             GetUserWithAddressesForEditHandler getUserWithAddresses,
             UpdateUserHandler updateUser,
             ChangeUserEmailHandler changeUserEmail,
-            ChangePasswordHandler changePassword,
             SetUserPasswordByAdminHandler setUserPasswordByAdmin,
+            RequestPasswordResetHandler requestPasswordReset,
+            ConfirmUserEmailByAdminHandler confirmUserEmail,
+            LockUserByAdminHandler lockUser,
+            UnlockUserByAdminHandler unlockUser,
             SoftDeleteUserHandler softDeleteUser,
             CreateUserAddressHandler createAddress,
             UpdateUserAddressHandler updateAddress,
@@ -62,6 +69,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             _updateUser = updateUser;
             _changeUserEmail = changeUserEmail;
             _setUserPasswordByAdmin = setUserPasswordByAdmin;
+            _requestPasswordReset = requestPasswordReset;
+            _confirmUserEmail = confirmUserEmail;
+            _lockUser = lockUser;
+            _unlockUser = unlockUser;
             _softDeleteUser = softDeleteUser;
             _createAddress = createAddress;
             _updateAddress = updateAddress;
@@ -168,6 +179,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 Id = u.Id,
                 RowVersion = u.RowVersion,
                 Email = u.Email,
+                EmailConfirmed = u.EmailConfirmed,
+                LockoutEndUtc = u.LockoutEndUtc,
                 FirstName = u.FirstName,
                 LastName = u.LastName,
                 Locale = u.Locale,
@@ -273,6 +286,76 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
             TempData["Success"] = "Email change requested. The user must confirm the new email before signing in.";
             return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
+        }
+
+        /// <summary>
+        /// Allows an administrator to mark the user's email as confirmed when support operations require a manual override.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmEmail([FromForm] Guid id, CancellationToken ct = default)
+        {
+            var result = await _confirmUserEmail.HandleAsync(new UserAdminActionDto { Id = id }, ct);
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Email marked as confirmed."
+                : (result.Error ?? "Failed to confirm email.");
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
+        }
+
+        /// <summary>
+        /// Sends a password reset email to the user's current email address without exposing token details in the admin UI.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendPasswordReset([FromForm] Guid id, CancellationToken ct = default)
+        {
+            var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
+            if (!userResult.Succeeded || userResult.Value is null)
+            {
+                TempData["Error"] = userResult.Error ?? "User not found.";
+                return RedirectOrHtmx(nameof(Edit), new { id });
+            }
+
+            var result = await _requestPasswordReset.HandleAsync(
+                new RequestPasswordResetDto { Email = userResult.Value.Email },
+                ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Password reset email sent."
+                : (result.Error ?? "Failed to send password reset email.");
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
+        }
+
+        /// <summary>
+        /// Locks the specified user account and revokes active refresh tokens.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Lock([FromForm] Guid id, CancellationToken ct = default)
+        {
+            var result = await _lockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Account locked."
+                : (result.Error ?? "Failed to lock account.");
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
+        }
+
+        /// <summary>
+        /// Unlocks the specified user account.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Unlock([FromForm] Guid id, CancellationToken ct = default)
+        {
+            var result = await _unlockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Account unlocked."
+                : (result.Error ?? "Failed to unlock account.");
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
         }
 
 

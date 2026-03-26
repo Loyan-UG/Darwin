@@ -49,7 +49,8 @@ Status terms used below:
 ### Authentication and account lifecycle
 
 - `Planned / Near-term`: complete signup, invitation, activation, forgot-password, and reset-password operational flows
-- `Planned / Near-term`: add admin support for resend activation, lock/unlock account, reset initiation support, and audit visibility
+- `Completed`: WebAdmin now supports lock/unlock, admin email confirmation override, and password-reset initiation support for operator troubleshooting
+- `Planned / Near-term`: add resend activation and true self-service activation completion once the platform has a real confirm-email token consumption flow
 - `Completed`: business-app token refresh now preserves preferred business context during onboarding-safe refresh cycles
 - `Planned / Near-term`: ensure business-user status directly affects access in mobile and admin-backed support workflows
 
@@ -93,6 +94,7 @@ Status terms used below:
 - `Completed`: CRM, inventory, billing, media, CMS, catalog, identity, and order modules are exposed in WebAdmin
 - `Completed`: business/tenant management foundation now exists in WebAdmin with business CRUD, owner assignment, member management, and location management
 - `Completed`: business invitations can now be created, listed, resent, and revoked from WebAdmin
+- `Completed`: user edit screens now expose operational account state and support actions for confirm-email override, password reset email, and lock/unlock
 - `Completed`: shared search/reset/pager behavior now covers legacy and newer operator lists across catalog, CMS, identity, billing, inventory, and orders
 - `Planned / Near-term`: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages
 - `Planned / Near-term`: standardize remaining partial loading, modal submission, and alert refresh patterns
@@ -104,6 +106,7 @@ Status terms used below:
 - `Planned / Near-term`: add communication logs, resend/retry actions, and delivery-state visibility in WebAdmin
 - `Planned / Near-term`: add per-business communication settings
 - `Planned / Near-term`: introduce localization-aware notification/email template management
+- `Planned / Near-term`: move password-reset, invitation, and future activation emails from direct SMTP composition into Communication Core templates and delivery logging
 
 ### Payments, refunds, reconciliation, disputes
 
@@ -245,3 +248,4 @@ Status terms used below:
 - `Decision pending`: decide whether support admins should have an explicit emergency override for the "last active owner cannot be removed or disabled" policy
 - `Decision pending`: decide whether invitation acceptance in phase 1 should be token-entry driven, magic-link driven, or both across `Darwin.Mobile.Business` and future front-end onboarding flows
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh
+- `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live

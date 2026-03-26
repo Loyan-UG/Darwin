@@ -60,6 +60,8 @@ namespace Darwin.Application.Identity.Queries
                 Id = user.Id,
                 RowVersion = user.RowVersion,
                 Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
+                LockoutEndUtc = user.LockoutEndUtc,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Locale = user.Locale,

@@ -85,4 +85,13 @@ namespace Darwin.Application.Identity.DTOs
         /// </summary>
         public string NewPassword { get; set; } = string.Empty;
     }
+
+    /// <summary>
+    /// Minimal admin action request for user support operations that only require a target user identifier.
+    /// </summary>
+    public sealed class UserAdminActionDto
+    {
+        /// <summary>The identifier of the target user.</summary>
+        public Guid Id { get; set; }
+    }
 }

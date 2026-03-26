@@ -112,8 +112,19 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// <summary>Current login email shown in the admin UI for context-sensitive actions.</summary>
         public string Email { get; set; } = string.Empty;
 
+        /// <summary>Indicates whether the user's primary email address is confirmed.</summary>
+        public bool EmailConfirmed { get; set; }
+
+        /// <summary>
+        /// When set to a future UTC timestamp, the account is currently locked for sign-in.
+        /// </summary>
+        public DateTime? LockoutEndUtc { get; set; }
+
         /// <summary>Active flag; deactivating disables login.</summary>
         public bool IsActive { get; set; } = true;
+
+        /// <summary>Returns whether the user is currently locked out.</summary>
+        public bool IsLockedOut => LockoutEndUtc.HasValue && LockoutEndUtc.Value > DateTime.UtcNow;
     }
 
     /// <summary>
