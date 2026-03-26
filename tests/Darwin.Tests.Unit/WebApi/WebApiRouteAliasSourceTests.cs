@@ -31,7 +31,28 @@ public sealed class WebApiRouteAliasSourceTests
 
         source.Should().Contain("api/v1/public/businesses");
         source.Should().Contain("/api/v1/businesses/list");
+        source.Should().Contain("/api/v1/businesses/map");
         source.Should().Contain("/api/v1/businesses/{id:guid}");
+    }
+
+    [Fact]
+    public void PublicCartController_Should_ContainPublicCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Public", "PublicCartController.cs"));
+
+        source.Should().Contain("api/v1/public/cart");
+        source.Should().Contain("/api/v1/cart");
+        source.Should().Contain("/api/v1/cart/items");
+        source.Should().Contain("/api/v1/cart/coupon");
+    }
+
+    [Fact]
+    public void PublicShippingController_Should_ContainPublicCanonicalRoute_AndLegacyAlias()
+    {
+        var source = ReadControllerSource(Path.Combine("Public", "PublicShippingController.cs"));
+
+        source.Should().Contain("api/v1/public/shipping");
+        source.Should().Contain("/api/v1/shipping/rates");
     }
 
     [Fact]
@@ -107,6 +128,17 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("api/v1/member/profile");
         source.Should().Contain("/api/v1/profile/me");
         source.Should().Contain("/api/v1/profile/me/deletion-request");
+    }
+
+    [Fact]
+    public void ProfileAddressesController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Profile", "ProfileAddressesController.cs"));
+
+        source.Should().Contain("api/v1/member/profile");
+        source.Should().Contain("/api/v1/profile/me/addresses");
+        source.Should().Contain("/api/v1/profile/me/addresses/{id:guid}");
+        source.Should().Contain("/api/v1/profile/me/customer");
     }
 
     [Fact]

@@ -38,14 +38,14 @@ namespace Darwin.Mobile.Shared.Api
         /// </summary>
         public static class Auth
         {
-            public const string Login = "api/v1/auth/login";
-            public const string Refresh = "api/v1/auth/refresh";
-            public const string Logout = "api/v1/auth/logout";
-            public const string LogoutAll = "api/v1/auth/logout-all";
-            public const string ChangePassword = "api/v1/auth/password/change";
-            public const string RequestPasswordReset = "api/v1/auth/password/request-reset";
-            public const string ResetPassword = "api/v1/auth/password/reset";
-            public const string Register = "api/v1/auth/register";
+            public const string Login = "api/v1/member/auth/login";
+            public const string Refresh = "api/v1/member/auth/refresh";
+            public const string Logout = "api/v1/member/auth/logout";
+            public const string LogoutAll = "api/v1/member/auth/logout-all";
+            public const string ChangePassword = "api/v1/member/auth/password/change";
+            public const string RequestPasswordReset = "api/v1/member/auth/password/request-reset";
+            public const string ResetPassword = "api/v1/member/auth/password/reset";
+            public const string Register = "api/v1/member/auth/register";
         }
 
         /// <summary>
@@ -56,9 +56,9 @@ namespace Darwin.Mobile.Shared.Api
         /// consistency when making requests to the profile API.</remarks>
         public static class Profile
         {
-            public const string GetMe = "api/v1/profile/me";
-            public const string UpdateMe = "api/v1/profile/me";
-            public const string RequestAccountDeletion = "api/v1/profile/me/deletion-request";
+            public const string GetMe = "api/v1/member/profile/me";
+            public const string UpdateMe = "api/v1/member/profile/me";
+            public const string RequestAccountDeletion = "api/v1/member/profile/me/deletion-request";
         }
 
         /// <summary>
@@ -66,17 +66,17 @@ namespace Darwin.Mobile.Shared.Api
         /// </summary>
         public static class Businesses
         {
-            public const string List = "api/v1/businesses/list";
-            public const string Map = "api/v1/businesses/map";
-            public const string Onboarding = "api/v1/businesses/onboarding";
-            public static string GetById(Guid id) => $"api/v1/businesses/{id:D}";
-            public static string GetWithMyAccount(Guid id) => $"api/v1/businesses/{id:D}/with-my-account";
-            public const string CategoryKinds = "api/v1/businesses/category-kinds";
+            public const string List = "api/v1/public/businesses/list";
+            public const string Map = "api/v1/public/businesses/map";
+            public const string Onboarding = "api/v1/member/businesses/onboarding";
+            public static string GetById(Guid id) => $"api/v1/public/businesses/{id:D}";
+            public static string GetWithMyAccount(Guid id) => $"api/v1/member/businesses/{id:D}/with-my-account";
+            public const string CategoryKinds = "api/v1/public/businesses/category-kinds";
 
-            public static string GetMyEngagement(Guid id) => $"api/v1/businesses/{id:D}/engagement/my";
-            public static string ToggleLike(Guid id) => $"api/v1/businesses/{id:D}/likes/toggle";
-            public static string ToggleFavorite(Guid id) => $"api/v1/businesses/{id:D}/favorites/toggle";
-            public static string UpsertMyReview(Guid id) => $"api/v1/businesses/{id:D}/my-review";
+            public static string GetMyEngagement(Guid id) => $"api/v1/member/businesses/{id:D}/engagement/my";
+            public static string ToggleLike(Guid id) => $"api/v1/member/businesses/{id:D}/likes/toggle";
+            public static string ToggleFavorite(Guid id) => $"api/v1/member/businesses/{id:D}/favorites/toggle";
+            public static string UpsertMyReview(Guid id) => $"api/v1/member/businesses/{id:D}/my-review";
         }
 
         /// <summary>
@@ -88,40 +88,40 @@ namespace Darwin.Mobile.Shared.Api
         /// </summary>
         public static class Notifications
         {
-            public const string RegisterDevice = "api/v1/notifications/devices/register";
+            public const string RegisterDevice = "api/v1/member/notifications/devices/register";
         }
         public static class Billing
         {
-            public const string GetCurrentBusinessSubscription = "api/v1/billing/business/subscription/current";
-            public const string SetCancelAtPeriodEnd = "api/v1/billing/business/subscription/cancel-at-period-end";
-            public const string CreateCheckoutIntent = "api/v1/billing/business/subscription/checkout-intent";
-            public const string GetPlans = "api/v1/billing/plans";
+            public const string GetCurrentBusinessSubscription = "api/v1/business/billing/subscription/current";
+            public const string SetCancelAtPeriodEnd = "api/v1/business/billing/subscription/cancel-at-period-end";
+            public const string CreateCheckoutIntent = "api/v1/business/billing/subscription/checkout-intent";
+            public const string GetPlans = "api/v1/business/billing/plans";
         }
 
         public static class Loyalty
         {
-            public const string PrepareScanSession = "api/v1/loyalty/scan/prepare";
-            public const string ProcessScanSessionForBusiness = "api/v1/loyalty/scan/process";
-            public const string ConfirmAccrual = "api/v1/loyalty/scan/confirm-accrual";
-            public const string ConfirmRedemption = "api/v1/loyalty/scan/confirm-redemption";
+            public const string PrepareScanSession = "api/v1/member/loyalty/scan/prepare";
+            public const string ProcessScanSessionForBusiness = "api/v1/business/loyalty/scan/process";
+            public const string ConfirmAccrual = "api/v1/business/loyalty/scan/confirm-accrual";
+            public const string ConfirmRedemption = "api/v1/business/loyalty/scan/confirm-redemption";
 
-            public const string GetMyAccounts = "api/v1/loyalty/my/accounts";
-            public static string GetMyHistory(Guid businessId) => $"api/v1/loyalty/my/history/{businessId:D}";
-            public static string GetAccountForBusiness(Guid businessId) => $"api/v1/loyalty/account/{businessId:D}";
-            public static string GetRewardsForBusiness(Guid businessId) => $"api/v1/loyalty/business/{businessId:D}/rewards";
-            public const string GetMyBusinesses = "api/v1/loyalty/my/businesses"; // GET with query
-            public const string GetMyTimeline = "api/v1/loyalty/my/timeline";     // POST
-            public static string Join(Guid businessId) => $"api/v1/loyalty/account/{businessId:D}/join";
-            public static string GetNextReward(Guid businessId) => $"api/v1/loyalty/account/{businessId:D}/next-reward";
-            public const string GetMyPromotions = "api/v1/loyalty/my/promotions"; // POST
-            public const string TrackPromotionInteraction = "api/v1/loyalty/my/promotions/track"; // POST
-            public const string GetBusinessRewardConfiguration = "api/v1/loyalty/business/reward-config";
-            public const string CreateBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers";
-            public const string UpdateBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers";
-            public const string DeleteBusinessRewardTier = "api/v1/loyalty/business/reward-config/tiers/delete";
-            public const string GetBusinessCampaigns = "api/v1/loyalty/business/campaigns";
-            public static string UpdateBusinessCampaign(Guid campaignId) => $"api/v1/loyalty/business/campaigns/{campaignId:D}";
-            public static string SetBusinessCampaignActivation(Guid campaignId) => $"api/v1/loyalty/business/campaigns/{campaignId:D}/activation";
+            public const string GetMyAccounts = "api/v1/member/loyalty/my/accounts";
+            public static string GetMyHistory(Guid businessId) => $"api/v1/member/loyalty/my/history/{businessId:D}";
+            public static string GetAccountForBusiness(Guid businessId) => $"api/v1/member/loyalty/account/{businessId:D}";
+            public static string GetRewardsForBusiness(Guid businessId) => $"api/v1/member/loyalty/business/{businessId:D}/rewards";
+            public const string GetMyBusinesses = "api/v1/member/loyalty/my/businesses"; // GET with query
+            public const string GetMyTimeline = "api/v1/member/loyalty/my/timeline";     // POST
+            public static string Join(Guid businessId) => $"api/v1/member/loyalty/account/{businessId:D}/join";
+            public static string GetNextReward(Guid businessId) => $"api/v1/member/loyalty/account/{businessId:D}/next-reward";
+            public const string GetMyPromotions = "api/v1/member/loyalty/my/promotions"; // POST
+            public const string TrackPromotionInteraction = "api/v1/member/loyalty/my/promotions/track"; // POST
+            public const string GetBusinessRewardConfiguration = "api/v1/business/loyalty/reward-config";
+            public const string CreateBusinessRewardTier = "api/v1/business/loyalty/reward-config/tiers";
+            public const string UpdateBusinessRewardTier = "api/v1/business/loyalty/reward-config/tiers";
+            public const string DeleteBusinessRewardTier = "api/v1/business/loyalty/reward-config/tiers/delete";
+            public const string GetBusinessCampaigns = "api/v1/business/loyalty/campaigns";
+            public static string UpdateBusinessCampaign(Guid campaignId) => $"api/v1/business/loyalty/campaigns/{campaignId:D}";
+            public static string SetBusinessCampaignActivation(Guid campaignId) => $"api/v1/business/loyalty/campaigns/{campaignId:D}/activation";
         }
     }
 }

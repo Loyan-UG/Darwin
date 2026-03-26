@@ -55,6 +55,7 @@ For authenticated end users:
 
 - profile and account settings
 - addresses
+- linked CRM customer context
 - order history
 - invoice history
 - loyalty balances, rewards, and transaction history
@@ -120,6 +121,8 @@ Recent route organization changes:
 - loyalty is now split between a dedicated member controller (`api/v1/member/loyalty`) and a dedicated business controller (`api/v1/business/loyalty`), while legacy `/api/v1/loyalty/*` aliases remain temporarily available
 - member order history and member invoice history now have dedicated canonical route roots under `api/v1/member/orders` and `api/v1/member/invoices`, while legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain temporarily available
 - public CMS and public catalog delivery now have dedicated canonical route roots under `api/v1/public/cms` and `api/v1/public/catalog`, while legacy `/api/v1/cms/*` and `/api/v1/catalog/*` aliases remain temporarily available
+- public business discovery now also includes a canonical map-discovery route under `api/v1/public/businesses/map`, while the legacy `/api/v1/businesses/map` alias remains available for existing mobile consumers
+- public storefront cart and shipping estimation now have dedicated canonical route roots under `api/v1/public/cart` and `api/v1/public/shipping`, while legacy `/api/v1/cart*` and `/api/v1/shipping/rates` aliases remain available during migration
 
 ### Required public groups
 
@@ -130,13 +133,17 @@ These should be documented and expanded as implementation continues:
 - `/api/v1/seo/*`
 - `/api/v1/public/catalog/products`
 - `/api/v1/public/catalog/categories`
-- `/api/v1/storefront/*`
+- `/api/v1/public/cart/*`
+- `/api/v1/public/shipping/*`
 
 Current public delivery ownership:
 
 - public CMS: published page listing, page-by-slug delivery, and menu delivery
 - public catalog: published category listing, product listing, and product-by-slug delivery
-- legacy `/api/v1/cms/*` and `/api/v1/catalog/*` aliases remain only for compatibility and should not be used for new development
+- public business discovery: list, detail, category kinds, and viewport-based map discovery
+- public storefront cart: cart summary, add/update/remove line, and coupon application for anonymous or authenticated storefront sessions
+- public shipping: rate quotes for storefront checkout estimation
+- legacy `/api/v1/cms/*`, `/api/v1/catalog/*`, `/api/v1/cart*`, `/api/v1/shipping/rates`, and `/api/v1/businesses/map` aliases remain only for compatibility and should not be used for new development
 
 ### Required member groups
 
@@ -156,7 +163,10 @@ Current member commerce ownership:
 
 - member orders: paged order history and order detail under the member route root
 - member invoices: paged invoice history and invoice detail under the member route root
+- member profile addresses: reusable address-book CRUD and default billing/shipping selection under the member profile route root
+- member CRM linkage: current identity-to-customer summary under the member profile route root
 - legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
+- mobile shared route constants should prefer the canonical audience-first roots (`public`, `member`, `business`) even when the legacy aliases still exist server-side
 
 ### Required CRM admin/integration groups
 

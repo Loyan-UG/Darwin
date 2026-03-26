@@ -110,16 +110,23 @@ The immediate direction is:
 - Completed: split loyalty delivery into dedicated member and business controllers so member account/reward/timeline flows and business scan/configuration/campaign flows no longer share one mixed controller surface.
 - Completed: add initial public CMS delivery endpoints for published pages and menus under `api/v1/public/cms` with legacy `/api/v1/cms/*` aliases.
 - Completed: add initial public catalog delivery endpoints for published categories and products under `api/v1/public/catalog` with legacy `/api/v1/catalog/*` aliases.
+- Completed: restore a dedicated public business map-discovery endpoint under `api/v1/public/businesses/map` while preserving the legacy `/api/v1/businesses/map` alias used by existing mobile flows.
+- Completed: add initial public storefront cart endpoints under `api/v1/public/cart` with legacy `/api/v1/cart*` aliases for anonymous and authenticated storefront cart mutations.
+- Completed: add initial public storefront shipping-rate endpoints under `api/v1/public/shipping/rates` with the legacy `/api/v1/shipping/rates` alias.
 - Task: deepen public CMS delivery with SEO, structured blocks, and culture fallback rules as storefront requirements expand.
 - Task: deepen public catalog delivery with richer pricing, availability, attribute filtering, and search-oriented projections.
+- Task: deepen storefront cart and checkout delivery with address capture, shipping selection, checkout intent, and order placement flows.
 
 ### Epic: Member API
 
 - Completed: establish the canonical member loyalty route root under `api/v1/member/loyalty` while preserving the legacy `/api/v1/loyalty/*` aliases for existing consumers.
 - Completed: add initial member order-history endpoints under `api/v1/member/orders` with legacy `/api/v1/orders/*` aliases for existing clients.
 - Completed: add initial member invoice-history endpoints under `api/v1/member/invoices` with legacy `/api/v1/invoices/*` aliases for existing clients.
+- Completed: add member profile address-book endpoints under `api/v1/member/profile/addresses` with legacy `/api/v1/profile/me/addresses*` aliases.
+- Completed: add a member-facing linked CRM customer summary endpoint under `api/v1/member/profile/customer`.
 - Task: document and implement member loyalty projections and account endpoints.
-- Task: deepen member order and invoice APIs with richer storefront-specific address, document-download, and action flows as front-office requirements solidify.
+- Task: deepen member order and invoice APIs with richer storefront-specific document-download and action flows as front-office requirements solidify.
+- Task: extend member profile APIs with address selection during checkout, customer-preference projections, and any additional self-service CRM views that become necessary.
 - Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.
 
 ### Epic: Admin and integration API
@@ -150,5 +157,6 @@ The immediate direction is:
 ### Epic: Mobile contract alignment
 
 - Task: review downstream impact of CRM, billing, and fulfillment changes on mobile-facing contracts.
-- Task: update `Darwin.WebApi`, `Darwin.Contracts`, and MAUI apps wherever domain changes affect mobile consumers.
+- Completed: migrate shared mobile route constants to the canonical audience-first WebApi route roots while preserving compatibility aliases server-side.
+- Task: continue updating `Darwin.WebApi`, `Darwin.Contracts`, and MAUI apps wherever future domain or route changes affect mobile consumers.
 - Task: keep loyalty behavior backward compatible unless an explicit contract version change is introduced.

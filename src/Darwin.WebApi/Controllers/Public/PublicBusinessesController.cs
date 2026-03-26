@@ -20,13 +20,16 @@ public sealed class PublicBusinessesController : ApiControllerBase
     private const int MaxPageSize = 100;
 
     private readonly GetBusinessesForDiscoveryHandler _getBusinessesForDiscovery;
+    private readonly GetBusinessesForMapDiscoveryHandler _getBusinessesForMapDiscovery;
     private readonly GetBusinessPublicDetailHandler _getBusinessPublicDetail;
 
     public PublicBusinessesController(
         GetBusinessesForDiscoveryHandler getBusinessesForDiscovery,
+        GetBusinessesForMapDiscoveryHandler getBusinessesForMapDiscovery,
         GetBusinessPublicDetailHandler getBusinessPublicDetail)
     {
         _getBusinessesForDiscovery = getBusinessesForDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForDiscovery));
+        _getBusinessesForMapDiscovery = getBusinessesForMapDiscovery ?? throw new ArgumentNullException(nameof(getBusinessesForMapDiscovery));
         _getBusinessPublicDetail = getBusinessPublicDetail ?? throw new ArgumentNullException(nameof(getBusinessPublicDetail));
     }
 
@@ -95,6 +98,66 @@ public sealed class PublicBusinessesController : ApiControllerBase
                 Page = page,
                 PageSize = pageSize,
                 Search = queryText
+            }
+        });
+    }
+
+    [HttpPost("map")]
+    [HttpPost("/api/v1/businesses/map")]
+    [ProducesResponseType(typeof(PagedResponse<BusinessSummary>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> MapAsync([FromBody] BusinessMapDiscoveryRequest? request, CancellationToken ct = default)
+    {
+        if (request?.Bounds is null)
+        {
+            return BadRequestProblem("Map bounds are required.");
+        }
+
+        var page = request.Page.GetValueOrDefault(1);
+        if (page <= 0)
+        {
+            return BadRequestProblem("Page must be a positive integer.");
+        }
+
+        var pageSize = request.PageSize.GetValueOrDefault(200);
+        if (pageSize <= 0 || pageSize > 500)
+        {
+            return BadRequestProblem("PageSize must be between 1 and 500.");
+        }
+
+        if (!BusinessControllerConventions.TryParseBusinessCategoryKind(request.Category, out var categoryKind, out var categoryError))
+        {
+            return BadRequestProblem(categoryError);
+        }
+
+        var dto = new BusinessMapDiscoveryRequestDto
+        {
+            Page = page,
+            PageSize = pageSize,
+            Query = BusinessControllerConventions.NormalizeNullable(request.Query),
+            CountryCode = BusinessControllerConventions.NormalizeNullable(request.CountryCode),
+            Category = categoryKind,
+            Bounds = new GeoBoundsDto
+            {
+                NorthLat = request.Bounds.NorthLat,
+                SouthLat = request.Bounds.SouthLat,
+                EastLon = request.Bounds.EastLon,
+                WestLon = request.Bounds.WestLon
+            }
+        };
+
+        var (items, total) = await _getBusinessesForMapDiscovery.HandleAsync(dto, ct).ConfigureAwait(false);
+        return Ok(new PagedResponse<BusinessSummary>
+        {
+            Total = total,
+            Items = (items ?? new List<BusinessDiscoveryListItemDto>())
+                .Select(BusinessContractsMapper.ToContract)
+                .ToList(),
+            Request = new PagedRequest
+            {
+                Page = page,
+                PageSize = pageSize,
+                Search = dto.Query
             }
         });
     }

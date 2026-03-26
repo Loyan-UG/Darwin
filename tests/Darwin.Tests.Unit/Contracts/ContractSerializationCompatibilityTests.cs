@@ -2,10 +2,12 @@ using Darwin.Contracts.Identity;
 using Darwin.Contracts.Invoices;
 using Darwin.Contracts.Orders;
 using Darwin.Contracts.Businesses;
+using Darwin.Contracts.Cart;
 using Darwin.Contracts.Catalog;
 using Darwin.Contracts.Cms;
 using Darwin.Contracts.Loyalty;
 using Darwin.Contracts.Profile;
+using Darwin.Contracts.Shipping;
 using FluentAssertions;
 using System.Text.Json;
 
@@ -376,6 +378,131 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"title\"");
         json.Should().Contain("\"slug\"");
         json.Should().Contain("\"contentHtml\"");
+    }
+
+    /// <summary>
+    ///     Verifies that public cart summary contracts serialize storefront-facing fields
+    ///     with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void PublicCartSummary_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new PublicCartSummary
+        {
+            CartId = Guid.Parse("12345678-1234-1234-1234-123456789012"),
+            Currency = "EUR",
+            SubtotalNetMinor = 1999,
+            VatTotalMinor = 380,
+            GrandTotalGrossMinor = 2379,
+            CouponCode = "WILLKOMMEN10",
+            Items =
+            [
+                new PublicCartItemRow
+                {
+                    VariantId = Guid.Parse("87654321-4321-4321-4321-210987654321"),
+                    Quantity = 2,
+                    UnitPriceNetMinor = 999,
+                    AddOnPriceDeltaMinor = 100,
+                    VatRate = 0.19m,
+                    LineNetMinor = 2198,
+                    LineVatMinor = 418,
+                    LineGrossMinor = 2616,
+                    SelectedAddOnValueIdsJson = "[\"11111111-1111-1111-1111-111111111111\"]"
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"cartId\"");
+        json.Should().Contain("\"currency\"");
+        json.Should().Contain("\"grandTotalGrossMinor\"");
+        json.Should().Contain("\"couponCode\"");
+        json.Should().Contain("\"selectedAddOnValueIdsJson\"");
+    }
+
+    /// <summary>
+    ///     Verifies that public shipping contracts serialize storefront-facing fields
+    ///     with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void PublicShippingOption_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new PublicShippingOption
+        {
+            MethodId = Guid.Parse("aaaaaaaa-1111-2222-3333-bbbbbbbbbbbb"),
+            Name = "DHL Paket",
+            PriceMinor = 590,
+            Currency = "EUR",
+            Carrier = "DHL",
+            Service = "Paket"
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"methodId\"");
+        json.Should().Contain("\"name\"");
+        json.Should().Contain("\"priceMinor\"");
+        json.Should().Contain("\"currency\"");
+        json.Should().Contain("\"carrier\"");
+        json.Should().Contain("\"service\"");
+    }
+
+    /// <summary>
+    ///     Verifies that member address contracts serialize profile-facing fields
+    ///     with stable camelCase property names.
+    /// </summary>
+    [Fact]
+    public void MemberAddress_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new MemberAddress
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            RowVersion = [1, 2, 3],
+            FullName = "Max Mustermann",
+            Street1 = "Musterstraße 1",
+            PostalCode = "10115",
+            City = "Berlin",
+            CountryCode = "DE",
+            IsDefaultBilling = true,
+            IsDefaultShipping = false
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"rowVersion\"");
+        json.Should().Contain("\"fullName\"");
+        json.Should().Contain("\"street1\"");
+        json.Should().Contain("\"postalCode\"");
+        json.Should().Contain("\"isDefaultBilling\"");
+        json.Should().Contain("\"isDefaultShipping\"");
+    }
+
+    /// <summary>
+    ///     Verifies that linked CRM customer profile contracts serialize member-facing
+    ///     CRM linkage fields with stable camelCase property names.
+    /// </summary>
+    [Fact]
+    public void LinkedCustomerProfile_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new LinkedCustomerProfile
+        {
+            Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            UserId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
+            DisplayName = "Max Mustermann",
+            Email = "max@example.de",
+            Phone = "+491701234567",
+            CompanyName = "Darwin GmbH"
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"id\"");
+        json.Should().Contain("\"userId\"");
+        json.Should().Contain("\"displayName\"");
+        json.Should().Contain("\"email\"");
+        json.Should().Contain("\"phone\"");
+        json.Should().Contain("\"companyName\"");
     }
 
 
