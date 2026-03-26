@@ -5,6 +5,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -25,6 +26,23 @@ namespace Darwin.Application.Businesses.Commands
         public async Task<Guid> HandleAsync(BusinessLocationCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
+
+            var businessExists = await _db.Set<Business>()
+                .AnyAsync(x => x.Id == dto.BusinessId, ct);
+            if (!businessExists)
+                throw new InvalidOperationException("Business not found.");
+
+            if (dto.IsPrimary)
+            {
+                var existingPrimaryLocations = await _db.Set<BusinessLocation>()
+                    .Where(x => x.BusinessId == dto.BusinessId && x.IsPrimary)
+                    .ToListAsync(ct);
+
+                foreach (var existingPrimary in existingPrimaryLocations)
+                {
+                    existingPrimary.IsPrimary = false;
+                }
+            }
 
             var entity = new BusinessLocation
             {

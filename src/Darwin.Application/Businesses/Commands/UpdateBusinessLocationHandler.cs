@@ -39,6 +39,18 @@ namespace Darwin.Application.Businesses.Commands
             if (!currentVersion.SequenceEqual(requestVersion))
                 throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
 
+            if (dto.IsPrimary)
+            {
+                var existingPrimaryLocations = await _db.Set<BusinessLocation>()
+                    .Where(x => x.BusinessId == dto.BusinessId && x.Id != dto.Id && x.IsPrimary)
+                    .ToListAsync(ct);
+
+                foreach (var existingPrimary in existingPrimaryLocations)
+                {
+                    existingPrimary.IsPrimary = false;
+                }
+            }
+
             entity.Name = dto.Name.Trim();
             entity.AddressLine1 = string.IsNullOrWhiteSpace(dto.AddressLine1) ? null : dto.AddressLine1.Trim();
             entity.AddressLine2 = string.IsNullOrWhiteSpace(dto.AddressLine2) ? null : dto.AddressLine2.Trim();

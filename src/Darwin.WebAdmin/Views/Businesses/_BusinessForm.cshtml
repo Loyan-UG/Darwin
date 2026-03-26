@@ -1,0 +1,79 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label">Business name</label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="LegalName" class="form-label">Legal name</label>
+        <input asp-for="LegalName" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Category" class="form-label">Category</label>
+        <select asp-for="Category" asp-items="Model.CategoryOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="DefaultCurrency" class="form-label">Default currency</label>
+        <input asp-for="DefaultCurrency" class="form-control" maxlength="3" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="DefaultCulture" class="form-label">Default culture</label>
+        <input asp-for="DefaultCulture" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="TaxId" class="form-label">Tax / VAT ID</label>
+        <input asp-for="TaxId" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="WebsiteUrl" class="form-label">Website</label>
+        <input asp-for="WebsiteUrl" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ContactEmail" class="form-label">Contact email</label>
+        <input asp-for="ContactEmail" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ContactPhoneE164" class="form-label">Contact phone (E.164)</label>
+        <input asp-for="ContactPhoneE164" class="form-control" />
+    </div>
+    <div class="col-12">
+        <label asp-for="ShortDescription" class="form-label">Short description</label>
+        <textarea asp-for="ShortDescription" class="form-control" rows="4"></textarea>
+    </div>
+    @if (isCreate)
+    {
+        <div class="col-md-6">
+            <label asp-for="OwnerUserId" class="form-label">Initial owner</label>
+            <select asp-for="OwnerUserId" asp-items="Model.OwnerUserOptions" class="form-select"></select>
+            <div class="form-text">Optional. Assigning an owner now reduces follow-up onboarding work.</div>
+        </div>
+    }
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label">Business is active</label>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+    @if (isCreate)
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+    }
+    else
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to list</a>
+        <a asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Manage members</a>
+        <a asp-action="Locations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Manage locations</a>
+    }
+</div>

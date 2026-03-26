@@ -1,0 +1,45 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessMemberEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    @if (isCreate)
+    {
+        <div class="col-12">
+            <label asp-for="UserId" class="form-label">User</label>
+            <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
+            <div class="form-text">Invitation-based staff onboarding is planned separately. For now, assign an existing platform user.</div>
+        </div>
+    }
+    else
+    {
+        <div class="col-md-6">
+            <label class="form-label">User</label>
+            <input class="form-control" value="@Model.UserDisplayName" readonly />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" value="@Model.UserEmail" readonly />
+        </div>
+    }
+    <div class="col-md-6">
+        <label asp-for="Role" class="form-label">Role</label>
+        <select asp-for="Role" asp-items="Model.RoleOptions" class="form-select"></select>
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label">Member is active</label>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+    <a asp-action="Members" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Cancel</a>
+</div>

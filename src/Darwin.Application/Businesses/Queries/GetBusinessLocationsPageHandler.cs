@@ -19,7 +19,7 @@ namespace Darwin.Application.Businesses.Queries
         public GetBusinessLocationsPageHandler(IAppDbContext db) => _db = db;
 
         public async Task<(List<BusinessLocationListItemDto> Items, int Total)> HandleAsync(
-            Guid businessId, int page, int pageSize, CancellationToken ct = default)
+            Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -27,6 +27,15 @@ namespace Darwin.Application.Businesses.Queries
             var baseQuery = _db.Set<BusinessLocation>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var q = query.Trim();
+                baseQuery = baseQuery.Where(x =>
+                    x.Name.Contains(q) ||
+                    (x.City != null && x.City.Contains(q)) ||
+                    (x.PostalCode != null && x.PostalCode.Contains(q)));
+            }
 
             var total = await baseQuery.CountAsync(ct);
 

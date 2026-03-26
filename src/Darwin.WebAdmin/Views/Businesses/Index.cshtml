@@ -1,0 +1,134 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessesListVm
+@{
+    ViewData["Title"] = "Businesses";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-0"><i class="fa-solid fa-building me-2"></i>Businesses</h1>
+        <p class="text-muted mb-0">Create and maintain merchant tenants, owner assignments, and operational readiness.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Create Business
+    </a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business or legal name" />
+    </div>
+    <div class="col-auto">
+        <select name="pageSize" class="form-select">
+            @foreach (var item in Model.PageSizeItems)
+            {
+                <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Business</th>
+                <th>Category</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Owners</th>
+                <th class="text-center">Members</th>
+                <th class="text-center">Locations</th>
+                <th class="text-end" style="width:360px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">No businesses found.</td>
+            </tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@item.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(item.LegalName))
+                        {
+                            <div class="text-muted small">@item.LegalName</div>
+                        }
+                    </td>
+                    <td>@item.Category</td>
+                    <td class="text-center">
+                        @if (item.IsActive)
+                        {
+                            <span class="badge text-bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td class="text-center">
+                        @if (item.ActiveOwnerCount > 0)
+                        {
+                            <span class="badge text-bg-success">@item.ActiveOwnerCount</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-warning">Missing</span>
+                        }
+                    </td>
+                    <td class="text-center">@item.MemberCount</td>
+                    <td class="text-center">
+                        @if (item.LocationCount > 0)
+                        {
+                            <span>@item.LocationCount</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-warning">Missing</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </a>
+                        <a asp-action="Members" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-user-group"></i> Members
+                        </a>
+                        <a asp-action="Locations" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-location-dot"></i> Locations
+                        </a>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmDeleteModal"
+                                data-action="@Url.Action("Delete", "Businesses")"
+                                data-id="@item.Id"
+                                data-name="@item.Name"
+                                data-rowversion="@Convert.ToBase64String(item.RowVersion)">
+                            <i class="fa-solid fa-box-archive"></i> Archive
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Businesses"
+       asp-action="Index"
+       asp-route-query="@Model.Query">
+</pager>
+
+<partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

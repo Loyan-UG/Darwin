@@ -1,0 +1,89 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+    ViewData["Title"] = isCreate ? "Create Business" : "Edit Business";
+}
+
+<div id="business-editor-shell">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-1">@(isCreate ? "Create Business" : "Edit Business")</h1>
+            <p class="text-muted mb-0">Tenant setup starts here. After saving, continue with owner assignment and primary location.</p>
+        </div>
+        @if (!isCreate)
+        {
+            <div class="d-flex gap-2">
+                <a asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-user-group"></i> Members
+                </a>
+                <a asp-action="Locations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-location-dot"></i> Locations
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (!isCreate)
+    {
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Owners</div>
+                    <div class="fs-4 fw-semibold">@Model.ActiveOwnerCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Members</div>
+                    <div class="fs-4 fw-semibold">@Model.MemberCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Locations</div>
+                    <div class="fs-4 fw-semibold">@Model.LocationCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Pending Invites</div>
+                    <div class="fs-4 fw-semibold">@Model.InvitationCount</div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.ActiveOwnerCount == 0 || Model.LocationCount == 0)
+        {
+            <div class="alert alert-warning">
+                This business is not onboarding-complete yet.
+                @if (Model.ActiveOwnerCount == 0)
+                {
+                    <span>Add at least one active owner.</span>
+                }
+                @if (Model.ActiveOwnerCount == 0 && Model.LocationCount == 0)
+                {
+                    <span class="mx-1">and</span>
+                }
+                @if (Model.LocationCount == 0)
+                {
+                    <span>Add a primary location.</span>
+                }
+            </div>
+        }
+    }
+
+    <form asp-action="@(isCreate ? "Create" : "Edit")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "Create" : "Edit", "Businesses")"
+          hx-target="#business-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+
+        <partial name="_BusinessForm" model="Model" />
+    </form>
+</div>

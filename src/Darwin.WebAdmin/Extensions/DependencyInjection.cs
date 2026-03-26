@@ -23,6 +23,8 @@ using Darwin.Application.Common.Html;
 using Darwin.Application.Extensions;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.Queries;
+using Darwin.Application.Businesses.Commands;
+using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Identity.Auth.Commands;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.Queries;
@@ -211,6 +213,21 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateBrandHandler>();
             services.AddScoped<UpdateBrandHandler>();
             services.AddScoped<SoftDeleteBrandHandler>();
+            services.AddScoped<GetBusinessesPageHandler>();
+            services.AddScoped<GetBusinessForEditHandler>();
+            services.AddScoped<CreateBusinessHandler>();
+            services.AddScoped<UpdateBusinessHandler>();
+            services.AddScoped<SoftDeleteBusinessHandler>();
+            services.AddScoped<GetBusinessLocationsPageHandler>();
+            services.AddScoped<GetBusinessLocationForEditHandler>();
+            services.AddScoped<CreateBusinessLocationHandler>();
+            services.AddScoped<UpdateBusinessLocationHandler>();
+            services.AddScoped<SoftDeleteBusinessLocationHandler>();
+            services.AddScoped<GetBusinessMembersPageHandler>();
+            services.AddScoped<GetBusinessMemberForEditHandler>();
+            services.AddScoped<CreateBusinessMemberHandler>();
+            services.AddScoped<UpdateBusinessMemberHandler>();
+            services.AddScoped<DeleteBusinessMemberHandler>();
 
             // Orders – queries
             services.AddScoped<GetOrdersPageHandler>();

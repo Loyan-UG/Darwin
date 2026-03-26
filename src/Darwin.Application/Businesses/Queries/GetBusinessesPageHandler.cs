@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Queries
@@ -48,6 +49,9 @@ namespace Darwin.Application.Businesses.Queries
                     LegalName = x.LegalName,
                     Category = x.Category,
                     IsActive = x.IsActive,
+                    MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id),
+                    ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
+                    LocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted),
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
                     RowVersion = x.RowVersion

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Queries
@@ -36,7 +37,11 @@ namespace Darwin.Application.Businesses.Queries
                     Category = x.Category,
                     DefaultCurrency = x.DefaultCurrency,
                     DefaultCulture = x.DefaultCulture,
-                    IsActive = x.IsActive
+                    IsActive = x.IsActive,
+                    MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id),
+                    ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
+                    LocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted),
+                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending)
                 })
                 .FirstOrDefaultAsync(ct);
         }

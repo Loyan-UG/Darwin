@@ -1,0 +1,70 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessLocationEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label">Location name</label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="PostalCode" class="form-label">Postal code</label>
+        <input asp-for="PostalCode" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="AddressLine1" class="form-label">Address line 1</label>
+        <input asp-for="AddressLine1" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="AddressLine2" class="form-label">Address line 2</label>
+        <input asp-for="AddressLine2" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="City" class="form-label">City</label>
+        <input asp-for="City" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Region" class="form-label">Region</label>
+        <input asp-for="Region" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="CountryCode" class="form-label">Country code</label>
+        <input asp-for="CountryCode" class="form-control" maxlength="2" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Latitude" class="form-label">Latitude</label>
+        <input asp-for="Latitude" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Longitude" class="form-label">Longitude</label>
+        <input asp-for="Longitude" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AltitudeMeters" class="form-label">Altitude (m)</label>
+        <input asp-for="AltitudeMeters" class="form-control" />
+    </div>
+    <div class="col-12">
+        <label asp-for="OpeningHoursJson" class="form-label">Opening hours JSON</label>
+        <textarea asp-for="OpeningHoursJson" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="col-12">
+        <label asp-for="InternalNote" class="form-label">Internal note</label>
+        <textarea asp-for="InternalNote" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="IsPrimary" class="form-check-input" />
+            <label asp-for="IsPrimary" class="form-check-label">Primary location</label>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+    <a asp-action="Locations" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Cancel</a>
+</div>

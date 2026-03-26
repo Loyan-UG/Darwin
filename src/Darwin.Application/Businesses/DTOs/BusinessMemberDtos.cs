@@ -36,4 +36,35 @@ namespace Darwin.Application.Businesses.DTOs
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
+
+    /// <summary>
+    /// Lightweight member row for admin paging grids.
+    /// </summary>
+    public sealed class BusinessMemberListItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid UserId { get; set; }
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string UserEmail { get; set; } = string.Empty;
+        public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
+        public bool IsActive { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    /// <summary>
+    /// Richer edit projection for business-member management screens.
+    /// </summary>
+    public sealed class BusinessMemberDetailDto
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid UserId { get; set; }
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string UserEmail { get; set; } = string.Empty;
+        public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
+        public bool IsActive { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
 }

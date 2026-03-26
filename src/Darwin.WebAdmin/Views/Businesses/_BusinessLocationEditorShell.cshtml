@@ -1,0 +1,30 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessLocationEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+}
+
+<div id="business-location-editor-shell">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-1">@(isCreate ? "Create Business Location" : "Edit Business Location")</h1>
+            <p class="text-muted mb-0">@Model.Business.Name</p>
+        </div>
+        <a asp-action="Locations" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back to locations</a>
+    </div>
+
+    <form asp-action="@(isCreate ? "CreateLocation" : "EditLocation")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "CreateLocation" : "EditLocation", "Businesses")"
+          hx-target="#business-location-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="BusinessId" />
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+
+        <partial name="_BusinessLocationForm" model="Model" />
+    </form>
+</div>

@@ -4,7 +4,9 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Identity;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Commands
 {
@@ -26,6 +28,21 @@ namespace Darwin.Application.Businesses.Commands
         public async Task<Guid> HandleAsync(BusinessMemberCreateDto dto, CancellationToken ct = default)
         {
             await _validator.ValidateAndThrowAsync(dto, ct);
+
+            var businessExists = await _db.Set<Business>()
+                .AnyAsync(x => x.Id == dto.BusinessId, ct);
+            if (!businessExists)
+                throw new InvalidOperationException("Business not found.");
+
+            var userExists = await _db.Set<User>()
+                .AnyAsync(x => x.Id == dto.UserId && !x.IsDeleted, ct);
+            if (!userExists)
+                throw new InvalidOperationException("User not found.");
+
+            var duplicateExists = await _db.Set<BusinessMember>()
+                .AnyAsync(x => x.BusinessId == dto.BusinessId && x.UserId == dto.UserId, ct);
+            if (duplicateExists)
+                throw new InvalidOperationException("This user is already assigned to the selected business.");
 
             var entity = new BusinessMember
             {

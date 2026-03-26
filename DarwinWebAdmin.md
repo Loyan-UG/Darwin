@@ -59,6 +59,7 @@ This is especially important because early operational usage is expected to star
 | Area | Status | Notes |
 | --- | --- | --- |
 | Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
+| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, and location management now exist; invitation, activation, approval, and tenant/customer provisioning remain near-term. |
 | Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist; Stripe-specific lifecycle support is still pending. |
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; reporting and support depth still need improvement. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, and purchase orders exist; receipt/adjustment/exception flows still need work. |
@@ -114,8 +115,8 @@ Target workflow:
 
 ### Current state
 
-- `Partial`: underlying business/user/role structures exist
-- `Planned / Near-term`: explicit onboarding state machine and end-to-end admin workflow still need completion
+- `In Progress`: business creation, owner assignment, member management, and location management now exist in WebAdmin
+- `Planned / Near-term`: explicit onboarding state machine, invitation/resend flows, approval transitions, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support
 

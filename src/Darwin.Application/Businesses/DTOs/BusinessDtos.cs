@@ -40,6 +40,10 @@ namespace Darwin.Application.Businesses.DTOs
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
         public bool IsActive { get; set; } = true;
+        public int MemberCount { get; set; }
+        public int ActiveOwnerCount { get; set; }
+        public int LocationCount { get; set; }
+        public int InvitationCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -62,6 +66,9 @@ namespace Darwin.Application.Businesses.DTOs
         public string? LegalName { get; set; }
         public BusinessCategoryKind Category { get; set; }
         public bool IsActive { get; set; }
+        public int MemberCount { get; set; }
+        public int ActiveOwnerCount { get; set; }
+        public int LocationCount { get; set; }
         public DateTime? CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();

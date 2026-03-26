@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +39,23 @@ namespace Darwin.Application.Businesses.Commands
             var requestVersion = dto.RowVersion ?? Array.Empty<byte>();
             if (!currentVersion.SequenceEqual(requestVersion))
                 throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+
+            var isOwnerBeingDemotedOrDisabled =
+                entity.Role == BusinessMemberRole.Owner &&
+                (dto.Role != BusinessMemberRole.Owner || !dto.IsActive);
+
+            if (isOwnerBeingDemotedOrDisabled)
+            {
+                var hasAnotherActiveOwner = await _db.Set<BusinessMember>()
+                    .AnyAsync(x =>
+                        x.BusinessId == entity.BusinessId &&
+                        x.Id != entity.Id &&
+                        x.Role == BusinessMemberRole.Owner &&
+                        x.IsActive, ct);
+
+                if (!hasAnotherActiveOwner)
+                    throw new InvalidOperationException("At least one active owner must remain assigned to the business.");
+            }
 
             entity.Role = dto.Role;
             entity.IsActive = dto.IsActive;
