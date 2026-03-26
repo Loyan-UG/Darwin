@@ -596,7 +596,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 ]
             };
             await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderJournalEntryEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -607,7 +607,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 EnsureJournalEntryRows(vm);
                 await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderJournalEntryEditor(vm, isCreate: true);
             }
 
             var dto = new JournalEntryCreateDto
@@ -629,14 +629,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 var id = await _createJournalEntry.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Journal entry created.";
-                return RedirectToAction(nameof(EditJournalEntry), new { id });
+                return RedirectOrHtmx(nameof(EditJournalEntry), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureJournalEntryRows(vm);
                 await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderJournalEntryEditor(vm, isCreate: true);
             }
         }
 
@@ -668,7 +668,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
             EnsureJournalEntryRows(vm);
             await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderJournalEntryEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -679,7 +679,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 EnsureJournalEntryRows(vm);
                 await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderJournalEntryEditor(vm, isCreate: false);
             }
 
             var dto = new JournalEntryEditDto
@@ -715,7 +715,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureJournalEntryRows(vm);
                 await PopulateJournalEntryOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderJournalEntryEditor(vm, isCreate: false);
             }
         }
 
@@ -785,6 +785,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
 
             return isCreate ? View("CreateExpense", vm) : View("EditExpense", vm);
+        }
+
+        private IActionResult RenderJournalEntryEditor(JournalEntryEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Billing/_JournalEntryEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateJournalEntry", vm) : View("EditJournalEntry", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

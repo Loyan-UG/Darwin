@@ -1,0 +1,27 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.PurchaseOrderEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true;
+    ViewData["Title"] = isCreate ? "Create Purchase Order" : "Edit Purchase Order";
+}
+
+<div id="inventory-purchase-order-editor-shell">
+    <h1 class="mb-3">@(isCreate ? "Create Purchase Order" : "Edit Purchase Order")</h1>
+
+    <form asp-action="@(isCreate ? "CreatePurchaseOrder" : "EditPurchaseOrder")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "CreatePurchaseOrder" : "EditPurchaseOrder", "Inventory")"
+          hx-target="#inventory-purchase-order-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+        <partial name="_PurchaseOrderForm" model="Model" />
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </form>
+</div>

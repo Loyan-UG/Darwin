@@ -577,7 +577,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
             EnsureStockTransferRows(vm);
             await PopulateStockTransferOptionsAsync(vm, businessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderStockTransferEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -588,7 +588,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 EnsureStockTransferRows(vm);
                 await PopulateStockTransferOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockTransferEditor(vm, isCreate: true);
             }
 
             var dto = new StockTransferCreateDto
@@ -607,14 +607,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 var id = await _createStockTransfer.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Stock transfer created.";
-                return RedirectToAction(nameof(EditStockTransfer), new { id });
+                return RedirectOrHtmx(nameof(EditStockTransfer), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureStockTransferRows(vm);
                 await PopulateStockTransferOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockTransferEditor(vm, isCreate: true);
             }
         }
 
@@ -643,7 +643,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
             EnsureStockTransferRows(vm);
             await PopulateStockTransferOptionsAsync(vm, null, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderStockTransferEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -654,7 +654,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 EnsureStockTransferRows(vm);
                 await PopulateStockTransferOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockTransferEditor(vm, isCreate: false);
             }
 
             var dto = new StockTransferEditDto
@@ -687,7 +687,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsureStockTransferRows(vm);
                 await PopulateStockTransferOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockTransferEditor(vm, isCreate: false);
             }
         }
 
@@ -738,7 +738,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
             EnsurePurchaseOrderRows(vm);
             await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderPurchaseOrderEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -749,7 +749,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 EnsurePurchaseOrderRows(vm);
                 await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPurchaseOrderEditor(vm, isCreate: true);
             }
 
             var dto = new PurchaseOrderCreateDto
@@ -772,14 +772,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 var id = await _createPurchaseOrder.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Purchase order created.";
-                return RedirectToAction(nameof(EditPurchaseOrder), new { id });
+                return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsurePurchaseOrderRows(vm);
                 await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPurchaseOrderEditor(vm, isCreate: true);
             }
         }
 
@@ -812,7 +812,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
             EnsurePurchaseOrderRows(vm);
             await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderPurchaseOrderEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -823,7 +823,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 EnsurePurchaseOrderRows(vm);
                 await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPurchaseOrderEditor(vm, isCreate: false);
             }
 
             var dto = new PurchaseOrderEditDto
@@ -860,7 +860,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 ModelState.AddModelError(string.Empty, ex.Message);
                 EnsurePurchaseOrderRows(vm);
                 await PopulatePurchaseOrderOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderPurchaseOrderEditor(vm, isCreate: false);
             }
         }
 
@@ -956,6 +956,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             }
 
             return isCreate ? View("CreateSupplier", vm) : View("EditSupplier", vm);
+        }
+
+        private IActionResult RenderStockTransferEditor(StockTransferEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Inventory/_StockTransferEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateStockTransfer", vm) : View("EditStockTransfer", vm);
+        }
+
+        private IActionResult RenderPurchaseOrderEditor(PurchaseOrderEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Inventory/_PurchaseOrderEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreatePurchaseOrder", vm) : View("EditPurchaseOrder", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

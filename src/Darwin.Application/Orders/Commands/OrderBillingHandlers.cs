@@ -38,13 +38,17 @@ namespace Darwin.Application.Orders.Commands
             }
 
             var payment = await _db.Set<Payment>()
-                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == dto.PaymentId && x.OrderId == dto.OrderId, ct)
                 .ConfigureAwait(false);
 
             if (payment is null)
             {
                 throw new InvalidOperationException("Payment not found for the order.");
+            }
+
+            if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided)
+            {
+                throw new ValidationException("Refunds cannot be recorded against failed or voided payments.");
             }
 
             if (!string.Equals(payment.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase))
@@ -92,6 +96,24 @@ namespace Darwin.Application.Orders.Commands
                 order.Status = OrderStatus.PartiallyRefunded;
             }
 
+            var resultingRefundedForPayment = refundedAmount + dto.AmountMinor;
+            if (resultingRefundedForPayment >= payment.AmountMinor)
+            {
+                payment.Status = PaymentStatus.Refunded;
+            }
+
+            if (payment.InvoiceId.HasValue)
+            {
+                var invoice = await _db.Set<Invoice>()
+                    .FirstOrDefaultAsync(x => x.Id == payment.InvoiceId.Value, ct)
+                    .ConfigureAwait(false);
+
+                if (invoice is not null && resultingRefundedForPayment >= payment.AmountMinor && invoice.Status == InvoiceStatus.Cancelled)
+                {
+                    invoice.PaidAtUtc = null;
+                }
+            }
+
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
             return refund.Id;
         }
@@ -136,6 +158,29 @@ namespace Darwin.Application.Orders.Commands
                     .ConfigureAwait(false);
             }
 
+            Payment? payment = null;
+            if (dto.PaymentId.HasValue)
+            {
+                payment = await _db.Set<Payment>()
+                    .FirstOrDefaultAsync(x => x.Id == dto.PaymentId.Value && x.OrderId == dto.OrderId, ct)
+                    .ConfigureAwait(false);
+
+                if (payment is null)
+                {
+                    throw new InvalidOperationException("Payment not found for the order.");
+                }
+
+                if (payment.InvoiceId.HasValue)
+                {
+                    throw new InvalidOperationException("Linked payment is already assigned to another invoice.");
+                }
+
+                if (payment.Status is PaymentStatus.Failed or PaymentStatus.Voided or PaymentStatus.Refunded)
+                {
+                    throw new InvalidOperationException("Only active payments can be linked to a new invoice.");
+                }
+            }
+
             var invoice = new Invoice
             {
                 BusinessId = dto.BusinessId,
@@ -162,6 +207,21 @@ namespace Darwin.Application.Orders.Commands
 
             _db.Set<Invoice>().Add(invoice);
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+            if (payment is not null)
+            {
+                payment.InvoiceId = invoice.Id;
+                payment.CustomerId ??= customerId;
+                payment.BusinessId ??= dto.BusinessId;
+                payment.PaidAtUtc ??= invoice.PaidAtUtc;
+                if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized)
+                {
+                    payment.Status = PaymentStatus.Captured;
+                }
+
+                await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            }
+
             return invoice.Id;
         }
     }

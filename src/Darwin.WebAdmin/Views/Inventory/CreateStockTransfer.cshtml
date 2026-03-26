@@ -1,25 +1,29 @@
 @model Darwin.WebAdmin.ViewModels.Inventory.StockTransferEditVm
 @{
     ViewData["Title"] = "Create Stock Transfer";
+    ViewData["IsCreate"] = true;
 }
-<h1 class="mb-3">Create Stock Transfer</h1>
-<form asp-action="CreateStockTransfer" method="post">
-    @Html.AntiForgeryToken()
-    <partial name="_StockTransferForm" model="Model" />
-    <div class="mt-4"><button type="submit" class="btn btn-primary">Save</button><a asp-action="StockTransfers" asp-route-warehouseId="@Model.FromWarehouseId" class="btn btn-outline-secondary">Back</a></div>
-</form>
+<partial name="~/Views/Inventory/_StockTransferEditorShell.cshtml" model="Model" />
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function () {
-            const container = document.getElementById('transferLines');
-            const template = document.getElementById('transferLineTemplate');
-            document.getElementById('addTransferLine')?.addEventListener('click', function () {
-                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
-            });
-            container?.addEventListener('click', function (event) {
-                const button = event.target.closest('.remove-line');
-                if (button) button.closest('.line-row')?.remove();
+            document.addEventListener('click', function (event) {
+                if (event.target.closest('#addTransferLine')) {
+                    const container = document.getElementById('transferLines');
+                    const template = document.getElementById('transferLineTemplate');
+                    if (!container || !template) {
+                        return;
+                    }
+
+                    container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.line-row').length));
+                    return;
+                }
+
+                const button = event.target.closest('#transferLines .remove-line');
+                if (button) {
+                    button.closest('.line-row')?.remove();
+                }
             });
         })();
     </script>
