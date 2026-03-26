@@ -179,5 +179,7 @@ The immediate direction is:
 - Completed: replace the consumer profile's local optional-privacy placeholder section with a canonical member preferences screen backed by WebApi profile preference endpoints.
 - Completed: add a dedicated consumer CRM customer-details screen so linked profile, segments, consent history, and recent interactions are no longer compressed into a profile-summary-only view.
 - Completed: remove the obsolete local optional-privacy registration toggles now that backend-backed member preferences are managed after sign-up in profile.
+- Completed: harden `Darwin.Mobile.Business` error handling so profile/password/reward-management flows no longer leak raw exception or server messages directly into the UI.
+- Completed: align `Darwin.Mobile.Business` default language metadata with `de-DE` resource qualifiers so Windows validation builds stay warning-free.
 - Task: continue updating `Darwin.WebApi`, `Darwin.Contracts`, and MAUI apps wherever future domain or route changes affect mobile consumers.
 - Task: keep loyalty behavior backward compatible unless an explicit contract version change is introduced.

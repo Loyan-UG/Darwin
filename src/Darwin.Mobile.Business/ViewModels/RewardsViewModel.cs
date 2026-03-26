@@ -897,7 +897,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
             if (!response.Succeeded || response.Value is null)
             {
-                RunOnMain(() => ErrorMessage = response.Error ?? AppResources.RewardsLoadFailed);
+                RunOnMain(() => ErrorMessage = ResolveRewardsFailureMessage(response.Error, AppResources.RewardsLoadFailed));
                 return;
             }
 
@@ -932,7 +932,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsLoadFailed} {ex.Message}");
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.RewardsLoadFailed));
         }
         finally
         {
@@ -1075,7 +1075,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
             if (!operationResult.Succeeded)
             {
-                RunOnMain(() => ErrorMessage = operationResult.Error ?? AppResources.RewardsSaveFailed);
+                RunOnMain(() => ErrorMessage = ResolveRewardsFailureMessage(operationResult.Error, AppResources.RewardsSaveFailed));
                 return;
             }
 
@@ -1089,7 +1089,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsSaveFailed} {ex.Message}");
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.RewardsSaveFailed));
         }
         finally
         {
@@ -1124,7 +1124,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
             if (!result.Succeeded)
             {
-                RunOnMain(() => ErrorMessage = result.Error ?? AppResources.RewardsDeleteFailed);
+                RunOnMain(() => ErrorMessage = ResolveRewardsFailureMessage(result.Error, AppResources.RewardsDeleteFailed));
                 return;
             }
 
@@ -1138,7 +1138,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsDeleteFailed} {ex.Message}");
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.RewardsDeleteFailed));
         }
         finally
         {
@@ -1630,7 +1630,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
             if (!operationResult.Succeeded)
             {
-                RunOnMain(() => ErrorMessage = operationResult.Error ?? AppResources.RewardsCampaignSaveFailed);
+                RunOnMain(() => ErrorMessage = ResolveRewardsFailureMessage(operationResult.Error, AppResources.RewardsCampaignSaveFailed));
                 return;
             }
 
@@ -1644,7 +1644,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            RunOnMain(() => ErrorMessage = $"{AppResources.RewardsCampaignSaveFailed} {ex.Message}");
+            RunOnMain(() => ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.RewardsCampaignSaveFailed));
         }
         finally
         {
@@ -2251,5 +2251,34 @@ public sealed partial class RewardsViewModel : BaseViewModel
         ResetCampaignTargetingFixMetricsCommand.RaiseCanExecuteChanged();
         CopyCampaignDiagnosticsCommand.RaiseCanExecuteChanged();
         ClearCampaignDiagnosticsStatusCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Maps raw reward-management failures to friendly UI messages without leaking transport/server internals.
+    /// </summary>
+    private static string ResolveRewardsFailureMessage(string? error, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return fallback;
+        }
+
+        if (LooksLikeRewardPermissionFailure(error))
+        {
+            return AppResources.BusinessPermissionDeniedRewardEdit;
+        }
+
+        return fallback;
+    }
+
+    /// <summary>
+    /// Detects common permission-denied markers from API/business-auth layers.
+    /// </summary>
+    private static bool LooksLikeRewardPermissionFailure(string error)
+    {
+        return error.Contains("permission", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("forbidden", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("403", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("unauthorized", StringComparison.OrdinalIgnoreCase);
     }
 }

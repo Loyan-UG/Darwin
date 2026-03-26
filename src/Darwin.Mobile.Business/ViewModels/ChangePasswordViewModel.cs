@@ -134,7 +134,7 @@ public sealed class ChangePasswordViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.PasswordChangeFailed);
         }
         finally
         {
