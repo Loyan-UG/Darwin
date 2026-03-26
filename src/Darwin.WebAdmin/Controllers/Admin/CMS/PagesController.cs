@@ -56,12 +56,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
-            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", ct);
+            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", query, ct);
             ViewBag.Total = total;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
+            ViewBag.Query = query ?? string.Empty;
             return View(items);
         }
 

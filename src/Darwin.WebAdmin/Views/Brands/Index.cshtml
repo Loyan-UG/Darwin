@@ -9,6 +9,7 @@
     <form asp-action="Index" method="get" class="d-flex gap-2">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search...">
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
     </form>
 
     <a asp-action="Create" class="btn btn-primary">
@@ -63,8 +64,8 @@
 </div>
 
 <pager page="Model.Page"
+       page-size="Model.PageSize"
        total="Model.Total"
-      
        asp-controller="Brands"
        asp-action="Index"
        asp-route-query="@Model.Query">

@@ -27,7 +27,23 @@ namespace Darwin.Application.CMS.Queries
         public async Task<(IReadOnlyList<PageListItemDto> Items, int Total)>
             HandleAsync(int page = 1, int pageSize = 20, string? culture = "de-DE", CancellationToken ct = default)
         {
-            var q = _db.Set<Page>().AsNoTracking();
+            return await HandleAsync(page, pageSize, culture, query: null, ct).ConfigureAwait(false);
+        }
+
+        public async Task<(IReadOnlyList<PageListItemDto> Items, int Total)>
+            HandleAsync(int page, int pageSize, string? culture, string? query, CancellationToken ct = default)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : pageSize;
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+
+            var q = _db.Set<Page>()
+                .AsNoTracking()
+                .Where(p =>
+                    query == null ||
+                    p.Translations.Any(t => t.Title.Contains(query)) ||
+                    p.Translations.Any(t => t.Slug.Contains(query)));
+
             var total = await q.CountAsync(ct);
 
             var items = await q

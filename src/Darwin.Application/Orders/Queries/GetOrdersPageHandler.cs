@@ -19,10 +19,21 @@ namespace Darwin.Application.Orders.Queries
 
         public async Task<(List<OrderListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, CancellationToken ct = default)
         {
+            return await HandleAsync(page, pageSize, query: null, ct).ConfigureAwait(false);
+        }
+
+        public async Task<(List<OrderListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query, CancellationToken ct = default)
+        {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 
-            var baseQuery = _db.Set<Order>().AsNoTracking();
+            var baseQuery = _db.Set<Order>()
+                .AsNoTracking()
+                .Where(o =>
+                    query == null ||
+                    o.OrderNumber.Contains(query) ||
+                    o.Currency.Contains(query));
             var total = await baseQuery.CountAsync(ct);
 
             var items = await baseQuery

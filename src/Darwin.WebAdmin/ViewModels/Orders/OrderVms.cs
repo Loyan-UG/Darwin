@@ -13,6 +13,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<OrderListItemVm> Items { get; set; } = new();
     }
 

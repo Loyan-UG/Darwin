@@ -12,6 +12,8 @@ using Darwin.Application.Catalog.Services;
 using Darwin.Application.Catalog.Validators;
 using Darwin.Application.CMS.Commands;
 using Darwin.Application.CMS.DTOs;
+using Darwin.Application.CMS.Media.Commands;
+using Darwin.Application.CMS.Media.Queries;
 using Darwin.Application.CMS.Queries;
 using Darwin.Application.CMS.Validators;
 using Darwin.Application.CRM.Commands;
@@ -135,6 +137,11 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetPagesPageHandler>();
             services.AddScoped<GetPageForEditHandler>();
             services.AddScoped<SoftDeletePageHandler>();
+            services.AddScoped<GetMediaAssetsPageHandler>();
+            services.AddScoped<GetMediaAssetForEditHandler>();
+            services.AddScoped<CreateMediaAssetHandler>();
+            services.AddScoped<UpdateMediaAssetHandler>();
+            services.AddScoped<SoftDeleteMediaAssetHandler>();
 
             // Roles (Identity)
             services.AddScoped<GetRolesPageHandler>();

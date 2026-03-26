@@ -1,0 +1,111 @@
+@model Darwin.WebAdmin.ViewModels.CMS.MediaAssetsListVm
+@{
+    ViewData["Title"] = "Media";
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+    <div>
+        <h1 class="mb-1">Media Library</h1>
+        <p class="text-muted mb-0">Manage uploaded editor assets and reusable media files.</p>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fa fa-upload"></i> Upload Media
+    </a>
+</div>
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-sm-8 col-lg-5">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by title, alt, filename, role, or URL" />
+    </div>
+    <div class="col-sm-auto">
+        <button class="btn btn-outline-secondary" type="submit">
+            <i class="fa fa-search"></i> Search
+        </button>
+    </div>
+    <div class="col-sm-auto">
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="row g-3">
+    @if (Model.Items.Count == 0)
+    {
+        <div class="col-12">
+            <div class="alert alert-secondary mb-0">No media assets found.</div>
+        </div>
+    }
+    else
+    {
+        foreach (var item in Model.Items)
+        {
+            <div class="col-sm-6 col-xl-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="ratio ratio-16x9 bg-light border-bottom">
+                        <img src="@item.Url" alt="@item.Alt" class="w-100 h-100 object-fit-cover" />
+                    </div>
+                    <div class="card-body d-flex flex-column gap-2">
+                        <div>
+                            <div class="fw-semibold text-truncate">@(!string.IsNullOrWhiteSpace(item.Title) ? item.Title : item.OriginalFileName)</div>
+                            <div class="small text-muted text-truncate">@item.OriginalFileName</div>
+                        </div>
+                        <div class="small">
+                            <div><span class="text-muted">Alt:</span> @(string.IsNullOrWhiteSpace(item.Alt) ? "Not set" : item.Alt)</div>
+                            <div><span class="text-muted">Role:</span> @(string.IsNullOrWhiteSpace(item.Role) ? "General" : item.Role)</div>
+                            <div><span class="text-muted">Size:</span> @((item.SizeBytes / 1024.0).ToString("0.0")) KB</div>
+                            <div><span class="text-muted">Updated:</span> @(item.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "n/a")</div>
+                        </div>
+                        <div class="input-group input-group-sm mt-auto">
+                            <input type="text" value="@item.Url" class="form-control" readonly />
+                            <button type="button" class="btn btn-outline-secondary js-copy-media-url" data-url="@item.Url">Copy</button>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white d-flex gap-2 justify-content-end">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa fa-pen"></i> Edit
+                        </a>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmDeleteModal"
+                                data-action="@Url.Action("Delete", "Media")"
+                                data-id="@item.Id"
+                                data-name="@(!string.IsNullOrWhiteSpace(item.Title) ? item.Title : item.OriginalFileName)">
+                            <i class="fa fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<div class="mt-4">
+    <pager page="Model.Page"
+           page-size="Model.PageSize"
+           total="Model.Total"
+           asp-controller="Media"
+           asp-action="Index"
+           asp-route-query="@Model.Query"></pager>
+</div>
+
+<partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.js-copy-media-url').forEach(function (button) {
+            button.addEventListener('click', async function () {
+                const url = button.getAttribute('data-url') || '';
+                if (!url || !navigator.clipboard) {
+                    return;
+                }
+
+                await navigator.clipboard.writeText(url);
+                button.textContent = 'Copied';
+                window.setTimeout(function () {
+                    button.textContent = 'Copy';
+                }, 1500);
+            });
+        });
+    </script>
+}

@@ -24,6 +24,7 @@
     </div>
     <div class="col-auto">
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+        <a asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Reset</a>
     </div>
 </form>
 
@@ -102,22 +103,12 @@
     </table>
 </div>
 
-@{
-    // Simple pager (optional): render if needed based on Total/PageSize
-    var totalPages = (int)Math.Ceiling((decimal)Model.Total / Model.PageSize);
-    if (totalPages > 1)
-    {
-        <nav>
-            <ul class="pagination pagination-sm">
-                @for (var p = 1; p <= totalPages; p++)
-                {
-                    <li class="page-item @(p == Model.Page ? "active" : "")">
-                        <a class="page-link" href="@Url.Action("Index", new { page = p, pageSize = Model.PageSize, q = Model.Query })">@p</a>
-                    </li>
-                }
-            </ul>
-        </nav>
-    }
-}
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Users"
+       asp-action="Index"
+       asp-route-q="@Model.Query">
+</pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

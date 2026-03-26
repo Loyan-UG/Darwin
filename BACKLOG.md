@@ -70,6 +70,11 @@ The immediate direction is:
 - Completed: normalize the user-administration wrappers and controller rendering paths so all user-management screens now share the same HTMX-aware shell/render/redirect pattern instead of mixing legacy full-page-only failure behavior with newer shells.
 - Completed: move the CRM customer-address editor script into the customer editor shell so add/remove address behavior survives HTMX validation round-trips instead of only working on the first full-page render.
 - Completed: harden HTMX-paged partials in Orders and CRM so boosted pager links no longer push partial-route URLs into browser history or navigate operators away from the parent detail screen.
+- Completed: standardize the remaining legacy user/role/permission list screens onto the shared search-reset-pager pattern so operators no longer switch between manual pagination UIs and the common pager helper across the admin area.
+- Completed: add a real Admin media library backed by `MediaAsset` records, including searchable listing, metadata editing, safe soft-delete, and persistence of Quill uploads into the same library instead of leaving editor uploads invisible to back-office operators.
+- Completed: harden dashboard quick links so identity actions only appear for full-admin operators and business-scoped links carry the current business context instead of dropping operators into ambiguous cross-business screens.
+- Completed: standardize the remaining legacy catalog/CMS list screens (`Categories`, `Products`, `Pages`) onto the shared search-reset-pager pattern and add server-side page search so operators no longer bounce between manual pagination UIs and inconsistent filtering behavior.
+- Completed: add lightweight server-side search to the admin orders list and align `Orders`/`Brands` with the same reset/pager affordances already used elsewhere in WebAdmin so the highest-traffic list screens behave consistently.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.

@@ -7,6 +7,14 @@
 
 <partial name="~/Views/Shared/_Alerts.cshtml" />
 
+<form asp-action="Index" method="get" class="d-flex gap-2 mb-3">
+    <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by order number or currency" />
+    <button class="btn btn-outline-secondary" type="submit">
+        <i class="fa fa-search"></i> Search
+    </button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+</form>
+
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
@@ -47,7 +55,7 @@
 <pager page="Model.Page"
        page-size="Model.PageSize"
        total="Model.Total"
-      
        asp-controller="Orders"
-       asp-action="Index">
+       asp-action="Index"
+       asp-route-query="@Model.Query">
 </pager>

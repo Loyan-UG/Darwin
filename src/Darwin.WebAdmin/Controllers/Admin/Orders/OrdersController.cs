@@ -65,14 +65,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrdersPage.HandleAsync(page, pageSize, ct).ConfigureAwait(false);
+            var (items, total) = await _getOrdersPage.HandleAsync(page, pageSize, query, ct).ConfigureAwait(false);
             var vm = new OrdersListVm
             {
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Query = query ?? string.Empty,
                 Items = items.Select(o => new OrderListItemVm
                 {
                     Id = o.Id,

@@ -1,0 +1,55 @@
+@model Darwin.WebAdmin.ViewModels.CMS.MediaAssetEditVm
+@{
+    ViewData["Title"] = "Edit Media";
+}
+
+<div id="media-edit-editor-shell">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-3">
+        <div>
+            <h1 class="mb-1">Edit Media</h1>
+            <div class="text-muted small">@Model.OriginalFileName</div>
+        </div>
+        <a href="@Model.Url" target="_blank" rel="noreferrer" class="btn btn-outline-secondary">
+            <i class="fa fa-up-right-from-square"></i> Open File
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="ratio ratio-16x9 bg-light border-bottom">
+                    <img src="@Model.Url" alt="@Model.Alt" class="w-100 h-100 object-fit-cover" />
+                </div>
+                <div class="card-body small">
+                    <div><span class="text-muted">URL:</span> @Model.Url</div>
+                    <div><span class="text-muted">Size:</span> @((Model.SizeBytes / 1024.0).ToString("0.0")) KB</div>
+                    <div><span class="text-muted">Dimensions:</span> @(Model.Width.HasValue && Model.Height.HasValue ? $"{Model.Width} × {Model.Height}" : "Unknown")</div>
+                    <div><span class="text-muted">Updated:</span> @(Model.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "n/a")</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <form asp-action="Edit"
+                  method="post"
+                  hx-post="@Url.Action("Edit", "Media")"
+                  hx-target="#media-edit-editor-shell"
+                  hx-swap="outerHTML">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="RowVersion" />
+
+                <partial name="_MediaAssetUploadForm" model="Model" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mt-3"></div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> Save
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

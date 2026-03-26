@@ -1,7 +1,6 @@
 @model Darwin.WebAdmin.ViewModels.Identity.PermissionsListVm
 @{
     ViewData["Title"] = "Permissions";
-    var totalPages = (int)Math.Ceiling((double)Model.Total / (double)Model.PageSize);
 }
 
 <h1 class="mb-3"><i class="fa fa-key"></i> Permissions</h1>
@@ -18,7 +17,11 @@
                 <label for="pageSize" class="form-label">Page size</label>
                 <select id="pageSize" name="pageSize" class="form-select" asp-items="Model.PageSizeItems"></select>
             </div>
-            <div class="col-md-6 text-end">
+            <div class="col-md-6 d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="fa fa-search"></i> Search
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
                 <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> New Permission</a>
             </div>
         </form>
@@ -82,22 +85,12 @@
     </div>
 </div>
 
-@if (totalPages > 1)
-{
-    <nav class="mt-3">
-        <ul class="pagination justify-content-end">
-            @for (int i = 1; i <= totalPages; i++)
-            {
-                <li class="page-item @(Model.Page == i ? "active" : "")">
-                    <a class="page-link"
-                       asp-action="Index"
-                       asp-route-page="@i"
-                       asp-route-pageSize="@Model.PageSize"
-                       asp-route-q="@Model.Query">@i</a>
-                </li>
-            }
-        </ul>
-    </nav>
-}
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Permissions"
+       asp-action="Index"
+       asp-route-q="@Model.Query">
+</pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
