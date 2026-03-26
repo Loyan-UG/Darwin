@@ -53,6 +53,18 @@ namespace Darwin.Mobile.Shared.Services.Profile
         }
 
         /// <summary>
+        /// Retrieves the CRM customer profile linked to the current identity account.
+        /// </summary>
+        public Task<LinkedCustomerProfile?> GetLinkedCustomerAsync(CancellationToken ct)
+            => _api.GetAsync<LinkedCustomerProfile>(ApiRoutes.Profile.GetLinkedCustomer, ct);
+
+        /// <summary>
+        /// Retrieves richer CRM customer context linked to the current identity account.
+        /// </summary>
+        public Task<MemberCustomerContext?> GetLinkedCustomerContextAsync(CancellationToken ct)
+            => _api.GetAsync<MemberCustomerContext>(ApiRoutes.Profile.GetLinkedCustomerContext, ct);
+
+        /// <summary>
         /// Requests deactivation and anonymization of the current authenticated user account.
         /// </summary>
         /// <param name="request">Deletion confirmation payload.</param>

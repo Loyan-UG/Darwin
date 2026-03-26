@@ -31,6 +31,16 @@ namespace Darwin.Mobile.Shared.Services.Profile
         Task<Result> UpdatePreferencesAsync(UpdateMemberPreferencesRequest preferences, CancellationToken ct);
 
         /// <summary>
+        /// Loads the CRM customer profile linked to the current identity account, when one exists.
+        /// </summary>
+        Task<LinkedCustomerProfile?> GetLinkedCustomerAsync(CancellationToken ct);
+
+        /// <summary>
+        /// Loads richer CRM customer context linked to the current identity account.
+        /// </summary>
+        Task<MemberCustomerContext?> GetLinkedCustomerContextAsync(CancellationToken ct);
+
+        /// <summary>
         /// Requests irreversible account deactivation and anonymization for the current authenticated user.
         /// </summary>
         Task<Result> RequestAccountDeletionAsync(RequestAccountDeletionRequest request, CancellationToken ct);

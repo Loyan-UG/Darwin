@@ -153,6 +153,7 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("/api/v1/profile/me/addresses");
         source.Should().Contain("/api/v1/profile/me/addresses/{id:guid}");
         source.Should().Contain("/api/v1/profile/me/customer");
+        source.Should().Contain("/api/v1/profile/me/customer/context");
     }
 
     [Fact]

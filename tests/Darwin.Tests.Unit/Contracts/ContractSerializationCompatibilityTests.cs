@@ -574,6 +574,66 @@ public sealed class ContractSerializationCompatibilityTests
     }
 
     /// <summary>
+    ///     Verifies that linked CRM customer-context contracts serialize member-facing
+    ///     segments, consents, and recent interactions with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void MemberCustomerContext_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new MemberCustomerContext
+        {
+            Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            UserId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
+            DisplayName = "Max Mustermann",
+            Email = "max@example.de",
+            Phone = "+491701234567",
+            CompanyName = "Darwin GmbH",
+            Notes = "VIP coffee subscriber",
+            InteractionCount = 3,
+            Segments =
+            [
+                new MemberCustomerSegment
+                {
+                    SegmentId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                    Name = "VIP",
+                    Description = "High-value customers"
+                }
+            ],
+            Consents =
+            [
+                new MemberCustomerConsent
+                {
+                    Id = Guid.Parse("12121212-3434-5656-7878-909090909090"),
+                    Type = "MarketingEmail",
+                    Granted = true,
+                    GrantedAtUtc = new DateTime(2030, 1, 1, 10, 0, 0, DateTimeKind.Utc)
+                }
+            ],
+            RecentInteractions =
+            [
+                new MemberCustomerInteraction
+                {
+                    Id = Guid.Parse("abababab-abab-abab-abab-abababababab"),
+                    Type = "Support",
+                    Channel = "Email",
+                    Subject = "Delivery question",
+                    ContentPreview = "Where is my order?",
+                    CreatedAtUtc = new DateTime(2030, 1, 2, 9, 0, 0, DateTimeKind.Utc)
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"displayName\"");
+        json.Should().Contain("\"interactionCount\"");
+        json.Should().Contain("\"segments\"");
+        json.Should().Contain("\"consents\"");
+        json.Should().Contain("\"recentInteractions\"");
+        json.Should().Contain("\"contentPreview\"");
+    }
+
+    /// <summary>
     ///     Verifies that storefront checkout contracts serialize order-placement
     ///     fields with stable camelCase property names.
     /// </summary>

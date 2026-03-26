@@ -187,10 +187,11 @@ Current member commerce ownership:
 - member invoices: paged invoice history and invoice detail under the member route root
 - member profile addresses: reusable address-book CRUD and default billing/shipping selection under the member profile route root
 - member CRM linkage: current identity-to-customer summary under the member profile route root
+- member CRM customer context: a richer self-service projection under the member profile route root that includes current segments, consent history, and recent interaction history without exposing admin editing DTOs
 - member preferences: privacy and communication preferences under the member profile route root, including aggregate marketing consent, per-channel delivery flags, and optional analytics tracking
 - storefront checkout is now intentionally allowed to reuse saved member addresses and then fall back to the same order aggregate for member confirmation/history rather than inventing a second order model
 - member profile addresses are intentionally reusable by storefront checkout so signed-in users can place orders from saved addresses without exposing admin-facing address contracts
-- mobile shared route/service catalogs now expose the canonical member-preferences endpoint so future mobile UI work does not need to rediscover route ownership
+- mobile shared route/service catalogs now expose the canonical member-preferences and member CRM customer-context endpoints so future mobile UI work does not need to rediscover route ownership
 - legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
 - mobile shared route constants should prefer the canonical audience-first roots (`public`, `member`, `business`) even when the legacy aliases still exist server-side
 

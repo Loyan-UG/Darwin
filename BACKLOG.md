@@ -131,9 +131,10 @@ The immediate direction is:
 - Completed: add member profile address-book endpoints under `api/v1/member/profile/addresses` with legacy `/api/v1/profile/me/addresses*` aliases.
 - Completed: add a member-facing linked CRM customer summary endpoint under `api/v1/member/profile/customer`.
 - Completed: add member privacy and communication preference endpoints under `api/v1/member/profile/preferences` with legacy `/api/v1/profile/me/preferences` aliases, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
+- Completed: add a richer member-facing CRM customer-context endpoint under `api/v1/member/profile/customer/context`, including segments, consent history, and recent interactions, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
 - Task: document and implement member loyalty projections and account endpoints.
 - Task: deepen member order and invoice APIs with richer storefront-specific document-download and action flows as front-office requirements solidify.
-- Task: extend member profile APIs with any additional self-service CRM views and richer customer-context projections beyond the now-supported addresses, linked customer summary, and privacy/communication preferences.
+- Task: extend member profile APIs with any additional self-service CRM views beyond the now-supported addresses, linked customer summary, CRM customer context, and privacy/communication preferences.
 - Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.
 
 ### Epic: Admin and integration API

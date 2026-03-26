@@ -125,4 +125,59 @@ namespace Darwin.Application.CRM.DTOs
         public int SegmentCount { get; set; }
         public int RecentInteractionCount { get; set; }
     }
+
+    /// <summary>
+    /// Member-facing CRM customer context summary linked to the current identity.
+    /// </summary>
+    public sealed class MemberCustomerContextDto
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? Phone { get; set; }
+        public string? CompanyName { get; set; }
+        public string? Notes { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? LastInteractionAtUtc { get; set; }
+        public int InteractionCount { get; set; }
+        public IReadOnlyList<MemberCustomerSegmentDto> Segments { get; set; } = Array.Empty<MemberCustomerSegmentDto>();
+        public IReadOnlyList<MemberCustomerConsentDto> Consents { get; set; } = Array.Empty<MemberCustomerConsentDto>();
+        public IReadOnlyList<MemberCustomerInteractionDto> RecentInteractions { get; set; } = Array.Empty<MemberCustomerInteractionDto>();
+    }
+
+    /// <summary>
+    /// Member-facing CRM segment summary.
+    /// </summary>
+    public sealed class MemberCustomerSegmentDto
+    {
+        public Guid SegmentId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
+
+    /// <summary>
+    /// Member-facing CRM consent history row.
+    /// </summary>
+    public sealed class MemberCustomerConsentDto
+    {
+        public Guid Id { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public bool Granted { get; set; }
+        public DateTime GrantedAtUtc { get; set; }
+        public DateTime? RevokedAtUtc { get; set; }
+    }
+
+    /// <summary>
+    /// Member-facing CRM interaction timeline row.
+    /// </summary>
+    public sealed class MemberCustomerInteractionDto
+    {
+        public Guid Id { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public string? Subject { get; set; }
+        public string? ContentPreview { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+    }
 }

@@ -60,6 +60,8 @@ namespace Darwin.Mobile.Shared.Api
             public const string UpdateMe = "api/v1/member/profile/me";
             public const string GetPreferences = "api/v1/member/profile/preferences";
             public const string UpdatePreferences = "api/v1/member/profile/preferences";
+            public const string GetLinkedCustomer = "api/v1/member/profile/customer";
+            public const string GetLinkedCustomerContext = "api/v1/member/profile/customer/context";
             public const string RequestAccountDeletion = "api/v1/member/profile/me/deletion-request";
         }
 

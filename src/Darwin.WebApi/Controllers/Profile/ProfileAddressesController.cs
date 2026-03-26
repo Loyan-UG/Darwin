@@ -22,6 +22,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
     private readonly DeleteCurrentUserAddressHandler _deleteCurrentUserAddressHandler;
     private readonly SetCurrentUserDefaultAddressHandler _setCurrentUserDefaultAddressHandler;
     private readonly GetCurrentMemberCustomerProfileHandler _getCurrentMemberCustomerProfileHandler;
+    private readonly GetCurrentMemberCustomerContextHandler _getCurrentMemberCustomerContextHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProfileAddressesController"/> class.
@@ -32,7 +33,8 @@ public sealed class ProfileAddressesController : ApiControllerBase
         UpdateCurrentUserAddressHandler updateCurrentUserAddressHandler,
         DeleteCurrentUserAddressHandler deleteCurrentUserAddressHandler,
         SetCurrentUserDefaultAddressHandler setCurrentUserDefaultAddressHandler,
-        GetCurrentMemberCustomerProfileHandler getCurrentMemberCustomerProfileHandler)
+        GetCurrentMemberCustomerProfileHandler getCurrentMemberCustomerProfileHandler,
+        GetCurrentMemberCustomerContextHandler getCurrentMemberCustomerContextHandler)
     {
         _getCurrentUserAddressesHandler = getCurrentUserAddressesHandler ?? throw new ArgumentNullException(nameof(getCurrentUserAddressesHandler));
         _createCurrentUserAddressHandler = createCurrentUserAddressHandler ?? throw new ArgumentNullException(nameof(createCurrentUserAddressHandler));
@@ -40,6 +42,7 @@ public sealed class ProfileAddressesController : ApiControllerBase
         _deleteCurrentUserAddressHandler = deleteCurrentUserAddressHandler ?? throw new ArgumentNullException(nameof(deleteCurrentUserAddressHandler));
         _setCurrentUserDefaultAddressHandler = setCurrentUserDefaultAddressHandler ?? throw new ArgumentNullException(nameof(setCurrentUserDefaultAddressHandler));
         _getCurrentMemberCustomerProfileHandler = getCurrentMemberCustomerProfileHandler ?? throw new ArgumentNullException(nameof(getCurrentMemberCustomerProfileHandler));
+        _getCurrentMemberCustomerContextHandler = getCurrentMemberCustomerContextHandler ?? throw new ArgumentNullException(nameof(getCurrentMemberCustomerContextHandler));
     }
 
     /// <summary>
@@ -204,6 +207,19 @@ public sealed class ProfileAddressesController : ApiControllerBase
         return dto is null ? NotFoundProblem("Linked CRM customer not found.") : Ok(MapCustomer(dto));
     }
 
+    /// <summary>
+    /// Returns richer CRM customer context for the current member identity, including segments, consents, and recent interactions.
+    /// </summary>
+    [HttpGet("customer/context")]
+    [HttpGet("/api/v1/profile/me/customer/context")]
+    [ProducesResponseType(typeof(MemberCustomerContext), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetLinkedCustomerContextAsync(CancellationToken ct = default)
+    {
+        var dto = await _getCurrentMemberCustomerContextHandler.HandleAsync(ct).ConfigureAwait(false);
+        return dto is null ? NotFoundProblem("Linked CRM customer context not found.") : Ok(MapCustomerContext(dto));
+    }
+
     private async Task<IActionResult> GetAddressByIdAsync(Guid id, CancellationToken ct)
     {
         var result = await _getCurrentUserAddressesHandler.HandleAsync(ct).ConfigureAwait(false);
@@ -244,5 +260,43 @@ public sealed class ProfileAddressesController : ApiControllerBase
             Phone = dto.Phone,
             CompanyName = dto.CompanyName,
             CreatedAtUtc = dto.CreatedAtUtc
+        };
+
+    private static MemberCustomerContext MapCustomerContext(Darwin.Application.CRM.DTOs.MemberCustomerContextDto dto)
+        => new()
+        {
+            Id = dto.Id,
+            UserId = dto.UserId,
+            DisplayName = dto.DisplayName,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            CompanyName = dto.CompanyName,
+            Notes = dto.Notes,
+            CreatedAtUtc = dto.CreatedAtUtc,
+            LastInteractionAtUtc = dto.LastInteractionAtUtc,
+            InteractionCount = dto.InteractionCount,
+            Segments = dto.Segments.Select(x => new MemberCustomerSegment
+            {
+                SegmentId = x.SegmentId,
+                Name = x.Name,
+                Description = x.Description
+            }).ToList(),
+            Consents = dto.Consents.Select(x => new MemberCustomerConsent
+            {
+                Id = x.Id,
+                Type = x.Type,
+                Granted = x.Granted,
+                GrantedAtUtc = x.GrantedAtUtc,
+                RevokedAtUtc = x.RevokedAtUtc
+            }).ToList(),
+            RecentInteractions = dto.RecentInteractions.Select(x => new MemberCustomerInteraction
+            {
+                Id = x.Id,
+                Type = x.Type,
+                Channel = x.Channel,
+                Subject = x.Subject,
+                ContentPreview = x.ContentPreview,
+                CreatedAtUtc = x.CreatedAtUtc
+            }).ToList()
         };
 }
