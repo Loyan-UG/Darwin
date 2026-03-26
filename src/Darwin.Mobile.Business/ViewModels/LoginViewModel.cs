@@ -31,6 +31,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 
     private string? _email;
     private string? _password;
+    private string? _infoMessage;
 
     /// <summary>
     /// Raised when the page should reveal the error area (e.g., scroll to top).
@@ -61,6 +62,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 #endif
 
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
+        RequestActivationEmailCommand = new AsyncCommand(RequestActivationEmailAsync, () => !IsBusy);
         OpenInvitationAcceptanceCommand = new AsyncCommand(OpenInvitationAcceptanceAsync, () => !IsBusy);
         OpenImpressumCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.Impressum), () => !IsBusy);
         OpenPrivacyPolicyCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy), () => !IsBusy);
@@ -80,7 +82,29 @@ public sealed partial class LoginViewModel : BaseViewModel
         set => SetProperty(ref _password, value);
     }
 
+    /// <summary>
+    /// Gets or sets a non-error informational message shown for auth recovery flows.
+    /// </summary>
+    public string? InfoMessage
+    {
+        get => _infoMessage;
+        private set
+        {
+            if (SetProperty(ref _infoMessage, value))
+            {
+                OnPropertyChanged(nameof(HasInfo));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether an informational message is available.
+    /// </summary>
+    public bool HasInfo => !string.IsNullOrWhiteSpace(_infoMessage);
+
     public AsyncCommand LoginCommand { get; }
+
+    public AsyncCommand RequestActivationEmailCommand { get; }
 
     public AsyncCommand OpenInvitationAcceptanceCommand { get; }
 
@@ -97,6 +121,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private async Task LoginAsync()
     {
         ErrorMessage = null;
+        InfoMessage = null;
 
         if (string.IsNullOrWhiteSpace(Email))
         {
@@ -176,6 +201,59 @@ public sealed partial class LoginViewModel : BaseViewModel
         await _navigationService.GoToAsync(Routes.InvitationAcceptance);
     }
 
+    private async Task RequestActivationEmailAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            ErrorMessage = AppResources.EmailRequired;
+            InfoMessage = null;
+            ErrorBecameVisibleRequested?.Invoke();
+            return;
+        }
+
+        IsBusy = true;
+        ErrorMessage = null;
+        InfoMessage = null;
+        RaiseCommandStates();
+
+        try
+        {
+            var sent = await _authService.RequestEmailConfirmationAsync(Email.Trim(), CancellationToken.None);
+            if (!sent)
+            {
+                ErrorMessage = AppResources.ActivationEmailRequestFailed;
+                ErrorBecameVisibleRequested?.Invoke();
+                return;
+            }
+
+            InfoMessage = AppResources.ActivationEmailSent;
+            ErrorBecameVisibleRequested?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            var resolvedMessage = ResolveBusinessAuthMessage(ex, _apiOptions, AppResources.ActivationEmailRequestFailed);
+
+            RunOnMain(() =>
+            {
+                ErrorMessage = resolvedMessage;
+                ErrorBecameVisibleRequested?.Invoke();
+            });
+        }
+        finally
+        {
+            RunOnMain(() =>
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+            });
+        }
+    }
+
     private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
     {
         var result = await _legalLinkService.OpenAsync(linkKind, CancellationToken.None).ConfigureAwait(false);
@@ -188,6 +266,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private void RaiseCommandStates()
     {
         LoginCommand.RaiseCanExecuteChanged();
+        RequestActivationEmailCommand.RaiseCanExecuteChanged();
         OpenInvitationAcceptanceCommand.RaiseCanExecuteChanged();
         OpenImpressumCommand.RaiseCanExecuteChanged();
         OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
@@ -196,6 +275,9 @@ public sealed partial class LoginViewModel : BaseViewModel
     }
 
     private static string ResolveBusinessLoginErrorMessage(Exception ex, ApiOptions apiOptions)
+        => ResolveBusinessAuthMessage(ex, apiOptions, AppResources.InvalidCredentials);
+
+    private static string ResolveBusinessAuthMessage(Exception ex, ApiOptions apiOptions, string fallback)
     {
         var raw = ex.Message ?? string.Empty;
 
@@ -226,7 +308,7 @@ public sealed partial class LoginViewModel : BaseViewModel
             return $"{AppResources.ServerUnreachableMessage}\n{hint}";
         }
 
-        return AppResources.InvalidCredentials;
+        return fallback;
     }
 
     private static bool LooksLikeConnectivityError(string raw, Exception ex)

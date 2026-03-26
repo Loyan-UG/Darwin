@@ -42,6 +42,9 @@ namespace Darwin.Mobile.Shared.Services
         /// <summary>Completes a password reset using email, token and new password.</summary>
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct);
 
+        /// <summary>Requests that a new account confirmation email be sent to the specified email address.</summary>
+        Task<bool> RequestEmailConfirmationAsync(string email, CancellationToken ct);
+
         /// <summary>Loads invitation preview data for business onboarding.</summary>
         Task<BusinessInvitationPreviewResponse?> GetBusinessInvitationPreviewAsync(string token, CancellationToken ct);
 
@@ -313,6 +316,19 @@ namespace Darwin.Mobile.Shared.Services
                     Token = token,
                     NewPassword = newPassword
                 },
+                ct).ConfigureAwait(false);
+
+            return result.Succeeded;
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> RequestEmailConfirmationAsync(string email, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var result = await _api.PostNoContentAsync(
+                ApiRoutes.Auth.RequestEmailConfirmation,
+                new RequestEmailConfirmationRequest { Email = email },
                 ct).ConfigureAwait(false);
 
             return result.Succeeded;

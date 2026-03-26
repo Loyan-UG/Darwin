@@ -142,6 +142,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public Guid UserId { get; set; }
         public string UserDisplayName { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public bool IsActive { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
@@ -172,6 +174,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string UserDisplayName { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public bool IsActive { get; set; } = true;
         public BusinessContextVm Business { get; set; } = new();

@@ -49,6 +49,13 @@
                         CornerRadius="6"
                         AutomationId="OpenInvitationAcceptanceButton" />
 
+                <Button Text="{x:Static res:AppResources.RequestActivationEmailButton}"
+                        Command="{Binding RequestActivationEmailCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                        HeightRequest="44"
+                        CornerRadius="6"
+                        AutomationId="RequestActivationEmailButton" />
+
                 <Border StrokeThickness="1" Padding="16">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="{x:Static res:AppResources.AuthLegalSectionTitle}"
@@ -80,6 +87,13 @@
                        LineBreakMode="WordWrap"
                        IsVisible="{Binding HasError}"
                        AutomationId="ErrorLabel" />
+
+                <Label Text="{Binding InfoMessage}"
+                       TextColor="DarkGoldenrod"
+                       FontSize="14"
+                       LineBreakMode="WordWrap"
+                       IsVisible="{Binding HasInfo}"
+                       AutomationId="InfoLabel" />
 
             </StackLayout>
         </Grid>

@@ -21,6 +21,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private readonly ILegalLinkService _legalLinkService;
+    private string? _infoMessage;
 
     /// <summary>
     /// Raised when the page should reveal the error area (for example: scroll to top).
@@ -67,6 +68,26 @@ public sealed partial class LoginViewModel : BaseViewModel
     public string Password { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets a non-error informational message shown for self-service authentication flows.
+    /// </summary>
+    public string? InfoMessage
+    {
+        get => _infoMessage;
+        private set
+        {
+            if (SetProperty(ref _infoMessage, value))
+            {
+                OnPropertyChanged(nameof(HasInfo));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether an informational message is available.
+    /// </summary>
+    public bool HasInfo => !string.IsNullOrWhiteSpace(_infoMessage);
+
+    /// <summary>
     /// Executes the login process. Uses <see cref="IAuthService.LoginAsync"/> and
     /// swaps the root page to the authenticated shell on success.
     /// </summary>
@@ -80,6 +101,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 
         IsBusy = true;
         ErrorMessage = null;
+        InfoMessage = null;
 
         try
         {
@@ -126,6 +148,50 @@ public sealed partial class LoginViewModel : BaseViewModel
 
     [RelayCommand]
     private async Task OpenTermsAsync() => await OpenLegalLinkAsync(LegalLinkKind.ConsumerTerms).ConfigureAwait(false);
+
+    [RelayCommand]
+    private async Task RequestActivationEmailAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            ErrorMessage = AppResources.EmailRequired;
+            InfoMessage = null;
+            ErrorBecameVisibleRequested?.Invoke();
+            return;
+        }
+
+        IsBusy = true;
+        ErrorMessage = null;
+        InfoMessage = null;
+
+        try
+        {
+            var sent = await _authService.RequestEmailConfirmationAsync(Email.Trim(), CancellationToken.None);
+            if (!sent)
+            {
+                ErrorMessage = AppResources.ActivationEmailRequestFailed;
+                ErrorBecameVisibleRequested?.Invoke();
+                return;
+            }
+
+            InfoMessage = AppResources.ActivationEmailSent;
+            ErrorBecameVisibleRequested?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ViewModelErrorMapper.ToUserMessage(ex, AppResources.ActivationEmailRequestFailed);
+            ErrorBecameVisibleRequested?.Invoke();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
     {

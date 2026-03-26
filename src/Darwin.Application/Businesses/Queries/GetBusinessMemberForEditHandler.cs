@@ -37,6 +37,8 @@ namespace Darwin.Application.Businesses.Queries
                             ? user.Email
                             : ((user.FirstName ?? string.Empty) + " " + (user.LastName ?? string.Empty)).Trim(),
                     UserEmail = user == null ? string.Empty : user.Email,
+                    EmailConfirmed = user != null && user.EmailConfirmed,
+                    LockoutEndUtc = user == null ? null : user.LockoutEndUtc,
                     Role = member.Role,
                     IsActive = member.IsActive,
                     RowVersion = member.RowVersion

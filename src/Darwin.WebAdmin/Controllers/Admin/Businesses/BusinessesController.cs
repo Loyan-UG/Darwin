@@ -476,6 +476,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     UserId = x.UserId,
                     UserDisplayName = x.UserDisplayName,
                     UserEmail = x.UserEmail,
+                    EmailConfirmed = x.EmailConfirmed,
+                    LockoutEndUtc = x.LockoutEndUtc,
                     Role = x.Role,
                     IsActive = x.IsActive,
                     ModifiedAtUtc = x.ModifiedAtUtc,
@@ -696,6 +698,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RowVersion = dto.RowVersion,
                 UserDisplayName = dto.UserDisplayName,
                 UserEmail = dto.UserEmail,
+                EmailConfirmed = dto.EmailConfirmed,
+                LockoutEndUtc = dto.LockoutEndUtc,
                 Role = dto.Role,
                 IsActive = dto.IsActive,
                 Business = business

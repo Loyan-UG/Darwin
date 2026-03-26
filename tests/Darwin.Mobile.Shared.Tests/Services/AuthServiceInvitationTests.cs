@@ -156,6 +156,30 @@ public sealed class AuthServiceInvitationTests
         api.LastBearerToken.Should().Be(refreshedAccessToken);
     }
 
+    [Fact]
+    public async Task RequestEmailConfirmationAsync_Should_UseCanonicalMemberAuthRoute()
+    {
+        var api = new FakeApiClient
+        {
+            OnPostNoContentAsync = (route, request) =>
+            {
+                route.Should().Be(ApiRoutes.Auth.RequestEmailConfirmation);
+                request.Should().BeOfType<RequestEmailConfirmationRequest>();
+
+                var payload = (RequestEmailConfirmationRequest)request;
+                payload.Email.Should().Be("member@darwin.de");
+
+                return Result.Ok();
+            }
+        };
+
+        var service = CreateService(api);
+
+        var sent = await service.RequestEmailConfirmationAsync("member@darwin.de", TestContext.Current.CancellationToken);
+
+        sent.Should().BeTrue();
+    }
+
     private static AuthService CreateService(FakeApiClient api, FakeTokenStore? tokenStore = null)
     {
         return new AuthService(
@@ -226,6 +250,7 @@ public sealed class AuthServiceInvitationTests
         public Func<string, object?>? OnGetAsync { get; init; }
         public Func<string, object, object?>? OnPostResultAsync { get; init; }
         public Func<string, object, object?>? OnPostAsync { get; init; }
+        public Func<string, object, Result>? OnPostNoContentAsync { get; init; }
 
         public string? LastBearerToken { get; private set; }
 
@@ -295,6 +320,13 @@ public sealed class AuthServiceInvitationTests
             => throw new NotSupportedException();
 
         public Task<Result> PostNoContentAsync<TRequest>(string route, TRequest request, CancellationToken ct)
-            => throw new NotSupportedException();
+        {
+            if (OnPostNoContentAsync is null)
+            {
+                return Task.FromResult(Result.Fail("No POST no-content handler configured."));
+            }
+
+            return Task.FromResult(OnPostNoContentAsync(route, request!));
+        }
     }
 }

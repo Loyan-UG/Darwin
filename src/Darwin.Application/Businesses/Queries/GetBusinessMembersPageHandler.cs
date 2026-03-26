@@ -43,7 +43,9 @@ namespace Darwin.Application.Businesses.Queries
                         : string.IsNullOrWhiteSpace(((user.FirstName ?? string.Empty) + " " + (user.LastName ?? string.Empty)).Trim())
                             ? user.Email
                             : ((user.FirstName ?? string.Empty) + " " + (user.LastName ?? string.Empty)).Trim(),
-                    UserEmail = user == null ? string.Empty : user.Email
+                    UserEmail = user == null ? string.Empty : user.Email,
+                    EmailConfirmed = user != null && user.EmailConfirmed,
+                    LockoutEndUtc = user == null ? null : user.LockoutEndUtc
                 };
 
             if (!string.IsNullOrWhiteSpace(query))
@@ -69,6 +71,8 @@ namespace Darwin.Application.Businesses.Queries
                     UserId = x.Member.UserId,
                     UserDisplayName = x.UserDisplayName,
                     UserEmail = x.UserEmail,
+                    EmailConfirmed = x.EmailConfirmed,
+                    LockoutEndUtc = x.LockoutEndUtc,
                     Role = x.Member.Role,
                     IsActive = x.Member.IsActive,
                     ModifiedAtUtc = x.Member.ModifiedAtUtc,

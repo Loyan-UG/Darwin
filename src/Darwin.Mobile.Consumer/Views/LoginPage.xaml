@@ -50,6 +50,11 @@
                         TextColor="{StaticResource BrandGold500}" />
             </HorizontalStackLayout>
 
+            <Button Text="{x:Static res:AppResources.RequestActivationEmailButton}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource BrandGold500}"
+                    Command="{Binding RequestActivationEmailCommand}" />
+
             <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
                 <VerticalStackLayout Spacing="12">
                     <Label Text="{x:Static res:AppResources.AuthLegalSectionTitle}"
@@ -83,6 +88,10 @@
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red"
                    IsVisible="{Binding HasError}" />
+
+            <Label Text="{Binding InfoMessage}"
+                   TextColor="{StaticResource BrandGold500}"
+                   IsVisible="{Binding HasInfo}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"

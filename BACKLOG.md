@@ -53,9 +53,10 @@ Status terms used below:
 - `Completed`: platform now has a real confirm-email token flow plus resend-activation email issuance via public auth endpoints and WebAdmin support actions
 - `Completed`: password sign-in now enforces account lockout and email-confirmation state for phase-1 activation policy
 - `Completed`: consumer registration no longer auto-signs-in when confirmation is pending; it now waits for email confirmation explicitly
+- `Completed`: consumer and business mobile login screens now provide self-service activation email requests against the canonical member-auth route
 - `Completed`: business-app token refresh now preserves preferred business context during onboarding-safe refresh cycles
 - `In Progress`: ensure broader business-user status directly affects access in mobile and admin-backed support workflows beyond lockout/confirmation alone
-- `Planned / Near-term`: add self-service resend-activation UX in mobile/front-end clients now that confirmation is enforced at sign-in
+- `Planned / Near-term`: add equivalent self-service resend-activation UX in front-end web flows now that confirmation is enforced at sign-in
 
 ### Communication Core (email-first MVP)
 
@@ -254,3 +255,4 @@ Status terms used below:
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh
 - `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live
 - `Decision made`: phase-1 password authentication now rejects unconfirmed accounts and locked accounts; follow-up UX should add self-service resend-activation where appropriate
+- `Decision pending`: decide whether self-service activation resend should remain email-entry based in phase 1, or also support deep-link/magic-link recovery entry in later auth UX

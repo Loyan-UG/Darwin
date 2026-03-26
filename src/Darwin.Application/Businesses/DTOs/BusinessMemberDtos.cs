@@ -47,6 +47,8 @@ namespace Darwin.Application.Businesses.DTOs
         public Guid UserId { get; set; }
         public string UserDisplayName { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public bool IsActive { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
@@ -63,6 +65,8 @@ namespace Darwin.Application.Businesses.DTOs
         public Guid UserId { get; set; }
         public string UserDisplayName { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public bool IsActive { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
