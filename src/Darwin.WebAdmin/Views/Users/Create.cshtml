@@ -3,67 +3,7 @@
     ViewData["Title"] = "Create User";
 }
 
-<h2>Create User</h2>
-
-<form asp-controller="Users" asp-action="Create" method="post" class="row g-3">
-    @Html.AntiForgeryToken()
-
-    <div class="col-md-6">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-6">
-        <label asp-for="Password" class="form-label"></label>
-        <input asp-for="Password" type="password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-6">
-        <label asp-for="FirstName" class="form-label"></label>
-        <input asp-for="FirstName" class="form-control" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-6">
-        <label asp-for="LastName" class="form-label"></label>
-        <input asp-for="LastName" class="form-control" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Locale" class="form-label"></label>
-        <field-help for="Locale" text="Select UI language/culture"></field-help>
-        <setting-select asp-for="Locale" key="SupportedLocalesCsv"></setting-select>
-        <span asp-validation-for="Locale" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Currency" class="form-label"></label>
-        <field-help for="Currency" text="Select default currency"></field-help>
-        <setting-select asp-for="Currency" key="SupportedCurrenciesCsv"></setting-select>
-        <span asp-validation-for="Currency" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-4">
-        <label asp-for="Timezone" class="form-label"></label>
-        <field-help for="Timezone" text="Select default timezone"></field-help>
-        <setting-select asp-for="Timezone" key="SupportedTimezonesCsv"></setting-select>
-        <span asp-validation-for="Timezone" class="text-danger"></span>
-    </div>
-
-    <div class="col-md-6">
-        <label asp-for="PhoneE164" class="form-label"></label>
-        <input asp-for="PhoneE164" class="form-control" />
-        <span asp-validation-for="PhoneE164" class="text-danger"></span>
-    </div>
-
-    <div class="col-12">
-        <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Create</button>
-        <a asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-</form>
+<partial name="_UserCreateEditorShell" model="Model" />
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

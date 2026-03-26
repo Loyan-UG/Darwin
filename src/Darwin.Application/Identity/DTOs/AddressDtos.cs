@@ -88,6 +88,7 @@ namespace Darwin.Application.Identity.DTOs
         // User edit portion (aligned with existing UserEditDto semantics)
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string Email { get; set; } = string.Empty;
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string Locale { get; set; } = "de-DE";

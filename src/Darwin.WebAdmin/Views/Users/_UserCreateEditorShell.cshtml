@@ -1,0 +1,38 @@
+@model Darwin.WebAdmin.ViewModels.Identity.UserCreateVm
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<div id="user-create-editor-shell">
+    <h2>Create User</h2>
+
+    <form asp-controller="Users"
+          asp-action="Create"
+          method="post"
+          class="row g-3"
+          hx-post="@Url.Action("Create", "Users")"
+          hx-target="#user-create-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" type="password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <partial name="_UserProfileFields" model="Model" />
+
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Create</button>
+            <a asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>

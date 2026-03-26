@@ -64,6 +64,9 @@ The immediate direction is:
 - Completed: migrate the legacy Add-on Groups create/edit screens onto HTMX-aware editor shells, replace the remaining `dynamic` options editor with a strongly typed shared editor model, and keep currency/input helpers shell-safe after HTMX swaps.
 - Completed: fix Add-on Group attachment screens so product/category/brand search queries are actually applied server-side, attachment paging/query context is preserved across posts, and the variants pager carries its route context correctly.
 - Completed: migrate the central Site Settings edit screen onto an HTMX-aware editor shell so validation/concurrency failures no longer force a full-page round-trip for one of the core back-office configuration pages.
+- Completed: migrate the core Users create/edit screens onto HTMX-aware editor shells, keep the address-management modal wiring shell-safe after swaps, and surface the main admin actions (email, password, roles) directly from the user edit screen.
+- Completed: enrich the admin user-edit projection with the current email so email/password workflows keep their operator context, and fix the `ChangeEmail` form so invalid posts no longer lose the displayed current email.
+- Completed: migrate the remaining user-administration subflows (`ChangeEmail`, `ChangePassword`, `Roles`) onto HTMX-aware editor shells and fix their failure paths so role checklists, operator context, and user identity details are rebuilt instead of rendering half-empty pages after validation or handler errors.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.

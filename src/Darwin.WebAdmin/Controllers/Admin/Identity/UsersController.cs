@@ -122,7 +122,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(UserCreateVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid) return RenderCreateEditor(vm);
 
             var dto = new UserCreateDto
             {
@@ -140,11 +140,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded)
             {
                 ModelState.AddModelError(string.Empty, result.Error ?? "Failed to create user.");
-                return View(vm);
+                return RenderCreateEditor(vm);
             }
 
             TempData["Success"] = "User created.";
-            return RedirectToAction(nameof(Edit), new { id = result.Value });
+            return RedirectOrHtmx(nameof(Edit), new { id = result.Value });
         }
 
         /// <summary>
@@ -167,6 +167,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             {
                 Id = u.Id,
                 RowVersion = u.RowVersion,
+                Email = u.Email,
                 FirstName = u.FirstName,
                 LastName = u.LastName,
                 Locale = u.Locale,
@@ -192,15 +193,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             if (!ModelState.IsValid)
             {
-                // Rebuild the addresses section so the partial has a non-null model
-                ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
-                return View(vm);
+                return await RenderEditEditorAsync(vm, ct);
             }
 
             var dto = new UserEditDto
             {
                 Id = vm.Id,
                 RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                Email = vm.Email,
                 FirstName = vm.FirstName,
                 LastName = vm.LastName,
                 Locale = vm.Locale,
@@ -215,12 +215,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             {
                 // Could be validation or concurrency; Application layer provides message.
                 ModelState.AddModelError(string.Empty, result.Error ?? "Failed to update user.");
-                ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
-                return View(vm);
+                return await RenderEditEditorAsync(vm, ct);
             }
 
             TempData["Success"] = "User updated.";
-            return RedirectToAction(nameof(Edit), new { id = vm.Id });
+            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
 
 
@@ -237,11 +236,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var vm = new UserChangeEmailVm
             {
                 Id = id,
+                CurrentEmail = currentEmail ?? string.Empty,
                 NewEmail = string.Empty
             };
-
-            // Current email is shown read-only in the UI; not part of the VM by design.
-            ViewBag.CurrentEmail = currentEmail ?? string.Empty;
             return View(vm);
         }
 
@@ -255,7 +252,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             // Validate input on the same page to preserve validation messages and user input.
             if (!ModelState.IsValid)
-                return View(vm);
+                return RenderChangeEmailEditor(vm);
 
             var dto = new UserChangeEmailDto
             {
@@ -271,12 +268,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     ModelState.AddModelError(string.Empty, result.Error);
 
                 TempData["Error"] = "Failed to change email.";
-                return View(vm);
+                return RenderChangeEmailEditor(vm);
             }
 
             TempData["Success"] = "Email change requested. The user must confirm the new email before signing in.";
-            // After successful operations (email/password), we go back to Index as requested.
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
 
 
@@ -317,7 +313,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             {
                 if (vm.NewPassword != vm.ConfirmNewPassword)
                     ModelState.AddModelError(nameof(vm.ConfirmNewPassword), "Passwords do not match.");
-                return View(vm);
+                return RenderChangePasswordEditor(vm);
             }
 
             // Build DTO for the admin-set password operation
@@ -332,8 +328,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 ? "Password changed successfully."
                 : (result.Error ?? "Failed to change password.");
 
-            // Return to the listing screen after the operation
-            return RedirectToAction(nameof(Index));
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty, result.Error ?? "Failed to change password.");
+                return RenderChangePasswordEditor(vm);
+            }
+
+            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
 
 
@@ -542,15 +543,116 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Roles(Guid id, CancellationToken ct = default)
         {
-            var result = await _getUserRoles.HandleAsync(id, ct);
-            if (!result.Succeeded || result.Value is null)
+            var vm = await BuildUserRolesVmAsync(id, ct);
+            if (vm is null)
             {
-                TempData["Error"] = result.Error ?? "Failed to load user roles.";
+                TempData["Error"] = "Failed to load user roles.";
                 return RedirectToAction(nameof(Index));
             }
 
+            return View(vm);
+        }
+
+        /// <summary>
+        /// Saves the role selection for the user and redirects to Users/Index.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Roles(UserRolesEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+                return await RenderRolesEditorAsync(vm, ct);
+
+            var dto = new UserRolesUpdateDto
+            {
+                UserId = vm.UserId,
+                RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                RoleIds = vm.SelectedRoleIds?.ToList() ?? new List<Guid>()
+            };
+
+            var result = await _updateUserRoles.HandleAsync(dto, ct);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty, result.Error ?? "Failed to update user roles.");
+                return await RenderRolesEditorAsync(vm, ct);
+            }
+
+            TempData["Success"] = "User roles updated.";
+            return RedirectOrHtmx(nameof(Edit), new { id = vm.UserId });
+        }
+
+        private IActionResult RenderCreateEditor(UserCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Users/_UserCreateEditorShell.cshtml", vm);
+            }
+
+            return View("Create", vm);
+        }
+
+        private IActionResult RenderChangeEmailEditor(UserChangeEmailVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Users/_UserChangeEmailEditorShell.cshtml", vm);
+            }
+
+            return View("ChangeEmail", vm);
+        }
+
+        private IActionResult RenderChangePasswordEditor(UserChangePasswordVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Users/_UserChangePasswordEditorShell.cshtml", vm);
+            }
+
+            return View("ChangePassword", vm);
+        }
+
+        private async Task<IActionResult> RenderEditEditorAsync(UserEditVm vm, CancellationToken ct)
+        {
+            ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(vm.Id, ct);
+
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Users/_UserEditEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private async Task<IActionResult> RenderRolesEditorAsync(UserRolesEditVm vm, CancellationToken ct)
+        {
+            var hydrated = await BuildUserRolesVmAsync(vm.UserId, ct);
+            if (hydrated is null)
+            {
+                TempData["Error"] = "Failed to load user roles.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            hydrated.SelectedRoleIds = vm.SelectedRoleIds?.ToList() ?? new List<Guid>();
+            hydrated.RowVersion = vm.RowVersion ?? hydrated.RowVersion;
+
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Users/_UserRolesEditorShell.cshtml", hydrated);
+            }
+
+            return View("Roles", hydrated);
+        }
+
+        private async Task<UserRolesEditVm?> BuildUserRolesVmAsync(Guid userId, CancellationToken ct)
+        {
+            var result = await _getUserRoles.HandleAsync(userId, ct);
+            if (!result.Succeeded || result.Value is null)
+            {
+                return null;
+            }
+
             var dto = result.Value;
-            var vm = new UserRolesEditVm
+            return new UserRolesEditVm
             {
                 UserId = dto.UserId,
                 UserEmail = dto.UserEmail,
@@ -566,35 +668,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 }).ToList(),
                 SelectedRoleIds = dto.RoleIds.ToList()
             };
-            return View(vm);
         }
 
-        /// <summary>
-        /// Saves the role selection for the user and redirects to Users/Index.
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Roles(UserRolesEditVm vm, CancellationToken ct = default)
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
         {
-            if (!ModelState.IsValid)
-                return View(vm);
-
-            var dto = new UserRolesUpdateDto
+            if (IsHtmxRequest())
             {
-                UserId = vm.UserId,
-                RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
-                RoleIds = vm.SelectedRoleIds?.ToList() ?? new List<Guid>()
-            };
-
-            var result = await _updateUserRoles.HandleAsync(dto, ct);
-            if (!result.Succeeded)
-            {
-                TempData["Error"] = result.Error ?? "Failed to update user roles.";
-                return View(vm);
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
             }
 
-            TempData["Success"] = "User roles updated.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

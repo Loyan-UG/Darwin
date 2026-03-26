@@ -1,0 +1,153 @@
+@model Darwin.WebAdmin.ViewModels.Identity.UserEditVm
+@{
+    ViewData["Title"] = "Edit User";
+    var addressesSection = ViewBag.AddressesSection as Darwin.WebAdmin.ViewModels.Identity.UserAddressesSectionVm;
+}
+
+<div id="user-edit-editor-shell">
+    <h2>Edit User</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">Administrative Actions</div>
+        <div class="card-body d-flex flex-wrap gap-2">
+            <span class="me-auto text-muted align-self-center">@Model.Email</span>
+            <a asp-controller="Users" asp-action="ChangeEmail" asp-route-id="@Model.Id" asp-route-currentEmail="@Model.Email" class="btn btn-outline-secondary">
+                <i class="fa fa-envelope"></i> Change Email
+            </a>
+            <a asp-controller="Users" asp-action="ChangePassword" asp-route-id="@Model.Id" asp-route-email="@Model.Email" class="btn btn-outline-secondary">
+                <i class="fa fa-key"></i> Change Password
+            </a>
+            <a asp-controller="Users" asp-action="Roles" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                <i class="fa fa-users-cog"></i> Manage Roles
+            </a>
+        </div>
+    </div>
+
+    <form asp-controller="Users"
+          asp-action="Edit"
+          method="post"
+          class="row g-3"
+          hx-post="@Url.Action("Edit", "Users")"
+          hx-target="#user-edit-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="RowVersion" />
+        <input type="hidden" asp-for="Email" />
+        <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+
+        <partial name="_UserProfileFields" model="Model" />
+
+        <div class="col-md-3">
+            <div class="form-check mt-4 pt-2">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Save</button>
+            <a asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        </div>
+    </form>
+
+    <hr />
+    <h3 class="mt-4">Addresses</h3>
+
+    <div id="addresses-section">
+        @await Html.PartialAsync("~/Views/Users/_AddressesSection.cshtml", addressesSection)
+    </div>
+
+    @await Html.PartialAsync("~/Views/Users/_AddressEditModal.cshtml", new Darwin.WebAdmin.ViewModels.Identity.UserAddressEditVm())
+    <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
+</div>
+
+<script>
+    (function () {
+      window.darwinAdmin = window.darwinAdmin || {};
+
+      window.darwinAdmin.hideAddressModal = function () {
+        window.darwinAdmin.hideModal('addressEditModal');
+      };
+
+      window.darwinAdmin.initUserEditScreen = window.darwinAdmin.initUserEditScreen || function (root) {
+        if (!root) return;
+
+        const modal = root.querySelector('#addressEditModal');
+        if (modal && !modal.dataset.addressModalBound) {
+          modal.dataset.addressModalBound = 'true';
+
+          modal.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            if (!btn) return;
+
+            const mode = btn.getAttribute('data-mode') || 'create';
+            const form = modal.querySelector('#addressEditForm');
+            if (!form) return;
+
+            const idInput = modal.querySelector('#addrId');
+            const rvInput = modal.querySelector('#addrRowVersion');
+            const userInput = modal.querySelector('#addrUserId');
+            const title = modal.querySelector('#addressEditModalLabel');
+            const action = btn.getAttribute('data-action') || '';
+
+            form.setAttribute('action', action);
+            form.setAttribute('hx-post', action);
+
+            if (userInput) {
+              userInput.value = btn.getAttribute('data-userid') || '';
+            }
+
+            const removeName = function (el) { if (el) el.removeAttribute('name'); };
+            const setName = function (el, name) { if (el) el.setAttribute('name', name); };
+
+            if (mode === 'create') {
+              if (idInput) { idInput.value = ''; removeName(idInput); }
+              if (rvInput) { rvInput.value = ''; removeName(rvInput); }
+
+              form.querySelector('input[name="FullName"]').value = '';
+              form.querySelector('input[name="Company"]').value = '';
+              form.querySelector('input[name="Street1"]').value = '';
+              form.querySelector('input[name="Street2"]').value = '';
+              form.querySelector('input[name="PostalCode"]').value = '';
+              form.querySelector('input[name="City"]').value = '';
+              form.querySelector('input[name="State"]').value = '';
+              form.querySelector('input[name="CountryCode"]').value = 'DE';
+              form.querySelector('input[name="PhoneE164"]').value = '';
+              form.querySelector('input[name="IsDefaultBilling"]').checked = false;
+              form.querySelector('input[name="IsDefaultShipping"]').checked = false;
+
+              if (title) title.textContent = 'Add Address';
+            } else {
+              if (idInput) { idInput.value = btn.getAttribute('data-id') || ''; setName(idInput, 'Id'); }
+              if (rvInput) { rvInput.value = btn.getAttribute('data-rowversion') || ''; setName(rvInput, 'RowVersion'); }
+
+              form.querySelector('input[name="FullName"]').value = btn.getAttribute('data-fullname') || '';
+              form.querySelector('input[name="Company"]').value = btn.getAttribute('data-company') || '';
+              form.querySelector('input[name="Street1"]').value = btn.getAttribute('data-street1') || '';
+              form.querySelector('input[name="Street2"]').value = btn.getAttribute('data-street2') || '';
+              form.querySelector('input[name="PostalCode"]').value = btn.getAttribute('data-postalcode') || '';
+              form.querySelector('input[name="City"]').value = btn.getAttribute('data-city') || '';
+              form.querySelector('input[name="State"]').value = btn.getAttribute('data-state') || '';
+              form.querySelector('input[name="CountryCode"]').value = btn.getAttribute('data-countrycode') || 'DE';
+              form.querySelector('input[name="PhoneE164"]').value = btn.getAttribute('data-phonee164') || '';
+              form.querySelector('input[name="IsDefaultBilling"]').checked = btn.getAttribute('data-defaultbilling') === 'true';
+              form.querySelector('input[name="IsDefaultShipping"]').checked = btn.getAttribute('data-defaultshipping') === 'true';
+
+              if (title) title.textContent = 'Edit Address';
+            }
+          });
+        }
+
+        const countryCode = root.querySelector('#addrCountryCode');
+        if (countryCode && !countryCode.dataset.uppercaseBound) {
+          countryCode.dataset.uppercaseBound = 'true';
+          countryCode.addEventListener('input', function () {
+            this.value = this.value.toUpperCase();
+          });
+        }
+      };
+
+      window.darwinAdmin.initUserEditScreen(document.getElementById('user-edit-editor-shell'));
+    })();
+</script>

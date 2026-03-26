@@ -59,6 +59,7 @@ namespace Darwin.Application.Identity.Queries
             {
                 Id = user.Id,
                 RowVersion = user.RowVersion,
+                Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Locale = user.Locale,

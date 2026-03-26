@@ -47,19 +47,10 @@ namespace Darwin.WebAdmin.ViewModels.Identity
     }
 
     /// <summary>
-    /// View model used to create a new user in the admin area.
+    /// Shared admin editor model for user create and edit screens.
     /// </summary>
-    public sealed class UserCreateVm
+    public abstract class UserEditorVm
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        /// <summary>Plain text password. Must be at least 8 characters.</summary>
-        [Required]
-        [StringLength(100, MinimumLength = 8)]
-        public string Password { get; set; } = string.Empty;
-
         /// <summary>Given name; optional.</summary>
         public string? FirstName { get; set; }
 
@@ -82,6 +73,21 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// <summary>Phone number in E.164 format; optional.</summary>
         [Phone]
         public string? PhoneE164 { get; set; }
+    }
+
+    /// <summary>
+    /// View model used to create a new user in the admin area.
+    /// </summary>
+    public sealed class UserCreateVm : UserEditorVm
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        /// <summary>Plain text password. Must be at least 8 characters.</summary>
+        [Required]
+        [StringLength(100, MinimumLength = 8)]
+        public string Password { get; set; } = string.Empty;
 
         /// <summary>Initial active flag; default true.</summary>
         public bool IsActive { get; set; } = true;
@@ -96,34 +102,18 @@ namespace Darwin.WebAdmin.ViewModels.Identity
     /// View model used to edit an existing user (admin area).
     /// Note that Email and Username are not editable here.
     /// </summary>
-    public sealed class UserEditVm
+    public sealed class UserEditVm : UserEditorVm
     {
         public Guid Id { get; set; }
 
         /// <summary>Concurrency token to detect conflicting updates.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
-        public string? FirstName { get; set; }
-
-        public string? LastName { get; set; }
-
-        [Required]
-        public string Locale { get; set; } = "de-DE";
-
-        [Required]
-        public string Timezone { get; set; } = "Europe/Berlin";
-
-        [Required]
-        [StringLength(3, MinimumLength = 3)]
-        public string Currency { get; set; } = "EUR";
-
-        [Phone]
-        public string? PhoneE164 { get; set; }
+        /// <summary>Current login email shown in the admin UI for context-sensitive actions.</summary>
+        public string Email { get; set; } = string.Empty;
 
         /// <summary>Active flag; deactivating disables login.</summary>
         public bool IsActive { get; set; } = true;
-
-        /// <summary>Concurrency token to detect conflicting updates.</summary>
     }
 
     /// <summary>
@@ -160,6 +150,11 @@ namespace Darwin.WebAdmin.ViewModels.Identity
     public sealed class UserChangeEmailVm
     {
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// Current email displayed back to the operator so invalid submissions can re-render without losing context.
+        /// </summary>
+        public string CurrentEmail { get; set; } = string.Empty;
 
         [Required]
         [EmailAddress]
