@@ -1,44 +1,49 @@
 @model Darwin.WebAdmin.ViewModels.CRM.InteractionsPageVm
 
-<div class="table-responsive">
-    <table class="table table-sm table-striped align-middle">
-        <thead>
-            <tr>
-                <th>Type</th>
-                <th>Channel</th>
-                <th>Subject</th>
-                <th>Content</th>
-                <th>Created (UTC)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model.Items.Count == 0)
-            {
-                <tr><td colspan="5" class="text-center text-muted">No interactions yet.</td></tr>
-            }
-            else
-            {
-                foreach (var item in Model.Items)
+<div hx-boost="true"
+     hx-target="this"
+     hx-swap="outerHTML"
+     hx-push-url="false">
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Channel</th>
+                    <th>Subject</th>
+                    <th>Content</th>
+                    <th>Created (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
                 {
-                    <tr>
-                        <td>@item.Type</td>
-                        <td>@item.Channel</td>
-                        <td>@item.Subject</td>
-                        <td>@item.Content</td>
-                        <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                    </tr>
+                    <tr><td colspan="5" class="text-center text-muted">No interactions yet.</td></tr>
                 }
-            }
-        </tbody>
-    </table>
-</div>
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.Type</td>
+                            <td>@item.Channel</td>
+                            <td>@item.Subject</td>
+                            <td>@item.Content</td>
+                            <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
 
-<pager page="Model.Page"
-       page-size="Model.PageSize"
-       total="Model.Total"
-       asp-controller="Crm"
-       asp-action="@(Model.Scope == "customer" ? "CustomerInteractions" : Model.Scope == "lead" ? "LeadInteractions" : "OpportunityInteractions")"
-       asp-route-customerId="@(Model.Scope == "customer" ? Model.EntityId : (Guid?)null)"
-       asp-route-leadId="@(Model.Scope == "lead" ? Model.EntityId : (Guid?)null)"
-       asp-route-opportunityId="@(Model.Scope == "opportunity" ? Model.EntityId : (Guid?)null)">
-</pager>
+    <pager page="Model.Page"
+           page-size="Model.PageSize"
+           total="Model.Total"
+           asp-controller="Crm"
+           asp-action="@(Model.Scope == "customer" ? "CustomerInteractions" : Model.Scope == "lead" ? "LeadInteractions" : "OpportunityInteractions")"
+           asp-route-customerId="@(Model.Scope == "customer" ? Model.EntityId : (Guid?)null)"
+           asp-route-leadId="@(Model.Scope == "lead" ? Model.EntityId : (Guid?)null)"
+           asp-route-opportunityId="@(Model.Scope == "opportunity" ? Model.EntityId : (Guid?)null)">
+    </pager>
+</div>

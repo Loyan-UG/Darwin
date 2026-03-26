@@ -67,6 +67,9 @@ The immediate direction is:
 - Completed: migrate the core Users create/edit screens onto HTMX-aware editor shells, keep the address-management modal wiring shell-safe after swaps, and surface the main admin actions (email, password, roles) directly from the user edit screen.
 - Completed: enrich the admin user-edit projection with the current email so email/password workflows keep their operator context, and fix the `ChangeEmail` form so invalid posts no longer lose the displayed current email.
 - Completed: migrate the remaining user-administration subflows (`ChangeEmail`, `ChangePassword`, `Roles`) onto HTMX-aware editor shells and fix their failure paths so role checklists, operator context, and user identity details are rebuilt instead of rendering half-empty pages after validation or handler errors.
+- Completed: normalize the user-administration wrappers and controller rendering paths so all user-management screens now share the same HTMX-aware shell/render/redirect pattern instead of mixing legacy full-page-only failure behavior with newer shells.
+- Completed: move the CRM customer-address editor script into the customer editor shell so add/remove address behavior survives HTMX validation round-trips instead of only working on the first full-page render.
+- Completed: harden HTMX-paged partials in Orders and CRM so boosted pager links no longer push partial-route URLs into browser history or navigate operators away from the parent detail screen.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.

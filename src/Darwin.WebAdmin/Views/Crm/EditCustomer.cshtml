@@ -138,17 +138,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            const container = document.getElementById('customerAddresses');
-            const template = document.getElementById('customerAddressTemplate');
-            document.getElementById('addCustomerAddress')?.addEventListener('click', function () {
-                container.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__index__', container.querySelectorAll('.address-row').length));
-            });
-            container?.addEventListener('click', function (event) {
-                const button = event.target.closest('.remove-address');
-                if (button) button.closest('.address-row')?.remove();
-            });
-        })();
-    </script>
 }
