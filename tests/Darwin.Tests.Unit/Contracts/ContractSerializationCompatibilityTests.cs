@@ -1167,6 +1167,94 @@ public sealed class ContractSerializationCompatibilityTests
     }
 
     /// <summary>
+    ///     Verifies that loyalty overview contracts serialize aggregate counters and nested
+    ///     account summaries with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void MyLoyaltyOverviewResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new MyLoyaltyOverviewResponse
+        {
+            TotalAccounts = 2,
+            ActiveAccounts = 1,
+            TotalPointsBalance = 420,
+            TotalLifetimePoints = 1250,
+            LastAccrualAtUtc = new DateTime(2030, 1, 3, 8, 0, 0, DateTimeKind.Utc),
+            Accounts =
+            [
+                new LoyaltyAccountSummary
+                {
+                    LoyaltyAccountId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                    BusinessId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                    BusinessName = "Cafe Aurora",
+                    PointsBalance = 300,
+                    LifetimePoints = 1000,
+                    Status = "Active"
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"totalAccounts\"");
+        json.Should().Contain("\"activeAccounts\"");
+        json.Should().Contain("\"totalPointsBalance\"");
+        json.Should().Contain("\"totalLifetimePoints\"");
+        json.Should().Contain("\"lastAccrualAtUtc\"");
+        json.Should().Contain("\"accounts\"");
+    }
+
+    /// <summary>
+    ///     Verifies that business-scoped loyalty dashboard contracts serialize nested account,
+    ///     reward, and transaction sections with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void MyLoyaltyBusinessDashboard_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new MyLoyaltyBusinessDashboard
+        {
+            Account = new LoyaltyAccountSummary
+            {
+                LoyaltyAccountId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                BusinessId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                BusinessName = "Cafe Aurora",
+                PointsBalance = 300,
+                LifetimePoints = 1000,
+                Status = "Active"
+            },
+            AvailableRewardsCount = 4,
+            RedeemableRewardsCount = 2,
+            NextReward = new LoyaltyRewardSummary
+            {
+                LoyaltyRewardTierId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                BusinessId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                Name = "Free Espresso",
+                RequiredPoints = 350,
+                IsActive = true,
+                IsSelectable = false
+            },
+            RecentTransactions =
+            [
+                new PointsTransaction
+                {
+                    OccurredAtUtc = new DateTime(2030, 1, 2, 7, 0, 0, DateTimeKind.Utc),
+                    Type = "Accrual",
+                    Delta = 50,
+                    Reference = "ORD-1001"
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"account\"");
+        json.Should().Contain("\"availableRewardsCount\"");
+        json.Should().Contain("\"redeemableRewardsCount\"");
+        json.Should().Contain("\"nextReward\"");
+        json.Should().Contain("\"recentTransactions\"");
+    }
+
+    /// <summary>
     ///     Verifies that map discovery request serializes viewport bounds and filters
     ///     with expected camelCase names consumed by discovery endpoints.
     /// </summary>

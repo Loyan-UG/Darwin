@@ -132,7 +132,8 @@ The immediate direction is:
 - Completed: add a member-facing linked CRM customer summary endpoint under `api/v1/member/profile/customer`.
 - Completed: add member privacy and communication preference endpoints under `api/v1/member/profile/preferences` with legacy `/api/v1/profile/me/preferences` aliases, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
 - Completed: add a richer member-facing CRM customer-context endpoint under `api/v1/member/profile/customer/context`, including segments, consent history, and recent interactions, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
-- Task: document and implement member loyalty projections and account endpoints.
+- Completed: add member loyalty overview and business-dashboard projections under `api/v1/member/loyalty/my/overview` and `api/v1/member/loyalty/business/{businessId}/dashboard`, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
+- Task: deepen member loyalty APIs with richer account insights such as expiry, cross-business personalization, and reward-progress projections beyond the new overview/dashboard endpoints.
 - Task: deepen member order and invoice APIs with richer storefront-specific document-download and action flows as front-office requirements solidify.
 - Task: extend member profile APIs with any additional self-service CRM views beyond the now-supported addresses, linked customer summary, CRM customer context, and privacy/communication preferences.
 - Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.

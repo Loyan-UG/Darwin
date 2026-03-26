@@ -22,7 +22,9 @@ public sealed class LoyaltyController : ApiControllerBase
 {
     private readonly PrepareScanSessionHandler _prepareScanSessionHandler;
     private readonly GetMyLoyaltyAccountsHandler _getMyLoyaltyAccountsHandler;
+    private readonly GetMyLoyaltyOverviewHandler _getMyLoyaltyOverviewHandler;
     private readonly GetMyLoyaltyHistoryHandler _getMyLoyaltyHistoryHandler;
+    private readonly GetMyLoyaltyBusinessDashboardHandler _getMyLoyaltyBusinessDashboardHandler;
     private readonly GetMyLoyaltyAccountForBusinessHandler _getMyLoyaltyAccountForBusinessHandler;
     private readonly GetAvailableLoyaltyRewardsForBusinessHandler _getAvailableLoyaltyRewardsForBusinessHandler;
     private readonly GetMyLoyaltyBusinessesHandler _getMyLoyaltyBusinessesHandler;
@@ -38,7 +40,9 @@ public sealed class LoyaltyController : ApiControllerBase
     public LoyaltyController(
         PrepareScanSessionHandler prepareScanSessionHandler,
         GetMyLoyaltyAccountsHandler getMyLoyaltyAccountsHandler,
+        GetMyLoyaltyOverviewHandler getMyLoyaltyOverviewHandler,
         GetMyLoyaltyHistoryHandler getMyLoyaltyHistoryHandler,
+        GetMyLoyaltyBusinessDashboardHandler getMyLoyaltyBusinessDashboardHandler,
         GetMyLoyaltyAccountForBusinessHandler getMyLoyaltyAccountForBusinessHandler,
         GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
         GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
@@ -50,7 +54,9 @@ public sealed class LoyaltyController : ApiControllerBase
     {
         _prepareScanSessionHandler = prepareScanSessionHandler ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
         _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountsHandler));
+        _getMyLoyaltyOverviewHandler = getMyLoyaltyOverviewHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyOverviewHandler));
         _getMyLoyaltyHistoryHandler = getMyLoyaltyHistoryHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyHistoryHandler));
+        _getMyLoyaltyBusinessDashboardHandler = getMyLoyaltyBusinessDashboardHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessDashboardHandler));
         _getMyLoyaltyAccountForBusinessHandler = getMyLoyaltyAccountForBusinessHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountForBusinessHandler));
         _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
         _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
@@ -144,6 +150,23 @@ public sealed class LoyaltyController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns an aggregated loyalty overview spanning all businesses for the current authenticated member.
+    /// </summary>
+    [HttpGet("my/overview")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(MyLoyaltyOverviewResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyOverviewAsync(CancellationToken ct = default)
+    {
+        var result = await _getMyLoyaltyOverviewHandler.HandleAsync(ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(LoyaltyContractsMapper.ToContract(result.Value));
+    }
+
+    /// <summary>
     /// Returns points transaction history for the current member within a single business context.
     /// </summary>
     [HttpGet("my/history/{businessId:guid}")]
@@ -189,6 +212,32 @@ public sealed class LoyaltyController : ApiControllerBase
 
         return result.Value is null
             ? NotFoundProblem("Loyalty account not found for the specified business and user.")
+            : Ok(LoyaltyContractsMapper.ToContract(result.Value));
+    }
+
+    /// <summary>
+    /// Returns a business-scoped loyalty dashboard for the current member.
+    /// </summary>
+    [HttpGet("business/{businessId:guid}/dashboard")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(MyLoyaltyBusinessDashboard), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBusinessDashboardAsync(Guid businessId, CancellationToken ct = default)
+    {
+        if (businessId == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId is required.");
+        }
+
+        var result = await _getMyLoyaltyBusinessDashboardHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
+        if (!result.Succeeded)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return result.Value is null
+            ? NotFoundProblem("Loyalty dashboard not found for the specified business and user.")
             : Ok(LoyaltyContractsMapper.ToContract(result.Value));
     }
 

@@ -151,6 +151,41 @@ namespace Darwin.WebApi.Mappers
         }
 
         /// <summary>
+        /// Maps the aggregated loyalty overview DTO to the member-facing contract.
+        /// </summary>
+        public static MyLoyaltyOverviewResponse ToContract(MyLoyaltyOverviewDto dto)
+        {
+            ArgumentNullException.ThrowIfNull(dto);
+
+            return new MyLoyaltyOverviewResponse
+            {
+                TotalAccounts = dto.TotalAccounts,
+                ActiveAccounts = dto.ActiveAccounts,
+                TotalPointsBalance = dto.TotalPointsBalance,
+                TotalLifetimePoints = dto.TotalLifetimePoints,
+                LastAccrualAtUtc = dto.LastAccrualAtUtc,
+                Accounts = dto.Accounts.Select(ToContract).ToList()
+            };
+        }
+
+        /// <summary>
+        /// Maps the business-scoped loyalty dashboard DTO to the member-facing contract.
+        /// </summary>
+        public static MyLoyaltyBusinessDashboard ToContract(MyLoyaltyBusinessDashboardDto dto)
+        {
+            ArgumentNullException.ThrowIfNull(dto);
+
+            return new MyLoyaltyBusinessDashboard
+            {
+                Account = ToContract(dto.Account),
+                AvailableRewardsCount = dto.AvailableRewardsCount,
+                RedeemableRewardsCount = dto.RedeemableRewardsCount,
+                NextReward = dto.NextReward is null ? null : ToContract(dto.NextReward),
+                RecentTransactions = dto.RecentTransactions.Select(ToContract).ToList()
+            };
+        }
+
+        /// <summary>
         /// Maps unified loyalty timeline entries from Application DTO to contract model.
         /// </summary>
         /// <remarks>

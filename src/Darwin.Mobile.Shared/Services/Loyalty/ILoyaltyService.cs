@@ -108,9 +108,11 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
 
         // My accounts (consumer)
         Task<Result<IReadOnlyList<LoyaltyAccountSummary>>> GetMyAccountsAsync(CancellationToken cancellationToken);
+        Task<Result<MyLoyaltyOverviewResponse>> GetMyOverviewAsync(CancellationToken cancellationToken);
 
         // My history (consumer)
         Task<Result<IReadOnlyList<PointsTransaction>>> GetMyHistoryAsync(Guid businessId, CancellationToken cancellationToken);
+        Task<Result<MyLoyaltyBusinessDashboard>> GetBusinessDashboardAsync(Guid businessId, CancellationToken cancellationToken);
 
         // My businesses (consumer, paged GET with query)
         Task<Result<Darwin.Contracts.Loyalty.MyLoyaltyBusinessesResponse>> GetMyBusinessesAsync(int page, int pageSize, bool includeInactive, CancellationToken cancellationToken);

@@ -184,9 +184,11 @@ public sealed class WebApiRouteAliasSourceTests
 
         source.Should().Contain("api/v1/member/loyalty");
         source.Should().Contain("api/v1/loyalty");
+        source.Should().Contain("my/overview");
         source.Should().Contain("scan/prepare");
         source.Should().Contain("my/accounts");
         source.Should().Contain("my/history/{businessId:guid}");
+        source.Should().Contain("business/{businessId:guid}/dashboard");
         source.Should().Contain("account/{businessId:guid}/join");
         source.Should().Contain("account/{businessId:guid}/next-reward");
     }

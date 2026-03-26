@@ -110,8 +110,10 @@ namespace Darwin.Mobile.Shared.Api
             public const string ConfirmRedemption = "api/v1/business/loyalty/scan/confirm-redemption";
 
             public const string GetMyAccounts = "api/v1/member/loyalty/my/accounts";
+            public const string GetMyOverview = "api/v1/member/loyalty/my/overview";
             public static string GetMyHistory(Guid businessId) => $"api/v1/member/loyalty/my/history/{businessId:D}";
             public static string GetAccountForBusiness(Guid businessId) => $"api/v1/member/loyalty/account/{businessId:D}";
+            public static string GetBusinessDashboard(Guid businessId) => $"api/v1/member/loyalty/business/{businessId:D}/dashboard";
             public static string GetRewardsForBusiness(Guid businessId) => $"api/v1/member/loyalty/business/{businessId:D}/rewards";
             public const string GetMyBusinesses = "api/v1/member/loyalty/my/businesses"; // GET with query
             public const string GetMyTimeline = "api/v1/member/loyalty/my/timeline";     // POST

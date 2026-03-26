@@ -361,6 +361,30 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
         }
 
         /// <inheritdoc />
+        public async Task<Result<MyLoyaltyOverviewResponse>> GetMyOverviewAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await _apiClient
+                    .GetResultAsync<MyLoyaltyOverviewResponse>(ApiRoutes.Loyalty.GetMyOverview, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                    return Result<MyLoyaltyOverviewResponse>.Fail(response.Error ?? "Request failed.");
+
+                return Result<MyLoyaltyOverviewResponse>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<MyLoyaltyOverviewResponse>.Fail($"Network error while retrieving loyalty overview: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
         public async Task<Result<IReadOnlyList<PointsTransaction>>> GetMyHistoryAsync(Guid businessId, CancellationToken cancellationToken)
         {
             if (businessId == Guid.Empty)
@@ -384,6 +408,33 @@ namespace Darwin.Mobile.Shared.Services.Loyalty
             catch (Exception ex)
             {
                 return Result<IReadOnlyList<PointsTransaction>>.Fail($"Network error while retrieving history: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<MyLoyaltyBusinessDashboard>> GetBusinessDashboardAsync(Guid businessId, CancellationToken cancellationToken)
+        {
+            if (businessId == Guid.Empty)
+                return Result<MyLoyaltyBusinessDashboard>.Fail("Invalid business identifier.");
+
+            try
+            {
+                var response = await _apiClient
+                    .GetResultAsync<MyLoyaltyBusinessDashboard>(ApiRoutes.Loyalty.GetBusinessDashboard(businessId), cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.Succeeded || response.Value is null)
+                    return Result<MyLoyaltyBusinessDashboard>.Fail(response.Error ?? "Request failed.");
+
+                return Result<MyLoyaltyBusinessDashboard>.Ok(response.Value);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<MyLoyaltyBusinessDashboard>.Fail($"Network error while retrieving loyalty dashboard: {ex.Message}");
             }
         }
 
