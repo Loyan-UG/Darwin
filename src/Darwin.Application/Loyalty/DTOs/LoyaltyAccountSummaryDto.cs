@@ -52,5 +52,25 @@ namespace Darwin.Application.Loyalty.DTOs
         /// Can be used to show "last visit" information in the UI.
         /// </summary>
         public DateTime? LastAccrualAtUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional title of the next reward tier above the current balance.
+        /// </summary>
+        public string? NextRewardTitle { get; set; }
+
+        /// <summary>
+        /// Gets or sets the next reward threshold in points, when one exists.
+        /// </summary>
+        public int? NextRewardRequiredPoints { get; set; }
+
+        /// <summary>
+        /// Gets or sets the remaining points needed to unlock the next reward tier.
+        /// </summary>
+        public int? PointsToNextReward { get; set; }
+
+        /// <summary>
+        /// Gets or sets the percentage progress toward the next reward tier.
+        /// </summary>
+        public decimal? NextRewardProgressPercent { get; set; }
     }
 }

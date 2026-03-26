@@ -133,8 +133,11 @@ The immediate direction is:
 - Completed: add member privacy and communication preference endpoints under `api/v1/member/profile/preferences` with legacy `/api/v1/profile/me/preferences` aliases, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
 - Completed: add a richer member-facing CRM customer-context endpoint under `api/v1/member/profile/customer/context`, including segments, consent history, and recent interactions, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
 - Completed: add member loyalty overview and business-dashboard projections under `api/v1/member/loyalty/my/overview` and `api/v1/member/loyalty/business/{businessId}/dashboard`, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
-- Task: deepen member loyalty APIs with richer account insights such as expiry, cross-business personalization, and reward-progress projections beyond the new overview/dashboard endpoints.
-- Task: deepen member order and invoice APIs with richer storefront-specific document-download and action flows as front-office requirements solidify.
+- Completed: add member order and invoice action/document flows, including canonical retry-payment endpoints, plain-text document downloads, and additive action metadata on member order/invoice detail contracts.
+- Completed: enrich member loyalty overview and business-dashboard projections with next-reward progress fields while explicitly reporting that point-expiry tracking is not yet enabled in the current loyalty domain model.
+- Completed: add a shared mobile member-commerce service abstraction for canonical member order/invoice history, retry-payment, and plain-text document download flows so MAUI clients do not need to hard-code the new WebApi routes.
+- Task: deepen member loyalty APIs with true point-expiry modeling, cross-business personalization, and any future reward-progress refinements beyond the current overview/dashboard projections.
+- Task: deepen member order and invoice APIs beyond the current retry-payment/document flow with richer storefront-specific actions, document formats, and post-payment follow-up behavior as front-office requirements solidify.
 - Task: extend member profile APIs with any additional self-service CRM views beyond the now-supported addresses, linked customer summary, CRM customer context, and privacy/communication preferences.
 - Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.
 
@@ -167,5 +170,7 @@ The immediate direction is:
 
 - Task: review downstream impact of CRM, billing, and fulfillment changes on mobile-facing contracts.
 - Completed: migrate shared mobile route constants to the canonical audience-first WebApi route roots while preserving compatibility aliases server-side.
+- Completed: add `Darwin.Mobile.Shared` member-commerce service coverage for canonical member order/invoice history, payment-intent, and document-download flows.
+- Completed: extend `Darwin.Mobile.Shared` profile service coverage to the canonical member address-book endpoints so mobile self-service address flows use the same audience-first route ownership as WebApi.
 - Task: continue updating `Darwin.WebApi`, `Darwin.Contracts`, and MAUI apps wherever future domain or route changes affect mobile consumers.
 - Task: keep loyalty behavior backward compatible unless an explicit contract version change is introduced.

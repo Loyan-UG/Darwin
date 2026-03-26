@@ -22,10 +22,44 @@ public sealed class LoyaltyOverviewQueryHandlersTests
         var userId = Guid.NewGuid();
         var firstBusinessId = Guid.NewGuid();
         var secondBusinessId = Guid.NewGuid();
+        var firstProgramId = Guid.NewGuid();
+        var secondProgramId = Guid.NewGuid();
 
         db.Set<Business>().AddRange(
             new Business { Id = firstBusinessId, Name = "Cafe Aurora" },
             new Business { Id = secondBusinessId, Name = "Backwerk Mitte" });
+        db.Set<LoyaltyProgram>().AddRange(
+            new LoyaltyProgram
+            {
+                Id = firstProgramId,
+                BusinessId = firstBusinessId,
+                Name = "Aurora Rewards",
+                IsActive = true
+            },
+            new LoyaltyProgram
+            {
+                Id = secondProgramId,
+                BusinessId = secondBusinessId,
+                Name = "Backwerk Rewards",
+                IsActive = true
+            });
+        db.Set<LoyaltyRewardTier>().AddRange(
+            new LoyaltyRewardTier
+            {
+                Id = Guid.NewGuid(),
+                LoyaltyProgramId = firstProgramId,
+                PointsRequired = 500,
+                Description = "Free Cake",
+                AllowSelfRedemption = true
+            },
+            new LoyaltyRewardTier
+            {
+                Id = Guid.NewGuid(),
+                LoyaltyProgramId = secondProgramId,
+                PointsRequired = 200,
+                Description = "Free Coffee",
+                AllowSelfRedemption = true
+            });
         db.Set<LoyaltyAccount>().AddRange(
             new LoyaltyAccount
             {
@@ -61,6 +95,13 @@ public sealed class LoyaltyOverviewQueryHandlersTests
         result.Value.TotalPointsBalance.Should().Be(420);
         result.Value.TotalLifetimePoints.Should().Be(1450);
         result.Value.LastAccrualAtUtc.Should().Be(new DateTime(2030, 1, 3, 9, 0, 0, DateTimeKind.Utc));
+        result.Value.Accounts.Should().HaveCount(2);
+        result.Value.Accounts[0].NextRewardTitle.Should().Be("Free Cake");
+        result.Value.Accounts[0].PointsToNextReward.Should().Be(200);
+        result.Value.Accounts[0].NextRewardProgressPercent.Should().Be(60m);
+        result.Value.Accounts[1].NextRewardTitle.Should().Be("Free Coffee");
+        result.Value.Accounts[1].PointsToNextReward.Should().Be(80);
+        result.Value.Accounts[1].NextRewardProgressPercent.Should().Be(60m);
     }
 
     [Fact]
@@ -140,6 +181,16 @@ public sealed class LoyaltyOverviewQueryHandlersTests
         result.Value.RedeemableRewardsCount.Should().Be(1);
         result.Value.NextReward.Should().NotBeNull();
         result.Value.NextReward!.Name.Should().Be("Free Espresso");
+        result.Value.Account.NextRewardTitle.Should().Be("Free Espresso");
+        result.Value.Account.PointsToNextReward.Should().Be(70);
+        result.Value.Account.NextRewardRequiredPoints.Should().Be(250);
+        result.Value.Account.NextRewardProgressPercent.Should().Be(72m);
+        result.Value.PointsToNextReward.Should().Be(70);
+        result.Value.NextRewardRequiredPoints.Should().Be(250);
+        result.Value.NextRewardProgressPercent.Should().Be(72m);
+        result.Value.ExpiryTrackingEnabled.Should().BeFalse();
+        result.Value.PointsExpiringSoon.Should().Be(0);
+        result.Value.NextPointsExpiryAtUtc.Should().BeNull();
         result.Value.RecentTransactions.Should().HaveCount(2);
         result.Value.RecentTransactions[0].Reference.Should().Be("ORD-1002");
     }

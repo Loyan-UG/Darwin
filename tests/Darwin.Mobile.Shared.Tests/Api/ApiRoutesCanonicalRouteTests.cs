@@ -17,6 +17,9 @@ public sealed class ApiRoutesCanonicalRouteTests
     {
         ApiRoutes.Auth.Login.Should().StartWith("api/v1/member/auth/");
         ApiRoutes.Profile.GetMe.Should().Be("api/v1/member/profile/me");
+        ApiRoutes.Profile.GetAddresses.Should().Be("api/v1/member/profile/addresses");
+        ApiRoutes.Orders.GetMyOrders.Should().Be("api/v1/member/orders");
+        ApiRoutes.Invoices.GetMyInvoices.Should().Be("api/v1/member/invoices");
         ApiRoutes.Notifications.RegisterDevice.Should().Be("api/v1/member/notifications/devices/register");
         ApiRoutes.Loyalty.GetMyAccounts.Should().Be("api/v1/member/loyalty/my/accounts");
         ApiRoutes.Loyalty.GetMyBusinesses.Should().Be("api/v1/member/loyalty/my/businesses");

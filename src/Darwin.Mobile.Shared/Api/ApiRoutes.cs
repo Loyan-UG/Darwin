@@ -58,11 +58,38 @@ namespace Darwin.Mobile.Shared.Api
         {
             public const string GetMe = "api/v1/member/profile/me";
             public const string UpdateMe = "api/v1/member/profile/me";
+            public const string GetAddresses = "api/v1/member/profile/addresses";
+            public const string CreateAddress = "api/v1/member/profile/addresses";
+            public static string UpdateAddress(Guid id) => $"api/v1/member/profile/addresses/{id:D}";
+            public static string DeleteAddress(Guid id) => $"api/v1/member/profile/addresses/{id:D}/delete";
+            public static string SetDefaultAddress(Guid id) => $"api/v1/member/profile/addresses/{id:D}/default";
             public const string GetPreferences = "api/v1/member/profile/preferences";
             public const string UpdatePreferences = "api/v1/member/profile/preferences";
             public const string GetLinkedCustomer = "api/v1/member/profile/customer";
             public const string GetLinkedCustomerContext = "api/v1/member/profile/customer/context";
             public const string RequestAccountDeletion = "api/v1/member/profile/me/deletion-request";
+        }
+
+        /// <summary>
+        /// Member order endpoints.
+        /// </summary>
+        public static class Orders
+        {
+            public const string GetMyOrders = "api/v1/member/orders";
+            public static string GetById(Guid id) => $"api/v1/member/orders/{id:D}";
+            public static string CreatePaymentIntent(Guid id) => $"api/v1/member/orders/{id:D}/payment-intent";
+            public static string DownloadDocument(Guid id) => $"api/v1/member/orders/{id:D}/document";
+        }
+
+        /// <summary>
+        /// Member invoice endpoints.
+        /// </summary>
+        public static class Invoices
+        {
+            public const string GetMyInvoices = "api/v1/member/invoices";
+            public static string GetById(Guid id) => $"api/v1/member/invoices/{id:D}";
+            public static string CreatePaymentIntent(Guid id) => $"api/v1/member/invoices/{id:D}/payment-intent";
+            public static string DownloadDocument(Guid id) => $"api/v1/member/invoices/{id:D}/document";
         }
 
         /// <summary>

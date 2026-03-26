@@ -222,7 +222,17 @@ public sealed class GetMyInvoiceDetailHandler
                 Status = x.Status,
                 DueDateUtc = x.DueDateUtc,
                 PaidAtUtc = x.PaidAtUtc,
-                CreatedAtUtc = x.CreatedAtUtc
+                CreatedAtUtc = x.CreatedAtUtc,
+                Lines = x.Lines.Select(line => new MemberInvoiceLineDto
+                {
+                    Id = line.Id,
+                    Description = line.Description,
+                    Quantity = line.Quantity,
+                    UnitPriceNetMinor = line.UnitPriceNetMinor,
+                    TaxRate = line.TaxRate,
+                    TotalNetMinor = line.TotalNetMinor,
+                    TotalGrossMinor = line.TotalGrossMinor
+                }).ToList()
             })
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);

@@ -98,6 +98,49 @@ namespace Darwin.Mobile.Shared.Api
         }
 
         /// <inheritdoc />
+        public async Task<Result<string>> GetStringResultAsync(string route, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(route))
+                return Result<string>.Fail("Route is required.");
+
+            var normalized = ApiRoutes.Normalize(route);
+
+            try
+            {
+                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+
+                return await _retry.ExecuteAsync(async token =>
+                {
+                    using var response = await _http.GetAsync(normalized, token).ConfigureAwait(false);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        if (response.StatusCode == HttpStatusCode.NoContent)
+                            return Result<string>.Fail(NoContentResultMessage);
+
+                        var content = await response.Content.ReadAsStringAsync(token).ConfigureAwait(false);
+                        return string.IsNullOrEmpty(content)
+                            ? Result<string>.Fail("Empty text payload from server.")
+                            : Result<string>.Ok(content);
+                    }
+
+                    var errorMessage = await TryReadErrorMessageAsync(response, token).ConfigureAwait(false);
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                        errorMessage = $"Request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}).";
+
+                    return Result<string>.Fail(errorMessage);
+                }, ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<string>.Fail($"Network error: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
         public async Task<Result<TResponse>> PostResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(route))

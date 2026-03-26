@@ -288,7 +288,14 @@ public sealed class ContractSerializationCompatibilityTests
                     UnitPriceGrossMinor = 2599,
                     LineGrossMinor = 2599
                 }
-            ]
+            ],
+            Actions = new MemberOrderActions
+            {
+                CanRetryPayment = true,
+                PaymentIntentPath = "/api/v1/member/orders/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/payment-intent",
+                ConfirmationPath = "/api/v1/public/checkout/orders/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/confirmation",
+                DocumentPath = "/api/v1/member/orders/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/document"
+            }
         };
 
         var json = JsonSerializer.Serialize(dto, JsonOptions);
@@ -303,6 +310,11 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"billingAddressJson\"");
         json.Should().Contain("\"shippingAddressJson\"");
         json.Should().Contain("\"lines\"");
+        json.Should().Contain("\"actions\"");
+        json.Should().Contain("\"canRetryPayment\"");
+        json.Should().Contain("\"paymentIntentPath\"");
+        json.Should().Contain("\"confirmationPath\"");
+        json.Should().Contain("\"documentPath\"");
     }
 
     /// <summary>
@@ -320,7 +332,27 @@ public sealed class ContractSerializationCompatibilityTests
             Currency = "EUR",
             TotalGrossMinor = 2599,
             BalanceMinor = 0,
-            PaymentSummary = "Stripe | EUR 25.99 | Captured"
+            PaymentSummary = "Stripe | EUR 25.99 | Captured",
+            Lines =
+            [
+                new MemberInvoiceLine
+                {
+                    Id = Guid.Parse("12121212-3434-5656-7878-909090909090"),
+                    Description = "Monthly subscription",
+                    Quantity = 1,
+                    UnitPriceNetMinor = 2184,
+                    TaxRate = 0.19m,
+                    TotalNetMinor = 2184,
+                    TotalGrossMinor = 2599
+                }
+            ],
+            Actions = new MemberInvoiceActions
+            {
+                CanRetryPayment = false,
+                PaymentIntentPath = null,
+                OrderPath = "/api/v1/member/orders/ffffffff-ffff-ffff-ffff-ffffffffffff",
+                DocumentPath = "/api/v1/member/invoices/dddddddd-dddd-dddd-dddd-dddddddddddd/document"
+            }
         };
 
         var json = JsonSerializer.Serialize(dto, JsonOptions);
@@ -331,6 +363,11 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"totalGrossMinor\"");
         json.Should().Contain("\"balanceMinor\"");
         json.Should().Contain("\"paymentSummary\"");
+        json.Should().Contain("\"lines\"");
+        json.Should().Contain("\"actions\"");
+        json.Should().Contain("\"canRetryPayment\"");
+        json.Should().Contain("\"orderPath\"");
+        json.Should().Contain("\"documentPath\"");
     }
 
     /// <summary>
@@ -1189,7 +1226,11 @@ public sealed class ContractSerializationCompatibilityTests
                     BusinessName = "Cafe Aurora",
                     PointsBalance = 300,
                     LifetimePoints = 1000,
-                    Status = "Active"
+                    Status = "Active",
+                    NextRewardTitle = "Free Cake",
+                    NextRewardRequiredPoints = 500,
+                    PointsToNextReward = 200,
+                    NextRewardProgressPercent = 60m
                 }
             ]
         };
@@ -1202,6 +1243,10 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"totalLifetimePoints\"");
         json.Should().Contain("\"lastAccrualAtUtc\"");
         json.Should().Contain("\"accounts\"");
+        json.Should().Contain("\"nextRewardTitle\"");
+        json.Should().Contain("\"nextRewardRequiredPoints\"");
+        json.Should().Contain("\"pointsToNextReward\"");
+        json.Should().Contain("\"nextRewardProgressPercent\"");
     }
 
     /// <summary>
@@ -1220,10 +1265,19 @@ public sealed class ContractSerializationCompatibilityTests
                 BusinessName = "Cafe Aurora",
                 PointsBalance = 300,
                 LifetimePoints = 1000,
-                Status = "Active"
+                Status = "Active",
+                NextRewardTitle = "Free Espresso",
+                NextRewardRequiredPoints = 250,
+                PointsToNextReward = 70,
+                NextRewardProgressPercent = 72m
             },
             AvailableRewardsCount = 4,
             RedeemableRewardsCount = 2,
+            PointsToNextReward = 70,
+            NextRewardRequiredPoints = 250,
+            NextRewardProgressPercent = 72m,
+            ExpiryTrackingEnabled = false,
+            PointsExpiringSoon = 0,
             NextReward = new LoyaltyRewardSummary
             {
                 LoyaltyRewardTierId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
@@ -1252,6 +1306,12 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"redeemableRewardsCount\"");
         json.Should().Contain("\"nextReward\"");
         json.Should().Contain("\"recentTransactions\"");
+        json.Should().Contain("\"pointsToNextReward\"");
+        json.Should().Contain("\"nextRewardRequiredPoints\"");
+        json.Should().Contain("\"nextRewardProgressPercent\"");
+        json.Should().Contain("\"expiryTrackingEnabled\"");
+        json.Should().Contain("\"pointsExpiringSoon\"");
+        json.Should().Contain("\"nextPointsExpiryAtUtc\"");
     }
 
     /// <summary>

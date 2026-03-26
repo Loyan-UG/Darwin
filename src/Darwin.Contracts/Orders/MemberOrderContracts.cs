@@ -91,6 +91,27 @@ public sealed class MemberOrderDetail
 
     /// <summary>Gets or sets the linked invoice snapshots.</summary>
     public IReadOnlyList<MemberOrderInvoice> Invoices { get; set; } = Array.Empty<MemberOrderInvoice>();
+
+    /// <summary>Gets or sets the available member actions for this order.</summary>
+    public MemberOrderActions Actions { get; set; } = new();
+}
+
+/// <summary>
+/// Member-facing action metadata for an order detail screen.
+/// </summary>
+public sealed class MemberOrderActions
+{
+    /// <summary>Gets or sets a value indicating whether the current member may retry payment for the order.</summary>
+    public bool CanRetryPayment { get; set; }
+
+    /// <summary>Gets or sets the canonical API path for creating a payment intent, when available.</summary>
+    public string? PaymentIntentPath { get; set; }
+
+    /// <summary>Gets or sets the canonical API path for the order confirmation projection.</summary>
+    public string ConfirmationPath { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the canonical API path for downloading an order document.</summary>
+    public string DocumentPath { get; set; } = string.Empty;
 }
 
 /// <summary>

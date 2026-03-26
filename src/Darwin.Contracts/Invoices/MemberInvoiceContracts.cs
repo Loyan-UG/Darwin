@@ -61,4 +61,55 @@ public sealed class MemberInvoiceDetail : MemberInvoiceSummary
 
     /// <summary>Gets or sets a compact linked payment summary.</summary>
     public string PaymentSummary { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the billed line snapshots.</summary>
+    public IReadOnlyList<MemberInvoiceLine> Lines { get; set; } = Array.Empty<MemberInvoiceLine>();
+
+    /// <summary>Gets or sets the available member actions for this invoice.</summary>
+    public MemberInvoiceActions Actions { get; set; } = new();
+}
+
+/// <summary>
+/// Member-facing invoice line snapshot.
+/// </summary>
+public sealed class MemberInvoiceLine
+{
+    /// <summary>Gets or sets the invoice line identifier.</summary>
+    public Guid Id { get; set; }
+
+    /// <summary>Gets or sets the line description shown to the member.</summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the billed quantity.</summary>
+    public int Quantity { get; set; }
+
+    /// <summary>Gets or sets the unit net amount in minor units.</summary>
+    public long UnitPriceNetMinor { get; set; }
+
+    /// <summary>Gets or sets the tax rate as a decimal fraction.</summary>
+    public decimal TaxRate { get; set; }
+
+    /// <summary>Gets or sets the total net amount in minor units.</summary>
+    public long TotalNetMinor { get; set; }
+
+    /// <summary>Gets or sets the total gross amount in minor units.</summary>
+    public long TotalGrossMinor { get; set; }
+}
+
+/// <summary>
+/// Member-facing action metadata for an invoice detail screen.
+/// </summary>
+public sealed class MemberInvoiceActions
+{
+    /// <summary>Gets or sets a value indicating whether the current member may retry payment for the invoice.</summary>
+    public bool CanRetryPayment { get; set; }
+
+    /// <summary>Gets or sets the canonical API path for creating a payment intent, when available.</summary>
+    public string? PaymentIntentPath { get; set; }
+
+    /// <summary>Gets or sets the canonical API path for navigating to the linked order, when available.</summary>
+    public string? OrderPath { get; set; }
+
+    /// <summary>Gets or sets the canonical API path for downloading an invoice document.</summary>
+    public string DocumentPath { get; set; } = string.Empty;
 }

@@ -1,7 +1,11 @@
+using System.Text;
+using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Orders;
+using Darwin.Domain.Enums;
+using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,16 +21,22 @@ public sealed class MemberOrdersController : ApiControllerBase
 {
     private readonly GetMyOrdersPageHandler _getMyOrdersPageHandler;
     private readonly GetMyOrderForViewHandler _getMyOrderForViewHandler;
+    private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;
+    private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MemberOrdersController"/> class.
     /// </summary>
     public MemberOrdersController(
         GetMyOrdersPageHandler getMyOrdersPageHandler,
-        GetMyOrderForViewHandler getMyOrderForViewHandler)
+        GetMyOrderForViewHandler getMyOrderForViewHandler,
+        CreateStorefrontPaymentIntentHandler createStorefrontPaymentIntentHandler,
+        StorefrontCheckoutUrlBuilder checkoutUrlBuilder)
     {
         _getMyOrdersPageHandler = getMyOrdersPageHandler ?? throw new ArgumentNullException(nameof(getMyOrdersPageHandler));
         _getMyOrderForViewHandler = getMyOrderForViewHandler ?? throw new ArgumentNullException(nameof(getMyOrderForViewHandler));
+        _createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));
+        _checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));
     }
 
     /// <summary>
@@ -88,6 +98,93 @@ public sealed class MemberOrdersController : ApiControllerBase
         }
 
         return Ok(MapDetail(dto));
+    }
+
+    /// <summary>
+    /// Creates or reuses a storefront payment intent for a member-owned order.
+    /// </summary>
+    [HttpPost("{id:guid}/payment-intent")]
+    [HttpPost("/api/v1/orders/{id:guid}/payment-intent")]
+    [ProducesResponseType(typeof(CreateStorefrontPaymentIntentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreatePaymentIntentAsync(Guid id, [FromBody] CreateStorefrontPaymentIntentRequest? request, CancellationToken ct = default)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem("Id must not be empty.");
+        }
+
+        var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (dto is null)
+        {
+            return NotFoundProblem("Order not found.");
+        }
+
+        if (!CanRetryPayment(dto))
+        {
+            return BadRequestProblem("Order cannot accept a new payment attempt.");
+        }
+
+        try
+        {
+            var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto
+            {
+                OrderId = dto.Id,
+                UserId = GetCurrentUserId(),
+                OrderNumber = dto.OrderNumber,
+                Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "DarwinCheckout" : request.Provider.Trim()
+            }, ct).ConfigureAwait(false);
+
+            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: false);
+            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(dto.Id, dto.OrderNumber, cancelled: true);
+            var checkoutUrl = _checkoutUrlBuilder.BuildGatewayUrl(result, returnUrl, cancelUrl);
+
+            return Ok(new CreateStorefrontPaymentIntentResponse
+            {
+                OrderId = result.OrderId,
+                PaymentId = result.PaymentId,
+                Provider = result.Provider,
+                ProviderReference = result.ProviderReference,
+                AmountMinor = result.AmountMinor,
+                Currency = result.Currency,
+                Status = result.Status.ToString(),
+                CheckoutUrl = checkoutUrl,
+                ReturnUrl = returnUrl,
+                CancelUrl = cancelUrl,
+                ExpiresAtUtc = result.ExpiresAtUtc
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequestProblem("Payment intent could not be created.", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Downloads a member-friendly plain-text document for an owned order.
+    /// </summary>
+    [HttpGet("{id:guid}/document")]
+    [HttpGet("/api/v1/orders/{id:guid}/document")]
+    [Produces("text/plain")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DownloadDocumentAsync(Guid id, CancellationToken ct = default)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequestProblem("Id must not be empty.");
+        }
+
+        var dto = await _getMyOrderForViewHandler.HandleAsync(id, ct).ConfigureAwait(false);
+        if (dto is null)
+        {
+            return NotFoundProblem("Order not found.");
+        }
+
+        var fileName = $"order-{SanitizeFileToken(dto.OrderNumber)}.txt";
+        var bytes = Encoding.UTF8.GetBytes(RenderOrderDocument(dto));
+        return File(bytes, "text/plain; charset=utf-8", fileName);
     }
 
     private static MemberOrderSummary MapSummary(MemberOrderSummaryDto dto)
@@ -159,6 +256,94 @@ public sealed class MemberOrdersController : ApiControllerBase
                 Status = invoice.Status.ToString(),
                 DueDateUtc = invoice.DueDateUtc,
                 PaidAtUtc = invoice.PaidAtUtc
-            }).ToList()
+            }).ToList(),
+            Actions = BuildActions(dto)
         };
+
+    private static MemberOrderActions BuildActions(MemberOrderDetailDto dto)
+    {
+        var canRetryPayment = CanRetryPayment(dto);
+        return new MemberOrderActions
+        {
+            CanRetryPayment = canRetryPayment,
+            PaymentIntentPath = canRetryPayment ? GetPaymentIntentPath(dto.Id) : null,
+            ConfirmationPath = GetConfirmationPath(dto.Id),
+            DocumentPath = GetDocumentPath(dto.Id)
+        };
+    }
+
+    private static bool CanRetryPayment(MemberOrderDetailDto dto)
+        => dto.Status is not OrderStatus.Cancelled and not OrderStatus.Refunded &&
+           dto.GrandTotalGrossMinor > 0 &&
+           dto.Payments.All(payment => payment.Status is not PaymentStatus.Captured and not PaymentStatus.Completed);
+
+    private static string GetPaymentIntentPath(Guid id) => $"/api/v1/member/orders/{id:D}/payment-intent";
+
+    private static string GetConfirmationPath(Guid id) => $"/api/v1/public/checkout/orders/{id:D}/confirmation";
+
+    private static string GetDocumentPath(Guid id) => $"/api/v1/member/orders/{id:D}/document";
+
+    private static string SanitizeFileToken(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "order";
+        }
+
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = new string(value.Trim().Select(ch => invalidChars.Contains(ch) ? '-' : ch).ToArray());
+        return string.IsNullOrWhiteSpace(sanitized) ? "order" : sanitized;
+    }
+
+    private static string RenderOrderDocument(MemberOrderDetailDto dto)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"Order: {dto.OrderNumber}");
+        builder.AppendLine($"Status: {dto.Status}");
+        builder.AppendLine($"CreatedAtUtc: {dto.CreatedAtUtc:O}");
+        builder.AppendLine($"Currency: {dto.Currency}");
+        builder.AppendLine($"SubtotalNetMinor: {dto.SubtotalNetMinor}");
+        builder.AppendLine($"TaxTotalMinor: {dto.TaxTotalMinor}");
+        builder.AppendLine($"ShippingTotalMinor: {dto.ShippingTotalMinor}");
+        builder.AppendLine($"DiscountTotalMinor: {dto.DiscountTotalMinor}");
+        builder.AppendLine($"GrandTotalGrossMinor: {dto.GrandTotalGrossMinor}");
+        builder.AppendLine($"ShippingMethod: {dto.ShippingMethodName ?? dto.ShippingMethodId?.ToString("D") ?? "N/A"}");
+        builder.AppendLine($"ShippingCarrier: {dto.ShippingCarrier ?? "N/A"}");
+        builder.AppendLine($"ShippingService: {dto.ShippingService ?? "N/A"}");
+        builder.AppendLine();
+        builder.AppendLine("BillingAddressJson:");
+        builder.AppendLine(dto.BillingAddressJson);
+        builder.AppendLine();
+        builder.AppendLine("ShippingAddressJson:");
+        builder.AppendLine(dto.ShippingAddressJson);
+        builder.AppendLine();
+        builder.AppendLine("Lines:");
+        foreach (var line in dto.Lines)
+        {
+            builder.AppendLine($"- {line.Name} | SKU: {line.Sku} | Qty: {line.Quantity} | UnitGrossMinor: {line.UnitPriceGrossMinor} | LineGrossMinor: {line.LineGrossMinor}");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Payments:");
+        foreach (var payment in dto.Payments)
+        {
+            builder.AppendLine($"- {payment.Provider} | {payment.Status} | {payment.Currency} {payment.AmountMinor} | Ref: {payment.ProviderReference ?? "N/A"} | PaidAtUtc: {payment.PaidAtUtc:O}");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Shipments:");
+        foreach (var shipment in dto.Shipments)
+        {
+            builder.AppendLine($"- {shipment.Carrier} | {shipment.Service} | {shipment.Status} | Tracking: {shipment.TrackingNumber ?? "N/A"} | ShippedAtUtc: {shipment.ShippedAtUtc:O} | DeliveredAtUtc: {shipment.DeliveredAtUtc:O}");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Invoices:");
+        foreach (var invoice in dto.Invoices)
+        {
+            builder.AppendLine($"- {invoice.Id:D} | {invoice.Status} | {invoice.Currency} {invoice.TotalGrossMinor} | DueDateUtc: {invoice.DueDateUtc:O} | PaidAtUtc: {invoice.PaidAtUtc:O}");
+        }
+
+        return builder.ToString();
+    }
 }

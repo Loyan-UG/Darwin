@@ -43,4 +43,22 @@ public sealed class MyLoyaltyBusinessDashboard
 
     /// <summary>Gets or sets recent transactions for the business-scoped account.</summary>
     public IReadOnlyList<PointsTransaction> RecentTransactions { get; set; } = Array.Empty<PointsTransaction>();
+
+    /// <summary>Gets or sets the points still required to unlock the next reward.</summary>
+    public int? PointsToNextReward { get; set; }
+
+    /// <summary>Gets or sets the next reward threshold in points, when one exists.</summary>
+    public int? NextRewardRequiredPoints { get; set; }
+
+    /// <summary>Gets or sets the percentage progress toward the next reward threshold.</summary>
+    public decimal? NextRewardProgressPercent { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether the loyalty implementation currently tracks point expiry.</summary>
+    public bool ExpiryTrackingEnabled { get; set; }
+
+    /// <summary>Gets or sets the points that are known to expire soon, when expiry tracking is enabled.</summary>
+    public int PointsExpiringSoon { get; set; }
+
+    /// <summary>Gets or sets the nearest known point-expiry timestamp in UTC, when available.</summary>
+    public DateTime? NextPointsExpiryAtUtc { get; set; }
 }

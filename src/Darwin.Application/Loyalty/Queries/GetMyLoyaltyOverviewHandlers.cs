@@ -55,6 +55,19 @@ public sealed class GetMyLoyaltyOverviewHandler
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
+        var thresholdsByBusiness = await LoyaltyRewardProgressProjection
+            .LoadThresholdsByBusinessAsync(_db, accounts.Select(x => x.BusinessId), ct)
+            .ConfigureAwait(false);
+
+        foreach (var account in accounts)
+        {
+            LoyaltyRewardProgressProjection.ApplyToAccount(
+                account,
+                thresholdsByBusiness.TryGetValue(account.BusinessId, out var thresholds)
+                    ? thresholds
+                    : Array.Empty<LoyaltyRewardProgressProjection.RewardThreshold>());
+        }
+
         return Result<MyLoyaltyOverviewDto>.Ok(new MyLoyaltyOverviewDto
         {
             TotalAccounts = accounts.Count,
@@ -178,13 +191,31 @@ public sealed class GetMyLoyaltyBusinessDashboardHandler
             .OrderBy(x => x.RequiredPoints)
             .FirstOrDefault();
 
+        LoyaltyRewardProgressProjection.ApplyToAccount(
+            account,
+            rewards
+                .Where(x => x.IsActive)
+                .OrderBy(x => x.RequiredPoints)
+                .Select(x => new LoyaltyRewardProgressProjection.RewardThreshold
+                {
+                    Name = x.Name,
+                    RequiredPoints = x.RequiredPoints
+                })
+                .ToList());
+
         return Result<MyLoyaltyBusinessDashboardDto?>.Ok(new MyLoyaltyBusinessDashboardDto
         {
             Account = account,
             AvailableRewardsCount = rewards.Count,
             RedeemableRewardsCount = rewards.Count(x => x.IsSelectable),
             NextReward = nextReward,
-            RecentTransactions = transactions
+            RecentTransactions = transactions,
+            PointsToNextReward = account.PointsToNextReward,
+            NextRewardRequiredPoints = account.NextRewardRequiredPoints,
+            NextRewardProgressPercent = account.NextRewardProgressPercent,
+            ExpiryTrackingEnabled = false,
+            PointsExpiringSoon = 0,
+            NextPointsExpiryAtUtc = null
         });
     }
 }

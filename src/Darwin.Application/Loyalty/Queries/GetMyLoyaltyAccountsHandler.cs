@@ -81,6 +81,19 @@ namespace Darwin.Application.Loyalty.Queries
 
             var items = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
+            var thresholdsByBusiness = await LoyaltyRewardProgressProjection
+                .LoadThresholdsByBusinessAsync(_dbContext, items.Select(x => x.BusinessId), cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var item in items)
+            {
+                LoyaltyRewardProgressProjection.ApplyToAccount(
+                    item,
+                    thresholdsByBusiness.TryGetValue(item.BusinessId, out var thresholds)
+                        ? thresholds
+                        : Array.Empty<LoyaltyRewardProgressProjection.RewardThreshold>());
+            }
+
             return Result<IReadOnlyList<LoyaltyAccountSummaryDto>>.Ok(items);
         }
     }

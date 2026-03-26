@@ -112,6 +112,8 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("api/v1/member/orders");
         source.Should().Contain("/api/v1/orders");
         source.Should().Contain("/api/v1/orders/{id:guid}");
+        source.Should().Contain("/api/v1/orders/{id:guid}/payment-intent");
+        source.Should().Contain("/api/v1/orders/{id:guid}/document");
     }
 
     [Fact]
@@ -122,6 +124,8 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("api/v1/member/invoices");
         source.Should().Contain("/api/v1/invoices");
         source.Should().Contain("/api/v1/invoices/{id:guid}");
+        source.Should().Contain("/api/v1/invoices/{id:guid}/payment-intent");
+        source.Should().Contain("/api/v1/invoices/{id:guid}/document");
     }
 
     [Fact]

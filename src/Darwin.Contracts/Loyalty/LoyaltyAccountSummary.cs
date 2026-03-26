@@ -65,5 +65,20 @@ namespace Darwin.Contracts.Loyalty
         /// Gets an optional title/label of the next reward the user might reach.
         /// </summary>
         public string? NextRewardTitle { get; init; }
+
+        /// <summary>
+        /// Gets the points threshold required for the next reward, when one exists.
+        /// </summary>
+        public int? NextRewardRequiredPoints { get; init; }
+
+        /// <summary>
+        /// Gets the remaining points needed to unlock the next reward, when one exists.
+        /// </summary>
+        public int? PointsToNextReward { get; init; }
+
+        /// <summary>
+        /// Gets the percentage progress toward the next reward threshold.
+        /// </summary>
+        public decimal? NextRewardProgressPercent { get; init; }
     }
 }

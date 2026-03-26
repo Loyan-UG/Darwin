@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Darwin.Application.CartCheckout.Commands;
 using Darwin.Application.CartCheckout.DTOs;
 using Darwin.Application.CartCheckout.Queries;
@@ -53,7 +52,7 @@ public sealed class PublicCartController : ApiControllerBase
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAsync([FromQuery] string? anonymousId, CancellationToken ct = default)
     {
-        var userId = GetCurrentUserId(User);
+        var userId = GetCurrentUserId();
         var normalizedAnonymousId = NormalizeAnonymousId(anonymousId);
         if (userId is null && normalizedAnonymousId is null)
         {
@@ -78,7 +77,7 @@ public sealed class PublicCartController : ApiControllerBase
             return BadRequestProblem("Request body is required.");
         }
 
-        var userId = GetCurrentUserId(User);
+        var userId = GetCurrentUserId();
         var normalizedAnonymousId = NormalizeAnonymousId(request.AnonymousId);
         if (userId is null && normalizedAnonymousId is null)
         {
@@ -230,21 +229,6 @@ public sealed class PublicCartController : ApiControllerBase
         {
             return NotFoundProblem("Cart not found.");
         }
-    }
-
-    private static Guid? GetCurrentUserId(ClaimsPrincipal user)
-    {
-        if (user.Identity?.IsAuthenticated != true)
-        {
-            return null;
-        }
-
-        var candidate =
-            user.FindFirstValue(ClaimTypes.NameIdentifier) ??
-            user.FindFirstValue("sub") ??
-            user.FindFirstValue("uid");
-
-        return Guid.TryParse(candidate, out var userId) ? userId : null;
     }
 
     private static string? NormalizeAnonymousId(string? anonymousId)

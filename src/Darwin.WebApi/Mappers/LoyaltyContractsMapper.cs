@@ -66,7 +66,10 @@ namespace Darwin.WebApi.Mappers
                 PointsBalance = dto.PointsBalance,
                 LifetimePoints = dto.LifetimePoints,
                 LastAccrualAtUtc = dto.LastAccrualAtUtc,
-                NextRewardTitle = null // not computed by Application yet
+                NextRewardTitle = dto.NextRewardTitle,
+                NextRewardRequiredPoints = dto.NextRewardRequiredPoints,
+                PointsToNextReward = dto.PointsToNextReward,
+                NextRewardProgressPercent = dto.NextRewardProgressPercent
             };
         }
 
@@ -181,7 +184,13 @@ namespace Darwin.WebApi.Mappers
                 AvailableRewardsCount = dto.AvailableRewardsCount,
                 RedeemableRewardsCount = dto.RedeemableRewardsCount,
                 NextReward = dto.NextReward is null ? null : ToContract(dto.NextReward),
-                RecentTransactions = dto.RecentTransactions.Select(ToContract).ToList()
+                RecentTransactions = dto.RecentTransactions.Select(ToContract).ToList(),
+                PointsToNextReward = dto.PointsToNextReward,
+                NextRewardRequiredPoints = dto.NextRewardRequiredPoints,
+                NextRewardProgressPercent = dto.NextRewardProgressPercent,
+                ExpiryTrackingEnabled = dto.ExpiryTrackingEnabled,
+                PointsExpiringSoon = dto.PointsExpiringSoon,
+                NextPointsExpiryAtUtc = dto.NextPointsExpiryAtUtc
             };
         }
 

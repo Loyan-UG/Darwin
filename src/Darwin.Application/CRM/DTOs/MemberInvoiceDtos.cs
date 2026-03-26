@@ -63,4 +63,34 @@ public sealed class MemberInvoiceDetailDto : MemberInvoiceSummaryDto
 
     /// <summary>Gets or sets a compact payment summary for the linked payment.</summary>
     public string PaymentSummary { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the invoice line snapshots.</summary>
+    public List<MemberInvoiceLineDto> Lines { get; set; } = new();
+}
+
+/// <summary>
+/// Member-facing snapshot of an invoice line.
+/// </summary>
+public sealed class MemberInvoiceLineDto
+{
+    /// <summary>Gets or sets the invoice line identifier.</summary>
+    public Guid Id { get; set; }
+
+    /// <summary>Gets or sets the line description shown to the member.</summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the billed quantity.</summary>
+    public int Quantity { get; set; }
+
+    /// <summary>Gets or sets the unit net amount in minor units.</summary>
+    public long UnitPriceNetMinor { get; set; }
+
+    /// <summary>Gets or sets the tax rate as a decimal fraction.</summary>
+    public decimal TaxRate { get; set; }
+
+    /// <summary>Gets or sets the total net amount in minor units.</summary>
+    public long TotalNetMinor { get; set; }
+
+    /// <summary>Gets or sets the total gross amount in minor units.</summary>
+    public long TotalGrossMinor { get; set; }
 }

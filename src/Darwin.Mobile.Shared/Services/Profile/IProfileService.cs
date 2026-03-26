@@ -31,6 +31,31 @@ namespace Darwin.Mobile.Shared.Services.Profile
         Task<Result> UpdatePreferencesAsync(UpdateMemberPreferencesRequest preferences, CancellationToken ct);
 
         /// <summary>
+        /// Loads the current user's reusable address book.
+        /// </summary>
+        Task<IReadOnlyList<MemberAddress>> GetAddressesAsync(CancellationToken ct);
+
+        /// <summary>
+        /// Creates a reusable address for the current user.
+        /// </summary>
+        Task<Result<MemberAddress>> CreateAddressAsync(CreateMemberAddressRequest request, CancellationToken ct);
+
+        /// <summary>
+        /// Updates an address owned by the current user.
+        /// </summary>
+        Task<Result<MemberAddress>> UpdateAddressAsync(Guid addressId, UpdateMemberAddressRequest request, CancellationToken ct);
+
+        /// <summary>
+        /// Deletes an address owned by the current user.
+        /// </summary>
+        Task<Result> DeleteAddressAsync(Guid addressId, DeleteMemberAddressRequest request, CancellationToken ct);
+
+        /// <summary>
+        /// Sets default billing and shipping flags on an address owned by the current user.
+        /// </summary>
+        Task<Result<MemberAddress>> SetDefaultAddressAsync(Guid addressId, SetMemberDefaultAddressRequest request, CancellationToken ct);
+
+        /// <summary>
         /// Loads the CRM customer profile linked to the current identity account, when one exists.
         /// </summary>
         Task<LinkedCustomerProfile?> GetLinkedCustomerAsync(CancellationToken ct);

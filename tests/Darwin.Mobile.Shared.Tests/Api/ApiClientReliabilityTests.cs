@@ -134,6 +134,27 @@ public sealed class ApiClientReliabilityTests
     }
 
     /// <summary>
+    ///     Verifies that raw text GET requests can retrieve non-JSON payloads such as
+    ///     member order or invoice document downloads.
+    /// </summary>
+    [Fact]
+    public async Task GetStringResultAsync_Should_ReturnTextPayload_WhenServerReturnsPlainText()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("Order: ORD-1001", Encoding.UTF8, "text/plain")
+        });
+        var client = CreateApiClient(handler);
+
+        var result = await client.GetStringResultAsync("/api/v1/member/orders/1/document", cancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        result.Value.Should().Be("Order: ORD-1001");
+    }
+
+    /// <summary>
     ///     Verifies that command-style PUT endpoints returning HTTP 204 are normalized
     ///     to <c>Result.Ok()</c> by <see cref="ApiClient.PutNoContentAsync{TRequest}"/>.
     /// </summary>

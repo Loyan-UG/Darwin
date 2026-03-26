@@ -1,14 +1,11 @@
-using System.Security.Claims;
 using Darwin.Application.Orders.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Contracts.Orders;
 using Darwin.Contracts.Shipping;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+using Darwin.WebApi.Services;
 
 namespace Darwin.WebApi.Controllers.Public;
 
@@ -25,7 +22,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
     private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;
     private readonly CompleteStorefrontPaymentHandler _completeStorefrontPaymentHandler;
     private readonly GetStorefrontOrderConfirmationHandler _getStorefrontOrderConfirmationHandler;
-    private readonly IConfiguration _configuration;
+    private readonly StorefrontCheckoutUrlBuilder _checkoutUrlBuilder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicCheckoutController"/> class.
@@ -36,14 +33,14 @@ public sealed class PublicCheckoutController : ApiControllerBase
         CreateStorefrontPaymentIntentHandler createStorefrontPaymentIntentHandler,
         CompleteStorefrontPaymentHandler completeStorefrontPaymentHandler,
         GetStorefrontOrderConfirmationHandler getStorefrontOrderConfirmationHandler,
-        IConfiguration configuration)
+        StorefrontCheckoutUrlBuilder checkoutUrlBuilder)
     {
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
         _placeOrderFromCartHandler = placeOrderFromCartHandler ?? throw new ArgumentNullException(nameof(placeOrderFromCartHandler));
         _createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));
         _completeStorefrontPaymentHandler = completeStorefrontPaymentHandler ?? throw new ArgumentNullException(nameof(completeStorefrontPaymentHandler));
         _getStorefrontOrderConfirmationHandler = getStorefrontOrderConfirmationHandler ?? throw new ArgumentNullException(nameof(getStorefrontOrderConfirmationHandler));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _checkoutUrlBuilder = checkoutUrlBuilder ?? throw new ArgumentNullException(nameof(checkoutUrlBuilder));
     }
 
     /// <summary>
@@ -65,7 +62,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
             var result = await _createStorefrontCheckoutIntentHandler.HandleAsync(new CreateStorefrontCheckoutIntentDto
             {
                 CartId = request.CartId,
-                UserId = GetCurrentUserId(User),
+                UserId = GetCurrentUserId(),
                 ShippingAddressId = request.ShippingAddressId,
                 ShippingAddress = request.ShippingAddress is null
                     ? null
@@ -124,7 +121,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
             var result = await _placeOrderFromCartHandler.HandleAsync(new PlaceOrderFromCartDto
             {
                 CartId = request.CartId,
-                UserId = GetCurrentUserId(User),
+                UserId = GetCurrentUserId(),
                 BillingAddressId = request.BillingAddressId,
                 ShippingAddressId = request.ShippingAddressId,
                 SelectedShippingMethodId = request.SelectedShippingMethodId,
@@ -195,14 +192,14 @@ public sealed class PublicCheckoutController : ApiControllerBase
             var result = await _createStorefrontPaymentIntentHandler.HandleAsync(new CreateStorefrontPaymentIntentDto
             {
                 OrderId = orderId,
-                UserId = GetCurrentUserId(User),
+                UserId = GetCurrentUserId(),
                 OrderNumber = request?.OrderNumber,
                 Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "DarwinCheckout" : request.Provider.Trim()
             }, ct).ConfigureAwait(false);
 
-            var returnUrl = BuildFrontOfficeUrl(orderId, request?.OrderNumber, cancelled: false);
-            var cancelUrl = BuildFrontOfficeUrl(orderId, request?.OrderNumber, cancelled: true);
-            var checkoutUrl = BuildGatewayUrl(result, returnUrl, cancelUrl);
+            var returnUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, request?.OrderNumber, cancelled: false);
+            var cancelUrl = _checkoutUrlBuilder.BuildFrontOfficeConfirmationUrl(orderId, request?.OrderNumber, cancelled: true);
+            var checkoutUrl = _checkoutUrlBuilder.BuildGatewayUrl(result, returnUrl, cancelUrl);
 
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
@@ -260,7 +257,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
             {
                 OrderId = orderId,
                 PaymentId = paymentId,
-                UserId = GetCurrentUserId(User),
+                UserId = GetCurrentUserId(),
                 OrderNumber = request.OrderNumber,
                 ProviderReference = request.ProviderReference,
                 Outcome = outcome,
@@ -304,7 +301,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
         var confirmation = await _getStorefrontOrderConfirmationHandler.HandleAsync(new GetStorefrontOrderConfirmationDto
         {
             OrderId = orderId,
-            UserId = GetCurrentUserId(User),
+            UserId = GetCurrentUserId(),
             OrderNumber = orderNumber
         }, ct).ConfigureAwait(false);
 
@@ -354,21 +351,6 @@ public sealed class PublicCheckoutController : ApiControllerBase
         });
     }
 
-    private static Guid? GetCurrentUserId(ClaimsPrincipal user)
-    {
-        if (user.Identity?.IsAuthenticated != true)
-        {
-            return null;
-        }
-
-        var candidate =
-            user.FindFirstValue(ClaimTypes.NameIdentifier) ??
-            user.FindFirstValue("sub") ??
-            user.FindFirstValue("uid");
-
-        return Guid.TryParse(candidate, out var userId) ? userId : null;
-    }
-
     private static PublicShippingOption MapShippingOption(StorefrontShippingOptionDto dto)
         => new()
         {
@@ -380,53 +362,4 @@ public sealed class PublicCheckoutController : ApiControllerBase
             Service = dto.Service
         };
 
-    private string BuildFrontOfficeUrl(Guid orderId, string? orderNumber, bool cancelled)
-    {
-        var baseUrl = _configuration["StorefrontCheckout:FrontOfficeBaseUrl"];
-        if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out var frontOfficeBaseUri))
-        {
-            throw new InvalidOperationException("Storefront front-office base URL is not configured.");
-        }
-
-        var queryBuilder = new QueryBuilder();
-        if (!string.IsNullOrWhiteSpace(orderNumber))
-        {
-            queryBuilder.Add("orderNumber", orderNumber.Trim());
-        }
-
-        if (cancelled)
-        {
-            queryBuilder.Add("cancelled", "true");
-        }
-
-        return new UriBuilder(frontOfficeBaseUri)
-        {
-            Path = $"/checkout/orders/{orderId:D}/confirmation",
-            Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
-        }.Uri.AbsoluteUri;
-    }
-
-    private string BuildGatewayUrl(StorefrontPaymentIntentResultDto result, string returnUrl, string cancelUrl)
-    {
-        var gatewayBaseUrl = _configuration["StorefrontCheckout:PaymentGatewayBaseUrl"];
-        if (string.IsNullOrWhiteSpace(gatewayBaseUrl) || !Uri.TryCreate(gatewayBaseUrl, UriKind.Absolute, out var gatewayBaseUri))
-        {
-            throw new InvalidOperationException("Storefront payment gateway base URL is not configured.");
-        }
-
-        var queryBuilder = new QueryBuilder
-        {
-            { "orderId", result.OrderId.ToString("D") },
-            { "paymentId", result.PaymentId.ToString("D") },
-            { "provider", result.Provider },
-            { "sessionToken", result.ProviderReference },
-            { "returnUrl", returnUrl },
-            { "cancelUrl", cancelUrl }
-        };
-
-        return new UriBuilder(gatewayBaseUri)
-        {
-            Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
-        }.Uri.AbsoluteUri;
-    }
 }

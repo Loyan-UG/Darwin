@@ -43,6 +43,13 @@ namespace Darwin.Mobile.Shared.Services.Profile
             => _api.GetAsync<MemberPreferences>(ApiRoutes.Profile.GetPreferences, ct);
 
         /// <summary>
+        /// Retrieves the current user's reusable address book.
+        /// </summary>
+        public async Task<IReadOnlyList<MemberAddress>> GetAddressesAsync(CancellationToken ct)
+            => await _api.GetAsync<IReadOnlyList<MemberAddress>>(ApiRoutes.Profile.GetAddresses, ct).ConfigureAwait(false)
+               ?? Array.Empty<MemberAddress>();
+
+        /// <summary>
         /// Updates the current user's privacy and communication preferences using optimistic concurrency.
         /// </summary>
         public async Task<Result> UpdatePreferencesAsync(UpdateMemberPreferencesRequest preferences, CancellationToken ct)
@@ -50,6 +57,49 @@ namespace Darwin.Mobile.Shared.Services.Profile
             if (preferences is null) throw new ArgumentNullException(nameof(preferences));
 
             return await _api.PutNoContentAsync(ApiRoutes.Profile.UpdatePreferences, preferences, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Creates a reusable address for the current user.
+        /// </summary>
+        public async Task<Result<MemberAddress>> CreateAddressAsync(CreateMemberAddressRequest request, CancellationToken ct)
+        {
+            if (request is null) throw new ArgumentNullException(nameof(request));
+
+            return await _api.PostResultAsync<CreateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.CreateAddress, request, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Updates an owned address using optimistic concurrency.
+        /// </summary>
+        public async Task<Result<MemberAddress>> UpdateAddressAsync(Guid addressId, UpdateMemberAddressRequest request, CancellationToken ct)
+        {
+            if (addressId == Guid.Empty) return Result<MemberAddress>.Fail("AddressId is required.");
+            if (request is null) throw new ArgumentNullException(nameof(request));
+
+            return await _api.PutResultAsync<UpdateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.UpdateAddress(addressId), request, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Deletes an owned address using optimistic concurrency.
+        /// </summary>
+        public async Task<Result> DeleteAddressAsync(Guid addressId, DeleteMemberAddressRequest request, CancellationToken ct)
+        {
+            if (addressId == Guid.Empty) return Result.Fail("AddressId is required.");
+            if (request is null) throw new ArgumentNullException(nameof(request));
+
+            return await _api.PostNoContentAsync(ApiRoutes.Profile.DeleteAddress(addressId), request, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Sets default billing and shipping flags for an owned address.
+        /// </summary>
+        public async Task<Result<MemberAddress>> SetDefaultAddressAsync(Guid addressId, SetMemberDefaultAddressRequest request, CancellationToken ct)
+        {
+            if (addressId == Guid.Empty) return Result<MemberAddress>.Fail("AddressId is required.");
+            if (request is null) throw new ArgumentNullException(nameof(request));
+
+            return await _api.PostResultAsync<SetMemberDefaultAddressRequest, MemberAddress>(ApiRoutes.Profile.SetDefaultAddress(addressId), request, ct).ConfigureAwait(false);
         }
 
         /// <summary>

@@ -25,6 +25,11 @@ namespace Darwin.Mobile.Shared.Api
         Task<Result<TResponse>> GetResultAsync<TResponse>(string route, CancellationToken ct);
 
         /// <summary>
+        /// Issues a GET request and returns the raw text payload for non-JSON endpoints.
+        /// </summary>
+        Task<Result<string>> GetStringResultAsync(string route, CancellationToken ct);
+
+        /// <summary>
         /// Issues a POST request and returns a functional result.
         /// </summary>
         Task<Result<TResponse>> PostResultAsync<TRequest, TResponse>(string route, TRequest request, CancellationToken ct);

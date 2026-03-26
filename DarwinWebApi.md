@@ -171,6 +171,10 @@ Current storefront checkout configuration:
 - `/api/v1/profile/*`
 - `/api/v1/member/orders/*`
 - `/api/v1/member/invoices/*`
+- `/api/v1/member/orders/{id}/payment-intent`
+- `/api/v1/member/orders/{id}/document`
+- `/api/v1/member/invoices/{id}/payment-intent`
+- `/api/v1/member/invoices/{id}/document`
 - `/api/v1/member/loyalty/*`
 - `/api/v1/member/profile/preferences`
 - `/api/v1/member/*`
@@ -179,6 +183,8 @@ Current loyalty ownership:
 
 - member loyalty: scan preparation, account summaries, reward browsing, timeline, promotions, and join flows
 - member loyalty now also exposes a cross-business overview (`my/overview`) and a business-scoped dashboard (`business/{businessId}/dashboard`) so mobile and front-office clients can render loyalty home/detail screens without fanning out across multiple smaller endpoints
+- member loyalty overview, account summaries, and the business dashboard now include additive next-reward progress fields (`nextRewardTitle`, `nextRewardRequiredPoints`, `pointsToNextReward`, `nextRewardProgressPercent`) so clients can render progress UI without re-deriving thresholds client-side
+- the business dashboard also exposes `expiryTrackingEnabled`, `pointsExpiringSoon`, and `nextPointsExpiryAtUtc`; today the current loyalty domain model does not track point expiry, so the API explicitly reports expiry tracking as disabled instead of inventing synthetic expiry behavior
 - business loyalty: reward configuration, scan processing, accrual/redemption confirmation, and campaign management
 - legacy mixed loyalty routes remain only as compatibility aliases and should not be used for new development
 
@@ -186,14 +192,19 @@ Current member commerce ownership:
 
 - member orders: paged order history and order detail under the member route root
 - member invoices: paged invoice history and invoice detail under the member route root
+- member order actions: additive retry-payment and plain-text document-download flows under the member route root, plus action metadata on order detail contracts so clients can discover canonical follow-up paths without hard-coding them
+- member invoice actions: additive retry-payment and plain-text document-download flows for order-linked invoices, plus action metadata on invoice detail contracts and line-level projections suitable for self-service document rendering
+- mobile shared now includes a dedicated member-commerce service abstraction over the canonical member order/invoice routes, including retry-payment and plain-text document downloads, so MAUI consumers can adopt the new audience-first paths without duplicating route composition logic in app code
 - member profile addresses: reusable address-book CRUD and default billing/shipping selection under the member profile route root
 - member CRM linkage: current identity-to-customer summary under the member profile route root
 - member CRM customer context: a richer self-service projection under the member profile route root that includes current segments, consent history, and recent interaction history without exposing admin editing DTOs
 - member preferences: privacy and communication preferences under the member profile route root, including aggregate marketing consent, per-channel delivery flags, and optional analytics tracking
 - member loyalty overview/dashboard: additive projections intended to reduce chatty client behavior by combining account, reward, and recent-history context into fewer member-facing calls
+- member retry-payment endpoints intentionally reuse the same storefront payment-intent handler and hosted-checkout URL builder as public checkout, so front-office and future mobile clients do not fork payment-session behavior
 - storefront checkout is now intentionally allowed to reuse saved member addresses and then fall back to the same order aggregate for member confirmation/history rather than inventing a second order model
 - member profile addresses are intentionally reusable by storefront checkout so signed-in users can place orders from saved addresses without exposing admin-facing address contracts
 - mobile shared route/service catalogs now expose the canonical member-preferences, member CRM customer-context, and member loyalty overview/dashboard endpoints so future mobile UI work does not need to rediscover route ownership
+- mobile shared profile services now also cover the canonical member address-book endpoints, so MAUI self-service address flows can move to the audience-first route surface without adding app-local route logic
 - legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
 - mobile shared route constants should prefer the canonical audience-first roots (`public`, `member`, `business`) even when the legacy aliases still exist server-side
 

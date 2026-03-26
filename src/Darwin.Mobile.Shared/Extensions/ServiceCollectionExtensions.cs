@@ -8,6 +8,7 @@ using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Resilience;
 using Darwin.Mobile.Shared.Security;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Services.Commerce;
 using Darwin.Mobile.Shared.Services.Legal;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.Services.Notifications;
@@ -131,6 +132,7 @@ namespace Darwin.Mobile.Shared.Extensions
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<ILoyaltyService, LoyaltyService>();
             services.AddSingleton<IBusinessService, BusinessService>();
+            services.AddSingleton<IMemberCommerceService, MemberCommerceService>();
             services.AddSingleton<IProfileService, ProfileService>();
             services.AddSingleton<IPushRegistrationService, PushRegistrationService>();
             services.AddSingleton<ILegalLinkService, LegalLinkService>();

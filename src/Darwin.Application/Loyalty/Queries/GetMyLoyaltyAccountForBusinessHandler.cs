@@ -129,6 +129,19 @@ namespace Darwin.Application.Loyalty.Queries
                 .SingleOrDefaultAsync(ct)
                 .ConfigureAwait(false);
 
+            if (summary is not null)
+            {
+                var thresholdsByBusiness = await LoyaltyRewardProgressProjection
+                    .LoadThresholdsByBusinessAsync(_db, [summary.BusinessId], ct)
+                    .ConfigureAwait(false);
+
+                LoyaltyRewardProgressProjection.ApplyToAccount(
+                    summary,
+                    thresholdsByBusiness.TryGetValue(summary.BusinessId, out var thresholds)
+                        ? thresholds
+                        : Array.Empty<LoyaltyRewardProgressProjection.RewardThreshold>());
+            }
+
             // Even when no account exists yet, we treat this as a successful
             // query with a null payload. The WebApi layer can decide whether
             // to translate null to HTTP 404 or return a 200 with a null body

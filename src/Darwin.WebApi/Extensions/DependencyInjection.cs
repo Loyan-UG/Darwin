@@ -107,6 +107,7 @@ namespace Darwin.WebApi.Extensions
 
             services.Configure<InactiveReminderWorkerOptions>(configuration.GetSection("InactiveReminderWorker"));
             services.AddHostedService<InactiveReminderBackgroundService>();
+            services.AddSingleton<StorefrontCheckoutUrlBuilder>();
 
             // Loyalty presentation helpers used by WebApi mapping/presentation layer.
             services.AddLoyaltyPresentationServices();

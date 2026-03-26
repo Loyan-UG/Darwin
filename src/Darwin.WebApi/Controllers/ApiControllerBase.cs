@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Claims;
 using Darwin.Shared.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -122,6 +123,25 @@ namespace Darwin.WebApi.Controllers
             };
 
             return StatusCode(StatusCodes.Status400BadRequest, problem);
+        }
+
+        /// <summary>
+        /// Resolves the current authenticated user identifier from common JWT claim types.
+        /// </summary>
+        /// <returns>The current user identifier, or <c>null</c> when the request is anonymous.</returns>
+        protected Guid? GetCurrentUserId()
+        {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                return null;
+            }
+
+            var candidate =
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                User.FindFirstValue("sub") ??
+                User.FindFirstValue("uid");
+
+            return Guid.TryParse(candidate, out var userId) ? userId : null;
         }
     }
 }
