@@ -1,657 +1,184 @@
-# Darwin Mobile Suite & Contracts — Technical Guide
+ï»¿# Darwin Mobile Guide
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet?logo=dotnet)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
 [![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
-[![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
-
-
-> Scope: **Mobile** projects and the **Darwin.Contracts** package only. This guide enables a new contributor to continue the mobile work without needing any prior chat context.
-
----
-
-## 0) Executive Summary
-
-Darwin’s mobile suite consists of two .NET MAUI apps that sit on top of the existing Darwin platform:
-
-- **Darwin.Mobile.Consumer** – end-user app: login, personal **QR based on a server-side scan session**, discover businesses on a map, view/earn/redeem rewards, profile.
-- **Darwin.Mobile.Business** – business tablet app: **scan the customer’s QR**, load the current **scan session** from the server, then **accrue points** or **confirm a redemption**.
-
-Key principles for the loyalty flow:
-
-- The QR code **only contains an opaque ScanSessionToken** (string).
-- All sensitive data (customer identity, rewards, balances, business rules) lives on the server.
-- The **Consumer app** calls `PrepareScanSession` to create a short-lived scan session (Mode = Accrual or Redemption) and renders the returned `ScanSessionToken` as QR.
-- The **Business app** scans the QR and calls `ProcessScanSessionForBusiness` to load the session (Mode + summary + selected rewards), then calls `ConfirmAccrual` or `ConfirmRedemption` to finalize.
-- The same Contracts (`Darwin.Contracts`) are used by WebApi and both apps.
-
----
-
-## 1) Projects & Roles
-
-### 1.1 Darwin.Mobile.Consumer (MAUI)
-
-- Targets iOS/Android (optionally Windows/MacCatalyst for debugging).
-- Core features:
-  - Authentication (JWT access + refresh tokens).
-  - **Loyalty QR page**: shows a QR built from a server-issued `ScanSessionToken`.
-  - Rewards dashboard per business.
-  - Business discovery (full in-app map integration + directory) and business detail.
-  - Profile (read/update with optimistic concurrency via `RowVersion`).
-- UI binds to **Shared** services (`ILoyaltyService`, `IAuthService`, `IProfileService`, `IBusinessService`) and uses platform services (camera, location) via abstractions in `Darwin.Mobile.Shared`.
-
-### 1.2 Darwin.Mobile.Business (MAUI)
-
-- Targets tablet-class devices (Android/iPad; Windows/Mac for debugging if needed).
-- Phase-1 core features:
-  - **Scan** customer QR with the device camera.
-  - Call `ProcessScanSessionForBusiness` to load the session:
-    - Mode = Accrual ? show account summary and allow point accrual.
-    - Mode = Redemption ? show selected rewards for confirmation.
-  - Call `ConfirmAccrual` / `ConfirmRedemption` to complete the operation.
-- Uses the same Shared services; provides the scanner implementation for the device.
-- Phase-2 increment delivered: business-side reward tier editing (load/create/update/delete) backed by loyalty reward-configuration APIs.
-- Phase-2 increment delivered: business dashboard + lightweight reporting cards (sessions/accruals/redemptions/top customers/recent activity).
-- Phase-2 increment delivered: staff role visibility + client-side permission guards for reward edit and redemption/accrual confirmations.
-- Phase-3 increment delivered: subscription settings entry point with a server-backed read-only subscription status snapshot and a public Loyan website handoff for full billing/subscription management outside the mobile app.
-
-### 1.3 Darwin.Mobile.Shared (Class Library)
-
-- **ApiClient** with JSON (System.Text.Json), bearer handling, and **retry** via an `IRetryPolicy` abstraction (exponential backoff with jitter).
-- **Abstractions** for camera scanning and geolocation (`IScanner`, `ILocation`) to keep UI projects platform-specific.
-- **Auth/Profile/Loyalty/Discovery facades**:
-  - `IAuthService` for login/refresh/logout/register/change-password/forgot-password/reset-password.
-  - `IProfileService` for `GET/PUT /api/v1/profile/me` flows.
-  - `ILoyaltyService` for session-based scan flows and loyalty accounts.
-  - `IBusinessService` for map/list/detail discovery calls.
-  - `ITokenStore` abstraction over secure storage.
-- **DI composition** entry:
-  - `AddDarwinMobileShared(ApiOptions)` registers ApiClient, retry policy, TokenStore, and service facades. Requires **Microsoft.Extensions.Http** for `AddHttpClient`.
-
-### 1.4 Darwin.Contracts (Class Library)
-
-- **Single source of truth** for WebApi request/response models used by both mobile apps and Web.
-- Contains **no** EF types or server implementation details.
-- Current/added areas:
-  - **Identity**: login, refresh, logout, logout-all, register, change-password, request-reset, reset-password.
-  - **Profile**: member self profile read/update models (`RowVersion` based).
-  - **Loyalty** (session-based scan model + business reward-configuration contracts for tier CRUD; see §4.3).
-  - **Businesses**: discovery filters, map summaries, business details.
-  - **Common**: paging, geo coordinates, problem details, sort options.
-
----
-
-### 1.5 Legal & Compliance UX (Consumer + Business)
-
-The mobile apps now implement a configuration-driven legal/compliance navigation layer on top of the existing auth/settings flows:
-
-- **Canonical source**: legal content stays external and is hosted on the Loyan website. The apps do **not** embed legal text bodies in code.
-- **Configured paths (canonical production URLs)**:
-  - `https://loyan.de/impressum`
-  - `https://loyan.de/datenschutz`
-  - `https://loyan.de/nutzungsbedingungen-consumer`
-  - `https://loyan.de/nutzungsbedingungen-business`
-  - `https://loyan.de/konto-loeschen`
-- **Central configuration model**: `LegalLinksOptions` in `Darwin.Mobile.Shared.Configuration` with required fields:
-  - `ImpressumUrl`, `PrivacyPolicyUrl`, `ConsumerTermsUrl`, `BusinessTermsUrl`, `AccountDeletionUrl`
-  - future-ready optional fields: `PrivacyChoicesUrl`, `ConsumerPreContractInfoUrl`, `BusinessLegalInfoUrl`
-- **DI / environment behavior**:
-  - bound from app configuration (`LegalLinks` section) and registered through `AddDarwinMobileShared(ApiOptions, LegalLinksOptions)`
-  - supports environment-specific overrides through `appsettings.mobile.{Environment}.json` when present
-  - validates required HTTPS links at startup, with debug diagnostics and optional fail-fast (`FailFastOnMissingRequiredLinks`)
-- **Shared opener behavior**:
-  - `ILegalLinkService` resolves validated URLs and opens them via MAUI browser abstractions
-  - preferred behavior is in-app browser experience (`BrowserLaunchMode.SystemPreferred`) with launcher fallback when needed
-- **Shared legal hub**:
-  - both apps expose a screen named exactly **`Rechtliches & Datenschutz`**
-  - available from **pre-login auth** and from **post-login settings**
-  - items: `Impressum`, `Datenschutzhinweise`, `Nutzungsbedingungen`, `Konto löschen`
-  - Consumer terms item opens `ConsumerTermsUrl`; Business terms item opens `BusinessTermsUrl`
-- **Account deletion entry**:
-  - **Consumer** exposes an authenticated in-app deletion-request flow that deactivates the current account and anonymizes direct personal data without physically deleting the user row
-  - **Business** keeps the warning-first handoff page and opens `https://loyan.de/konto-loeschen` through the centralized legal-links configuration
-  - no fake in-app deletion success is shown; Consumer signs the user out locally after a successful in-app request, while Business deletion remains externally completed on the website
-- **Consumer registration acknowledgements**:
-  - registration is blocked until the user accepts `Nutzungsbedingungen` and acknowledges `Datenschutzhinweise`
-  - the privacy item is an acknowledgement/notice-read pattern, **not** blanket consent for all processing
-  - each acknowledgement row includes a tappable link to the configured canonical page
-- **Optional future-ready privacy choices**:
-  - registration/profile expose local placeholder controls for promotional push and optional analytics preferences
-  - these controls are independent from required legal acknowledgements, default to off, and remain revocable later
-- **Permission disclosures (just-in-time)**:
-  - Consumer: shown before location permission and before notification permission request
-  - Business: shown before camera/scanner permission request
-  - each disclosure explains what is requested, why it is needed, whether the feature is optional/required, and links to `Datenschutzhinweise`
-
----
-
-## 2) Solution Structure & Solution Filters
 
-- Keep mobile and web in **one repo**, but use two **Solution Filters**:
-  - `Darwin.WebAdminOnly.slnf`: Darwin.WebAdmin, Darwin.WebApi, Darwin.Infrastructure, Darwin.Application, Darwin.Domain, Darwin.Contracts.
-  - `Darwin.MobileOnly.slnf`: Darwin.Mobile.Consumer, Darwin.Mobile.Business, Darwin.Mobile.Shared, Darwin.Contracts.
-- Rationale: faster IDE load and focused builds while preserving a single codebase and shared Contracts.
+> Scope: `Darwin.Mobile.Consumer`, `Darwin.Mobile.Business`, `Darwin.Mobile.Shared`, and mobile-facing contract dependencies.
 
----
+## 1. Purpose
 
-## 3) Back-end Composition (for reference)
+Darwin has two MAUI apps:
 
-Web/WebApi compose Infrastructure modules:
-
-- `AddPersistence(configuration)` for EF Core + migrations + seeding.
-- `AddIdentityInfrastructure()` for Argon2, WebAuthn, TOTP, secret-protection; `AddJwtAuthCore()` for JWT issuing + login rate limiting.
-- `AddSharedHostingDataProtection(configuration)` for key rings (token/encryption) and `AddNotificationsInfrastructure(configuration)` for SMTP.
+- `Darwin.Mobile.Consumer`: member-facing app
+- `Darwin.Mobile.Business`: business/staff-facing app
 
-> Why this matters to mobile? Token issuance/refresh, **session-based loyalty endpoints**, and secure storage assumptions derive from this composition.
+The mobile suite is already important enough to affect platform priorities. Early operational usage is expected to start from business/mobile-facing workflows, which means backend and WebAdmin must support mobile onboarding and account lifecycle needs correctly.
 
----
+## 2. Current Priority Clarification
 
-## 4) Contracts Overview
+Current delivery priority is not "mobile first" in isolation.
 
-> Contracts are designed for **System.Text.Json** with default web naming, compatible with the Shared ApiClient. They avoid exposing internal IDs where not needed and keep the QR payload opaque.
+The actual priority is:
 
-### 4.1 Common
+1. keep mobile-used backend flows stable
+2. complete `Darwin.WebAdmin` and backend workflows needed by mobile operations
+3. support real business onboarding, activation, setup, and support scenarios
 
-- `PagingRequest`, `PagedResponse<T>` – uniform paging across discovery lists.
-- `GeoCoordinateModel` – decimal degrees for pins/proximity.
-- `ApiProblem` – RFC 7807-like minimal error envelope.
-- `SortOption` – already exists and is reused by discovery.
+Practical consequence:
 
-### 4.2 Identity
+- `Darwin.Mobile.Business` is usable enough that missing onboarding/admin support is now a platform blocker
+- WebAdmin and backend must support business user lifecycle and operational troubleshooting
 
-- `PasswordLoginRequest` ? `TokenResponse` (Access/Refresh pair), `RefreshTokenRequest`.
-  - Access is short-lived (JWT); Refresh is opaque and longer-lived per server policy.
+## 3. Current Mobile Status
 
-### 4.3 Loyalty (Session-based Scan Model)
+### `Darwin.Mobile.Consumer`
 
-Located under `Darwin.Contracts.Loyalty`:
+Current usable areas include:
 
-- **Enums / flags**
-  - `LoyaltyScanMode` – `Accrual` or `Redemption`.
-  - `LoyaltyScanAllowedActions` – flags for what the Business app is allowed to do (e.g. `CanConfirmRedemption`, `CanAccruePoints`).
+- authentication
+- profile and preferences
+- member addresses
+- loyalty views
+- orders and invoices
+- CRM-linked customer context
 
-- **Read models**
-  - `LoyaltyRewardSummary` – compact reward model for both apps:
-    - `Id`, `BusinessId`, `Name`, `Description`, `RequiredPoints`, `IsActive`, `IsSelectable`.
-  - `LoyaltyAccountSummary` – snapshot for the current consumer at a business:
-    - Non-personal alias (not real name/email), `CurrentPoints`, `NextReward`, etc.
+### `Darwin.Mobile.Business`
 
-- **Scan session creation (Consumer app)**
-  - `PrepareScanSessionRequest`:
-    - `BusinessId` – where the user is visiting.
-    - `Mode` – `LoyaltyScanMode.Accrual` or `Redemption`.
-    - `SelectedRewardIds` – optional list of reward IDs (for Redemption).
-  - `PrepareScanSessionResponse`:
-    - `ScanSessionToken` – opaque string encoded into the QR.
-    - `Mode` – confirmed mode.
-    - `ExpireAtUtc` – server-side expiry of the scan session.
-    - `SelectedRewards` – optional list of `LoyaltyRewardSummary` for confirmation on the Consumer side.
+Current usable areas include:
 
-- **Scan session processing (Business app)**
-  - `ProcessScanSessionForBusinessRequest`:
-    - `ScanSessionToken` – scanned from the consumer’s QR.
-  - `ProcessScanSessionForBusinessResponse`:
-    - `Mode` – `Accrual` / `Redemption`.
-    - `BusinessId` – must match the logged-in business (validated server-side).
-    - `AccountSummary` – optional `LoyaltyAccountSummary`.
-    - `SelectedRewards` – optional list of `LoyaltyRewardSummary`.
-    - `AllowedActions` – `LoyaltyScanAllowedActions` flags.
+- loyalty scanning and operational business usage
+- dashboard and business-side workflows already implemented in the app
+- account/profile/password flows that now depend on cleaner backend and admin support
 
-- **Accrual confirmation (Business app)**
-  - `ConfirmAccrualRequest`:
-    - `ScanSessionToken`.
-    - `Points` or `Amount` depending on current business rules.
-  - `ConfirmAccrualResponse`:
-    - `Success`, `NewBalance`, `ErrorCode`, `ErrorMessage` (optional).
+### `Darwin.Mobile.Shared`
 
-- **Redemption confirmation (Business app)**
-  - `ConfirmRedemptionRequest`:
-    - `ScanSessionToken` (in Phase 1 we confirm the rewards already stored in the session).
-  - `ConfirmRedemptionResponse`:
-    - `Success`, `NewBalance`, `ErrorCode`, `ErrorMessage` (optional).
+Shared responsibilities include:
 
-These Contracts support Phase-1/2 of the mobile roadmap while being extendable (e.g. extra modes, more summary data) without breaking existing clients.
+- API route catalog
+- auth/profile/loyalty/member-commerce service abstractions
+- contract-aligned shared client logic
 
-### 4.4 Businesses (Discovery)
+## 4. Business User Lifecycle
 
-- `BusinessDiscoveryFilter` – query, category, near/max-distance, open-now, min-rating, active-loyalty-only, sort, paging.
-- `BusinessSummary` – id, name, category, rating, approximate location, open-now.
-- `BusinessDetail` – description, opening hours, phones/links, address, images, loyalty program preview.
+This lifecycle matters now because it directly affects early go-live.
 
-These are sufficient for the map, directory and profile pages on Consumer.
+Required scenarios:
 
----
+- signup
+- invitation
+- activation
+- login
+- forgot password
+- reset password
+- status-based access
+- onboarding completion
+- lock/suspend/reactivate where required
 
-## 5) Mobile Shared Library Details
+### Current state
 
-### 5.1 HTTP + Retry
+- `In Progress`: login and operational app usage exist
+- `Planned / Near-term`: the surrounding onboarding, activation, invitation, and support lifecycle must be completed end-to-end through backend and WebAdmin
 
-- `ApiClient` sets `HttpClient.BaseAddress` from `ApiOptions.BaseUrl`, serializes with `JsonSerializerDefaults.Web`, and wraps calls in `IRetryPolicy`.
-- Default policy: exponential backoff with jitter; retries `HttpRequestException` and timeouts only. Keep attempts small to protect UX/battery.
-- DI registration (`AddDarwinMobileShared`) wires `AddHttpClient<IApiClient, ApiClient>()` and default timeout (e.g. 15s). `Microsoft.Extensions.Http` must be referenced in the host project.
+## 5. Email Dependency
 
-### 5.2 Auth Storage
+The following scenarios depend on reliable email sending:
 
-- `ITokenStore` – abstraction over secure storage; mobile apps provide concrete implementations (e.g. Essentials’ `SecureStorage`).
-- `IAuthService` – wraps Contracts for auth flows and integrates `ITokenStore` with `IApiClient` (Bearer handling).
-- `IProfileService` – wraps member profile endpoints and handles update payload shape (`Id` + `RowVersion`).
-- During active integration testing, login view models in both mobile apps prefill QA credentials only for DEBUG builds to speed manual verification loops; non-DEBUG builds keep credentials empty. This behavior is intentionally retained and must remain unchanged until manual removal is explicitly requested by product owner.
-- **Consumer QR auto-refresh policy (current app behavior)**: the UI countdown check runs every ~1 second for a smooth countdown, while the app enforces a **minimum 5-minute interval** between automatic network refresh calls when the token is still valid. Configuration lives in `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs` (`MinimumAutoRotationInterval`, `RotationCheckInterval`, `RotationRenewThreshold`) so this value can be changed centrally later.
+- signup confirmation
+- invitation
+- account activation
+- forgot password
+- password reset
 
-### 5.3 Integration Abstractions
+This dependency should not be treated as optional infrastructure. It is a go-live-critical platform capability and one of the main reasons Communication Core must be delivered early with email-first scope.
 
-- `IScanner` – camera barcode/QR reader; implemented per app (Business tablet, optionally Consumer for demos).
-- `ILocation` – geo provider; used to implement “near me” filters.
+## 6. Mobile and WebAdmin Dependency
 
----
+Mobile usage depends on WebAdmin and backend being able to:
 
-## 6) End-to-End QR/Scan Flow (Security-aware)
+- create businesses
+- provision owner/admin users
+- manage business account state
+- support activation and password recovery
+- inspect and troubleshoot account/payment/shipment issues
+- apply initial defaults and configuration
 
-### Consumer app
+This is why WebAdmin completion is currently more important than broader front-office expansion.
 
-1. User logs in ? `POST /identity/login` ? `TokenResponse`.  
-   Access token is stored through `ITokenStore`; ApiClient bearer is set.
+## 7. Mobile and WebApi Dependency
 
-2. To show QR in **Accrual** mode:
-   - Consumer calls `POST /api/v1/loyalty/scan/prepare` with `PrepareScanSessionRequest { BusinessId, Mode = Accrual }`.
-   - Server returns `PrepareScanSessionResponse` with `ScanSessionToken` and `ExpireAtUtc`.
-   - Consumer renders the QR using `ScanSessionToken`.
+Mobile apps rely on `Darwin.WebApi` and `Darwin.Contracts` as the delivery boundary.
 
-3. To show QR in **Redemption** mode:
-   - Consumer queries available rewards for the business and current balance.
-   - User selects one or more rewards.
-   - Consumer calls `POST /api/v1/loyalty/scan/prepare` with `Mode = Redemption` and `SelectedRewardIds`.
-   - Server validates that points are sufficient and returns `ScanSessionToken` + `SelectedRewards`.
-   - Consumer refreshes the QR with the new token.
+Rules:
 
-4. If the session expires before being scanned, WebApi returns an error; the app should call `POST /api/v1/loyalty/scan/prepare` again and show a new QR.
+- keep mobile-used endpoints stable
+- preserve compatibility when changing routes or payloads
+- if a mobile-used endpoint changes, update `Darwin.Mobile.Shared` and then the consuming mobile UI path
 
-### Business app
+The current platform rule remains:
 
-1. Cashier taps “Scan” ? `IScanner.ScanAsync()` yields the token string.
-2. App calls `POST /api/v1/loyalty/scan/process` with `ProcessScanSessionForBusinessRequest { ScanSessionToken }`.
-3. WebApi:
-   - Validates the token and business, loads mode and account summary.
-   - Returns `ProcessScanSessionForBusinessResponse`:
-     - Mode, `AccountSummary`, `SelectedRewards`, `AllowedActions`.
+- mobile-used WebApi flows must continue to work
+- broader WebApi expansion can proceed after admin/backend priorities are met
 
-4. UI logic:
-   - If `Mode = Accrual` and `AllowedActions` contains `CanAccruePoints`:
-     - Show current balance, optionally ask for amount.
-     - Call `POST /api/v1/loyalty/scan/confirm-accrual` with `ConfirmAccrualRequest { ScanSessionToken, Points }`.
-   - If `Mode = Redemption` and `AllowedActions` contains `CanConfirmRedemption`:
-     - Show list of `SelectedRewards`.
-     - Cashier confirms usage ? call `POST /api/v1/loyalty/scan/confirm-redemption` with `ConfirmRedemptionRequest { ScanSessionToken }`.
+## 8. Localization Note
 
-5. Server updates balances and returns confirmations; Consumer app will see updated points on next refresh (or via push/polling in later phases).
+Current state:
 
-### Security notes
+- mobile apps already support bilingual operation
+- adding another mobile resource language is comparatively straightforward
 
-- QR payload contains **only `ScanSessionToken`**, not internal IDs.
-- Tokens are **short-lived** and bound to both customer and business.
-- Processing always goes through a server-side scan session, not directly against the loyalty account.
-- Replay risk is limited by short expiry, single-use semantics, server-side validation and potential rate limiting.
+Platform implication:
 
----
+- future platform-wide multilingual support should stay aligned with the mobile localization approach
+- WebAdmin is not yet fully multilingual, but it should be built in a way that makes later multilingual rollout easier
 
-## 7) Configuration & Environments
+## 9. Communication and Notification Implication
 
-### 7.1 Mobile
+Mobile-related user lifecycle flows depend on Communication Core:
 
-`ApiOptions` is provided in each app at composition time:
+- invitation
+- signup confirmation
+- activation
+- forgot password
+- reset password
+- important account notifications
 
-- `BaseUrl`: WebApi root (e.g. `https://api.example.com/`).
-- `JwtAudience`: as expected by WebApi JWT validation.
-- Other tuning knobs (retry, timeouts, etc.) can be added as the Shared layer evolves.
+This means Communication Core is not only a web/admin concern. It is directly tied to mobile onboarding success.
 
-Provide environment-specific `ApiOptions` via platform config (e.g. MAUI config class per build configuration) or compile-time constants; pass them into `AddDarwinMobileShared()` during startup.
+## 10. Security and Operational Notes
 
-For map providers:
-- **Android (Google Maps)**: provide `GoogleMapsApiKey` via environment/CI secret and pass it to Android manifest placeholder (`googleMapsApiKey`). Avoid committing production API keys in `.csproj` or manifest files.
-- **iOS/MacCatalyst (MapKit)**: no Google Maps key is required for built-in MAUI MapKit rendering, but location/privacy entries (e.g., `NSLocationWhenInUseUsageDescription`) must remain configured.
+Important cross-cutting concerns for mobile-backed flows:
 
+- secure token handling
+- account status-based access control
+- tenant/business isolation
+- safe reset and activation flows
+- PII protection
+- auditability for support-sensitive actions
 
-### 7.1.1 Android Google Maps key setup (required for Consumer map on Android)
+The admin and backend systems must expose enough operator visibility to support these flows without leaking sensitive internals into the mobile clients.
 
-The Consumer project reads map key through MSBuild property `GoogleMapsApiKey`, with fallback to env var `GOOGLE_MAPS_API_KEY`.
+## 11. Phase-1 Provider Assumptions
 
-Where to set it:
-- **Windows / PowerShell (current shell):** `<c>$env:GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
-- **macOS/Linux / bash (current shell):** `<c>export GOOGLE_MAPS_API_KEY="YOUR_KEY"</c>`
-- **Alternative env var (Android-only pipelines):** `ANDROID_GOOGLE_MAPS_API_KEY`
-- **CI/CD:** add secure variable named `GOOGLE_MAPS_API_KEY` (preferred) or `ANDROID_GOOGLE_MAPS_API_KEY`.
-- **Local persistent MSBuild override (optional):** set `GoogleMapsApiKey` in `Directory.Build.props` outside source control.
+### Payments
 
-The project now validates this key during Android build:
-- **Debug/Dev build:** missing key => warning (build continues, map can fail at runtime).
-- **Release build:** missing key => build error (prevents shipping a broken map config).
+- phase-1 payment implementation is `Stripe-first`
+- mobile business/account lifecycle support may need Stripe-related payment visibility from WebAdmin and backend even before deep mobile payment features expand
 
+### Shipping
 
-### 7.1.2 Push provider setup (FCM/APNs production integration)
+- phase-1 shipping implementation is `DHL-first`
+- shipping support and order troubleshooting in admin/backend should assume DHL-first operational flow in the first go-live wave
 
-Consumer app now resolves push tokens from native runtime providers:
-- At startup, Android requests Android 13+ `POST_NOTIFICATIONS` permission to align user-consent state with registration payload, with one-time prompt persistence to avoid repeated dialogs after hard deny.
-- **Android**: Firebase Cloud Messaging token (`Xamarin.Firebase.Messaging`, wired only for Android target in `.csproj`).
-- **iOS/MacCatalyst**: APNs device token via `RegisterForRemoteNotifications` with explicit `CodesignEntitlements` binding to platform entitlements files.
+## 12. Near-Term Mobile-Side Priorities
 
-Required setup per environment:
-1. **Firebase project**
-   - Create Android app entry with package id `com.loyan.darwin.mobile.consumer`.
-   - Download `google-services.json` and place it at `src/Darwin.Mobile.Consumer/google-services.json` (not committed to source control for private environments).
-   - Android Release builds now fail when `google-services.json` is missing (Debug warns only), to avoid shipping broken FCM configuration.
+- keep loyalty, auth, profile, and business-operational flows stable
+- ensure backend/admin onboarding support is sufficient for business app usage
+- keep `Darwin.Mobile.Shared` aligned whenever contracts or canonical routes change
+- avoid introducing drift between mobile route assumptions and WebApi ownership
 
-2. **Apple Push capability**
-   - Enable Push Notifications capability in Apple Developer portal for the app identifier.
-   - Ensure provisioning profile includes push entitlement.
-   - Keep `aps-environment` entitlement aligned with target build (`development` vs `production`). Consumer project now uses separate entitlements for Debug vs Release to enforce this split.
-3. **Runtime permissions**
-   - Android 13+: grant `POST_NOTIFICATIONS` permission at runtime.
-   - iOS/MacCatalyst: allow notifications in system prompt/settings.
+## 13. What Is Deliberately Not the Current Priority
 
-Operational note:
-- If permissions are denied, registration still upserts device metadata with `NotificationsEnabled = false`; token can be null until the user enables permissions.
-- Legacy fallback config/noop providers are removed from the Consumer project to avoid environment drift in production builds.
-
-
-### 7.1.3 Push operational readiness checklist (Dev / Staging / Production)
-
-Use this checklist before promoting builds between environments.
-
-| Check | Dev | Staging | Production | Notes |
-|------|-----|---------|------------|-------|
-| Android `google-services.json` present and mapped to correct Firebase project | [ ] | [ ] | [ ] | Release build fails when missing. |
-| Android Firebase package name matches `com.loyan.darwin.mobile.consumer` | [ ] | [ ] | [ ] | Keep package id and Firebase app id aligned. |
-| iOS/MacCatalyst provisioning profile includes Push capability | [ ] | [ ] | [ ] | Validate on Apple Developer portal and CI signing profile. |
-| APNs entitlement environment is correct (`development` for Debug, `production` for Release) | [ ] | [ ] | [ ] | Project uses separate entitlements by configuration. |
-| Runtime permission path verified on fresh install (allow + deny + hard deny) | [ ] | [ ] | [ ] | Confirm one-time prompt behavior and settings recovery path. |
-| Profile push diagnostics labels verified (`permission`, `token availability`) | [ ] | [ ] | [ ] | Should reflect device runtime state without exposing raw token value. |
-| Profile "Open notification settings" action verified | [ ] | [ ] | [ ] | Must route user to app/system settings on device. |
-| Manual push registration sync returns success for authenticated user | [ ] | [ ] | [ ] | Check status text + last sync timestamp in Profile. |
-| WebApi `/api/v1/notifications/devices/register` observed in logs | [ ] | [ ] | [ ] | Confirm no auth/validation failures in API logs. |
-| Token rotation scenario validated (app reinstall or token refresh callback) | [ ] | [ ] | [ ] | Ensure backend receives updated token and old one is superseded. |
-
-Escalation guidance:
-- If diagnostics show `permission: disabled`, direct user to the in-app settings shortcut first.
-- If diagnostics show `token: missing` while permission is enabled, validate Firebase/APNs credentials and registration callbacks.
-- If sync fails with auth issues, validate access token freshness and retry after login refresh.
-
-### 7.2 Server
-
-- DataProtection key ring path, SMTP, and WebAuthn settings live in appsettings.
-- Infrastructure exposes composition helpers (`AddSharedHostingDataProtection`, `AddPersistence`, `AddIdentityInfrastructure`, `AddNotificationsInfrastructure`, `AddJwtAuthCore`).
-- Password-reset emails are sent through `IEmailSender` (`SmtpEmailSender` by default), bound from `Email:Smtp` configuration. If this section is missing or points to a non-working relay, reset requests still return generic success (anti-enumeration) but no email is delivered.
-- For troubleshooting delivery issues, inspect WebApi logs (`logs/api-log-*.txt`) for `Error processing password reset request` and SMTP send diagnostics.
-
----
-
-## 8) Error Handling
-
-- WebApi should standardize on `ApiProblem` responses with field errors for validation.
-- Shared `ApiClient` surfaces non-2xx as exceptions; in UI, catch and map to friendly messages using `ApiProblem` if available.
-
----
-
-## 9) Versioning & Compatibility
-
-- Contracts should be versioned semantically (e.g. v1).  
-- Breaking changes require new fields with defaults, new endpoints, or a `v2` namespace/route.
-- Mobile apps pin to a specific Contracts package version; CI should run contract tests to detect breaking changes early.
-
----
-
-## 10) Minimal App Startup (Sketch)
-
-Each mobile app’s DI should call something like:
-
-```csharp
-// in <App>.Composition/DependencyInjection.cs
-services.AddDarwinMobileShared(new ApiOptions
-{
-    BaseUrl = "https://api.example.com/",
-    JwtAudience = "Darwin.PublicApi"
-});
-```
-
----
-
-## 11) Mobile App Responsibilities
-
-### Consumer
-
-- **Login**: `PasswordLoginRequest` ? `TokenResponse`; store via `ITokenStore` and configure `ApiClient`.
-- **QR/Scan session**:
-  - Call `PrepareScanSession` (Accrual or Redemption) via `ILoyaltyService.PrepareScanSessionAsync`.
-  - Render the returned `ScanSessionToken` as QR.
-- **Rewards**:
-  - Fetch loyalty account + available rewards per business.
-  - Enable selection of rewards for Redemption mode.
-- **Discover**:
-  - Discover tab is split into two journeys:
-    1) **My Businesses**: joined loyalty businesses with per-business points and quick actions (Open QR / Open Rewards).
-    2) **Explore**: searchable businesses by name/address for joining new programs, with category and nearby filters.
-  - Call discovery endpoints with `BusinessDiscoveryFilter` ? paged `BusinessSummary`.
-  - Navigate to `BusinessDetail` for full info, or route directly to Rewards when the business is already joined.
-- **Profile**:
-  - Fetch/edit using identity/profile Contracts as they evolve.
-
-### Business
-
-- **Scan**:
-  - Use `IScanner.ScanAsync` to obtain the scanned token.
-  - Call `ILoyaltyService.ProcessScanSessionForBusinessAsync` with that token.
-- **Accrue**:
-  - If Mode = Accrual and allowed, call `ILoyaltyService.ConfirmAccrualAsync`.
-- **Redeem**:
-  - If Mode = Redemption and allowed, call `ILoyaltyService.ConfirmRedemptionAsync`.
-- **Customer Snapshot**:
-  - Use `LoyaltyAccountSummary` and `SelectedRewards` to verbally confirm with the customer when needed.
-
----
-
-## 12) Offline & Resilience Notes
-
-- Shared client includes retry for transient network faults; keep attempts small.
-- For heavier offline needs, introduce a local outbox in the apps and replay stored operations when connectivity is restored (future work).
-- Avoid long-running loops; prefer one-shot operations with explicit user actions.
-
----
-
-## 13) Security Posture (Mobile Perspective)
-
-- **No internal IDs in QR**; only a short-lived opaque `ScanSessionToken` exchanged for a server-side scan session.
-- **JWT & refresh**: short TTL access token; refresh via secure storage (`ITokenStore`).
-- **Rate limiting**: login rate limiter already exists; per-endpoint throttling can be added on WebApi.
-- **Data Protection**: server key ring persists across restarts; required for stable token and secret protection.
-
----
-
-## 14) Current Code Pointers
-
-- **Shared HTTP & Retry**: `Darwin.Mobile.Shared/Api/ApiClient.cs`, `Resilience/IRetryPolicy.cs`, `Resilience/ExponentialBackoffRetryPolicy.cs`.
-- **Shared DI**: `Darwin.Mobile.Shared/Extensions/ServiceCollectionExtensions.cs` (requires `Microsoft.Extensions.Http`).
-- **Scanner & Location Abstractions**: `Darwin.Mobile.Shared/Integration/IScanner.cs`, `Integration/ILocation.cs`.
-- **Loyalty Service**: `Darwin.Mobile.Shared/Services/Loyalty/LoyaltyService.cs` (session-based APIs).
-- **Consumer ViewModels**: `Darwin.Mobile.Consumer/ViewModels/QrViewModel.cs`, `RewardsViewModel.cs`.
-- **Business ViewModels**: `Darwin.Mobile.Business/ViewModels/ScannerViewModel.cs`.
-- **Server composition**: Infrastructure `ServiceCollectionExtensions.*` (persistence, identity/JWT, notifications, data-protection, JWT).
-- **Repo README**: configuration examples for DataProtection, SMTP, WebAuthn, etc.
-
----
-
-## 15) Build & Tooling
-
-- **Target SDK**: .NET 10.
-- **Packages (apps)**:
-  - `Microsoft.Extensions.Http` for `AddHttpClient`.
-  - Camera/QR packages per platform (to be selected in each MAUI app).
-  - Essentials for secure storage.
-- **Migrations**: run under Infrastructure project; Web/WebApi composes Db + seeders.
-
----
-
-## 16) Testing Considerations
-
-- For contract/serialization tests, reference `Darwin.Contracts` directly.
-- For handler/UI integration, use a mock `IApiClient` or a test WebApi host.
-- For relational tests, prefer SQLite in-memory over EF InMemory when behaviour matters.
-
----
-
-## 17) API Dependencies (Mobile-facing View)
-
-Mobile apps rely on `Darwin.Contracts` as the single source of payload truth and consume endpoints through `Darwin.Mobile.Shared` service facades.
-
-- For complete endpoint inventory, policies, request/response contracts, and troubleshooting playbooks, use **`DarwinWebApi.md`**.
-- Keep this mobile guide focused on app-side behavior, UX rules, threading, platform integration, and mobile roadmap status.
-
----
-
-## 18) Roadmap Coupling (Phases 1–3)
-
-- **Phase 1**: Endpoints: login/refresh/logout, consumer register + forgot-password + reset-password, session-based loyalty scan (prepare/process/confirm), basic rewards read models, discovery basics, and profile read/update/change-password.
-- **Phase 2**: Map discovery with filters & details, richer reward dashboard, feed/promo endpoints.
-- **Phase 3**: Subscriptions/analytics/notifications; additive endpoints on top of existing Contracts.
-
----
-
-
-## 18.1 Current Snapshot (Done vs Remaining)
-
-### Done in current codebase
-- Consumer push-registration baseline is integrated end-to-end (contracts + API + shared service + coordinator + profile manual sync UI).
-- Consumer Profile includes a self-service "Open notification settings" action to recover from denied notification permissions without leaving users blocked.
-- Consumer Profile now shows runtime push diagnostics labels (permission state + token availability) for faster support and troubleshooting.
-- Consumer Profile refreshes push diagnostics on every `OnAppearing` so permission/token changes are reflected after returning from system settings.
-- Rewards tab now includes multi-business overview metrics (joined business count, aggregated points, top business) and a quick action to open selected-business QR.
-- Feed promotions now support scope switching between selected-business and all-joined-business campaigns.
-- Feed promotions keep lightweight client fallback guardrails for resilience, while primary guardrail enforcement now runs server-side with applied-policy + diagnostics returned by the promotions endpoint.
-- Device registration now updates `UserEngagementSnapshot` baseline engagement metrics (last activity + heartbeat count metadata) to prepare inactive-reminder targeting and measurement.
-- Application now includes inactive-reminder orchestration handlers: candidate selection query (threshold + cooldown + push-enabled device check) and per-outcome recorder that persists `Sent`/`Failed`/`Suppressed` metadata in `UserEngagementSnapshot`.
-- WebApi now includes `InactiveReminderBackgroundService` scaffold (config-gated) that periodically runs reminder batch orchestration and logs evaluated/dispatched/suppressed/failed counters.
-- Reminder batch orchestration now writes measurement counters into snapshot metadata (`inactiveReminderSentCount`, `inactiveReminderFailedCount`, `inactiveReminderSuppressedCount`) for downstream analytics.
-- Inactive reminder dispatch now uses `HttpInactiveReminderDispatcher` (server-side HTTP gateway integration) and sends user/device/token/platform payload with configurable title/body templates.
-- HTTP gateway dispatcher now maps provider transport/HTTP errors to stable outcome codes (for example `Gateway.Unauthorized`, `Gateway.RateLimited`, `Gateway.ServerError`) to improve reminder analytics quality.
-- When gateway returns provider reason payload, dispatcher now emits normalized `Gateway.Provider.*` codes to preserve APNs/FCM-specific failure semantics in analytics.
-- Dispatcher now canonicalizes common FCM/APNs reasons into stable categories (for example `Gateway.Provider.Fcm.TokenUnregistered`, `Gateway.Provider.Apns.TokenInvalid`) for clearer operational actions.
-- Inactive reminder gateway payloads now include provider-routing hints (`Fcm` / `Apns`) plus native delivery metadata (`androidChannelId`, `apnsTopic`, `collapseKey`, `analyticsLabel`, `deepLinkUrl`) so the downstream gateway can dispatch without provider-specific guesswork.
-- Reminder worker observability now includes per-code failure/suppression breakdowns in batch logs, making remediation playbooks easier to apply during operations incidents.
-- Promotions analytics tracking is now wired end-to-end for `Impression` and `Open` events (mobile feed emits events to WebApi; Application persists counters in `UserEngagementSnapshot` metadata).
-- Promotions `Claim` tracking is now hooked from redemption QR generation (`RewardClaimIntent`) so conversion funnel has event coverage for all three stages.
-- Promotions response contracts now include campaign-foundation metadata (`CampaignState`, campaign window, eligibility rules) with backward-compatible defaults for derived cards.
-- Promotions feed query now includes active in-app campaign entities from server-side marketing data and merges them with legacy derived cards to preserve rollout safety.
-- Promotions endpoint now returns the server-applied feed policy and enforces server-side guardrails (de-duplication, max-card cap, suppression/frequency windows) for better client/server consistency.
-- Business campaign operations endpoint set is now available for list/create/update/activation workflows, enabling controlled campaign lifecycle management from business interfaces.
-- `Darwin.Mobile.Shared` now exposes business campaign operations in `ILoyaltyService` to unblock Business app integration without duplicating API plumbing in UI projects.
-- Business app Rewards page now ships minimal campaign operations UI (list + activate/deactivate + create/update editor) for mobile-first campaign lifecycle management.
-- Business campaign editor now includes optional UTC schedule inputs with pre-submit validation for date format and start/end range.
-- Business campaign editor now includes channel selection controls (In-App / In-App+Push) and channel validation before API mutations.
-- Business campaign editor now validates and submits optional `targeting/payload` JSON object fields with localized guardrail errors before API mutations.
-- Business campaign editor now blocks duplicate internal campaign names on the client before API mutations, reducing avoidable retry loops for operators.
-- Business campaign list now supports local search + lifecycle-state filtering to keep large campaign sets manageable on tablet screens.
-- Business campaign list now shows visible/total result summary and supports one-tap filter reset to reduce operator friction during frequent context switching.
-- Business campaign list now supports operator-selectable sort modes (start date and title ascending/descending) for faster review in high-volume campaign inventories.
-- Business campaign list now shows lifecycle KPI counters (Draft/Scheduled/Active/Expired) for faster day-to-day operational monitoring.
-- Business campaign lifecycle KPI counters now act as one-tap filter chips so operators can jump directly to a state-specific list.
-- Business campaign lifecycle KPI chips now include "All" quick-reset and toggle-to-clear behavior on active state chips for faster context switching.
-- "All" lifecycle KPI chip now resets only the state filter while keeping search/sort criteria intact for faster repeated operator triage loops.
-- Campaign management toolbar now includes "Clear search" action that resets only search query while preserving state/sort context.
-- Business campaign search now also matches campaign body text (besides internal name/title) to improve findability across long-form campaign content.
-- Business campaign list now shows localized audience/eligibility summary parsed from targeting JSON (with compatibility fallback to `eligibilityRules[0]`) so operators can verify segmentation without opening editor.
-- Business campaign toolbar now includes audience-kind filtering (all/joined/tier/points/date-window) so operators can isolate segmentation cohorts in one tap.
-- Business campaign audience metrics now include actionable audience KPI chips (all/joined/tier/points/date-window) with toggle-to-clear behavior for faster cohort drill-down workflows.
-- Business campaign editor now offers quick audience targeting presets (joined/tier/points/date-window) to accelerate common segmentation setup while keeping JSON editable.
-- Business campaign editor now renders inline targeting guidance from current targeting JSON so segmentation intent is visible before submit.
-- Business campaign editor now validates audience-specific targeting schema inline (tier/minimumPoints/date-window UTC fields) and blocks invalid saves with localized feedback.
-- Business campaign editor now offers one-tap schema quick-fix action for common targeting errors to accelerate operator recovery before save.
-- Business campaign editor quick-fix now shows localized status feedback (applied/no-change) after auto-correction attempts.
-- Business campaign editor now shows quick-fix applied/no-change telemetry counters inline for lightweight operational diagnostics.
-- Business campaign editor now allows resetting quick-fix telemetry counters to start a fresh monitoring window during daily operations.
-- Quick-fix telemetry now shows monitoring-window context (window start + last reset) to improve operational diagnostics readability.
-- Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
-- Promotions feed policy now supports an explicit frequency-window contract field (`FrequencyWindowMinutes`) with backward-compatible fallback to suppression-window behavior.
-- Promotions feed response now emits guardrail diagnostics counters (initial candidates, suppressed by frequency, deduplicated, cap-trimmed, final count) for operations observability.
-- Consumer now uses production platform push token providers (`ConsumerPlatformPushTokenProvider`) with Android FCM token bridge + iOS/MacCatalyst APNs runtime bridge (fallback config provider removed from DI path).
-- Android map key is externalized and validated at build-time (warning in Debug, error in Release when missing).
-- Business Phase-2 dashboard/rewards flows and authorization guards are implemented.
-- Business Dashboard now includes CSV + PDF export via native share sheet (summary KPIs, top customers, recent activity rows) for lightweight operator reporting workflows.
-- Business Settings now includes a rotating Staff Access Badge page for internal QR-based staff checkpoints (short-lived payload, expiry countdown, manual refresh).
-
-### Remaining / follow-up
-- **Handoff note (this chat):** current iteration is paused cleanly for continuation in a new chat; latest completed increment hardened inactive-reminder gateway routing metadata and remediation observability, and removed repository license references from the top-level docs/readme surface.
-- **Recommended next step (new chat):** start with a fresh baseline validation from latest repository state, then continue from delivery-evidence collection for the inactive-reminder stack, while Promotions verification remains in the dedicated testing stream.
-- Testing coverage and execution evidence are tracked in `DarwinTesting.md` (dedicated testing stream); update that file alongside status changes.
-- Keep Promotions operations polish as feedback-driven follow-up (address only newly reported UX gaps) on top of the delivered diagnostics baseline.
-- Re-run end-to-end mobile/server build + test evidence collection from current branch before rollout decisions.
-
-### Next-chat startup checklist
-1. Re-read `BACKLOG.md`, `DarwinMobile.md`, and current mobile ViewModels from disk before coding.
-2. Run mobile-only compile/build checks to capture only active failures from latest branch state.
-3. Resolve blocker errors in small isolated commits, then resume promotions/reminders queue delivery.
-4. If no new promotions UX gap is reported, prioritize release-evidence collection and reminder rollout validation before opening new UI polish tasks.
-
-## 19) Contributor Checklist
-
-1. Install SDKs (MAUI workloads for target platforms).
-2. Use the appropriate Solution Filter (`Darwin.MobileOnly.slnf`).
-3. Add `Microsoft.Extensions.Http` to mobile host projects to satisfy `AddHttpClient`.
-4. Wire `AddDarwinMobileShared(ApiOptions)` in each app’s composition.
-5. Implement platform services: `IScanner`, `ILocation`, `ITokenStore`.
-6. Bind Consumer QR page to `ILoyaltyService.PrepareScanSessionAsync` and render the returned `ScanSessionToken` as a QR image.
-7. Implement scan/confirm flows in Business app using `ProcessScanSessionForBusinessAsync`, `ConfirmAccrualAsync`, `ConfirmRedemptionAsync`.
-8. Handle `ApiProblem` uniformly and map server errors to friendly UX.
-
----
-
-## 20) Appendix — Contracts (Snapshot)
-
-> Modules present/added in `Darwin.Contracts`:
-
-- **Common**: `PagedRequest`, `PagedResponse<T>`, `GeoCoordinateModel`, `ApiProblem`, `SortOption`.
-- **Identity**: `PasswordLoginRequest`, `TokenResponse`, `RefreshTokenRequest`.
-- **Loyalty**: `LoyaltyScanMode`, `LoyaltyScanAllowedActions`, `LoyaltyRewardSummary`, `LoyaltyAccountSummary`, `PrepareScanSessionRequest/Response`, `ProcessScanSessionForBusinessRequest/Response`, `ConfirmAccrualRequest/Response`, `ConfirmRedemptionRequest/Response`.
-- **Businesses**: `BusinessDiscoveryFilter`, `BusinessDiscoveryResponse`, `BusinessSummary`, `BusinessDetail`.
-- **Notifications**: `MobileDevicePlatform`, `RegisterPushDeviceRequest`, `RegisterPushDeviceResponse`.
-
-> Rationale: keep WebApi and both mobile apps aligned on a stable, server-agnostic schema. All server EF/domain mapping stays private in Application/Infrastructure.
-
----
-
-
-## Mobile Discovery & QR Troubleshooting (Consumer + Business)
-
-### Symptoms: Discover tab is empty after successful login
-
-If login succeeds (for example `cons1@darwin.de`) but no businesses are shown in the Discover tab, validate in this order:
-
-1. **Seed data exists**
-   - `IdentitySeedSection` creates consumer users (`cons1..cons10`) and member-role assignments.
-   - `BusinessesSeedSection` creates 10+ active businesses and primary locations.
-   - `LoyaltySeedSection` creates active loyalty programs/accounts for seeded businesses.
-2. **Consumer Discover page has a bound ViewModel**
-   - `DiscoverPage` must receive `DiscoverViewModel` through DI and call `OnAppearingAsync()`.
-   - Without this, no API call is triggered and list remains empty.
-3. **Business context reaches QR page**
-   - Join flow must navigate with `businessId` query parameter.
-   - `QrPage` must parse `businessId` and call `QrViewModel.SetBusiness(...)` before session refresh.
-
-### Expected end-to-end flow
-
-1. Consumer logs in (`cons1@darwin.de` / seeded password).
-2. Consumer sees business list in Discover.
-3. Consumer opens a business detail and taps Join.
-4. App prepares a scan session and opens QR tab with business-scoped token.
-5. Business app scans the QR and calls `ProcessScanSessionForBusiness`.
-
----
-
-## WebApi Verification
-
-WebApi endpoint verification and Postman walkthroughs were moved to **`DarwinWebApi.md`**.
-Use that document as the source of truth for:
-
-- auth/device-binding preconditions,
-- endpoint-specific request/response examples,
-- role/policy requirements,
-- and operational diagnostics/troubleshooting.
-
-- [x] Campaign targeting quick-fix telemetry is now persisted in business activity logs and surfaced in dashboard/report exports for shift-level diagnostics.
+- broad new mobile feature expansion that depends on unfinished onboarding/admin capabilities
+- major mobile-only UX investment before backend and WebAdmin support gaps are closed
+- aggressive new API surface changes that could destabilize current business/mobile usage

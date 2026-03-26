@@ -10,176 +10,229 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18.0.0-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.0-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 [![HTMX](https://img.shields.io/badge/HTMX-2.0-3366CC?logo=htmx&logoColor=white)](https://htmx.org/)
+[![Stripe](https://img.shields.io/badge/Stripe-Phase--1-635BFF?logo=stripe&logoColor=white)](https://stripe.com/)
+[![DHL](https://img.shields.io/badge/DHL-Phase--1-FFCC00?logoColor=black)](https://www.dhl.de/)
 [![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-10.0-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/maui/)
 [![Visual Studio 2026](https://img.shields.io/badge/Visual%20Studio-2026-5C2D91?logo=visual-studio&logoColor=white)](https://visualstudio.microsoft.com/)
 
-Darwin is a unified CMS, commerce, CRM, loyalty, inventory, billing, API, and mobile platform. The web layer is now split into two independent applications:
+Darwin is a multi-tenant-ready commerce and operations platform for small and medium businesses. It combines CMS, catalog, CRM, loyalty, inventory, billing, mobile, and API delivery under one solution.
 
-- `Darwin.WebAdmin`: the ASP.NET Core MVC/Razor back-office for staff and administrators, using HTMX for lightweight partial loading and form interactions.
-- `Darwin.Web`: the Next.js/React front-office for the public storefront and authenticated member portal.
+The web layer is intentionally split into two separate applications:
 
-Both applications consume the same business model through `Darwin.Application` and expose delivery-friendly data through `Darwin.WebApi`.
+- `Darwin.WebAdmin`: the ASP.NET Core MVC/Razor back-office for staff and operators, using HTMX for server-driven interactions
+- `Darwin.Web`: the Next.js/React front-office for the public storefront and authenticated member portal
+
+Both web applications consume the same core business model through `Darwin.Application` and expose or consume delivery-ready contracts through `Darwin.WebApi`.
 
 ## Documentation Map
 
-Use this README as the entry point, then continue with the focused documents:
+Use this README as the product and delivery overview, then continue with the focused documents:
 
-- [`BACKLOG.md`](BACKLOG.md): roadmap, epics, completed work, and current execution order
-- [`DarwinDomainDesign.md`](DarwinDomainDesign.md): target domain model, module boundaries, and aggregate rules
-- [`DarwinWebApi.md`](DarwinWebApi.md): WebApi surfaces, contracts, REST design, BFF direction, and integration rules
-- [`DarwinWebAdmin.md`](DarwinWebAdmin.md): back-office architecture, HTMX conventions, and MVC/Razor workflow rules
-- [`DarwinFrontEnd.md`](DarwinFrontEnd.md): Next.js front-office structure, data fetching, and member portal guidance
-- [`DarwinMobile.md`](DarwinMobile.md): mobile integration and client responsibilities
-- [`DarwinMobile.Guidelines.md`](DarwinMobile.Guidelines.md): mobile UI/UX rules
-- [`DarwinTesting.md`](DarwinTesting.md): testing strategy and execution notes
-- [`howto-identity-access.md`](howto-identity-access.md): admin identity, roles, permissions, and HTMX-backed address workflows
-- [`CONTRIBUTING.md`](CONTRIBUTING.md): coding standards and contribution rules
+- [`BACKLOG.md`](BACKLOG.md): execution priorities, go-live critical work, near-term items, future-phase items, and decision log
+- [`DarwinDomainDesign.md`](DarwinDomainDesign.md): current domain model, target refinements, lifecycle rules, and platform-level capabilities
+- [`DarwinWebAdmin.md`](DarwinWebAdmin.md): back-office operating model, HTMX/MVC conventions, onboarding workflows, settings architecture, and admin UX priorities
+- [`DarwinFrontEnd.md`](DarwinFrontEnd.md): Next.js storefront and member portal boundaries, delivery assumptions, and front-office constraints
+- [`DarwinMobile.md`](DarwinMobile.md): MAUI app responsibilities, onboarding/account lifecycle dependencies, and mobile/backend coupling
+- [`DarwinWebApi.md`](DarwinWebApi.md): HTTP surfaces, contract boundaries, audience split, and integration direction
+- [`DarwinTesting.md`](DarwinTesting.md): testing strategy and validation expectations
+- [`howto-identity-access.md`](howto-identity-access.md): identity, roles, permissions, and admin identity operations
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): engineering rules and contribution standards
+
+## Current Execution Focus
+
+The current execution focus is not evenly distributed across the whole platform.
+
+The near-term delivery order is:
+
+1. complete `Darwin.WebAdmin` as the operational control center
+2. make business onboarding, authentication support, setup, and operator workflows usable for real SMEs
+3. ensure backend and admin workflows support `Darwin.Mobile.Business` as an early operational entry point
+4. keep the mobile-used `Darwin.WebApi` flows stable
+5. return to broader front-office and WebApi expansion once the back-office is operationally complete
+
+Practical meaning:
+
+- `Darwin.Mobile.Business` is already usable enough to matter operationally
+- early go-live pressure sits on back-office setup and support flows, not on polishing the public storefront first
+- onboarding a new business, linking owners/admins, account activation, password recovery, and operational visibility are high-priority platform concerns
+
+## Phase-1 Provider Strategy
+
+### Payments
+
+- Phase 1 payment provider: `Stripe`
+- Additional payment providers and market-specific payment methods remain later-phase work
+- The architecture must stay extensible for additional providers, but the active implementation scope is intentionally Stripe-first
+
+### Shipping
+
+- Phase 1 shipping/logistics provider: `DHL`
+- Additional shipping carriers and postal providers remain later-phase work
+- The shipping model should stay generic, but implementation scope and operator workflow design are intentionally DHL-first
 
 ## Status Snapshot
 
 | Pillar | Status | Notes |
 | --- | --- | --- |
-| Domain & Application | Active | CRM, inventory, billing, and warehouse-aware fulfillment are now modeled and implemented in the core layers. |
-| Infrastructure | Active | EF Core persistence, migrations, seeding, security, and new module mappings are in place. |
-| Web CMS & E-Commerce (Admin) | In Progress | `Darwin.WebAdmin` is the operational portal built with MVC/Razor and HTMX. |
-| Loyalty | Mature | Loyalty is already end-to-end and remains the only source of truth for loyalty balances and ledgers. |
-| REST WebApi | Active | `Darwin.WebApi` is the shared HTTP delivery layer for front-office, mobile, and future external clients. |
-| Mobile Apps | Active | MAUI consumer and business apps continue to build on the shared contracts and loyalty stack. |
-| CRM Module | In Progress | Lead, Opportunity, Interaction, Consent, and CRM-linked billing are now in the domain and application stack. |
-| Front-Office (`Darwin.Web`) | In Progress | Next.js front-end for the public storefront and member portal, consuming `Darwin.WebApi`. |
-| Testing & QA | Active | Unit, infrastructure, WebApi, contract, and integration coverage exist and continue to expand. |
+| Domain & Application | Completed foundation / In Progress refinement | Core CRM, loyalty, inventory, billing, and warehouse-aware fulfillment exist; payment, shipping, onboarding, communication, tax, and settings domains still need deeper refinement. |
+| Infrastructure | Active | EF Core persistence, migrations, seed pipeline, security wiring, and module mappings are in place. |
+| WebAdmin | In Progress and highest priority | MVC/Razor + HTMX back-office is the current delivery focus and is being completed as the first operational control center. |
+| WebApi | Active | Mobile-used endpoints must remain stable; broader public/member/admin surface separation continues after critical admin/backend work. |
+| Front-Office (`Darwin.Web`) | In Progress but not current priority | Next.js storefront/member portal direction is defined, but execution is intentionally secondary to WebAdmin completion. |
+| Mobile Consumer | Active | Member profile, addresses, commerce, and loyalty flows are usable and must stay aligned with canonical contracts. |
+| Mobile Business | Usable and strategically important | Early business-side operational usage is expected to start here, which raises the priority of onboarding, setup, auth, and admin support workflows. |
+| Communication Core | Planned / Near-term | Email-first operational communication is required for signup, activation, invitation, password recovery, and support notifications. |
+| Stripe Integration | Planned / Near-term | Generic payment handoff exists, but real provider-specific lifecycle, webhook verification, and reconciliation are still pending. |
+| DHL Integration | Planned / Near-term | Generic shipping and shipment visibility exist, but provider-specific label/tracking/exception/return flows are still pending. |
+| Localization | Partial | Mobile is already bilingual; WebAdmin must become localization-ready and then move into multilingual enablement immediately after core completion. |
 
 ## Architecture
 
 ```text
 src/
-├── Darwin.Domain         – Entities, value objects, enums, base entity
-├── Darwin.Application    – Use cases, handlers, DTOs, validators
-├── Darwin.Infrastructure – EF Core, DbContext, migrations, seed pipeline
-├── Darwin.WebAdmin       – MVC + Razor + HTMX back-office
-├── Darwin.WebApi         – REST API for public, member, business, and admin delivery
-├── Darwin.Web            – Next.js React front-office (SSR/SSG/ISR)
-├── Darwin.Worker         – Background jobs and schedulers
-├── Darwin.Shared         – Result wrappers, constants, helpers
-├── Darwin.Contracts      – Shared request/response contracts for WebApi and mobile
-├── Darwin.Mobile.Shared  – Shared mobile services
-├── Darwin.Mobile.Consumer – Consumer MAUI app
-└── Darwin.Mobile.Business – Business MAUI app
+|-- Darwin.Domain          - Entities, value objects, enums, and aggregate rules
+|-- Darwin.Application     - Use cases, handlers, DTOs, validators, and orchestration
+|-- Darwin.Infrastructure  - EF Core, DbContext, migrations, seed pipeline, and infrastructure services
+|-- Darwin.WebAdmin        - MVC + Razor + HTMX back-office
+|-- Darwin.WebApi          - REST API for public, member, business, admin, and future integrations
+|-- Darwin.Web             - Next.js React front-office (SSR/SSG/ISR)
+|-- Darwin.Worker          - Background jobs and schedulers
+|-- Darwin.Shared          - Result wrappers, constants, helpers
+|-- Darwin.Contracts       - Shared API contracts for WebApi and mobile
+|-- Darwin.Mobile.Shared   - Shared mobile services, API clients, and route abstractions
+|-- Darwin.Mobile.Consumer - Consumer-facing MAUI app
+`-- Darwin.Mobile.Business - Business-facing MAUI app
 ```
 
 Important delivery rules:
 
-- `Darwin.WebAdmin` builds with the .NET solution.
-- `Darwin.Web` is managed by Node/npm and does not build via `dotnet build`.
-- `Darwin.WebApi` is the API-friendly delivery boundary for front-office, mobile, and future external systems.
+- `Darwin.WebAdmin` builds with the .NET solution and is the current operational priority
+- `Darwin.Web` is managed by Node/npm and does not build through `dotnet build`
+- `Darwin.WebApi` is the delivery boundary for storefront, member, mobile, and future external consumers
+- `Darwin.Contracts` is the contract boundary; admin DTOs must not leak into public/member delivery
 
 ## User Interface Segments
 
 ### Back-Office (`Darwin.WebAdmin`)
 
-The back-office is the internal administrative portal used for:
+`Darwin.WebAdmin` is the operational control center for:
 
-- CMS and menu management
-- catalog and pricing management
-- orders, payments, shipments, and warehouse-aware fulfillment
-- CRM operations such as customers, leads, opportunities, interactions, and consent
-- inventory, supplier, and purchasing workflows
-- billing, subscription, and future accounting administration
-- identity, permissions, and site settings
-
-The implementation model is ASP.NET Core MVC/Razor with HTMX for partial rendering and server-driven interactions.
+- business and tenant setup
+- operator and staff support
+- users, roles, permissions, and business ownership management
+- CMS and catalog administration
+- orders, payments, refunds, invoices, and fulfillment visibility
+- CRM operations
+- inventory and procurement operations
+- settings, configuration, and future integrations
 
 ### Front-Office (`Darwin.Web`)
 
-The front-office is the public and authenticated customer experience used for:
+`Darwin.Web` is the customer-facing experience for:
 
-- public storefront browsing
-- CMS page rendering
-- product listing and product detail pages
-- customer account, loyalty, orders, invoices, and support-related views
+- public CMS pages
+- product and catalog discovery
+- checkout and payment flows
+- authenticated member profile, loyalty, orders, invoices, and support views
 
-The member portal is part of the front-office. It is not an admin area and it must not depend on back-office DTOs or Razor models.
+The member portal belongs to the front-office. It is not a second admin area.
+
+## Cross-Cutting Platform Capabilities
+
+Darwin now explicitly treats the following as platform-wide capabilities rather than isolated feature details:
+
+- Communication Core
+- Tax and VAT readiness
+- Authentication and onboarding flows
+- Site and system settings
+- Localization and multilingual readiness
+- Security and performance
+- Auditability and observability
+
+These concerns must be modeled consistently across Domain, Application, WebAdmin, WebApi, and client applications.
 
 ## CRM and Loyalty Boundary
 
-The CRM model no longer stores loyalty balances directly.
+CRM no longer duplicates loyalty state.
 
-- `Customer.LoyaltyPointsTotal` has been removed.
-- `LoyaltyPointEntry` has been removed.
-- Loyalty balances are managed only through `LoyaltyAccount` and `LoyaltyPointsTransaction`.
+- `Customer.LoyaltyPointsTotal` has been removed
+- `LoyaltyPointEntry` has been removed
+- loyalty balances and ledgers belong only to `LoyaltyAccount` and `LoyaltyPointsTransaction`
 
-Whenever a total point balance is needed for a customer, it must be calculated from loyalty transactions or projected by a query/view model. Any code that previously depended on `Customer.LoyaltyPointsTotal` must now aggregate `LoyaltyPointsTransaction` records instead.
+Whenever a customer loyalty total is needed, it must be projected from loyalty transactions and accounts. Query handlers and view models must aggregate loyalty data instead of relying on CRM-owned balance fields.
 
-## HTMX in WebAdmin
+## WebAdmin Technology Direction
 
-HTMX is now a first-class part of `Darwin.WebAdmin`.
+`Darwin.WebAdmin` uses:
 
-Current usage direction:
+- ASP.NET Core MVC
+- Razor views
+- HTMX for partial loading and form submission
+- Bootstrap for layout and interaction primitives
 
-- use `hx-get` to load partial views without custom `fetch` code
-- use `hx-post` to submit forms and replace only the affected section
-- keep alerts and partial grids server-rendered
-- use small Bootstrap-focused JavaScript only where modal orchestration or UI state wiring is still needed
+HTMX is the default way to reduce scattered `fetch` calls and full-page postbacks. Alpine.js is not part of the current stack.
 
-Representative examples:
+## Operational Priorities
 
-- Orders details uses `hx-get` to load the payments and shipments partials.
-- Address create/edit in the Users screen uses `hx-post` to submit the modal form and refresh only the addresses section.
-- Default billing/shipping address buttons now use `hx-post` to update the address section without a full page reload.
+Near-term operational priorities are:
 
-HTMX is the preferred replacement for scattered `fetch`-driven partial refreshes. Alpine.js is not part of the current stack; it may be introduced later only if richer client-side state becomes necessary.
+- complete business onboarding and setup flows in WebAdmin
+- support business-user account lifecycle: signup, invitation, activation, forgot-password, reset-password, lock/unlock, and role assignment
+- build minimum viable Communication Core for email-based operational flows
+- replace generic payment placeholders with Stripe-specific integration
+- replace generic shipping placeholders with DHL-specific integration
+- improve admin visibility for payments, shipments, communications, settings, and support operations
 
-## API-Friendly Delivery Rules
+## Security and Performance
 
-These rules are non-negotiable:
+Security and performance are cross-cutting platform concerns, not isolated implementation details.
 
-### CMS Must Be API-Friendly
+Security concerns include:
 
-CMS pages, menus, SEO metadata, and structured content blocks must be delivered through `Darwin.WebApi`. Razor views in the public site must not be the only rendering path for CMS content.
+- authentication hardening
+- authorization and permission-aware UI
+- tenant isolation
+- secure token and activation flows
+- PII protection
+- audit logging
+- secret/configuration handling
+- secure admin operations
+- secure webhook processing
+- rate limiting and abuse protection
 
-### Separate DTOs
+Performance concerns include:
 
-Do not reuse back-office DTOs in the public site. Admin DTOs are operational; public DTOs must be presentation-oriented and stable for front-office delivery.
+- pagination, filtering, and search in admin
+- async processing for notifications and provider callbacks
+- scalable settings retrieval
+- efficient projections for dashboards and operator lists
+- retry-safe external integration patterns
+- background jobs and operational diagnostics
 
-### Isolated API Surfaces
+## Localization and Multilingual Readiness
 
-`Darwin.WebApi` must expose separate logical surfaces for:
+Current state:
 
-- public storefront content
-- member/account operations
-- business/mobile operations
-- admin/integration scenarios
+- mobile apps already support bilingual operation
+- adding a new mobile resource language is comparatively straightforward
+- WebAdmin is not yet fully multilingual
 
-### Keep the Architecture BFF-Ready
+Required direction:
 
-The current architecture must remain ready for a future Backend-for-Frontend layer responsible for:
-
-- authentication/session orchestration
-- response composition
-- caching
-- reduction of chatty client-to-API flows
-
-## Security Overview
-
-- passwords are hashed with Argon2id
-- TOTP and WebAuthn are supported
-- Data Protection is configured for shared hosting scenarios
-- WebApi authentication uses JWT and/or cookie-based delivery patterns depending on the client
-- optimistic concurrency is enforced with `RowVersion`
-
-The same security practices apply to back-office, front-office, mobile, and future consumers.
+- WebAdmin must remain localization-friendly during current development
+- hard-coded labels should be reduced over time
+- language/default-locale settings must exist in the future settings architecture
+- template/content/settings translation readiness must be considered before the multilingual rollout starts
 
 ## Engineering Standards
 
-The repository expects these standards:
-
-- nullable reference types must remain enabled
-- non-nullable strings must be initialized, typically with `string.Empty`
+- nullable reference types remain enabled
+- non-nullable strings should be initialized, typically with `string.Empty`
 - nullable values must be marked with `?`
-- new classes and public members should include complete English XML documentation
-- code comments must be English-only
-- TODO markers are reserved only for genuinely future-phase work
-- avoid technical debt by modeling the final architectural boundary early rather than layering aliases and temporary duplicates
+- new public classes and members should include English XML documentation
+- code comments must remain English-only
+- TODO markers are reserved for later-phase work only
+- avoid reintroducing duplicate ledgers, alias fields, or temporary parallel models
 
 ## Getting Started
 
@@ -239,12 +292,10 @@ npm run start
 
 The roadmap source of truth is [`BACKLOG.md`](BACKLOG.md).
 
-Current direction:
+Immediate direction:
 
-- complete the HTMX-driven rewrite of existing WebAdmin modules
-- continue surfacing the new CRM, inventory, and billing modules in WebAdmin
-- expand `Darwin.WebApi` with clear public/member/admin surfaces
-- continue the Next.js front-office implementation
-- keep mobile aligned with contract and loyalty changes
-
-Front-office Next.js implementation is now underway; see `BACKLOG.md` for detailed tasks.
+1. complete `Darwin.WebAdmin` for real business operations
+2. close onboarding, authentication-support, and settings gaps needed by SMEs
+3. deliver minimum viable Communication Core for email-driven account lifecycle flows
+4. implement real Stripe and DHL integrations
+5. return to wider WebApi and front-office expansion with a stable operational backend

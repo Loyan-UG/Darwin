@@ -6,150 +6,304 @@
 
 > Scope: `src/Darwin.WebAdmin`, the internal back-office used by staff and administrators.
 
-## Purpose
+## 1. Role of WebAdmin
 
-`Darwin.WebAdmin` is the operational portal for managing the Darwin platform. It is responsible for internal workflows, not customer-facing delivery.
+`Darwin.WebAdmin` is not a secondary side-panel. It is the first operational control center for Darwin.
 
-Primary module areas:
+Its responsibility is to support:
 
-- CMS and content operations
-- catalog and pricing management
-- orders, payments, shipments, and warehouse-aware fulfillment
-- CRM administration
-- inventory, procurement, and supplier operations
-- subscriptions, billing, and future accounting workflows
-- identity, roles, permissions, and site settings
+- business creation and setup
+- tenant/customer provisioning where applicable
+- user, owner, admin, and staff management
+- onboarding and activation support
+- catalog and CMS management
+- payment and shipping visibility
+- CRM and support operations
+- inventory and procurement operations
+- settings and operational configuration
+- troubleshooting and admin intervention
 
-## Technology Stack
+This is the most important active delivery surface in the current phase.
+
+## 2. Current Status
+
+- `In Progress`: major module coverage exists and the HTMX-first rewrite is far along
+- `Highest priority`: current team focus is to complete WebAdmin before wider storefront expansion
+- `Operational goal`: make day-one SME operations workable from WebAdmin plus supporting backend/mobile flows
+
+## 3. Technology Stack
 
 - ASP.NET Core MVC
 - Razor views
-- HTMX for server-driven partial updates
+- HTMX for server-driven partial interactions
 - Bootstrap for layout and components
-- small JavaScript helpers only where modal orchestration or UI-only state is still required
+- minimal JavaScript only where modal orchestration or editor integration still requires it
 
-Alpine.js is not part of the current stack. If richer client-side state becomes necessary later, it should be introduced intentionally, not as a default dependency.
+HTMX is the preferred mechanism for partial loading and form submission. Alpine.js is not part of the current stack.
 
-## HTMX Conventions
+## 4. WebAdmin as Operational Control Center
 
-HTMX is the preferred pattern for partial loading and form submissions.
+WebAdmin must be treated as the initial command center for:
 
-### When to Use `hx-get`
+- creating and provisioning businesses
+- assigning owner/admin users
+- completing initial setup
+- supporting activation and approval workflows
+- exposing payment, shipment, communication, and account visibility
+- supporting admin troubleshooting for mobile and backend-driven operations
 
-Use `hx-get` for read-only partial rendering when only a subsection of the page needs to be refreshed.
+This is especially important because early operational usage is expected to start from `Darwin.Mobile.Business`, which depends on backend/admin setup being correct.
 
-Current examples:
+## 5. Module Status Overview
 
-- order payments partial on the order details page
-- order shipments partial on the order details page
-- future dashboards, list filters, and tabbed content
+| Area | Status | Notes |
+| --- | --- | --- |
+| Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
+| Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist; Stripe-specific lifecycle support is still pending. |
+| CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; reporting and support depth still need improvement. |
+| Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, and purchase orders exist; receipt/adjustment/exception flows still need work. |
+| Identity/Admin Support | In Progress | Users, roles, permissions, and core admin identity flows exist; invite/activation/support actions need completion. |
+| Settings | Partial | Basic settings UI exists, but settings information architecture still needs redesign and categorization. |
+| Communication Management | Planned / Near-term | Must become first-class for email templates, delivery logs, resend/retry, and admin visibility. |
+| Shipping Operations | Partial | Generic order shipment visibility exists; DHL-first operational workspace is still near-term work. |
 
-Example:
+## 6. HTMX Conventions
 
-```html
-<div id="payments-grid"
-     hx-get="/Orders/Payments?orderId=..."
-     hx-trigger="load"
-     hx-swap="innerHTML">
-</div>
-```
+HTMX is the default pattern for server-driven interaction.
 
-### When to Use `hx-post`
+### Use `hx-get` for
 
-Use `hx-post` for commands that update one section of the page and should return a refreshed partial.
+- fragment loading
+- tab/section refresh
+- partial list updates
+- detail sub-panels
 
-Current examples:
+### Use `hx-post` for
 
-- create/edit address modal in the Users screen
-- set default billing/shipping address buttons
+- form submissions
+- modal commands
+- partial section replacement
+- operator workflows where the page should not fully reload
 
-Example:
+### Keep server responses authoritative
 
-```html
-<form hx-post="/Users/CreateAddress"
-      hx-target="#addresses-section"
-      hx-swap="innerHTML">
-    ...
-</form>
-```
+- validation messages stay server-rendered
+- alerts stay server-rendered
+- list rows and partial grids stay server-rendered
+- concurrency and permission results come back from controller/application responses, not client guesses
 
-### Alerts and Partial Refreshes
+### Keep anti-forgery and Bootstrap hooks centralized
 
-Keep alerts server-rendered through `_Alerts.cshtml`. After a successful HTMX command, refresh the alerts container with another server-rendered partial rather than building alert HTML in JavaScript.
+- HTMX requests must carry ASP.NET Core anti-forgery
+- swapped fragments must reinitialize Bootstrap affordances
+- do not scatter one-off client-side refresh code when the layout can coordinate it centrally
 
-### Anti-Forgery
+## 7. Business Onboarding Workflows
 
-HTMX requests in WebAdmin must carry the ASP.NET Core anti-forgery token. The layout registers an `htmx:configRequest` handler that reads the current `__RequestVerificationToken` and sends it as the `RequestVerificationToken` header.
+Business onboarding is a near-term operational requirement and should be documented as a real workflow, not only entity CRUD.
 
-### Bootstrap Interop
+Target workflow:
 
-After HTMX swaps content, Bootstrap tooltips/popovers must be re-initialized. The shared layout handles this by listening to `htmx:afterSwap` and re-running the Bootstrap initializer on the swapped fragment.
+1. create business
+2. provision tenant/customer context as needed
+3. assign owner/admin user
+4. trigger invitation or activation
+5. complete initial defaults and setup
+6. move through activation/approval states
+7. support suspension/deactivation/reactivation
 
-## Controller and View Responsibilities
+### Current state
 
-### Controllers
+- `Partial`: underlying business/user/role structures exist
+- `Planned / Near-term`: explicit onboarding state machine and end-to-end admin workflow still need completion
 
-Controllers should:
+## 8. Authentication-Related Admin Support
 
-- call application handlers only
+WebAdmin should support or coordinate:
+
+- invite user
+- resend activation email
+- forgot-password assistance
+- reset-password initiation/support
+- lock/unlock account
+- role assignment
+- audit visibility
+
+### Current state
+
+- `In Progress`: user, role, permission, password, and email-change admin tooling exists
+- `Planned / Near-term`: invite, activation-resend, lock/unlock, and clearer support tooling remain required for go-live
+
+## 9. Site and System Settings Architecture
+
+Settings are a platform concern, not one crowded page.
+
+### Required design direction
+
+Settings should be grouped and scalable. At minimum, the information architecture should support:
+
+- General
+- Business Profile
+- Localization
+- Branding
+- Payments
+- Shipping
+- Notifications / Communications
+- Users & Roles
+- Security
+- Integrations
+- Tax / Invoicing
+- Advanced / Feature Flags
+
+### UI/UX guidance
+
+Settings UI must be:
+
+- scalable
+- discoverable
+- tenant-aware
+- permission-aware
+- easy for operators to navigate
+- future-safe as categories expand
+
+### Current state
+
+- `Partial`: a basic settings UI exists
+- `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
+
+## 10. Payment Operations UI
+
+WebAdmin must provide operational payment support.
+
+### Current state
+
+- `Completed foundation`: generic payment list/edit and payment-linked order/invoice visibility exist
+- `Completed foundation`: refund and reconciliation visibility exists
+- `In Progress`: payment operations are still generic rather than Stripe-first operationally
+
+### Required near-term capabilities
+
+- payment list
+- payment detail
+- provider references
+- status history
+- refund action/support
+- reconciliation-state visibility
+- dispute visibility
+- order/invoice linkage
+- webhook/callback audit visibility
+
+### Phase-1 provider direction
+
+WebAdmin payment operations should optimize for Stripe first. Additional providers are later-phase work.
+
+## 11. Shipping Operations UI
+
+WebAdmin must provide shipping visibility and operator support.
+
+### Current state
+
+- `Partial`: shipments are visible through order-related flows
+- `Planned / Near-term`: dedicated shipping operations UI still needs to be strengthened
+
+### Required near-term capabilities
+
+- shipment list
+- shipment detail
+- tracking timeline
+- label info
+- delivery exceptions
+- return shipment / return request visibility
+- manual intervention/support actions
+
+### Phase-1 provider direction
+
+Shipping operations should optimize for DHL first. Additional carriers are later-phase work.
+
+## 12. Communication Management UI
+
+Communication is a platform capability and must be visible in WebAdmin.
+
+### Required capabilities
+
+- email template management
+- notification template management
+- communication logs
+- resend/retry actions where applicable
+- delivery status visibility
+- per-business communication settings
+
+### Current state
+
+- `Planned / Near-term`: platform communication management is not yet complete enough for go-live-critical email flows
+
+## 13. Localization Readiness in WebAdmin
+
+WebAdmin is not fully multilingual yet, but it must be built in a localization-friendly way now.
+
+### Important platform context
+
+- mobile apps already support bilingual operation
+- adding resource languages in mobile is comparatively straightforward
+- WebAdmin should move into multilingual enablement immediately after core completion
+
+### Required design rules
+
+- avoid hard-coded labels where practical
+- keep settings/categories/messages translation-friendly
+- plan for language/default-locale settings now
+- keep templates and system messages ready for later localization
+
+## 14. Security and Performance Concerns
+
+These are non-functional requirements for WebAdmin, not optional nice-to-haves.
+
+### Security
+
+- permission-aware UI
+- safe admin action protection
+- auditability
+- tenant isolation awareness
+- PII protection
+- secure handling of activation/reset/support flows
+- rate-limiting awareness for sensitive paths
+
+### Performance
+
+- pagination/filtering/search for large datasets
+- efficient dashboard and list projections
+- responsive partial updates
+- avoid over-fetching
+- background/async handling where provider callbacks or communication delivery are involved
+
+## 15. Controller and View Responsibilities
+
+### Controllers should
+
+- call application handlers
 - map DTOs to view models
-- return full views for page loads
-- return partial views for HTMX fragment requests
-- keep server responses authoritative for alerts, grid rows, and validation messages
+- return full views for full-page loads
+- return partials/shells for HTMX fragment requests
+- keep responses authoritative for validation and operator feedback
 
-Controllers should not:
+### Controllers should not
 
 - manipulate EF entities directly
-- duplicate application-layer validation
-- push complex UI state into JavaScript
+- duplicate domain/application validation
+- push complex business rules into page JavaScript
 
-### Views
+### Views should
 
-Views should:
+- remain server-rendered and thin
+- prefer HTMX attributes over custom fetch code
+- preserve concurrency tokens such as `RowVersion`
+- reuse shared modal, alert, pager, and partial patterns
 
-- remain thin and server-rendered
-- prefer HTMX attributes over custom `fetch` calls
-- use Bootstrap components and shared partials consistently
-- preserve optimistic concurrency fields such as `RowVersion`
+## 16. Near-Term WebAdmin Delivery Order
 
-## Current HTMX-backed Areas
-
-### Orders
-
-The order details page now uses HTMX to load payments and shipments partials. Pagination inside those partials is also HTMX-boosted so the tab content can refresh without a full page navigation.
-
-### Identity Addresses
-
-The user edit page now uses HTMX for:
-
-- create address
-- edit address
-- set default billing address
-- set default shipping address
-
-Delete still uses the existing modal flow and can be moved fully to HTMX in a later cleanup pass.
-
-## Architectural Rules
-
-- WebAdmin DTOs are operational and must never be reused as public storefront DTOs.
-- Public content and front-office delivery must go through `Darwin.WebApi`, not direct reuse of MVC views.
-- Loyalty balances must not be read from CRM. Any UI that needs a points total must consume a loyalty projection derived from `LoyaltyAccount` and `LoyaltyPointsTransaction`.
-- New admin screens should be added on top of the existing Application handlers and validators, not by bypassing them.
-
-## Coding Standards for WebAdmin
-
-- keep nullable reference types enabled
-- initialize non-nullable references
-- write English XML documentation for public classes and members
-- keep code comments in English
-- reserve TODOs for genuinely later-phase work
-- prefer small, intentional HTMX fragments over client-heavy page scripts
-
-## Near-Term Rewrite Priorities
-
-The current rewrite direction is:
-
-1. continue replacing scattered `fetch` partial refreshes with HTMX
-2. complete the rewrite of the existing admin modules against the new domain
-3. surface CRM, inventory, billing, and accounting modules that already exist in the domain and application layers
-4. standardize list/filter/modal patterns across all admin modules
+1. complete business onboarding and operator account lifecycle support
+2. complete settings architecture and operational visibility
+3. complete Stripe-first payment operations
+4. complete DHL-first shipment operations
+5. add Communication Core admin visibility and template support
+6. run a full workflow audit across all implemented modules

@@ -1,215 +1,235 @@
 # Darwin Backlog
 
-This document is the execution roadmap for Darwin. It tracks what is stable, what was recently completed, and what still needs to be built in the recommended order.
+This document is the execution roadmap for Darwin. It is intentionally priority-based, not merely historical. The current guiding rule is:
 
-## 1. Completed or Stable
+- finish `Darwin.WebAdmin` and the admin/backend workflows needed for real SME operations first
+- keep mobile-used API paths stable
+- return to broader front-office and non-critical expansion after the operational core is ready
 
-- Clean Architecture foundation is in place across Domain, Application, Infrastructure, WebAdmin, WebApi, and mobile.
-- `Darwin.Web` has been split from `Darwin.WebAdmin` as a dedicated front-office Next.js application.
-- `Darwin.WebAdmin` has been renamed and moved to the root back-office structure.
-- CRM no longer duplicates loyalty balances. `Customer.LoyaltyPointsTotal` and `LoyaltyPointEntry` are removed.
-- Loyalty remains fully managed by `LoyaltyAccount` and `LoyaltyPointsTransaction`.
-- Lead and Opportunity are now part of the domain and application layers.
-- Inventory now supports warehouses, stock levels, transfers, suppliers, and purchase orders.
-- Billing/accounting now includes payments, financial accounts, journal entries, and expenses.
-- Order fulfillment is warehouse-aware and `OrderLine` can persist `WarehouseId`.
-- HTMX has been added to `Darwin.WebAdmin` and is now used in representative existing flows.
+Status terms used below:
 
-## 2. Current Focus
+- `Completed`
+- `In Progress`
+- `Planned / Near-term`
+- `Future / Later phase`
 
-The immediate direction is:
+## 1. Current Delivery Focus
 
-1. complete the HTMX-driven rewrite of existing WebAdmin modules
-2. expose the new domain modules in WebAdmin
-3. continue separating WebApi surfaces by audience
-4. keep front-office and mobile aligned with the new contracts and domain rules
+### Primary focus
 
-## 3. Phase 1 - Documentation and Delivery Alignment
+- `In Progress`: complete `Darwin.WebAdmin` as the first operational control center
+- `In Progress`: support real onboarding and day-one operations for small and medium businesses
+- `In Progress`: make backend + admin workflows sufficient for `Darwin.Mobile.Business` early operational usage
 
-### Epic: Architecture and documentation alignment
+### Phase-1 provider decisions
 
-- Completed: rewrite README to reflect `Darwin.WebAdmin`, `Darwin.Web`, HTMX, CRM, inventory, billing, and loyalty boundaries.
-- Completed: replace the old domain design notes with the new design removing `LoyaltyPointEntry` and documenting Lead, Opportunity, Warehouse, Supplier, Payment, FinancialAccount, JournalEntry, and related modules.
-- Completed: expand WebApi documentation around public/member/business/admin surfaces and BFF direction.
-- Completed: add a dedicated `DarwinWebAdmin.md` guide for MVC/Razor + HTMX patterns.
-- Completed: update identity/how-to documentation to reflect HTMX-backed address flows.
-- Completed: rebuild the EF Core migration history into a fresh initial migration aligned with the current domain and infrastructure model.
+- `Planned / Near-term`: payment implementation is `Stripe-first`
+- `Planned / Near-term`: shipping implementation is `DHL-first`
+- `Future / Later phase`: additional payment providers and market-specific payment methods
+- `Future / Later phase`: additional shipping/logistics providers
 
-## 4. Phase 2 - WebAdmin Rewrite
+## 2. Go-Live Critical
 
-### Epic: HTMX-first rewrite of existing modules
+### WebAdmin operational completion
 
-- Completed: add HTMX to the shared WebAdmin layouts.
-- Completed: replace custom `fetch`-based loading in the Orders details screen with HTMX partial loading for payments and shipments.
-- Completed: move user-address create/edit and default-address operations toward HTMX-driven partial updates.
-- Completed: expose new CRM, inventory, and billing modules in WebAdmin with MVC/Razor screens aligned to the new Application handlers.
-- Completed: add HTMX-backed CRM interaction timelines on customer, lead, and opportunity edit screens.
-- Completed: add HTMX-backed customer consent history and segment membership management screens.
-- Completed: move customer, lead, opportunity, invoice, and payment create/edit flows onto reusable HTMX editor-shell patterns with full-page fallback.
-- Completed: extend the HTMX editor-shell pattern to financial account, expense, warehouse, and supplier screens so those forms no longer rely on full-page postbacks by default.
-- Completed: harden HTMX editor shells so repeated in-place submissions keep a stable target container instead of losing the shell after the first swap.
-- Completed: extend the HTMX editor-shell pattern to the remaining multi-line journal entry, stock transfer, and purchase order editors.
-- Completed: move order operation screens (`AddPayment`, `AddShipment`, `AddRefund`, `CreateInvoice`) onto HTMX-backed shells with inline loading from order details and proper fallback pages.
-- Completed: remove dead sidebar links in WebAdmin so navigation only exposes modules that currently have implemented admin controllers.
-- Completed: move the remaining custom fetch-based user-address delete flow onto the shared HTMX confirmation-modal pattern, including shared alert refresh and modal-close hooks.
-- Completed: remove page-local confirm-delete wiring from legacy list screens where the shared modal now provides the same behavior centrally.
-- Completed: replace the admin home placeholder with a real dashboard summary screen that surfaces business-aware operations counts, CRM metrics, and quick links into the implemented modules.
-- Completed: migrate the legacy Brands create/edit screens onto the shared HTMX editor-shell pattern with HTMX-aware success redirects and validation fallback.
-- Completed: repair legacy delete affordances in category, product, and role screens so destructive actions consistently use the shared confirmation modal and concurrency tokens.
-- Completed: remove stray cross-module navigation elements from legacy identity screens so each admin module stays focused on its own workflow.
-- Completed: migrate the legacy Categories create/edit screens onto HTMX-aware editor shells with partial-only invalid responses and HTMX-safe success redirects.
-- Completed: migrate the legacy Products create/edit screens onto HTMX-aware editor shells and move Quill initialization into shell-safe scripts so validation round-trips still preserve rich-text editing after HTMX swaps.
-- Completed: migrate the legacy Permissions and Roles create/edit screens onto HTMX-aware editor shells and align their edit projections so immutable fields (`Key`, `IsSystem`) stay consistent across GET, POST, and delete affordances.
-- Completed: migrate the legacy CMS Pages create/edit screens onto HTMX-aware editor shells and move Quill initialization into shell-safe scripts so content editing keeps working after HTMX swaps.
-- Completed: migrate the legacy Add-on Groups create/edit screens onto HTMX-aware editor shells, replace the remaining `dynamic` options editor with a strongly typed shared editor model, and keep currency/input helpers shell-safe after HTMX swaps.
-- Completed: fix Add-on Group attachment screens so product/category/brand search queries are actually applied server-side, attachment paging/query context is preserved across posts, and the variants pager carries its route context correctly.
-- Completed: migrate the central Site Settings edit screen onto an HTMX-aware editor shell so validation/concurrency failures no longer force a full-page round-trip for one of the core back-office configuration pages.
-- Completed: migrate the core Users create/edit screens onto HTMX-aware editor shells, keep the address-management modal wiring shell-safe after swaps, and surface the main admin actions (email, password, roles) directly from the user edit screen.
-- Completed: enrich the admin user-edit projection with the current email so email/password workflows keep their operator context, and fix the `ChangeEmail` form so invalid posts no longer lose the displayed current email.
-- Completed: migrate the remaining user-administration subflows (`ChangeEmail`, `ChangePassword`, `Roles`) onto HTMX-aware editor shells and fix their failure paths so role checklists, operator context, and user identity details are rebuilt instead of rendering half-empty pages after validation or handler errors.
-- Completed: normalize the user-administration wrappers and controller rendering paths so all user-management screens now share the same HTMX-aware shell/render/redirect pattern instead of mixing legacy full-page-only failure behavior with newer shells.
-- Completed: move the CRM customer-address editor script into the customer editor shell so add/remove address behavior survives HTMX validation round-trips instead of only working on the first full-page render.
-- Completed: harden HTMX-paged partials in Orders and CRM so boosted pager links no longer push partial-route URLs into browser history or navigate operators away from the parent detail screen.
-- Completed: standardize the remaining legacy user/role/permission list screens onto the shared search-reset-pager pattern so operators no longer switch between manual pagination UIs and the common pager helper across the admin area.
-- Completed: add a real Admin media library backed by `MediaAsset` records, including searchable listing, metadata editing, safe soft-delete, and persistence of Quill uploads into the same library instead of leaving editor uploads invisible to back-office operators.
-- Completed: harden dashboard quick links so identity actions only appear for full-admin operators and business-scoped links carry the current business context instead of dropping operators into ambiguous cross-business screens.
-- Completed: standardize the remaining legacy catalog/CMS list screens (`Categories`, `Products`, `Pages`) onto the shared search-reset-pager pattern and add server-side page search so operators no longer bounce between manual pagination UIs and inconsistent filtering behavior.
-- Completed: add lightweight server-side search to the admin orders list and align `Orders`/`Brands` with the same reset/pager affordances already used elsewhere in WebAdmin so the highest-traffic list screens behave consistently.
-- Completed: decouple shared alert refresh from `UsersController` by exposing a home-scoped alerts fragment and remove the duplicate inventory shortcut from the catalog sidebar section so shared admin navigation is less misleading.
-- Completed: remove the obsolete user-scoped alerts fragment now that shared alert refresh is owned by `HomeController`, and align key operational list screens (`Payments`, `Financial Accounts`, `Warehouses`, `Suppliers`, `Purchase Orders`) with shared search/reset/pager behavior so operators do not bounce between inconsistent filtering patterns.
-- Completed: extend the same shared search/reset/pager behavior to the remaining finance and inventory operator lists (`Expenses`, `Journal Entries`, `Stock Levels`, `Stock Transfers`) so the newer back-office modules do not regress into filter-only navigation patterns.
-- Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
-- Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
-- Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.
-- Decision: decide when it is safe to retire the legacy `/admin` and `/dashboard` redirects still served by `DashboardController`; they are useful for compatibility today but keep an extra alias path alive in the back-office surface.
-- Decision: decide whether `MediaAsset` deletion should remain metadata-only soft delete for operator safety or eventually add reference-aware physical file purge and orphan cleanup; the current behavior intentionally leaves files on disk to avoid breaking existing CMS/editor content.
+- `In Progress`: complete remaining operator workflows in `Darwin.WebAdmin` so every sidebar module has usable list/detail/create/edit/support actions
+- `Planned / Near-term`: run a functional audit of all admin navigation, quick actions, and operator workflows from the perspective of daily SME usage
+- `Planned / Near-term`: close high-friction support gaps in orders, CRM, media, settings, and business/user management
 
-### Epic: Orders, fulfillment, and billing admin
+### Business and tenant onboarding
 
-- Completed: warehouse-aware order status changes and fulfillment context persistence.
-- Completed: warehouse-aware inventory ledger filtering in WebAdmin.
-- Completed: build billing management screens for payments, financial accounts, expenses, and journal entries.
-- Completed: add shipment, refund, and invoice management screens to order administration.
-- Completed: add order detail tabs for payments, shipments, refunds, and invoices.
-- Completed: converge duplicated order-payment and billing-payment concepts into a single `Billing.Payment` aggregate.
-- Completed: remove legacy shadow foreign-key columns from business/identity joins and align `OrderLine.VatRate` precision in the database model.
-- Completed: expose CRM-linked invoices, payment context, and customer/order cross-links more deeply in the admin UI so Billing and Orders screens no longer rely on raw ids.
-- Completed: add dedicated CRM invoice list/edit screens and fix invoice lifecycle persistence so order links and payment reassignments do not leave stale associations.
-- Completed: add explicit invoice status transition workflows in CRM so paid/open/cancelled operator actions enforce safer payment-aware guards.
-- Completed: align order refunds and order-created invoices with the shared payment aggregate so refunds can mark payments as refunded and invoice creation links/captures eligible payments.
-- Completed: add reconciliation visibility across CRM invoice screens, billing payment screens, and order tabs so operators can see refunded, net-collected, settled, and remaining-balance amounts without introducing new domain states.
-- Completed: deepen CRM invoice lifecycle with explicit post/void language in the operator UI and a direct invoice refund workflow that records refunds against the linked payment and cancels fully refunded invoices.
-- Task: extend invoice lifecycle beyond the current post/void/refund workflow with credit-note, write-off, and reconciliation-specific operator flows where the domain eventually needs them.
+- `Planned / Near-term`: implement business creation and onboarding workflow as an explicit operational flow, not only as raw entity management
+- `Planned / Near-term`: support tenant/customer provisioning for new business onboarding
+- `Planned / Near-term`: support owner/admin assignment during onboarding
+- `Planned / Near-term`: model and expose onboarding state, activation state, approval state, and suspension/reactivation rules
+- `Planned / Near-term`: seed and apply initial defaults during onboarding (locale, branding basics, payment/shipping defaults, communication defaults where applicable)
 
-### Epic: CRM admin
+### Authentication and account lifecycle
 
-- Completed: build customer list and editing screens.
-- Completed: build lead management with assignment and qualification fields.
-- Completed: build opportunity management with stages, projected value, and product lines.
-- Completed: build interaction timeline and consent management screens.
-- Completed: build segmentation definitions and membership management screens.
-- Completed: add explicit lead-to-customer conversion workflows in WebAdmin and Application.
-- Completed: add a lightweight CRM overview with pipeline and activity summary cards.
-- Task: deepen CRM dashboard/reporting with owner-based, source-based, and conversion-rate breakdowns.
+- `Planned / Near-term`: complete signup, invitation, activation, forgot-password, and reset-password operational flows
+- `Planned / Near-term`: add admin support for resend activation, lock/unlock account, reset initiation support, and audit visibility
+- `Planned / Near-term`: ensure business-user status directly affects access in mobile and admin-backed support workflows
 
-### Epic: Inventory and procurement admin
+### Communication Core (email-first MVP)
 
-- Completed: build warehouse management pages.
-- Completed: build stock-level management pages.
-- Completed: build stock transfer management pages.
-- Completed: build supplier management pages.
-- Completed: build purchase order management pages.
-- Task: add manual stock adjustment, reservation/release, and receipt-specific operator flows.
-- Task: add inventory dashboards, low-stock monitoring, and transfer/purchase order workflow actions.
+- `Planned / Near-term`: implement minimum viable Communication Core with email as the first operational channel
+- `Planned / Near-term`: support signup email, account activation email, invitation email, forgot-password email, reset-password email, and important account notifications
+- `Planned / Near-term`: add provider abstraction, template support, delivery logging, retry handling, and admin visibility for email operations
 
-### Epic: Accounting admin
+### Payment integration
 
-- Completed: build payment management pages.
-- Completed: build expense management pages.
-- Completed: build financial account management pages.
-- Completed: build journal entry management pages.
-- Task: add accounting summaries, balancing helpers, and safer posting workflows.
+- `Planned / Near-term`: replace generic hosted-checkout/payment completion flow with Stripe-specific integration
+- `Planned / Near-term`: support Stripe payment intent/session references in the domain and application model
+- `Planned / Near-term`: implement Stripe webhook verification and lifecycle handling
+- `Planned / Near-term`: expose Stripe-related provider references, status history, and support visibility in WebAdmin
 
-## 5. Phase 3 - WebApi Expansion
+### Shipping integration
 
-### Epic: Public API
+- `Planned / Near-term`: replace generic shipping assumptions with DHL-specific implementation
+- `Planned / Near-term`: support DHL label creation, tracking visibility, and delivery lifecycle handling
+- `Planned / Near-term`: surface DHL shipment visibility and operator support actions in WebAdmin
 
-- Completed: add non-breaking public/member/business route aliases so the future API surface split can evolve without breaking legacy callers.
-- Completed: reorganize `Darwin.WebApi` route ownership so audience-first canonical routes are now explicit for member/business/public controllers, while legacy aliases remain in place for existing clients.
-- Completed: split mixed business delivery endpoints into dedicated public and member controllers so storefront discovery and member engagement/onboarding no longer share one mixed controller surface.
-- Completed: split loyalty delivery into dedicated member and business controllers so member account/reward/timeline flows and business scan/configuration/campaign flows no longer share one mixed controller surface.
-- Completed: add initial public CMS delivery endpoints for published pages and menus under `api/v1/public/cms` with legacy `/api/v1/cms/*` aliases.
-- Completed: add initial public catalog delivery endpoints for published categories and products under `api/v1/public/catalog` with legacy `/api/v1/catalog/*` aliases.
-- Completed: restore a dedicated public business map-discovery endpoint under `api/v1/public/businesses/map` while preserving the legacy `/api/v1/businesses/map` alias used by existing mobile flows.
-- Completed: add initial public storefront cart endpoints under `api/v1/public/cart` with legacy `/api/v1/cart*` aliases for anonymous and authenticated storefront cart mutations.
-- Completed: add initial public storefront shipping-rate endpoints under `api/v1/public/shipping/rates` with the legacy `/api/v1/shipping/rates` alias.
-- Completed: add initial public storefront checkout order-placement under `api/v1/public/checkout/orders` with the legacy `/api/v1/checkout/orders` alias, including authoritative cart totals, address snapshots, and cart finalization.
-- Completed: add storefront checkout-intent preview under `api/v1/public/checkout/intent`, including authoritative cart totals, derived shipment mass, validated shipping options, and selected shipping-rate preview.
-- Completed: add storefront payment-intent initiation under `api/v1/public/checkout/orders/{orderId}/payment-intent`, reusing active pending intents where possible instead of creating duplicate pending payments.
-- Completed: add generic storefront PSP handoff and payment-completion flows under `api/v1/public/checkout/orders/{orderId}/payment-intent` and `api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete`, including hosted-checkout URLs, safe member/anonymous access rules, and payment/order status finalization.
-- Completed: add storefront post-order confirmation under `api/v1/public/checkout/orders/{orderId}/confirmation`, with safe access rules for member-owned versus anonymous orders.
-- Completed: persist the selected checkout shipping method and its display snapshots on `Order` so confirmation, member history, and back-office screens do not depend on mutable shipping-method configuration.
-- Task: deepen public CMS delivery with SEO, structured blocks, and culture fallback rules as storefront requirements expand.
-- Task: deepen public catalog delivery with richer pricing, availability, attribute filtering, and search-oriented projections.
-- Task: replace the current generic hosted-checkout handoff with provider-specific PSP integration, callback/webhook verification, and reconciliation-safe payment completion.
+### Settings foundation
 
-### Epic: Member API
+- `Planned / Near-term`: formalize a settings architecture that separates global/system settings from tenant/business settings
+- `Planned / Near-term`: redesign settings IA into discoverable categories instead of allowing settings to sprawl into one ambiguous page
+- `Planned / Near-term`: model default locale/language, branding, payment, shipping, communication, security, and tax/invoicing settings explicitly
 
-- Completed: establish the canonical member loyalty route root under `api/v1/member/loyalty` while preserving the legacy `/api/v1/loyalty/*` aliases for existing consumers.
-- Completed: add initial member order-history endpoints under `api/v1/member/orders` with legacy `/api/v1/orders/*` aliases for existing clients.
-- Completed: add initial member invoice-history endpoints under `api/v1/member/invoices` with legacy `/api/v1/invoices/*` aliases for existing clients.
-- Completed: add member profile address-book endpoints under `api/v1/member/profile/addresses` with legacy `/api/v1/profile/me/addresses*` aliases.
-- Completed: add a member-facing linked CRM customer summary endpoint under `api/v1/member/profile/customer`.
-- Completed: add member privacy and communication preference endpoints under `api/v1/member/profile/preferences` with legacy `/api/v1/profile/me/preferences` aliases, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
-- Completed: add a richer member-facing CRM customer-context endpoint under `api/v1/member/profile/customer/context`, including segments, consent history, and recent interactions, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
-- Completed: add member loyalty overview and business-dashboard projections under `api/v1/member/loyalty/my/overview` and `api/v1/member/loyalty/business/{businessId}/dashboard`, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
-- Completed: add member order and invoice action/document flows, including canonical retry-payment endpoints, plain-text document downloads, and additive action metadata on member order/invoice detail contracts.
-- Completed: enrich member loyalty overview and business-dashboard projections with next-reward progress fields while explicitly reporting that point-expiry tracking is not yet enabled in the current loyalty domain model.
-- Completed: add a shared mobile member-commerce service abstraction for canonical member order/invoice history, retry-payment, and plain-text document download flows so MAUI clients do not need to hard-code the new WebApi routes.
-- Task: deepen member loyalty APIs with true point-expiry modeling, cross-business personalization, and any future reward-progress refinements beyond the current overview/dashboard projections.
-- Task: deepen member order and invoice APIs beyond the current retry-payment/document flow with richer storefront-specific actions, document formats, and post-payment follow-up behavior as front-office requirements solidify.
-- Task: extend member profile APIs with any additional self-service CRM views beyond the now-supported addresses, linked customer summary, CRM customer context, and privacy/communication preferences.
-- Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.
+### Access and support operations
 
-### Epic: Admin and integration API
+- `In Progress`: continue improving users, roles, permissions, and business-aware admin visibility
+- `Planned / Near-term`: add stronger auditability for sensitive admin actions
+- `Planned / Near-term`: add support-oriented admin views for troubleshooting onboarding, auth, payment, shipping, and communication issues
 
-- Completed: establish the canonical business loyalty route root under `api/v1/business/loyalty` while preserving the legacy `/api/v1/loyalty/*` aliases for business mobile flows.
-- Task: design CRM admin/integration endpoints.
-- Task: design inventory admin/integration endpoints.
-- Task: design billing/accounting admin/integration endpoints.
-- Task: keep each API surface on its own contract set; no admin DTO reuse in public/member delivery.
+## 3. High Priority / Near-Term
 
-### Epic: BFF readiness
+### WebAdmin module completion and refinement
 
-- Task: define the future ASP.NET Core BFF/gateway layout for `Darwin.Web`.
-- Task: plan route composition, caching, token/session handling, and external consumer isolation.
-- Task: ensure future consumers such as SharePoint web parts can use an isolated delivery surface.
+- `Completed`: HTMX is established in shared WebAdmin layouts and representative module flows
+- `Completed`: CRM, inventory, billing, media, CMS, catalog, identity, and order modules are exposed in WebAdmin
+- `Completed`: shared search/reset/pager behavior now covers legacy and newer operator lists across catalog, CMS, identity, billing, inventory, and orders
+- `Planned / Near-term`: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages
+- `Planned / Near-term`: standardize remaining partial loading, modal submission, and alert refresh patterns
+- `Planned / Near-term`: deepen operator workflows in Orders, CRM, and Media beyond structural refactor
 
-## 6. Phase 4 - Front-Office
+### Communication management
 
-### Epic: Storefront and member portal
+- `Planned / Near-term`: add communication logs, resend/retry actions, and delivery-state visibility in WebAdmin
+- `Planned / Near-term`: add per-business communication settings
+- `Planned / Near-term`: introduce localization-aware notification/email template management
 
-- Task: continue the Next.js storefront implementation in `src/Darwin.Web`.
-- Task: implement public CMS and catalog pages against WebApi.
-- Task: implement member profile, addresses, loyalty, orders, and invoices against WebApi.
-- Task: keep front-office DTOs independent from admin DTOs.
+### Payments, refunds, reconciliation, disputes
 
-## 7. Phase 5 - Mobile and Cross-Channel Alignment
+- `Completed`: generic payment list/edit/refund visibility exists in WebAdmin and reconciliation projections exist
+- `Planned / Near-term`: add Stripe-specific operational visibility, provider references, and status history
+- `Planned / Near-term`: deepen refund, reconciliation, dispute, and support workflows
+- `Planned / Near-term`: add webhook/callback audit trail visibility
 
-### Epic: Mobile contract alignment
+### Shipping and returns
 
-- Task: review downstream impact of CRM, billing, and fulfillment changes on mobile-facing contracts.
-- Completed: migrate shared mobile route constants to the canonical audience-first WebApi route roots while preserving compatibility aliases server-side.
-- Completed: add `Darwin.Mobile.Shared` member-commerce service coverage for canonical member order/invoice history, payment-intent, and document-download flows.
-- Completed: extend `Darwin.Mobile.Shared` profile service coverage to the canonical member address-book endpoints so mobile self-service address flows use the same audience-first route ownership as WebApi.
-- Completed: refactor the consumer rewards screen to consume the aggregated loyalty overview/business-dashboard endpoints and surface next-reward progress instead of relying only on smaller chatty account/history calls.
-- Completed: surface canonical member address-book and linked CRM customer-context summaries directly in the consumer profile screen so profile UI uses the new profile service projections instead of ad-hoc follow-up work.
-- Completed: add a dedicated consumer member-address-book screen for create/update/delete/default flows on top of the canonical profile address endpoints instead of keeping addresses read-only in profile summary.
-- Completed: add a consumer `Orders & Invoices` screen that consumes the canonical member-commerce routes for history, detail, payment retry, and document copy flows instead of leaving those APIs unused in UI.
-- Completed: replace the consumer profile's local optional-privacy placeholder section with a canonical member preferences screen backed by WebApi profile preference endpoints.
-- Completed: add a dedicated consumer CRM customer-details screen so linked profile, segments, consent history, and recent interactions are no longer compressed into a profile-summary-only view.
-- Completed: remove the obsolete local optional-privacy registration toggles now that backend-backed member preferences are managed after sign-up in profile.
-- Completed: harden `Darwin.Mobile.Business` error handling so profile/password/reward-management flows no longer leak raw exception or server messages directly into the UI.
-- Completed: align `Darwin.Mobile.Business` default language metadata with `de-DE` resource qualifiers so Windows validation builds stay warning-free.
-- Task: continue updating `Darwin.WebApi`, `Darwin.Contracts`, and MAUI apps wherever future domain or route changes affect mobile consumers.
-- Task: keep loyalty behavior backward compatible unless an explicit contract version change is introduced.
+- `Completed`: order-bound shipment visibility exists in admin
+- `Planned / Near-term`: add DHL-first shipment workspace, tracking timeline, label info, and exception handling
+- `Planned / Near-term`: add return shipment / return request / RMA foundations
+
+### Settings UI and architecture
+
+- `In Progress`: basic site settings UI exists
+- `Planned / Near-term`: restructure settings into categories such as General, Business Profile, Localization, Branding, Payments, Shipping, Communications, Users & Roles, Security, Integrations, Tax & Invoicing, and Advanced
+- `Planned / Near-term`: make settings UI tenant-aware, permission-aware, and future-safe
+
+### Localization readiness
+
+- `Planned / Near-term`: make WebAdmin localization-ready immediately after initial completion
+- `Planned / Near-term`: introduce shared localization strategy for admin, templates, and settings labels
+- `Planned / Near-term`: add language/default-locale settings at system, business, and user levels
+- `Planned / Near-term`: reduce hard-coded WebAdmin text and prepare translation-friendly resource structure
+
+### Tax, VAT, and invoice improvement
+
+- `Planned / Near-term`: improve tax/VAT-aware order and invoice snapshots
+- `Planned / Near-term`: add VAT ID support and B2B/B2C differentiation
+- `Planned / Near-term`: define reverse-charge readiness and country-aware taxation rules
+- `Planned / Near-term`: improve invoice immutability, archive readiness, and structured export readiness
+
+### Auditability and observability
+
+- `Planned / Near-term`: add stronger audit logging around onboarding, auth support, settings, payments, and shipping actions
+- `Planned / Near-term`: improve observability around provider callbacks, communication delivery, and admin-side operational failures
+
+## 4. Medium Priority
+
+### Communication expansion
+
+- `Future / Later phase`: add channels beyond email, including SMS, WhatsApp, Push, and In-app, on top of the same Communication Core
+- `Future / Later phase`: add richer targeting, queue/outbox strategies, and failure-routing workflows
+
+### Returns and post-order operations
+
+- `Planned / Near-term`: introduce return requests / RMA baseline
+- `Future / Later phase`: add full end-to-end returns workflow with inventory, refund, and support coupling
+
+### Tax and compliance expansion
+
+- `Future / Later phase`: add deeper EU tax handling such as OSS/IOSS-specific behavior where required
+- `Future / Later phase`: add compliance metadata foundations for products, packaging, and traceability-related needs
+- `Future / Later phase`: add e-invoice and archive workflows beyond initial readiness
+
+### Merchant operations depth
+
+- `Future / Later phase`: add richer merchant operational settings and automation features after go-live-critical support is stable
+
+## 5. Later Phase / Future Expansion
+
+### Additional providers
+
+- `Future / Later phase`: additional payment providers beyond Stripe
+- `Future / Later phase`: additional market-specific payment methods beyond the phase-1 Stripe scope
+- `Future / Later phase`: additional shipping carriers and postal companies beyond the phase-1 DHL scope
+
+### Broader market expansion
+
+- `Future / Later phase`: advanced EU expansion requirements beyond initial go-live
+- `Future / Later phase`: deeper multi-provider abstractions once real provider variation justifies them
+
+### Front-office growth
+
+- `In Progress but secondary`: continue `Darwin.Web` storefront and member portal implementation against `Darwin.WebApi`
+- `Future / Later phase`: broaden public delivery capabilities after operational admin/backend work stabilizes
+
+## 6. Technical Foundations / Cross-Cutting
+
+### Domain and application
+
+- `Completed`: CRM no longer duplicates loyalty totals; `Customer.LoyaltyPointsTotal` and `LoyaltyPointEntry` are removed
+- `Completed`: loyalty remains owned by `LoyaltyAccount` and `LoyaltyPointsTransaction`
+- `Completed`: Lead and Opportunity are part of the domain and application layers
+- `Completed`: inventory supports warehouses, stock levels, transfers, suppliers, and purchase orders
+- `Completed`: billing/accounting supports payments, financial accounts, journal entries, and expenses
+- `Completed`: warehouse-aware fulfillment persists fulfillment context on order lines
+- `Planned / Near-term`: deepen payment domain lifecycle and provider audit trail
+- `Planned / Near-term`: deepen shipment/return domain model and delivery exception lifecycle
+- `Planned / Near-term`: model Communication Core as a platform capability rather than feature-local helper code
+- `Planned / Near-term`: formalize merchant/tenant onboarding domain rules
+- `Planned / Near-term`: formalize settings domain architecture across global and business scopes
+
+### WebApi
+
+- `Completed`: mobile-used route surfaces have been reorganized with canonical audience-first routing while preserving compatibility aliases
+- `Completed`: public/member loyalty, member commerce, profile, and storefront groundwork exists
+- `Planned / Near-term`: keep mobile-used endpoints stable while WebAdmin and backend operational flows are prioritized
+- `Planned / Near-term`: add admin/integration APIs only when WebAdmin and business/mobile scenarios demand them
+
+### Mobile
+
+- `Completed`: mobile apps remain operational and use shared canonical service abstractions
+- `Completed`: `Darwin.Mobile.Business` is usable enough to influence delivery priorities
+- `Planned / Near-term`: ensure onboarding/account lifecycle backend and admin support flows satisfy business mobile usage
+- `Planned / Near-term`: keep mobile route and contract compatibility intact whenever backend changes touch mobile-used flows
+
+### Security and performance
+
+- `Planned / Near-term`: harden authentication, tenant isolation, and sensitive-action protection
+- `Planned / Near-term`: ensure pagination/filtering/search for large operational datasets everywhere in admin
+- `Planned / Near-term`: use async/background handling for notifications, shipping callbacks, and payment callbacks
+- `Planned / Near-term`: improve retry-safe integration and failure diagnostics across provider boundaries
+
+## 7. Localization Program
+
+### Current state
+
+- `Completed`: mobile apps already support bilingual operation
+- `In Progress`: WebAdmin is being built in a way that should not block later multilingual enablement
+
+### Required next steps
+
+- `Planned / Near-term`: add WebAdmin localization infrastructure
+- `Planned / Near-term`: add shared localization strategy across admin, templates, and system messages
+- `Planned / Near-term`: add language settings and fallback policy
+- `Planned / Near-term`: translate core admin flows after initial operational completion
+- `Planned / Near-term`: localize templates and communication content
+
+## 8. Decision Log
+
+- `Decision pending`: decide when it is safe to retire the legacy `/admin` and `/dashboard` redirects still served by `DashboardController`
+- `Decision pending`: decide whether `MediaAsset` deletion should remain metadata-only soft delete or evolve into reference-aware physical file purge/orphan cleanup
+- `Decision pending`: decide how far initial tenant/customer separation should go for SME onboarding in the first go-live wave versus a lighter business-first provisioning model
