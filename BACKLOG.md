@@ -60,6 +60,7 @@ The immediate direction is:
 - Completed: migrate the legacy Categories create/edit screens onto HTMX-aware editor shells with partial-only invalid responses and HTMX-safe success redirects.
 - Completed: migrate the legacy Products create/edit screens onto HTMX-aware editor shells and move Quill initialization into shell-safe scripts so validation round-trips still preserve rich-text editing after HTMX swaps.
 - Completed: migrate the legacy Permissions and Roles create/edit screens onto HTMX-aware editor shells and align their edit projections so immutable fields (`Key`, `IsSystem`) stay consistent across GET, POST, and delete affordances.
+- Completed: migrate the legacy CMS Pages create/edit screens onto HTMX-aware editor shells and move Quill initialization into shell-safe scripts so content editing keeps working after HTMX swaps.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.

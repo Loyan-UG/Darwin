@@ -68,8 +68,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken ct)
         {
-            var (_, cultures) = await _getCultures.HandleAsync(ct);
-            ViewBag.Cultures = cultures;
+            await LoadCulturesAsync(ct).ConfigureAwait(false);
             return View(new PageCreateVm());
         }
 
@@ -83,10 +82,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
 
             if (!ModelState.IsValid)
             {
-                var (_, culturesInvalid) = await _getCultures.HandleAsync(ct);
-                ViewBag.Cultures = culturesInvalid;
-                if (vm.Translations.Count == 0) vm.Translations.Add(new PageTranslationVm());
-                return View(vm);
+                await LoadCulturesAsync(ct).ConfigureAwait(false);
+                EnsureTranslations(vm);
+                return RenderCreateEditor(vm);
             }
 
             var dto = new PageCreateDto
@@ -109,16 +107,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             {
                 await _create.HandleAsync(dto, ct);
                 TempData["Success"] = "Page created successfully.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                var (_, cultures) = await _getCultures.HandleAsync(ct);
-                ViewBag.Cultures = cultures;
-                return View(vm);
+                await LoadCulturesAsync(ct).ConfigureAwait(false);
+                EnsureTranslations(vm);
+                return RenderCreateEditor(vm);
             }
         }
 
@@ -146,8 +144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 }).ToList()
             };
 
-            var (_, cultures) = await _getCultures.HandleAsync(ct);
-            ViewBag.Cultures = cultures;
+            await LoadCulturesAsync(ct).ConfigureAwait(false);
 
             return View(vm);
         }
@@ -160,9 +157,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
 
             if (!ModelState.IsValid)
             {
-                var (_, culturesInvalid) = await _getCultures.HandleAsync(ct);
-                ViewBag.Cultures = culturesInvalid;
-                return View(vm);
+                await LoadCulturesAsync(ct).ConfigureAwait(false);
+                EnsureTranslations(vm);
+                return RenderEditEditor(vm);
             }
 
             var dto = new PageEditDto
@@ -187,23 +184,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             {
                 await _update.HandleAsync(dto, ct);
                 TempData["Success"] = "Page updated successfully.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
-                var (_, cultures) = await _getCultures.HandleAsync(ct);
-                ViewBag.Cultures = cultures;
-                return View(vm);
+                await LoadCulturesAsync(ct).ConfigureAwait(false);
+                EnsureTranslations(vm);
+                return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
-                var (_, cultures) = await _getCultures.HandleAsync(ct);
-                ViewBag.Cultures = cultures;
-                return View(vm);
+                await LoadCulturesAsync(ct).ConfigureAwait(false);
+                EnsureTranslations(vm);
+                return RenderEditEditor(vm);
             }
         }
 
@@ -221,6 +218,56 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 TempData["Error"] = "Failed to delete the page.";
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task LoadCulturesAsync(CancellationToken ct)
+        {
+            var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
+            ViewBag.Cultures = cultures;
+        }
+
+        private IActionResult RenderCreateEditor(PageCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Pages/_PageCreateEditorShell.cshtml", vm);
+            }
+
+            return View("Create", vm);
+        }
+
+        private IActionResult RenderEditEditor(PageEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Pages/_PageEditEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void EnsureTranslations(PageEditorVm vm)
+        {
+            if (vm.Translations.Count == 0)
+            {
+                vm.Translations.Add(new PageTranslationVm());
+            }
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public string ContentHtml { get; set; } = string.Empty;
     }
 
-    public sealed class PageCreateVm
+    public abstract class PageEditorVm
     {
         public PageStatus Status { get; set; } = PageStatus.Draft;
         public DateTime? PublishStartUtc { get; set; }
@@ -22,13 +22,13 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public List<PageTranslationVm> Translations { get; set; } = new() { new PageTranslationVm() };
     }
 
-    public sealed class PageEditVm
+    public sealed class PageCreateVm : PageEditorVm
+    {
+    }
+
+    public sealed class PageEditVm : PageEditorVm
     {
         public Guid Id { get; set; }
-        public PageStatus Status { get; set; } = PageStatus.Draft;
-        public DateTime? PublishStartUtc { get; set; }
-        public DateTime? PublishEndUtc { get; set; }
-        public List<PageTranslationVm> Translations { get; set; } = new() { new PageTranslationVm() };
         public byte[]? RowVersion { get; set; }
     }
 }

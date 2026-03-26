@@ -1,0 +1,95 @@
+<script>
+    (function () {
+        window.darwinAdmin = window.darwinAdmin || {};
+
+        window.darwinAdmin.initPageEditors = window.darwinAdmin.initPageEditors || function (root) {
+            const scope = root || document;
+            if (!window.Quill) {
+                console.error("Quill is not loaded. Ensure quill.js is included in _Layout BEFORE this section.");
+                return;
+            }
+
+            scope.querySelectorAll('[data-page-quill-editor="true"]').forEach(function (el) {
+                if (el.dataset.quillInitialized === 'true') {
+                    return;
+                }
+
+                const quill = new Quill(el, {
+                    theme: 'snow',
+                    placeholder: 'Write content here...',
+                    modules: {
+                        toolbar: {
+                            container: [
+                                [{ header: [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                ['link', 'image', 'video'],
+                                ['blockquote', 'code-block'],
+                                [{ 'align': [] }],
+                                ['clean']
+                            ],
+                            handlers: {
+                                image: function () {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*';
+                                    input.onchange = async () => {
+                                        const file = input.files[0];
+                                        if (!file) {
+                                            return;
+                                        }
+
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+
+                                        try {
+                                            const resp = await fetch('@Url.Action("UploadQuill", "Media")', {
+                                                method: 'POST',
+                                                body: formData
+                                            });
+
+                                            if (!resp.ok) {
+                                                throw new Error('Upload failed');
+                                            }
+
+                                            const json = await resp.json();
+                                            const range = quill.getSelection(true);
+                                            quill.insertEmbed(range.index, 'image', json.url);
+                                            quill.setSelection(range.index + 1);
+                                        } catch {
+                                            alert('Image upload failed.');
+                                        }
+                                    };
+                                    input.click();
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const hidden = el.parentElement.querySelector('textarea');
+                if (hidden && hidden.value) {
+                    quill.root.innerHTML = hidden.value;
+                }
+
+                const form = el.closest('form');
+                if (form && form.dataset.pageQuillSubmitBound !== 'true') {
+                    form.addEventListener('submit', function () {
+                        form.querySelectorAll('[data-page-quill-editor="true"]').forEach(function (editorEl) {
+                            const editorHidden = editorEl.parentElement.querySelector('textarea');
+                            if (editorHidden && editorEl.__quill) {
+                                editorHidden.value = editorEl.__quill.root.innerHTML;
+                            }
+                        });
+                    });
+                    form.dataset.pageQuillSubmitBound = 'true';
+                }
+
+                el.__quill = quill;
+                el.dataset.quillInitialized = 'true';
+            });
+        };
+
+        window.darwinAdmin.initPageEditors(document.getElementById('page-editor-shell') || document);
+    })();
+</script>

@@ -1,0 +1,100 @@
+@model Darwin.WebAdmin.ViewModels.CMS.PageEditorVm
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <partial name="~/Views/Shared/_Alerts.cshtml" />
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select asp-for="Status" class="form-select">
+                    @foreach (var s in Enum.GetValues(typeof(Darwin.Domain.Enums.PageStatus)))
+                    {
+                        <option value="@s" selected="@(Model.Status.Equals(s))">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Publish Start (UTC)</label>
+                <input asp-for="PublishStartUtc" type="datetime-local" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Publish End (UTC)</label>
+                <input asp-for="PublishEndUtc" type="datetime-local" class="form-control" />
+            </div>
+        </div>
+
+        <hr />
+
+        <h5>Translations</h5>
+        @for (int i = 0; i < Model.Translations.Count; i++)
+        {
+            <div class="border rounded p-3 mb-3" data-translation-block>
+                <input type="hidden" name="Translations.Index" value="@i" />
+
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label class="form-label">Culture</label>
+                        <select asp-for="Translations[@i].Culture" class="form-select">
+                            @if (ViewBag.Cultures is IEnumerable<string> cultures)
+                            {
+                                foreach (var cul in cultures)
+                                {
+                                    <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label">Title</label>
+                        <input asp-for="Translations[@i].Title" class="form-control" />
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label">Slug</label>
+                        <div class="d-flex align-items-center">
+                            <input asp-for="Translations[@i].Slug" class="form-control" />
+                            <field-help title="Slug"
+                                        content="URL-friendly identifier. Use lowercase letters, digits, and hyphens. Example: <code>about-us</code>."
+                                        placement="right"></field-help>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Meta Title</label>
+                        <input asp-for="Translations[@i].MetaTitle" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Meta Description</label>
+                        <div class="d-flex align-items-center">
+                            <input asp-for="Translations[@i].MetaDescription" class="form-control" />
+                            <field-help title="Meta Description"
+                                        content="Short SEO description (recommended up to ~155 chars)."
+                                        placement="right"></field-help>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Content (HTML)</label>
+                        <div class="d-flex align-items-center mb-2">
+                            <small class="text-muted">Rich text content rendered on the page.</small>
+                            <field-help title="Content"
+                                        content="Use headings (H2/H3), lists, and links. Images via the toolbar uploader."
+                                        placement="right"></field-help>
+                        </div>
+                        <div id="page-quill-editor-@i" class="border rounded" data-page-quill-editor="true"></div>
+                        <textarea asp-for="Translations[@i].ContentHtml" class="d-none"></textarea>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card-footer text-end">
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</div>

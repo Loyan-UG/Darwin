@@ -1,0 +1,19 @@
+@model Darwin.WebAdmin.ViewModels.CMS.PageCreateVm
+@{
+    ViewData["Title"] = "Create Page";
+}
+
+<div id="page-editor-shell">
+    <h2>Create Page</h2>
+
+    <form asp-action="Create"
+          method="post"
+          hx-post="@Url.Action("Create", "Pages")"
+          hx-target="#page-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <partial name="_PageForm" model="Model" />
+    </form>
+</div>
+
+<partial name="_PageEditorScript" />
