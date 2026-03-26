@@ -35,6 +35,11 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string Currency { get; set; } = "EUR";
         public long GrandTotalGrossMinor { get; set; }
         public Guid? UserId { get; set; }
+        public Guid? ShippingMethodId { get; set; }
+        public string? ShippingMethodName { get; set; }
+        public string? ShippingCarrier { get; set; }
+        public string? ShippingService { get; set; }
+        public long ShippingTotalMinor { get; set; }
         public OrderStatus Status { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? SelectedWarehouseId { get; set; }

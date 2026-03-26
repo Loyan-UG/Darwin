@@ -19,14 +19,19 @@ public sealed class PlaceOrderFromCartHandler
 {
     private readonly IAppDbContext _db;
     private readonly ComputeCartSummaryHandler _computeCartSummaryHandler;
+    private readonly Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler _createStorefrontCheckoutIntentHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlaceOrderFromCartHandler"/> class.
     /// </summary>
-    public PlaceOrderFromCartHandler(IAppDbContext db, ComputeCartSummaryHandler computeCartSummaryHandler)
+    public PlaceOrderFromCartHandler(
+        IAppDbContext db,
+        ComputeCartSummaryHandler computeCartSummaryHandler,
+        Darwin.Application.Orders.Queries.CreateStorefrontCheckoutIntentHandler createStorefrontCheckoutIntentHandler)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
+        _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
     }
 
     /// <summary>
@@ -69,6 +74,36 @@ public sealed class PlaceOrderFromCartHandler
             StringComparer.Ordinal);
 
         var billingAddressJson = await ResolveAddressJsonAsync(dto.UserId, dto.BillingAddressId, dto.BillingAddress, "billing", ct).ConfigureAwait(false);
+
+        var checkoutIntent = await _createStorefrontCheckoutIntentHandler.HandleAsync(new CreateStorefrontCheckoutIntentDto
+        {
+            CartId = dto.CartId,
+            UserId = dto.UserId,
+            ShippingAddressId = dto.ShippingAddressId,
+            ShippingAddress = dto.ShippingAddress,
+            SelectedShippingMethodId = dto.SelectedShippingMethodId
+        }, ct).ConfigureAwait(false);
+
+        if (checkoutIntent.RequiresShipping)
+        {
+            if (checkoutIntent.SelectedShippingMethodId is null)
+            {
+                throw new InvalidOperationException("A shipping method is required for the current checkout.");
+            }
+
+            if (dto.ShippingTotalMinor != checkoutIntent.SelectedShippingTotalMinor)
+            {
+                throw new InvalidOperationException("Shipping total does not match the authoritative checkout intent.");
+            }
+        }
+        else if (dto.ShippingTotalMinor != 0)
+        {
+            throw new InvalidOperationException("Shipping total must be zero when checkout does not require shipping.");
+        }
+
+        var selectedShippingOption = checkoutIntent.SelectedShippingMethodId.HasValue
+            ? checkoutIntent.ShippingOptions.FirstOrDefault(x => x.MethodId == checkoutIntent.SelectedShippingMethodId.Value)
+            : null;
         var shippingAddressJson = await ResolveAddressJsonAsync(dto.UserId, dto.ShippingAddressId, dto.ShippingAddress, "shipping", ct).ConfigureAwait(false);
 
         var variantIds = activeItems.Select(x => x.VariantId).Distinct().ToList();
@@ -146,6 +181,10 @@ public sealed class PlaceOrderFromCartHandler
             ShippingTotalMinor = dto.ShippingTotalMinor,
             DiscountTotalMinor = discountTotalMinor,
             GrandTotalGrossMinor = Math.Max(0L, grandTotalGrossMinor),
+            ShippingMethodId = checkoutIntent.SelectedShippingMethodId,
+            ShippingMethodName = selectedShippingOption?.Name,
+            ShippingCarrier = selectedShippingOption?.Carrier,
+            ShippingService = selectedShippingOption?.Service,
             Status = OrderStatus.Created,
             BillingAddressJson = billingAddressJson,
             ShippingAddressJson = shippingAddressJson,

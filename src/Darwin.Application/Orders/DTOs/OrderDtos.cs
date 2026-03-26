@@ -83,6 +83,10 @@ namespace Darwin.Application.Orders.DTOs
         public long ShippingTotalMinor { get; set; }
         public long DiscountTotalMinor { get; set; }
         public long GrandTotalGrossMinor { get; set; }
+        public Guid? ShippingMethodId { get; set; }
+        public string? ShippingMethodName { get; set; }
+        public string? ShippingCarrier { get; set; }
+        public string? ShippingService { get; set; }
 
         public OrderStatus Status { get; set; }
 
@@ -378,6 +382,7 @@ namespace Darwin.Application.Orders.DTOs
         public Guid? UserId { get; set; }
         public Guid? BillingAddressId { get; set; }
         public Guid? ShippingAddressId { get; set; }
+        public Guid? SelectedShippingMethodId { get; set; }
         public CheckoutAddressDto? BillingAddress { get; set; }
         public CheckoutAddressDto? ShippingAddress { get; set; }
         public long ShippingTotalMinor { get; set; }

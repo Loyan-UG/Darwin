@@ -153,6 +153,7 @@ Current public delivery ownership:
 - public checkout: order placement from the authoritative cart summary with saved member addresses or inline address snapshots and automatic cart finalization
 - public payment intent: pending storefront payment-session creation or reuse for already placed orders so front-office clients can hand off to a PSP without duplicating pending payment rows
 - public confirmation: safe post-order confirmation delivery for member-owned or anonymous orders without exposing member-owned orders to anonymous callers
+- selected checkout shipping method is now persisted on the `Order` aggregate together with method-name/carrier/service snapshots so storefront confirmation, member order history, and admin views are not coupled to future shipping-method edits
 - legacy `/api/v1/cms/*`, `/api/v1/catalog/*`, `/api/v1/cart*`, `/api/v1/shipping/rates`, `/api/v1/checkout/intent`, `/api/v1/checkout/orders*`, and `/api/v1/businesses/map` aliases remain only for compatibility and should not be used for new development
 
 ### Required member groups

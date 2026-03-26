@@ -270,6 +270,10 @@ public sealed class ContractSerializationCompatibilityTests
             OrderNumber = "ORD-1001",
             Currency = "EUR",
             GrandTotalGrossMinor = 2599,
+            ShippingMethodId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
+            ShippingMethodName = "DHL Paket",
+            ShippingCarrier = "DHL",
+            ShippingService = "Paket",
             BillingAddressJson = "{}",
             ShippingAddressJson = "{}",
             Lines =
@@ -292,6 +296,10 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"id\"");
         json.Should().Contain("\"orderNumber\"");
         json.Should().Contain("\"grandTotalGrossMinor\"");
+        json.Should().Contain("\"shippingMethodId\"");
+        json.Should().Contain("\"shippingMethodName\"");
+        json.Should().Contain("\"shippingCarrier\"");
+        json.Should().Contain("\"shippingService\"");
         json.Should().Contain("\"billingAddressJson\"");
         json.Should().Contain("\"shippingAddressJson\"");
         json.Should().Contain("\"lines\"");
@@ -515,6 +523,7 @@ public sealed class ContractSerializationCompatibilityTests
         var dto = new PlaceOrderFromCartRequest
         {
             CartId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            SelectedShippingMethodId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
             ShippingTotalMinor = 590,
             Culture = "de-DE",
             BillingAddress = new CheckoutAddress
@@ -538,6 +547,7 @@ public sealed class ContractSerializationCompatibilityTests
         var json = JsonSerializer.Serialize(dto, JsonOptions);
 
         json.Should().Contain("\"cartId\"");
+        json.Should().Contain("\"selectedShippingMethodId\"");
         json.Should().Contain("\"shippingTotalMinor\"");
         json.Should().Contain("\"culture\"");
         json.Should().Contain("\"billingAddress\"");
@@ -651,6 +661,10 @@ public sealed class ContractSerializationCompatibilityTests
             OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             OrderNumber = "D-20300101-00001",
             Currency = "EUR",
+            ShippingMethodId = Guid.Parse("12121212-3434-5656-7878-909090909090"),
+            ShippingMethodName = "DHL Paket",
+            ShippingCarrier = "DHL",
+            ShippingService = "Paket",
             GrandTotalGrossMinor = 4160,
             BillingAddressJson = "{}",
             ShippingAddressJson = "{}",
@@ -685,6 +699,10 @@ public sealed class ContractSerializationCompatibilityTests
 
         json.Should().Contain("\"orderId\"");
         json.Should().Contain("\"orderNumber\"");
+        json.Should().Contain("\"shippingMethodId\"");
+        json.Should().Contain("\"shippingMethodName\"");
+        json.Should().Contain("\"shippingCarrier\"");
+        json.Should().Contain("\"shippingService\"");
         json.Should().Contain("\"lines\"");
         json.Should().Contain("\"payments\"");
         json.Should().Contain("\"providerReference\"");

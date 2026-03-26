@@ -11,7 +11,21 @@
         <div class="row g-3">
             <div class="col-md-3"><strong>Status:</strong> @Model.Status</div>
             <div class="col-md-3"><strong>Total:</strong> @Model.Currency @((Model.GrandTotalGrossMinor / 100.0M).ToString("0.00"))</div>
-            <div class="col-md-6 text-end">
+            <div class="col-md-3">
+                <strong>Shipping:</strong>
+                @(string.IsNullOrWhiteSpace(Model.ShippingMethodName)
+                    ? "Not selected"
+                    : $"{Model.ShippingMethodName} ({Model.Currency} {(Model.ShippingTotalMinor / 100.0M):0.00})")
+            </div>
+            <div class="col-md-3">
+                <strong>Carrier/Service:</strong>
+                @(string.IsNullOrWhiteSpace(Model.ShippingCarrier)
+                    ? "-"
+                    : string.IsNullOrWhiteSpace(Model.ShippingService)
+                        ? Model.ShippingCarrier
+                        : $"{Model.ShippingCarrier} / {Model.ShippingService}")
+            </div>
+            <div class="col-md-12 text-end">
                 <form asp-controller="Orders" asp-action="ChangeStatus" method="post" class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="OrderId" value="@Model.Id" />

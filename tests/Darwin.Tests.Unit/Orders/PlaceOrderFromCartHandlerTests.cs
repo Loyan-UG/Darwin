@@ -2,11 +2,14 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.CartCheckout.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Application.Orders.Queries;
+using Darwin.Application.Shipping.Queries;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Pricing;
+using Darwin.Domain.Entities.Shipping;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +31,7 @@ public sealed class PlaceOrderFromCartHandlerTests
         var taxCategoryId = Guid.NewGuid();
         var addOnOptionId = Guid.NewGuid();
         var addOnValueId = Guid.NewGuid();
+        var shippingMethodId = Guid.NewGuid();
 
         db.Set<ProductVariant>().Add(new ProductVariant
         {
@@ -75,13 +79,36 @@ public sealed class PlaceOrderFromCartHandlerTests
             ]
         });
 
+        db.Set<ShippingMethod>().Add(new ShippingMethod
+        {
+            Id = shippingMethodId,
+            Name = "DHL Paket",
+            Carrier = "DHL",
+            Service = "Paket",
+            CountriesCsv = "DE",
+            Currency = "EUR",
+            Rates =
+            [
+                new ShippingRate
+                {
+                    Id = Guid.NewGuid(),
+                    ShippingMethodId = shippingMethodId,
+                    MaxShipmentMass = 5000,
+                    PriceMinor = 590,
+                    SortOrder = 1
+                }
+            ]
+        });
+
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db));
+        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db), new RateShipmentHandler(db));
+        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db), checkoutIntentHandler);
 
         var result = await handler.HandleAsync(new PlaceOrderFromCartDto
         {
             CartId = cartId,
+            SelectedShippingMethodId = shippingMethodId,
             ShippingTotalMinor = 590,
             BillingAddress = new CheckoutAddressDto
             {
@@ -119,6 +146,10 @@ public sealed class PlaceOrderFromCartHandlerTests
         order.ShippingTotalMinor.Should().Be(590);
         order.DiscountTotalMinor.Should().Be(0);
         order.GrandTotalGrossMinor.Should().Be(3446);
+        order.ShippingMethodId.Should().Be(shippingMethodId);
+        order.ShippingMethodName.Should().Be("DHL Paket");
+        order.ShippingCarrier.Should().Be("DHL");
+        order.ShippingService.Should().Be("Paket");
         order.BillingAddressJson.Should().Contain("Max Mustermann");
         order.ShippingAddressJson.Should().Contain("Musterstrasse 1");
         order.Lines.Should().ContainSingle();
@@ -142,6 +173,7 @@ public sealed class PlaceOrderFromCartHandlerTests
         var taxCategoryId = Guid.NewGuid();
         var billingAddressId = Guid.NewGuid();
         var shippingAddressId = Guid.NewGuid();
+        var shippingMethodId = Guid.NewGuid();
 
         db.Set<ProductVariant>().Add(new ProductVariant
         {
@@ -202,9 +234,31 @@ public sealed class PlaceOrderFromCartHandlerTests
             ]
         });
 
+        db.Set<ShippingMethod>().Add(new ShippingMethod
+        {
+            Id = shippingMethodId,
+            Name = "Hermes Standard",
+            Carrier = "Hermes",
+            Service = "Standard",
+            CountriesCsv = "DE",
+            Currency = "EUR",
+            Rates =
+            [
+                new ShippingRate
+                {
+                    Id = Guid.NewGuid(),
+                    ShippingMethodId = shippingMethodId,
+                    MaxShipmentMass = 5000,
+                    PriceMinor = 490,
+                    SortOrder = 1
+                }
+            ]
+        });
+
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db));
+        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db), new RateShipmentHandler(db));
+        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db), checkoutIntentHandler);
 
         var result = await handler.HandleAsync(new PlaceOrderFromCartDto
         {
@@ -212,6 +266,7 @@ public sealed class PlaceOrderFromCartHandlerTests
             UserId = userId,
             BillingAddressId = billingAddressId,
             ShippingAddressId = shippingAddressId,
+            SelectedShippingMethodId = shippingMethodId,
             ShippingTotalMinor = 490
         }, TestContext.Current.CancellationToken);
 
@@ -221,6 +276,7 @@ public sealed class PlaceOrderFromCartHandlerTests
         order.BillingAddressJson.Should().Contain("Friedrichstrasse 12");
         order.ShippingAddressJson.Should().Contain("Unter den Linden 5");
         order.GrandTotalGrossMinor.Should().Be(3165);
+        order.ShippingMethodName.Should().Be("Hermes Standard");
     }
 
     [Fact]
@@ -285,7 +341,8 @@ public sealed class PlaceOrderFromCartHandlerTests
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db));
+        var checkoutIntentHandler = new CreateStorefrontCheckoutIntentHandler(db, new ComputeCartSummaryHandler(db), new RateShipmentHandler(db));
+        var handler = new PlaceOrderFromCartHandler(db, new ComputeCartSummaryHandler(db), checkoutIntentHandler);
 
         var action = () => handler.HandleAsync(new PlaceOrderFromCartDto
         {
@@ -402,6 +459,22 @@ public sealed class PlaceOrderFromCartHandlerTests
                 builder.Property(x => x.PostalCode).IsRequired();
                 builder.Property(x => x.City).IsRequired();
                 builder.Property(x => x.CountryCode).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<ShippingMethod>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Name).IsRequired();
+                builder.Property(x => x.Carrier).IsRequired();
+                builder.Property(x => x.Service).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+                builder.HasMany(x => x.Rates).WithOne().HasForeignKey(x => x.ShippingMethodId);
+            });
+
+            modelBuilder.Entity<ShippingRate>(builder =>
+            {
+                builder.HasKey(x => x.Id);
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }

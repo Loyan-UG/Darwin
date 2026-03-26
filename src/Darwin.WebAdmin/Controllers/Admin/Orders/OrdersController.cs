@@ -117,6 +117,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 Status = dto.Status,
                 Currency = dto.Currency,
                 GrandTotalGrossMinor = dto.GrandTotalGrossMinor,
+                ShippingMethodId = dto.ShippingMethodId,
+                ShippingMethodName = dto.ShippingMethodName,
+                ShippingCarrier = dto.ShippingCarrier,
+                ShippingService = dto.ShippingService,
+                ShippingTotalMinor = dto.ShippingTotalMinor,
                 RowVersion = dto.RowVersion,
                 SelectedWarehouseId = selectedWarehouseId,
                 WarehouseOptions = warehouses

@@ -117,9 +117,10 @@ The immediate direction is:
 - Completed: add storefront checkout-intent preview under `api/v1/public/checkout/intent`, including authoritative cart totals, derived shipment mass, validated shipping options, and selected shipping-rate preview.
 - Completed: add storefront payment-intent initiation under `api/v1/public/checkout/orders/{orderId}/payment-intent`, reusing active pending intents where possible instead of creating duplicate pending payments.
 - Completed: add storefront post-order confirmation under `api/v1/public/checkout/orders/{orderId}/confirmation`, with safe access rules for member-owned versus anonymous orders.
+- Completed: persist the selected checkout shipping method and its display snapshots on `Order` so confirmation, member history, and back-office screens do not depend on mutable shipping-method configuration.
 - Task: deepen public CMS delivery with SEO, structured blocks, and culture fallback rules as storefront requirements expand.
 - Task: deepen public catalog delivery with richer pricing, availability, attribute filtering, and search-oriented projections.
-- Task: deepen storefront cart and checkout delivery with explicit shipping-method persistence, real PSP handoff, and post-order payment completion flows on top of the now-implemented intent, order placement, and confirmation path.
+- Task: deepen storefront cart and checkout delivery with real PSP handoff and post-order payment completion flows on top of the now-implemented shipping-method persistence, intent, order placement, and confirmation path.
 
 ### Epic: Member API
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Billing;
+using Darwin.Domain.Entities.Shipping;
 using Darwin.Domain.Enums;
 
 namespace Darwin.Domain.Entities.Orders
@@ -21,6 +22,27 @@ namespace Darwin.Domain.Entities.Orders
         public long ShippingTotalMinor { get; set; }
         public long DiscountTotalMinor { get; set; }
         public long GrandTotalGrossMinor { get; set; }
+
+        /// <summary>
+        /// Optional selected shipping method identifier used during checkout.
+        /// The related shipping method may later change or be deleted, so the order also stores snapshot fields below.
+        /// </summary>
+        public Guid? ShippingMethodId { get; set; }
+
+        /// <summary>
+        /// Snapshot of the shipping method display name chosen at checkout.
+        /// </summary>
+        public string? ShippingMethodName { get; set; }
+
+        /// <summary>
+        /// Snapshot of the carrier label chosen at checkout.
+        /// </summary>
+        public string? ShippingCarrier { get; set; }
+
+        /// <summary>
+        /// Snapshot of the carrier service level chosen at checkout.
+        /// </summary>
+        public string? ShippingService { get; set; }
 
         public OrderStatus Status { get; set; } = OrderStatus.Created;
 

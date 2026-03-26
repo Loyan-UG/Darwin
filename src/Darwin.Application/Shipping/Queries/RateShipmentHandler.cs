@@ -63,7 +63,7 @@ namespace Darwin.Application.Shipping.Queries
                     options.Add(new ShippingOptionDto
                     {
                         MethodId = m.Id,
-                        Name = $"{m.Carrier} – {m.Service}",
+                        Name = string.IsNullOrWhiteSpace(m.Name) ? $"{m.Carrier} – {m.Service}" : m.Name,
                         PriceMinor = match.PriceMinor,
                         Currency = currency,
                         Carrier = m.Carrier,

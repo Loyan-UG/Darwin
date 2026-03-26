@@ -52,6 +52,18 @@ public sealed class MemberOrderDetailDto
     /// <summary>Gets or sets the shipping total in minor units.</summary>
     public long ShippingTotalMinor { get; set; }
 
+    /// <summary>Gets or sets the optional selected shipping method identifier.</summary>
+    public Guid? ShippingMethodId { get; set; }
+
+    /// <summary>Gets or sets the shipping method display name snapshot.</summary>
+    public string? ShippingMethodName { get; set; }
+
+    /// <summary>Gets or sets the shipping carrier snapshot.</summary>
+    public string? ShippingCarrier { get; set; }
+
+    /// <summary>Gets or sets the shipping service snapshot.</summary>
+    public string? ShippingService { get; set; }
+
     /// <summary>Gets or sets the discount total in minor units.</summary>
     public long DiscountTotalMinor { get; set; }
 

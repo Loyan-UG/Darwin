@@ -47,6 +47,9 @@ public sealed class PlaceOrderFromCartRequest
     /// <summary>Gets or sets the optional saved shipping address identifier.</summary>
     public Guid? ShippingAddressId { get; set; }
 
+    /// <summary>Gets or sets the optional selected shipping method identifier.</summary>
+    public Guid? SelectedShippingMethodId { get; set; }
+
     /// <summary>Gets or sets the inline billing address when no saved address is selected.</summary>
     public CheckoutAddress? BillingAddress { get; set; }
 
@@ -202,6 +205,18 @@ public sealed class StorefrontOrderConfirmationResponse
 
     /// <summary>Gets or sets the order shipping total in minor units.</summary>
     public long ShippingTotalMinor { get; set; }
+
+    /// <summary>Gets or sets the selected shipping method identifier.</summary>
+    public Guid? ShippingMethodId { get; set; }
+
+    /// <summary>Gets or sets the shipping method display name snapshot.</summary>
+    public string? ShippingMethodName { get; set; }
+
+    /// <summary>Gets or sets the carrier snapshot.</summary>
+    public string? ShippingCarrier { get; set; }
+
+    /// <summary>Gets or sets the service snapshot.</summary>
+    public string? ShippingService { get; set; }
 
     /// <summary>Gets or sets the order discount total in minor units.</summary>
     public long DiscountTotalMinor { get; set; }

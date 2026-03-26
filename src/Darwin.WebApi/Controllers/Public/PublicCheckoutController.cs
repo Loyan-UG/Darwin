@@ -119,6 +119,7 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 UserId = GetCurrentUserId(User),
                 BillingAddressId = request.BillingAddressId,
                 ShippingAddressId = request.ShippingAddressId,
+                SelectedShippingMethodId = request.SelectedShippingMethodId,
                 BillingAddress = request.BillingAddress is null
                     ? null
                     : new CheckoutAddressDto
@@ -247,6 +248,10 @@ public sealed class PublicCheckoutController : ApiControllerBase
             SubtotalNetMinor = confirmation.SubtotalNetMinor,
             TaxTotalMinor = confirmation.TaxTotalMinor,
             ShippingTotalMinor = confirmation.ShippingTotalMinor,
+            ShippingMethodId = confirmation.ShippingMethodId,
+            ShippingMethodName = confirmation.ShippingMethodName,
+            ShippingCarrier = confirmation.ShippingCarrier,
+            ShippingService = confirmation.ShippingService,
             DiscountTotalMinor = confirmation.DiscountTotalMinor,
             GrandTotalGrossMinor = confirmation.GrandTotalGrossMinor,
             Status = confirmation.Status.ToString(),
