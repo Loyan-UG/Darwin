@@ -121,6 +121,12 @@
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Ungültige E-Mail oder Passwort</value>
   </data>
+  <data name="LoginEmailConfirmationRequired" xml:space="preserve">
+    <value>Bitte bestÃ¤tigen Sie zuerst Ihre E-Mail-Adresse, bevor Sie sich anmelden.</value>
+  </data>
+  <data name="LoginAccountLocked" xml:space="preserve">
+    <value>Ihr Konto ist derzeit gesperrt. Bitte kontaktieren Sie den Support.</value>
+  </data>
   <data name="JoinProgramButton" xml:space="preserve">
     <value>Treueprogramm beitreten</value>
   </data>
@@ -786,6 +792,9 @@
   </data>
   <data name="RegisterAutoLoginFailed" xml:space="preserve">
     <value>Ihr Konto wurde erstellt, aber die automatische Anmeldung ist fehlgeschlagen. Bitte melden Sie sich manuell an.</value>
+  </data>
+  <data name="RegisterEmailConfirmationSent" xml:space="preserve">
+    <value>Ihr Konto wurde erstellt. Bitte bestÃ¤tigen Sie Ihre E-Mail, bevor Sie sich anmelden.</value>
   </data>
   <data name="DiscoverMyBusinessesTab" xml:space="preserve">
     <value>Meine Unternehmen</value>

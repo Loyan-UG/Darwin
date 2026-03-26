@@ -37,6 +37,16 @@ internal static class ViewModelErrorMapper
             return AppResources.SessionExpiredReLogin;
         }
 
+        if (raw.Contains("Email address is not confirmed", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.LoginEmailConfirmationRequired;
+        }
+
+        if (raw.Contains("Account is locked", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.LoginAccountLocked;
+        }
+
         if (raw.Contains("409", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("concurrency", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("rowversion", StringComparison.OrdinalIgnoreCase))

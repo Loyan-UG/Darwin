@@ -77,6 +77,16 @@ namespace Darwin.Application.Identity.Commands
                     return Result<AuthResultDto>.Fail("Invalid credentials.");
                 }
 
+                if (user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > DateTime.UtcNow)
+                {
+                    return Result<AuthResultDto>.Fail("Account is locked.");
+                }
+
+                if (!user.EmailConfirmed)
+                {
+                    return Result<AuthResultDto>.Fail("Email address is not confirmed.");
+                }
+
                 // 4) Issue access and refresh tokens.
                 // DeviceId forwarded so JwtTokenService can enforce device-binding and single-device policies.
                 var (access, accessExp, refresh, refreshExp) =

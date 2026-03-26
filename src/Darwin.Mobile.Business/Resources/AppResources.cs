@@ -63,6 +63,8 @@ public static class AppResources
     public static string LoginAcceptInvitationButton => ResourceManager.GetString(nameof(LoginAcceptInvitationButton), Culture) ?? "Accept invitation";
     public static string LoginLogoDescription => ResourceManager.GetString(nameof(LoginLogoDescription), Culture) ?? "Loyan Business app logo";
     public static string InvalidCredentials => ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
+    public static string LoginEmailConfirmationRequired => ResourceManager.GetString(nameof(LoginEmailConfirmationRequired), Culture) ?? "Please confirm your email address before signing in.";
+    public static string LoginAccountLocked => ResourceManager.GetString(nameof(LoginAccountLocked), Culture) ?? "Your account is currently locked. Please contact support.";
     public static string EmailRequired => ResourceManager.GetString(nameof(EmailRequired), Culture) ?? "Email is required.";
     public static string PasswordRequired => ResourceManager.GetString(nameof(PasswordRequired), Culture) ?? "Password is required.";
     public static string InvitationAcceptanceTitle => ResourceManager.GetString(nameof(InvitationAcceptanceTitle), Culture) ?? "Accept invitation";

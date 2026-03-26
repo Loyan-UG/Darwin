@@ -12,7 +12,7 @@ using Darwin.Mobile.Shared.ViewModels;
 namespace Darwin.Mobile.Consumer.ViewModels;
 
 /// <summary>
-/// Handles customer self-service registration with legal acknowledgements and an auto-login continuation.
+/// Handles customer self-service registration with legal acknowledgements and a confirmation-aware continuation.
 /// </summary>
 /// <remarks>
 /// Legal/compliance rules implemented here:
@@ -33,6 +33,7 @@ public sealed class RegisterViewModel : BaseViewModel
     private string _confirmPassword = string.Empty;
     private bool _acceptConsumerTerms;
     private bool _acknowledgePrivacyNotice;
+    private string? _infoMessage;
 
     public RegisterViewModel(
         IAuthService authService,
@@ -94,6 +95,26 @@ public sealed class RegisterViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Gets or sets a non-error informational message shown after successful registration steps.
+    /// </summary>
+    public string? InfoMessage
+    {
+        get => _infoMessage;
+        private set
+        {
+            if (SetProperty(ref _infoMessage, value))
+            {
+                OnPropertyChanged(nameof(HasInfo));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether an informational message is available.
+    /// </summary>
+    public bool HasInfo => !string.IsNullOrWhiteSpace(_infoMessage);
+
+    /// <summary>
     /// Gets or sets a value indicating whether the consumer terms were explicitly accepted.
     /// </summary>
     public bool AcceptConsumerTerms
@@ -134,6 +155,7 @@ public sealed class RegisterViewModel : BaseViewModel
 
         IsBusy = true;
         ErrorMessage = null;
+        InfoMessage = null;
         RegisterCommand.RaiseCanExecuteChanged();
 
         var normalizedEmail = Email.Trim();
@@ -161,6 +183,14 @@ public sealed class RegisterViewModel : BaseViewModel
                 return;
             }
 
+            if (response.ConfirmationEmailSent)
+            {
+                InfoMessage = AppResources.RegisterEmailConfirmationSent;
+                Password = string.Empty;
+                ConfirmPassword = string.Empty;
+                return;
+            }
+
             try
             {
                 _ = await _authService.LoginAsync(
@@ -180,6 +210,7 @@ public sealed class RegisterViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
+            InfoMessage = null;
             ErrorMessage = ResolveFriendlyError(ex, AppResources.RegisterFailed);
         }
         finally

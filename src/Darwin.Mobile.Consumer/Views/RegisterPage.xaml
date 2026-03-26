@@ -98,6 +98,10 @@
                    TextColor="Red"
                    IsVisible="{Binding HasError}" />
 
+            <Label Text="{Binding InfoMessage}"
+                   TextColor="{StaticResource BrandGold500}"
+                   IsVisible="{Binding HasInfo}" />
+
             <Button Text="{x:Static res:AppResources.RegisterButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding RegisterCommand}" />

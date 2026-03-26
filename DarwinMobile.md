@@ -81,6 +81,8 @@ Required scenarios:
 - `In Progress`: login and operational app usage exist
 - `Completed`: business invitation preview and acceptance now work in `Darwin.Mobile.Business` through canonical business-auth endpoints
 - `Completed`: preferred business context is preserved during token refresh so invitation-based onboarding is safer for multi-business operators
+- `Completed`: password sign-in now enforces email confirmation and account lockout, so mobile clients follow the same activation/support policy as admin-backed operations
+- `Completed`: `Darwin.Mobile.Consumer` registration now stops after account creation when confirmation is pending instead of attempting an immediate auto-login
 - `Planned / Near-term`: the surrounding onboarding, activation, invitation, and support lifecycle must be completed end-to-end through backend and WebAdmin
 
 ### Phase-1 invitation acceptance mode
@@ -102,6 +104,8 @@ The following scenarios depend on reliable email sending:
 - password reset
 
 This dependency should not be treated as optional infrastructure. It is a go-live-critical platform capability and one of the main reasons Communication Core must be delivered early with email-first scope.
+
+Because email confirmation is now enforced during password sign-in, the activation email path is operationally critical for both consumer and business onboarding. A follow-up self-service resend-confirmation experience is still near-term work.
 
 ## 6. Mobile and WebAdmin Dependency
 

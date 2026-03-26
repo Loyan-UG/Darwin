@@ -32,12 +32,6 @@ public sealed partial class LoginViewModel : BaseViewModel
     private string? _email;
     private string? _password;
 
-    private const string NoBusinessMembershipUserMessage =
-        "Your username and password are correct, but your account is not assigned to any business yet. Please contact support.";
-
-    private const string ServerUnreachableUserMessage =
-        "Unable to connect to server. Please check your internet connection and server URL, then try again.";
-
     /// <summary>
     /// Raised when the page should reveal the error area (e.g., scroll to top).
     /// The view subscribes to this to avoid error text being hidden behind the keyboard.
@@ -208,18 +202,28 @@ public sealed partial class LoginViewModel : BaseViewModel
         if (raw.Contains("missing business_id claim", StringComparison.OrdinalIgnoreCase) ||
             raw.Contains("not assigned to any business", StringComparison.OrdinalIgnoreCase))
         {
-            return NoBusinessMembershipUserMessage;
+            return AppResources.NoBusinessMembershipMessage;
+        }
+
+        if (raw.Contains("Email address is not confirmed", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.LoginEmailConfirmationRequired;
+        }
+
+        if (raw.Contains("Account is locked", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppResources.LoginAccountLocked;
         }
 
         if (LooksLikeConnectivityError(raw, ex))
         {
             if (!apiOptions.EnableVerboseNetworkDiagnostics)
             {
-                return ServerUnreachableUserMessage;
+                return AppResources.ServerUnreachableMessage;
             }
 
             var hint = BuildNetworkDiagnosticHint(ex, apiOptions.BaseUrl, raw);
-            return $"{ServerUnreachableUserMessage}\n{hint}";
+            return $"{AppResources.ServerUnreachableMessage}\n{hint}";
         }
 
         return AppResources.InvalidCredentials;

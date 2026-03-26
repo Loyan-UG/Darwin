@@ -121,6 +121,12 @@
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
   </data>
+  <data name="LoginEmailConfirmationRequired" xml:space="preserve">
+    <value>Please confirm your email address before signing in.</value>
+  </data>
+  <data name="LoginAccountLocked" xml:space="preserve">
+    <value>Your account is currently locked. Please contact support.</value>
+  </data>
   <data name="JoinProgramButton" xml:space="preserve">
     <value>Join Loyalty Program</value>
   </data>
@@ -786,6 +792,9 @@
   </data>
   <data name="RegisterAutoLoginFailed" xml:space="preserve">
     <value>Your account was created, but automatic sign-in failed. Please login manually.</value>
+  </data>
+  <data name="RegisterEmailConfirmationSent" xml:space="preserve">
+    <value>Your account was created. Please confirm your email before signing in.</value>
   </data>
   <data name="DiscoverMyBusinessesTab" xml:space="preserve">
     <value>My Businesses</value>

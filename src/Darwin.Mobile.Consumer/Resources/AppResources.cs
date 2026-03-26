@@ -43,6 +43,10 @@ public static class AppResources
         ResourceManager.GetString(nameof(LoginPasswordPlaceholder), Culture) ?? "••••••";
     public static string InvalidCredentials =>
         ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
+    public static string LoginEmailConfirmationRequired =>
+        ResourceManager.GetString(nameof(LoginEmailConfirmationRequired), Culture) ?? "Please confirm your email address before signing in.";
+    public static string LoginAccountLocked =>
+        ResourceManager.GetString(nameof(LoginAccountLocked), Culture) ?? "Your account is currently locked. Please contact support.";
     public static string EmailRequired =>
         ResourceManager.GetString(nameof(EmailRequired), Culture) ?? "Email is required.";
     public static string PasswordRequired =>
@@ -428,6 +432,7 @@ public static class AppResources
     public static string RegisterPrivacyAcknowledgementLabel => ResourceManager.GetString(nameof(RegisterPrivacyAcknowledgementLabel), Culture) ?? "I confirm that I have reviewed the privacy notice before creating my account.";
     public static string RegisterTermsAcceptanceRequired => ResourceManager.GetString(nameof(RegisterTermsAcceptanceRequired), Culture) ?? "Please accept the terms before creating your account.";
     public static string RegisterPrivacyAcknowledgementRequired => ResourceManager.GetString(nameof(RegisterPrivacyAcknowledgementRequired), Culture) ?? "Please acknowledge the privacy notice before creating your account.";
+    public static string RegisterEmailConfirmationSent => ResourceManager.GetString(nameof(RegisterEmailConfirmationSent), Culture) ?? "Your account was created. Please confirm your email before signing in.";
     public static string AccountDeletionTitle => ResourceManager.GetString(nameof(AccountDeletionTitle), Culture) ?? "Delete account";
     public static string AccountDeletionWarningTitle => ResourceManager.GetString(nameof(AccountDeletionWarningTitle), Culture) ?? "Before you continue";
     public static string AccountDeletionWarningBody => ResourceManager.GetString(nameof(AccountDeletionWarningBody), Culture) ?? "This action permanently deactivates your account and anonymizes personal data where it is safe to do so.";

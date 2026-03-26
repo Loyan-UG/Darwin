@@ -97,6 +97,12 @@
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
   </data>
+  <data name="LoginEmailConfirmationRequired" xml:space="preserve">
+    <value>Please confirm your email address before signing in.</value>
+  </data>
+  <data name="LoginAccountLocked" xml:space="preserve">
+    <value>Your account is currently locked. Please contact support.</value>
+  </data>
   <data name="LastTokenLabel" xml:space="preserve">
     <value>Last token</value>
   </data>
