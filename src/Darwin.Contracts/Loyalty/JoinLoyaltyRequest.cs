@@ -8,9 +8,9 @@ namespace Darwin.Contracts.Loyalty
     /// </summary>
     /// <remarks>
     /// The API route carries the authoritative business identifier as a route
-    /// parameter (see POST /api/v1/loyalty/account/{businessId}/join). The body
-    /// may include an optional BusinessLocationId when the user explicitly
-    /// selects a specific branch.
+    /// parameter (canonical route: POST /api/v1/member/loyalty/account/{businessId}/join;
+    /// legacy alias: POST /api/v1/loyalty/account/{businessId}/join). The body may include
+    /// an optional BusinessLocationId when the user explicitly selects a specific branch.
     /// </remarks>
     public sealed class JoinLoyaltyRequest
     {

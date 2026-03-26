@@ -108,16 +108,18 @@ The immediate direction is:
 - Completed: reorganize `Darwin.WebApi` route ownership so audience-first canonical routes are now explicit for member/business/public controllers, while legacy aliases remain in place for existing clients.
 - Completed: split mixed business delivery endpoints into dedicated public and member controllers so storefront discovery and member engagement/onboarding no longer share one mixed controller surface.
 - Completed: split loyalty delivery into dedicated member and business controllers so member account/reward/timeline flows and business scan/configuration/campaign flows no longer share one mixed controller surface.
-- Task: document and implement CMS page endpoints.
-- Task: document and implement menus and storefront navigation endpoints.
-- Task: document and implement product/category/storefront browsing endpoints.
+- Completed: add initial public CMS delivery endpoints for published pages and menus under `api/v1/public/cms` with legacy `/api/v1/cms/*` aliases.
+- Completed: add initial public catalog delivery endpoints for published categories and products under `api/v1/public/catalog` with legacy `/api/v1/catalog/*` aliases.
+- Task: deepen public CMS delivery with SEO, structured blocks, and culture fallback rules as storefront requirements expand.
+- Task: deepen public catalog delivery with richer pricing, availability, attribute filtering, and search-oriented projections.
 
 ### Epic: Member API
 
 - Completed: establish the canonical member loyalty route root under `api/v1/member/loyalty` while preserving the legacy `/api/v1/loyalty/*` aliases for existing consumers.
-- Task: document and implement order history endpoints.
-- Task: document and implement invoice endpoints.
+- Completed: add initial member order-history endpoints under `api/v1/member/orders` with legacy `/api/v1/orders/*` aliases for existing clients.
+- Completed: add initial member invoice-history endpoints under `api/v1/member/invoices` with legacy `/api/v1/invoices/*` aliases for existing clients.
 - Task: document and implement member loyalty projections and account endpoints.
+- Task: deepen member order and invoice APIs with richer storefront-specific address, document-download, and action flows as front-office requirements solidify.
 - Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.
 
 ### Epic: Admin and integration API

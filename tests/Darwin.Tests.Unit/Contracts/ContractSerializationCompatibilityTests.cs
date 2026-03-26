@@ -1,5 +1,9 @@
 using Darwin.Contracts.Identity;
+using Darwin.Contracts.Invoices;
+using Darwin.Contracts.Orders;
 using Darwin.Contracts.Businesses;
+using Darwin.Contracts.Catalog;
+using Darwin.Contracts.Cms;
 using Darwin.Contracts.Loyalty;
 using Darwin.Contracts.Profile;
 using FluentAssertions;
@@ -249,6 +253,129 @@ public sealed class ContractSerializationCompatibilityTests
         dto.Email.Should().Be("customer@example.test");
         dto.RowVersion.Should().NotBeNull();
         dto.RowVersion.Should().HaveCount(4);
+    }
+
+    /// <summary>
+    ///     Verifies that member order detail contract serializes the expected camelCase payload
+    ///     fields for the new member order-history API surface.
+    /// </summary>
+    [Fact]
+    public void MemberOrderDetail_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new MemberOrderDetail
+        {
+            Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            OrderNumber = "ORD-1001",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 2599,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Lines =
+            [
+                new MemberOrderLine
+                {
+                    Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                    VariantId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                    Name = "Coffee Beans",
+                    Sku = "COF-001",
+                    Quantity = 1,
+                    UnitPriceGrossMinor = 2599,
+                    LineGrossMinor = 2599
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"id\"");
+        json.Should().Contain("\"orderNumber\"");
+        json.Should().Contain("\"grandTotalGrossMinor\"");
+        json.Should().Contain("\"billingAddressJson\"");
+        json.Should().Contain("\"shippingAddressJson\"");
+        json.Should().Contain("\"lines\"");
+    }
+
+    /// <summary>
+    ///     Verifies that member invoice detail contract serializes the expected camelCase payload
+    ///     fields for the new member invoice-history API surface.
+    /// </summary>
+    [Fact]
+    public void MemberInvoiceDetail_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new MemberInvoiceDetail
+        {
+            Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+            BusinessId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+            OrderId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+            Currency = "EUR",
+            TotalGrossMinor = 2599,
+            BalanceMinor = 0,
+            PaymentSummary = "Stripe | EUR 25.99 | Captured"
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"id\"");
+        json.Should().Contain("\"businessId\"");
+        json.Should().Contain("\"orderId\"");
+        json.Should().Contain("\"totalGrossMinor\"");
+        json.Should().Contain("\"balanceMinor\"");
+        json.Should().Contain("\"paymentSummary\"");
+    }
+
+    /// <summary>
+    ///     Verifies that public product detail contract serializes storefront-facing fields
+    ///     with stable camelCase property names.
+    /// </summary>
+    [Fact]
+    public void PublicProductDetail_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new PublicProductDetail
+        {
+            Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            Name = "Filterkaffee",
+            Slug = "filterkaffee",
+            PriceMinor = 1299,
+            PrimaryImageUrl = "/media/filterkaffee.jpg",
+            Media =
+            [
+                new PublicProductMedia
+                {
+                    Id = Guid.Parse("66666666-7777-8888-9999-000000000000"),
+                    Url = "/media/filterkaffee.jpg",
+                    Alt = "Filterkaffee"
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"primaryImageUrl\"");
+        json.Should().Contain("\"priceMinor\"");
+        json.Should().Contain("\"media\"");
+        json.Should().Contain("\"slug\"");
+    }
+
+    /// <summary>
+    ///     Verifies that public page detail contract serializes storefront-facing fields
+    ///     with stable camelCase property names.
+    /// </summary>
+    [Fact]
+    public void PublicPageDetail_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new PublicPageDetail
+        {
+            Id = Guid.Parse("99999999-aaaa-bbbb-cccc-dddddddddddd"),
+            Title = "Über Uns",
+            Slug = "uber-uns",
+            ContentHtml = "<p>Hallo</p>"
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"title\"");
+        json.Should().Contain("\"slug\"");
+        json.Should().Contain("\"contentHtml\"");
     }
 
 

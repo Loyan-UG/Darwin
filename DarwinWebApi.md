@@ -118,23 +118,31 @@ Recent route organization changes:
 - member business onboarding, engagement, and review actions now live under a dedicated member controller
 - auth, profile, notification, and business billing controllers now use audience-first canonical route roots while preserving legacy aliases
 - loyalty is now split between a dedicated member controller (`api/v1/member/loyalty`) and a dedicated business controller (`api/v1/business/loyalty`), while legacy `/api/v1/loyalty/*` aliases remain temporarily available
+- member order history and member invoice history now have dedicated canonical route roots under `api/v1/member/orders` and `api/v1/member/invoices`, while legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain temporarily available
+- public CMS and public catalog delivery now have dedicated canonical route roots under `api/v1/public/cms` and `api/v1/public/catalog`, while legacy `/api/v1/cms/*` and `/api/v1/catalog/*` aliases remain temporarily available
 
 ### Required public groups
 
 These should be documented and expanded as implementation continues:
 
-- `/api/v1/cms/pages`
-- `/api/v1/cms/menus`
+- `/api/v1/public/cms/pages`
+- `/api/v1/public/cms/menus`
 - `/api/v1/seo/*`
-- `/api/v1/catalog/products`
-- `/api/v1/catalog/categories`
+- `/api/v1/public/catalog/products`
+- `/api/v1/public/catalog/categories`
 - `/api/v1/storefront/*`
+
+Current public delivery ownership:
+
+- public CMS: published page listing, page-by-slug delivery, and menu delivery
+- public catalog: published category listing, product listing, and product-by-slug delivery
+- legacy `/api/v1/cms/*` and `/api/v1/catalog/*` aliases remain only for compatibility and should not be used for new development
 
 ### Required member groups
 
 - `/api/v1/profile/*`
-- `/api/v1/orders/*`
-- `/api/v1/invoices/*`
+- `/api/v1/member/orders/*`
+- `/api/v1/member/invoices/*`
 - `/api/v1/member/loyalty/*`
 - `/api/v1/member/*`
 
@@ -143,6 +151,12 @@ Current loyalty ownership:
 - member loyalty: scan preparation, account summaries, reward browsing, timeline, promotions, and join flows
 - business loyalty: reward configuration, scan processing, accrual/redemption confirmation, and campaign management
 - legacy mixed loyalty routes remain only as compatibility aliases and should not be used for new development
+
+Current member commerce ownership:
+
+- member orders: paged order history and order detail under the member route root
+- member invoices: paged invoice history and invoice detail under the member route root
+- legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
 
 ### Required CRM admin/integration groups
 

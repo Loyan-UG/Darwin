@@ -35,6 +35,28 @@ public sealed class WebApiRouteAliasSourceTests
     }
 
     [Fact]
+    public void PublicCmsController_Should_ContainPublicCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Public", "PublicCmsController.cs"));
+
+        source.Should().Contain("api/v1/public/cms");
+        source.Should().Contain("/api/v1/cms/pages");
+        source.Should().Contain("/api/v1/cms/pages/{slug}");
+        source.Should().Contain("/api/v1/cms/menus/{name}");
+    }
+
+    [Fact]
+    public void PublicCatalogController_Should_ContainPublicCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Public", "PublicCatalogController.cs"));
+
+        source.Should().Contain("api/v1/public/catalog");
+        source.Should().Contain("/api/v1/catalog/categories");
+        source.Should().Contain("/api/v1/catalog/products");
+        source.Should().Contain("/api/v1/catalog/products/{slug}");
+    }
+
+    [Fact]
     public void MemberBusinessesController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
     {
         var source = ReadControllerSource(Path.Combine("Member", "MemberBusinessesController.cs"));
@@ -46,6 +68,26 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("/api/v1/businesses/{id:guid}/likes/toggle");
         source.Should().Contain("/api/v1/businesses/{id:guid}/favorites/toggle");
         source.Should().Contain("/api/v1/businesses/{id:guid}/my-review");
+    }
+
+    [Fact]
+    public void MemberOrdersController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Member", "MemberOrdersController.cs"));
+
+        source.Should().Contain("api/v1/member/orders");
+        source.Should().Contain("/api/v1/orders");
+        source.Should().Contain("/api/v1/orders/{id:guid}");
+    }
+
+    [Fact]
+    public void MemberInvoicesController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Member", "MemberInvoicesController.cs"));
+
+        source.Should().Contain("api/v1/member/invoices");
+        source.Should().Contain("/api/v1/invoices");
+        source.Should().Contain("/api/v1/invoices/{id:guid}");
     }
 
     [Fact]
