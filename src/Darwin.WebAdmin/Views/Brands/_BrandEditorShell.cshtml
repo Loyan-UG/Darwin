@@ -1,0 +1,24 @@
+@model Darwin.WebAdmin.ViewModels.Catalog.BrandEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] == true;
+    ViewData["Title"] = isCreate ? "Create Brand" : "Edit Brand";
+}
+
+<div id="brand-editor-shell">
+    <h1 class="mb-3">@(isCreate ? "Create Brand" : "Edit Brand")</h1>
+
+    <form asp-action="@(isCreate ? "Create" : "Edit")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "Create" : "Edit", "Brands")"
+          hx-target="#brand-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" />
+        }
+
+        <partial name="_BrandForm" model="Model" />
+    </form>
+</div>

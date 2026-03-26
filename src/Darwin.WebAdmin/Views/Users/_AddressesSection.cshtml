@@ -120,6 +120,9 @@
                                     data-id="@a.Id"
                                     data-rowversion="@(a.RowVersion is null ? "" : Convert.ToBase64String(a.RowVersion))"
                                     data-userid="@userId"
+                                    data-hx-target="#addresses-section"
+                                    data-hx-swap="innerHTML"
+                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');"
                                     data-name="@($"{a.FullName} / {a.City} / {a.Street1}")">
                                 <i class="fa fa-trash"></i> Delete
                             </button>

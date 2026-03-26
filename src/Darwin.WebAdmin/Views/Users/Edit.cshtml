@@ -89,72 +89,9 @@
 
     <script>
         window.darwinAdmin = window.darwinAdmin || {};
-        window.darwinAdmin.refreshAlerts = function () {
-            htmx.ajax('GET', '@Url.Action("AlertsFragment", "Users")', '#alerts-container');
-        };
         window.darwinAdmin.hideAddressModal = function () {
-            const modalEl = document.getElementById('addressEditModal');
-            if (!modalEl) {
-                return;
-            }
-
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.hide();
+            window.darwinAdmin.hideModal('addressEditModal');
         };
-
-        // --- Delete modal wiring (already in your page, kept as-is) ---
-        const confirmModal = document.getElementById('confirmDeleteModal');
-        if (confirmModal) {
-            confirmModal.addEventListener('show.bs.modal', function (event) {
-                const btn = event.relatedTarget;
-                if (!btn) return;
-                const action = btn.getAttribute('data-action');
-                const id = btn.getAttribute('data-id');
-                const name = btn.getAttribute('data-name') || '';
-                const rowVersion = btn.getAttribute('data-rowversion') || '';
-                const userId = btn.getAttribute('data-userid') || '';
-
-                const form = confirmModal.querySelector('form');
-                form.setAttribute('action', action);
-                form.querySelector('input[name="id"]').value = id;
-                const rv = form.querySelector('input[name="rowVersion"]');
-                if (rv) rv.value = rowVersion;
-                const uid = form.querySelector('input[name="userId"]');
-                if (uid) uid.value = userId;
-                const lbl = confirmModal.querySelector('[data-confirm-name]');
-                if (lbl) lbl.textContent = name;
-            });
-
-            // When submitting the form: AJAX instead of navigation
-            const deleteForm = confirmModal.querySelector('form');
-            if (deleteForm) {
-                deleteForm.addEventListener('submit', async function (e) {
-                    e.preventDefault();
-
-                    const form = e.currentTarget;
-                    const action = form.getAttribute('action');
-                    const formData = new FormData(form);
-
-                    // Send AJAX
-                    const resp = await fetch(action, { method: 'POST', body: formData });
-                    if (resp.ok) {
-                        // 1) refresh grid
-                        const html = await resp.text();
-                        document.getElementById('addresses-section').innerHTML = html;
-
-                        // 2) refresh alerts (TempData consumed & displayed)
-                        await refreshAlerts();
-
-                        // 3) close modal
-                        const modal = bootstrap.Modal.getInstance(confirmModal) || new bootstrap.Modal(confirmModal);
-                        modal.hide();
-                    } else {
-                        const msg = await resp.text();
-                        alert(msg || 'Failed to delete address.');
-                    }
-                });
-            }
-        }
 
         // --- Address Edit/Create modal wiring ---
         const addrModalEl = document.getElementById('addressEditModal');

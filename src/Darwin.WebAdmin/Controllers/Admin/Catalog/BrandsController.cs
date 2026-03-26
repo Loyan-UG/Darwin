@@ -4,7 +4,6 @@ using Darwin.Application.Catalog.Queries;
 using Darwin.Shared.Results;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -71,14 +70,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpGet]
         public IActionResult Create() => View(new BrandEditVm
         {
-            // Start with one translation row for convenience
             Translations = { new BrandTranslationVm { Culture = "de-DE" } }
         });
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BrandEditVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid)
+            {
+                EnsureTranslations(vm);
+                return RenderBrandEditor(vm, isCreate: true);
+            }
 
             var dto = new BrandCreateDto
             {
@@ -96,13 +98,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _create.HandleAsync(dto, ct);
                 TempData["Success"] = "Brand created.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (Exception ex)
             {
-                // Application throws FluentValidation or returns friendly messages upstream.
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(vm);
+                EnsureTranslations(vm);
+                return RenderBrandEditor(vm, isCreate: true);
             }
         }
 
@@ -136,7 +138,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(BrandEditVm vm, CancellationToken ct = default)
         {
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid)
+            {
+                EnsureTranslations(vm);
+                return RenderBrandEditor(vm, isCreate: false);
+            }
 
             var dto = new BrandEditDto
             {
@@ -156,17 +162,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _update.HandleAsync(dto, ct);
                 TempData["Success"] = "Brand updated.";
-                return RedirectToAction(nameof(Index), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. The brand was modified by another process. Please reload and try again.";
-                return RedirectToAction(nameof(Edit), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(vm);
+                EnsureTranslations(vm);
+                return RenderBrandEditor(vm, isCreate: false);
             }
         }
 
@@ -183,6 +190,38 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 result.Succeeded ? "Brand deleted." : (result.Error ?? "Failed to delete brand.");
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private IActionResult RenderBrandEditor(BrandEditVm vm, bool isCreate)
+        {
+            ViewData["IsCreate"] = isCreate;
+            return isCreate
+                ? View("Create", vm)
+                : View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void EnsureTranslations(BrandEditVm vm)
+        {
+            if (vm.Translations.Count == 0)
+            {
+                vm.Translations.Add(new BrandTranslationVm { Culture = "de-DE" });
+            }
         }
     }
 }

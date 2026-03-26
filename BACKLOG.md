@@ -50,6 +50,13 @@ The immediate direction is:
 - Completed: harden HTMX editor shells so repeated in-place submissions keep a stable target container instead of losing the shell after the first swap.
 - Completed: extend the HTMX editor-shell pattern to the remaining multi-line journal entry, stock transfer, and purchase order editors.
 - Completed: move order operation screens (`AddPayment`, `AddShipment`, `AddRefund`, `CreateInvoice`) onto HTMX-backed shells with inline loading from order details and proper fallback pages.
+- Completed: remove dead sidebar links in WebAdmin so navigation only exposes modules that currently have implemented admin controllers.
+- Completed: move the remaining custom fetch-based user-address delete flow onto the shared HTMX confirmation-modal pattern, including shared alert refresh and modal-close hooks.
+- Completed: remove page-local confirm-delete wiring from legacy list screens where the shared modal now provides the same behavior centrally.
+- Completed: replace the admin home placeholder with a real dashboard summary screen that surfaces business-aware operations counts, CRM metrics, and quick links into the implemented modules.
+- Completed: migrate the legacy Brands create/edit screens onto the shared HTMX editor-shell pattern with HTMX-aware success redirects and validation fallback.
+- Completed: repair legacy delete affordances in category, product, and role screens so destructive actions consistently use the shared confirmation modal and concurrency tokens.
+- Completed: remove stray cross-module navigation elements from legacy identity screens so each admin module stays focused on its own workflow.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.

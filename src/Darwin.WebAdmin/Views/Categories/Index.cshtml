@@ -64,11 +64,11 @@
                                     </form> *@
                                     <button type="button"
                                             class="btn btn-sm btn-outline-danger ms-1"
-                                            data-delete="open-modal"
-                                           
-                                            data-controller="Categories"
-                                            data-action="Delete"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmDeleteModal"
+                                            data-action="@Url.Action("Delete", "Categories")"
                                             data-id="@c.Id"
+                                            data-rowversion="@Convert.ToBase64String(c.RowVersion)"
                                             data-name="@(string.IsNullOrWhiteSpace(c.Name) ? c.Id.ToString() : c.Name)">
                                         <i class="fas fa-trash-alt"></i> Delete
                                     </button>

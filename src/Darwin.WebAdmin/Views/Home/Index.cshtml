@@ -1,18 +1,197 @@
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-@addTagHelper *, Darwin.WebAdmin
-
+@model Darwin.WebAdmin.ViewModels.Admin.AdminDashboardVm
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<h1 class="mb-3">Admin Dashboard</h1>
+<div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="mb-1">Admin Dashboard</h1>
+        <p class="text-muted mb-0">Use this overview as the operational starting point for the back-office.</p>
+    </div>
 
-<partial name="~/Views/Shared/_Alerts.cshtml" />
+    <form asp-action="Index" method="get" class="d-flex align-items-center gap-2">
+        <label for="businessId" class="form-label mb-0 text-muted">Business context</label>
+        <select id="businessId" name="businessId" asp-items="Model.BusinessOptions" class="form-select">
+            @if (Model.BusinessOptions.Count == 0)
+            {
+                <option value="">No active business</option>
+            }
+        </select>
+        <button type="submit" class="btn btn-outline-secondary">Apply</button>
+    </form>
+</div>
 
-<div class="card">
+<div class="row g-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Products</div>
+                <div class="fs-2 fw-semibold">@Model.ProductCount</div>
+                <a asp-controller="Products" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open Catalog</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Pages</div>
+                <div class="fs-2 fw-semibold">@Model.PageCount</div>
+                <a asp-controller="Pages" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open CMS</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Orders</div>
+                <div class="fs-2 fw-semibold">@Model.OrderCount</div>
+                <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open Orders</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Users</div>
+                <div class="fs-2 fw-semibold">@Model.UserCount</div>
+                <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary mt-3">Open Identity</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-7">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="fw-semibold">CRM Snapshot</div>
+                        <div class="small text-muted">Customers, leads, and pipeline health.</div>
+                    </div>
+                    <a asp-controller="Crm" asp-action="Index" class="btn btn-sm btn-outline-secondary">Open CRM</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Customers</div>
+                            <div class="fs-4 fw-semibold">@Model.Crm.CustomerCount</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Leads</div>
+                            <div class="fs-4 fw-semibold">@Model.Crm.LeadCount</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Qualified Leads</div>
+                            <div class="fs-4 fw-semibold">@Model.Crm.QualifiedLeadCount</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Open Opportunities</div>
+                            <div class="fs-4 fw-semibold">@Model.Crm.OpenOpportunityCount</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Segments</div>
+                            <div class="fs-4 fw-semibold">@Model.Crm.SegmentCount</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="text-muted small">Interactions (7d)</div>
+                            <div class="fs-4 fw-semibold">@Model.Crm.RecentInteractionCount</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border rounded p-3 mt-3">
+                    <div class="text-muted small">Open Pipeline</div>
+                    <div class="fs-4 fw-semibold">EUR @((Model.Crm.OpenPipelineMinor / 100.0M).ToString("0.00"))</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white">
+                <div class="fw-semibold">Business Operations</div>
+                <div class="small text-muted">
+                    @if (Model.SelectedBusinessId.HasValue)
+                    {
+                        <span>Current business: @Model.SelectedBusinessLabel</span>
+                    }
+                    else
+                    {
+                        <span>No active business available yet.</span>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                @if (Model.SelectedBusinessId.HasValue)
+                {
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <div class="text-muted small">Payments</div>
+                                <div class="fs-4 fw-semibold">@Model.PaymentCount</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <div class="text-muted small">Warehouses</div>
+                                <div class="fs-4 fw-semibold">@Model.WarehouseCount</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <div class="text-muted small">Suppliers</div>
+                                <div class="fs-4 fw-semibold">@Model.SupplierCount</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="border rounded p-3 h-100">
+                                <div class="text-muted small">Purchase Orders</div>
+                                <div class="fs-4 fw-semibold">@Model.PurchaseOrderCount</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary mb-0">
+                        Seed or create at least one active business to unlock inventory and billing summaries.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-white">
+        <div class="fw-semibold">Quick Links</div>
+        <div class="small text-muted">Jump directly to the most-used back-office areas.</div>
+    </div>
     <div class="card-body">
-        <p class="mb-0">
-            This is a placeholder for the admin dashboard. Add KPIs, charts, and quick links here.
-        </p>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">Products</a>
+            <a asp-controller="Pages" asp-action="Index" class="btn btn-outline-primary">Pages</a>
+            <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-primary">Orders</a>
+            <a asp-controller="Crm" asp-action="Customers" class="btn btn-outline-primary">Customers</a>
+            <a asp-controller="Crm" asp-action="Leads" class="btn btn-outline-primary">Leads</a>
+            <a asp-controller="Inventory" asp-action="Warehouses" class="btn btn-outline-primary">Warehouses</a>
+            <a asp-controller="Billing" asp-action="Payments" class="btn btn-outline-primary">Payments</a>
+            <a asp-controller="Users" asp-action="Index" class="btn btn-outline-primary">Users</a>
+            <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-outline-primary">Settings</a>
+        </div>
     </div>
 </div>

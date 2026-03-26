@@ -69,11 +69,11 @@
                                     </a>
                                     <button type="button"
                                             class="btn btn-sm btn-outline-danger ms-1"
-                                            data-delete="open-modal"
-                                           
-                                            data-controller="Products"
-                                            data-action="Delete"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmDeleteModal"
+                                            data-action="@Url.Action("Delete", "Products")"
                                             data-id="@p.Id"
+                                            data-rowversion="@Convert.ToBase64String(p.RowVersion)"
                                             data-name="@(string.IsNullOrWhiteSpace(p.DefaultName) ? p.Id.ToString() : p.DefaultName)">
                                         <i class="fas fa-trash-alt"></i> Delete
                                     </button>

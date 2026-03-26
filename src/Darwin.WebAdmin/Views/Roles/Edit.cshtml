@@ -45,11 +45,11 @@
         <div>
             <button type="button"
                     class="btn btn-outline-danger"
-                    data-delete="open-modal"
-                   
-                    data-controller="Roles"
-                    data-action="Delete"
+                    data-bs-toggle="modal"
+                    data-bs-target="#confirmDeleteModal"
+                    data-action="@Url.Action("Delete", "Roles")"
                     data-id="@Model.Id"
+                    data-rowversion="@Convert.ToBase64String(Model.RowVersion)"
                     data-name="@Model.DisplayName">
                 <i class="fa fa-trash"></i> Delete
             </button>

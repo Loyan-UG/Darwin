@@ -93,46 +93,13 @@
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Pages" asp-action="Index">
                         <i class="fa-regular fa-file-lines me-2"></i> Pages
                     </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="Menus" asp-action="Index">
-                        <i class="fa-solid fa-bars me-2"></i> Menus
-                    </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="MenuItems" asp-action="Index">
-                        <i class="fa-regular fa-square-plus me-2"></i> Menu Items
-                    </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Media" asp-action="Index">
                         <i class="fa-regular fa-images me-2"></i> Media
-                    </active-nav>
-
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Pricing</div>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="TaxCategories" asp-action="Index">
-                        <i class="fa-solid fa-percent me-2"></i> Tax Categories
-                    </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="Promotions" asp-action="Index">
-                        <i class="fa-solid fa-bullhorn me-2"></i> Promotions
-                    </active-nav>
-
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Shipping</div>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="ShippingMethods" asp-action="Index">
-                        <i class="fa-solid fa-truck-fast me-2"></i> Methods
-                    </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="ShippingRates" asp-action="Index">
-                        <i class="fa-solid fa-layer-group me-2"></i> Rates
-                    </active-nav>
-
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Cart & Checkout</div>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="Carts" asp-action="Index">
-                        <i class="fa-solid fa-cart-shopping me-2"></i> Carts
-                    </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="CartItems" asp-action="Index">
-                        <i class="fa-regular fa-square-check me-2"></i> Cart Items
                     </active-nav>
 
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Orders</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Orders" asp-action="Index">
                         <i class="fa-solid fa-receipt me-2"></i> Orders
-                    </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="Shipments" asp-action="Index">
-                        <i class="fa-solid fa-boxes-packing me-2"></i> Shipments
                     </active-nav>
 
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">CRM</div>
@@ -184,11 +151,6 @@
                     </active-nav>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Billing" asp-action="JournalEntries">
                         <i class="fa-solid fa-scale-balanced me-2"></i> Journal Entries
-                    </active-nav>
-
-                    <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">SEO</div>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="RedirectRules" asp-action="Index">
-                        <i class="fa-solid fa-link-slash me-2"></i> Redirect Rules
                     </active-nav>
 
                     @* Protected sections (FullAdminAccess) *@
@@ -256,6 +218,21 @@
             scope.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
                 bootstrap.Tooltip.getOrCreateInstance(el);
             });
+        };
+
+        window.darwinAdmin.refreshAlerts = function (url) {
+            const targetUrl = url || '@Url.Action("AlertsFragment", "Users")';
+            htmx.ajax('GET', targetUrl, '#alerts-container');
+        };
+
+        window.darwinAdmin.hideModal = function (modalId) {
+            const modalEl = document.getElementById(modalId);
+            if (!modalEl) {
+                return;
+            }
+
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.hide();
         };
 
         document.addEventListener('DOMContentLoaded', function () {

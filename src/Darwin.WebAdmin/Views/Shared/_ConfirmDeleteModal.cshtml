@@ -31,7 +31,6 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" id="confirmDeleteId" />
                     <input type="hidden" name="rowVersion" id="confirmDeleteRowVersion" />
-                    <!-- NEW: the userId required by DeleteAddress(id,userId,rowVersion) -->
                     <input type="hidden" name="userId" />
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete</button>
@@ -50,21 +49,18 @@
       const idInput  = document.getElementById('confirmDeleteId');
       const rvInput  = document.getElementById('confirmDeleteRowVersion');
       const form     = document.getElementById('confirmDeleteForm');
+      const userIdInput = form ? form.querySelector('input[name="userId"]') : null;
 
-      // Use Bootstrap's show.bs.modal to read the *trigger button* attributes
       modalEl.addEventListener('show.bs.modal', function (ev) {
         const btn = ev.relatedTarget;
         if (!btn) return;
 
-        // Prefer explicit data-action (a ready-to-use URL)
         let actionUrl = btn.getAttribute('data-action');
 
-        // If not provided, compose from area/controller/action
         if (!actionUrl) {
           const area = btn.getAttribute('data-area');
           const ctrl = btn.getAttribute('data-controller');
           const act  = btn.getAttribute('data-action') || 'Delete';
-          // Compose as /{area}/{controller}/{action}
           if (ctrl) {
             actionUrl = '/' + (area ? (area + '/') : '') + ctrl + '/' + act;
           }
@@ -73,11 +69,38 @@
         const id   = btn.getAttribute('data-id');
         const name = btn.getAttribute('data-name') || '';
         const rv   = btn.getAttribute('data-rowversion') || '';
+        const userId = btn.getAttribute('data-userid') || '';
+        const hxTarget = btn.getAttribute('data-hx-target');
+        const hxSwap = btn.getAttribute('data-hx-swap') || 'innerHTML';
+        const hxSuccess = btn.getAttribute('data-hx-success');
 
         if (nameSpan) nameSpan.textContent = name;
         if (idInput)  idInput.value = id || '';
         if (rvInput)  rvInput.value = rv || '';
-        if (actionUrl) form.setAttribute('action', actionUrl);
+        if (userIdInput) userIdInput.value = userId;
+
+        if (actionUrl) {
+          form.setAttribute('action', actionUrl);
+        } else {
+          form.removeAttribute('action');
+        }
+
+        if (hxTarget && actionUrl) {
+          form.setAttribute('hx-post', actionUrl);
+          form.setAttribute('hx-target', hxTarget);
+          form.setAttribute('hx-swap', hxSwap);
+
+          if (hxSuccess) {
+            form.setAttribute('hx-on::after-request', 'if(event.detail.successful){ ' + hxSuccess + ' }');
+          } else {
+            form.removeAttribute('hx-on::after-request');
+          }
+        } else {
+          form.removeAttribute('hx-post');
+          form.removeAttribute('hx-target');
+          form.removeAttribute('hx-swap');
+          form.removeAttribute('hx-on::after-request');
+        }
       });
     })();
 </script>
