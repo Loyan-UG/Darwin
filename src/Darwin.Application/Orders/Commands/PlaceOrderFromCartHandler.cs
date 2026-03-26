@@ -1,94 +1,247 @@
-﻿using System.Linq;
+using System.Globalization;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.CartCheckout.Queries;
+using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.CartCheckout;
 using Darwin.Domain.Entities.Catalog;
+using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace Darwin.Application.Orders.Commands
+namespace Darwin.Application.Orders.Commands;
+
+/// <summary>
+/// Creates an order snapshot from a cart, capturing address snapshots and authoritative financial totals.
+/// </summary>
+public sealed class PlaceOrderFromCartHandler
 {
+    private readonly IAppDbContext _db;
+    private readonly ComputeCartSummaryHandler _computeCartSummaryHandler;
+
     /// <summary>
-    /// Creates an Order snapshot from a Cart. Copies add-on selections for each line
-    /// and populates Name/SKU from catalog using the provided culture.
+    /// Initializes a new instance of the <see cref="PlaceOrderFromCartHandler"/> class.
     /// </summary>
-    public sealed class PlaceOrderFromCartHandler
+    public PlaceOrderFromCartHandler(IAppDbContext db, ComputeCartSummaryHandler computeCartSummaryHandler)
     {
-        private readonly IAppDbContext _db;
-        public PlaceOrderFromCartHandler(IAppDbContext db) => _db = db;
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _computeCartSummaryHandler = computeCartSummaryHandler ?? throw new ArgumentNullException(nameof(computeCartSummaryHandler));
+    }
 
-        public async Task<Order> HandleAsync(System.Guid cartId, System.Guid? userId, string culture = "de-DE", System.Threading.CancellationToken ct = default)
+    /// <summary>
+    /// Creates an order from the specified cart and finalizes the cart to prevent duplicate checkout submissions.
+    /// </summary>
+    public async Task<PlaceOrderFromCartResultDto> HandleAsync(PlaceOrderFromCartDto dto, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        if (dto.CartId == Guid.Empty)
         {
-            var cart = await _db.Set<Cart>()
-                .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.Id == cartId && !c.IsDeleted, ct)
-                ?? throw new System.InvalidOperationException("Cart not found.");
+            throw new InvalidOperationException("CartId is required.");
+        }
 
-            if (cart.Items.Count == 0)
-                throw new System.InvalidOperationException("Cart is empty.");
+        if (dto.ShippingTotalMinor < 0)
+        {
+            throw new InvalidOperationException("ShippingTotalMinor must be zero or positive.");
+        }
 
-            var order = new Order
+        var cart = await _db.Set<Cart>()
+            .Include(x => x.Items)
+            .FirstOrDefaultAsync(x => x.Id == dto.CartId && !x.IsDeleted, ct)
+            .ConfigureAwait(false)
+            ?? throw new InvalidOperationException("Cart not found.");
+
+        if (cart.UserId.HasValue && dto.UserId != cart.UserId)
+        {
+            throw new InvalidOperationException("Cart does not belong to the current user.");
+        }
+
+        var activeItems = cart.Items.Where(x => !x.IsDeleted && x.Quantity > 0).ToList();
+        if (activeItems.Count == 0)
+        {
+            throw new InvalidOperationException("Cart is empty.");
+        }
+
+        var summary = await _computeCartSummaryHandler.HandleAsync(cart.Id, ct).ConfigureAwait(false);
+        var summaryLinesByKey = summary.Items.ToDictionary(
+            x => BuildSummaryKey(x.VariantId, x.SelectedAddOnValueIdsJson),
+            x => x,
+            StringComparer.Ordinal);
+
+        var billingAddressJson = await ResolveAddressJsonAsync(dto.UserId, dto.BillingAddressId, dto.BillingAddress, "billing", ct).ConfigureAwait(false);
+        var shippingAddressJson = await ResolveAddressJsonAsync(dto.UserId, dto.ShippingAddressId, dto.ShippingAddress, "shipping", ct).ConfigureAwait(false);
+
+        var variantIds = activeItems.Select(x => x.VariantId).Distinct().ToList();
+        var variants = await _db.Set<ProductVariant>()
+            .AsNoTracking()
+            .Where(x => variantIds.Contains(x.Id) && !x.IsDeleted)
+            .ToDictionaryAsync(x => x.Id, ct)
+            .ConfigureAwait(false);
+
+        var productIds = variants.Values.Select(x => x.ProductId).Distinct().ToList();
+        var translations = await _db.Set<ProductTranslation>()
+            .AsNoTracking()
+            .Where(x => productIds.Contains(x.ProductId) && x.Culture == dto.Culture && !x.IsDeleted)
+            .ToDictionaryAsync(x => x.ProductId, ct)
+            .ConfigureAwait(false);
+
+        long subtotalNetMinor = 0;
+        long taxTotalMinor = 0;
+        var orderLines = new List<OrderLine>(activeItems.Count);
+
+        foreach (var cartItem in activeItems)
+        {
+            if (!variants.TryGetValue(cartItem.VariantId, out var variant))
             {
-                UserId = userId,
-                Currency = cart.Currency,
-                PricesIncludeTax = false
-            };
-
-            long subtotalNet = 0;
-            long taxTotal = 0;
-
-            // Pre-load variant + product + translation for all lines
-            var variantIds = cart.Items.Select(i => i.VariantId).Distinct().ToList();
-            var variants = await _db.Set<ProductVariant>()
-                .Where(v => variantIds.Contains(v.Id))
-                .ToDictionaryAsync(v => v.Id, ct);
-
-            var productIds = variants.Values.Select(v => v.ProductId).Distinct().ToList();
-            var translations = await _db.Set<ProductTranslation>()
-                .Where(t => productIds.Contains(t.ProductId) && (t.Culture == culture))
-                .ToDictionaryAsync(t => t.ProductId, ct);
-
-            foreach (var ci in cart.Items)
-            {
-                var v = variants[ci.VariantId];
-                var name = translations.TryGetValue(v.ProductId, out var t) ? t.Name : string.Empty;
-
-                var lineNet = ci.UnitPriceNetMinor * ci.Quantity;
-                var lineTax = (long)System.Math.Round(lineNet * (double)ci.VatRate, System.MidpointRounding.AwayFromZero);
-                var lineGross = lineNet + lineTax;
-
-                order.Lines.Add(new OrderLine
-                {
-                    OrderId = order.Id,
-                    VariantId = ci.VariantId,
-                    Name = name,
-                    Sku = v.Sku,
-                    Quantity = ci.Quantity,
-                    UnitPriceNetMinor = ci.UnitPriceNetMinor,
-                    VatRate = ci.VatRate,
-                    UnitPriceGrossMinor = ci.UnitPriceNetMinor + (long)System.Math.Round(ci.UnitPriceNetMinor * (double)ci.VatRate),
-                    LineTaxMinor = lineTax,
-                    LineGrossMinor = lineGross,
-
-                    AddOnValueIdsJson = ci.SelectedAddOnValueIdsJson ?? "[]",
-                    AddOnPriceDeltaMinor = ci.AddOnPriceDeltaMinor
-                });
-
-                subtotalNet += lineNet;
-                taxTotal += lineTax;
+                throw new InvalidOperationException("Variant not found.");
             }
 
-            order.SubtotalNetMinor = subtotalNet;
-            order.TaxTotalMinor = taxTotal;
-            order.ShippingTotalMinor = 0; // rated later
-            order.DiscountTotalMinor = 0; // applied later
-            order.GrandTotalGrossMinor = subtotalNet + taxTotal;
+            if (!summaryLinesByKey.TryGetValue(BuildSummaryKey(cartItem.VariantId, cartItem.SelectedAddOnValueIdsJson), out var summaryLine))
+            {
+                throw new InvalidOperationException("Cart summary is missing a line required for checkout.");
+            }
 
-            _db.Set<Order>().Add(order);
-            await _db.SaveChangesAsync(ct);
-            return order;
+            var name = translations.TryGetValue(variant.ProductId, out var translation)
+                ? translation.Name
+                : variant.Sku;
+
+            var unitNetWithAddOns = summaryLine.UnitPriceNetMinor;
+            var lineNet = summaryLine.LineNetMinor;
+            var lineTax = summaryLine.LineVatMinor;
+            var unitGross = unitNetWithAddOns + (long)Math.Round(unitNetWithAddOns * (double)summaryLine.VatRate, MidpointRounding.AwayFromZero);
+            var lineGross = summaryLine.LineGrossMinor;
+
+            subtotalNetMinor += lineNet;
+            taxTotalMinor += lineTax;
+
+            orderLines.Add(new OrderLine
+            {
+                VariantId = cartItem.VariantId,
+                WarehouseId = null,
+                Name = name,
+                Sku = variant.Sku,
+                Quantity = summaryLine.Quantity,
+                UnitPriceNetMinor = unitNetWithAddOns,
+                VatRate = summaryLine.VatRate,
+                UnitPriceGrossMinor = unitGross,
+                LineTaxMinor = lineTax,
+                LineGrossMinor = lineGross,
+                AddOnValueIdsJson = summaryLine.SelectedAddOnValueIdsJson,
+                AddOnPriceDeltaMinor = summaryLine.AddOnPriceDeltaMinor
+            });
         }
+
+        var rawGrossMinor = subtotalNetMinor + taxTotalMinor;
+        var discountTotalMinor = Math.Max(0L, rawGrossMinor - summary.GrandTotalGrossMinor);
+        var grandTotalGrossMinor = rawGrossMinor + dto.ShippingTotalMinor - discountTotalMinor;
+
+        var order = new Order
+        {
+            OrderNumber = await NextOrderNumberAsync(ct).ConfigureAwait(false),
+            UserId = dto.UserId ?? cart.UserId,
+            Currency = summary.Currency,
+            PricesIncludeTax = false,
+            SubtotalNetMinor = subtotalNetMinor,
+            TaxTotalMinor = taxTotalMinor,
+            ShippingTotalMinor = dto.ShippingTotalMinor,
+            DiscountTotalMinor = discountTotalMinor,
+            GrandTotalGrossMinor = Math.Max(0L, grandTotalGrossMinor),
+            Status = OrderStatus.Created,
+            BillingAddressJson = billingAddressJson,
+            ShippingAddressJson = shippingAddressJson,
+            Lines = orderLines
+        };
+
+        _db.Set<Order>().Add(order);
+
+        cart.IsDeleted = true;
+        foreach (var cartItem in activeItems)
+        {
+            cartItem.IsDeleted = true;
+        }
+
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        return new PlaceOrderFromCartResultDto
+        {
+            OrderId = order.Id,
+            OrderNumber = order.OrderNumber,
+            Currency = order.Currency,
+            GrandTotalGrossMinor = order.GrandTotalGrossMinor,
+            Status = order.Status
+        };
+    }
+
+    private async Task<string> ResolveAddressJsonAsync(
+        Guid? userId,
+        Guid? addressId,
+        CheckoutAddressDto? inlineAddress,
+        string role,
+        CancellationToken ct)
+    {
+        if (addressId.HasValue)
+        {
+            if (!userId.HasValue || userId == Guid.Empty)
+            {
+                throw new InvalidOperationException($"A signed-in user is required to use a saved {role} address.");
+            }
+
+            var address = await _db.Set<Address>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == addressId.Value && x.UserId == userId.Value && !x.IsDeleted, ct)
+                .ConfigureAwait(false);
+
+            if (address is null)
+            {
+                throw new InvalidOperationException($"Saved {role} address not found.");
+            }
+
+            return JsonSerializer.Serialize(new CheckoutAddressDto
+            {
+                FullName = address.FullName,
+                Company = address.Company,
+                Street1 = address.Street1,
+                Street2 = address.Street2,
+                PostalCode = address.PostalCode,
+                City = address.City,
+                State = address.State,
+                CountryCode = address.CountryCode,
+                PhoneE164 = address.PhoneE164
+            });
+        }
+
+        if (inlineAddress is null)
+        {
+            throw new InvalidOperationException($"A {role} address is required.");
+        }
+
+        ValidateInlineAddress(inlineAddress, role);
+        return JsonSerializer.Serialize(inlineAddress);
+    }
+
+    private static void ValidateInlineAddress(CheckoutAddressDto address, string role)
+    {
+        if (string.IsNullOrWhiteSpace(address.FullName) ||
+            string.IsNullOrWhiteSpace(address.Street1) ||
+            string.IsNullOrWhiteSpace(address.PostalCode) ||
+            string.IsNullOrWhiteSpace(address.City) ||
+            string.IsNullOrWhiteSpace(address.CountryCode))
+        {
+            throw new InvalidOperationException($"The {role} address is incomplete.");
+        }
+    }
+
+    private async Task<string> NextOrderNumberAsync(CancellationToken ct)
+    {
+        var lastCount = await _db.Set<Order>().AsNoTracking().CountAsync(ct).ConfigureAwait(false);
+        return $"D-{DateTime.UtcNow:yyyyMMdd}-{lastCount + 1:D5}";
+    }
+
+    private static string BuildSummaryKey(Guid variantId, string? selectedAddOnValueIdsJson)
+    {
+        return string.Concat(
+            variantId.ToString("N", CultureInfo.InvariantCulture),
+            "|",
+            selectedAddOnValueIdsJson ?? "[]");
     }
 }

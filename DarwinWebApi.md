@@ -123,6 +123,8 @@ Recent route organization changes:
 - public CMS and public catalog delivery now have dedicated canonical route roots under `api/v1/public/cms` and `api/v1/public/catalog`, while legacy `/api/v1/cms/*` and `/api/v1/catalog/*` aliases remain temporarily available
 - public business discovery now also includes a canonical map-discovery route under `api/v1/public/businesses/map`, while the legacy `/api/v1/businesses/map` alias remains available for existing mobile consumers
 - public storefront cart and shipping estimation now have dedicated canonical route roots under `api/v1/public/cart` and `api/v1/public/shipping`, while legacy `/api/v1/cart*` and `/api/v1/shipping/rates` aliases remain available during migration
+- public storefront checkout order placement now has a dedicated canonical route root under `api/v1/public/checkout/orders`, while the legacy `/api/v1/checkout/orders` alias remains available during migration
+- public storefront checkout intent, payment intent, and confirmation now live under the dedicated canonical `api/v1/public/checkout/*` route group, while legacy `/api/v1/checkout/*` aliases remain available during migration
 
 ### Required public groups
 
@@ -135,6 +137,10 @@ These should be documented and expanded as implementation continues:
 - `/api/v1/public/catalog/categories`
 - `/api/v1/public/cart/*`
 - `/api/v1/public/shipping/*`
+- `/api/v1/public/checkout/intent`
+- `/api/v1/public/checkout/orders`
+- `/api/v1/public/checkout/orders/{orderId}/payment-intent`
+- `/api/v1/public/checkout/orders/{orderId}/confirmation`
 
 Current public delivery ownership:
 
@@ -143,7 +149,11 @@ Current public delivery ownership:
 - public business discovery: list, detail, category kinds, and viewport-based map discovery
 - public storefront cart: cart summary, add/update/remove line, and coupon application for anonymous or authenticated storefront sessions
 - public shipping: rate quotes for storefront checkout estimation
-- legacy `/api/v1/cms/*`, `/api/v1/catalog/*`, `/api/v1/cart*`, `/api/v1/shipping/rates`, and `/api/v1/businesses/map` aliases remain only for compatibility and should not be used for new development
+- public checkout intent: authoritative cart totals, derived shipment mass, and validated shipping options for the current address context
+- public checkout: order placement from the authoritative cart summary with saved member addresses or inline address snapshots and automatic cart finalization
+- public payment intent: pending storefront payment-session creation or reuse for already placed orders so front-office clients can hand off to a PSP without duplicating pending payment rows
+- public confirmation: safe post-order confirmation delivery for member-owned or anonymous orders without exposing member-owned orders to anonymous callers
+- legacy `/api/v1/cms/*`, `/api/v1/catalog/*`, `/api/v1/cart*`, `/api/v1/shipping/rates`, `/api/v1/checkout/intent`, `/api/v1/checkout/orders*`, and `/api/v1/businesses/map` aliases remain only for compatibility and should not be used for new development
 
 ### Required member groups
 
@@ -165,6 +175,8 @@ Current member commerce ownership:
 - member invoices: paged invoice history and invoice detail under the member route root
 - member profile addresses: reusable address-book CRUD and default billing/shipping selection under the member profile route root
 - member CRM linkage: current identity-to-customer summary under the member profile route root
+- storefront checkout is now intentionally allowed to reuse saved member addresses and then fall back to the same order aggregate for member confirmation/history rather than inventing a second order model
+- member profile addresses are intentionally reusable by storefront checkout so signed-in users can place orders from saved addresses without exposing admin-facing address contracts
 - legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
 - mobile shared route constants should prefer the canonical audience-first roots (`public`, `member`, `business`) even when the legacy aliases still exist server-side
 

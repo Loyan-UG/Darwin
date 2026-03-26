@@ -100,7 +100,8 @@ namespace Darwin.Application.CartCheckout.Commands
                     Quantity = dto.Quantity,
                     UnitPriceNetMinor = adjustedUnit,
                     VatRate = vatRate,
-                    SelectedAddOnValueIdsJson = selectedJson
+                    SelectedAddOnValueIdsJson = selectedJson,
+                    AddOnPriceDeltaMinor = addOnDelta
                 });
             }
 

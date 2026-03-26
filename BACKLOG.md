@@ -113,9 +113,13 @@ The immediate direction is:
 - Completed: restore a dedicated public business map-discovery endpoint under `api/v1/public/businesses/map` while preserving the legacy `/api/v1/businesses/map` alias used by existing mobile flows.
 - Completed: add initial public storefront cart endpoints under `api/v1/public/cart` with legacy `/api/v1/cart*` aliases for anonymous and authenticated storefront cart mutations.
 - Completed: add initial public storefront shipping-rate endpoints under `api/v1/public/shipping/rates` with the legacy `/api/v1/shipping/rates` alias.
+- Completed: add initial public storefront checkout order-placement under `api/v1/public/checkout/orders` with the legacy `/api/v1/checkout/orders` alias, including authoritative cart totals, address snapshots, and cart finalization.
+- Completed: add storefront checkout-intent preview under `api/v1/public/checkout/intent`, including authoritative cart totals, derived shipment mass, validated shipping options, and selected shipping-rate preview.
+- Completed: add storefront payment-intent initiation under `api/v1/public/checkout/orders/{orderId}/payment-intent`, reusing active pending intents where possible instead of creating duplicate pending payments.
+- Completed: add storefront post-order confirmation under `api/v1/public/checkout/orders/{orderId}/confirmation`, with safe access rules for member-owned versus anonymous orders.
 - Task: deepen public CMS delivery with SEO, structured blocks, and culture fallback rules as storefront requirements expand.
 - Task: deepen public catalog delivery with richer pricing, availability, attribute filtering, and search-oriented projections.
-- Task: deepen storefront cart and checkout delivery with address capture, shipping selection, checkout intent, and order placement flows.
+- Task: deepen storefront cart and checkout delivery with explicit shipping-method persistence, real PSP handoff, and post-order payment completion flows on top of the now-implemented intent, order placement, and confirmation path.
 
 ### Epic: Member API
 
@@ -126,7 +130,7 @@ The immediate direction is:
 - Completed: add a member-facing linked CRM customer summary endpoint under `api/v1/member/profile/customer`.
 - Task: document and implement member loyalty projections and account endpoints.
 - Task: deepen member order and invoice APIs with richer storefront-specific document-download and action flows as front-office requirements solidify.
-- Task: extend member profile APIs with address selection during checkout, customer-preference projections, and any additional self-service CRM views that become necessary.
+- Task: extend member profile APIs with customer-preference projections and any additional self-service CRM views that become necessary beyond the now-supported checkout address reuse and confirmation flow.
 - Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.
 
 ### Epic: Admin and integration API

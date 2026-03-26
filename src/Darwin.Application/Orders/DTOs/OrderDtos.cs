@@ -352,4 +352,47 @@ namespace Darwin.Application.Orders.DTOs
         public DateTime? DueAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
+
+    /// <summary>
+    /// Address snapshot captured during storefront checkout.
+    /// </summary>
+    public sealed class CheckoutAddressDto
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string? Company { get; set; }
+        public string Street1 { get; set; } = string.Empty;
+        public string? Street2 { get; set; }
+        public string PostalCode { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string? State { get; set; }
+        public string CountryCode { get; set; } = "DE";
+        public string? PhoneE164 { get; set; }
+    }
+
+    /// <summary>
+    /// Input DTO for placing an order directly from a cart snapshot.
+    /// </summary>
+    public sealed class PlaceOrderFromCartDto
+    {
+        public Guid CartId { get; set; }
+        public Guid? UserId { get; set; }
+        public Guid? BillingAddressId { get; set; }
+        public Guid? ShippingAddressId { get; set; }
+        public CheckoutAddressDto? BillingAddress { get; set; }
+        public CheckoutAddressDto? ShippingAddress { get; set; }
+        public long ShippingTotalMinor { get; set; }
+        public string Culture { get; set; } = "de-DE";
+    }
+
+    /// <summary>
+    /// Result DTO returned after a storefront cart is converted into an order.
+    /// </summary>
+    public sealed class PlaceOrderFromCartResultDto
+    {
+        public Guid OrderId { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+        public string Currency { get; set; } = "EUR";
+        public long GrandTotalGrossMinor { get; set; }
+        public OrderStatus Status { get; set; } = OrderStatus.Created;
+    }
 }

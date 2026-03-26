@@ -56,6 +56,18 @@ public sealed class WebApiRouteAliasSourceTests
     }
 
     [Fact]
+    public void PublicCheckoutController_Should_ContainPublicCanonicalRoute_AndLegacyAlias()
+    {
+        var source = ReadControllerSource(Path.Combine("Public", "PublicCheckoutController.cs"));
+
+        source.Should().Contain("api/v1/public/checkout");
+        source.Should().Contain("/api/v1/checkout/intent");
+        source.Should().Contain("/api/v1/checkout/orders");
+        source.Should().Contain("/api/v1/checkout/orders/{orderId:guid}/payment-intent");
+        source.Should().Contain("/api/v1/checkout/orders/{orderId:guid}/confirmation");
+    }
+
+    [Fact]
     public void PublicCmsController_Should_ContainPublicCanonicalRoutes_AndLegacyAliases()
     {
         var source = ReadControllerSource(Path.Combine("Public", "PublicCmsController.cs"));

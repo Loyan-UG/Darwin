@@ -505,6 +505,192 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"companyName\"");
     }
 
+    /// <summary>
+    ///     Verifies that storefront checkout contracts serialize order-placement
+    ///     fields with stable camelCase property names.
+    /// </summary>
+    [Fact]
+    public void PlaceOrderFromCartRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new PlaceOrderFromCartRequest
+        {
+            CartId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            ShippingTotalMinor = 590,
+            Culture = "de-DE",
+            BillingAddress = new CheckoutAddress
+            {
+                FullName = "Max Mustermann",
+                Street1 = "Musterstraße 1",
+                PostalCode = "10115",
+                City = "Berlin",
+                CountryCode = "DE"
+            },
+            ShippingAddress = new CheckoutAddress
+            {
+                FullName = "Max Mustermann",
+                Street1 = "Musterstraße 1",
+                PostalCode = "10115",
+                City = "Berlin",
+                CountryCode = "DE"
+            }
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"cartId\"");
+        json.Should().Contain("\"shippingTotalMinor\"");
+        json.Should().Contain("\"culture\"");
+        json.Should().Contain("\"billingAddress\"");
+        json.Should().Contain("\"shippingAddress\"");
+    }
+
+    /// <summary>
+    ///     Verifies that storefront checkout responses serialize created-order
+    ///     fields with stable camelCase property names.
+    /// </summary>
+    [Fact]
+    public void PlaceOrderFromCartResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new PlaceOrderFromCartResponse
+        {
+            OrderId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            OrderNumber = "D-20300101-00001",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 2590,
+            Status = "Created"
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"orderId\"");
+        json.Should().Contain("\"orderNumber\"");
+        json.Should().Contain("\"grandTotalGrossMinor\"");
+        json.Should().Contain("\"status\"");
+    }
+
+    /// <summary>
+    ///     Verifies that storefront checkout-intent contracts serialize preview and shipping
+    ///     selection fields with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void CreateCheckoutIntentResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new CreateCheckoutIntentResponse
+        {
+            CartId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            Currency = "EUR",
+            SubtotalNetMinor = 3000,
+            VatTotalMinor = 570,
+            GrandTotalGrossMinor = 3570,
+            ShipmentMass = 1500,
+            RequiresShipping = true,
+            ShippingCountryCode = "DE",
+            SelectedShippingMethodId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            SelectedShippingTotalMinor = 590,
+            ShippingOptions =
+            [
+                new PublicShippingOption
+                {
+                    MethodId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                    Name = "DHL Paket",
+                    PriceMinor = 590,
+                    Currency = "EUR",
+                    Carrier = "DHL",
+                    Service = "Paket"
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"shipmentMass\"");
+        json.Should().Contain("\"requiresShipping\"");
+        json.Should().Contain("\"shippingCountryCode\"");
+        json.Should().Contain("\"selectedShippingMethodId\"");
+        json.Should().Contain("\"selectedShippingTotalMinor\"");
+        json.Should().Contain("\"shippingOptions\"");
+    }
+
+    /// <summary>
+    ///     Verifies that storefront payment-intent contracts serialize payment session
+    ///     fields with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void CreateStorefrontPaymentIntentResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new CreateStorefrontPaymentIntentResponse
+        {
+            OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            PaymentId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            Provider = "DarwinCheckout",
+            ProviderReference = "chk_abc123",
+            AmountMinor = 4160,
+            Currency = "EUR",
+            Status = "Pending",
+            ExpiresAtUtc = new DateTime(2030, 1, 1, 12, 30, 0, DateTimeKind.Utc)
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"paymentId\"");
+        json.Should().Contain("\"provider\"");        
+        json.Should().Contain("\"providerReference\"");
+        json.Should().Contain("\"amountMinor\"");
+        json.Should().Contain("\"expiresAtUtc\"");
+    }
+
+    /// <summary>
+    ///     Verifies that storefront order-confirmation contracts serialize line and payment
+    ///     snapshots with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void StorefrontOrderConfirmationResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new StorefrontOrderConfirmationResponse
+        {
+            OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            OrderNumber = "D-20300101-00001",
+            Currency = "EUR",
+            GrandTotalGrossMinor = 4160,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Lines =
+            [
+                new StorefrontOrderConfirmationLine
+                {
+                    Id = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+                    VariantId = Guid.Parse("66666666-7777-8888-9999-000000000000"),
+                    Name = "Filterkaffee",
+                    Sku = "COF-01",
+                    Quantity = 2,
+                    UnitPriceGrossMinor = 2080,
+                    LineGrossMinor = 4160
+                }
+            ],
+            Payments =
+            [
+                new StorefrontOrderConfirmationPayment
+                {
+                    Id = Guid.Parse("99999999-8888-7777-6666-555555555555"),
+                    Provider = "DarwinCheckout",
+                    ProviderReference = "chk_abc123",
+                    AmountMinor = 4160,
+                    Currency = "EUR",
+                    Status = "Pending"
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"orderId\"");
+        json.Should().Contain("\"orderNumber\"");
+        json.Should().Contain("\"lines\"");
+        json.Should().Contain("\"payments\"");
+        json.Should().Contain("\"providerReference\"");
+        json.Should().Contain("\"unitPriceGrossMinor\"");
+    }
+
 
 
 
