@@ -88,6 +88,35 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("/api/v1/notifications/devices/register");
     }
 
+    [Fact]
+    public void LoyaltyController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Loyalty", "LoyaltyController.cs"));
+
+        source.Should().Contain("api/v1/member/loyalty");
+        source.Should().Contain("api/v1/loyalty");
+        source.Should().Contain("scan/prepare");
+        source.Should().Contain("my/accounts");
+        source.Should().Contain("my/history/{businessId:guid}");
+        source.Should().Contain("account/{businessId:guid}/join");
+        source.Should().Contain("account/{businessId:guid}/next-reward");
+    }
+
+    [Fact]
+    public void BusinessLoyaltyController_Should_ContainBusinessCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Business", "BusinessLoyaltyController.cs"));
+
+        source.Should().Contain("api/v1/business/loyalty");
+        source.Should().Contain("/api/v1/loyalty/business/reward-config");
+        source.Should().Contain("/api/v1/loyalty/business/reward-config/tiers");
+        source.Should().Contain("/api/v1/loyalty/scan/process");
+        source.Should().Contain("/api/v1/loyalty/scan/confirm-accrual");
+        source.Should().Contain("/api/v1/loyalty/scan/confirm-redemption");
+        source.Should().Contain("/api/v1/loyalty/business/campaigns");
+        source.Should().Contain("/api/v1/loyalty/business/campaigns/{id:guid}/activation");
+    }
+
     private static string ReadControllerSource(string relativeControllerPath)
     {
         var path = Path.GetFullPath(Path.Combine(

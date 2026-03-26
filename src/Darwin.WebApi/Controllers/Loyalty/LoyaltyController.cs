@@ -1,1359 +1,334 @@
-﻿using Darwin.Application.Loyalty.Campaigns;
+using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Application.Loyalty.Commands;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Queries;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
-using Darwin.Shared.Results;
 using Darwin.WebApi.Mappers;
 using Darwin.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ContractLoyaltyScanMode = Darwin.Contracts.Loyalty.LoyaltyScanMode;
-// Use explicit aliases to avoid ambiguity between domain and contract enums.
-using DomainLoyaltyScanMode = Darwin.Domain.Enums.LoyaltyScanMode;
-using DomainLoyaltyRewardType = Darwin.Domain.Enums.LoyaltyRewardType;
 
-namespace Darwin.WebApi.Controllers.Loyalty
+namespace Darwin.WebApi.Controllers.Loyalty;
+
+/// <summary>
+/// Member-facing loyalty endpoints used by the consumer mobile application and member portal.
+/// </summary>
+[ApiController]
+[Route("api/v1/member/loyalty")]
+[Route("api/v1/loyalty")]
+[Authorize]
+public sealed class LoyaltyController : ApiControllerBase
 {
+    private readonly PrepareScanSessionHandler _prepareScanSessionHandler;
+    private readonly GetMyLoyaltyAccountsHandler _getMyLoyaltyAccountsHandler;
+    private readonly GetMyLoyaltyHistoryHandler _getMyLoyaltyHistoryHandler;
+    private readonly GetMyLoyaltyAccountForBusinessHandler _getMyLoyaltyAccountForBusinessHandler;
+    private readonly GetAvailableLoyaltyRewardsForBusinessHandler _getAvailableLoyaltyRewardsForBusinessHandler;
+    private readonly GetMyLoyaltyBusinessesHandler _getMyLoyaltyBusinessesHandler;
+    private readonly GetMyLoyaltyTimelinePageHandler _getMyLoyaltyTimelinePageHandler;
+    private readonly CreateLoyaltyAccountHandler _createLoyaltyAccountHandler;
+    private readonly GetMyPromotionsHandler _getMyPromotionsHandler;
+    private readonly TrackPromotionInteractionHandler _trackPromotionInteractionHandler;
+    private readonly ILoyaltyPresentationService _presentationService;
+
     /// <summary>
-    /// API endpoints for the loyalty system used by both consumer and business mobile applications.
+    /// Initializes a new instance of the <see cref="LoyaltyController"/> class.
     /// </summary>
-    /// <remarks>
-    /// IMPORTANT:
-    /// This controller must remain thin. It performs:
-    /// - Request validation (format-level)
-    /// - Auth/claims boundary checks
-    /// - Delegation to Application handlers
-    /// - Mapping from Application DTOs to Darwin.Contracts
-    /// 
-    /// All business rules must remain in the Application layer.
-    /// </remarks>
-    [ApiController]
-    [Route("api/v1/loyalty")]
-    [Authorize]
-    public sealed class LoyaltyController : ApiControllerBase
+    public LoyaltyController(
+        PrepareScanSessionHandler prepareScanSessionHandler,
+        GetMyLoyaltyAccountsHandler getMyLoyaltyAccountsHandler,
+        GetMyLoyaltyHistoryHandler getMyLoyaltyHistoryHandler,
+        GetMyLoyaltyAccountForBusinessHandler getMyLoyaltyAccountForBusinessHandler,
+        GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
+        GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
+        GetMyPromotionsHandler getMyPromotionsHandler,
+        TrackPromotionInteractionHandler trackPromotionInteractionHandler,
+        GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
+        CreateLoyaltyAccountHandler createLoyaltyAccountHandler,
+        ILoyaltyPresentationService presentationService)
     {
-        private readonly PrepareScanSessionHandler _prepareScanSessionHandler;
-        private readonly ProcessScanSessionForBusinessHandler _processScanSessionForBusinessHandler;
-        private readonly ConfirmAccrualFromSessionHandler _confirmAccrualFromSessionHandler;
-        private readonly ConfirmRedemptionFromSessionHandler _confirmRedemptionFromSessionHandler;
-        private readonly GetMyLoyaltyAccountsHandler _getMyLoyaltyAccountsHandler;
-        private readonly GetMyLoyaltyHistoryHandler _getMyLoyaltyHistoryHandler;
-        private readonly GetMyLoyaltyAccountForBusinessHandler _getMyLoyaltyAccountForBusinessHandler;
-        private readonly GetAvailableLoyaltyRewardsForBusinessHandler _getAvailableLoyaltyRewardsForBusinessHandler;
-        private readonly GetMyLoyaltyBusinessesHandler _getMyLoyaltyBusinessesHandler;
-        private readonly GetMyLoyaltyTimelinePageHandler _getMyLoyaltyTimelinePageHandler;
-        private readonly CreateLoyaltyAccountHandler _createLoyaltyAccountHandler;
-        private readonly ILoyaltyPresentationService _presentationService;
-        private readonly ILogger<LoyaltyController> _logger;
-        private readonly GetMyPromotionsHandler _getMyPromotionsHandler;
-        private readonly TrackPromotionInteractionHandler _trackPromotionInteractionHandler;
-        private readonly GetLoyaltyProgramsPageHandler _getLoyaltyProgramsPageHandler;
-        private readonly GetLoyaltyRewardTiersPageHandler _getLoyaltyRewardTiersPageHandler;
-        private readonly CreateLoyaltyProgramHandler _createLoyaltyProgramHandler;
-        private readonly CreateLoyaltyRewardTierHandler _createLoyaltyRewardTierHandler;
-        private readonly UpdateLoyaltyRewardTierHandler _updateLoyaltyRewardTierHandler;
-        private readonly SoftDeleteLoyaltyRewardTierHandler _softDeleteLoyaltyRewardTierHandler;
-        private readonly GetBusinessCampaignsHandler _getBusinessCampaignsHandler;
-        private readonly CreateBusinessCampaignHandler _createBusinessCampaignHandler;
-        private readonly UpdateBusinessCampaignHandler _updateBusinessCampaignHandler;
-        private readonly SetCampaignActivationHandler _setCampaignActivationHandler;
+        _prepareScanSessionHandler = prepareScanSessionHandler ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
+        _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountsHandler));
+        _getMyLoyaltyHistoryHandler = getMyLoyaltyHistoryHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyHistoryHandler));
+        _getMyLoyaltyAccountForBusinessHandler = getMyLoyaltyAccountForBusinessHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountForBusinessHandler));
+        _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
+        _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
+        _getMyPromotionsHandler = getMyPromotionsHandler ?? throw new ArgumentNullException(nameof(getMyPromotionsHandler));
+        _trackPromotionInteractionHandler = trackPromotionInteractionHandler ?? throw new ArgumentNullException(nameof(trackPromotionInteractionHandler));
+        _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
+        _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
+        _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
+    }
 
-
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LoyaltyController"/> class.
-        /// </summary>
-        /// <param name="prepareScanSessionHandler">
-        /// Command handler that prepares consumer scan sessions.
-        /// </param>
-        /// <param name="processScanSessionForBusinessHandler">
-        /// Query handler that materializes a scan session for business processing.
-        /// </param>
-        /// <param name="confirmAccrualFromSessionHandler">
-        /// Command handler that confirms accrual for a previously prepared scan session.
-        /// </param>
-        /// <param name="confirmRedemptionFromSessionHandler">
-        /// Command handler that confirms redemption for a previously prepared scan session.
-        /// </param>
-        /// <param name="getMyLoyaltyAccountsHandler">
-        /// Query handler that returns loyalty accounts for the current user.
-        /// </param>
-        /// <param name="getMyLoyaltyHistoryHandler">
-        /// Query handler that returns loyalty history for the current user.
-        /// </param>
-        /// <param name="getMyLoyaltyAccountForBusinessHandler ">
-        /// Query handler that returns the account for a given business/user pair.
-        /// </param>
-        /// <param name="getAvailableLoyaltyRewardsForBusinessHandler">
-        /// Query handler that lists available rewards for a business.
-        /// </param>
-        public LoyaltyController(
-            PrepareScanSessionHandler prepareScanSessionHandler,
-            ProcessScanSessionForBusinessHandler processScanSessionForBusinessHandler,
-            ConfirmAccrualFromSessionHandler confirmAccrualFromSessionHandler,
-            ConfirmRedemptionFromSessionHandler confirmRedemptionFromSessionHandler,
-            GetMyLoyaltyAccountsHandler getMyLoyaltyAccountsHandler,
-            GetMyLoyaltyHistoryHandler getMyLoyaltyHistoryHandler,
-            GetMyLoyaltyAccountForBusinessHandler getMyLoyaltyAccountForBusinessHandler,
-            GetAvailableLoyaltyRewardsForBusinessHandler getAvailableLoyaltyRewardsForBusinessHandler,
-            GetMyLoyaltyBusinessesHandler getMyLoyaltyBusinessesHandler,
-            GetMyPromotionsHandler getMyPromotionsHandler,
-            TrackPromotionInteractionHandler trackPromotionInteractionHandler,
-            GetLoyaltyProgramsPageHandler getLoyaltyProgramsPageHandler,
-            GetLoyaltyRewardTiersPageHandler getLoyaltyRewardTiersPageHandler,
-            CreateLoyaltyProgramHandler createLoyaltyProgramHandler,
-            CreateLoyaltyRewardTierHandler createLoyaltyRewardTierHandler,
-            UpdateLoyaltyRewardTierHandler updateLoyaltyRewardTierHandler,
-            SoftDeleteLoyaltyRewardTierHandler softDeleteLoyaltyRewardTierHandler,
-            GetBusinessCampaignsHandler getBusinessCampaignsHandler,
-            CreateBusinessCampaignHandler createBusinessCampaignHandler,
-            UpdateBusinessCampaignHandler updateBusinessCampaignHandler,
-            SetCampaignActivationHandler setCampaignActivationHandler,
-            GetMyLoyaltyTimelinePageHandler getMyLoyaltyTimelinePageHandler,
-            CreateLoyaltyAccountHandler createLoyaltyAccountHandler,
-            ILoyaltyPresentationService presentationService,
-            ILogger<LoyaltyController> logger)
+    /// <summary>
+    /// Prepares a member scan session for a selected business and optional reward redemption payload.
+    /// </summary>
+    [HttpPost("scan/prepare")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(PrepareScanSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PrepareScanSessionAsync(
+        [FromBody] PrepareScanSessionRequest? request,
+        CancellationToken ct = default)
+    {
+        if (request is null)
         {
-            _prepareScanSessionHandler = prepareScanSessionHandler ?? throw new ArgumentNullException(nameof(prepareScanSessionHandler));
-            _processScanSessionForBusinessHandler = processScanSessionForBusinessHandler ?? throw new ArgumentNullException(nameof(processScanSessionForBusinessHandler));
-            _confirmAccrualFromSessionHandler = confirmAccrualFromSessionHandler ?? throw new ArgumentNullException(nameof(confirmAccrualFromSessionHandler));
-            _confirmRedemptionFromSessionHandler = confirmRedemptionFromSessionHandler ?? throw new ArgumentNullException(nameof(confirmRedemptionFromSessionHandler));
-            _getMyLoyaltyAccountsHandler = getMyLoyaltyAccountsHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountsHandler));
-            _getMyLoyaltyHistoryHandler = getMyLoyaltyHistoryHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyHistoryHandler));
-            _getMyLoyaltyAccountForBusinessHandler = getMyLoyaltyAccountForBusinessHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyAccountForBusinessHandler));
-            _getAvailableLoyaltyRewardsForBusinessHandler = getAvailableLoyaltyRewardsForBusinessHandler ?? throw new ArgumentNullException(nameof(getAvailableLoyaltyRewardsForBusinessHandler));
-            _getMyLoyaltyBusinessesHandler = getMyLoyaltyBusinessesHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyBusinessesHandler));
-            _getMyPromotionsHandler = getMyPromotionsHandler ?? throw new ArgumentNullException(nameof(getMyPromotionsHandler));
-            _trackPromotionInteractionHandler = trackPromotionInteractionHandler ?? throw new ArgumentNullException(nameof(trackPromotionInteractionHandler));
-            _getLoyaltyProgramsPageHandler = getLoyaltyProgramsPageHandler ?? throw new ArgumentNullException(nameof(getLoyaltyProgramsPageHandler));
-            _getLoyaltyRewardTiersPageHandler = getLoyaltyRewardTiersPageHandler ?? throw new ArgumentNullException(nameof(getLoyaltyRewardTiersPageHandler));
-            _createLoyaltyProgramHandler = createLoyaltyProgramHandler ?? throw new ArgumentNullException(nameof(createLoyaltyProgramHandler));
-            _createLoyaltyRewardTierHandler = createLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(createLoyaltyRewardTierHandler));
-            _updateLoyaltyRewardTierHandler = updateLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(updateLoyaltyRewardTierHandler));
-            _softDeleteLoyaltyRewardTierHandler = softDeleteLoyaltyRewardTierHandler ?? throw new ArgumentNullException(nameof(softDeleteLoyaltyRewardTierHandler));
-            _getBusinessCampaignsHandler = getBusinessCampaignsHandler ?? throw new ArgumentNullException(nameof(getBusinessCampaignsHandler));
-            _createBusinessCampaignHandler = createBusinessCampaignHandler ?? throw new ArgumentNullException(nameof(createBusinessCampaignHandler));
-            _updateBusinessCampaignHandler = updateBusinessCampaignHandler ?? throw new ArgumentNullException(nameof(updateBusinessCampaignHandler));
-            _setCampaignActivationHandler = setCampaignActivationHandler ?? throw new ArgumentNullException(nameof(setCampaignActivationHandler));
-            _getMyLoyaltyTimelinePageHandler = getMyLoyaltyTimelinePageHandler ?? throw new ArgumentNullException(nameof(getMyLoyaltyTimelinePageHandler));
-            _createLoyaltyAccountHandler = createLoyaltyAccountHandler ?? throw new ArgumentNullException(nameof(createLoyaltyAccountHandler));
-            _presentationService = presentationService ?? throw new ArgumentNullException(nameof(presentationService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            return BadRequestProblem("Request body is required.");
         }
 
-
-
-        #region Business reward configuration
-
-        [HttpGet("business/reward-config")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(BusinessRewardConfigurationResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> GetBusinessRewardConfigurationAsync(CancellationToken ct = default)
+        if (request.BusinessId == Guid.Empty)
         {
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult ?? Forbid();
-            }
-
-            var programResult = await _getLoyaltyProgramsPageHandler
-                .HandleAsync(page: 1, pageSize: 1, businessId: businessId, ct: ct)
-                .ConfigureAwait(false);
-
-            var program = programResult.Items.FirstOrDefault();
-            if (program is null)
-            {
-                return Ok(new BusinessRewardConfigurationResponse
-                {
-                    LoyaltyProgramId = Guid.Empty,
-                    ProgramName = string.Empty,
-                    IsProgramActive = false,
-                    RewardTiers = Array.Empty<BusinessRewardTierConfigItem>()
-                });
-            }
-
-            var tiersResult = await _getLoyaltyRewardTiersPageHandler
-                .HandleAsync(program.Id, page: 1, pageSize: 200, ct)
-                .ConfigureAwait(false);
-
-            var response = new BusinessRewardConfigurationResponse
-            {
-                LoyaltyProgramId = program.Id,
-                ProgramName = program.Name ?? string.Empty,
-                IsProgramActive = program.IsActive,
-                RewardTiers = tiersResult.Items
-                    .Select(x => new BusinessRewardTierConfigItem
-                    {
-                        RewardTierId = x.Id,
-                        PointsRequired = x.PointsRequired,
-                        RewardType = x.RewardType.ToString(),
-                        RewardValue = x.RewardValue,
-                        Description = x.Description,
-                        AllowSelfRedemption = x.AllowSelfRedemption,
-                        RowVersion = x.RowVersion
-                    })
-                    .ToList()
-            };
-
-            return Ok(response);
+            return BadRequestProblem("BusinessId is required.");
         }
 
-        [HttpPost("business/reward-config/tiers")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(BusinessRewardTierMutationResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> CreateBusinessRewardTierAsync([FromBody] CreateBusinessRewardTierRequest? request, CancellationToken ct = default)
+        var dto = new PrepareScanSessionDto
         {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult ?? Forbid();
-            }
-
-            if (!TryParseRewardType(request.RewardType, out var rewardType))
-            {
-                return BadRequestProblem("RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.");
-            }
-
-            var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: true, ct).ConfigureAwait(false);
-
-            try
-            {
-                var tierId = await _createLoyaltyRewardTierHandler
-                    .HandleAsync(new LoyaltyRewardTierCreateDto
-                    {
-                        LoyaltyProgramId = programId,
-                        PointsRequired = request.PointsRequired,
-                        RewardType = rewardType,
-                        RewardValue = request.RewardValue,
-                        Description = request.Description,
-                        AllowSelfRedemption = request.AllowSelfRedemption,
-                        MetadataJson = request.MetadataJson
-                    }, ct)
-                    .ConfigureAwait(false);
-
-                return Ok(new BusinessRewardTierMutationResponse
-                {
-                    RewardTierId = tierId,
-                    Success = true
-                });
-            }
-            catch (FluentValidation.ValidationException ex)
-            {
-                return BadRequestProblem(ex.Message);
-            }
-        }
-
-        [HttpPut("business/reward-config/tiers")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(BusinessRewardTierMutationResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> UpdateBusinessRewardTierAsync([FromBody] UpdateBusinessRewardTierRequest? request, CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (request.RewardTierId == Guid.Empty)
-            {
-                return BadRequestProblem("RewardTierId is required.");
-            }
-
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult ?? Forbid();
-            }
-
-            if (!TryParseRewardType(request.RewardType, out var rewardType))
-            {
-                return BadRequestProblem("RewardType is invalid. Allowed values: FreeItem, PercentDiscount, AmountDiscount.");
-            }
-
-            var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: false, ct).ConfigureAwait(false);
-            if (programId == Guid.Empty)
-            {
-                return BadRequestProblem("No loyalty program was found for the current business.");
-            }
-
-            var isOwnedByBusiness = await IsRewardTierOwnedByBusinessAsync(programId, request.RewardTierId, ct).ConfigureAwait(false);
-            if (!isOwnedByBusiness)
-            {
-                return Forbid();
-            }
-
-            try
-            {
-                await _updateLoyaltyRewardTierHandler
-                    .HandleAsync(new LoyaltyRewardTierEditDto
-                    {
-                        Id = request.RewardTierId,
-                        LoyaltyProgramId = programId,
-                        PointsRequired = request.PointsRequired,
-                        RewardType = rewardType,
-                        RewardValue = request.RewardValue,
-                        Description = request.Description,
-                        AllowSelfRedemption = request.AllowSelfRedemption,
-                        MetadataJson = request.MetadataJson,
-                        RowVersion = request.RowVersion
-                    }, ct)
-                    .ConfigureAwait(false);
-
-                return Ok(new BusinessRewardTierMutationResponse
-                {
-                    RewardTierId = request.RewardTierId,
-                    Success = true
-                });
-            }
-            catch (FluentValidation.ValidationException ex)
-            {
-                return BadRequestProblem(ex.Message);
-            }
-        }
-
-        [HttpPost("business/reward-config/tiers/delete")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(BusinessRewardTierMutationResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> DeleteBusinessRewardTierAsync([FromBody] DeleteBusinessRewardTierRequest? request, CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (request.RewardTierId == Guid.Empty)
-            {
-                return BadRequestProblem("RewardTierId is required.");
-            }
-
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult ?? Forbid();
-            }
-
-            var programId = await EnsureBusinessProgramAsync(businessId, createIfMissing: false, ct).ConfigureAwait(false);
-            if (programId == Guid.Empty)
-            {
-                return BadRequestProblem("No loyalty program was found for the current business.");
-            }
-
-            var isOwnedByBusiness = await IsRewardTierOwnedByBusinessAsync(programId, request.RewardTierId, ct).ConfigureAwait(false);
-            if (!isOwnedByBusiness)
-            {
-                return Forbid();
-            }
-
-            var result = await _softDeleteLoyaltyRewardTierHandler
-                .HandleAsync(new LoyaltyRewardTierDeleteDto
-                {
-                    Id = request.RewardTierId,
-                    RowVersion = request.RowVersion
-                }, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded)
-            {
-                return ProblemFromResult(result);
-            }
-
-            return Ok(new BusinessRewardTierMutationResponse
-            {
-                RewardTierId = request.RewardTierId,
-                Success = true
-            });
-        }
-
-        private async Task<Guid> EnsureBusinessProgramAsync(Guid businessId, bool createIfMissing, CancellationToken ct)
-        {
-            var existing = await _getLoyaltyProgramsPageHandler
-                .HandleAsync(page: 1, pageSize: 1, businessId: businessId, ct: ct)
-                .ConfigureAwait(false);
-
-            var program = existing.Items.FirstOrDefault();
-            if (program is not null)
-            {
-                return program.Id;
-            }
-
-            if (!createIfMissing)
-            {
-                return Guid.Empty;
-            }
-
-            return await _createLoyaltyProgramHandler
-                .HandleAsync(new LoyaltyProgramCreateDto
-                {
-                    BusinessId = businessId,
-                    Name = "Default Loyalty Program",
-                    AccrualMode = Darwin.Domain.Enums.LoyaltyAccrualMode.PerVisit,
-                    IsActive = true
-                }, ct)
-                .ConfigureAwait(false);
-        }
-
-        private async Task<bool> IsRewardTierOwnedByBusinessAsync(Guid programId, Guid rewardTierId, CancellationToken ct)
-        {
-            var tiers = await _getLoyaltyRewardTiersPageHandler
-                .HandleAsync(programId, page: 1, pageSize: 200, ct)
-                .ConfigureAwait(false);
-
-            return tiers.Items.Any(x => x.Id == rewardTierId);
-        }
-
-        private static bool TryParseRewardType(string? rewardType, out DomainLoyaltyRewardType value)
-        {
-            if (Enum.TryParse(rewardType, ignoreCase: true, out DomainLoyaltyRewardType parsed) &&
-                Enum.IsDefined(parsed))
-            {
-                value = parsed;
-                return true;
-            }
-
-            value = default;
-            return false;
-        }
-
-        #endregion
-
-
-
-        #region Scan preparation (consumer)
-
-        /// <summary>
-        /// Prepares a new loyalty scan session for the current consumer user.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// The consumer app calls this endpoint with a target business and an optional
-        /// list of rewards to redeem. The backend resolves the corresponding loyalty
-        /// account, creates a short-lived <c>ScanSession</c> and returns the opaque
-        /// <c>ScanSessionToken</c> plus basic context.
-        /// </para>
-        /// <para>
-        /// The returned <see cref="PrepareScanSessionResponse.ScanSessionToken"/> value is
-        /// the only data that must be encoded into the QR code shown on the device.
-        /// No internal identifiers are allowed to cross the API boundary.
-        /// </para>
-        /// <para>
-        /// For redemption-mode sessions, the response also includes a list of
-        /// <see cref="LoyaltyRewardSummary"/> instances describing the rewards that
-        /// were actually accepted for redemption. This list is derived by joining:
-        /// (1) the accepted reward tier ids returned by the Application handler, and
-        /// (2) the available rewards query for the business.
-        /// </para>
-        /// </remarks>
-        /// <param name="request">The scan preparation request payload sent by the consumer device.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// <see cref="PrepareScanSessionResponse"/> on success; HTTP 400 with an error payload
-        /// when validation or business rules fail.
-        /// </returns>
-        [HttpPost("scan/prepare")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(PrepareScanSessionResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> PrepareScanSessionAsync(
-            [FromBody] PrepareScanSessionRequest? request,
-            CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (request.BusinessId == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required.");
-            }
-
-            var dto = new PrepareScanSessionDto
-            {
-                BusinessId = request.BusinessId,
-                BusinessLocationId = request.BusinessLocationId,
-                Mode = LoyaltyContractsMapper.ToDomain(request.Mode),
-                SelectedRewardTierIds = request.SelectedRewardTierIds?
-                    .Where(x => x != Guid.Empty)
-                    .Distinct()
-                    .ToList() ?? new List<Guid>(),
-                DeviceId = request.DeviceId
-            };
-
-            var result = await _prepareScanSessionHandler
-                .HandleAsync(dto, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                return ProblemFromResult(result);
-            }
-
-            var value = result.Value;
-
-            IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
-
-            // Redemption: enrich selected tier ids with reward details (name/description/etc.)
-            if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
-                value.SelectedRewardTierIds is { Count: > 0 })
-            {
-                var enrichResult = await _presentationService
-                    .EnrichSelectedRewardsAsync(request.BusinessId, value.SelectedRewardTierIds, failIfMissing: true, ct)
-                    .ConfigureAwait(false);
-
-                if (!enrichResult.Succeeded)
-                {
-                    return ProblemFromResult(enrichResult);
-                }
-
-                selectedRewards = enrichResult.Value ?? Array.Empty<LoyaltyRewardSummary>();
-            }
-
-            var response = new PrepareScanSessionResponse
-            {
-                ScanSessionToken = value.ScanSessionToken,
-                Mode = LoyaltyContractsMapper.ToContract(value.Mode),
-                ExpiresAtUtc = value.ExpiresAtUtc,
-                CurrentPointsBalance = value.CurrentPointsBalance,
-                SelectedRewards = selectedRewards
-            };
-
-            return Ok(response);
-        }
-
-        #endregion
-
-
-
-
-        #region Scan processing (business)
-
-        /// <summary>
-        /// Processes a scanned QR token for the current business and returns a business-facing
-        /// view of the scan session.
-        /// </summary>
-        /// <remarks>
-        /// - The business app scans a QR with an opaque ScanSessionToken.
-        /// - Backend resolves token, validates expiry/state/ownership, and returns session view.
-        /// - Error mapping: expired/consumed → 409; business mismatch → 403; token not found → 404.
-        /// </remarks>
-        /// <param name="request">Request payload containing <c>ScanSessionToken</c>.</param>
-        /// <param name="ct">Cancellation token.</param>
-        [HttpPost("scan/process")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(ProcessScanSessionForBusinessResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ProcessScanSessionForBusinessAsync(
-            [FromBody] ProcessScanSessionForBusinessRequest? request,
-            CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
-            {
-                return BadRequestProblem("ScanSessionToken is required.");
-            }
-
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult ?? Forbid();
-            }
-
-            var result = await _processScanSessionForBusinessHandler
-                .HandleAsync(request.ScanSessionToken, businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                // FIX: use generic MapScanFailure<Result<T>> to avoid CS1503 type mismatch
-                return MapScanFailure(result);
-            }
-
-            var value = result.Value;
-
-            // Default to empty list; only redemption-mode sessions may carry selected rewards.
-            IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
-
-            // Redemption: enrich selected tier ids with reward details (name/description/etc.)
-            if (value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
-                value.SelectedRewards is { Count: > 0 })
-            {
-                var tierIds = value.SelectedRewards
-                    .Select(x => x.LoyaltyRewardTierId)
-                    .Where(x => x != Guid.Empty)
-                    .Distinct()
-                    .ToList();
-
-                var enrichResult = await _presentationService
-                    .EnrichSelectedRewardsAsync(businessId, tierIds, failIfMissing: true, ct)
-                    .ConfigureAwait(false);
-
-                if (!enrichResult.Succeeded)
-                {
-                    return ProblemFromResult(enrichResult);
-                }
-
-                selectedRewards = enrichResult.Value ?? Array.Empty<LoyaltyRewardSummary>();
-            }
-
-            var allowedActions =
-                value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Accrual
-                    ? LoyaltyScanAllowedActions.CanConfirmAccrual
-                    : LoyaltyScanAllowedActions.CanConfirmRedemption;
-
-            var response = new ProcessScanSessionForBusinessResponse
-            {
-                Mode = LoyaltyContractsMapper.ToContract(value.Mode),
-                BusinessId = businessId,
-                AccountSummary = LoyaltyContractsMapper.ToContractBusinessAccountSummary(value),
-                CustomerDisplayName = value.CustomerDisplayName,
-                SelectedRewards = selectedRewards,
-                AllowedActions = allowedActions
-            };
-
-            return Ok(response);
-        }
-
-        #endregion
-
-
-
-        /// <summary>
-        /// Enriches selected reward tier ids with public reward metadata for the specified business.
-        /// Returns Result.Failed when the enrichment could not be performed or when required tier ids were missing
-        /// and failIfMissing is true.
-        /// </summary>
-        /// <param name="businessId">Business to query available rewards for.</param>
-        /// <param name="selectedTierIds">Ordered collection of selected reward tier ids (may be null/empty).</param>
-        /// <param name="failIfMissing">When true, treat missing reward metadata as an error; otherwise return best-effort list.</param>
-        /// <param name="ct">Cancellation token.</param>
-        private async Task<Result<IReadOnlyList<LoyaltyRewardSummary>>> BuildSelectedRewardsAsync(
-            Guid businessId,
-            IReadOnlyCollection<Guid>? selectedTierIds,
-            bool failIfMissing,
-            CancellationToken ct = default)
-        {
-            if (selectedTierIds is null || selectedTierIds.Count == 0)
-            {
-                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(Array.Empty<LoyaltyRewardSummary>());
-            }
-
-            // Normalize requested ids, preserve provided order but remove empties/dups.
-            var orderedDistinct = selectedTierIds
+            BusinessId = request.BusinessId,
+            BusinessLocationId = request.BusinessLocationId,
+            Mode = LoyaltyContractsMapper.ToDomain(request.Mode),
+            SelectedRewardTierIds = request.SelectedRewardTierIds?
                 .Where(x => x != Guid.Empty)
                 .Distinct()
-                .ToList();
+                .ToList() ?? new List<Guid>(),
+            DeviceId = request.DeviceId
+        };
 
-            if (orderedDistinct.Count == 0)
-            {
-                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(Array.Empty<LoyaltyRewardSummary>());
-            }
+        var result = await _prepareScanSessionHandler.HandleAsync(dto, ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
 
-            // Fetch available rewards from Application handler
-            var availableRewardsResult = await _getAvailableLoyaltyRewardsForBusinessHandler
-                .HandleAsync(businessId, ct)
+        IReadOnlyList<LoyaltyRewardSummary> selectedRewards = Array.Empty<LoyaltyRewardSummary>();
+        if (result.Value.Mode == Darwin.Domain.Enums.LoyaltyScanMode.Redemption &&
+            result.Value.SelectedRewardTierIds is { Count: > 0 })
+        {
+            var enrichResult = await _presentationService
+                .EnrichSelectedRewardsAsync(request.BusinessId, result.Value.SelectedRewardTierIds, failIfMissing: true, ct)
                 .ConfigureAwait(false);
 
-            if (!availableRewardsResult.Succeeded || availableRewardsResult.Value is null)
+            if (!enrichResult.Succeeded)
             {
-                if (failIfMissing)
-                {
-                    return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail("Could not load business rewards for enrichment.");
-                }
-                else
-                {
-                    // Best-effort: return empty list to keep caller available
-                    return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(Array.Empty<LoyaltyRewardSummary>());
-                }
+                return ProblemFromResult(enrichResult);
             }
 
-            var available = availableRewardsResult.Value;
+            selectedRewards = enrichResult.Value ?? Array.Empty<LoyaltyRewardSummary>();
+        }
 
-            // Build a dictionary for fast lookup
-            var dict = available.ToDictionary(r => r.LoyaltyRewardTierId);
+        return Ok(new PrepareScanSessionResponse
+        {
+            ScanSessionToken = result.Value.ScanSessionToken,
+            Mode = LoyaltyContractsMapper.ToContract(result.Value.Mode),
+            ExpiresAtUtc = result.Value.ExpiresAtUtc,
+            CurrentPointsBalance = result.Value.CurrentPointsBalance,
+            SelectedRewards = selectedRewards
+        });
+    }
 
-            var missing = new List<Guid>();
-            var resultList = new List<LoyaltyRewardSummary>(orderedDistinct.Count);
+    /// <summary>
+    /// Returns loyalty accounts for the current authenticated member.
+    /// </summary>
+    [HttpGet("my/accounts")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(IReadOnlyList<LoyaltyAccountSummary>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyAccountsAsync(CancellationToken ct = default)
+    {
+        var result = await _getMyLoyaltyAccountsHandler.HandleAsync(ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
 
-            // Preserve the order of orderedDistinct
-            foreach (var id in orderedDistinct)
+        return Ok(result.Value.Select(LoyaltyContractsMapper.ToContract).ToList());
+    }
+
+    /// <summary>
+    /// Returns points transaction history for the current member within a single business context.
+    /// </summary>
+    [HttpGet("my/history/{businessId:guid}")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(IReadOnlyList<PointsTransaction>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetMyHistoryAsync(Guid businessId, CancellationToken ct = default)
+    {
+        if (businessId == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId is required.");
+        }
+
+        var result = await _getMyLoyaltyHistoryHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(result.Value.Select(LoyaltyContractsMapper.ToContract).ToList());
+    }
+
+    /// <summary>
+    /// Returns the current member loyalty account for the specified business.
+    /// </summary>
+    [HttpGet("account/{businessId:guid}")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(LoyaltyAccountSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCurrentAccountForBusinessAsync(Guid businessId, CancellationToken ct = default)
+    {
+        if (businessId == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId is required.");
+        }
+
+        var result = await _getMyLoyaltyAccountForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
+        if (!result.Succeeded)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return result.Value is null
+            ? NotFoundProblem("Loyalty account not found for the specified business and user.")
+            : Ok(LoyaltyContractsMapper.ToContract(result.Value));
+    }
+
+    /// <summary>
+    /// Returns the rewards currently available to the member for the specified business.
+    /// </summary>
+    [HttpGet("business/{businessId:guid}/rewards")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(IReadOnlyList<LoyaltyRewardSummary>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetRewardsForBusinessAsync(Guid businessId, CancellationToken ct = default)
+    {
+        if (businessId == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId is required.");
+        }
+
+        var result = await _getAvailableLoyaltyRewardsForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(result.Value.Select(LoyaltyContractsMapper.ToContract).ToList());
+    }
+
+    /// <summary>
+    /// Returns the paged list of businesses where the current member has a loyalty relationship.
+    /// </summary>
+    [HttpGet("my/businesses")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(MyLoyaltyBusinessesResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetMyBusinessesAsync(
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        [FromQuery] bool? includeInactiveBusinesses,
+        CancellationToken ct = default)
+    {
+        var normalizedPage = page.GetValueOrDefault(1);
+        if (normalizedPage <= 0)
+        {
+            return BadRequestProblem("Page must be a positive integer.");
+        }
+
+        var normalizedPageSize = pageSize.GetValueOrDefault(20);
+        if (normalizedPageSize <= 0 || normalizedPageSize > 200)
+        {
+            return BadRequestProblem("PageSize must be between 1 and 200.");
+        }
+
+        var request = new MyLoyaltyBusinessListRequestDto
+        {
+            Page = normalizedPage,
+            PageSize = normalizedPageSize,
+            IncludeInactiveBusinesses = includeInactiveBusinesses.GetValueOrDefault(false)
+        };
+
+        var (items, total) = await _getMyLoyaltyBusinessesHandler.HandleAsync(request, ct).ConfigureAwait(false);
+        var safeItems = items ?? new List<MyLoyaltyBusinessListItemDto>();
+
+        return Ok(new MyLoyaltyBusinessesResponse
+        {
+            Total = total,
+            Items = safeItems.Select(LoyaltyContractsMapper.ToContract).ToList(),
+            Request = new PagedRequest { Page = normalizedPage, PageSize = normalizedPageSize, Search = null }
+        });
+    }
+
+    /// <summary>
+    /// Returns personalized loyalty promotion cards for the current member.
+    /// </summary>
+    [HttpPost("my/promotions")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(MyPromotionsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetMyPromotionsAsync([FromBody] MyPromotionsRequest? request, CancellationToken ct = default)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (request.BusinessId.HasValue && request.BusinessId.Value == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId must be a non-empty GUID when provided.");
+        }
+
+        var result = await _getMyPromotionsHandler
+            .HandleAsync(new MyPromotionsDto
             {
-                if (dict.TryGetValue(id, out var rewardDto))
-                {
-                    resultList.Add(new LoyaltyRewardSummary
+                BusinessId = request.BusinessId,
+                MaxItems = request.MaxItems,
+                Policy = request.Policy is null
+                    ? null
+                    : new PromotionFeedPolicyDto
                     {
-                        LoyaltyRewardTierId = rewardDto.LoyaltyRewardTierId,
-                        BusinessId = rewardDto.BusinessId,
-                        Name = rewardDto.Name ?? string.Empty,
-                        Description = rewardDto.Description,
-                        RequiredPoints = rewardDto.RequiredPoints,
-                        IsActive = rewardDto.IsActive,
-                        IsSelectable = rewardDto.IsSelectable
-                    });
-                }
-                else
+                        EnableDeduplication = request.Policy.EnableDeduplication,
+                        MaxCards = request.Policy.MaxCards,
+                        FrequencyWindowMinutes = request.Policy.FrequencyWindowMinutes,
+                        SuppressionWindowMinutes = request.Policy.SuppressionWindowMinutes
+                    }
+            }, ct)
+            .ConfigureAwait(false);
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(new MyPromotionsResponse
+        {
+            AppliedPolicy = new PromotionFeedPolicy
+            {
+                EnableDeduplication = result.Value.AppliedPolicy.EnableDeduplication,
+                MaxCards = result.Value.AppliedPolicy.MaxCards,
+                FrequencyWindowMinutes = result.Value.AppliedPolicy.FrequencyWindowMinutes,
+                SuppressionWindowMinutes = result.Value.AppliedPolicy.SuppressionWindowMinutes
+            },
+            Diagnostics = new PromotionFeedDiagnostics
+            {
+                InitialCandidates = result.Value.Diagnostics.InitialCandidates,
+                SuppressedByFrequency = result.Value.Diagnostics.SuppressedByFrequency,
+                Deduplicated = result.Value.Diagnostics.Deduplicated,
+                TrimmedByCap = result.Value.Diagnostics.TrimmedByCap,
+                FinalCount = result.Value.Diagnostics.FinalCount
+            },
+            Items = result.Value.Items
+                .Select(x => new PromotionFeedItem
                 {
-                    missing.Add(id);
-                }
-            }
-
-            if (missing.Count > 0 && failIfMissing)
-            {
-                // Helpful diagnostic: include count or first missing id (avoid leaking data)
-                return Result<IReadOnlyList<LoyaltyRewardSummary>>.Fail("Some selected rewards are not available for this business.");
-            }
-
-            return Result<IReadOnlyList<LoyaltyRewardSummary>>.Ok(resultList);
-        }
-
-
-
-        /// <summary>
-        /// Attempts to resolve the current business identifier from the
-        /// authenticated user principal.
-        /// </summary>
-        /// <param name="businessId">
-        /// When this method returns <c>true</c>, contains the resolved business id.
-        /// Otherwise, contains <see cref="Guid.Empty"/>.
-        /// </param>
-        /// <param name="errorResult">
-        /// When this method returns <c>false</c>, contains an appropriate
-        /// <see cref="IActionResult"/> that should be returned to the client
-        /// (for example <see cref="ForbidResult"/>). When the method returns
-        /// <c>true</c>, this value is <c>null</c>.
-        /// </param>
-        /// <returns>
-        /// <c>true</c> if a valid business identifier could be resolved from the
-        /// current principal; otherwise <c>false</c>.
-        /// </returns>
-        private bool TryGetCurrentBusinessId(out Guid businessId, out IActionResult? errorResult)
-        {
-            businessId = Guid.Empty;
-            errorResult = null;
-
-            // NOTE:
-            // The claim type "business_id" must match what JwtTokenService (or any
-            // upstream identity provider) emits for business accounts. If this
-            // ever changes, adjust the claim type here accordingly.
-            var claimValue = User?.FindFirst("business_id")?.Value;
-
-            if (string.IsNullOrWhiteSpace(claimValue) || !Guid.TryParse(claimValue, out businessId))
-            {
-                // The user is authenticated (we are inside an [Authorize] context)
-                // but either not a business user or the token is misconfigured.
-                // We return 403 rather than 401 to reflect that distinction.
-                errorResult = Forbid();
-                businessId = Guid.Empty;
-                return false;
-            }
-
-            return true;
-        }
-
-
-        /// <summary>
-        /// Confirms an accrual operation for a previously prepared scan session on the business device.
-        /// </summary>
-        /// <remarks>
-        /// - Business id is resolved from authenticated principal (claim "business_id").
-        /// - Error mapping: expired/consumed → 409; business mismatch → 403; token not found → 404.
-        /// - Validation errors remain 400.
-        /// </remarks>
-        /// <param name="request">Accrual confirmation payload.</param>
-        /// <param name="ct">Cancellation token.</param>
-        [HttpPost("scan/confirm-accrual")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(ConfirmAccrualResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> ConfirmAccrualAsync(
-            [FromBody] ConfirmAccrualRequest? request,
-            CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
-            {
-                return BadRequestProblem("ScanSessionToken is required.");
-            }
-
-            if (request.ScanSessionToken.Length > 4000)
-            {
-                return BadRequestProblem("ScanSessionToken is too long.");
-            }
-
-            if (request.Points <= 0)
-            {
-                return BadRequestProblem("Points must be greater than zero.");
-            }
-
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult ?? Forbid();
-            }
-
-            var dto = new ConfirmAccrualFromSessionDto
-            {
-                ScanSessionToken = request.ScanSessionToken,
-                Points = request.Points,
-                Note = request.Note
-            };
-
-            var result = await _confirmAccrualFromSessionHandler
-                .HandleAsync(dto, businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                // FIX: use generic MapScanFailure<Result<T>> to avoid CS1503 type mismatch
-                return MapScanFailure(result);
-            }
-
-            var value = result.Value;
-
-            var response = new ConfirmAccrualResponse
-            {
-                Success = true,
-                NewBalance = value.NewPointsBalance,
-                // Future-friendly: allow richer response later (updated account snapshot)
-                UpdatedAccount = null,
-                ErrorCode = null,
-                ErrorMessage = null
-            };
-
-            return Ok(response);
-        }
-
-
-
-
-        /// <summary>
-        /// Confirms a redemption operation for a previously prepared scan session on the business device.
-        /// </summary>
-        /// <remarks>
-        /// - Business id is resolved from the authenticated principal.
-        /// - Error mapping: expired/consumed → 409; business mismatch → 403; token not found → 404.
-        /// - Validation errors remain 400.
-        /// </remarks>
-        /// <param name="request">Redemption confirmation payload with ScanSessionToken.</param>
-        /// <param name="ct">Cancellation token.</param>
-        [HttpPost("scan/confirm-redemption")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(ConfirmRedemptionResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> ConfirmRedemptionAsync(
-            [FromBody] ConfirmRedemptionRequest? request,
-            CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.ScanSessionToken))
-            {
-                return BadRequestProblem("ScanSessionToken is required.");
-            }
-
-            if (request.ScanSessionToken.Length > 4000)
-            {
-                return BadRequestProblem("ScanSessionToken is too long.");
-            }
-
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult ?? Forbid();
-            }
-
-            var dto = new ConfirmRedemptionFromSessionDto
-            {
-                ScanSessionToken = request.ScanSessionToken
-            };
-
-            var result = await _confirmRedemptionFromSessionHandler
-                .HandleAsync(dto, businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                // FIX: use generic MapScanFailure<Result<T>> to avoid CS1503 type mismatch
-                return MapScanFailure(result);
-            }
-
-            var value = result.Value;
-
-            var response = new ConfirmRedemptionResponse
-            {
-                Success = true,
-                NewBalance = value.NewPointsBalance,
-                UpdatedAccount = null,
-                ErrorCode = null,
-                ErrorMessage = null
-            };
-
-            return Ok(response);
-        }
-
-
-
-
-        /// <summary>
-        /// Returns all loyalty accounts for the current authenticated consumer.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This endpoint is used by the consumer mobile application to populate
-        /// a "My loyalty accounts" screen. It returns one entry per business
-        /// where the current user has an active loyalty account.
-        /// </para>
-        /// <para>
-        /// The underlying query handler uses <see cref="ICurrentUserService"/>
-        /// to resolve the current user identifier and joins the loyalty account
-        /// with the <c>Business</c> entity to obtain a human-friendly name.
-        /// </para>
-        /// </remarks>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A list of <see cref="LoyaltyAccountSummary"/> items for the current user.
-        /// </returns>
-        [HttpGet("my/accounts")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(IReadOnlyList<LoyaltyAccountSummary>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetMyAccountsAsync(
-            CancellationToken ct = default)
-        {
-            var result = await _getMyLoyaltyAccountsHandler
-                .HandleAsync(ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                // Surface application-level failures as a 400 response with a simple
-                // { error = "..." } payload, consistent with the Result<T> pattern.
-                return ProblemFromResult(result);
-            }
-
-            /// FIX: previously mapping omitted LoyaltyAccountId/LifetimePoints/Status.
-            // Centralized mapping ensures contract completeness and stability.
-            var items = result.Value
-                .Select(LoyaltyContractsMapper.ToContract)
-                .ToList();
-
-            return Ok(items);
-        }
-
-
-        /// <summary>
-        /// Returns the loyalty points transaction history for the current user
-        /// and the specified business.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This endpoint is used by the consumer mobile application to show a
-        /// chronological list of accruals, redemptions and manual adjustments
-        /// for a single business. The current user is resolved by the application
-        /// layer via <c>ICurrentUserService</c>; the business identifier is
-        /// provided explicitly as a route parameter.
-        /// </para>
-        /// <para>
-        /// The underlying <see cref="GetMyLoyaltyHistoryHandler"/> returns
-        /// <see cref="LoyaltyPointsTransactionDto"/> items, which are mapped to
-        /// the public <see cref="PointsTransaction"/> contract type.
-        /// </para>
-        /// </remarks>
-        /// <param name="businessId">
-        /// The identifier of the business whose loyalty history should be returned.
-        /// </param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A list of <see cref="PointsTransaction"/> entries ordered by newest first.
-        /// </returns>
-        [HttpGet("my/history/{businessId:guid}")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(IReadOnlyList<PointsTransaction>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetMyHistoryAsync(
-            Guid businessId,
-            CancellationToken ct = default)
-        {
-            if (businessId == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required.");
-            }
-
-            var result = await _getMyLoyaltyHistoryHandler
-                .HandleAsync(businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                // Application-level failures (for example, account not found)
-                // are surfaced as a 400 response with a simple { error = "..." }
-                // payload via the shared Result<T> helper.
-                return ProblemFromResult(result);
-            }
-
-            var items = result.Value
-                .Select(LoyaltyContractsMapper.ToContract)
-                .ToList();
-
-            return Ok(items);
-        }
-
-
-        /// <summary>
-        /// Gets a loyalty account summary for the current consumer user within the
-        /// specified business context.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This endpoint is designed for the consumer mobile application. It relies on
-        /// JWT authentication and the application-layer
-        /// <see cref="GetMyLoyaltyAccountForBusinessHandler"/> to resolve the current
-        /// user from <c>ICurrentUserService</c>.
-        /// </para>
-        /// <para>
-        /// When no loyalty account exists yet for the current consumer at the given
-        /// business, the API returns HTTP 404. Validation or business rule failures
-        /// are translated into RFC 7807 problem responses via the shared
-        /// <c>Result&lt;T&gt;</c> pattern.
-        /// </para>
-        /// </remarks>
-        /// <param name="businessId">The business identifier.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// HTTP 200 with a <see cref="LoyaltyAccountSummary"/> payload, HTTP 404 when
-        /// no account exists, or HTTP 400 with a problem response for validation errors.
-        /// </returns>
-        [HttpGet("account/{businessId:guid}")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(LoyaltyAccountSummary), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetCurrentAccountForBusinessAsync(
-            Guid businessId,
-            CancellationToken ct = default)
-        {
-            if (businessId == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required.");
-            }
-
-            // Application handler resolves the current user via ICurrentUserService
-            // and returns a Result<LoyaltyAccountSummaryDto?> that captures both
-            // validation errors and the not-found case.
-            var result = await _getMyLoyaltyAccountForBusinessHandler
-                .HandleAsync(businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded)
-            {
-                // Convert validation/business errors into a problem details response.
-                return ProblemFromResult(result);
-            }
-
-            var dto = result.Value;
-            if (dto is null)
-            {
-                // No loyalty account exists yet for this (business, user) pair.
-                return NotFoundProblem("Loyalty account not found for the specified business and user.");
-            }
-
-            return Ok(LoyaltyContractsMapper.ToContract(dto));
-        }
-
-
-
-
-
-        /// <summary>
-        /// Lists loyalty rewards available for the specified business, taking
-        /// the current consumer's loyalty account balance into account.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This endpoint is primarily used by the consumer-facing application to
-        /// populate the "available rewards" screen before a scan session is prepared.
-        /// It combines the active loyalty program configuration of the business with
-        /// the current user's points balance to determine which rewards are
-        /// currently selectable.
-        /// </para>
-        /// <para>
-        /// The business identifier is provided explicitly as a route parameter, while
-        /// the current user is resolved by the application layer via
-        /// <c>ICurrentUserService</c>.
-        /// </para>
-        /// </remarks>
-        /// <param name="businessId">
-        /// The identifier of the business whose rewards should be returned.
-        /// </param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// A list of <see cref="LoyaltyRewardSummary"/> entries that can be displayed
-        /// in the client UI.
-        /// </returns>
-        [HttpGet("business/{businessId:guid}/rewards")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(IReadOnlyList<LoyaltyRewardSummary>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetRewardsForBusinessAsync(
-            Guid businessId,
-            CancellationToken ct = default)
-        {
-            if (businessId == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required.");
-            }
-
-            var result = await _getAvailableLoyaltyRewardsForBusinessHandler
-                .HandleAsync(businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                // Application-level failures (for example, the business does not have
-                // an active loyalty program) are surfaced as a 400 response with a
-                // simple { error = "..." } payload, consistent with the Result<T>
-                // pattern used across the solution.
-                return ProblemFromResult(result);
-            }
-
-            var rewards = result.Value
-                .Select(LoyaltyContractsMapper.ToContract)
-                .ToList();
-
-            return Ok(rewards);
-        }
-
-
-
-        /// <summary>
-        /// Returns the list of businesses for which the current user has a loyalty account ("My places").
-        /// This endpoint is consumer/member scoped and relies on the current authenticated user resolved
-        /// in the Application layer via <c>ICurrentUserService</c>.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// The underlying Application handler uses standard joins/subqueries only (DB-agnostic),
-        /// and does not expose any internal identifiers.
-        /// </para>
-        /// <para>
-        /// This endpoint uses offset paging because the list is user-scoped and expected to be small.
-        /// </para>
-        /// </remarks>
-        /// <param name="page">1-based page index. Defaults to 1.</param>
-        /// <param name="pageSize">Page size. Defaults to 20. Maximum 200.</param>
-        /// <param name="includeInactiveBusinesses">
-        /// When true, includes businesses that may be inactive/hidden for discovery but still have an account.
-        /// </param>
-        /// <param name="ct">Cancellation token propagated from the HTTP request.</param>
-        /// <returns>A 200 OK with a paged list of "My places" items.</returns>
-        [HttpGet("my/businesses")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(MyLoyaltyBusinessesResponse), 200)]
-        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), 400)]
-        public async Task<IActionResult> GetMyBusinessesAsync(
-            [FromQuery] int? page,
-            [FromQuery] int? pageSize,
-            [FromQuery] bool? includeInactiveBusinesses,
-            CancellationToken ct = default)
-        {
-            var normalizedPage = page.GetValueOrDefault(1);
-            if (normalizedPage <= 0)
-            {
-                return BadRequestProblem("Page must be a positive integer.");
-            }
-
-            var normalizedPageSize = pageSize.GetValueOrDefault(20);
-            if (normalizedPageSize <= 0 || normalizedPageSize > 200)
-            {
-                return BadRequestProblem("PageSize must be between 1 and 200.");
-            }
-
-            // IMPORTANT:
-            // The Application handler expects MyLoyaltyBusinessListRequestDto (not a GetMy... DTO).
-            var request = new MyLoyaltyBusinessListRequestDto
-            {
-                Page = normalizedPage,
-                PageSize = normalizedPageSize,
-                IncludeInactiveBusinesses = includeInactiveBusinesses.GetValueOrDefault(false)
-            };
-
-            // IMPORTANT:
-            // This handler returns a tuple (Items, Total) and is NOT Result-wrapped.
-            var (items, total) = await _getMyLoyaltyBusinessesHandler
-                .HandleAsync(request, ct)
-                .ConfigureAwait(false);
-
-            var safeItems = items ?? new List<MyLoyaltyBusinessListItemDto>();
-
-            var response = new MyLoyaltyBusinessesResponse
-            {
-                Total = total,
-                Items = safeItems.Select(LoyaltyContractsMapper.ToContract).ToList(),
-                Request = new PagedRequest
-                {
-                    Page = normalizedPage,
-                    PageSize = normalizedPageSize,
-                    Search = null
-                }
-            };
-
-            return Ok(response);
-        }
-
-
-
-
-
-        /// <summary>
-        /// Returns personalized promotion cards for the current consumer user.
-        /// Promotions are generated from joined loyalty programs and reward tiers.
-        /// Response includes:
-        /// - applied guardrail policy snapshot,
-        /// - diagnostics counters describing suppression, de-duplication, and max-cap trimming outcomes.
-        /// </summary>
-        [HttpPost("my/promotions")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(MyPromotionsResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetMyPromotionsAsync(
-            [FromBody] MyPromotionsRequest? request,
-            CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (request.BusinessId.HasValue && request.BusinessId.Value == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId must be a non-empty GUID when provided.");
-            }
-
-            var result = await _getMyPromotionsHandler
-                .HandleAsync(new MyPromotionsDto
-                {
-                    BusinessId = request.BusinessId,
-                    MaxItems = request.MaxItems,
-                    Policy = request.Policy is null
-                        ? null
-                        : new PromotionFeedPolicyDto
-                        {
-                            EnableDeduplication = request.Policy.EnableDeduplication,
-                            MaxCards = request.Policy.MaxCards,
-                            FrequencyWindowMinutes = request.Policy.FrequencyWindowMinutes,
-                            SuppressionWindowMinutes = request.Policy.SuppressionWindowMinutes
-                        }
-                }, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                return ProblemFromResult(result);
-            }
-
-            var response = new MyPromotionsResponse
-            {
-                AppliedPolicy = new PromotionFeedPolicy
-                {
-                    EnableDeduplication = result.Value.AppliedPolicy.EnableDeduplication,
-                    MaxCards = result.Value.AppliedPolicy.MaxCards,
-                    FrequencyWindowMinutes = result.Value.AppliedPolicy.FrequencyWindowMinutes,
-                    SuppressionWindowMinutes = result.Value.AppliedPolicy.SuppressionWindowMinutes
-                },
-                Diagnostics = new PromotionFeedDiagnostics
-                {
-                    InitialCandidates = result.Value.Diagnostics.InitialCandidates,
-                    SuppressedByFrequency = result.Value.Diagnostics.SuppressedByFrequency,
-                    Deduplicated = result.Value.Diagnostics.Deduplicated,
-                    TrimmedByCap = result.Value.Diagnostics.TrimmedByCap,
-                    FinalCount = result.Value.Diagnostics.FinalCount
-                },
-                Items = result.Value.Items
-                    .Select(x => new PromotionFeedItem
-                    {
-                        BusinessId = x.BusinessId,
-                        BusinessName = x.BusinessName,
-                        Title = x.Title,
-                        Description = x.Description,
-                        CtaKind = x.CtaKind,
-                        Priority = x.Priority,
-                        CampaignId = x.CampaignId,
-                        CampaignState = x.CampaignState,
-                        StartsAtUtc = x.StartsAtUtc,
-                        EndsAtUtc = x.EndsAtUtc,
-                        EligibilityRules = x.EligibilityRules
-                            .Select(rule => new PromotionEligibilityRule
-                            {
-                                AudienceKind = rule.AudienceKind,
-                                MinPoints = rule.MinPoints,
-                                MaxPoints = rule.MaxPoints,
-                                TierKey = rule.TierKey,
-                                Note = rule.Note
-                            })
-                            .ToList()
-                    })
-                    .ToList()
-            };
-
-            return Ok(response);
-        }
-
-        /// <summary>
-        /// Returns business-owned campaign cards for management screens.
-        /// </summary>
-        [HttpGet("business/campaigns")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(GetBusinessCampaignsResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetBusinessCampaignsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
-        {
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult!;
-            }
-
-            var result = await _getBusinessCampaignsHandler.HandleAsync(businessId, page, pageSize, ct).ConfigureAwait(false);
-            if (!result.Succeeded || result.Value is null)
-            {
-                return ProblemFromResult(result);
-            }
-
-            var response = new GetBusinessCampaignsResponse
-            {
-                Total = result.Value.Total,
-                Items = result.Value.Items.Select(x => new BusinessCampaignItem
-                {
-                    Id = x.Id,
                     BusinessId = x.BusinessId,
-                    Name = x.Name,
+                    BusinessName = x.BusinessName,
                     Title = x.Title,
-                    Subtitle = x.Subtitle,
-                    Body = x.Body,
-                    MediaUrl = x.MediaUrl,
-                    LandingUrl = x.LandingUrl,
-                    Channels = x.Channels,
+                    Description = x.Description,
+                    CtaKind = x.CtaKind,
+                    Priority = x.Priority,
+                    CampaignId = x.CampaignId,
+                    CampaignState = x.CampaignState,
                     StartsAtUtc = x.StartsAtUtc,
                     EndsAtUtc = x.EndsAtUtc,
-                    IsActive = x.IsActive,
-                    CampaignState = x.CampaignState,
-                    TargetingJson = x.TargetingJson,
                     EligibilityRules = x.EligibilityRules.Select(rule => new PromotionEligibilityRule
                     {
                         AudienceKind = rule.AudienceKind,
@@ -1361,460 +336,191 @@ namespace Darwin.WebApi.Controllers.Loyalty
                         MaxPoints = rule.MaxPoints,
                         TierKey = rule.TierKey,
                         Note = rule.Note
-                    }).ToList(),
-                    PayloadJson = x.PayloadJson,
-                    RowVersion = x.RowVersion
-                }).ToList()
-            };
+                    }).ToList()
+                })
+                .ToList()
+        });
+    }
 
-            return Ok(response);
+    /// <summary>
+    /// Records a promotion interaction event for analytics and suppression logic.
+    /// </summary>
+    [HttpPost("my/promotions/track")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> TrackPromotionInteractionAsync(
+        [FromBody] TrackPromotionInteractionRequest? request,
+        CancellationToken ct = default)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
         }
 
-        /// <summary>
-        /// Creates a business campaign in draft state.
-        /// </summary>
-        [HttpPost("business/campaigns")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(typeof(BusinessCampaignMutationResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateBusinessCampaignAsync([FromBody] CreateBusinessCampaignRequest? request, CancellationToken ct = default)
+        if (request.BusinessId == Guid.Empty)
         {
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult!;
-            }
+            return BadRequestProblem("BusinessId is required.");
+        }
 
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            return BadRequestProblem("Title is required.");
+        }
 
-            var result = await _createBusinessCampaignHandler.HandleAsync(new CreateBusinessCampaignDto
+        var result = await _trackPromotionInteractionHandler
+            .HandleAsync(new TrackPromotionInteractionDto
             {
-                BusinessId = businessId,
-                Name = request.Name,
+                BusinessId = request.BusinessId,
+                BusinessName = request.BusinessName,
                 Title = request.Title,
-                Subtitle = request.Subtitle,
-                Body = request.Body,
-                MediaUrl = request.MediaUrl,
-                LandingUrl = request.LandingUrl,
-                Channels = request.Channels,
-                StartsAtUtc = request.StartsAtUtc,
-                EndsAtUtc = request.EndsAtUtc,
-                TargetingJson = request.TargetingJson,
-                EligibilityRules = request.EligibilityRules.Select(rule => new Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
-                {
-                    AudienceKind = rule.AudienceKind,
-                    MinPoints = rule.MinPoints,
-                    MaxPoints = rule.MaxPoints,
-                    TierKey = rule.TierKey,
-                    Note = rule.Note
-                }).ToList(),
-                PayloadJson = request.PayloadJson
-            }, ct).ConfigureAwait(false);
+                CtaKind = request.CtaKind,
+                EventType = MapPromotionInteractionEventType(request.EventType),
+                OccurredAtUtc = request.OccurredAtUtc
+            }, ct)
+            .ConfigureAwait(false);
 
-            if (!result.Succeeded || result.Value == Guid.Empty)
-            {
-                return ProblemFromResult(result);
-            }
-
-            return Created($"/api/v1/loyalty/business/campaigns/{result.Value}", new BusinessCampaignMutationResponse { CampaignId = result.Value });
-        }
-
-        /// <summary>
-        /// Updates an existing business campaign.
-        /// </summary>
-        [HttpPut("business/campaigns/{id:guid}")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateBusinessCampaignAsync(Guid id, [FromBody] UpdateBusinessCampaignRequest? request, CancellationToken ct = default)
+        if (!result.Succeeded)
         {
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult!;
-            }
-
-            if (request is null || request.Id != id)
-            {
-                return BadRequestProblem("Request body is required and route id must match body id.");
-            }
-
-            var result = await _updateBusinessCampaignHandler.HandleAsync(new UpdateBusinessCampaignDto
-            {
-                BusinessId = businessId,
-                Id = request.Id,
-                Name = request.Name,
-                Title = request.Title,
-                Subtitle = request.Subtitle,
-                Body = request.Body,
-                MediaUrl = request.MediaUrl,
-                LandingUrl = request.LandingUrl,
-                Channels = request.Channels,
-                StartsAtUtc = request.StartsAtUtc,
-                EndsAtUtc = request.EndsAtUtc,
-                TargetingJson = request.TargetingJson,
-                EligibilityRules = request.EligibilityRules.Select(rule => new Application.Loyalty.Campaigns.PromotionEligibilityRuleDto
-                {
-                    AudienceKind = rule.AudienceKind,
-                    MinPoints = rule.MinPoints,
-                    MaxPoints = rule.MaxPoints,
-                    TierKey = rule.TierKey,
-                    Note = rule.Note
-                }).ToList(),
-                PayloadJson = request.PayloadJson,
-                RowVersion = request.RowVersion
-            }, ct).ConfigureAwait(false);
-
-            if (!result.Succeeded)
-            {
-                return ProblemFromResult(result);
-            }
-
-            return NoContent();
-        }
-
-        /// <summary>
-        /// Activates or deactivates a business campaign.
-        /// </summary>
-        [HttpPost("business/campaigns/{id:guid}/activation")]
-        [Authorize(Policy = "perm:AccessLoyaltyBusiness")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> SetBusinessCampaignActivationAsync(Guid id, [FromBody] SetCampaignActivationRequest? request, CancellationToken ct = default)
-        {
-            if (!TryGetCurrentBusinessId(out var businessId, out var errorResult))
-            {
-                return errorResult!;
-            }
-
-            if (request is null || request.Id != id)
-            {
-                return BadRequestProblem("Request body is required and route id must match body id.");
-            }
-
-            var result = await _setCampaignActivationHandler.HandleAsync(new SetCampaignActivationDto
-            {
-                BusinessId = businessId,
-                Id = request.Id,
-                IsActive = request.IsActive,
-                RowVersion = request.RowVersion
-            }, ct).ConfigureAwait(false);
-
-            if (!result.Succeeded)
-            {
-                return ProblemFromResult(result);
-            }
-
-            return NoContent();
-        }
-
-        /// <summary>
-        /// Tracks a promotions interaction event for analytics and measurement.
-        /// </summary>
-        [HttpPost("my/promotions/track")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> TrackPromotionInteractionAsync(
-            [FromBody] TrackPromotionInteractionRequest? request,
-            CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            if (request.BusinessId == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(request.Title))
-            {
-                return BadRequestProblem("Title is required.");
-            }
-
-            var result = await _trackPromotionInteractionHandler
-                .HandleAsync(new TrackPromotionInteractionDto
-                {
-                    BusinessId = request.BusinessId,
-                    BusinessName = request.BusinessName,
-                    Title = request.Title,
-                    CtaKind = request.CtaKind,
-                    EventType = MapPromotionInteractionEventType(request.EventType),
-                    OccurredAtUtc = request.OccurredAtUtc
-                }, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded)
-            {
-                return ProblemFromResult(result);
-            }
-
-            return NoContent();
-        }
-
-        private static Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType MapPromotionInteractionEventType(
-            Darwin.Contracts.Loyalty.PromotionInteractionEventType eventType)
-        {
-            return eventType switch
-            {
-                Darwin.Contracts.Loyalty.PromotionInteractionEventType.Open => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Open,
-                Darwin.Contracts.Loyalty.PromotionInteractionEventType.Claim => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Claim,
-                _ => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Impression
-            };
-        }
-
-
-        /// <summary>
-        /// Returns a single page of unified loyalty timeline entries for the current consumer user
-        /// within a specific business context.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This endpoint is consumer-facing and is designed for mobile "Activity" / "Timeline" screens.
-        /// It returns a unified stream of entries (transactions + redemptions) ordered newest-first.
-        /// </para>
-        /// <para>
-        /// Paging is cursor-based (keyset) using (BeforeAtUtc, BeforeId) to keep it deterministic and
-        /// provider-agnostic. The cursor rules are enforced by the Application handler as well.
-        /// </para>
-        /// <para>
-        /// IMPORTANT (Token-First Rule):
-        /// This endpoint must not expose internal operational identifiers such as ScanSessionId.
-        /// The returned entries contain only user-safe identifiers (transaction ids / redemption ids).
-        /// </para>
-        /// </remarks>
-        /// <param name="request">Paging request (business + cursor).</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>
-        /// HTTP 200 with a timeline page, or HTTP 400 with a problem response when validation fails.
-        /// </returns>
-        [HttpPost("my/timeline")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(GetMyLoyaltyTimelinePageResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetMyLoyaltyTimelinePageAsync(
-            [FromBody] GetMyLoyaltyTimelinePageRequest? request,
-            CancellationToken ct = default)
-        {
-            if (request is null)
-            {
-                return BadRequestProblem("Request body is required.");
-            }
-
-            // Contract currently allows nullable BusinessId; Application requires a non-empty GUID.
-            if (!request.BusinessId.HasValue || request.BusinessId.Value == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required and must be a non-empty GUID.");
-            }
-
-            // Defensive cursor validation at API boundary (Application validates again).
-            // Cursor correctness: both parts must be provided together.
-            if ((request.BeforeAtUtc is null) != (request.BeforeId is null))
-            {
-                return BadRequestProblem("Invalid cursor. Both BeforeAtUtc and BeforeId must be provided together.");
-            }
-
-            var dto = new GetMyLoyaltyTimelinePageDto
-            {
-                BusinessId = request.BusinessId.Value,
-                PageSize = request.PageSize,
-                BeforeAtUtc = request.BeforeAtUtc,
-                BeforeId = request.BeforeId
-            };
-
-            var result = await _getMyLoyaltyTimelinePageHandler
-                .HandleAsync(dto, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                return ProblemFromResult(result);
-            }
-
-            var value = result.Value;
-
-            var response = new GetMyLoyaltyTimelinePageResponse
-            {
-                Items = (value.Items ?? Array.Empty<LoyaltyTimelineEntryDto>())
-                    .Select(LoyaltyContractsMapper.ToContract)
-                    .ToList(),
-                NextBeforeAtUtc = value.NextBeforeAtUtc,
-                NextBeforeId = value.NextBeforeId
-            };
-
-            return Ok(response);
-        }
-
-
-        /// <summary>
-        /// Join (create) a loyalty account for the current authenticated user for the specified business.
-        /// </summary>
-        /// <remarks>
-        /// - The business identifier is provided in the route and is authoritative.
-        /// - This endpoint is idempotent: calling it when an account already exists returns the existing account summary.
-        /// - A consumer-facing client typically calls this when the user taps "Join loyalty program" on a business detail page.
-        /// </remarks>
-        /// <param name="businessId">Business identifier (route).</param>
-        /// <param name="request">Optional request body (for example selected BusinessLocationId).</param>
-        /// <param name="ct">Cancellation token.</param>
-        [HttpPost("account/{businessId:guid}/join")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(LoyaltyAccountSummary), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> JoinLoyaltyAsync(
-            [FromRoute] Guid businessId,
-            [FromBody] Contracts.Loyalty.JoinLoyaltyRequest? request,
-            CancellationToken ct = default)
-        {
-            if (businessId == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required.");
-            }
-
-            var result = await _createLoyaltyAccountHandler
-                .HandleAsync(businessId, request?.BusinessLocationId, ct)
-                .ConfigureAwait(false);
-
-            if (!result.Succeeded || result.Value is null)
-            {
-                return ProblemFromResult(result);
-            }
-
-            var dto = result.Value;
-            var contract = LoyaltyContractsMapper.ToContract(dto);
-            return Ok(contract);
-        }
-
-
-
-        /// <summary>
-        /// Returns the next available reward (the smallest RequiredPoints greater than user's current balance)
-        /// for the specified business. Returns 204 No Content when no further reward exists.
-        /// </summary>
-        [HttpGet("account/{businessId:guid}/next-reward")]
-        [Authorize(Policy = "perm:AccessMemberArea")]
-        [ProducesResponseType(typeof(LoyaltyRewardSummary), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetNextRewardAsync([FromRoute] Guid businessId, CancellationToken ct = default)
-        {
-            if (businessId == Guid.Empty)
-            {
-                return BadRequestProblem("BusinessId is required.");
-            }
-
-            var accountResult = await _getMyLoyaltyAccountForBusinessHandler
-                .HandleAsync(businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!accountResult.Succeeded)
-            {
-                return ProblemFromResult(accountResult);
-            }
-
-            var account = accountResult.Value;
-            if (account is null)
-            {
-                return NotFoundProblem("Loyalty account not found for the specified business and user.");
-            }
-
-            var availableResult = await _getAvailableLoyaltyRewardsForBusinessHandler
-                .HandleAsync(businessId, ct)
-                .ConfigureAwait(false);
-
-            if (!availableResult.Succeeded)
-            {
-                return ProblemFromResult(availableResult);
-            }
-
-            var available = availableResult.Value ?? Array.Empty<Darwin.Application.Loyalty.DTOs.LoyaltyRewardSummaryDto>();
-
-            // Find the smallest reward that requires more points than current balance and is active/selectable.
-            var candidate = available
-                .Where(r => r.RequiredPoints > account.PointsBalance && r.IsActive && r.IsSelectable)
-                .OrderBy(r => r.RequiredPoints)
-                .FirstOrDefault();
-
-            if (candidate is null)
-            {
-                return NoContent();
-            }
-
-            var contract = LoyaltyContractsMapper.ToContract(candidate);
-            return Ok(contract);
-        }
-
-
-
-        /// <summary>
-        /// Maps common scan-session failures to HTTP status codes per Darwin Mobile error taxonomy.
-        /// </summary>
-        /// <typeparam name="T">Result payload type.</typeparam>
-        /// <param name="result">Application-layer Result (failed or missing Value).</param>
-        /// <returns>IActionResult with appropriate status (409/403/404/400).</returns>
-        /// <remarks>
-        /// Rationale:
-        /// - Avoid passing non-generic Result into a helper when controller works with Result&lt;T&gt;.
-        /// - Map common textual error categories to stable HTTP codes for mobile UX.
-        /// Pitfalls:
-        /// - Text-based checks can drift; prefer future move to structured error codes from Application.
-        /// Example:
-        /// - MapScanFailure(result) where result is Result&lt;ConfirmAccrualResultDto&gt;.
-        /// </remarks>
-        private IActionResult MapScanFailure<T>(Result<T> result)
-        {
-            var msg = (result.Error ?? "Operation failed.").Trim();
-            var text = msg.ToLowerInvariant();
-
-            // 409 Conflict — expired/consumed tokens or sessions
-            if (text.Contains("expired") || text.Contains("consumed"))
-            {
-                return ConflictProblem(msg);
-            }
-
-            // 404 Not Found — token/session not found
-            if (text.Contains("not found"))
-            {
-                return NotFoundProblem(msg);
-            }
-
-            // 403 Forbidden — cross-business mismatch (ownership violation)
-            if (text.Contains("belongs to a different business") ||
-                text.Contains("bound to a different business") ||
-                text.Contains("does not belong to this business"))
-            {
-                return Forbid();
-            }
-
-            // Fallback: standardized 400 Problem response
             return ProblemFromResult(result);
         }
 
-        /// <summary>
-        /// Returns a 409 Conflict response with RFC7807-like problem payload for mobile.
-        /// </summary>
-        /// <param name="detail">Human-readable explanation.</param>
-        /// <remarks>
-        /// Rationale:
-        /// - Mobile error taxonomy recommends 409 for expired/consumed tokens (user can retry).
-        /// Pitfalls:
-        /// - Do not leak sensitive values; keep messages generic.
-        /// Example:
-        /// - ConflictProblem("Scan session token has expired.")
-        /// </remarks>
-        private IActionResult ConflictProblem(string detail)
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Returns a cursor-paged unified loyalty timeline for the current member.
+    /// </summary>
+    [HttpPost("my/timeline")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(GetMyLoyaltyTimelinePageResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetMyLoyaltyTimelinePageAsync(
+        [FromBody] GetMyLoyaltyTimelinePageRequest? request,
+        CancellationToken ct = default)
+    {
+        if (request is null)
         {
-            var problem = new Darwin.Contracts.Common.ProblemDetails
-            {
-                Type = "https://docs.darwincms.com/errors/conflict",
-                Title = "Conflict",
-                Status = StatusCodes.Status409Conflict,
-                Detail = detail
-            };
-            return StatusCode(StatusCodes.Status409Conflict, problem);
+            return BadRequestProblem("Request body is required.");
         }
+
+        if (!request.BusinessId.HasValue || request.BusinessId.Value == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId is required and must be a non-empty GUID.");
+        }
+
+        if ((request.BeforeAtUtc is null) != (request.BeforeId is null))
+        {
+            return BadRequestProblem("Invalid cursor. Both BeforeAtUtc and BeforeId must be provided together.");
+        }
+
+        var dto = new GetMyLoyaltyTimelinePageDto
+        {
+            BusinessId = request.BusinessId.Value,
+            PageSize = request.PageSize,
+            BeforeAtUtc = request.BeforeAtUtc,
+            BeforeId = request.BeforeId
+        };
+
+        var result = await _getMyLoyaltyTimelinePageHandler.HandleAsync(dto, ct).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(new GetMyLoyaltyTimelinePageResponse
+        {
+            Items = (result.Value.Items ?? Array.Empty<LoyaltyTimelineEntryDto>())
+                .Select(LoyaltyContractsMapper.ToContract)
+                .ToList(),
+            NextBeforeAtUtc = result.Value.NextBeforeAtUtc,
+            NextBeforeId = result.Value.NextBeforeId
+        });
+    }
+
+    /// <summary>
+    /// Creates or returns the current member loyalty account for the specified business.
+    /// </summary>
+    [HttpPost("account/{businessId:guid}/join")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(LoyaltyAccountSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> JoinLoyaltyAsync(
+        [FromRoute] Guid businessId,
+        [FromBody] JoinLoyaltyRequest? request,
+        CancellationToken ct = default)
+    {
+        if (businessId == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId is required.");
+        }
+
+        var result = await _createLoyaltyAccountHandler
+            .HandleAsync(businessId, request?.BusinessLocationId, ct)
+            .ConfigureAwait(false);
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            return ProblemFromResult(result);
+        }
+
+        return Ok(LoyaltyContractsMapper.ToContract(result.Value));
+    }
+
+    /// <summary>
+    /// Returns the next attainable reward for the current member within the specified business.
+    /// </summary>
+    [HttpGet("account/{businessId:guid}/next-reward")]
+    [Authorize(Policy = "perm:AccessMemberArea")]
+    [ProducesResponseType(typeof(LoyaltyRewardSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetNextRewardAsync([FromRoute] Guid businessId, CancellationToken ct = default)
+    {
+        if (businessId == Guid.Empty)
+        {
+            return BadRequestProblem("BusinessId is required.");
+        }
+
+        var accountResult = await _getMyLoyaltyAccountForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
+        if (!accountResult.Succeeded)
+        {
+            return ProblemFromResult(accountResult);
+        }
+
+        var account = accountResult.Value;
+        if (account is null)
+        {
+            return NotFoundProblem("Loyalty account not found for the specified business and user.");
+        }
+
+        var availableResult = await _getAvailableLoyaltyRewardsForBusinessHandler.HandleAsync(businessId, ct).ConfigureAwait(false);
+        if (!availableResult.Succeeded)
+        {
+            return ProblemFromResult(availableResult);
+        }
+
+        var candidate = (availableResult.Value ?? Array.Empty<LoyaltyRewardSummaryDto>())
+            .Where(r => r.RequiredPoints > account.PointsBalance && r.IsActive && r.IsSelectable)
+            .OrderBy(r => r.RequiredPoints)
+            .FirstOrDefault();
+
+        return candidate is null
+            ? NoContent()
+            : Ok(LoyaltyContractsMapper.ToContract(candidate));
+    }
+
+    /// <summary>
+    /// Maps contract interaction events to the application-layer enum.
+    /// </summary>
+    private static Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType MapPromotionInteractionEventType(
+        Darwin.Contracts.Loyalty.PromotionInteractionEventType eventType)
+    {
+        return eventType switch
+        {
+            Darwin.Contracts.Loyalty.PromotionInteractionEventType.Open => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Open,
+            Darwin.Contracts.Loyalty.PromotionInteractionEventType.Claim => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Claim,
+            _ => Darwin.Application.Loyalty.DTOs.PromotionInteractionEventType.Impression
+        };
     }
 }

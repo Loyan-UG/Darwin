@@ -13,6 +13,25 @@ internal static class BusinessControllerConventions
     public static string? NormalizeNullable(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+    public static bool TryGetCurrentBusinessId(ClaimsPrincipal user, out Guid businessId)
+    {
+        businessId = Guid.Empty;
+
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        var id = user.FindFirstValue("business_id");
+        if (!Guid.TryParse(id, out var parsed))
+        {
+            return false;
+        }
+
+        businessId = parsed;
+        return true;
+    }
+
     public static bool TryGetCurrentUserId(ClaimsPrincipal user, out Guid userId)
     {
         userId = Guid.Empty;

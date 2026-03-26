@@ -117,6 +117,7 @@ Recent route organization changes:
 - business discovery and public business detail now live under a dedicated public controller
 - member business onboarding, engagement, and review actions now live under a dedicated member controller
 - auth, profile, notification, and business billing controllers now use audience-first canonical route roots while preserving legacy aliases
+- loyalty is now split between a dedicated member controller (`api/v1/member/loyalty`) and a dedicated business controller (`api/v1/business/loyalty`), while legacy `/api/v1/loyalty/*` aliases remain temporarily available
 
 ### Required public groups
 
@@ -134,8 +135,14 @@ These should be documented and expanded as implementation continues:
 - `/api/v1/profile/*`
 - `/api/v1/orders/*`
 - `/api/v1/invoices/*`
-- `/api/v1/loyalty/*`
+- `/api/v1/member/loyalty/*`
 - `/api/v1/member/*`
+
+Current loyalty ownership:
+
+- member loyalty: scan preparation, account summaries, reward browsing, timeline, promotions, and join flows
+- business loyalty: reward configuration, scan processing, accrual/redemption confirmation, and campaign management
+- legacy mixed loyalty routes remain only as compatibility aliases and should not be used for new development
 
 ### Required CRM admin/integration groups
 

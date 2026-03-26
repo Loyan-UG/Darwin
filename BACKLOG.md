@@ -107,12 +107,14 @@ The immediate direction is:
 - Completed: add non-breaking public/member/business route aliases so the future API surface split can evolve without breaking legacy callers.
 - Completed: reorganize `Darwin.WebApi` route ownership so audience-first canonical routes are now explicit for member/business/public controllers, while legacy aliases remain in place for existing clients.
 - Completed: split mixed business delivery endpoints into dedicated public and member controllers so storefront discovery and member engagement/onboarding no longer share one mixed controller surface.
+- Completed: split loyalty delivery into dedicated member and business controllers so member account/reward/timeline flows and business scan/configuration/campaign flows no longer share one mixed controller surface.
 - Task: document and implement CMS page endpoints.
 - Task: document and implement menus and storefront navigation endpoints.
 - Task: document and implement product/category/storefront browsing endpoints.
 
 ### Epic: Member API
 
+- Completed: establish the canonical member loyalty route root under `api/v1/member/loyalty` while preserving the legacy `/api/v1/loyalty/*` aliases for existing consumers.
 - Task: document and implement order history endpoints.
 - Task: document and implement invoice endpoints.
 - Task: document and implement member loyalty projections and account endpoints.
@@ -120,6 +122,7 @@ The immediate direction is:
 
 ### Epic: Admin and integration API
 
+- Completed: establish the canonical business loyalty route root under `api/v1/business/loyalty` while preserving the legacy `/api/v1/loyalty/*` aliases for business mobile flows.
 - Task: design CRM admin/integration endpoints.
 - Task: design inventory admin/integration endpoints.
 - Task: design billing/accounting admin/integration endpoints.
