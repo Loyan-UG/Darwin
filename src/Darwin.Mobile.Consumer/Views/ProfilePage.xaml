@@ -124,6 +124,10 @@
                             Style="{StaticResource SecondaryButtonStyle}"
                             Clicked="OnManageAddressesClicked" />
 
+                    <Button Text="{x:Static res:AppResources.ProfileManagePreferencesButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Clicked="OnManagePreferencesClicked" />
+
                     <BoxView HeightRequest="1"
                              Color="{StaticResource Neutral300}" />
 
@@ -152,37 +156,11 @@
                         <Label Text="{Binding LinkedCustomerLastInteractionText}"
                                FontSize="13"
                                LineBreakMode="WordWrap" />
+
+                        <Button Text="{x:Static res:AppResources.ProfileViewCustomerContextButton}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Clicked="OnViewCustomerContextClicked" />
                     </VerticalStackLayout>
-
-
-                    <BoxView HeightRequest="1"
-                             Color="{StaticResource Neutral300}" />
-
-                    <Label Text="{x:Static res:AppResources.OptionalPrivacyChoicesTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-
-                    <Label Text="{x:Static res:AppResources.OptionalPrivacyChoicesPlaceholderNote}"
-                           FontSize="13"
-                           TextColor="{StaticResource Neutral600}"
-                           LineBreakMode="WordWrap" />
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="{x:Static res:AppResources.OptionalPromotionalPushLabel}"
-                               VerticalOptions="Center"
-                               LineBreakMode="WordWrap" />
-                        <Switch Grid.Column="1"
-                                IsToggled="{Binding AllowPromotionalPushNotifications}" />
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="{x:Static res:AppResources.OptionalAnalyticsLabel}"
-                               VerticalOptions="Center"
-                               LineBreakMode="WordWrap" />
-                        <Switch Grid.Column="1"
-                                IsToggled="{Binding AllowOptionalAnalyticsTracking}" />
-                    </Grid>
-
                     <ActivityIndicator IsVisible="{Binding IsBusy}"
                                        IsRunning="{Binding IsBusy}"
                                        Color="{StaticResource BrandGold500}" />

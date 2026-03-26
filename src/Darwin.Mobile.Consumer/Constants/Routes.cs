@@ -56,6 +56,16 @@ public static class Routes
     public const string MemberAddresses = "member-addresses";
 
     /// <summary>
+    /// Dedicated member preferences route.
+    /// </summary>
+    public const string MemberPreferences = "member-preferences";
+
+    /// <summary>
+    /// Dedicated member CRM customer-context route.
+    /// </summary>
+    public const string MemberCustomerContext = "member-customer-context";
+
+    /// <summary>
     /// Dedicated password change screen route.
     /// </summary>
     public const string ChangePassword = "change-password";

@@ -13,7 +13,6 @@ using Darwin.Mobile.Shared.Services.Legal;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.Services.Notifications;
 using Darwin.Mobile.Shared.Services.Permissions;
-using Darwin.Mobile.Shared.Services.Privacy;
 using Darwin.Mobile.Shared.Services.Profile;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -137,7 +136,6 @@ namespace Darwin.Mobile.Shared.Extensions
             services.AddSingleton<IPushRegistrationService, PushRegistrationService>();
             services.AddSingleton<ILegalLinkService, LegalLinkService>();
             services.AddSingleton<IPermissionDisclosureService, PermissionDisclosureService>();
-            services.AddSingleton<IOptionalPrivacyPreferencesStore, OptionalPrivacyPreferencesStore>();
 
             // NOTE: QrTokenRefresher is opt-in; pages/viewmodels can new it up or register as needed.
 

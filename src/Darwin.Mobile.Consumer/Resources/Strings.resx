@@ -331,6 +331,9 @@
   <data name="ProfileManageAddressesButton" xml:space="preserve">
     <value>Manage addresses</value>
   </data>
+  <data name="ProfileManagePreferencesButton" xml:space="preserve">
+    <value>Manage preferences</value>
+  </data>
   <data name="ProfileCustomerContextSectionTitle" xml:space="preserve">
     <value>Customer context</value>
   </data>
@@ -351,6 +354,9 @@
   </data>
   <data name="ProfileCustomerNoInteractions" xml:space="preserve">
     <value>No CRM interactions recorded yet.</value>
+  </data>
+  <data name="ProfileViewCustomerContextButton" xml:space="preserve">
+    <value>Open customer details</value>
   </data>
   <data name="ChangePasswordTitle" xml:space="preserve">
     <value>Change password</value>
@@ -412,8 +418,131 @@
   <data name="SettingsOrdersAndInvoicesButton" xml:space="preserve">
     <value>Orders &amp; invoices</value>
   </data>
+  <data name="SettingsPreferencesButton" xml:space="preserve">
+    <value>Privacy &amp; preferences</value>
+  </data>
   <data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Change password</value>
+  </data>
+  <data name="MemberPreferencesTitle" xml:space="preserve">
+    <value>Privacy &amp; preferences</value>
+  </data>
+  <data name="MemberPreferencesSubtitle" xml:space="preserve">
+    <value>Manage your backend-backed communication and analytics preferences.</value>
+  </data>
+  <data name="MemberPreferencesRefreshButton" xml:space="preserve">
+    <value>Refresh preferences</value>
+  </data>
+  <data name="MemberPreferencesMarketingConsentLabel" xml:space="preserve">
+    <value>Allow marketing communication</value>
+  </data>
+  <data name="MemberPreferencesEmailLabel" xml:space="preserve">
+    <value>Allow promotional email</value>
+  </data>
+  <data name="MemberPreferencesSmsLabel" xml:space="preserve">
+    <value>Allow promotional SMS</value>
+  </data>
+  <data name="MemberPreferencesWhatsAppLabel" xml:space="preserve">
+    <value>Allow promotional WhatsApp</value>
+  </data>
+  <data name="MemberPreferencesPromotionalPushLabel" xml:space="preserve">
+    <value>Allow promotional push notifications</value>
+  </data>
+  <data name="MemberPreferencesAnalyticsLabel" xml:space="preserve">
+    <value>Allow optional analytics tracking</value>
+  </data>
+  <data name="MemberPreferencesTermsAcceptedFormat" xml:space="preserve">
+    <value>Terms accepted at: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberPreferencesLoadFailed" xml:space="preserve">
+    <value>Unable to load privacy preferences.</value>
+  </data>
+  <data name="MemberPreferencesSaveFailed" xml:space="preserve">
+    <value>Unable to save privacy preferences right now.</value>
+  </data>
+  <data name="MemberPreferencesSaved" xml:space="preserve">
+    <value>Privacy preferences updated successfully.</value>
+  </data>
+  <data name="MemberPreferencesSaveButton" xml:space="preserve">
+    <value>Save preferences</value>
+  </data>
+  <data name="MemberCustomerContextTitle" xml:space="preserve">
+    <value>Customer details</value>
+  </data>
+  <data name="MemberCustomerContextSubtitle" xml:space="preserve">
+    <value>Review your linked CRM profile, segments, consent history, and recent interactions.</value>
+  </data>
+  <data name="MemberCustomerContextRefreshButton" xml:space="preserve">
+    <value>Refresh customer details</value>
+  </data>
+  <data name="MemberCustomerContextEmpty" xml:space="preserve">
+    <value>No linked CRM customer context is available for this account yet.</value>
+  </data>
+  <data name="MemberCustomerContextSummarySectionTitle" xml:space="preserve">
+    <value>Customer summary</value>
+  </data>
+  <data name="MemberCustomerContextSegmentsSectionTitle" xml:space="preserve">
+    <value>Segments</value>
+  </data>
+  <data name="MemberCustomerContextConsentsSectionTitle" xml:space="preserve">
+    <value>Consent history</value>
+  </data>
+  <data name="MemberCustomerContextInteractionsSectionTitle" xml:space="preserve">
+    <value>Recent interactions</value>
+  </data>
+  <data name="MemberCustomerContextEmailFormat" xml:space="preserve">
+    <value>Email: {0}</value>
+  </data>
+  <data name="MemberCustomerContextPhoneFormat" xml:space="preserve">
+    <value>Phone: {0}</value>
+  </data>
+  <data name="MemberCustomerContextCompanyFormat" xml:space="preserve">
+    <value>Company: {0}</value>
+  </data>
+  <data name="MemberCustomerContextNotesFormat" xml:space="preserve">
+    <value>Notes: {0}</value>
+  </data>
+  <data name="MemberCustomerContextCreatedAtFormat" xml:space="preserve">
+    <value>Customer since: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextLastInteractionFormat" xml:space="preserve">
+    <value>Last interaction: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionCountFormat" xml:space="preserve">
+    <value>Interactions recorded: {0}</value>
+  </data>
+  <data name="MemberCustomerContextNoSegments" xml:space="preserve">
+    <value>No CRM segments are currently linked.</value>
+  </data>
+  <data name="MemberCustomerContextNoConsents" xml:space="preserve">
+    <value>No consent history is available yet.</value>
+  </data>
+  <data name="MemberCustomerContextNoInteractions" xml:space="preserve">
+    <value>No CRM interactions are available yet.</value>
+  </data>
+  <data name="MemberCustomerContextLoadFailed" xml:space="preserve">
+    <value>Unable to load customer details right now.</value>
+  </data>
+  <data name="MemberCustomerContextConsentStatusGranted" xml:space="preserve">
+    <value>Granted</value>
+  </data>
+  <data name="MemberCustomerContextConsentStatusRevoked" xml:space="preserve">
+    <value>Revoked</value>
+  </data>
+  <data name="MemberCustomerContextConsentGrantedAtFormat" xml:space="preserve">
+    <value>Granted at: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextConsentRevokedAtFormat" xml:space="preserve">
+    <value>Revoked at: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionTypeChannelFormat" xml:space="preserve">
+    <value>{0} via {1}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionSubjectFormat" xml:space="preserve">
+    <value>Subject: {0}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionCreatedAtFormat" xml:space="preserve">
+    <value>Created at: {0:yyyy-MM-dd HH:mm}</value>
   </data>
   <data name="MemberCommerceTitle" xml:space="preserve">
     <value>Orders &amp; invoices</value>
@@ -981,18 +1110,6 @@
   </data>
   <data name="RegisterPrivacyAcknowledgementRequired" xml:space="preserve">
     <value>Please acknowledge the privacy notice before creating your account.</value>
-  </data>
-  <data name="OptionalPrivacyChoicesTitle" xml:space="preserve">
-    <value>Optional privacy choices</value>
-  </data>
-  <data name="OptionalPrivacyChoicesPlaceholderNote" xml:space="preserve">
-    <value>These optional controls are kept separate from the required legal acknowledgements and are stored locally until final backend privacy settings are delivered.</value>
-  </data>
-  <data name="OptionalPromotionalPushLabel" xml:space="preserve">
-    <value>Allow promotional push notifications (optional)</value>
-  </data>
-  <data name="OptionalAnalyticsLabel" xml:space="preserve">
-    <value>Allow optional analytics and tracking (optional)</value>
   </data>
   <data name="AccountDeletionTitle" xml:space="preserve">
     <value>Delete account</value>

@@ -331,6 +331,9 @@
   <data name="ProfileManageAddressesButton" xml:space="preserve">
     <value>Adressen verwalten</value>
   </data>
+  <data name="ProfileManagePreferencesButton" xml:space="preserve">
+    <value>Präferenzen verwalten</value>
+  </data>
   <data name="ProfileCustomerContextSectionTitle" xml:space="preserve">
     <value>Kundenkontext</value>
   </data>
@@ -351,6 +354,9 @@
   </data>
   <data name="ProfileCustomerNoInteractions" xml:space="preserve">
     <value>Es wurden noch keine CRM-Interaktionen erfasst.</value>
+  </data>
+  <data name="ProfileViewCustomerContextButton" xml:space="preserve">
+    <value>Kundendetails öffnen</value>
   </data>
   <data name="ChangePasswordTitle" xml:space="preserve">
     <value>Passwort ändern</value>
@@ -415,8 +421,131 @@
   <data name="SettingsOrdersAndInvoicesButton" xml:space="preserve">
     <value>Bestellungen &amp; Rechnungen</value>
   </data>
+  <data name="SettingsPreferencesButton" xml:space="preserve">
+    <value>Datenschutz &amp; Präferenzen</value>
+  </data>
   <data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Passwort ändern</value>
+  </data>
+  <data name="MemberPreferencesTitle" xml:space="preserve">
+    <value>Datenschutz &amp; Präferenzen</value>
+  </data>
+  <data name="MemberPreferencesSubtitle" xml:space="preserve">
+    <value>Verwalten Sie Ihre serverseitig gespeicherten Kommunikations- und Analysepräferenzen.</value>
+  </data>
+  <data name="MemberPreferencesRefreshButton" xml:space="preserve">
+    <value>Präferenzen aktualisieren</value>
+  </data>
+  <data name="MemberPreferencesMarketingConsentLabel" xml:space="preserve">
+    <value>Marketingkommunikation erlauben</value>
+  </data>
+  <data name="MemberPreferencesEmailLabel" xml:space="preserve">
+    <value>Werbliche E-Mails erlauben</value>
+  </data>
+  <data name="MemberPreferencesSmsLabel" xml:space="preserve">
+    <value>Werbliche SMS erlauben</value>
+  </data>
+  <data name="MemberPreferencesWhatsAppLabel" xml:space="preserve">
+    <value>Werbliche WhatsApp-Nachrichten erlauben</value>
+  </data>
+  <data name="MemberPreferencesPromotionalPushLabel" xml:space="preserve">
+    <value>Werbliche Push-Benachrichtigungen erlauben</value>
+  </data>
+  <data name="MemberPreferencesAnalyticsLabel" xml:space="preserve">
+    <value>Optionale Analyse erlauben</value>
+  </data>
+  <data name="MemberPreferencesTermsAcceptedFormat" xml:space="preserve">
+    <value>Bedingungen akzeptiert am: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberPreferencesLoadFailed" xml:space="preserve">
+    <value>Datenschutzpräferenzen konnten nicht geladen werden.</value>
+  </data>
+  <data name="MemberPreferencesSaveFailed" xml:space="preserve">
+    <value>Datenschutzpräferenzen konnten derzeit nicht gespeichert werden.</value>
+  </data>
+  <data name="MemberPreferencesSaved" xml:space="preserve">
+    <value>Datenschutzpräferenzen wurden erfolgreich aktualisiert.</value>
+  </data>
+  <data name="MemberPreferencesSaveButton" xml:space="preserve">
+    <value>Präferenzen speichern</value>
+  </data>
+  <data name="MemberCustomerContextTitle" xml:space="preserve">
+    <value>Kundendetails</value>
+  </data>
+  <data name="MemberCustomerContextSubtitle" xml:space="preserve">
+    <value>Prüfen Sie Ihr verknüpftes CRM-Profil, Segmente, Einwilligungsverlauf und letzte Interaktionen.</value>
+  </data>
+  <data name="MemberCustomerContextRefreshButton" xml:space="preserve">
+    <value>Kundendetails aktualisieren</value>
+  </data>
+  <data name="MemberCustomerContextEmpty" xml:space="preserve">
+    <value>Für dieses Konto ist noch kein verknüpfter CRM-Kundenkontext verfügbar.</value>
+  </data>
+  <data name="MemberCustomerContextSummarySectionTitle" xml:space="preserve">
+    <value>Kundenzusammenfassung</value>
+  </data>
+  <data name="MemberCustomerContextSegmentsSectionTitle" xml:space="preserve">
+    <value>Segmente</value>
+  </data>
+  <data name="MemberCustomerContextConsentsSectionTitle" xml:space="preserve">
+    <value>Einwilligungsverlauf</value>
+  </data>
+  <data name="MemberCustomerContextInteractionsSectionTitle" xml:space="preserve">
+    <value>Letzte Interaktionen</value>
+  </data>
+  <data name="MemberCustomerContextEmailFormat" xml:space="preserve">
+    <value>E-Mail: {0}</value>
+  </data>
+  <data name="MemberCustomerContextPhoneFormat" xml:space="preserve">
+    <value>Telefon: {0}</value>
+  </data>
+  <data name="MemberCustomerContextCompanyFormat" xml:space="preserve">
+    <value>Firma: {0}</value>
+  </data>
+  <data name="MemberCustomerContextNotesFormat" xml:space="preserve">
+    <value>Notizen: {0}</value>
+  </data>
+  <data name="MemberCustomerContextCreatedAtFormat" xml:space="preserve">
+    <value>Kunde seit: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextLastInteractionFormat" xml:space="preserve">
+    <value>Letzte Interaktion: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionCountFormat" xml:space="preserve">
+    <value>Erfasste Interaktionen: {0}</value>
+  </data>
+  <data name="MemberCustomerContextNoSegments" xml:space="preserve">
+    <value>Derzeit sind keine CRM-Segmente verknüpft.</value>
+  </data>
+  <data name="MemberCustomerContextNoConsents" xml:space="preserve">
+    <value>Noch kein Einwilligungsverlauf verfügbar.</value>
+  </data>
+  <data name="MemberCustomerContextNoInteractions" xml:space="preserve">
+    <value>Noch keine CRM-Interaktionen verfügbar.</value>
+  </data>
+  <data name="MemberCustomerContextLoadFailed" xml:space="preserve">
+    <value>Kundendetails konnten derzeit nicht geladen werden.</value>
+  </data>
+  <data name="MemberCustomerContextConsentStatusGranted" xml:space="preserve">
+    <value>Erteilt</value>
+  </data>
+  <data name="MemberCustomerContextConsentStatusRevoked" xml:space="preserve">
+    <value>Widerrufen</value>
+  </data>
+  <data name="MemberCustomerContextConsentGrantedAtFormat" xml:space="preserve">
+    <value>Erteilt am: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextConsentRevokedAtFormat" xml:space="preserve">
+    <value>Widerrufen am: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionTypeChannelFormat" xml:space="preserve">
+    <value>{0} über {1}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionSubjectFormat" xml:space="preserve">
+    <value>Betreff: {0}</value>
+  </data>
+  <data name="MemberCustomerContextInteractionCreatedAtFormat" xml:space="preserve">
+    <value>Erstellt am: {0:yyyy-MM-dd HH:mm}</value>
   </data>
   <data name="MemberCommerceTitle" xml:space="preserve">
     <value>Bestellungen &amp; Rechnungen</value>
@@ -981,18 +1110,6 @@
   </data>
   <data name="RegisterPrivacyAcknowledgementRequired" xml:space="preserve">
     <value>Bitte bestätigen Sie die Datenschutzhinweise, bevor Sie Ihr Konto erstellen.</value>
-  </data>
-  <data name="OptionalPrivacyChoicesTitle" xml:space="preserve">
-    <value>Optionale Datenschutzeinstellungen</value>
-  </data>
-  <data name="OptionalPrivacyChoicesPlaceholderNote" xml:space="preserve">
-    <value>Diese optionalen Einstellungen bleiben von den verpflichtenden rechtlichen Bestätigungen getrennt und werden lokal gespeichert, bis die endgültigen Backend-Datenschutzeinstellungen verfügbar sind.</value>
-  </data>
-  <data name="OptionalPromotionalPushLabel" xml:space="preserve">
-    <value>Werbliche Push-Benachrichtigungen erlauben (optional)</value>
-  </data>
-  <data name="OptionalAnalyticsLabel" xml:space="preserve">
-    <value>Optionale Analyse- und Tracking-Funktionen erlauben (optional)</value>
   </data>
   <data name="AccountDeletionTitle" xml:space="preserve">
     <value>Konto löschen</value>

@@ -88,35 +88,6 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="{x:Static res:AppResources.OptionalPrivacyChoicesTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-
-                    <Label Text="{x:Static res:AppResources.OptionalPrivacyChoicesPlaceholderNote}"
-                           FontSize="13"
-                           LineBreakMode="WordWrap"
-                           Opacity="0.85" />
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="{x:Static res:AppResources.OptionalPromotionalPushLabel}"
-                               VerticalOptions="Center"
-                               LineBreakMode="WordWrap" />
-                        <Switch Grid.Column="1"
-                                IsToggled="{Binding AllowPromotionalPushNotifications}" />
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Label Text="{x:Static res:AppResources.OptionalAnalyticsLabel}"
-                               VerticalOptions="Center"
-                               LineBreakMode="WordWrap" />
-                        <Switch Grid.Column="1"
-                                IsToggled="{Binding AllowOptionalAnalyticsTracking}" />
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
-
             <Button Text="{x:Static res:AppResources.LegalHubTitle}"
                     BackgroundColor="Transparent"
                     TextColor="{StaticResource BrandGold500}"

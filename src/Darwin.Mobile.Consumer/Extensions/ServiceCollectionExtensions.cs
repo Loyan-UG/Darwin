@@ -69,6 +69,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProfileViewModel>();
         services.AddTransient<MemberAddressesViewModel>();
         services.AddTransient<MemberCommerceViewModel>();
+        services.AddTransient<MemberPreferencesViewModel>();
+        services.AddTransient<MemberCustomerContextViewModel>();
         //services.AddTransient<SettingsViewModel>();
         services.AddTransient<ChangePasswordViewModel>();
         services.AddTransient<BusinessDetailViewModel>();
@@ -88,6 +90,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProfilePage>();
         services.AddTransient<MemberAddressesPage>();
         services.AddTransient<MemberCommercePage>();
+        services.AddTransient<MemberPreferencesPage>();
+        services.AddTransient<MemberCustomerContextPage>();
         services.AddTransient<RegisterPage>();
         services.AddTransient<ForgotPasswordPage>();
         services.AddTransient<ResetPasswordPage>();

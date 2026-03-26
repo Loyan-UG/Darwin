@@ -7,7 +7,6 @@ using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Legal;
-using Darwin.Mobile.Shared.Services.Privacy;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
@@ -19,14 +18,13 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 /// Legal/compliance rules implemented here:
 /// - Account creation is blocked until the user accepts the consumer terms.
 /// - Account creation is blocked until the user acknowledges the privacy notice.
-/// - Optional privacy-related choices remain separate from the required legal acknowledgements and default to off.
+/// - Backend-backed privacy and communication preferences are managed after account creation in the profile area.
 /// </remarks>
 public sealed class RegisterViewModel : BaseViewModel
 {
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly ILegalLinkService _legalLinkService;
-    private readonly IOptionalPrivacyPreferencesStore _optionalPrivacyPreferencesStore;
 
     private string _firstName = string.Empty;
     private string _lastName = string.Empty;
@@ -35,23 +33,15 @@ public sealed class RegisterViewModel : BaseViewModel
     private string _confirmPassword = string.Empty;
     private bool _acceptConsumerTerms;
     private bool _acknowledgePrivacyNotice;
-    private bool _allowPromotionalPushNotifications;
-    private bool _allowOptionalAnalyticsTracking;
 
     public RegisterViewModel(
         IAuthService authService,
         IAppRootNavigator appRootNavigator,
-        ILegalLinkService legalLinkService,
-        IOptionalPrivacyPreferencesStore optionalPrivacyPreferencesStore)
+        ILegalLinkService legalLinkService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _legalLinkService = legalLinkService ?? throw new ArgumentNullException(nameof(legalLinkService));
-        _optionalPrivacyPreferencesStore = optionalPrivacyPreferencesStore ?? throw new ArgumentNullException(nameof(optionalPrivacyPreferencesStore));
-
-        var preferences = _optionalPrivacyPreferencesStore.GetCurrent();
-        _allowPromotionalPushNotifications = preferences.AllowPromotionalPushNotifications;
-        _allowOptionalAnalyticsTracking = preferences.AllowOptionalAnalyticsTracking;
 
         RegisterCommand = new AsyncCommand(RegisterAsync, CanRegister);
         OpenTermsCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.ConsumerTerms), () => !IsBusy);
@@ -129,36 +119,6 @@ public sealed class RegisterViewModel : BaseViewModel
             if (SetProperty(ref _acknowledgePrivacyNotice, value))
             {
                 RegisterCommand.RaiseCanExecuteChanged();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the user opted in to promotional push notifications.
-    /// </summary>
-    public bool AllowPromotionalPushNotifications
-    {
-        get => _allowPromotionalPushNotifications;
-        set
-        {
-            if (SetProperty(ref _allowPromotionalPushNotifications, value))
-            {
-                SaveOptionalPrivacyPreferences();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the user opted in to optional analytics/tracking.
-    /// </summary>
-    public bool AllowOptionalAnalyticsTracking
-    {
-        get => _allowOptionalAnalyticsTracking;
-        set
-        {
-            if (SetProperty(ref _allowOptionalAnalyticsTracking, value))
-            {
-                SaveOptionalPrivacyPreferences();
             }
         }
     }
@@ -294,15 +254,6 @@ public sealed class RegisterViewModel : BaseViewModel
         {
             RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
         }
-    }
-
-    private void SaveOptionalPrivacyPreferences()
-    {
-        _optionalPrivacyPreferencesStore.Save(new OptionalPrivacyPreferences
-        {
-            AllowPromotionalPushNotifications = AllowPromotionalPushNotifications,
-            AllowOptionalAnalyticsTracking = AllowOptionalAnalyticsTracking
-        });
     }
 
     /// <summary>

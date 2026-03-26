@@ -176,5 +176,8 @@ The immediate direction is:
 - Completed: surface canonical member address-book and linked CRM customer-context summaries directly in the consumer profile screen so profile UI uses the new profile service projections instead of ad-hoc follow-up work.
 - Completed: add a dedicated consumer member-address-book screen for create/update/delete/default flows on top of the canonical profile address endpoints instead of keeping addresses read-only in profile summary.
 - Completed: add a consumer `Orders & Invoices` screen that consumes the canonical member-commerce routes for history, detail, payment retry, and document copy flows instead of leaving those APIs unused in UI.
+- Completed: replace the consumer profile's local optional-privacy placeholder section with a canonical member preferences screen backed by WebApi profile preference endpoints.
+- Completed: add a dedicated consumer CRM customer-details screen so linked profile, segments, consent history, and recent interactions are no longer compressed into a profile-summary-only view.
+- Completed: remove the obsolete local optional-privacy registration toggles now that backend-backed member preferences are managed after sign-up in profile.
 - Task: continue updating `Darwin.WebApi`, `Darwin.Contracts`, and MAUI apps wherever future domain or route changes affect mobile consumers.
 - Task: keep loyalty behavior backward compatible unless an explicit contract version change is introduced.

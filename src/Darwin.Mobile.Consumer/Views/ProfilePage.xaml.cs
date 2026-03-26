@@ -43,6 +43,22 @@ public partial class ProfilePage : ContentPage
         await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.MemberAddresses));
     }
 
+    /// <summary>
+    /// Opens the member preferences management screen from the profile page.
+    /// </summary>
+    private async void OnManagePreferencesClicked(object? sender, EventArgs e)
+    {
+        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.MemberPreferences));
+    }
+
+    /// <summary>
+    /// Opens the member CRM customer-context details screen from the profile page.
+    /// </summary>
+    private async void OnViewCustomerContextClicked(object? sender, EventArgs e)
+    {
+        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.MemberCustomerContext));
+    }
+
     private static async Task NavigateSafelyAsync(string route)
     {
         if (Shell.Current is null || string.IsNullOrWhiteSpace(route))
