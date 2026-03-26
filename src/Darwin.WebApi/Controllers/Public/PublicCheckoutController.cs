@@ -6,7 +6,9 @@ using Darwin.Contracts.Orders;
 using Darwin.Contracts.Shipping;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace Darwin.WebApi.Controllers.Public;
 
@@ -21,7 +23,9 @@ public sealed class PublicCheckoutController : ApiControllerBase
     private readonly CreateStorefrontCheckoutIntentHandler _createStorefrontCheckoutIntentHandler;
     private readonly PlaceOrderFromCartHandler _placeOrderFromCartHandler;
     private readonly CreateStorefrontPaymentIntentHandler _createStorefrontPaymentIntentHandler;
+    private readonly CompleteStorefrontPaymentHandler _completeStorefrontPaymentHandler;
     private readonly GetStorefrontOrderConfirmationHandler _getStorefrontOrderConfirmationHandler;
+    private readonly IConfiguration _configuration;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicCheckoutController"/> class.
@@ -30,12 +34,16 @@ public sealed class PublicCheckoutController : ApiControllerBase
         CreateStorefrontCheckoutIntentHandler createStorefrontCheckoutIntentHandler,
         PlaceOrderFromCartHandler placeOrderFromCartHandler,
         CreateStorefrontPaymentIntentHandler createStorefrontPaymentIntentHandler,
-        GetStorefrontOrderConfirmationHandler getStorefrontOrderConfirmationHandler)
+        CompleteStorefrontPaymentHandler completeStorefrontPaymentHandler,
+        GetStorefrontOrderConfirmationHandler getStorefrontOrderConfirmationHandler,
+        IConfiguration configuration)
     {
         _createStorefrontCheckoutIntentHandler = createStorefrontCheckoutIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontCheckoutIntentHandler));
         _placeOrderFromCartHandler = placeOrderFromCartHandler ?? throw new ArgumentNullException(nameof(placeOrderFromCartHandler));
         _createStorefrontPaymentIntentHandler = createStorefrontPaymentIntentHandler ?? throw new ArgumentNullException(nameof(createStorefrontPaymentIntentHandler));
+        _completeStorefrontPaymentHandler = completeStorefrontPaymentHandler ?? throw new ArgumentNullException(nameof(completeStorefrontPaymentHandler));
         _getStorefrontOrderConfirmationHandler = getStorefrontOrderConfirmationHandler ?? throw new ArgumentNullException(nameof(getStorefrontOrderConfirmationHandler));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     /// <summary>
@@ -192,6 +200,10 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 Provider = string.IsNullOrWhiteSpace(request?.Provider) ? "DarwinCheckout" : request.Provider.Trim()
             }, ct).ConfigureAwait(false);
 
+            var returnUrl = BuildFrontOfficeUrl(orderId, request?.OrderNumber, cancelled: false);
+            var cancelUrl = BuildFrontOfficeUrl(orderId, request?.OrderNumber, cancelled: true);
+            var checkoutUrl = BuildGatewayUrl(result, returnUrl, cancelUrl);
+
             return Ok(new CreateStorefrontPaymentIntentResponse
             {
                 OrderId = result.OrderId,
@@ -201,6 +213,9 @@ public sealed class PublicCheckoutController : ApiControllerBase
                 AmountMinor = result.AmountMinor,
                 Currency = result.Currency,
                 Status = result.Status.ToString(),
+                CheckoutUrl = checkoutUrl,
+                ReturnUrl = returnUrl,
+                CancelUrl = cancelUrl,
                 ExpiresAtUtc = result.ExpiresAtUtc
             });
         }
@@ -211,6 +226,64 @@ public sealed class PublicCheckoutController : ApiControllerBase
         catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
         {
             return BadRequestProblem("Payment intent could not be created.", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Finalizes a storefront payment after the shopper returns from the hosted checkout or PSP.
+    /// </summary>
+    [HttpPost("orders/{orderId:guid}/payments/{paymentId:guid}/complete")]
+    [HttpPost("/api/v1/checkout/orders/{orderId:guid}/payments/{paymentId:guid}/complete")]
+    [ProducesResponseType(typeof(CompleteStorefrontPaymentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CompletePaymentAsync(Guid orderId, Guid paymentId, [FromBody] CompleteStorefrontPaymentRequest? request, CancellationToken ct = default)
+    {
+        if (orderId == Guid.Empty || paymentId == Guid.Empty)
+        {
+            return BadRequestProblem("OrderId and PaymentId must not be empty.");
+        }
+
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (!Enum.TryParse<StorefrontPaymentOutcome>(request.Outcome, ignoreCase: true, out var outcome))
+        {
+            return BadRequestProblem("Outcome must be one of: Succeeded, Cancelled, Failed.");
+        }
+
+        try
+        {
+            var result = await _completeStorefrontPaymentHandler.HandleAsync(new CompleteStorefrontPaymentDto
+            {
+                OrderId = orderId,
+                PaymentId = paymentId,
+                UserId = GetCurrentUserId(User),
+                OrderNumber = request.OrderNumber,
+                ProviderReference = request.ProviderReference,
+                Outcome = outcome,
+                FailureReason = request.FailureReason
+            }, ct).ConfigureAwait(false);
+
+            return Ok(new CompleteStorefrontPaymentResponse
+            {
+                OrderId = result.OrderId,
+                PaymentId = result.PaymentId,
+                OrderStatus = result.OrderStatus.ToString(),
+                PaymentStatus = result.PaymentStatus.ToString(),
+                PaidAtUtc = result.PaidAtUtc
+            });
+        }
+        catch (InvalidOperationException ex) when (string.Equals(ex.Message, "Order not found.", StringComparison.Ordinal) ||
+                                                   string.Equals(ex.Message, "Payment not found for the order.", StringComparison.Ordinal))
+        {
+            return NotFoundProblem(ex.Message);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException || ex is FluentValidation.ValidationException)
+        {
+            return BadRequestProblem("Payment completion could not be applied.", ex.Message);
         }
     }
 
@@ -306,4 +379,54 @@ public sealed class PublicCheckoutController : ApiControllerBase
             Carrier = dto.Carrier,
             Service = dto.Service
         };
+
+    private string BuildFrontOfficeUrl(Guid orderId, string? orderNumber, bool cancelled)
+    {
+        var baseUrl = _configuration["StorefrontCheckout:FrontOfficeBaseUrl"];
+        if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out var frontOfficeBaseUri))
+        {
+            throw new InvalidOperationException("Storefront front-office base URL is not configured.");
+        }
+
+        var queryBuilder = new QueryBuilder();
+        if (!string.IsNullOrWhiteSpace(orderNumber))
+        {
+            queryBuilder.Add("orderNumber", orderNumber.Trim());
+        }
+
+        if (cancelled)
+        {
+            queryBuilder.Add("cancelled", "true");
+        }
+
+        return new UriBuilder(frontOfficeBaseUri)
+        {
+            Path = $"/checkout/orders/{orderId:D}/confirmation",
+            Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
+        }.Uri.AbsoluteUri;
+    }
+
+    private string BuildGatewayUrl(StorefrontPaymentIntentResultDto result, string returnUrl, string cancelUrl)
+    {
+        var gatewayBaseUrl = _configuration["StorefrontCheckout:PaymentGatewayBaseUrl"];
+        if (string.IsNullOrWhiteSpace(gatewayBaseUrl) || !Uri.TryCreate(gatewayBaseUrl, UriKind.Absolute, out var gatewayBaseUri))
+        {
+            throw new InvalidOperationException("Storefront payment gateway base URL is not configured.");
+        }
+
+        var queryBuilder = new QueryBuilder
+        {
+            { "orderId", result.OrderId.ToString("D") },
+            { "paymentId", result.PaymentId.ToString("D") },
+            { "provider", result.Provider },
+            { "sessionToken", result.ProviderReference },
+            { "returnUrl", returnUrl },
+            { "cancelUrl", cancelUrl }
+        };
+
+        return new UriBuilder(gatewayBaseUri)
+        {
+            Query = queryBuilder.ToQueryString().Value?.TrimStart('?')
+        }.Uri.AbsoluteUri;
+    }
 }

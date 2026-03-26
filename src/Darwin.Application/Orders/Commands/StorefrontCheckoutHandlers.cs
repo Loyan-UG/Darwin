@@ -106,3 +106,95 @@ public sealed class CreateStorefrontPaymentIntentHandler
         };
     }
 }
+
+/// <summary>
+/// Finalizes a storefront payment attempt after the shopper returns from the PSP or hosted checkout.
+/// </summary>
+public sealed class CompleteStorefrontPaymentHandler
+{
+    private readonly IAppDbContext _db;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CompleteStorefrontPaymentHandler"/> class.
+    /// </summary>
+    public CompleteStorefrontPaymentHandler(IAppDbContext db)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+    }
+
+    /// <summary>
+    /// Applies the reported storefront payment outcome to the payment and order aggregates.
+    /// </summary>
+    public async Task<CompleteStorefrontPaymentResultDto> HandleAsync(CompleteStorefrontPaymentDto dto, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        if (dto.OrderId == Guid.Empty || dto.PaymentId == Guid.Empty)
+        {
+            throw new InvalidOperationException("OrderId and PaymentId are required.");
+        }
+
+        var order = await _db.Set<Order>()
+            .Include(x => x.Payments)
+            .FirstOrDefaultAsync(x => x.Id == dto.OrderId, ct)
+            .ConfigureAwait(false)
+            ?? throw new InvalidOperationException("Order not found.");
+
+        if (!Darwin.Application.Orders.Queries.GetStorefrontOrderConfirmationHandler.CanAccessOrder(order.UserId, order.OrderNumber, dto.UserId, dto.OrderNumber))
+        {
+            throw new InvalidOperationException("Order confirmation context is invalid.");
+        }
+
+        var payment = order.Payments.FirstOrDefault(x => x.Id == dto.PaymentId && !x.IsDeleted);
+        if (payment is null)
+        {
+            throw new InvalidOperationException("Payment not found for the order.");
+        }
+
+        if (payment.Status is PaymentStatus.Captured or PaymentStatus.Completed or PaymentStatus.Refunded)
+        {
+            throw new InvalidOperationException("Payment is already finalized.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(dto.ProviderReference))
+        {
+            payment.ProviderTransactionRef = dto.ProviderReference.Trim();
+        }
+
+        switch (dto.Outcome)
+        {
+            case StorefrontPaymentOutcome.Succeeded:
+                payment.Status = PaymentStatus.Captured;
+                payment.PaidAtUtc = DateTime.UtcNow;
+                if (order.Status is OrderStatus.Created or OrderStatus.Confirmed)
+                {
+                    order.Status = OrderStatus.Paid;
+                }
+                payment.FailureReason = null;
+                break;
+
+            case StorefrontPaymentOutcome.Cancelled:
+                payment.Status = PaymentStatus.Voided;
+                payment.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason) ? "Checkout was cancelled by the shopper." : dto.FailureReason.Trim();
+                break;
+
+            case StorefrontPaymentOutcome.Failed:
+                payment.Status = PaymentStatus.Failed;
+                payment.FailureReason = string.IsNullOrWhiteSpace(dto.FailureReason) ? "Checkout failed at the payment provider." : dto.FailureReason.Trim();
+                break;
+
+            default:
+                throw new InvalidOperationException("Unsupported storefront payment outcome.");
+        }
+
+        await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        return new CompleteStorefrontPaymentResultDto
+        {
+            OrderId = order.Id,
+            PaymentId = payment.Id,
+            OrderStatus = order.Status,
+            PaymentStatus = payment.Status,
+            PaidAtUtc = payment.PaidAtUtc
+        };
+    }
+}

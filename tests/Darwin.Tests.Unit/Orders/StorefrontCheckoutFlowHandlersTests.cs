@@ -182,6 +182,121 @@ public sealed class StorefrontCheckoutFlowHandlersTests
     }
 
     [Fact]
+    public async Task CompleteStorefrontPayment_Should_MarkPaymentCaptured_AndOrderPaid()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20260326-00003",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "DarwinCheckout",
+                    ProviderTransactionRef = "chk_pending",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(db);
+
+        var result = await handler.HandleAsync(new CompleteStorefrontPaymentDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            OrderNumber = "D-20260326-00003",
+            ProviderReference = "psp_txn_1001",
+            Outcome = StorefrontPaymentOutcome.Succeeded
+        }, TestContext.Current.CancellationToken);
+
+        result.OrderStatus.Should().Be(OrderStatus.Paid);
+        result.PaymentStatus.Should().Be(PaymentStatus.Captured);
+        result.PaidAtUtc.Should().NotBeNull();
+
+        var persistedPayment = await db.Set<Payment>()
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        persistedPayment.Status.Should().Be(PaymentStatus.Captured);
+        persistedPayment.ProviderTransactionRef.Should().Be("psp_txn_1001");
+
+        var persistedOrder = await db.Set<Order>()
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == orderId, TestContext.Current.CancellationToken);
+        persistedOrder.Status.Should().Be(OrderStatus.Paid);
+    }
+
+    [Fact]
+    public async Task CompleteStorefrontPayment_Should_VoidPayment_WhenShopperCancels()
+    {
+        await using var db = StorefrontCheckoutFlowTestDbContext.Create();
+        var orderId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+
+        db.Set<Order>().Add(new Order
+        {
+            Id = orderId,
+            OrderNumber = "D-20260326-00004",
+            Currency = "EUR",
+            Status = OrderStatus.Created,
+            GrandTotalGrossMinor = 2590,
+            BillingAddressJson = "{}",
+            ShippingAddressJson = "{}",
+            Payments =
+            [
+                new Payment
+                {
+                    Id = paymentId,
+                    OrderId = orderId,
+                    Provider = "DarwinCheckout",
+                    ProviderTransactionRef = "chk_pending_cancel",
+                    AmountMinor = 2590,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                }
+            ]
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CompleteStorefrontPaymentHandler(db);
+
+        var result = await handler.HandleAsync(new CompleteStorefrontPaymentDto
+        {
+            OrderId = orderId,
+            PaymentId = paymentId,
+            OrderNumber = "D-20260326-00004",
+            Outcome = StorefrontPaymentOutcome.Cancelled,
+            FailureReason = "Customer closed the checkout window."
+        }, TestContext.Current.CancellationToken);
+
+        result.OrderStatus.Should().Be(OrderStatus.Created);
+        result.PaymentStatus.Should().Be(PaymentStatus.Voided);
+        result.PaidAtUtc.Should().BeNull();
+
+        var persistedPayment = await db.Set<Payment>()
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        persistedPayment.Status.Should().Be(PaymentStatus.Voided);
+        persistedPayment.FailureReason.Should().Be("Customer closed the checkout window.");
+    }
+
+    [Fact]
     public async Task GetStorefrontOrderConfirmation_Should_ReturnNull_ForAnonymousAccess_ToMemberOwnedOrder()
     {
         await using var db = StorefrontCheckoutFlowTestDbContext.Create();

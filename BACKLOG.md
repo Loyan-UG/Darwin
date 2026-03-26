@@ -116,11 +116,12 @@ The immediate direction is:
 - Completed: add initial public storefront checkout order-placement under `api/v1/public/checkout/orders` with the legacy `/api/v1/checkout/orders` alias, including authoritative cart totals, address snapshots, and cart finalization.
 - Completed: add storefront checkout-intent preview under `api/v1/public/checkout/intent`, including authoritative cart totals, derived shipment mass, validated shipping options, and selected shipping-rate preview.
 - Completed: add storefront payment-intent initiation under `api/v1/public/checkout/orders/{orderId}/payment-intent`, reusing active pending intents where possible instead of creating duplicate pending payments.
+- Completed: add generic storefront PSP handoff and payment-completion flows under `api/v1/public/checkout/orders/{orderId}/payment-intent` and `api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete`, including hosted-checkout URLs, safe member/anonymous access rules, and payment/order status finalization.
 - Completed: add storefront post-order confirmation under `api/v1/public/checkout/orders/{orderId}/confirmation`, with safe access rules for member-owned versus anonymous orders.
 - Completed: persist the selected checkout shipping method and its display snapshots on `Order` so confirmation, member history, and back-office screens do not depend on mutable shipping-method configuration.
 - Task: deepen public CMS delivery with SEO, structured blocks, and culture fallback rules as storefront requirements expand.
 - Task: deepen public catalog delivery with richer pricing, availability, attribute filtering, and search-oriented projections.
-- Task: deepen storefront cart and checkout delivery with real PSP handoff and post-order payment completion flows on top of the now-implemented shipping-method persistence, intent, order placement, and confirmation path.
+- Task: replace the current generic hosted-checkout handoff with provider-specific PSP integration, callback/webhook verification, and reconciliation-safe payment completion.
 
 ### Epic: Member API
 
@@ -129,9 +130,10 @@ The immediate direction is:
 - Completed: add initial member invoice-history endpoints under `api/v1/member/invoices` with legacy `/api/v1/invoices/*` aliases for existing clients.
 - Completed: add member profile address-book endpoints under `api/v1/member/profile/addresses` with legacy `/api/v1/profile/me/addresses*` aliases.
 - Completed: add a member-facing linked CRM customer summary endpoint under `api/v1/member/profile/customer`.
+- Completed: add member privacy and communication preference endpoints under `api/v1/member/profile/preferences` with legacy `/api/v1/profile/me/preferences` aliases, plus aligned route/service catalog updates in `Darwin.Mobile.Shared`.
 - Task: document and implement member loyalty projections and account endpoints.
 - Task: deepen member order and invoice APIs with richer storefront-specific document-download and action flows as front-office requirements solidify.
-- Task: extend member profile APIs with customer-preference projections and any additional self-service CRM views that become necessary beyond the now-supported checkout address reuse and confirmation flow.
+- Task: extend member profile APIs with any additional self-service CRM views and richer customer-context projections beyond the now-supported addresses, linked customer summary, and privacy/communication preferences.
 - Task: propagate warehouse-aware order context into future storefront checkout/order APIs where needed.
 
 ### Epic: Admin and integration API

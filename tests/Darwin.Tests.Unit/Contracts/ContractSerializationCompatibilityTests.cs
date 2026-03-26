@@ -487,6 +487,66 @@ public sealed class ContractSerializationCompatibilityTests
     }
 
     /// <summary>
+    ///     Verifies that member preference contracts serialize profile-facing privacy and
+    ///     communication fields with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void MemberPreferences_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new MemberPreferences
+        {
+            RowVersion = [1, 2, 3],
+            MarketingConsent = true,
+            AllowEmailMarketing = true,
+            AllowSmsMarketing = false,
+            AllowWhatsAppMarketing = true,
+            AllowPromotionalPushNotifications = true,
+            AllowOptionalAnalyticsTracking = false,
+            AcceptsTermsAtUtc = new DateTime(2030, 1, 1, 10, 15, 0, DateTimeKind.Utc)
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"rowVersion\"");
+        json.Should().Contain("\"marketingConsent\"");
+        json.Should().Contain("\"allowEmailMarketing\"");
+        json.Should().Contain("\"allowSmsMarketing\"");
+        json.Should().Contain("\"allowWhatsAppMarketing\"");
+        json.Should().Contain("\"allowPromotionalPushNotifications\"");
+        json.Should().Contain("\"allowOptionalAnalyticsTracking\"");
+        json.Should().Contain("\"acceptsTermsAtUtc\"");
+    }
+
+    /// <summary>
+    ///     Verifies that member preference update contracts serialize mutation-facing fields
+    ///     with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void UpdateMemberPreferencesRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new UpdateMemberPreferencesRequest
+        {
+            RowVersion = [4, 3, 2, 1],
+            MarketingConsent = true,
+            AllowEmailMarketing = true,
+            AllowSmsMarketing = true,
+            AllowWhatsAppMarketing = false,
+            AllowPromotionalPushNotifications = true,
+            AllowOptionalAnalyticsTracking = true
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"rowVersion\"");
+        json.Should().Contain("\"marketingConsent\"");
+        json.Should().Contain("\"allowEmailMarketing\"");
+        json.Should().Contain("\"allowSmsMarketing\"");
+        json.Should().Contain("\"allowWhatsAppMarketing\"");
+        json.Should().Contain("\"allowPromotionalPushNotifications\"");
+        json.Should().Contain("\"allowOptionalAnalyticsTracking\"");
+    }
+
+    /// <summary>
     ///     Verifies that linked CRM customer profile contracts serialize member-facing
     ///     CRM linkage fields with stable camelCase property names.
     /// </summary>
@@ -637,16 +697,71 @@ public sealed class ContractSerializationCompatibilityTests
             AmountMinor = 4160,
             Currency = "EUR",
             Status = "Pending",
+            CheckoutUrl = "https://payments.example.com/checkout?paymentId=11111111-2222-3333-4444-555555555555",
+            ReturnUrl = "https://storefront.example.com/checkout/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/confirmation",
+            CancelUrl = "https://storefront.example.com/checkout/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/confirmation?cancelled=true",
             ExpiresAtUtc = new DateTime(2030, 1, 1, 12, 30, 0, DateTimeKind.Utc)
         };
 
         var json = JsonSerializer.Serialize(dto, JsonOptions);
 
+        json.Should().Contain("\"orderId\"");
         json.Should().Contain("\"paymentId\"");
-        json.Should().Contain("\"provider\"");        
+        json.Should().Contain("\"provider\"");
         json.Should().Contain("\"providerReference\"");
         json.Should().Contain("\"amountMinor\"");
+        json.Should().Contain("\"checkoutUrl\"");
+        json.Should().Contain("\"returnUrl\"");
+        json.Should().Contain("\"cancelUrl\"");
         json.Should().Contain("\"expiresAtUtc\"");
+    }
+
+    /// <summary>
+    ///     Verifies that storefront payment-completion request contracts serialize completion
+    ///     fields with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void CompleteStorefrontPaymentRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new CompleteStorefrontPaymentRequest
+        {
+            OrderNumber = "D-20300101-00001",
+            ProviderReference = "psp_txn_123",
+            Outcome = "Succeeded",
+            FailureReason = null
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"orderNumber\"");
+        json.Should().Contain("\"providerReference\"");
+        json.Should().Contain("\"outcome\"");
+        json.Should().Contain("\"failureReason\"");
+    }
+
+    /// <summary>
+    ///     Verifies that storefront payment-completion response contracts serialize result
+    ///     fields with stable camelCase names.
+    /// </summary>
+    [Fact]
+    public void CompleteStorefrontPaymentResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new CompleteStorefrontPaymentResponse
+        {
+            OrderId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            PaymentId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            OrderStatus = "Paid",
+            PaymentStatus = "Captured",
+            PaidAtUtc = new DateTime(2030, 1, 1, 12, 45, 0, DateTimeKind.Utc)
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"orderId\"");
+        json.Should().Contain("\"paymentId\"");
+        json.Should().Contain("\"orderStatus\"");
+        json.Should().Contain("\"paymentStatus\"");
+        json.Should().Contain("\"paidAtUtc\"");
     }
 
     /// <summary>

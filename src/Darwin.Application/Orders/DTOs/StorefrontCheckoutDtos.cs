@@ -135,6 +135,54 @@ public sealed class StorefrontPaymentIntentResultDto
 }
 
 /// <summary>
+/// Input used to finalize a storefront payment attempt after the shopper returns from the PSP.
+/// </summary>
+public sealed class CompleteStorefrontPaymentDto
+{
+    /// <summary>Gets or sets the order identifier.</summary>
+    public Guid OrderId { get; set; }
+
+    /// <summary>Gets or sets the payment identifier.</summary>
+    public Guid PaymentId { get; set; }
+
+    /// <summary>Gets or sets the optional current member identifier.</summary>
+    public Guid? UserId { get; set; }
+
+    /// <summary>Gets or sets the order number required for anonymous storefront completion flows.</summary>
+    public string? OrderNumber { get; set; }
+
+    /// <summary>Gets or sets the provider reference returned by the PSP.</summary>
+    public string? ProviderReference { get; set; }
+
+    /// <summary>Gets or sets the requested payment outcome.</summary>
+    public StorefrontPaymentOutcome Outcome { get; set; } = StorefrontPaymentOutcome.Succeeded;
+
+    /// <summary>Gets or sets the optional failure or cancellation reason.</summary>
+    public string? FailureReason { get; set; }
+}
+
+/// <summary>
+/// Result returned after a storefront payment attempt is finalized.
+/// </summary>
+public sealed class CompleteStorefrontPaymentResultDto
+{
+    /// <summary>Gets or sets the order identifier.</summary>
+    public Guid OrderId { get; set; }
+
+    /// <summary>Gets or sets the payment identifier.</summary>
+    public Guid PaymentId { get; set; }
+
+    /// <summary>Gets or sets the resulting order status.</summary>
+    public OrderStatus OrderStatus { get; set; } = OrderStatus.Created;
+
+    /// <summary>Gets or sets the resulting payment status.</summary>
+    public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+
+    /// <summary>Gets or sets the UTC timestamp when the payment was captured, if applicable.</summary>
+    public DateTime? PaidAtUtc { get; set; }
+}
+
+/// <summary>
 /// Query input used to resolve a storefront order-confirmation view.
 /// </summary>
 public sealed class GetStorefrontOrderConfirmationDto
@@ -261,4 +309,19 @@ public sealed class StorefrontOrderConfirmationPaymentDto
 
     /// <summary>Gets or sets the paid/captured timestamp in UTC.</summary>
     public DateTime? PaidAtUtc { get; set; }
+}
+
+/// <summary>
+/// Supported high-level storefront payment outcomes reported by the checkout return flow.
+/// </summary>
+public enum StorefrontPaymentOutcome
+{
+    /// <summary>Payment completed successfully.</summary>
+    Succeeded = 0,
+
+    /// <summary>Shopper cancelled before completion.</summary>
+    Cancelled = 1,
+
+    /// <summary>Provider reported a failed payment attempt.</summary>
+    Failed = 2
 }

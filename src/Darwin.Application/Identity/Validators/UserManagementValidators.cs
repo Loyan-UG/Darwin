@@ -19,6 +19,17 @@ namespace Darwin.Application.Identity.Validators
     }
 
     /// <summary>
+    /// Validation rules for <see cref="UpdateMemberPreferencesDto"/>.
+    /// </summary>
+    public sealed class UpdateMemberPreferencesValidator : AbstractValidator<UpdateMemberPreferencesDto>
+    {
+        public UpdateMemberPreferencesValidator()
+        {
+            RuleFor(x => x.RowVersion).NotNull().Must(x => x.Length > 0);
+        }
+    }
+
+    /// <summary>
     /// Validation rules for <see cref="UserChangeEmailDto"/>.
     /// </summary>
     public sealed class UserChangeEmailValidator : AbstractValidator<UserChangeEmailDto>

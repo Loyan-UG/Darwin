@@ -20,13 +20,13 @@ namespace Darwin.Mobile.Shared.Services.Profile
         public ProfileService(IApiClient api) => _api = api ?? throw new ArgumentNullException(nameof(api));
 
         /// <summary>
-        /// Retrieves the current user's profile using GET /api/v1/profile/me.
+        /// Retrieves the current user's profile using the canonical member-profile endpoint.
         /// </summary>
         public Task<CustomerProfile?> GetMeAsync(CancellationToken ct)
             => _api.GetAsync<CustomerProfile>(ApiRoutes.Profile.GetMe, ct);
 
         /// <summary>
-        /// Updates the current user's profile using PUT /api/v1/profile/me.
+        /// Updates the current user's profile using the canonical member-profile endpoint.
         /// The server returns 204 No Content on success; this method maps that to true.
         /// </summary>
         public async Task<Result> UpdateMeAsync(CustomerProfile profile, CancellationToken ct)
@@ -34,6 +34,22 @@ namespace Darwin.Mobile.Shared.Services.Profile
             if (profile is null) throw new ArgumentNullException(nameof(profile));
 
             return await _api.PutNoContentAsync(ApiRoutes.Profile.UpdateMe, profile, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Retrieves the current user's privacy and communication preferences.
+        /// </summary>
+        public Task<MemberPreferences?> GetPreferencesAsync(CancellationToken ct)
+            => _api.GetAsync<MemberPreferences>(ApiRoutes.Profile.GetPreferences, ct);
+
+        /// <summary>
+        /// Updates the current user's privacy and communication preferences using optimistic concurrency.
+        /// </summary>
+        public async Task<Result> UpdatePreferencesAsync(UpdateMemberPreferencesRequest preferences, CancellationToken ct)
+        {
+            if (preferences is null) throw new ArgumentNullException(nameof(preferences));
+
+            return await _api.PutNoContentAsync(ApiRoutes.Profile.UpdatePreferences, preferences, ct).ConfigureAwait(false);
         }
 
         /// <summary>

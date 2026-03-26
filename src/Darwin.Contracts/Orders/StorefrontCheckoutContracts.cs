@@ -179,8 +179,56 @@ public sealed class CreateStorefrontPaymentIntentResponse
     /// <summary>Gets or sets the payment status.</summary>
     public string Status { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the hosted checkout handoff URL.</summary>
+    public string CheckoutUrl { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the front-office return URL.</summary>
+    public string ReturnUrl { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the front-office cancellation URL.</summary>
+    public string CancelUrl { get; set; } = string.Empty;
+
     /// <summary>Gets or sets the intent expiration timestamp.</summary>
     public DateTime ExpiresAtUtc { get; set; }
+}
+
+/// <summary>
+/// Request payload used to finalize a storefront payment after the shopper returns from the PSP.
+/// </summary>
+public sealed class CompleteStorefrontPaymentRequest
+{
+    /// <summary>Gets or sets the order number required for anonymous storefront flows.</summary>
+    public string? OrderNumber { get; set; }
+
+    /// <summary>Gets or sets the optional provider reference returned by the PSP.</summary>
+    public string? ProviderReference { get; set; }
+
+    /// <summary>Gets or sets the reported storefront payment outcome.</summary>
+    public string Outcome { get; set; } = "Succeeded";
+
+    /// <summary>Gets or sets the optional failure or cancellation reason.</summary>
+    public string? FailureReason { get; set; }
+}
+
+/// <summary>
+/// Response payload returned after storefront payment completion has been applied.
+/// </summary>
+public sealed class CompleteStorefrontPaymentResponse
+{
+    /// <summary>Gets or sets the order identifier.</summary>
+    public Guid OrderId { get; set; }
+
+    /// <summary>Gets or sets the payment identifier.</summary>
+    public Guid PaymentId { get; set; }
+
+    /// <summary>Gets or sets the resulting order status.</summary>
+    public string OrderStatus { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the resulting payment status.</summary>
+    public string PaymentStatus { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the UTC paid/captured timestamp.</summary>
+    public DateTime? PaidAtUtc { get; set; }
 }
 
 /// <summary>

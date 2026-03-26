@@ -64,6 +64,7 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("/api/v1/checkout/intent");
         source.Should().Contain("/api/v1/checkout/orders");
         source.Should().Contain("/api/v1/checkout/orders/{orderId:guid}/payment-intent");
+        source.Should().Contain("/api/v1/checkout/orders/{orderId:guid}/payments/{paymentId:guid}/complete");
         source.Should().Contain("/api/v1/checkout/orders/{orderId:guid}/confirmation");
     }
 
@@ -139,6 +140,7 @@ public sealed class WebApiRouteAliasSourceTests
 
         source.Should().Contain("api/v1/member/profile");
         source.Should().Contain("/api/v1/profile/me");
+        source.Should().Contain("/api/v1/profile/me/preferences");
         source.Should().Contain("/api/v1/profile/me/deletion-request");
     }
 

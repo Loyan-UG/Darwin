@@ -140,6 +140,7 @@ These should be documented and expanded as implementation continues:
 - `/api/v1/public/checkout/intent`
 - `/api/v1/public/checkout/orders`
 - `/api/v1/public/checkout/orders/{orderId}/payment-intent`
+- `/api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete`
 - `/api/v1/public/checkout/orders/{orderId}/confirmation`
 
 Current public delivery ownership:
@@ -152,9 +153,18 @@ Current public delivery ownership:
 - public checkout intent: authoritative cart totals, derived shipment mass, and validated shipping options for the current address context
 - public checkout: order placement from the authoritative cart summary with saved member addresses or inline address snapshots and automatic cart finalization
 - public payment intent: pending storefront payment-session creation or reuse for already placed orders so front-office clients can hand off to a PSP without duplicating pending payment rows
+- public PSP handoff: payment-intent responses now include `checkoutUrl`, `returnUrl`, and `cancelUrl` generated from `StorefrontCheckout` configuration so `Darwin.Web` can redirect to a hosted checkout flow without hard-coding URLs
+- public payment completion: `POST /api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete` finalizes the linked payment and order for `Succeeded`, `Cancelled`, or `Failed` outcomes while preserving the same safe access rules used by storefront confirmation
 - public confirmation: safe post-order confirmation delivery for member-owned or anonymous orders without exposing member-owned orders to anonymous callers
 - selected checkout shipping method is now persisted on the `Order` aggregate together with method-name/carrier/service snapshots so storefront confirmation, member order history, and admin views are not coupled to future shipping-method edits
 - legacy `/api/v1/cms/*`, `/api/v1/catalog/*`, `/api/v1/cart*`, `/api/v1/shipping/rates`, `/api/v1/checkout/intent`, `/api/v1/checkout/orders*`, and `/api/v1/businesses/map` aliases remain only for compatibility and should not be used for new development
+
+Current storefront checkout configuration:
+
+- `StorefrontCheckout:FrontOfficeBaseUrl` defines where return/cancel flows land in `Darwin.Web`
+- `StorefrontCheckout:PaymentGatewayBaseUrl` defines the current hosted-checkout handoff base URL
+- development defaults point to `http://localhost:3000` and `http://localhost:3000/mock-checkout`
+- this is intentionally provider-agnostic infrastructure; provider-specific callback/webhook verification still belongs to a later PSP integration slice
 
 ### Required member groups
 
@@ -162,6 +172,7 @@ Current public delivery ownership:
 - `/api/v1/member/orders/*`
 - `/api/v1/member/invoices/*`
 - `/api/v1/member/loyalty/*`
+- `/api/v1/member/profile/preferences`
 - `/api/v1/member/*`
 
 Current loyalty ownership:
@@ -176,8 +187,10 @@ Current member commerce ownership:
 - member invoices: paged invoice history and invoice detail under the member route root
 - member profile addresses: reusable address-book CRUD and default billing/shipping selection under the member profile route root
 - member CRM linkage: current identity-to-customer summary under the member profile route root
+- member preferences: privacy and communication preferences under the member profile route root, including aggregate marketing consent, per-channel delivery flags, and optional analytics tracking
 - storefront checkout is now intentionally allowed to reuse saved member addresses and then fall back to the same order aggregate for member confirmation/history rather than inventing a second order model
 - member profile addresses are intentionally reusable by storefront checkout so signed-in users can place orders from saved addresses without exposing admin-facing address contracts
+- mobile shared route/service catalogs now expose the canonical member-preferences endpoint so future mobile UI work does not need to rediscover route ownership
 - legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
 - mobile shared route constants should prefer the canonical audience-first roots (`public`, `member`, `business`) even when the legacy aliases still exist server-side
 

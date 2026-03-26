@@ -19,7 +19,9 @@ namespace Darwin.WebApi.Controllers.Profile
     public sealed class ProfileController : ApiControllerBase
     {
         private readonly GetCurrentUserProfileHandler _getCurrentUserProfileHandler;
+        private readonly GetCurrentUserPreferencesHandler _getCurrentUserPreferencesHandler;
         private readonly UpdateCurrentUserHandler _updateCurrentUserHandler;
+        private readonly UpdateCurrentUserPreferencesHandler _updateCurrentUserPreferencesHandler;
         private readonly RequestCurrentUserAccountDeletionHandler _requestCurrentUserAccountDeletionHandler;
 
         /// <summary>
@@ -30,14 +32,22 @@ namespace Darwin.WebApi.Controllers.Profile
         /// <exception cref="ArgumentNullException">Thrown when any dependency is null.</exception>
         public ProfileController(
             GetCurrentUserProfileHandler getCurrentUserProfileHandler,
+            GetCurrentUserPreferencesHandler getCurrentUserPreferencesHandler,
             UpdateCurrentUserHandler updateCurrentUserHandler,
+            UpdateCurrentUserPreferencesHandler updateCurrentUserPreferencesHandler,
             RequestCurrentUserAccountDeletionHandler requestCurrentUserAccountDeletionHandler)
         {
             _getCurrentUserProfileHandler =
                 getCurrentUserProfileHandler ?? throw new ArgumentNullException(nameof(getCurrentUserProfileHandler));
 
+            _getCurrentUserPreferencesHandler =
+                getCurrentUserPreferencesHandler ?? throw new ArgumentNullException(nameof(getCurrentUserPreferencesHandler));
+
             _updateCurrentUserHandler =
                 updateCurrentUserHandler ?? throw new ArgumentNullException(nameof(updateCurrentUserHandler));
+
+            _updateCurrentUserPreferencesHandler =
+                updateCurrentUserPreferencesHandler ?? throw new ArgumentNullException(nameof(updateCurrentUserPreferencesHandler));
 
             _requestCurrentUserAccountDeletionHandler =
                 requestCurrentUserAccountDeletionHandler ?? throw new ArgumentNullException(nameof(requestCurrentUserAccountDeletionHandler));
@@ -90,6 +100,40 @@ namespace Darwin.WebApi.Controllers.Profile
             };
 
             return Ok(contract);
+        }
+
+        /// <summary>
+        /// Returns the current user's privacy and communication preferences.
+        /// </summary>
+        [HttpGet("preferences")]
+        [HttpGet("/api/v1/profile/me/preferences")]
+        [ProducesResponseType(typeof(MemberPreferences), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetPreferencesAsync(CancellationToken ct)
+        {
+            var result = await _getCurrentUserPreferencesHandler.HandleAsync(ct).ConfigureAwait(false);
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
+
+            if (result.Value is null)
+            {
+                return NotFoundProblem("Preferences not found.");
+            }
+
+            return Ok(new MemberPreferences
+            {
+                RowVersion = result.Value.RowVersion ?? Array.Empty<byte>(),
+                MarketingConsent = result.Value.MarketingConsent,
+                AllowEmailMarketing = result.Value.AllowEmailMarketing,
+                AllowSmsMarketing = result.Value.AllowSmsMarketing,
+                AllowWhatsAppMarketing = result.Value.AllowWhatsAppMarketing,
+                AllowPromotionalPushNotifications = result.Value.AllowPromotionalPushNotifications,
+                AllowOptionalAnalyticsTracking = result.Value.AllowOptionalAnalyticsTracking,
+                AcceptsTermsAtUtc = result.Value.AcceptsTermsAtUtc
+            });
         }
 
         /// <summary>
@@ -150,6 +194,44 @@ namespace Darwin.WebApi.Controllers.Profile
 
             if (!result.Succeeded)
                 return ProblemFromResult(result);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Updates the current user's privacy and communication preferences using optimistic concurrency.
+        /// </summary>
+        [HttpPut("preferences")]
+        [HttpPut("/api/v1/profile/me/preferences")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdatePreferencesAsync([FromBody] UpdateMemberPreferencesRequest? request, CancellationToken ct)
+        {
+            if (request is null)
+            {
+                return BadRequestProblem("Request body is required.");
+            }
+
+            if (request.RowVersion is null || request.RowVersion.Length == 0)
+            {
+                return BadRequestProblem("RowVersion must be provided for optimistic concurrency.");
+            }
+
+            var result = await _updateCurrentUserPreferencesHandler.HandleAsync(new UpdateMemberPreferencesDto
+            {
+                RowVersion = request.RowVersion,
+                MarketingConsent = request.MarketingConsent,
+                AllowEmailMarketing = request.AllowEmailMarketing,
+                AllowSmsMarketing = request.AllowSmsMarketing,
+                AllowWhatsAppMarketing = request.AllowWhatsAppMarketing,
+                AllowPromotionalPushNotifications = request.AllowPromotionalPushNotifications,
+                AllowOptionalAnalyticsTracking = request.AllowOptionalAnalyticsTracking
+            }, ct).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
 
             return NoContent();
         }

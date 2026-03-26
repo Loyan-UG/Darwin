@@ -21,6 +21,16 @@ namespace Darwin.Mobile.Shared.Services.Profile
         Task<Result> UpdateMeAsync(CustomerProfile profile, CancellationToken ct);
 
         /// <summary>
+        /// Loads the current user's privacy and communication preferences.
+        /// </summary>
+        Task<MemberPreferences?> GetPreferencesAsync(CancellationToken ct);
+
+        /// <summary>
+        /// Updates the current user's privacy and communication preferences.
+        /// </summary>
+        Task<Result> UpdatePreferencesAsync(UpdateMemberPreferencesRequest preferences, CancellationToken ct);
+
+        /// <summary>
         /// Requests irreversible account deactivation and anonymization for the current authenticated user.
         /// </summary>
         Task<Result> RequestAccountDeletionAsync(RequestAccountDeletionRequest request, CancellationToken ct);
