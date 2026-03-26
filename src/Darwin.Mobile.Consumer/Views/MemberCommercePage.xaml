@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    x:Class="Darwin.Mobile.Consumer.Views.MemberCommercePage"
+    x:DataType="vm:MemberCommerceViewModel"
+    Title="{x:Static res:AppResources.MemberCommerceTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.MemberCommerceTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{x:Static res:AppResources.MemberCommerceSubtitle}"
+                   FontSize="14"
+                   Opacity="0.85" />
+
+            <Label Text="{Binding SuccessMessage}"
+                   TextColor="Green"
+                   FontSize="14"
+                   IsVisible="{Binding HasSuccess}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   IsVisible="{Binding HasError}" />
+
+            <Button Text="{x:Static res:AppResources.MemberCommerceRefreshButton}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding RefreshCommand}" />
+
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.MemberCommerceOrdersSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.MemberCommerceOrdersEmpty}"
+                           FontSize="13"
+                           IsVisible="{Binding HasOrders, Converter={StaticResource InverseBoolConverter}}" />
+
+                    <VerticalStackLayout Spacing="10"
+                                         BindableLayout.ItemsSource="{Binding Orders}"
+                                         IsVisible="{Binding HasOrders}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MemberCommerceOrderItemViewModel">
+                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding OrderNumber}" FontAttributes="Bold" />
+                                        <Label Text="{Binding StatusText}" FontSize="13" />
+                                        <Label Text="{Binding CreatedAtText}" FontSize="13" />
+                                        <Label Text="{Binding TotalText}" FontSize="13" />
+                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewOrderButton}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewOrderCommand}"
+                                                CommandParameter="{Binding .}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12"
+                            IsVisible="{Binding HasSelectedOrder}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{Binding SelectedOrder.HeaderTitle}" FontAttributes="Bold" />
+                            <Label Text="{Binding SelectedOrder.StatusText}" FontSize="13" />
+                            <Label Text="{Binding SelectedOrder.CreatedAtText}" FontSize="13" />
+                            <Label Text="{Binding SelectedOrder.TotalText}" FontSize="13" />
+                            <Label Text="{Binding SelectedOrder.ShippingMethodText}"
+                                   FontSize="13"
+                                   IsVisible="{Binding SelectedOrder.HasShippingMethod}" />
+                            <Label Text="{Binding SelectedOrder.PaymentsCountText}" FontSize="13" />
+                            <Label Text="{Binding SelectedOrder.InvoicesCountText}" FontSize="13" />
+
+                            <VerticalStackLayout Spacing="4"
+                                                 BindableLayout.ItemsSource="{Binding SelectedOrder.LineSummaries}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Label Text="{Binding .}" FontSize="13" LineBreakMode="WordWrap" />
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+
+                            <Button Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding RetryOrderPaymentCommand}"
+                                    IsVisible="{Binding SelectedOrder.CanRetryPayment}" />
+
+                            <Button Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding CopyOrderDocumentCommand}"
+                                    IsVisible="{Binding SelectedOrder.HasDocument}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.MemberCommerceInvoicesSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.MemberCommerceInvoicesEmpty}"
+                           FontSize="13"
+                           IsVisible="{Binding HasInvoices, Converter={StaticResource InverseBoolConverter}}" />
+
+                    <VerticalStackLayout Spacing="10"
+                                         BindableLayout.ItemsSource="{Binding Invoices}"
+                                         IsVisible="{Binding HasInvoices}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MemberCommerceInvoiceItemViewModel">
+                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding ReferenceNumber}" FontAttributes="Bold" />
+                                        <Label Text="{Binding BusinessName}" FontSize="13" IsVisible="{Binding HasBusinessName}" />
+                                        <Label Text="{Binding StatusText}" FontSize="13" />
+                                        <Label Text="{Binding DueDateText}" FontSize="13" />
+                                        <Label Text="{Binding TotalText}" FontSize="13" />
+                                        <Label Text="{Binding BalanceText}" FontSize="13" />
+                                        <Button Text="{x:Static res:AppResources.MemberCommerceViewInvoiceButton}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewInvoiceCommand}"
+                                                CommandParameter="{Binding .}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12"
+                            IsVisible="{Binding HasSelectedInvoice}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{Binding SelectedInvoice.HeaderTitle}" FontAttributes="Bold" />
+                            <Label Text="{Binding SelectedInvoice.StatusText}" FontSize="13" />
+                            <Label Text="{Binding SelectedInvoice.DueDateText}" FontSize="13" />
+                            <Label Text="{Binding SelectedInvoice.TotalText}" FontSize="13" />
+                            <Label Text="{Binding SelectedInvoice.BalanceText}" FontSize="13" />
+                            <Label Text="{Binding SelectedInvoice.PaymentSummaryText}" FontSize="13" LineBreakMode="WordWrap" />
+
+                            <VerticalStackLayout Spacing="4"
+                                                 BindableLayout.ItemsSource="{Binding SelectedInvoice.LineSummaries}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Label Text="{Binding .}" FontSize="13" LineBreakMode="WordWrap" />
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+
+                            <Button Text="{x:Static res:AppResources.MemberCommerceRetryPaymentButton}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding RetryInvoicePaymentCommand}"
+                                    IsVisible="{Binding SelectedInvoice.CanRetryPayment}" />
+
+                            <Button Text="{x:Static res:AppResources.MemberCommerceCopyDocumentButton}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding CopyInvoiceDocumentCommand}"
+                                    IsVisible="{Binding SelectedInvoice.HasDocument}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrandGold500}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

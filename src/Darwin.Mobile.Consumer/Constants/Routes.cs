@@ -46,6 +46,11 @@ public static class Routes
     public const string ProfileEdit = "profile-edit";
 
     /// <summary>
+    /// Dedicated member commerce history route.
+    /// </summary>
+    public const string MemberCommerce = "member-commerce";
+
+    /// <summary>
     /// Dedicated password change screen route.
     /// </summary>
     public const string ChangePassword = "change-password";

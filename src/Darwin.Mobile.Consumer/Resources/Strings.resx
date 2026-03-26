@@ -199,6 +199,42 @@
   <data name="RewardsLoadHistoryFailed" xml:space="preserve">
     <value>Unable to load reward history.</value>
   </data>
+  <data name="RewardsNextRewardSectionTitle" xml:space="preserve">
+    <value>Next reward progress</value>
+  </data>
+  <data name="RewardsAvailableRewardsCountFormat" xml:space="preserve">
+    <value>Configured rewards: {0}</value>
+  </data>
+  <data name="RewardsRedeemableRewardsCountFormat" xml:space="preserve">
+    <value>Redeemable rewards: {0}</value>
+  </data>
+  <data name="RewardsNextRewardNameFormat" xml:space="preserve">
+    <value>Next reward: {0}</value>
+  </data>
+  <data name="RewardsNextRewardRemainingFormat" xml:space="preserve">
+    <value>Remaining points: {0}</value>
+  </data>
+  <data name="RewardsNextRewardThresholdFormat" xml:space="preserve">
+    <value>Threshold: {0} pts</value>
+  </data>
+  <data name="RewardsNextRewardProgressFormat" xml:space="preserve">
+    <value>Progress: {0}%</value>
+  </data>
+  <data name="RewardsAllRewardsUnlockedMessage" xml:space="preserve">
+    <value>All currently configured rewards are already unlocked for this business.</value>
+  </data>
+  <data name="RewardsExpiryTrackingDisabled" xml:space="preserve">
+    <value>Point expiry tracking is not enabled for this loyalty program yet.</value>
+  </data>
+  <data name="RewardsExpiryTrackingEnabled" xml:space="preserve">
+    <value>Point expiry tracking is enabled for this loyalty program.</value>
+  </data>
+  <data name="RewardsPointsExpiringSoonFormat" xml:space="preserve">
+    <value>Points expiring soon: {0}</value>
+  </data>
+  <data name="RewardsNextPointsExpiryFormat" xml:space="preserve">
+    <value>Next expiry: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
   <data name="ScanTitle" xml:space="preserve">
     <value>Scan</value>
   </data>
@@ -280,6 +316,39 @@
   <data name="ProfilePushTokenAvailabilityUnknown" xml:space="preserve">
     <value>Push token status: unknown</value>
   </data>
+  <data name="ProfileAddressesSectionTitle" xml:space="preserve">
+    <value>Saved addresses</value>
+  </data>
+  <data name="ProfileAddressCountFormat" xml:space="preserve">
+    <value>Saved addresses: {0}</value>
+  </data>
+  <data name="ProfileDefaultBillingAddressFormat" xml:space="preserve">
+    <value>Default billing: {0}</value>
+  </data>
+  <data name="ProfileDefaultShippingAddressFormat" xml:space="preserve">
+    <value>Default shipping: {0}</value>
+  </data>
+  <data name="ProfileCustomerContextSectionTitle" xml:space="preserve">
+    <value>Customer context</value>
+  </data>
+  <data name="ProfileCustomerContextEmpty" xml:space="preserve">
+    <value>No linked CRM customer context is available yet.</value>
+  </data>
+  <data name="ProfileCustomerDisplayNameFormat" xml:space="preserve">
+    <value>Customer: {0}</value>
+  </data>
+  <data name="ProfileCustomerCompanyFormat" xml:space="preserve">
+    <value>Company: {0}</value>
+  </data>
+  <data name="ProfileCustomerSegmentsFormat" xml:space="preserve">
+    <value>Segments: {0}</value>
+  </data>
+  <data name="ProfileCustomerLastInteractionFormat" xml:space="preserve">
+    <value>Last interaction: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="ProfileCustomerNoInteractions" xml:space="preserve">
+    <value>No CRM interactions recorded yet.</value>
+  </data>
   <data name="ChangePasswordTitle" xml:space="preserve">
     <value>Change password</value>
   </data>
@@ -337,8 +406,98 @@
   <data name="SettingsProfileButton" xml:space="preserve">
     <value>Profile</value>
   </data>
+  <data name="SettingsOrdersAndInvoicesButton" xml:space="preserve">
+    <value>Orders &amp; invoices</value>
+  </data>
   <data name="SettingsChangePasswordButton" xml:space="preserve">
     <value>Change password</value>
+  </data>
+  <data name="MemberCommerceTitle" xml:space="preserve">
+    <value>Orders &amp; invoices</value>
+  </data>
+  <data name="MemberCommerceSubtitle" xml:space="preserve">
+    <value>Review recent member orders and invoices, retry payments, and copy text documents.</value>
+  </data>
+  <data name="MemberCommerceRefreshButton" xml:space="preserve">
+    <value>Refresh history</value>
+  </data>
+  <data name="MemberCommerceOrdersSectionTitle" xml:space="preserve">
+    <value>Orders</value>
+  </data>
+  <data name="MemberCommerceOrdersEmpty" xml:space="preserve">
+    <value>No member orders are available yet.</value>
+  </data>
+  <data name="MemberCommerceInvoicesSectionTitle" xml:space="preserve">
+    <value>Invoices</value>
+  </data>
+  <data name="MemberCommerceInvoicesEmpty" xml:space="preserve">
+    <value>No member invoices are available yet.</value>
+  </data>
+  <data name="MemberCommerceViewOrderButton" xml:space="preserve">
+    <value>View order</value>
+  </data>
+  <data name="MemberCommerceViewInvoiceButton" xml:space="preserve">
+    <value>View invoice</value>
+  </data>
+  <data name="MemberCommerceRetryPaymentButton" xml:space="preserve">
+    <value>Retry payment</value>
+  </data>
+  <data name="MemberCommerceCopyDocumentButton" xml:space="preserve">
+    <value>Copy document</value>
+  </data>
+  <data name="MemberCommerceOrderStatusFormat" xml:space="preserve">
+    <value>Status: {0}</value>
+  </data>
+  <data name="MemberCommerceOrderCreatedFormat" xml:space="preserve">
+    <value>Created: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCommerceOrderTotalFormat" xml:space="preserve">
+    <value>Total: {0}</value>
+  </data>
+  <data name="MemberCommerceOrderShippingMethodFormat" xml:space="preserve">
+    <value>Shipping: {0}</value>
+  </data>
+  <data name="MemberCommerceOrderPaymentsCountFormat" xml:space="preserve">
+    <value>Payments: {0}</value>
+  </data>
+  <data name="MemberCommerceOrderInvoicesCountFormat" xml:space="preserve">
+    <value>Invoices: {0}</value>
+  </data>
+  <data name="MemberCommerceInvoiceStatusFormat" xml:space="preserve">
+    <value>Status: {0}</value>
+  </data>
+  <data name="MemberCommerceInvoiceDueDateFormat" xml:space="preserve">
+    <value>Due: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="MemberCommerceInvoiceTotalFormat" xml:space="preserve">
+    <value>Total: {0}</value>
+  </data>
+  <data name="MemberCommerceInvoiceBalanceFormat" xml:space="preserve">
+    <value>Balance: {0}</value>
+  </data>
+  <data name="MemberCommerceInvoicePaymentSummaryFormat" xml:space="preserve">
+    <value>Payment: {0}</value>
+  </data>
+  <data name="MemberCommerceCheckoutLaunchedFormat" xml:space="preserve">
+    <value>Hosted checkout launched for {0}.</value>
+  </data>
+  <data name="MemberCommerceDocumentCopiedFormat" xml:space="preserve">
+    <value>Document copied for {0}.</value>
+  </data>
+  <data name="MemberCommerceLoadFailed" xml:space="preserve">
+    <value>Unable to load order and invoice history.</value>
+  </data>
+  <data name="MemberCommerceOrderDetailLoadFailed" xml:space="preserve">
+    <value>Unable to load order detail.</value>
+  </data>
+  <data name="MemberCommerceInvoiceDetailLoadFailed" xml:space="preserve">
+    <value>Unable to load invoice detail.</value>
+  </data>
+  <data name="MemberCommercePaymentIntentFailed" xml:space="preserve">
+    <value>Unable to start a payment retry right now.</value>
+  </data>
+  <data name="MemberCommerceDocumentDownloadFailed" xml:space="preserve">
+    <value>Unable to download the document right now.</value>
   </data>
   <data name="RegisterTitle" xml:space="preserve">
     <value>Create account</value>

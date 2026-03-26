@@ -172,5 +172,8 @@ The immediate direction is:
 - Completed: migrate shared mobile route constants to the canonical audience-first WebApi route roots while preserving compatibility aliases server-side.
 - Completed: add `Darwin.Mobile.Shared` member-commerce service coverage for canonical member order/invoice history, payment-intent, and document-download flows.
 - Completed: extend `Darwin.Mobile.Shared` profile service coverage to the canonical member address-book endpoints so mobile self-service address flows use the same audience-first route ownership as WebApi.
+- Completed: refactor the consumer rewards screen to consume the aggregated loyalty overview/business-dashboard endpoints and surface next-reward progress instead of relying only on smaller chatty account/history calls.
+- Completed: surface canonical member address-book and linked CRM customer-context summaries directly in the consumer profile screen so profile UI uses the new profile service projections instead of ad-hoc follow-up work.
+- Completed: add a consumer `Orders & Invoices` screen that consumes the canonical member-commerce routes for history, detail, payment retry, and document copy flows instead of leaving those APIs unused in UI.
 - Task: continue updating `Darwin.WebApi`, `Darwin.Contracts`, and MAUI apps wherever future domain or route changes affect mobile consumers.
 - Task: keep loyalty behavior backward compatible unless an explicit contract version change is introduced.

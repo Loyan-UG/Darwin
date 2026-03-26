@@ -84,6 +84,58 @@
             <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
                    FontSize="18" />
 
+            <Border Stroke="{StaticResource BrushGray300}"
+                    StrokeThickness="1"
+                    Padding="12"
+                    IsVisible="{Binding HasAccounts}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static res:AppResources.RewardsNextRewardSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding AvailableRewardsCount, StringFormat='{x:Static res:AppResources.RewardsAvailableRewardsCountFormat}'}"
+                           FontSize="13" />
+
+                    <Label Text="{Binding RedeemableRewardsCount, StringFormat='{x:Static res:AppResources.RewardsRedeemableRewardsCountFormat}'}"
+                           FontSize="13" />
+
+                    <Label Text="{Binding NextRewardTitle, StringFormat='{x:Static res:AppResources.RewardsNextRewardNameFormat}'}"
+                           FontSize="13"
+                           IsVisible="{Binding HasNextRewardInsight}" />
+
+                    <Label Text="{Binding PointsToNextReward, StringFormat='{x:Static res:AppResources.RewardsNextRewardRemainingFormat}'}"
+                           FontSize="13"
+                           IsVisible="{Binding HasNextRewardInsight}" />
+
+                    <Label Text="{Binding NextRewardRequiredPoints, StringFormat='{x:Static res:AppResources.RewardsNextRewardThresholdFormat}'}"
+                           FontSize="13"
+                           IsVisible="{Binding HasNextRewardInsight}" />
+
+                    <Label Text="{Binding NextRewardProgressPercent, StringFormat='{x:Static res:AppResources.RewardsNextRewardProgressFormat}'}"
+                           FontSize="13"
+                           IsVisible="{Binding HasNextRewardInsight}" />
+
+                    <Label Text="{x:Static res:AppResources.RewardsAllRewardsUnlockedMessage}"
+                           FontSize="13"
+                           IsVisible="{Binding HasUnlockedAllRewards}" />
+
+                    <BoxView HeightRequest="1"
+                             Color="{StaticResource Neutral300}" />
+
+                    <Label Text="{Binding ExpiryStatusMessage}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap" />
+
+                    <Label Text="{Binding PointsExpiringSoon, StringFormat='{x:Static res:AppResources.RewardsPointsExpiringSoonFormat}'}"
+                           FontSize="13"
+                           IsVisible="{Binding HasExpiryInsight}" />
+
+                    <Label Text="{Binding NextPointsExpiryAtUtc, StringFormat='{x:Static res:AppResources.RewardsNextPointsExpiryFormat}'}"
+                           FontSize="13"
+                           IsVisible="{Binding HasExpiryInsight}" />
+                </VerticalStackLayout>
+            </Border>
+
             <Label Text="{x:Static res:AppResources.RewardsAvailableRewardsLabel}"
                    FontAttributes="Bold" />
 

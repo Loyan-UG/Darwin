@@ -100,6 +100,56 @@
                                        IsRunning="{Binding IsPushSyncBusy}"
                                        Color="{StaticResource BrandGold500}" />
 
+                    <BoxView HeightRequest="1"
+                             Color="{StaticResource Neutral300}" />
+
+                    <Label Text="{x:Static res:AppResources.ProfileAddressesSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{Binding AddressCount, StringFormat='{x:Static res:AppResources.ProfileAddressCountFormat}'}"
+                           FontSize="13" />
+
+                    <Label Text="{Binding DefaultBillingAddressSummary, StringFormat='{x:Static res:AppResources.ProfileDefaultBillingAddressFormat}'}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding HasDefaultBillingAddress}" />
+
+                    <Label Text="{Binding DefaultShippingAddressSummary, StringFormat='{x:Static res:AppResources.ProfileDefaultShippingAddressFormat}'}"
+                           FontSize="13"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding HasDefaultShippingAddress}" />
+
+                    <BoxView HeightRequest="1"
+                             Color="{StaticResource Neutral300}" />
+
+                    <Label Text="{x:Static res:AppResources.ProfileCustomerContextSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.ProfileCustomerContextEmpty}"
+                           FontSize="13"
+                           IsVisible="{Binding HasLinkedCustomerContext, Converter={StaticResource InverseBoolConverter}}" />
+
+                    <VerticalStackLayout Spacing="6"
+                                         IsVisible="{Binding HasLinkedCustomerContext}">
+                        <Label Text="{Binding LinkedCustomerDisplayName, StringFormat='{x:Static res:AppResources.ProfileCustomerDisplayNameFormat}'}"
+                               FontSize="13" />
+
+                        <Label Text="{Binding LinkedCustomerCompanyName, StringFormat='{x:Static res:AppResources.ProfileCustomerCompanyFormat}'}"
+                               FontSize="13"
+                               IsVisible="{Binding HasLinkedCustomerCompanyName}" />
+
+                        <Label Text="{Binding LinkedCustomerSegmentsSummary, StringFormat='{x:Static res:AppResources.ProfileCustomerSegmentsFormat}'}"
+                               FontSize="13"
+                               LineBreakMode="WordWrap"
+                               IsVisible="{Binding HasLinkedCustomerSegments}" />
+
+                        <Label Text="{Binding LinkedCustomerLastInteractionText}"
+                               FontSize="13"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
 
                     <BoxView HeightRequest="1"
                              Color="{StaticResource Neutral300}" />

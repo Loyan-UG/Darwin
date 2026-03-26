@@ -26,6 +26,11 @@ public partial class SettingsPage : ContentPage
         await NavigateSafelyAsync(Routes.ChangePassword);
     }
 
+    private async void OnMemberCommerceClicked(object sender, EventArgs e)
+    {
+        await NavigateSafelyAsync(Routes.MemberCommerce);
+    }
+
     private async void OnLegalHubClicked(object sender, EventArgs e)
     {
         await NavigateSafelyAsync(Routes.LegalHub);

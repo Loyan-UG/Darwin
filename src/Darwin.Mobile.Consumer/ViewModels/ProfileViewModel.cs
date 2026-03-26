@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
@@ -48,6 +49,13 @@ public sealed class ProfileViewModel : BaseViewModel
     private string _pushTokenAvailabilityText = AppResources.ProfilePushTokenAvailabilityUnknown;
     private bool _allowPromotionalPushNotifications;
     private bool _allowOptionalAnalyticsTracking;
+    private int _addressCount;
+    private string? _defaultBillingAddressSummary;
+    private string? _defaultShippingAddressSummary;
+    private string? _linkedCustomerDisplayName;
+    private string? _linkedCustomerCompanyName;
+    private string? _linkedCustomerSegmentsSummary;
+    private string? _linkedCustomerLastInteractionText;
 
     public ProfileViewModel(
         IProfileService profileService,
@@ -200,6 +208,109 @@ public sealed class ProfileViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Gets the number of saved member addresses.
+    /// </summary>
+    public int AddressCount
+    {
+        get => _addressCount;
+        private set => SetProperty(ref _addressCount, value);
+    }
+
+    /// <summary>
+    /// Gets a compact default billing address summary.
+    /// </summary>
+    public string? DefaultBillingAddressSummary
+    {
+        get => _defaultBillingAddressSummary;
+        private set
+        {
+            if (SetProperty(ref _defaultBillingAddressSummary, value))
+            {
+                OnPropertyChanged(nameof(HasDefaultBillingAddress));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a compact default shipping address summary.
+    /// </summary>
+    public string? DefaultShippingAddressSummary
+    {
+        get => _defaultShippingAddressSummary;
+        private set
+        {
+            if (SetProperty(ref _defaultShippingAddressSummary, value))
+            {
+                OnPropertyChanged(nameof(HasDefaultShippingAddress));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the linked CRM customer display name, when one exists.
+    /// </summary>
+    public string? LinkedCustomerDisplayName
+    {
+        get => _linkedCustomerDisplayName;
+        private set
+        {
+            if (SetProperty(ref _linkedCustomerDisplayName, value))
+            {
+                OnPropertyChanged(nameof(HasLinkedCustomerContext));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the linked CRM customer company name, when one exists.
+    /// </summary>
+    public string? LinkedCustomerCompanyName
+    {
+        get => _linkedCustomerCompanyName;
+        private set
+        {
+            if (SetProperty(ref _linkedCustomerCompanyName, value))
+            {
+                OnPropertyChanged(nameof(HasLinkedCustomerCompanyName));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a compact list of active CRM segment names.
+    /// </summary>
+    public string? LinkedCustomerSegmentsSummary
+    {
+        get => _linkedCustomerSegmentsSummary;
+        private set
+        {
+            if (SetProperty(ref _linkedCustomerSegmentsSummary, value))
+            {
+                OnPropertyChanged(nameof(HasLinkedCustomerSegments));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the localized last-interaction summary for the linked CRM customer.
+    /// </summary>
+    public string? LinkedCustomerLastInteractionText
+    {
+        get => _linkedCustomerLastInteractionText;
+        private set => SetProperty(ref _linkedCustomerLastInteractionText, value);
+    }
+
+    public bool HasDefaultBillingAddress => !string.IsNullOrWhiteSpace(DefaultBillingAddressSummary);
+
+    public bool HasDefaultShippingAddress => !string.IsNullOrWhiteSpace(DefaultShippingAddressSummary);
+
+    public bool HasLinkedCustomerContext => !string.IsNullOrWhiteSpace(LinkedCustomerDisplayName);
+
+    public bool HasLinkedCustomerCompanyName => !string.IsNullOrWhiteSpace(LinkedCustomerCompanyName);
+
+    public bool HasLinkedCustomerSegments => !string.IsNullOrWhiteSpace(LinkedCustomerSegmentsSummary);
+
     public override async Task OnAppearingAsync()
     {
         // Always refresh push runtime diagnostics because permission/token state can change
@@ -253,6 +364,9 @@ public sealed class ProfileViewModel : BaseViewModel
                 Timezone = string.IsNullOrWhiteSpace(profile.Timezone) ? "Europe/Berlin" : profile.Timezone;
                 Currency = string.IsNullOrWhiteSpace(profile.Currency) ? "EUR" : profile.Currency;
             });
+
+            await LoadAddressBookSummaryAsync().ConfigureAwait(false);
+            await LoadLinkedCustomerContextAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -267,6 +381,75 @@ public sealed class ProfileViewModel : BaseViewModel
                 RefreshCommand.RaiseCanExecuteChanged();
             });
         }
+    }
+
+    private async Task LoadAddressBookSummaryAsync()
+    {
+        try
+        {
+            var addresses = await _profileService.GetAddressesAsync(CancellationToken.None).ConfigureAwait(false);
+            var defaultBilling = addresses.FirstOrDefault(x => x.IsDefaultBilling);
+            var defaultShipping = addresses.FirstOrDefault(x => x.IsDefaultShipping);
+
+            RunOnMain(() =>
+            {
+                AddressCount = addresses.Count;
+                DefaultBillingAddressSummary = FormatAddressSummary(defaultBilling);
+                DefaultShippingAddressSummary = FormatAddressSummary(defaultShipping);
+            });
+        }
+        catch
+        {
+            RunOnMain(() =>
+            {
+                AddressCount = 0;
+                DefaultBillingAddressSummary = null;
+                DefaultShippingAddressSummary = null;
+            });
+        }
+    }
+
+    private async Task LoadLinkedCustomerContextAsync()
+    {
+        try
+        {
+            var context = await _profileService.GetLinkedCustomerContextAsync(CancellationToken.None).ConfigureAwait(false);
+            if (context is null)
+            {
+                ClearLinkedCustomerContext();
+                return;
+            }
+
+            var segmentsSummary = context.Segments.Count == 0
+                ? null
+                : string.Join(", ", context.Segments.Select(x => x.Name).Where(x => !string.IsNullOrWhiteSpace(x)));
+            var lastInteractionText = context.LastInteractionAtUtc.HasValue
+                ? string.Format(AppResources.ProfileCustomerLastInteractionFormat, context.LastInteractionAtUtc.Value.ToLocalTime())
+                : AppResources.ProfileCustomerNoInteractions;
+
+            RunOnMain(() =>
+            {
+                LinkedCustomerDisplayName = context.DisplayName;
+                LinkedCustomerCompanyName = context.CompanyName;
+                LinkedCustomerSegmentsSummary = segmentsSummary;
+                LinkedCustomerLastInteractionText = lastInteractionText;
+            });
+        }
+        catch
+        {
+            ClearLinkedCustomerContext();
+        }
+    }
+
+    private void ClearLinkedCustomerContext()
+    {
+        RunOnMain(() =>
+        {
+            LinkedCustomerDisplayName = null;
+            LinkedCustomerCompanyName = null;
+            LinkedCustomerSegmentsSummary = null;
+            LinkedCustomerLastInteractionText = null;
+        });
     }
 
     private async Task SaveProfileAsync()
@@ -498,6 +681,20 @@ public sealed class ProfileViewModel : BaseViewModel
         }
 
         return value.Trim();
+    }
+
+    private static string? FormatAddressSummary(MemberAddress? address)
+    {
+        if (address is null)
+        {
+            return null;
+        }
+
+        var line = string.Join(", ",
+            new[] { address.Street1, address.PostalCode, address.City }
+                .Where(static value => !string.IsNullOrWhiteSpace(value)));
+
+        return string.IsNullOrWhiteSpace(line) ? address.FullName : $"{address.FullName} | {line}";
     }
 
     /// <summary>

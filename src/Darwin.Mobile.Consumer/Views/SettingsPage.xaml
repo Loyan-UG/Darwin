@@ -19,6 +19,10 @@
                     Style="{StaticResource PrimaryButtonStyle}"
                     Clicked="OnProfileClicked" />
 
+            <Button Text="{x:Static res:AppResources.SettingsOrdersAndInvoicesButton}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Clicked="OnMemberCommerceClicked" />
+
             <Button Text="{x:Static res:AppResources.SettingsChangePasswordButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
                     Clicked="OnChangePasswordClicked" />

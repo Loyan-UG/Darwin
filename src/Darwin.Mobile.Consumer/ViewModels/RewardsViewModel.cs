@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
+using Darwin.Mobile.Consumer.Resources;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -44,6 +45,15 @@ public sealed class RewardsViewModel : BaseViewModel
     private int _pointsBalance;
     private LoyaltyAccountSummary? _selectedAccount;
     private bool _suppressSelectedAccountRefresh;
+    private int _availableRewardsCount;
+    private int _redeemableRewardsCount;
+    private string? _nextRewardTitle;
+    private int? _pointsToNextReward;
+    private int? _nextRewardRequiredPoints;
+    private decimal? _nextRewardProgressPercent;
+    private bool _expiryTrackingEnabled;
+    private int _pointsExpiringSoon;
+    private DateTime? _nextPointsExpiryAtUtc;
 
     public RewardsViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
     {
@@ -74,6 +84,132 @@ public sealed class RewardsViewModel : BaseViewModel
     {
         get => _pointsBalance;
         private set => SetProperty(ref _pointsBalance, value);
+    }
+
+    /// <summary>
+    /// Gets the total number of configured rewards for the selected business.
+    /// </summary>
+    public int AvailableRewardsCount
+    {
+        get => _availableRewardsCount;
+        private set => SetProperty(ref _availableRewardsCount, value);
+    }
+
+    /// <summary>
+    /// Gets the number of rewards currently redeemable for the selected business.
+    /// </summary>
+    public int RedeemableRewardsCount
+    {
+        get => _redeemableRewardsCount;
+        private set => SetProperty(ref _redeemableRewardsCount, value);
+    }
+
+    /// <summary>
+    /// Gets the title of the next reward target, when one exists.
+    /// </summary>
+    public string? NextRewardTitle
+    {
+        get => _nextRewardTitle;
+        private set
+        {
+            if (SetProperty(ref _nextRewardTitle, value))
+            {
+                OnPropertyChanged(nameof(HasNextRewardInsight));
+                OnPropertyChanged(nameof(HasUnlockedAllRewards));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the remaining points needed to unlock the next reward target.
+    /// </summary>
+    public int? PointsToNextReward
+    {
+        get => _pointsToNextReward;
+        private set
+        {
+            if (SetProperty(ref _pointsToNextReward, value))
+            {
+                OnPropertyChanged(nameof(HasNextRewardInsight));
+                OnPropertyChanged(nameof(HasUnlockedAllRewards));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the next reward threshold in points, when one exists.
+    /// </summary>
+    public int? NextRewardRequiredPoints
+    {
+        get => _nextRewardRequiredPoints;
+        private set
+        {
+            if (SetProperty(ref _nextRewardRequiredPoints, value))
+            {
+                OnPropertyChanged(nameof(HasNextRewardInsight));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the percentage progress toward the next reward threshold.
+    /// </summary>
+    public decimal? NextRewardProgressPercent
+    {
+        get => _nextRewardProgressPercent;
+        private set
+        {
+            if (SetProperty(ref _nextRewardProgressPercent, value))
+            {
+                OnPropertyChanged(nameof(HasNextRewardInsight));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the selected business currently tracks point expiry.
+    /// </summary>
+    public bool ExpiryTrackingEnabled
+    {
+        get => _expiryTrackingEnabled;
+        private set
+        {
+            if (SetProperty(ref _expiryTrackingEnabled, value))
+            {
+                OnPropertyChanged(nameof(HasExpiryInsight));
+                OnPropertyChanged(nameof(ExpiryStatusMessage));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the points known to expire soon for the selected business account.
+    /// </summary>
+    public int PointsExpiringSoon
+    {
+        get => _pointsExpiringSoon;
+        private set
+        {
+            if (SetProperty(ref _pointsExpiringSoon, value))
+            {
+                OnPropertyChanged(nameof(HasExpiryInsight));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the next known point-expiry timestamp in UTC, when available.
+    /// </summary>
+    public DateTime? NextPointsExpiryAtUtc
+    {
+        get => _nextPointsExpiryAtUtc;
+        private set
+        {
+            if (SetProperty(ref _nextPointsExpiryAtUtc, value))
+            {
+                OnPropertyChanged(nameof(HasExpiryInsight));
+            }
+        }
     }
 
     /// <summary>
@@ -134,6 +270,37 @@ public sealed class RewardsViewModel : BaseViewModel
     /// Gets whether the selected account has any history entries to show.
     /// </summary>
     public bool HasHistory => RewardHistory.Count > 0;
+
+    /// <summary>
+    /// Gets whether the selected business has a next-reward progress insight to show.
+    /// </summary>
+    public bool HasNextRewardInsight =>
+        !string.IsNullOrWhiteSpace(NextRewardTitle) ||
+        NextRewardRequiredPoints.HasValue ||
+        NextRewardProgressPercent.HasValue;
+
+    /// <summary>
+    /// Gets whether the selected business has already unlocked all currently configured rewards.
+    /// </summary>
+    public bool HasUnlockedAllRewards =>
+        AvailableRewardsCount > 0 &&
+        string.IsNullOrWhiteSpace(NextRewardTitle) &&
+        PointsToNextReward == 0;
+
+    /// <summary>
+    /// Gets whether point-expiry insight is available for the selected business.
+    /// </summary>
+    public bool HasExpiryInsight =>
+        ExpiryTrackingEnabled &&
+        (PointsExpiringSoon > 0 || NextPointsExpiryAtUtc.HasValue);
+
+    /// <summary>
+    /// Gets a localized status message describing the current expiry-tracking behavior.
+    /// </summary>
+    public string ExpiryStatusMessage =>
+        ExpiryTrackingEnabled
+            ? AppResources.RewardsExpiryTrackingEnabled
+            : AppResources.RewardsExpiryTrackingDisabled;
 
     /// <summary>
     /// Gets whether quick QR navigation can execute for selected account.
@@ -221,15 +388,15 @@ public sealed class RewardsViewModel : BaseViewModel
 
         try
         {
-            var accountsResult = await _loyaltyService.GetMyAccountsAsync(CancellationToken.None);
+            var overviewResult = await _loyaltyService.GetMyOverviewAsync(CancellationToken.None);
 
-            if (!accountsResult.Succeeded || accountsResult.Value is null)
+            if (!overviewResult.Succeeded || overviewResult.Value is null)
             {
                 ErrorMessage = Resources.AppResources.RewardsLoadAccountsFailed;
                 return;
             }
 
-            var orderedAccounts = accountsResult.Value
+            var orderedAccounts = overviewResult.Value.Accounts
                 .Where(a => a.BusinessId != Guid.Empty)
                 .OrderBy(a => a.BusinessName)
                 .ToList();
@@ -336,16 +503,33 @@ public sealed class RewardsViewModel : BaseViewModel
     /// <param name="businessId">Business identifier that owns the selected loyalty account.</param>
     private async Task LoadSelectedBusinessDataAsync(Guid businessId)
     {
-        var accountResult = await _loyaltyService.GetAccountSummaryAsync(businessId, CancellationToken.None);
+        var dashboardResult = await _loyaltyService.GetBusinessDashboardAsync(businessId, CancellationToken.None);
 
-        if (accountResult?.Value == null)
+        if (!dashboardResult.Succeeded || dashboardResult.Value is null)
         {
             ErrorMessage = Resources.AppResources.RewardsLoadAccountSummaryFailed;
+            ClearRewardInsights();
             return;
         }
 
+        var dashboard = dashboardResult.Value;
+
         // Keep points strictly tied to the selected business account.
-        RunOnMain(() => PointsBalance = accountResult.Value.PointsBalance);
+        RunOnMain(() =>
+        {
+            PointsBalance = dashboard.Account.PointsBalance;
+            AvailableRewardsCount = dashboard.AvailableRewardsCount;
+            RedeemableRewardsCount = dashboard.RedeemableRewardsCount;
+            NextRewardTitle = dashboard.Account.NextRewardTitle ?? dashboard.NextReward?.Name;
+            PointsToNextReward = dashboard.PointsToNextReward ?? dashboard.Account.PointsToNextReward;
+            NextRewardRequiredPoints = dashboard.NextRewardRequiredPoints ?? dashboard.Account.NextRewardRequiredPoints;
+            NextRewardProgressPercent = dashboard.NextRewardProgressPercent ?? dashboard.Account.NextRewardProgressPercent;
+            ExpiryTrackingEnabled = dashboard.ExpiryTrackingEnabled;
+            PointsExpiringSoon = dashboard.PointsExpiringSoon;
+            NextPointsExpiryAtUtc = dashboard.NextPointsExpiryAtUtc;
+        });
+
+        UpdateSelectedAccountFromDashboard(dashboard.Account);
 
         var rewardsResult = await _loyaltyService.GetAvailableRewardsAsync(businessId, CancellationToken.None);
 
@@ -368,13 +552,11 @@ public sealed class RewardsViewModel : BaseViewModel
             ErrorMessage = Resources.AppResources.RewardsLoadRewardsFailed;
         }
 
-        var historyResult = await _loyaltyService.GetMyHistoryAsync(businessId, CancellationToken.None);
-
         RunOnMain(RewardHistory.Clear);
 
-        if (historyResult.Succeeded && historyResult.Value is not null)
+        if (dashboard.RecentTransactions is not null)
         {
-            var orderedHistory = historyResult.Value
+            var orderedHistory = dashboard.RecentTransactions
                 .OrderByDescending(h => h.OccurredAtUtc)
                 .ToList();
 
@@ -395,6 +577,52 @@ public sealed class RewardsViewModel : BaseViewModel
         }
     }
 
+    private void UpdateSelectedAccountFromDashboard(LoyaltyAccountSummary updatedAccount)
+    {
+        if (updatedAccount.BusinessId == Guid.Empty)
+        {
+            return;
+        }
+
+        RunOnMain(() =>
+        {
+            var existingIndex = Accounts
+                .Select((account, index) => new { account, index })
+                .FirstOrDefault(x => x.account.BusinessId == updatedAccount.BusinessId)?.index;
+
+            if (existingIndex is null)
+            {
+                return;
+            }
+
+            Accounts[existingIndex.Value] = updatedAccount;
+            RaiseOverviewChanged();
+
+            if (SelectedAccount?.BusinessId == updatedAccount.BusinessId)
+            {
+                _suppressSelectedAccountRefresh = true;
+                SelectedAccount = updatedAccount;
+                _suppressSelectedAccountRefresh = false;
+            }
+        });
+    }
+
+    private void ClearRewardInsights()
+    {
+        RunOnMain(() =>
+        {
+            AvailableRewardsCount = 0;
+            RedeemableRewardsCount = 0;
+            NextRewardTitle = null;
+            PointsToNextReward = null;
+            NextRewardRequiredPoints = null;
+            NextRewardProgressPercent = null;
+            ExpiryTrackingEnabled = false;
+            PointsExpiringSoon = 0;
+            NextPointsExpiryAtUtc = null;
+        });
+    }
+
     /// <summary>
     /// Opens QR tab for the currently selected account business context.
     /// </summary>
@@ -405,7 +633,7 @@ public sealed class RewardsViewModel : BaseViewModel
             return;
         }
 
-        var parameters = new Dictionary<string, object>
+        IDictionary<string, object?> parameters = new Dictionary<string, object?>
         {
             ["businessId"] = SelectedAccount.BusinessId
         };

@@ -1248,11 +1248,29 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to All currently configured rewards are already unlocked for this business..
+        /// </summary>
+        internal static string RewardsAllRewardsUnlockedMessage {
+            get {
+                return ResourceManager.GetString("RewardsAllRewardsUnlockedMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Rewards history.
         /// </summary>
         internal static string RewardsHistoryLabel {
             get {
                 return ResourceManager.GetString("RewardsHistoryLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configured rewards: {0}.
+        /// </summary>
+        internal static string RewardsAvailableRewardsCountFormat {
+            get {
+                return ResourceManager.GetString("RewardsAvailableRewardsCountFormat", resourceCulture);
             }
         }
         
@@ -1302,6 +1320,78 @@ namespace Darwin.Mobile.Consumer.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Point expiry tracking is not enabled for this loyalty program yet..
+        /// </summary>
+        internal static string RewardsExpiryTrackingDisabled {
+            get {
+                return ResourceManager.GetString("RewardsExpiryTrackingDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Point expiry tracking is enabled for this loyalty program..
+        /// </summary>
+        internal static string RewardsExpiryTrackingEnabled {
+            get {
+                return ResourceManager.GetString("RewardsExpiryTrackingEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Next reward: {0}.
+        /// </summary>
+        internal static string RewardsNextRewardNameFormat {
+            get {
+                return ResourceManager.GetString("RewardsNextRewardNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Progress: {0}%.
+        /// </summary>
+        internal static string RewardsNextRewardProgressFormat {
+            get {
+                return ResourceManager.GetString("RewardsNextRewardProgressFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remaining points: {0}.
+        /// </summary>
+        internal static string RewardsNextRewardRemainingFormat {
+            get {
+                return ResourceManager.GetString("RewardsNextRewardRemainingFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Next reward progress.
+        /// </summary>
+        internal static string RewardsNextRewardSectionTitle {
+            get {
+                return ResourceManager.GetString("RewardsNextRewardSectionTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Threshold: {0} pts.
+        /// </summary>
+        internal static string RewardsNextRewardThresholdFormat {
+            get {
+                return ResourceManager.GetString("RewardsNextRewardThresholdFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Next expiry: {0:yyyy-MM-dd HH:mm}.
+        /// </summary>
+        internal static string RewardsNextPointsExpiryFormat {
+            get {
+                return ResourceManager.GetString("RewardsNextPointsExpiryFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No loyalty accounts found yet..
         /// </summary>
         internal static string RewardsNoAccountsFound {
@@ -1316,6 +1406,24 @@ namespace Darwin.Mobile.Consumer.Resources {
         internal static string RewardsNoHistoryMessage {
             get {
                 return ResourceManager.GetString("RewardsNoHistoryMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Points expiring soon: {0}.
+        /// </summary>
+        internal static string RewardsPointsExpiringSoonFormat {
+            get {
+                return ResourceManager.GetString("RewardsPointsExpiringSoonFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redeemable rewards: {0}.
+        /// </summary>
+        internal static string RewardsRedeemableRewardsCountFormat {
+            get {
+                return ResourceManager.GetString("RewardsRedeemableRewardsCountFormat", resourceCulture);
             }
         }
         
