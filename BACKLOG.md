@@ -98,6 +98,7 @@ Status terms used below:
 - `Completed`: CRM, inventory, billing, media, CMS, catalog, identity, and order modules are exposed in WebAdmin
 - `Completed`: business/tenant management foundation now exists in WebAdmin with business CRUD, owner assignment, member management, and location management
 - `Completed`: business invitations can now be created, listed, resent, and revoked from WebAdmin
+- `Completed`: business member lists in WebAdmin now expose activation/lock visibility for faster onboarding troubleshooting
 - `Completed`: user edit screens now expose operational account state and support actions for confirm-email override, password reset email, and lock/unlock
 - `Completed`: user edit screens now also support sending activation emails for unconfirmed accounts
 - `Completed`: shared search/reset/pager behavior now covers legacy and newer operator lists across catalog, CMS, identity, billing, inventory, and orders
