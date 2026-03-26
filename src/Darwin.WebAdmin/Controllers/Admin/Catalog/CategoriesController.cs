@@ -90,8 +90,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
-                return View(vm);
+                EnsureCreateTranslations(vm);
+                return RenderCreateEditor(vm);
             }
 
             var dto = new CategoryCreateDto
@@ -112,7 +112,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _create.HandleAsync(dto, ct);
                 TempData["Success"] = "Category created successfully.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
             {
@@ -120,7 +120,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                return View(vm);
+                EnsureCreateTranslations(vm);
+                return RenderCreateEditor(vm);
             }
         }
 
@@ -159,7 +160,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                return View(vm);
+                EnsureEditTranslations(vm);
+                return RenderEditEditor(vm);
             }
 
             var dto = new CategoryEditDto
@@ -182,13 +184,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _update.HandleAsync(dto, ct);
                 TempData["Success"] = "Category updated successfully.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
                 await LoadLookupsAsync(ct);
-                return View(vm);
+                EnsureEditTranslations(vm);
+                return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
             {
@@ -196,7 +199,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                return View(vm);
+                EnsureEditTranslations(vm);
+                return RenderEditEditor(vm);
             }
         }
 
@@ -231,6 +235,58 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             var (_, cultures) = await _getCultures.HandleAsync(ct);
             ViewBag.Cultures = cultures;
+        }
+
+        private IActionResult RenderCreateEditor(CategoryCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Categories/_CategoryCreateEditorShell.cshtml", vm);
+            }
+
+            return View("Create", vm);
+        }
+
+        private IActionResult RenderEditEditor(CategoryEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Categories/_CategoryEditEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void EnsureCreateTranslations(CategoryCreateVm vm)
+        {
+            if (vm.Translations.Count == 0)
+            {
+                vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
+            }
+        }
+
+        private static void EnsureEditTranslations(CategoryEditVm vm)
+        {
+            if (vm.Translations.Count == 0)
+            {
+                vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
+            }
         }
     }
 }
