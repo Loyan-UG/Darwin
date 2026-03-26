@@ -53,4 +53,13 @@ namespace Darwin.Application.CRM.DTOs
         public InvoiceStatus TargetStatus { get; set; }
         public DateTime? PaidAtUtc { get; set; }
     }
+
+    public sealed class InvoiceRefundCreateDto
+    {
+        public Guid InvoiceId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+    }
 }

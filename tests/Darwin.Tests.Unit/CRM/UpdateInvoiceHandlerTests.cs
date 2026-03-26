@@ -4,6 +4,7 @@ using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Validators;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -149,6 +150,110 @@ public sealed class UpdateInvoiceHandlerTests
             .WithMessage("Linked payment is already assigned to another invoice.");
     }
 
+    [Fact]
+    public async Task HandleAsync_Should_CreatePartialRefund_WithoutCancellingInvoice()
+    {
+        await using var db = InvoiceTestDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        var rowVersion = new byte[] { 4, 2, 4, 2 };
+
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            PaymentId = paymentId,
+            Status = InvoiceStatus.Paid,
+            Currency = "EUR",
+            TotalGrossMinor = 1200,
+            DueDateUtc = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc),
+            PaidAtUtc = new DateTime(2026, 3, 26, 11, 0, 0, DateTimeKind.Utc),
+            RowVersion = rowVersion.ToArray()
+        });
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "Stripe",
+            Currency = "EUR",
+            AmountMinor = 1200,
+            Status = PaymentStatus.Captured,
+            PaidAtUtc = new DateTime(2026, 3, 26, 11, 0, 0, DateTimeKind.Utc)
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateInvoiceRefundHandler(db, new InvoiceRefundCreateValidator());
+        await handler.HandleAsync(new InvoiceRefundCreateDto
+        {
+            InvoiceId = invoiceId,
+            RowVersion = rowVersion,
+            AmountMinor = 300,
+            Currency = "EUR",
+            Reason = "Partial goodwill refund"
+        }, TestContext.Current.CancellationToken);
+
+        var invoice = await db.Set<Invoice>().SingleAsync(x => x.Id == invoiceId, TestContext.Current.CancellationToken);
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+        var refunds = await db.Set<Refund>().Where(x => x.PaymentId == paymentId).ToListAsync(TestContext.Current.CancellationToken);
+
+        refunds.Should().ContainSingle();
+        refunds[0].AmountMinor.Should().Be(300);
+        invoice.Status.Should().Be(InvoiceStatus.Paid);
+        payment.Status.Should().Be(PaymentStatus.Captured);
+        invoice.PaidAtUtc.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_FullyRefund_AndCancelInvoice()
+    {
+        await using var db = InvoiceTestDbContext.Create();
+        var invoiceId = Guid.NewGuid();
+        var paymentId = Guid.NewGuid();
+        var rowVersion = new byte[] { 7, 7, 7, 7 };
+
+        db.Set<Invoice>().Add(new Invoice
+        {
+            Id = invoiceId,
+            PaymentId = paymentId,
+            Status = InvoiceStatus.Paid,
+            Currency = "EUR",
+            TotalGrossMinor = 1800,
+            DueDateUtc = new DateTime(2026, 3, 30, 10, 0, 0, DateTimeKind.Utc),
+            PaidAtUtc = new DateTime(2026, 3, 26, 11, 0, 0, DateTimeKind.Utc),
+            RowVersion = rowVersion.ToArray()
+        });
+
+        db.Set<Payment>().Add(new Payment
+        {
+            Id = paymentId,
+            Provider = "PayPal",
+            Currency = "EUR",
+            AmountMinor = 1800,
+            Status = PaymentStatus.Completed,
+            PaidAtUtc = new DateTime(2026, 3, 26, 11, 0, 0, DateTimeKind.Utc)
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var handler = new CreateInvoiceRefundHandler(db, new InvoiceRefundCreateValidator());
+        await handler.HandleAsync(new InvoiceRefundCreateDto
+        {
+            InvoiceId = invoiceId,
+            RowVersion = rowVersion,
+            AmountMinor = 1800,
+            Currency = "EUR",
+            Reason = "Full cancellation"
+        }, TestContext.Current.CancellationToken);
+
+        var invoice = await db.Set<Invoice>().SingleAsync(x => x.Id == invoiceId, TestContext.Current.CancellationToken);
+        var payment = await db.Set<Payment>().SingleAsync(x => x.Id == paymentId, TestContext.Current.CancellationToken);
+
+        invoice.Status.Should().Be(InvoiceStatus.Cancelled);
+        invoice.PaidAtUtc.Should().BeNull();
+        payment.Status.Should().Be(PaymentStatus.Refunded);
+        payment.PaidAtUtc.Should().BeNull();
+    }
+
     private sealed class InvoiceTestDbContext : DbContext, IAppDbContext
     {
         private InvoiceTestDbContext(DbContextOptions<InvoiceTestDbContext> options)
@@ -192,6 +297,14 @@ public sealed class UpdateInvoiceHandlerTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Provider).IsRequired();
                 builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.RowVersion).IsRequired();
+            });
+
+            modelBuilder.Entity<Refund>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.Currency).IsRequired();
+                builder.Property(x => x.Reason).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }

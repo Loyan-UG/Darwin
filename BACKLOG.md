@@ -68,7 +68,8 @@ The immediate direction is:
 - Completed: add explicit invoice status transition workflows in CRM so paid/open/cancelled operator actions enforce safer payment-aware guards.
 - Completed: align order refunds and order-created invoices with the shared payment aggregate so refunds can mark payments as refunded and invoice creation links/captures eligible payments.
 - Completed: add reconciliation visibility across CRM invoice screens, billing payment screens, and order tabs so operators can see refunded, net-collected, settled, and remaining-balance amounts without introducing new domain states.
-- Task: deepen invoice lifecycle tooling further with posting/voiding/refund-oriented workflows that connect more directly to refund creation and downstream reconciliation.
+- Completed: deepen CRM invoice lifecycle with explicit post/void language in the operator UI and a direct invoice refund workflow that records refunds against the linked payment and cancels fully refunded invoices.
+- Task: extend invoice lifecycle beyond the current post/void/refund workflow with credit-note, write-off, and reconciliation-specific operator flows where the domain eventually needs them.
 
 ### Epic: CRM admin
 
@@ -104,6 +105,8 @@ The immediate direction is:
 ### Epic: Public API
 
 - Completed: add non-breaking public/member/business route aliases so the future API surface split can evolve without breaking legacy callers.
+- Completed: reorganize `Darwin.WebApi` route ownership so audience-first canonical routes are now explicit for member/business/public controllers, while legacy aliases remain in place for existing clients.
+- Completed: split mixed business delivery endpoints into dedicated public and member controllers so storefront discovery and member engagement/onboarding no longer share one mixed controller surface.
 - Task: document and implement CMS page endpoints.
 - Task: document and implement menus and storefront navigation endpoints.
 - Task: document and implement product/category/storefront browsing endpoints.

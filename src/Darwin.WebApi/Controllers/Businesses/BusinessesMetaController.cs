@@ -16,8 +16,7 @@ namespace Darwin.WebApi.Controllers.Businesses
     /// reference data (e.g., category filter options) without hardcoding server enums.
     /// </summary>
     [ApiController]
-    [Route("api/v1/businesses")]
-    [Authorize]
+    [Route("api/v1/public/businesses")]
     public sealed class BusinessesMetaController : ApiControllerBase
     {
         private readonly GetBusinessCategoryKindsHandler _getBusinessCategoryKindsHandler;
@@ -46,6 +45,7 @@ namespace Darwin.WebApi.Controllers.Businesses
         /// <param name="ct">Cancellation token propagated from the HTTP request.</param>
         /// <returns>A 200 OK with a stable list of category kinds.</returns>
         [HttpGet("category-kinds")]
+        [HttpGet("/api/v1/businesses/category-kinds")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(BusinessCategoryKindsResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCategoryKinds(CancellationToken ct)

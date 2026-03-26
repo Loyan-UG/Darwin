@@ -21,7 +21,7 @@ namespace Darwin.WebApi.Controllers
     /// Inputs and outputs use Darwin.Contracts models; handlers use Application DTOs.
     /// </summary>
     [ApiController]
-    [Route("api/v1/auth")]
+    [Route("api/v1/member/auth")]
     public sealed class AuthController : ApiControllerBase
     {
         private readonly LoginWithPasswordHandler _loginWithPassword;
@@ -70,7 +70,7 @@ namespace Darwin.WebApi.Controllers
         /// <param name="request">Password login payload coming from the client.</param>
         /// <param name="ct">Cancellation token.</param>
         [HttpPost("login")]
-        [HttpPost("/api/v1/member/auth/login")]
+        [HttpPost("/api/v1/auth/login")]
         [AllowAnonymous]
         [EnableRateLimiting("auth-login")]
         public async Task<IActionResult> LoginAsync(
@@ -125,7 +125,7 @@ namespace Darwin.WebApi.Controllers
         /// <param name="request">Refresh token payload.</param>
         /// <param name="ct">Cancellation token.</param>
         [HttpPost("refresh")]
-        [HttpPost("/api/v1/member/auth/refresh")]
+        [HttpPost("/api/v1/auth/refresh")]
         [AllowAnonymous]
         [EnableRateLimiting("auth-refresh")]
         public async Task<IActionResult> RefreshAsync(
@@ -177,7 +177,7 @@ namespace Darwin.WebApi.Controllers
         /// <param name="request">Logout request containing the refresh token.</param>
         /// <param name="ct">Cancellation token.</param>
         [HttpPost("logout")]
-        [HttpPost("/api/v1/member/auth/logout")]
+        [HttpPost("/api/v1/auth/logout")]
         [Authorize]
         public async Task<IActionResult> LogoutAsync(
             [FromBody] LogoutRequest request,
@@ -227,7 +227,7 @@ namespace Darwin.WebApi.Controllers
         /// </summary>
         /// <param name="ct">Cancellation token.</param>
         [HttpPost("logout-all")]
-        [HttpPost("/api/v1/member/auth/logout-all")]
+        [HttpPost("/api/v1/auth/logout-all")]
         [Authorize]
         public async Task<IActionResult> LogoutAllAsync(CancellationToken ct)
         {
@@ -282,7 +282,7 @@ namespace Darwin.WebApi.Controllers
         /// Registers a new consumer account. Only available for consumer apps; business accounts are provisioned separately.
         /// </summary>
         [HttpPost("register")]
-        [HttpPost("/api/v1/member/auth/register")]
+        [HttpPost("/api/v1/auth/register")]
         [AllowAnonymous]
         public async Task<IActionResult> RegisterAsync(
             [FromBody] RegisterRequest request,
@@ -346,7 +346,7 @@ namespace Darwin.WebApi.Controllers
         /// Changes the current user's password. Requires authentication.
         /// </summary>
         [HttpPost("password/change")]
-        [HttpPost("/api/v1/member/auth/password/change")]
+        [HttpPost("/api/v1/auth/password/change")]
         [Authorize]
         public async Task<IActionResult> ChangePasswordAsync(
             [FromBody] ChangePasswordRequest request,
@@ -394,7 +394,7 @@ namespace Darwin.WebApi.Controllers
         /// Initiates a password reset by generating a token and sending notification (email/SMS). Always returns 200/OK to prevent user enumeration.
         /// </summary>
         [HttpPost("password/request-reset")]
-        [HttpPost("/api/v1/member/auth/password/request-reset")]
+        [HttpPost("/api/v1/auth/password/request-reset")]
         [AllowAnonymous]
         public async Task<IActionResult> RequestPasswordResetAsync(
             [FromBody] RequestPasswordResetRequest request,
@@ -427,7 +427,7 @@ namespace Darwin.WebApi.Controllers
         /// Completes a password reset using the provided email, token, and new password.
         /// </summary>
         [HttpPost("password/reset")]
-        [HttpPost("/api/v1/member/auth/password/reset")]
+        [HttpPost("/api/v1/auth/password/reset")]
         [AllowAnonymous]
         public async Task<IActionResult> ResetPasswordAsync(
             [FromBody] ResetPasswordRequest request,

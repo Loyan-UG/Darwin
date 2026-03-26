@@ -432,6 +432,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; } = DateTime.UtcNow.AddDays(14);
         public DateTime? PaidAtUtc { get; set; }
+        public InvoiceRefundCreateVm Refund { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public List<SelectListItem> PaymentOptions { get; set; } = new();
@@ -443,6 +444,23 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public InvoiceStatus TargetStatus { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+    }
+
+    public sealed class InvoiceRefundCreateVm
+    {
+        public Guid InvoiceId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Range(1, long.MaxValue)]
+        public long AmountMinor { get; set; }
+
+        [Required]
+        [StringLength(3, MinimumLength = 3)]
+        public string Currency { get; set; } = "EUR";
+
+        [Required]
+        [StringLength(256)]
+        public string Reason { get; set; } = string.Empty;
     }
 
     public sealed class CrmSummaryVm

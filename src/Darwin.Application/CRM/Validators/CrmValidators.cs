@@ -187,4 +187,16 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.TargetStatus).IsInEnum();
         }
     }
+
+    public sealed class InvoiceRefundCreateValidator : AbstractValidator<InvoiceRefundCreateDto>
+    {
+        public InvoiceRefundCreateValidator()
+        {
+            RuleFor(x => x.InvoiceId).NotEmpty();
+            RuleFor(x => x.RowVersion).NotEmpty();
+            RuleFor(x => x.AmountMinor).GreaterThan(0);
+            RuleFor(x => x.Currency).NotEmpty().Length(3);
+            RuleFor(x => x.Reason).NotEmpty().MaximumLength(256);
+        }
+    }
 }

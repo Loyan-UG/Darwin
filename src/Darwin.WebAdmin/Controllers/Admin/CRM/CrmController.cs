@@ -41,6 +41,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly UpdateCustomerSegmentHandler _updateCustomerSegment;
         private readonly UpdateInvoiceHandler _updateInvoice;
         private readonly TransitionInvoiceStatusHandler _transitionInvoiceStatus;
+        private readonly CreateInvoiceRefundHandler _createInvoiceRefund;
         private readonly CreateInteractionHandler _createInteraction;
         private readonly CreateConsentHandler _createConsent;
         private readonly AssignCustomerSegmentHandler _assignCustomerSegment;
@@ -75,6 +76,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             UpdateCustomerSegmentHandler updateCustomerSegment,
             UpdateInvoiceHandler updateInvoice,
             TransitionInvoiceStatusHandler transitionInvoiceStatus,
+            CreateInvoiceRefundHandler createInvoiceRefund,
             CreateInteractionHandler createInteraction,
             CreateConsentHandler createConsent,
             AssignCustomerSegmentHandler assignCustomerSegment,
@@ -108,6 +110,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _updateCustomerSegment = updateCustomerSegment;
             _updateInvoice = updateInvoice;
             _transitionInvoiceStatus = transitionInvoiceStatus;
+            _createInvoiceRefund = createInvoiceRefund;
             _createInteraction = createInteraction;
             _createConsent = createConsent;
             _assignCustomerSegment = assignCustomerSegment;
@@ -381,7 +384,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 SettledAmountMinor = dto.SettledAmountMinor,
                 BalanceMinor = dto.BalanceMinor,
                 DueDateUtc = dto.DueDateUtc,
-                PaidAtUtc = dto.PaidAtUtc
+                PaidAtUtc = dto.PaidAtUtc,
+                Refund = new InvoiceRefundCreateVm
+                {
+                    InvoiceId = dto.Id,
+                    RowVersion = dto.RowVersion,
+                    AmountMinor = dto.SettledAmountMinor,
+                    Currency = dto.Currency,
+                    Reason = "Customer refund"
+                }
             };
 
             await PopulateInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -459,6 +470,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
 
             return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RefundInvoice(InvoiceRefundCreateVm vm, CancellationToken ct = default)
+        {
+            try
+            {
+                await _createInvoiceRefund.HandleAsync(new InvoiceRefundCreateDto
+                {
+                    InvoiceId = vm.InvoiceId,
+                    RowVersion = vm.RowVersion,
+                    AmountMinor = vm.AmountMinor,
+                    Currency = vm.Currency,
+                    Reason = vm.Reason
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Invoice refund recorded.";
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["Error"] = "Concurrency conflict. Reload the invoice and try again.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.InvoiceId });
         }
 
         [HttpGet]

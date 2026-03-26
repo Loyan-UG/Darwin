@@ -1,7 +1,9 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Billing.Queries;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -197,6 +199,109 @@ namespace Darwin.Application.CRM.Commands
             }
 
             await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+    }
+
+    public sealed class CreateInvoiceRefundHandler
+    {
+        private readonly IAppDbContext _db;
+        private readonly IValidator<InvoiceRefundCreateDto> _validator;
+
+        public CreateInvoiceRefundHandler(IAppDbContext db, IValidator<InvoiceRefundCreateDto> validator)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        }
+
+        public async Task<Guid> HandleAsync(InvoiceRefundCreateDto dto, CancellationToken ct = default)
+        {
+            await _validator.ValidateAndThrowAsync(dto, ct).ConfigureAwait(false);
+
+            var invoice = await _db.Set<Invoice>()
+                .FirstOrDefaultAsync(x => x.Id == dto.InvoiceId, ct)
+                .ConfigureAwait(false);
+
+            if (invoice is null)
+            {
+                throw new InvalidOperationException("Invoice not found.");
+            }
+
+            if (!invoice.RowVersion.SequenceEqual(dto.RowVersion))
+            {
+                throw new DbUpdateConcurrencyException("Concurrency conflict detected.");
+            }
+
+            if (!invoice.PaymentId.HasValue)
+            {
+                throw new InvalidOperationException("Only invoices with a linked payment can be refunded.");
+            }
+
+            var payment = await _db.Set<Payment>()
+                .FirstOrDefaultAsync(x => x.Id == invoice.PaymentId.Value, ct)
+                .ConfigureAwait(false);
+
+            if (payment is null)
+            {
+                throw new InvalidOperationException("Linked payment not found.");
+            }
+
+            if (payment.Status is PaymentStatus.Pending or PaymentStatus.Authorized or PaymentStatus.Failed or PaymentStatus.Voided)
+            {
+                throw new ValidationException("Only captured or completed payments can be refunded. Void the invoice/payment if funds were not collected.");
+            }
+
+            if (!string.Equals(payment.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(invoice.Currency, dto.Currency, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ValidationException("Refund currency must match the linked invoice and payment currency.");
+            }
+
+            var refundedAmountMinor = await _db.Set<Refund>()
+                .AsNoTracking()
+                .Where(x => x.PaymentId == payment.Id && x.Status == RefundStatus.Completed)
+                .SumAsync(x => (long?)x.AmountMinor, ct)
+                .ConfigureAwait(false) ?? 0L;
+
+            var refundableAgainstPaymentMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(payment.AmountMinor, refundedAmountMinor);
+            var refundableAgainstInvoiceMinor = invoice.Status == InvoiceStatus.Cancelled
+                ? 0L
+                : BillingReconciliationCalculator.CalculateSettledAmount(invoice.TotalGrossMinor, refundableAgainstPaymentMinor);
+
+            if (refundableAgainstInvoiceMinor <= 0)
+            {
+                throw new ValidationException("There is no refundable amount remaining on the invoice.");
+            }
+
+            if (dto.AmountMinor > refundableAgainstPaymentMinor || dto.AmountMinor > refundableAgainstInvoiceMinor)
+            {
+                throw new ValidationException("Refund amount exceeds the remaining refundable amount on the invoice.");
+            }
+
+            var refund = new Refund
+            {
+                OrderId = invoice.OrderId,
+                PaymentId = payment.Id,
+                AmountMinor = dto.AmountMinor,
+                Currency = dto.Currency.ToUpperInvariant(),
+                Reason = dto.Reason.Trim(),
+                Status = RefundStatus.Completed,
+                CompletedAtUtc = DateTime.UtcNow
+            };
+
+            _db.Set<Refund>().Add(refund);
+
+            var resultingRefundedAmountMinor = refundedAmountMinor + dto.AmountMinor;
+            var remainingNetCollectedMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(payment.AmountMinor, resultingRefundedAmountMinor);
+            if (remainingNetCollectedMinor == 0)
+            {
+                payment.Status = PaymentStatus.Refunded;
+                payment.PaidAtUtc = null;
+                invoice.Status = InvoiceStatus.Cancelled;
+                invoice.PaidAtUtc = null;
+            }
+
+            await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+            return refund.Id;
         }
     }
 }

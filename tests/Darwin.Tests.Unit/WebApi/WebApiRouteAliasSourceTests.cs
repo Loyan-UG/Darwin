@@ -13,49 +13,79 @@ public sealed class WebApiRouteAliasSourceTests
     {
         var source = ReadControllerSource("AuthController.cs");
 
-        source.Should().Contain("/api/v1/member/auth/login");
-        source.Should().Contain("/api/v1/member/auth/refresh");
-        source.Should().Contain("/api/v1/member/auth/logout");
-        source.Should().Contain("/api/v1/member/auth/logout-all");
-        source.Should().Contain("/api/v1/member/auth/register");
-        source.Should().Contain("/api/v1/member/auth/password/change");
-        source.Should().Contain("/api/v1/member/auth/password/request-reset");
-        source.Should().Contain("/api/v1/member/auth/password/reset");
+        source.Should().Contain("api/v1/member/auth");
+        source.Should().Contain("/api/v1/auth/login");
+        source.Should().Contain("/api/v1/auth/refresh");
+        source.Should().Contain("/api/v1/auth/logout");
+        source.Should().Contain("/api/v1/auth/logout-all");
+        source.Should().Contain("/api/v1/auth/register");
+        source.Should().Contain("/api/v1/auth/password/change");
+        source.Should().Contain("/api/v1/auth/password/request-reset");
+        source.Should().Contain("/api/v1/auth/password/reset");
     }
 
     [Fact]
-    public void BusinessesController_Should_ContainPublicAndMemberAliases()
+    public void PublicBusinessesController_Should_ContainPublicCanonicalRoutes_AndLegacyAliases()
     {
-        var source = ReadControllerSource(Path.Combine("Businesses", "BusinessesController.cs"));
+        var source = ReadControllerSource(Path.Combine("Public", "PublicBusinessesController.cs"));
 
-        source.Should().Contain("/api/v1/public/businesses/list");
-        source.Should().Contain("/api/v1/public/businesses/{id:guid}");
-        source.Should().Contain("/api/v1/member/businesses/onboarding");
-        source.Should().Contain("/api/v1/member/businesses/{id:guid}/with-my-account");
-        source.Should().Contain("/api/v1/member/businesses/{id:guid}/engagement/my");
-        source.Should().Contain("/api/v1/member/businesses/{id:guid}/likes/toggle");
-        source.Should().Contain("/api/v1/member/businesses/{id:guid}/favorites/toggle");
-        source.Should().Contain("/api/v1/member/businesses/{id:guid}/my-review");
+        source.Should().Contain("api/v1/public/businesses");
+        source.Should().Contain("/api/v1/businesses/list");
+        source.Should().Contain("/api/v1/businesses/{id:guid}");
     }
 
     [Fact]
-    public void ProfileController_Should_ContainMemberAliases()
+    public void MemberBusinessesController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Member", "MemberBusinessesController.cs"));
+
+        source.Should().Contain("api/v1/member/businesses");
+        source.Should().Contain("/api/v1/businesses/onboarding");
+        source.Should().Contain("/api/v1/businesses/{id:guid}/with-my-account");
+        source.Should().Contain("/api/v1/businesses/{id:guid}/engagement/my");
+        source.Should().Contain("/api/v1/businesses/{id:guid}/likes/toggle");
+        source.Should().Contain("/api/v1/businesses/{id:guid}/favorites/toggle");
+        source.Should().Contain("/api/v1/businesses/{id:guid}/my-review");
+    }
+
+    [Fact]
+    public void BusinessesMetaController_Should_ContainPublicCanonicalRoute_AndLegacyAlias()
+    {
+        var source = ReadControllerSource(Path.Combine("Businesses", "BusinessesMetaController.cs"));
+
+        source.Should().Contain("api/v1/public/businesses");
+        source.Should().Contain("/api/v1/businesses/category-kinds");
+    }
+
+    [Fact]
+    public void ProfileController_Should_ContainMemberCanonicalRoutes_AndLegacyAliases()
     {
         var source = ReadControllerSource(Path.Combine("Profile", "ProfileController.cs"));
 
-        source.Should().Contain("/api/v1/member/profile/me");
-        source.Should().Contain("/api/v1/member/profile/me/deletion-request");
+        source.Should().Contain("api/v1/member/profile");
+        source.Should().Contain("/api/v1/profile/me");
+        source.Should().Contain("/api/v1/profile/me/deletion-request");
     }
 
     [Fact]
-    public void BillingController_Should_ContainBusinessAliases()
+    public void BillingController_Should_ContainBusinessCanonicalRoutes_AndLegacyAliases()
     {
         var source = ReadControllerSource(Path.Combine("Billing", "BillingController.cs"));
 
-        source.Should().Contain("/api/v1/business/billing/subscription/current");
-        source.Should().Contain("/api/v1/business/billing/subscription/cancel-at-period-end");
-        source.Should().Contain("/api/v1/business/billing/plans");
-        source.Should().Contain("/api/v1/business/billing/subscription/checkout-intent");
+        source.Should().Contain("api/v1/business/billing");
+        source.Should().Contain("/api/v1/billing/business/subscription/current");
+        source.Should().Contain("/api/v1/billing/business/subscription/cancel-at-period-end");
+        source.Should().Contain("/api/v1/billing/plans");
+        source.Should().Contain("/api/v1/billing/business/subscription/checkout-intent");
+    }
+
+    [Fact]
+    public void NotificationsController_Should_ContainMemberCanonicalRoute_AndLegacyAlias()
+    {
+        var source = ReadControllerSource(Path.Combine("Notifications", "NotificationsController.cs"));
+
+        source.Should().Contain("api/v1/member/notifications");
+        source.Should().Contain("/api/v1/notifications/devices/register");
     }
 
     private static string ReadControllerSource(string relativeControllerPath)

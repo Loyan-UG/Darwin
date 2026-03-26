@@ -28,6 +28,15 @@
 
 The API must be designed as separate logical surfaces sharing a common host.
 
+Canonical route ownership should now be audience-first:
+
+- `api/v1/public/*` for anonymous storefront and CMS delivery
+- `api/v1/member/*` for authenticated end-user operations
+- `api/v1/business/*` for business/mobile operator workflows
+- `api/v1/admin/*` for future back-office/integration delivery where HTTP is justified
+
+Legacy non-audience-prefixed aliases may remain temporarily for backward compatibility, but new work should always attach to the audience-first canonical route.
+
 ### 1. Public API
 
 For anonymous or low-friction browsing scenarios:
@@ -102,6 +111,12 @@ Examples:
 - businesses/discovery
 - billing subscriptions
 - meta/health
+
+Recent route organization changes:
+
+- business discovery and public business detail now live under a dedicated public controller
+- member business onboarding, engagement, and review actions now live under a dedicated member controller
+- auth, profile, notification, and business billing controllers now use audience-first canonical route roots while preserving legacy aliases
 
 ### Required public groups
 

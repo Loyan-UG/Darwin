@@ -16,7 +16,7 @@ namespace Darwin.WebApi.Controllers.Notifications;
 /// Endpoints for client notification/device registration operations.
 /// </summary>
 [ApiController]
-[Route("api/v1/notifications")]
+[Route("api/v1/member/notifications")]
 [Authorize]
 public sealed class NotificationsController : ApiControllerBase
 {
@@ -32,6 +32,7 @@ public sealed class NotificationsController : ApiControllerBase
     /// Registers or updates the authenticated user's mobile device installation for push delivery.
     /// </summary>
     [HttpPost("devices/register")]
+    [HttpPost("/api/v1/notifications/devices/register")]
     [ProducesResponseType(typeof(RegisterPushDeviceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status401Unauthorized)]
