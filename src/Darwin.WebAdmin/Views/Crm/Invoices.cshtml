@@ -78,7 +78,17 @@
                                 <span class="text-muted">Unlinked</span>
                             }
                         </td>
-                        <td class="text-end">@item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</td>
+                        <td class="text-end">
+                            <div>@item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
+                            @if (item.RefundedAmountMinor > 0)
+                            {
+                                <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
+                            }
+                            <div class="small text-muted">Settled: @item.Currency @((item.SettledAmountMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="small @(item.BalanceMinor > 0 ? "text-danger" : "text-success")">
+                                Balance: @item.Currency @((item.BalanceMinor / 100.0M).ToString("0.00"))
+                            </div>
+                        </td>
                         <td>@item.Status</td>
                         <td>@item.DueDateUtc.ToString("yyyy-MM-dd")</td>
                         <td class="text-end">

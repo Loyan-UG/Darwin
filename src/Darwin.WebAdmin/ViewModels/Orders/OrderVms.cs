@@ -138,6 +138,9 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         /// <summary>UTC timestamp when the payment was marked as paid/captured.</summary>
         public DateTime? PaidAtUtc { get; set; }
 
+        public long RefundedAmountMinor { get; set; }
+        public long NetCapturedAmountMinor { get; set; }
+
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -287,6 +290,9 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public long TotalGrossMinor { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long SettledAmountMinor { get; set; }
+        public long BalanceMinor { get; set; }
         public InvoiceStatus Status { get; set; }
         public DateTime IssuedAtUtc { get; set; }
         public DateTime? DueAtUtc { get; set; }

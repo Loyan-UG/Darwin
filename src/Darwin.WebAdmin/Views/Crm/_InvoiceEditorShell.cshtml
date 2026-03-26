@@ -88,6 +88,36 @@
         </div>
     </div>
 
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light">
+                <div class="card-body py-3">
+                    <div class="small text-uppercase text-muted fw-semibold">Gross Total</div>
+                    <div class="fs-5">@Model.Currency @((Model.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light">
+                <div class="card-body py-3">
+                    <div class="small text-uppercase text-muted fw-semibold">Refunded / Settled</div>
+                    <div>@Model.Currency @((Model.RefundedAmountMinor / 100.0M).ToString("0.00")) refunded</div>
+                    <div class="small text-muted">@Model.Currency @((Model.SettledAmountMinor / 100.0M).ToString("0.00")) settled</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light">
+                <div class="card-body py-3">
+                    <div class="small text-uppercase text-muted fw-semibold">Open Balance</div>
+                    <div class="fs-5 @(Model.BalanceMinor > 0 ? "text-danger" : "text-success")">
+                        @Model.Currency @((Model.BalanceMinor / 100.0M).ToString("0.00"))
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form asp-action="EditInvoice"
           method="post"
           hx-post="@Url.Action("EditInvoice", "Crm")"

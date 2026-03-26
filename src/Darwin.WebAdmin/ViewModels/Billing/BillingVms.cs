@@ -35,6 +35,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long NetCapturedAmountMinor { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -80,6 +82,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string? ProviderTransactionRef { get; set; }
 
         public DateTime? PaidAtUtc { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long NetCapturedAmountMinor { get; set; }
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();

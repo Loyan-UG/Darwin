@@ -173,6 +173,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     FailureReason = x.FailureReason,
                     CreatedAtUtc = x.CreatedAtUtc,
                     PaidAtUtc = x.PaidAtUtc,
+                    RefundedAmountMinor = x.RefundedAmountMinor,
+                    NetCapturedAmountMinor = x.NetCapturedAmountMinor,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -257,6 +259,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     CustomerDisplayName = x.CustomerDisplayName,
                     Currency = x.Currency,
                     TotalGrossMinor = x.TotalGrossMinor,
+                    RefundedAmountMinor = x.RefundedAmountMinor,
+                    SettledAmountMinor = x.SettledAmountMinor,
+                    BalanceMinor = x.BalanceMinor,
                     Status = x.Status,
                     IssuedAtUtc = x.IssuedAtUtc,
                     DueAtUtc = x.DueAtUtc,

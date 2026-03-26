@@ -24,6 +24,8 @@ namespace Darwin.Application.Billing.DTOs
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long NetCapturedAmountMinor { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -53,6 +55,8 @@ namespace Darwin.Application.Billing.DTOs
         public string? CustomerEmail { get; set; }
         public string UserDisplayName { get; set; } = string.Empty;
         public string? UserEmail { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long NetCapturedAmountMinor { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

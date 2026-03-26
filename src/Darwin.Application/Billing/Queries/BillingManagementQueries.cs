@@ -4,6 +4,7 @@ using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Billing.Queries
@@ -83,6 +84,16 @@ namespace Darwin.Application.Billing.Queries
                     .Where(x => invoiceIds.Contains(x.Id))
                     .ToDictionaryAsync(x => x.Id, ct)
                     .ConfigureAwait(false);
+            var paymentIds = items.Select(x => x.Id).ToList();
+            var refundTotals = paymentIds.Count == 0
+                ? new Dictionary<Guid, long>()
+                : await _db.Set<Refund>()
+                    .AsNoTracking()
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .GroupBy(x => x.PaymentId)
+                    .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
+                    .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)
+                    .ConfigureAwait(false);
 
             foreach (var customerId in invoiceMap.Values.Where(x => x.CustomerId.HasValue).Select(x => x.CustomerId!.Value))
             {
@@ -146,6 +157,11 @@ namespace Darwin.Application.Billing.Queries
                     item.UserDisplayName = BillingPaymentDisplayFormatter.BuildUserDisplayName(user);
                     item.UserEmail = user.Email;
                 }
+
+                item.RefundedAmountMinor = BillingReconciliationCalculator.ClampRefundedAmount(
+                    item.AmountMinor,
+                    refundTotals.TryGetValue(item.Id, out var refundedAmountMinor) ? refundedAmountMinor : 0L);
+                item.NetCapturedAmountMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(item.AmountMinor, item.RefundedAmountMinor);
             }
         }
     }
@@ -219,6 +235,15 @@ namespace Darwin.Application.Billing.Queries
                     }
                 }
             }
+
+            dto.RefundedAmountMinor = BillingReconciliationCalculator.ClampRefundedAmount(
+                dto.AmountMinor,
+                await _db.Set<Refund>()
+                    .AsNoTracking()
+                    .Where(x => x.PaymentId == dto.Id && x.Status == RefundStatus.Completed)
+                    .SumAsync(x => (long?)x.AmountMinor, ct)
+                    .ConfigureAwait(false) ?? 0L);
+            dto.NetCapturedAmountMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(dto.AmountMinor, dto.RefundedAmountMinor);
 
             User? paymentUser = null;
             if (dto.UserId.HasValue)

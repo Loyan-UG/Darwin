@@ -4,9 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Billing.Queries;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
+using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Queries
@@ -59,6 +62,13 @@ namespace Darwin.Application.Orders.Queries
                     .Select(x => new { PaymentId = x.PaymentId!.Value, x.Id, x.Status })
                     .ToDictionaryAsync(x => x.PaymentId, ct)
                     .ConfigureAwait(false);
+                var refundTotals = await _db.Set<Refund>()
+                    .AsNoTracking()
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .GroupBy(x => x.PaymentId)
+                    .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
+                    .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)
+                    .ConfigureAwait(false);
 
                 foreach (var item in items)
                 {
@@ -67,6 +77,11 @@ namespace Darwin.Application.Orders.Queries
                         item.InvoiceId = invoice.Id;
                         item.InvoiceStatus = invoice.Status;
                     }
+
+                    item.RefundedAmountMinor = BillingReconciliationCalculator.ClampRefundedAmount(
+                        item.AmountMinor,
+                        refundTotals.TryGetValue(item.Id, out var refundedAmountMinor) ? refundedAmountMinor : 0L);
+                    item.NetCapturedAmountMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(item.AmountMinor, item.RefundedAmountMinor);
                 }
             }
 

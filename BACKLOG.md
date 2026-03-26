@@ -67,6 +67,7 @@ The immediate direction is:
 - Completed: add dedicated CRM invoice list/edit screens and fix invoice lifecycle persistence so order links and payment reassignments do not leave stale associations.
 - Completed: add explicit invoice status transition workflows in CRM so paid/open/cancelled operator actions enforce safer payment-aware guards.
 - Completed: align order refunds and order-created invoices with the shared payment aggregate so refunds can mark payments as refunded and invoice creation links/captures eligible payments.
+- Completed: add reconciliation visibility across CRM invoice screens, billing payment screens, and order tabs so operators can see refunded, net-collected, settled, and remaining-balance amounts without introducing new domain states.
 - Task: deepen invoice lifecycle tooling further with posting/voiding/refund-oriented workflows that connect more directly to refund creation and downstream reconciliation.
 
 ### Epic: CRM admin

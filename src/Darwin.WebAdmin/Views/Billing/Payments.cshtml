@@ -63,7 +63,14 @@
                             <span class="text-muted">-</span>
                         }
                     </td>
-                    <td>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
+                    <td>
+                        <div>@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</div>
+                        @if (item.RefundedAmountMinor > 0)
+                        {
+                            <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100M).ToString("0.00"))</div>
+                        }
+                        <div class="small text-muted">Net: @item.Currency @((item.NetCapturedAmountMinor / 100M).ToString("0.00"))</div>
+                    </td>
                     <td>
                         @if (item.CustomerId.HasValue)
                         {

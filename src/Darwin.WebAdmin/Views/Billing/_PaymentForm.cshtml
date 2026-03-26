@@ -54,6 +54,35 @@
     </div>
 }
 
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card border-0 bg-light h-100">
+            <div class="card-body py-3">
+                <div class="small text-uppercase text-muted fw-semibold">Recorded Amount</div>
+                <div class="fs-5">@Model.Currency @((Model.AmountMinor / 100M).ToString("0.00"))</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 bg-light h-100">
+            <div class="card-body py-3">
+                <div class="small text-uppercase text-muted fw-semibold">Refunded</div>
+                <div class="fs-5 @(Model.RefundedAmountMinor > 0 ? "text-warning" : string.Empty)">
+                    @Model.Currency @((Model.RefundedAmountMinor / 100M).ToString("0.00"))
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 bg-light h-100">
+            <div class="card-body py-3">
+                <div class="small text-uppercase text-muted fw-semibold">Net Collected</div>
+                <div class="fs-5">@Model.Currency @((Model.NetCapturedAmountMinor / 100M).ToString("0.00"))</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-md-4">
         <label asp-for="BusinessId" class="form-label"></label>

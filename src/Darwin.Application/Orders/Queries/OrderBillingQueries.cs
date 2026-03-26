@@ -1,9 +1,11 @@
 using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Billing.Queries;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.CRM;
 using Darwin.Domain.Entities.Orders;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Orders.Queries
@@ -119,6 +121,15 @@ namespace Darwin.Application.Orders.Queries
                     .Where(x => paymentIds.Contains(x.Id))
                     .ToDictionaryAsync(x => x.Id, ct)
                     .ConfigureAwait(false);
+            var refundTotals = paymentIds.Count == 0
+                ? new Dictionary<Guid, long>()
+                : await _db.Set<Refund>()
+                    .AsNoTracking()
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .GroupBy(x => x.PaymentId)
+                    .Select(x => new { PaymentId = x.Key, AmountMinor = x.Sum(r => r.AmountMinor) })
+                    .ToDictionaryAsync(x => x.PaymentId, x => x.AmountMinor, ct)
+                    .ConfigureAwait(false);
 
             var customers = customerIds.Count == 0
                 ? new List<Customer>()
@@ -146,6 +157,22 @@ namespace Darwin.Application.Orders.Queries
                     item.PaymentProvider = payment.Provider;
                     item.PaymentProviderReference = payment.ProviderTransactionRef;
                     item.PaymentStatus = payment.Status;
+                    var refundedAmountMinor = BillingReconciliationCalculator.ClampRefundedAmount(
+                        payment.AmountMinor,
+                        refundTotals.TryGetValue(payment.Id, out var paymentRefundedAmountMinor) ? paymentRefundedAmountMinor : 0L);
+                    var settledAmountMinor = BillingReconciliationCalculator.CalculateSettledAmount(
+                        item.TotalGrossMinor,
+                        BillingReconciliationCalculator.CalculateNetCollectedAmount(payment.AmountMinor, refundedAmountMinor));
+
+                    item.RefundedAmountMinor = Math.Min(refundedAmountMinor, item.TotalGrossMinor);
+                    item.SettledAmountMinor = settledAmountMinor;
+                    item.BalanceMinor = BillingReconciliationCalculator.CalculateBalanceAmount(item.TotalGrossMinor, settledAmountMinor);
+                }
+                else
+                {
+                    item.RefundedAmountMinor = 0L;
+                    item.SettledAmountMinor = item.Status == InvoiceStatus.Paid ? item.TotalGrossMinor : 0L;
+                    item.BalanceMinor = BillingReconciliationCalculator.CalculateBalanceAmount(item.TotalGrossMinor, item.SettledAmountMinor);
                 }
 
                 if (item.CustomerId.HasValue && customerMap.TryGetValue(item.CustomerId.Value, out var customer))

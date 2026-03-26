@@ -45,7 +45,14 @@
                                     <span class="text-muted">-</span>
                                 }
                             </td>
-                            <td class="text-end">@p.Currency @((p.AmountMinor / 100.0M).ToString("0.00"))</td>
+                            <td class="text-end">
+                                <div>@p.Currency @((p.AmountMinor / 100.0M).ToString("0.00"))</div>
+                                @if (p.RefundedAmountMinor > 0)
+                                {
+                                    <div class="small text-warning">Refunded: @p.Currency @((p.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>
+                                }
+                                <div class="small text-muted">Net: @p.Currency @((p.NetCapturedAmountMinor / 100.0M).ToString("0.00"))</div>
+                            </td>
                             <td>@p.Status</td>
                             <td>@(p.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? p.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"))</td>
                             <td class="text-end">

@@ -15,6 +15,9 @@ namespace Darwin.Application.CRM.DTOs
         public InvoiceStatus Status { get; set; }
         public string Currency { get; set; } = "EUR";
         public long TotalGrossMinor { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long SettledAmountMinor { get; set; }
+        public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -36,6 +39,9 @@ namespace Darwin.Application.CRM.DTOs
         public long TotalNetMinor { get; set; }
         public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long SettledAmountMinor { get; set; }
+        public long BalanceMinor { get; set; }
         public DateTime DueDateUtc { get; set; }
         public DateTime? PaidAtUtc { get; set; }
     }

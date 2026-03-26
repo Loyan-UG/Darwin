@@ -242,6 +242,12 @@ namespace Darwin.Application.Orders.DTOs
         /// <summary>UTC timestamp when the payment was captured or marked as paid.</summary>
         public DateTime? PaidAtUtc { get; set; }
 
+        /// <summary>Total refunded amount applied against this payment in minor units.</summary>
+        public long RefundedAmountMinor { get; set; }
+
+        /// <summary>Remaining net collected amount after completed refunds.</summary>
+        public long NetCapturedAmountMinor { get; set; }
+
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -338,6 +344,9 @@ namespace Darwin.Application.Orders.DTOs
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public long TotalGrossMinor { get; set; }
+        public long RefundedAmountMinor { get; set; }
+        public long SettledAmountMinor { get; set; }
+        public long BalanceMinor { get; set; }
         public InvoiceStatus Status { get; set; }
         public DateTime IssuedAtUtc { get; set; }
         public DateTime? DueAtUtc { get; set; }

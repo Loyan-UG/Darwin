@@ -341,6 +341,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Status = x.Status,
                     Currency = x.Currency,
                     TotalGrossMinor = x.TotalGrossMinor,
+                    RefundedAmountMinor = x.RefundedAmountMinor,
+                    SettledAmountMinor = x.SettledAmountMinor,
+                    BalanceMinor = x.BalanceMinor,
                     DueDateUtc = x.DueDateUtc,
                     PaidAtUtc = x.PaidAtUtc,
                     RowVersion = x.RowVersion
@@ -374,6 +377,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 TotalNetMinor = dto.TotalNetMinor,
                 TotalTaxMinor = dto.TotalTaxMinor,
                 TotalGrossMinor = dto.TotalGrossMinor,
+                RefundedAmountMinor = dto.RefundedAmountMinor,
+                SettledAmountMinor = dto.SettledAmountMinor,
+                BalanceMinor = dto.BalanceMinor,
                 DueDateUtc = dto.DueDateUtc,
                 PaidAtUtc = dto.PaidAtUtc
             };

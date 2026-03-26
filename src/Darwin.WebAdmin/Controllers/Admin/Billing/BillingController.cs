@@ -105,6 +105,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     Provider = x.Provider,
                     ProviderTransactionRef = x.ProviderTransactionRef,
                     PaidAtUtc = x.PaidAtUtc,
+                    RefundedAmountMinor = x.RefundedAmountMinor,
+                    NetCapturedAmountMinor = x.NetCapturedAmountMinor,
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
@@ -209,7 +211,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Status = dto.Status,
                 Provider = dto.Provider,
                 ProviderTransactionRef = dto.ProviderTransactionRef,
-                PaidAtUtc = dto.PaidAtUtc
+                PaidAtUtc = dto.PaidAtUtc,
+                RefundedAmountMinor = dto.RefundedAmountMinor,
+                NetCapturedAmountMinor = dto.NetCapturedAmountMinor
             };
 
             await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
