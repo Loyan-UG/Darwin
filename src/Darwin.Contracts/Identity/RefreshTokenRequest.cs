@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
 namespace Darwin.Contracts.Identity
 {
@@ -22,5 +18,11 @@ namespace Darwin.Contracts.Identity
         /// the value must match to successfully refresh.
         /// </summary>
         public string? DeviceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the preferred active business context that should be preserved
+        /// when the access token is re-issued during refresh.
+        /// </summary>
+        public Guid? BusinessId { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Darwin.Application.Identity.DTOs
 {
@@ -36,8 +36,6 @@ namespace Darwin.Application.Identity.DTOs
         public string NewPassword { get; set; } = string.Empty;
     }
 
-
-
     /// <summary>
     /// Request for username/password login. Username is email in current Domain model.
     /// </summary>
@@ -50,6 +48,12 @@ namespace Darwin.Application.Identity.DTOs
         /// Optional device identifier (e.g., mobile installation id) for device-bound refresh tokens.
         /// </summary>
         public string? DeviceId { get; set; }
+
+        /// <summary>
+        /// Optional preferred active business identifier for the issued token.
+        /// This is mainly used by business-facing clients to preserve workspace context.
+        /// </summary>
+        public Guid? BusinessId { get; set; }
     }
 
     /// <summary>
@@ -72,6 +76,7 @@ namespace Darwin.Application.Identity.DTOs
     {
         public string RefreshToken { get; set; } = string.Empty;
         public string? DeviceId { get; set; }
+        public Guid? BusinessId { get; set; }
     }
 
     /// <summary>

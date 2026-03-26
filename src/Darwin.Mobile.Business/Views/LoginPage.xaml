@@ -42,6 +42,13 @@
                         CornerRadius="6"
                         AutomationId="SignInButton" />
 
+                <Button Text="{x:Static res:AppResources.LoginAcceptInvitationButton}"
+                        Command="{Binding OpenInvitationAcceptanceCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                        HeightRequest="44"
+                        CornerRadius="6"
+                        AutomationId="OpenInvitationAcceptanceButton" />
+
                 <Border StrokeThickness="1" Padding="16">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="{x:Static res:AppResources.AuthLegalSectionTitle}"

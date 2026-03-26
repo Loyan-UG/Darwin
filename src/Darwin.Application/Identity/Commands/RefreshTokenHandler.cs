@@ -41,7 +41,7 @@ namespace Darwin.Application.Identity.Commands
             _jwt.RevokeRefreshToken(dto.RefreshToken, dto.DeviceId);
 
             var (access, accessExp, refresh, refreshExp) =
-                _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null);
+                _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null, preferredBusinessId: dto.BusinessId);
 
 
             var result = new AuthResultDto

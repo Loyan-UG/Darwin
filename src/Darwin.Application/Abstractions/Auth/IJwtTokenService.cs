@@ -32,12 +32,17 @@ namespace Darwin.Application.Abstractions.Auth
         /// SiteSetting.JwtEmitScopes is enabled. This keeps the JWT compact while still
         /// allowing coarse-grained authorization decisions.
         /// </param>
+        /// <param name="preferredBusinessId">
+        /// Optional preferred business context that should be embedded in the issued token when the user
+        /// belongs to multiple businesses. Implementations must validate that the user is an active member
+        /// of the requested business before using it.
+        /// </param>
         /// <returns>
         /// A tuple describing the issued access token and refresh token along with their
         /// respective expiration timestamps in UTC.
         /// </returns>
         (string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)
-            IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null);
+            IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null, Guid? preferredBusinessId = null);
 
         /// <summary>
         /// Validates a refresh token (opaque) and returns the associated user id if valid.

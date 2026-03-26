@@ -934,6 +934,87 @@
   <data name="LoginLogoDescription" xml:space="preserve">
     <value>Loyan Business App-Logo</value>
   </data>
+  <data name="LoginAcceptInvitationButton" xml:space="preserve">
+    <value>Einladung annehmen</value>
+  </data>
+  <data name="InvitationAcceptanceTitle" xml:space="preserve">
+    <value>Einladung annehmen</value>
+  </data>
+  <data name="InvitationTokenLabel" xml:space="preserve">
+    <value>Einladungstoken</value>
+  </data>
+  <data name="InvitationTokenPlaceholder" xml:space="preserve">
+    <value>Einladungstoken einfÃ¼gen</value>
+  </data>
+  <data name="InvitationPreviewButton" xml:space="preserve">
+    <value>Einladung prÃ¼fen</value>
+  </data>
+  <data name="InvitationBusinessLabel" xml:space="preserve">
+    <value>Unternehmen</value>
+  </data>
+  <data name="InvitationRoleLabel" xml:space="preserve">
+    <value>Rolle</value>
+  </data>
+  <data name="InvitationInvitedEmailLabel" xml:space="preserve">
+    <value>Eingeladene E-Mail</value>
+  </data>
+  <data name="InvitationStatusLabel" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="InvitationExpiresAtLabel" xml:space="preserve">
+    <value>GÃ¼ltig bis</value>
+  </data>
+  <data name="InvitationFirstNameRequired" xml:space="preserve">
+    <value>Vorname ist erforderlich.</value>
+  </data>
+  <data name="InvitationLastNameRequired" xml:space="preserve">
+    <value>Nachname ist erforderlich.</value>
+  </data>
+  <data name="InvitationAcceptButton" xml:space="preserve">
+    <value>Annehmen und fortfahren</value>
+  </data>
+  <data name="InvitationPreviewFailed" xml:space="preserve">
+    <value>Einladungsdetails konnten nicht geladen werden.</value>
+  </data>
+  <data name="InvitationAcceptFailed" xml:space="preserve">
+    <value>Die Einladung konnte derzeit nicht angenommen werden.</value>
+  </data>
+  <data name="InvitationExistingUserHint" xml:space="preserve">
+    <value>Diese E-Mail gehÃ¶rt bereits zu einem bestehenden Konto. Beim Annehmen der Einladung werden Sie in der Business-App angemeldet.</value>
+  </data>
+  <data name="InvitationNewUserHint" xml:space="preserve">
+    <value>ErgÃ¤nzen Sie Ihr Profil und vergeben Sie ein Passwort, um das eingeladene Business-Konto zu erstellen.</value>
+  </data>
+  <data name="InvitationPasswordLabel" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="InvitationConfirmPasswordLabel" xml:space="preserve">
+    <value>Passwort bestÃ¤tigen</value>
+  </data>
+  <data name="InvitationPasswordMismatch" xml:space="preserve">
+    <value>Passwort und BestÃ¤tigung stimmen nicht Ã¼berein.</value>
+  </data>
+  <data name="InvitationTokenRequired" xml:space="preserve">
+    <value>Einladungstoken ist erforderlich.</value>
+  </data>
+  <data name="InvitationNotFoundMessage" xml:space="preserve">
+    <value>Einladung wurde nicht gefunden. Bitte prÃ¼fen Sie den Token oder fordern Sie eine neue Einladung an.</value>
+  </data>
+  <data name="InvitationExpiredMessage" xml:space="preserve">
+    <value>Die Einladung ist abgelaufen. Bitte fordern Sie eine neue Einladung an.</value>
+  </data>
+  <data name="InvitationRevokedMessage" xml:space="preserve">
+    <value>Die Einladung wurde widerrufen. Bitte kontaktieren Sie Ihre Administratoren.</value>
+  </data>
+  <data name="InvitationAlreadyAcceptedMessage" xml:space="preserve">
+    <value>Die Einladung wurde bereits angenommen. Melden Sie sich mit Ihrem Konto an.</value>
+  </data>
+  <data name="InvitationAccountUnavailableMessage" xml:space="preserve">
+    <value>Das eingeladene Konto ist derzeit nicht verfÃ¼gbar. Bitte kontaktieren Sie den Support.</value>
+  </data>
+  <data name="InvitationAcceptedSuccess" xml:space="preserve">
+    <value>Einladung erfolgreich angenommen.</value>
+  </data>
   <data name="DashboardSessionsFormat" xml:space="preserve">
     <value>Sitzungen: {0}</value>
   </data>

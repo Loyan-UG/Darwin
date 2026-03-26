@@ -32,6 +32,7 @@ public sealed partial class AppShell : Shell
         Routing.RegisterRoute(Routes.Home, typeof(HomePage));
         Routing.RegisterRoute(Routes.Scanner, typeof(ScannerPage));
         Routing.RegisterRoute(Routes.Login, typeof(LoginPage));
+        Routing.RegisterRoute(Routes.InvitationAcceptance, typeof(AcceptInvitationPage));
         Routing.RegisterRoute(Routes.Session, typeof(SessionPage));
         Routing.RegisterRoute(Routes.Dashboard, typeof(DashboardPage));
         Routing.RegisterRoute(Routes.Rewards, typeof(RewardsPage));
@@ -92,9 +93,11 @@ public sealed partial class AppShell : Shell
     private void OnShellNavigated(object? sender, ShellNavigatedEventArgs e)
     {
         var route = e.Current?.Location?.OriginalString ?? string.Empty;
-        var onLogin = route.Contains(Routes.Login, StringComparison.OrdinalIgnoreCase);
+        var onAuthScreen =
+            route.Contains(Routes.Login, StringComparison.OrdinalIgnoreCase) ||
+            route.Contains(Routes.InvitationAcceptance, StringComparison.OrdinalIgnoreCase);
 
-        if (onLogin)
+        if (onAuthScreen)
         {
             RemoveLogoutToolbarItemIfNeeded();
         }

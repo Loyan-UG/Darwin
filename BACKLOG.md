@@ -42,6 +42,7 @@ Status terms used below:
 - `Planned / Near-term`: support tenant/customer provisioning for new business onboarding
 - `In Progress`: support owner/admin assignment during onboarding
 - `In Progress`: support invitation-based onboarding for owners/staff when no existing platform user is available
+- `Completed`: `Darwin.Mobile.Business` now supports token-entry invitation preview and acceptance for phase-1 onboarding
 - `Planned / Near-term`: model and expose onboarding state, activation state, approval state, and suspension/reactivation rules
 - `In Progress`: seed and apply initial defaults during onboarding (locale, branding basics, payment/shipping defaults, communication defaults where applicable)
 
@@ -49,6 +50,7 @@ Status terms used below:
 
 - `Planned / Near-term`: complete signup, invitation, activation, forgot-password, and reset-password operational flows
 - `Planned / Near-term`: add admin support for resend activation, lock/unlock account, reset initiation support, and audit visibility
+- `Completed`: business-app token refresh now preserves preferred business context during onboarding-safe refresh cycles
 - `Planned / Near-term`: ensure business-user status directly affects access in mobile and admin-backed support workflows
 
 ### Communication Core (email-first MVP)
@@ -208,6 +210,7 @@ Status terms used below:
 
 - `Completed`: mobile apps remain operational and use shared canonical service abstractions
 - `Completed`: `Darwin.Mobile.Business` is usable enough to influence delivery priorities
+- `Completed`: `Darwin.Mobile.Business` invitation acceptance now works end-to-end against canonical business-auth endpoints
 - `Planned / Near-term`: ensure onboarding/account lifecycle backend and admin support flows satisfy business mobile usage
 - `Planned / Near-term`: keep mobile route and contract compatibility intact whenever backend changes touch mobile-used flows
 
@@ -241,3 +244,4 @@ Status terms used below:
 - `Decision pending`: decide whether phase-1 business onboarding should remain "assign existing user as owner" or include invitation-first owner creation before the Communication Core MVP is complete
 - `Decision pending`: decide whether support admins should have an explicit emergency override for the "last active owner cannot be removed or disabled" policy
 - `Decision pending`: decide whether invitation acceptance in phase 1 should be token-entry driven, magic-link driven, or both across `Darwin.Mobile.Business` and future front-end onboarding flows
+- `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh

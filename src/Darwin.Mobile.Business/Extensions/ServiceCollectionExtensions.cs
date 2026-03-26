@@ -57,6 +57,8 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<ViewModels.LoginViewModel>();
         services.AddTransient<Views.LoginPage>();
+        services.AddTransient<ViewModels.AcceptInvitationViewModel>();
+        services.AddTransient<Views.AcceptInvitationPage>();
 
         services.AddTransient<ViewModels.ScannerViewModel>();
         services.AddTransient<Views.ScannerPage>();

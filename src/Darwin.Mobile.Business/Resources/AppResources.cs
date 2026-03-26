@@ -60,10 +60,37 @@ public static class AppResources
     public static string EmailLabel => ResourceManager.GetString(nameof(EmailLabel), Culture) ?? "Email";
     public static string PasswordLabel => ResourceManager.GetString(nameof(PasswordLabel), Culture) ?? "Password";
     public static string LoginButton => ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Sign in";
+    public static string LoginAcceptInvitationButton => ResourceManager.GetString(nameof(LoginAcceptInvitationButton), Culture) ?? "Accept invitation";
     public static string LoginLogoDescription => ResourceManager.GetString(nameof(LoginLogoDescription), Culture) ?? "Loyan Business app logo";
     public static string InvalidCredentials => ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
     public static string EmailRequired => ResourceManager.GetString(nameof(EmailRequired), Culture) ?? "Email is required.";
     public static string PasswordRequired => ResourceManager.GetString(nameof(PasswordRequired), Culture) ?? "Password is required.";
+    public static string InvitationAcceptanceTitle => ResourceManager.GetString(nameof(InvitationAcceptanceTitle), Culture) ?? "Accept invitation";
+    public static string InvitationTokenLabel => ResourceManager.GetString(nameof(InvitationTokenLabel), Culture) ?? "Invitation token";
+    public static string InvitationTokenPlaceholder => ResourceManager.GetString(nameof(InvitationTokenPlaceholder), Culture) ?? "Paste invitation token";
+    public static string InvitationPreviewButton => ResourceManager.GetString(nameof(InvitationPreviewButton), Culture) ?? "Preview invitation";
+    public static string InvitationBusinessLabel => ResourceManager.GetString(nameof(InvitationBusinessLabel), Culture) ?? "Business";
+    public static string InvitationRoleLabel => ResourceManager.GetString(nameof(InvitationRoleLabel), Culture) ?? "Role";
+    public static string InvitationInvitedEmailLabel => ResourceManager.GetString(nameof(InvitationInvitedEmailLabel), Culture) ?? "Invited email";
+    public static string InvitationStatusLabel => ResourceManager.GetString(nameof(InvitationStatusLabel), Culture) ?? "Status";
+    public static string InvitationExpiresAtLabel => ResourceManager.GetString(nameof(InvitationExpiresAtLabel), Culture) ?? "Expires";
+    public static string InvitationFirstNameRequired => ResourceManager.GetString(nameof(InvitationFirstNameRequired), Culture) ?? "First name is required.";
+    public static string InvitationLastNameRequired => ResourceManager.GetString(nameof(InvitationLastNameRequired), Culture) ?? "Last name is required.";
+    public static string InvitationAcceptButton => ResourceManager.GetString(nameof(InvitationAcceptButton), Culture) ?? "Accept and continue";
+    public static string InvitationPreviewFailed => ResourceManager.GetString(nameof(InvitationPreviewFailed), Culture) ?? "Unable to load invitation details.";
+    public static string InvitationAcceptFailed => ResourceManager.GetString(nameof(InvitationAcceptFailed), Culture) ?? "Unable to accept the invitation right now.";
+    public static string InvitationExistingUserHint => ResourceManager.GetString(nameof(InvitationExistingUserHint), Culture) ?? "This email already belongs to an existing account. Accepting the invitation will sign you into the Business app.";
+    public static string InvitationNewUserHint => ResourceManager.GetString(nameof(InvitationNewUserHint), Culture) ?? "Complete your profile and set a password to create the invited business account.";
+    public static string InvitationPasswordLabel => ResourceManager.GetString(nameof(InvitationPasswordLabel), Culture) ?? "Password";
+    public static string InvitationConfirmPasswordLabel => ResourceManager.GetString(nameof(InvitationConfirmPasswordLabel), Culture) ?? "Confirm password";
+    public static string InvitationPasswordMismatch => ResourceManager.GetString(nameof(InvitationPasswordMismatch), Culture) ?? "Password and confirmation do not match.";
+    public static string InvitationTokenRequired => ResourceManager.GetString(nameof(InvitationTokenRequired), Culture) ?? "Invitation token is required.";
+    public static string InvitationNotFoundMessage => ResourceManager.GetString(nameof(InvitationNotFoundMessage), Culture) ?? "Invitation was not found. Please check the token or request a new invitation.";
+    public static string InvitationExpiredMessage => ResourceManager.GetString(nameof(InvitationExpiredMessage), Culture) ?? "Invitation has expired. Please request a new invitation.";
+    public static string InvitationRevokedMessage => ResourceManager.GetString(nameof(InvitationRevokedMessage), Culture) ?? "Invitation has been revoked. Please contact your administrator.";
+    public static string InvitationAlreadyAcceptedMessage => ResourceManager.GetString(nameof(InvitationAlreadyAcceptedMessage), Culture) ?? "Invitation was already accepted. Sign in with your account.";
+    public static string InvitationAccountUnavailableMessage => ResourceManager.GetString(nameof(InvitationAccountUnavailableMessage), Culture) ?? "The invited account is currently unavailable. Please contact support.";
+    public static string InvitationAcceptedSuccess => ResourceManager.GetString(nameof(InvitationAcceptedSuccess), Culture) ?? "Invitation accepted successfully.";
 
     public static string ServerUnreachableMessage =>
     ResourceManager.GetString(nameof(ServerUnreachableMessage), Culture)

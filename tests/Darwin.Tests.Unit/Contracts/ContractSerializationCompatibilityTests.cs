@@ -108,7 +108,8 @@ public sealed class ContractSerializationCompatibilityTests
         {
             Email = "member@example.test",
             Password = "SecurePassword123!",
-            DeviceId = "device-1"
+            DeviceId = "device-1",
+            BusinessId = Guid.Parse("12121212-3434-5656-7878-909090909090")
         };
 
         // Act
@@ -118,6 +119,84 @@ public sealed class ContractSerializationCompatibilityTests
         json.Should().Contain("\"email\"");
         json.Should().Contain("\"password\"");
         json.Should().Contain("\"deviceId\"");
+        json.Should().Contain("\"businessId\"");
+    }
+
+    /// <summary>
+    ///     Verifies that refresh request contract preserves device binding and preferred business
+    ///     context field names for business-app token refresh.
+    /// </summary>
+    [Fact]
+    public void RefreshTokenRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new RefreshTokenRequest
+        {
+            RefreshToken = "refresh-token-value",
+            DeviceId = "device-1",
+            BusinessId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"refreshToken\"");
+        json.Should().Contain("\"deviceId\"");
+        json.Should().Contain("\"businessId\"");
+    }
+
+    /// <summary>
+    ///     Verifies that business invitation preview contracts serialize onboarding payload fields
+    ///     with stable camelCase names for business-mobile clients.
+    /// </summary>
+    [Fact]
+    public void BusinessInvitationPreviewResponse_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new BusinessInvitationPreviewResponse
+        {
+            InvitationId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            BusinessId = Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            BusinessName = "Cafe Morgenrot",
+            Email = "operator@morgenrot.de",
+            Role = "Owner",
+            Status = "Pending",
+            ExpiresAtUtc = new DateTime(2030, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+            HasExistingUser = false
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"invitationId\"");
+        json.Should().Contain("\"businessId\"");
+        json.Should().Contain("\"businessName\"");
+        json.Should().Contain("\"email\"");
+        json.Should().Contain("\"role\"");
+        json.Should().Contain("\"status\"");
+        json.Should().Contain("\"expiresAtUtc\"");
+        json.Should().Contain("\"hasExistingUser\"");
+    }
+
+    /// <summary>
+    ///     Verifies that business invitation acceptance request preserves the token-entry onboarding
+    ///     payload field names expected by the business-mobile app.
+    /// </summary>
+    [Fact]
+    public void AcceptBusinessInvitationRequest_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var dto = new AcceptBusinessInvitationRequest
+        {
+            Token = "invite-token",
+            DeviceId = "device-1",
+            FirstName = "Greta",
+            LastName = "Sommer",
+            Password = "Business123!"
+        };
+
+        var json = JsonSerializer.Serialize(dto, JsonOptions);
+
+        json.Should().Contain("\"token\"");
+        json.Should().Contain("\"deviceId\"");
+        json.Should().Contain("\"firstName\"");
+        json.Should().Contain("\"lastName\"");
+        json.Should().Contain("\"password\"");
     }
 
     /// <summary>

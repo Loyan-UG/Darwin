@@ -67,6 +67,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 #endif
 
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
+        OpenInvitationAcceptanceCommand = new AsyncCommand(OpenInvitationAcceptanceAsync, () => !IsBusy);
         OpenImpressumCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.Impressum), () => !IsBusy);
         OpenPrivacyPolicyCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy), () => !IsBusy);
         OpenTermsCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.BusinessTerms), () => !IsBusy);
@@ -86,6 +87,8 @@ public sealed partial class LoginViewModel : BaseViewModel
     }
 
     public AsyncCommand LoginCommand { get; }
+
+    public AsyncCommand OpenInvitationAcceptanceCommand { get; }
 
     public AsyncCommand OpenImpressumCommand { get; }
 
@@ -169,6 +172,16 @@ public sealed partial class LoginViewModel : BaseViewModel
         }
     }
 
+    private async Task OpenInvitationAcceptanceAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        await _navigationService.GoToAsync(Routes.InvitationAcceptance);
+    }
+
     private async Task OpenLegalLinkAsync(LegalLinkKind linkKind)
     {
         var result = await _legalLinkService.OpenAsync(linkKind, CancellationToken.None).ConfigureAwait(false);
@@ -181,6 +194,7 @@ public sealed partial class LoginViewModel : BaseViewModel
     private void RaiseCommandStates()
     {
         LoginCommand.RaiseCanExecuteChanged();
+        OpenInvitationAcceptanceCommand.RaiseCanExecuteChanged();
         OpenImpressumCommand.RaiseCanExecuteChanged();
         OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
         OpenTermsCommand.RaiseCanExecuteChanged();

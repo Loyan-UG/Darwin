@@ -59,7 +59,7 @@ This is especially important because early operational usage is expected to star
 | Area | Status | Notes |
 | --- | --- | --- |
 | Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
-| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, and invitation management now exist; activation, approval, and tenant/customer provisioning remain near-term. |
+| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, and invitation management now exist; `Darwin.Mobile.Business` can now accept invitations, while activation, approval, and tenant/customer provisioning remain near-term. |
 | Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist; Stripe-specific lifecycle support is still pending. |
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; reporting and support depth still need improvement. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, and purchase orders exist; receipt/adjustment/exception flows still need work. |
@@ -116,7 +116,8 @@ Target workflow:
 ### Current state
 
 - `In Progress`: business creation, owner assignment, member management, location management, and invitation/resend/revoke now exist in WebAdmin
-- `Planned / Near-term`: explicit onboarding state machine, invitation acceptance, approval transitions, and tenant/customer provisioning still need completion
+- `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
+- `Planned / Near-term`: explicit onboarding state machine, approval transitions, resend-activation support, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support
 
@@ -133,7 +134,8 @@ WebAdmin should support or coordinate:
 ### Current state
 
 - `In Progress`: user, role, permission, password, and email-change admin tooling exists
-- `Planned / Near-term`: invite, activation-resend, lock/unlock, and clearer support tooling remain required for go-live
+- `In Progress`: invite issuance/reissue/revoke now exists for business onboarding
+- `Planned / Near-term`: activation-resend, lock/unlock, and clearer support tooling remain required for go-live
 
 ## 9. Site and System Settings Architecture
 

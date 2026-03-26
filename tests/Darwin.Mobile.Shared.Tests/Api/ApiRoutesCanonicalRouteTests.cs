@@ -31,6 +31,8 @@ public sealed class ApiRoutesCanonicalRouteTests
     [Fact]
     public void PublicAndBusinessRoutes_Should_UseAudienceFirstCanonicalPrefixes()
     {
+        ApiRoutes.BusinessAuth.PreviewInvitation.Should().Be("api/v1/business/auth/invitations/preview");
+        ApiRoutes.BusinessAuth.AcceptInvitation.Should().Be("api/v1/business/auth/invitations/accept");
         ApiRoutes.Businesses.List.Should().Be("api/v1/public/businesses/list");
         ApiRoutes.Businesses.Map.Should().Be("api/v1/public/businesses/map");
         ApiRoutes.Businesses.CategoryKinds.Should().Be("api/v1/public/businesses/category-kinds");

@@ -50,4 +50,48 @@ namespace Darwin.Application.Businesses.DTOs
         public DateTime CreatedAtUtc { get; set; }
         public string? Note { get; set; }
     }
+
+    /// <summary>
+    /// DTO used by unauthenticated clients to preview an invitation before acceptance.
+    /// </summary>
+    public sealed class BusinessInvitationPreviewDto
+    {
+        public Guid InvitationId { get; set; }
+        public Guid BusinessId { get; set; }
+        public string BusinessName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime ExpiresAtUtc { get; set; }
+        public bool HasExistingUser { get; set; }
+    }
+
+    /// <summary>
+    /// DTO used when an invited operator accepts a business invitation.
+    /// </summary>
+    public sealed class BusinessInvitationAcceptDto
+    {
+        public string Token { get; set; } = string.Empty;
+        public string? DeviceId { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? Password { get; set; }
+    }
+
+    /// <summary>
+    /// Result DTO returned after successful invitation acceptance.
+    /// It contains the authenticated token pair so mobile onboarding can continue without a second login step.
+    /// </summary>
+    public sealed class BusinessInvitationAcceptanceDto
+    {
+        public string AccessToken { get; set; } = string.Empty;
+        public DateTime AccessTokenExpiresAtUtc { get; set; }
+        public string RefreshToken { get; set; } = string.Empty;
+        public DateTime RefreshTokenExpiresAtUtc { get; set; }
+        public Guid UserId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public Guid BusinessId { get; set; }
+        public string BusinessName { get; set; } = string.Empty;
+        public bool IsNewUser { get; set; }
+    }
 }

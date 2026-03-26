@@ -50,6 +50,7 @@ Current usable areas include:
 - loyalty scanning and operational business usage
 - dashboard and business-side workflows already implemented in the app
 - account/profile/password flows that now depend on cleaner backend and admin support
+- business invitation preview and token-entry acceptance for phase-1 onboarding
 
 ### `Darwin.Mobile.Shared`
 
@@ -78,7 +79,17 @@ Required scenarios:
 ### Current state
 
 - `In Progress`: login and operational app usage exist
+- `Completed`: business invitation preview and acceptance now work in `Darwin.Mobile.Business` through canonical business-auth endpoints
+- `Completed`: preferred business context is preserved during token refresh so invitation-based onboarding is safer for multi-business operators
 - `Planned / Near-term`: the surrounding onboarding, activation, invitation, and support lifecycle must be completed end-to-end through backend and WebAdmin
+
+### Phase-1 invitation acceptance mode
+
+Current implementation is intentionally conservative:
+
+- invitation acceptance is token-entry based in `Darwin.Mobile.Business`
+- the same flow is future-ready for deep-link or magic-link entry, but those are not phase-1 requirements yet
+- a full multi-business switcher is still later work; current behavior only preserves the active business context during refresh
 
 ## 5. Email Dependency
 

@@ -173,6 +173,16 @@ public sealed class WebApiRouteAliasSourceTests
     }
 
     [Fact]
+    public void BusinessAuthController_Should_ContainBusinessCanonicalRoutes_AndLegacyAliases()
+    {
+        var source = ReadControllerSource(Path.Combine("Business", "BusinessAuthController.cs"));
+
+        source.Should().Contain("api/v1/business/auth");
+        source.Should().Contain("/api/v1/auth/business-invitations/preview");
+        source.Should().Contain("/api/v1/auth/business-invitations/accept");
+    }
+
+    [Fact]
     public void NotificationsController_Should_ContainMemberCanonicalRoute_AndLegacyAlias()
     {
         var source = ReadControllerSource(Path.Combine("Notifications", "NotificationsController.cs"));

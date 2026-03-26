@@ -49,6 +49,15 @@ namespace Darwin.Mobile.Shared.Api
         }
 
         /// <summary>
+        /// Business onboarding/auth endpoints used by the Business mobile app before full sign-in.
+        /// </summary>
+        public static class BusinessAuth
+        {
+            public const string PreviewInvitation = "api/v1/business/auth/invitations/preview";
+            public const string AcceptInvitation = "api/v1/business/auth/invitations/accept";
+        }
+
+        /// <summary>
         /// Provides API endpoint paths for profile-related operations.
         /// </summary>
         /// <remarks>This class contains constant string values representing the relative paths for

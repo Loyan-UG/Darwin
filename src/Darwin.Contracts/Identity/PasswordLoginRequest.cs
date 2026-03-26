@@ -1,6 +1,7 @@
-﻿namespace Darwin.Contracts.Identity
-{
+using System;
 
+namespace Darwin.Contracts.Identity
+{
     /// <summary>
     /// Request payload for password-based authentication in the public Web API.
     /// This maps closely to PasswordLoginRequestDto in the Application layer.
@@ -24,5 +25,12 @@
         /// will be bound to this device.
         /// </summary>
         public string? DeviceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the preferred active business context for the issued token.
+        /// This is optional and mainly used by business-facing clients when the operator
+        /// belongs to multiple businesses and the token should open in a specific workspace.
+        /// </summary>
+        public Guid? BusinessId { get; set; }
     }
 }

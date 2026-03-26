@@ -934,6 +934,87 @@
   <data name="LoginLogoDescription" xml:space="preserve">
     <value>Loyan Business app logo</value>
   </data>
+  <data name="LoginAcceptInvitationButton" xml:space="preserve">
+    <value>Accept invitation</value>
+  </data>
+  <data name="InvitationAcceptanceTitle" xml:space="preserve">
+    <value>Accept invitation</value>
+  </data>
+  <data name="InvitationTokenLabel" xml:space="preserve">
+    <value>Invitation token</value>
+  </data>
+  <data name="InvitationTokenPlaceholder" xml:space="preserve">
+    <value>Paste invitation token</value>
+  </data>
+  <data name="InvitationPreviewButton" xml:space="preserve">
+    <value>Preview invitation</value>
+  </data>
+  <data name="InvitationBusinessLabel" xml:space="preserve">
+    <value>Business</value>
+  </data>
+  <data name="InvitationRoleLabel" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="InvitationInvitedEmailLabel" xml:space="preserve">
+    <value>Invited email</value>
+  </data>
+  <data name="InvitationStatusLabel" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="InvitationExpiresAtLabel" xml:space="preserve">
+    <value>Expires</value>
+  </data>
+  <data name="InvitationFirstNameRequired" xml:space="preserve">
+    <value>First name is required.</value>
+  </data>
+  <data name="InvitationLastNameRequired" xml:space="preserve">
+    <value>Last name is required.</value>
+  </data>
+  <data name="InvitationAcceptButton" xml:space="preserve">
+    <value>Accept and continue</value>
+  </data>
+  <data name="InvitationPreviewFailed" xml:space="preserve">
+    <value>Unable to load invitation details.</value>
+  </data>
+  <data name="InvitationAcceptFailed" xml:space="preserve">
+    <value>Unable to accept the invitation right now.</value>
+  </data>
+  <data name="InvitationExistingUserHint" xml:space="preserve">
+    <value>This email already belongs to an existing account. Accepting the invitation will sign you into the Business app.</value>
+  </data>
+  <data name="InvitationNewUserHint" xml:space="preserve">
+    <value>Complete your profile and set a password to create the invited business account.</value>
+  </data>
+  <data name="InvitationPasswordLabel" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="InvitationConfirmPasswordLabel" xml:space="preserve">
+    <value>Confirm password</value>
+  </data>
+  <data name="InvitationPasswordMismatch" xml:space="preserve">
+    <value>Password and confirmation do not match.</value>
+  </data>
+  <data name="InvitationTokenRequired" xml:space="preserve">
+    <value>Invitation token is required.</value>
+  </data>
+  <data name="InvitationNotFoundMessage" xml:space="preserve">
+    <value>Invitation was not found. Please check the token or request a new invitation.</value>
+  </data>
+  <data name="InvitationExpiredMessage" xml:space="preserve">
+    <value>Invitation has expired. Please request a new invitation.</value>
+  </data>
+  <data name="InvitationRevokedMessage" xml:space="preserve">
+    <value>Invitation has been revoked. Please contact your administrator.</value>
+  </data>
+  <data name="InvitationAlreadyAcceptedMessage" xml:space="preserve">
+    <value>Invitation was already accepted. Sign in with your account.</value>
+  </data>
+  <data name="InvitationAccountUnavailableMessage" xml:space="preserve">
+    <value>The invited account is currently unavailable. Please contact support.</value>
+  </data>
+  <data name="InvitationAcceptedSuccess" xml:space="preserve">
+    <value>Invitation accepted successfully.</value>
+  </data>
   <data name="DashboardSessionsFormat" xml:space="preserve">
     <value>Sessions: {0}</value>
   </data>

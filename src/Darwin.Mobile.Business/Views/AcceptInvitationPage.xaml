@@ -1,0 +1,119 @@
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:res="clr-namespace:Darwin.Mobile.Business.Resources"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
+    x:Class="Darwin.Mobile.Business.Views.AcceptInvitationPage"
+    x:DataType="vm:AcceptInvitationViewModel"
+    Title="{x:Static res:AppResources.InvitationAcceptanceTitle}"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.InvitationAcceptanceTitle}"
+                   FontSize="24"
+                   FontAttributes="Bold" />
+
+            <Label Text="{x:Static res:AppResources.InvitationTokenLabel}"
+                   FontAttributes="Bold" />
+
+            <Entry Placeholder="{x:Static res:AppResources.InvitationTokenPlaceholder}"
+                   Text="{Binding InvitationToken}"
+                   AutomationId="InvitationTokenEntry" />
+
+            <Button Text="{x:Static res:AppResources.InvitationPreviewButton}"
+                    Command="{Binding PreviewInvitationCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                    AutomationId="PreviewInvitationButton" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}" />
+
+            <Border StrokeThickness="1"
+                    Padding="16"
+                    IsVisible="{Binding HasPreview}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding InvitationHint}"
+                           LineBreakMode="WordWrap" />
+
+                    <Grid ColumnDefinitions="Auto,*"
+                          RowDefinitions="Auto,Auto,Auto,Auto"
+                          ColumnSpacing="12"
+                          RowSpacing="8">
+                        <Label Grid.Row="0"
+                               Grid.Column="0"
+                               Text="{x:Static res:AppResources.InvitationBusinessLabel}"
+                               FontAttributes="Bold" />
+                        <Label Grid.Row="0"
+                               Grid.Column="1"
+                               Text="{Binding BusinessName}" />
+
+                        <Label Grid.Row="1"
+                               Grid.Column="0"
+                               Text="{x:Static res:AppResources.InvitationInvitedEmailLabel}"
+                               FontAttributes="Bold" />
+                        <Label Grid.Row="1"
+                               Grid.Column="1"
+                               Text="{Binding InvitedEmail}" />
+
+                        <Label Grid.Row="2"
+                               Grid.Column="0"
+                               Text="{x:Static res:AppResources.InvitationRoleLabel}"
+                               FontAttributes="Bold" />
+                        <Label Grid.Row="2"
+                               Grid.Column="1"
+                               Text="{Binding InvitationRole}" />
+
+                        <Label Grid.Row="3"
+                               Grid.Column="0"
+                               Text="{x:Static res:AppResources.InvitationExpiresAtLabel}"
+                               FontAttributes="Bold" />
+                        <Label Grid.Row="3"
+                               Grid.Column="1"
+                               Text="{Binding InvitationExpiresAtDisplay}" />
+                    </Grid>
+
+                    <Label Text="{x:Static res:AppResources.InvitationStatusLabel}"
+                           FontAttributes="Bold" />
+                    <Label Text="{Binding InvitationStatus}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="12"
+                                 IsVisible="{Binding RequiresAccountDetails}">
+                <Entry Placeholder="{x:Static res:AppResources.FirstNameLabel}"
+                       Text="{Binding FirstName}"
+                       AutomationId="InvitationFirstNameEntry" />
+
+                <Entry Placeholder="{x:Static res:AppResources.LastNameLabel}"
+                       Text="{Binding LastName}"
+                       AutomationId="InvitationLastNameEntry" />
+
+                <Entry Placeholder="{x:Static res:AppResources.InvitationPasswordLabel}"
+                       IsPassword="True"
+                       Text="{Binding Password}"
+                       AutomationId="InvitationPasswordEntry" />
+
+                <Entry Placeholder="{x:Static res:AppResources.InvitationConfirmPasswordLabel}"
+                       IsPassword="True"
+                       Text="{Binding ConfirmPassword}"
+                       AutomationId="InvitationConfirmPasswordEntry" />
+            </VerticalStackLayout>
+
+            <Button Text="{x:Static res:AppResources.InvitationAcceptButton}"
+                    Command="{Binding AcceptInvitationCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                    IsVisible="{Binding HasPreview}"
+                    HeightRequest="48"
+                    CornerRadius="6"
+                    AutomationId="AcceptInvitationButton" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Crimson"
+                   FontSize="14"
+                   LineBreakMode="WordWrap"
+                   IsVisible="{Binding HasError}"
+                   AutomationId="InvitationErrorLabel" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

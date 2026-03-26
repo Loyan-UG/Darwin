@@ -1,4 +1,5 @@
 ﻿using Darwin.Contracts.Identity;
+using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Meta;
 using Darwin.Mobile.Shared.Api;
 using Darwin.Mobile.Shared.Common;
@@ -40,6 +41,12 @@ namespace Darwin.Mobile.Shared.Services
 
         /// <summary>Completes a password reset using email, token and new password.</summary>
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword, CancellationToken ct);
+
+        /// <summary>Loads invitation preview data for business onboarding.</summary>
+        Task<BusinessInvitationPreviewResponse?> GetBusinessInvitationPreviewAsync(string token, CancellationToken ct);
+
+        /// <summary>Accepts a business invitation and signs the operator into the Business app.</summary>
+        Task<AppBootstrapResponse> AcceptBusinessInvitationAsync(AcceptBusinessInvitationRequest request, string? deviceId, CancellationToken ct);
     }
 
     /// <summary>
@@ -85,7 +92,8 @@ namespace Darwin.Mobile.Shared.Services
                 {
                     Email = email,
                     Password = password,
-                    DeviceId = effectiveDeviceId
+                    DeviceId = effectiveDeviceId,
+                    BusinessId = null
                 },
                 ct).ConfigureAwait(false);
 
@@ -98,28 +106,7 @@ namespace Darwin.Mobile.Shared.Services
                 throw new InvalidOperationException(message);
             }
 
-            var token = tokenResult.Value;
-
-            // Validate token shape/claims with app role (prevent cross-app logins).
-            ValidateTokenForApp(token.AccessToken, _opts);
-
-            await _store.SaveAsync(
-                token.AccessToken,
-                token.AccessTokenExpiresAtUtc,
-                token.RefreshToken,
-                token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
-
-            _api.SetBearerToken(token.AccessToken);
-
-            var boot = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false)
-                       ?? new AppBootstrapResponse();
-
-            // Populate runtime options from bootstrap.
-            _opts.JwtAudience = boot.JwtAudience;
-            _opts.QrRefreshSeconds = boot.QrTokenRefreshSeconds;
-            _opts.MaxOutbox = boot.MaxOutboxItems;
-
-            return boot;
+            return await CompleteAuthenticatedBootstrapAsync(tokenResult.Value, ct).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -146,11 +133,17 @@ namespace Darwin.Mobile.Shared.Services
                     return true;
 
                 var effectiveDeviceId = await ResolveEffectiveDeviceIdAsync(deviceId: null).ConfigureAwait(false);
+                var preferredBusinessId = await TryGetPreferredBusinessIdFromStoredAccessTokenAsync().ConfigureAwait(false);
 
                 // Perform refresh network call.
                 var res = await _api.PostAsync<RefreshTokenRequest, TokenResponse>(
                     ApiRoutes.Auth.Refresh,
-                    new RefreshTokenRequest { RefreshToken = currentRt!, DeviceId = effectiveDeviceId },
+                    new RefreshTokenRequest
+                    {
+                        RefreshToken = currentRt!,
+                        DeviceId = effectiveDeviceId,
+                        BusinessId = preferredBusinessId
+                    },
                     ct).ConfigureAwait(false);
 
                 if (res is null)
@@ -325,6 +318,67 @@ namespace Darwin.Mobile.Shared.Services
             return result.Succeeded;
         }
 
+        /// <inheritdoc />
+        public async Task<BusinessInvitationPreviewResponse?> GetBusinessInvitationPreviewAsync(string token, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var trimmedToken = token?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(trimmedToken))
+            {
+                throw new InvalidOperationException("Invitation token is required.");
+            }
+
+            var route = $"{ApiRoutes.BusinessAuth.PreviewInvitation}?token={Uri.EscapeDataString(trimmedToken)}";
+            var result = await _api.GetResultAsync<BusinessInvitationPreviewResponse>(route, ct).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                var message = string.IsNullOrWhiteSpace(result.Error)
+                    ? "Invitation preview failed."
+                    : result.Error;
+
+                throw new InvalidOperationException(message);
+            }
+
+            return result.Value;
+        }
+
+        /// <inheritdoc />
+        public async Task<AppBootstrapResponse> AcceptBusinessInvitationAsync(
+            AcceptBusinessInvitationRequest request,
+            string? deviceId,
+            CancellationToken ct)
+        {
+            if (request is null) throw new ArgumentNullException(nameof(request));
+            ct.ThrowIfCancellationRequested();
+
+            var effectiveDeviceId = await ResolveEffectiveDeviceIdAsync(deviceId ?? request.DeviceId).ConfigureAwait(false);
+
+            var tokenResult = await _api.PostResultAsync<AcceptBusinessInvitationRequest, TokenResponse>(
+                ApiRoutes.BusinessAuth.AcceptInvitation,
+                new AcceptBusinessInvitationRequest
+                {
+                    Token = request.Token?.Trim() ?? string.Empty,
+                    DeviceId = effectiveDeviceId,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    Password = request.Password
+                },
+                ct).ConfigureAwait(false);
+
+            if (!tokenResult.Succeeded || tokenResult.Value is null)
+            {
+                var message = string.IsNullOrWhiteSpace(tokenResult.Error)
+                    ? "Invitation acceptance failed."
+                    : tokenResult.Error;
+
+                throw new InvalidOperationException(message);
+            }
+
+            return await CompleteAuthenticatedBootstrapAsync(tokenResult.Value, ct).ConfigureAwait(false);
+        }
+
         /// <summary>
         /// Resolves a device id that can be sent to authentication endpoints.
         /// The method guarantees a non-empty value even when platform storage APIs are unavailable.
@@ -344,6 +398,63 @@ namespace Darwin.Mobile.Shared.Services
 
             // Defensive fallback for extreme edge cases.
             return Guid.NewGuid().ToString("N");
+        }
+
+        /// <summary>
+        /// Persists a successful token response, validates app-specific claims, applies the bearer token,
+        /// and loads the standard bootstrap payload used by the mobile apps.
+        /// </summary>
+        private async Task<AppBootstrapResponse> CompleteAuthenticatedBootstrapAsync(TokenResponse token, CancellationToken ct)
+        {
+            ValidateTokenForApp(token.AccessToken, _opts);
+
+            await _store.SaveAsync(
+                token.AccessToken,
+                token.AccessTokenExpiresAtUtc,
+                token.RefreshToken,
+                token.RefreshTokenExpiresAtUtc).ConfigureAwait(false);
+
+            _api.SetBearerToken(token.AccessToken);
+
+            var boot = await _api.GetAsync<AppBootstrapResponse>(ApiRoutes.Meta.Bootstrap, ct).ConfigureAwait(false)
+                       ?? new AppBootstrapResponse();
+
+            _opts.JwtAudience = boot.JwtAudience;
+            _opts.QrRefreshSeconds = boot.QrTokenRefreshSeconds;
+            _opts.MaxOutbox = boot.MaxOutboxItems;
+
+            return boot;
+        }
+
+        /// <summary>
+        /// Attempts to read the current business context from the stored access token.
+        /// Business apps use this during refresh so the server can preserve the intended
+        /// active business when the operator belongs to multiple businesses.
+        /// </summary>
+        private async Task<Guid?> TryGetPreferredBusinessIdFromStoredAccessTokenAsync()
+        {
+            var (accessToken, _) = await _store.GetAccessAsync().ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                return null;
+            }
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(accessToken);
+                var claimValue = jwt.Claims
+                    .FirstOrDefault(c => string.Equals(c.Type, "business_id", StringComparison.OrdinalIgnoreCase))
+                    ?.Value;
+
+                return Guid.TryParse(claimValue, out var businessId)
+                    ? businessId
+                    : null;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
         }
 
         /// <summary>

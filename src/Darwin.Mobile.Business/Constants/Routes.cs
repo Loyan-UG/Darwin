@@ -12,6 +12,7 @@ public static class Routes
 {
     // Auth + flow routes
     public const string Login = "Login";
+    public const string InvitationAcceptance = "InvitationAcceptance";
     public const string Session = "Session";
 
     // Phase 1 active tabs

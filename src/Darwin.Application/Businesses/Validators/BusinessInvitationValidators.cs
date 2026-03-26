@@ -40,4 +40,20 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.Note).MaximumLength(2000);
         }
     }
+
+    /// <summary>
+    /// Validator for accepting business invitations.
+    /// </summary>
+    public sealed class BusinessInvitationAcceptDtoValidator : AbstractValidator<BusinessInvitationAcceptDto>
+    {
+        public BusinessInvitationAcceptDtoValidator()
+        {
+            RuleFor(x => x.Token).NotEmpty().MinimumLength(12);
+
+            When(x => !string.IsNullOrWhiteSpace(x.Password), () =>
+            {
+                RuleFor(x => x.Password!).MinimumLength(8);
+            });
+        }
+    }
 }

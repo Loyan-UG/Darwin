@@ -87,7 +87,8 @@ namespace Darwin.WebApi.Controllers
             {
                 Email = request.Email ?? string.Empty,
                 PasswordPlain = request.Password ?? string.Empty,
-                DeviceId = request.DeviceId
+                DeviceId = request.DeviceId,
+                BusinessId = request.BusinessId
             };
 
             var rateKey = BuildRateKey(request.Email);
@@ -140,7 +141,8 @@ namespace Darwin.WebApi.Controllers
             var dto = new RefreshRequestDto
             {
                 RefreshToken = request.RefreshToken ?? string.Empty,
-                DeviceId = request.DeviceId
+                DeviceId = request.DeviceId,
+                BusinessId = request.BusinessId
             };
 
             var result = await _refresh.HandleAsync(dto, ct);

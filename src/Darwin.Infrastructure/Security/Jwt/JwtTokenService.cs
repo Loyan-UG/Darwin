@@ -69,7 +69,7 @@ namespace Darwin.Infrastructure.Security.Jwt
         /// respective expiration timestamps in UTC.
         /// </returns>
         public (string accessToken, DateTime expiresAtUtc, string refreshToken, DateTime refreshExpiresAtUtc)
-            IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null)
+            IssueTokens(Guid userId, string email, string? deviceId, IEnumerable<string>? scopes = null, Guid? preferredBusinessId = null)
         {
             var settings = _db.Set<SiteSetting>()
                 .AsNoTracking()
@@ -105,7 +105,7 @@ namespace Darwin.Infrastructure.Security.Jwt
                 claims.Add(new Claim("scope", string.Join(",", scopes)));
             }
 
-            var businessId = ResolveActiveBusinessId(userId);
+            var businessId = ResolveActiveBusinessId(userId, preferredBusinessId);
             if (businessId.HasValue)
             {
                 claims.Add(new Claim("business_id", businessId.Value.ToString("D")));
@@ -373,8 +373,27 @@ namespace Darwin.Infrastructure.Security.Jwt
         ///
         /// Returning null means the user is not a business member and should receive a consumer-style token.
         /// </summary>
-        private Guid? ResolveActiveBusinessId(Guid userId)
+        private Guid? ResolveActiveBusinessId(Guid userId, Guid? preferredBusinessId)
         {
+            if (preferredBusinessId.HasValue)
+            {
+                var preferredMatch = (from m in _db.Set<BusinessMember>()
+                                      join b in _db.Set<Business>() on m.BusinessId equals b.Id
+                                      where m.UserId == userId
+                                            && m.BusinessId == preferredBusinessId.Value
+                                            && !m.IsDeleted
+                                            && m.IsActive
+                                            && !b.IsDeleted
+                                            && b.IsActive
+                                      select (Guid?)m.BusinessId)
+                    .FirstOrDefault();
+
+                if (preferredMatch.HasValue)
+                {
+                    return preferredMatch;
+                }
+            }
+
             return (from m in _db.Set<BusinessMember>()
                     join b in _db.Set<Business>() on m.BusinessId equals b.Id
                     where m.UserId == userId

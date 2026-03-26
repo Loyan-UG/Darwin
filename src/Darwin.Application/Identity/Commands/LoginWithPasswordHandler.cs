@@ -80,7 +80,7 @@ namespace Darwin.Application.Identity.Commands
                 // 4) Issue access and refresh tokens.
                 // DeviceId forwarded so JwtTokenService can enforce device-binding and single-device policies.
                 var (access, accessExp, refresh, refreshExp) =
-                    _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null);
+                    _jwt.IssueTokens(user.Id, user.Email, dto.DeviceId, scopes: null, preferredBusinessId: dto.BusinessId);
 
                 var result = new AuthResultDto
                 {
