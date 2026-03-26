@@ -89,7 +89,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         public IActionResult Index() => RedirectToAction(nameof(Warehouses));
 
         [HttpGet]
-        public async Task<IActionResult> Warehouses(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Warehouses(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
 
@@ -97,7 +97,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getWarehousesPage.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getWarehousesPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new WarehouseListItemVm
                 {
                     Id = x.Id,
@@ -115,6 +115,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = new WarehousesListVm
             {
                 BusinessId = businessId,
+                Query = q ?? string.Empty,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -231,14 +232,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> Suppliers(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Suppliers(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<SupplierListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getSuppliersPage.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getSuppliersPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new SupplierListItemVm
                 {
                     Id = x.Id,
@@ -256,6 +257,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = new SuppliersListVm
             {
                 BusinessId = businessId,
+                Query = q ?? string.Empty,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -375,7 +377,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> StockLevels(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> StockLevels(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             warehouseId = await _referenceData.ResolveWarehouseIdAsync(warehouseId, businessId, ct).ConfigureAwait(false);
@@ -384,7 +386,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var total = 0;
             if (warehouseId.HasValue)
             {
-                var result = await _getStockLevelsPage.HandleAsync(warehouseId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getStockLevelsPage.HandleAsync(warehouseId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new StockLevelListItemVm
                 {
                     Id = x.Id,
@@ -405,6 +407,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = new StockLevelsListVm
             {
                 WarehouseId = warehouseId,
+                Query = q ?? string.Empty,
                 WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -529,7 +532,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> StockTransfers(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> StockTransfers(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             warehouseId = await _referenceData.ResolveWarehouseIdAsync(warehouseId, businessId, ct).ConfigureAwait(false);
@@ -538,7 +541,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var total = 0;
             if (warehouseId.HasValue)
             {
-                var result = await _getStockTransfersPage.HandleAsync(warehouseId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getStockTransfersPage.HandleAsync(warehouseId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new StockTransferListItemVm
                 {
                     Id = x.Id,
@@ -555,6 +558,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = new StockTransfersListVm
             {
                 WarehouseId = warehouseId,
+                Query = q ?? string.Empty,
                 WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -692,14 +696,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> PurchaseOrders(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> PurchaseOrders(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<PurchaseOrderListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getPurchaseOrdersPage.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getPurchaseOrdersPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new PurchaseOrderListItemVm
                 {
                     Id = x.Id,
@@ -717,6 +721,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var vm = new PurchaseOrdersListVm
             {
                 BusinessId = businessId,
+                Query = q ?? string.Empty,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,

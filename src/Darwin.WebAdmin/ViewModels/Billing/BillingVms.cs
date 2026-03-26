@@ -7,6 +7,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class PaymentsListVm
     {
         public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<PaymentListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -92,6 +93,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class FinancialAccountsListVm
     {
         public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<FinancialAccountListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -131,6 +133,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class ExpensesListVm
     {
         public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<ExpenseListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -178,6 +181,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     public sealed class JournalEntriesListVm
     {
         public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<JournalEntryListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;

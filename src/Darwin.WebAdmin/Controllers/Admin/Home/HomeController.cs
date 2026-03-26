@@ -71,8 +71,8 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
             var crmSummaryTask = _getCrmSummary.HandleAsync(ct);
             var productsTask = _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct);
-            var pagesTask = _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct);
-            var ordersTask = _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct);
+            var pagesTask = _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct: ct);
+            var ordersTask = _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct);
             var usersTask = _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, ct);
 
             Task<(List<Darwin.Application.Billing.DTOs.PaymentListItemDto> Items, int Total)>? paymentsTask = null;
@@ -82,10 +82,10 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
             if (selectedBusinessId.HasValue)
             {
-                paymentsTask = _getPaymentsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, ct);
-                warehousesTask = _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, ct);
-                suppliersTask = _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, ct);
-                purchaseOrdersTask = _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, ct);
+                paymentsTask = _getPaymentsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
+                warehousesTask = _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
+                suppliersTask = _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
+                purchaseOrdersTask = _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
             }
 
             await Task.WhenAll(new Task[] { crmSummaryTask, productsTask, pagesTask, ordersTask, usersTask }
@@ -119,6 +119,16 @@ namespace Darwin.WebAdmin.Controllers.Admin
             };
 
             return View(vm);
+        }
+
+        /// <summary>
+        /// Returns the shared alerts partial so HTMX flows can refresh feedback banners without
+        /// coupling the shared layout to a feature-specific controller.
+        /// </summary>
+        [HttpGet]
+        public IActionResult AlertsFragment()
+        {
+            return PartialView("~/Views/Shared/_Alerts.cshtml");
         }
 
         private static CrmSummaryVm MapCrmSummary(CrmSummaryDto dto)

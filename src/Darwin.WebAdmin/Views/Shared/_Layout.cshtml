@@ -85,9 +85,6 @@
                     <active-nav class="list-group-item list-group-item-action" asp-controller="AddOnGroups" asp-action="Index">
                         <i class="fa-solid fa-puzzle-piece me-2"></i> Add-on Groups
                     </active-nav>
-                    <active-nav class="list-group-item list-group-item-action" asp-controller="Inventory" asp-action="Warehouses">
-                        <i class="fa-solid fa-warehouse me-2"></i> Inventory
-                    </active-nav>
 
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">CMS</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Pages" asp-action="Index">
@@ -221,7 +218,7 @@
         };
 
         window.darwinAdmin.refreshAlerts = function (url) {
-            const targetUrl = url || '@Url.Action("AlertsFragment", "Users")';
+            const targetUrl = url || '@Url.Action("AlertsFragment", "Home")';
             htmx.ajax('GET', targetUrl, '#alerts-container');
         };
 

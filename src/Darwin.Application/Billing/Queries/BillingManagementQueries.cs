@@ -19,18 +19,40 @@ namespace Darwin.Application.Billing.Queries
             Guid businessId,
             int page,
             int pageSize,
+            string? query = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query = _db.Set<Payment>()
+            var paymentsQuery = _db.Set<Payment>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                paymentsQuery = paymentsQuery.Where(x =>
+                    x.Provider.Contains(term) ||
+                    x.Currency.Contains(term) ||
+                    (x.ProviderTransactionRef != null && x.ProviderTransactionRef.Contains(term)) ||
+                    (x.OrderId.HasValue && _db.Set<Order>().Any(o => o.Id == x.OrderId.Value && o.OrderNumber.Contains(term))) ||
+                    (x.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
+                        c.Id == x.CustomerId.Value &&
+                        (c.FirstName.Contains(term) ||
+                         c.LastName.Contains(term) ||
+                         c.Email.Contains(term) ||
+                         (c.CompanyName != null && c.CompanyName.Contains(term))))) ||
+                    (x.UserId.HasValue && _db.Set<User>().Any(u =>
+                        u.Id == x.UserId.Value &&
+                        (u.Email.Contains(term) ||
+                         (u.FirstName != null && u.FirstName.Contains(term)) ||
+                         (u.LastName != null && u.LastName.Contains(term))))));
+            }
 
-            var items = await query
+            var total = await paymentsQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await paymentsQuery
                 .OrderByDescending(x => x.PaidAtUtc ?? x.CreatedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -299,18 +321,27 @@ namespace Darwin.Application.Billing.Queries
             Guid businessId,
             int page,
             int pageSize,
+            string? query = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query = _db.Set<FinancialAccount>()
+            var accountsQuery = _db.Set<FinancialAccount>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                accountsQuery = accountsQuery.Where(x =>
+                    x.Name.Contains(term) ||
+                    (x.Code != null && x.Code.Contains(term)));
+            }
 
-            var items = await query
+            var total = await accountsQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await accountsQuery
                 .OrderBy(x => x.Code)
                 .ThenBy(x => x.Name)
                 .Skip((page - 1) * pageSize)
@@ -365,18 +396,27 @@ namespace Darwin.Application.Billing.Queries
             Guid businessId,
             int page,
             int pageSize,
+            string? query = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query = _db.Set<Expense>()
+            var expensesQuery = _db.Set<Expense>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                expensesQuery = expensesQuery.Where(x =>
+                    x.Category.Contains(term) ||
+                    x.Description.Contains(term));
+            }
 
-            var items = await query
+            var total = await expensesQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await expensesQuery
                 .OrderByDescending(x => x.ExpenseDateUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -434,18 +474,25 @@ namespace Darwin.Application.Billing.Queries
             Guid businessId,
             int page,
             int pageSize,
+            string? query = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query = _db.Set<JournalEntry>()
+            var journalEntriesQuery = _db.Set<JournalEntry>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                journalEntriesQuery = journalEntriesQuery.Where(x => x.Description.Contains(term));
+            }
 
-            var items = await query
+            var total = await journalEntriesQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await journalEntriesQuery
                 .OrderByDescending(x => x.EntryDateUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

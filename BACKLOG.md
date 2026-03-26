@@ -75,9 +75,14 @@ The immediate direction is:
 - Completed: harden dashboard quick links so identity actions only appear for full-admin operators and business-scoped links carry the current business context instead of dropping operators into ambiguous cross-business screens.
 - Completed: standardize the remaining legacy catalog/CMS list screens (`Categories`, `Products`, `Pages`) onto the shared search-reset-pager pattern and add server-side page search so operators no longer bounce between manual pagination UIs and inconsistent filtering behavior.
 - Completed: add lightweight server-side search to the admin orders list and align `Orders`/`Brands` with the same reset/pager affordances already used elsewhere in WebAdmin so the highest-traffic list screens behave consistently.
+- Completed: decouple shared alert refresh from `UsersController` by exposing a home-scoped alerts fragment and remove the duplicate inventory shortcut from the catalog sidebar section so shared admin navigation is less misleading.
+- Completed: remove the obsolete user-scoped alerts fragment now that shared alert refresh is owned by `HomeController`, and align key operational list screens (`Payments`, `Financial Accounts`, `Warehouses`, `Suppliers`, `Purchase Orders`) with shared search/reset/pager behavior so operators do not bounce between inconsistent filtering patterns.
+- Completed: extend the same shared search/reset/pager behavior to the remaining finance and inventory operator lists (`Expenses`, `Journal Entries`, `Stock Levels`, `Stock Transfers`) so the newer back-office modules do not regress into filter-only navigation patterns.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.
+- Decision: decide when it is safe to retire the legacy `/admin` and `/dashboard` redirects still served by `DashboardController`; they are useful for compatibility today but keep an extra alias path alive in the back-office surface.
+- Decision: decide whether `MediaAsset` deletion should remain metadata-only soft delete for operator safety or eventually add reference-aware physical file purge and orphan cleanup; the current behavior intentionally leaves files on disk to avoid breaking existing CMS/editor content.
 
 ### Epic: Orders, fulfillment, and billing admin
 

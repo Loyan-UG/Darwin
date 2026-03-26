@@ -149,6 +149,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     public sealed class WarehousesListVm
     {
         public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<WarehouseListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -193,6 +194,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     public sealed class SuppliersListVm
     {
         public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SupplierListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -245,6 +247,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     public sealed class StockLevelsListVm
     {
         public Guid? WarehouseId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<StockLevelListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -300,6 +303,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     public sealed class StockTransfersListVm
     {
         public Guid? WarehouseId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<StockTransferListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -349,6 +353,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     public sealed class PurchaseOrdersListVm
     {
         public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<PurchaseOrderListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;

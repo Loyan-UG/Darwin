@@ -521,22 +521,6 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             return section;
         }
 
-
-        /// <summary>
-        /// Returns the alerts partial so that AJAX flows can refresh the alerts area
-        /// after setting TempData in a previous request.
-        /// </summary>
-        [HttpGet]
-        public IActionResult AlertsFragment()
-        {
-            // NOTE:
-            // TempData values set in a previous POST will be consumed here and cleared.
-            return PartialView("~/Views/Shared/_Alerts.cshtml");
-        }
-
-
-
-
         /// <summary>
         /// Shows all roles and the selection for the specified user.
         /// </summary>

@@ -75,7 +75,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public IActionResult Index() => RedirectToAction(nameof(Payments));
 
         [HttpGet]
-        public async Task<IActionResult> Payments(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Payments(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
 
@@ -83,7 +83,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getPaymentsPage.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getPaymentsPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new PaymentListItemVm
                 {
                     Id = x.Id,
@@ -115,6 +115,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var vm = new PaymentsListVm
             {
                 BusinessId = businessId,
+                Query = q ?? string.Empty,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -267,14 +268,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
 
         [HttpGet]
-        public async Task<IActionResult> FinancialAccounts(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> FinancialAccounts(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<FinancialAccountListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getAccountsPage.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getAccountsPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new FinancialAccountListItemVm
                 {
                     Id = x.Id,
@@ -289,6 +290,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var vm = new FinancialAccountsListVm
             {
                 BusinessId = businessId,
+                Query = q ?? string.Empty,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -405,14 +407,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
 
         [HttpGet]
-        public async Task<IActionResult> Expenses(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Expenses(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<ExpenseListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getExpensesPage.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getExpensesPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new ExpenseListItemVm
                 {
                     Id = x.Id,
@@ -429,6 +431,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var vm = new ExpensesListVm
             {
                 BusinessId = businessId,
+                Query = q ?? string.Empty,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -552,14 +555,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
 
         [HttpGet]
-        public async Task<IActionResult> JournalEntries(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> JournalEntries(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<JournalEntryListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getJournalEntriesPage.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getJournalEntriesPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new JournalEntryListItemVm
                 {
                     Id = x.Id,
@@ -576,6 +579,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var vm = new JournalEntriesListVm
             {
                 BusinessId = businessId,
+                Query = q ?? string.Empty,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,

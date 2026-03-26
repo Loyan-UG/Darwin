@@ -36,15 +36,24 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetWarehousesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<WarehouseListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<WarehouseListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query = _db.Set<Warehouse>().AsNoTracking().Where(x => x.BusinessId == businessId);
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            var warehousesQuery = _db.Set<Warehouse>().AsNoTracking().Where(x => x.BusinessId == businessId);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                warehousesQuery = warehousesQuery.Where(x =>
+                    x.Name.Contains(term) ||
+                    (x.Description != null && x.Description.Contains(term)) ||
+                    (x.Location != null && x.Location.Contains(term)));
+            }
 
-            var items = await query
+            var total = await warehousesQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await warehousesQuery
                 .OrderByDescending(x => x.IsDefault)
                 .ThenBy(x => x.Name)
                 .Skip((page - 1) * pageSize)
@@ -98,15 +107,25 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetSuppliersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<SupplierListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<SupplierListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query = _db.Set<Supplier>().AsNoTracking().Where(x => x.BusinessId == businessId);
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            var suppliersQuery = _db.Set<Supplier>().AsNoTracking().Where(x => x.BusinessId == businessId);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                suppliersQuery = suppliersQuery.Where(x =>
+                    x.Name.Contains(term) ||
+                    x.Email.Contains(term) ||
+                    x.Phone.Contains(term) ||
+                    (x.Address != null && x.Address.Contains(term)));
+            }
 
-            var items = await query
+            var total = await suppliersQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await suppliersQuery
                 .OrderBy(x => x.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -160,21 +179,29 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetStockLevelsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<StockLevelListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<StockLevelListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, string? query = null, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query =
+            var stockLevelsQuery =
                 from stockLevel in _db.Set<StockLevel>().AsNoTracking()
                 join warehouse in _db.Set<Warehouse>().AsNoTracking() on stockLevel.WarehouseId equals warehouse.Id
                 join variant in _db.Set<ProductVariant>().AsNoTracking() on stockLevel.ProductVariantId equals variant.Id
                 where stockLevel.WarehouseId == warehouseId
                 select new { stockLevel, warehouse, variant };
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                stockLevelsQuery = stockLevelsQuery.Where(x =>
+                    x.variant.Sku.Contains(term) ||
+                    x.warehouse.Name.Contains(term));
+            }
 
-            var items = await query
+            var total = await stockLevelsQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await stockLevelsQuery
                 .OrderBy(x => x.variant.Sku)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -232,21 +259,30 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetStockTransfersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<StockTransferListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<StockTransferListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, string? query = null, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query =
+            var stockTransfersQuery =
                 from transfer in _db.Set<StockTransfer>().AsNoTracking()
                 join fromWarehouse in _db.Set<Warehouse>().AsNoTracking() on transfer.FromWarehouseId equals fromWarehouse.Id
                 join toWarehouse in _db.Set<Warehouse>().AsNoTracking() on transfer.ToWarehouseId equals toWarehouse.Id
                 where transfer.FromWarehouseId == warehouseId || transfer.ToWarehouseId == warehouseId
                 select new { transfer, fromWarehouse, toWarehouse };
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                stockTransfersQuery = stockTransfersQuery.Where(x =>
+                    x.fromWarehouse.Name.Contains(term) ||
+                    x.toWarehouse.Name.Contains(term) ||
+                    x.transfer.Status.ToString().Contains(term));
+            }
 
-            var items = await query
+            var total = await stockTransfersQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await stockTransfersQuery
                 .OrderByDescending(x => x.transfer.CreatedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -313,20 +349,29 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetPurchaseOrdersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<PurchaseOrderListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<PurchaseOrderListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var query =
+            var purchaseOrdersQuery =
                 from order in _db.Set<PurchaseOrder>().AsNoTracking()
                 join supplier in _db.Set<Supplier>().AsNoTracking() on order.SupplierId equals supplier.Id
                 where order.BusinessId == businessId
                 select new { order, supplier };
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                purchaseOrdersQuery = purchaseOrdersQuery.Where(x =>
+                    x.order.OrderNumber.Contains(term) ||
+                    x.supplier.Name.Contains(term) ||
+                    x.order.Status.ToString().Contains(term));
+            }
 
-            var items = await query
+            var total = await purchaseOrdersQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await purchaseOrdersQuery
                 .OrderByDescending(x => x.order.OrderedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
