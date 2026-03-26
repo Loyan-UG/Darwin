@@ -42,9 +42,11 @@ namespace Darwin.WebAdmin.ViewModels.Identity
     public sealed class PermissionEditVm
     {
         public Guid Id { get; set; }
+        public string Key { get; set; } = string.Empty;
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string DisplayName { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public bool IsSystem { get; set; }
     }
 
     /// <summary>View model used to delete a permission.</summary>

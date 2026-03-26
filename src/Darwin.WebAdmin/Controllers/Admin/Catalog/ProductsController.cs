@@ -102,9 +102,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
-                if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
-                return View(vm);
+                EnsureProductDefaults(vm);
+                return RenderCreateEditor(vm);
             }
 
             var dto = new ProductCreateDto
@@ -151,7 +150,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _createProduct.HandleAsync(dto, ct);
                 TempData["Success"] = "Product has been created successfully.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
             {
@@ -159,9 +158,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                if (vm.Translations.Count == 0) vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
-                if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
-                return View(vm);
+                EnsureProductDefaults(vm);
+                return RenderCreateEditor(vm);
             }
         }
 
@@ -227,7 +225,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!ModelState.IsValid)
             {
                 await LoadLookupsAsync(ct);
-                return View(vm);
+                EnsureProductDefaults(vm);
+                return RenderEditEditor(vm);
             }
 
             var dto = new ProductEditDto
@@ -276,13 +275,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _updateProduct.HandleAsync(dto, ct);
                 TempData["Success"] = "Product has been updated successfully.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user. Please reload and try again.");
                 await LoadLookupsAsync(ct);
-                return View(vm);
+                EnsureProductDefaults(vm);
+                return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
             {
@@ -290,7 +290,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
 
                 await LoadLookupsAsync(ct);
-                return View(vm);
+                EnsureProductDefaults(vm);
+                return RenderEditEditor(vm);
             }
         }
 
@@ -314,6 +315,55 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             ViewBag.Cultures = cultures;
 
             ViewBag.Currencies = new[] { "EUR", "USD", "GBP" }; // TODO: will move to SiteSetting/table later
+        }
+
+        private IActionResult RenderCreateEditor(ProductCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Products/_ProductCreateEditorShell.cshtml", vm);
+            }
+
+            return View("Create", vm);
+        }
+
+        private IActionResult RenderEditEditor(ProductEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Products/_ProductEditEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void EnsureProductDefaults(ProductEditorVm vm)
+        {
+            if (vm.Translations.Count == 0)
+            {
+                vm.Translations.Add(new ProductTranslationVm { Culture = "de-DE" });
+            }
+
+            if (vm.Variants.Count == 0)
+            {
+                vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
+            }
         }
     }
 }

@@ -1,0 +1,150 @@
+@using Darwin.Domain.Enums
+@model Darwin.WebAdmin.ViewModels.Catalog.ProductEditorVm
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <partial name="~/Views/Shared/_Alerts.cshtml" />
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Brand</label>
+                <select asp-for="BrandId" class="form-select"
+                        asp-items="@(new SelectList(ViewBag.Brands, "Id", "Name"))"></select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Primary Category</label>
+                <select asp-for="PrimaryCategoryId" class="form-select"
+                        asp-items="@(new SelectList(ViewBag.Categories, "Id", "Name"))"></select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Kind</label>
+                <select asp-for="Kind" class="form-select"
+                        asp-items="Html.GetEnumSelectList<ProductKind>()"></select>
+            </div>
+        </div>
+
+        <hr />
+
+        <h5>Translations</h5>
+        @for (int i = 0; i < Model.Translations.Count; i++)
+        {
+            <div class="border rounded p-3 mb-3">
+                <input type="hidden" name="Translations.Index" value="@i" />
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label class="form-label">Culture</label>
+                        <select asp-for="Translations[@i].Culture" class="form-select">
+                            @foreach (var cul in (IEnumerable<string>)ViewBag.Cultures)
+                            {
+                                <option value="@cul" selected="@(Model.Translations[i].Culture == cul)">@cul</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Name</label>
+                        <input asp-for="Translations[@i].Name" class="form-control" />
+                        <span asp-validation-for="Translations[@i].Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Slug</label>
+                        <div class="d-flex align-items-center">
+                            <input asp-for="Translations[@i].Slug" class="form-control" />
+                            <field-help title="Slug"
+                                        content="URL-friendly identifier. Lowercase, digits, hyphens. Example: <code>organic-apple-1kg</code>."
+                                        placement="right"></field-help>
+                        </div>
+                        <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Meta Title</label>
+                        <input asp-for="Translations[@i].MetaTitle" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Meta Description</label>
+                        <div class="d-flex align-items-center">
+                            <input asp-for="Translations[@i].MetaDescription" class="form-control" />
+                            <field-help title="Meta Description"
+                                        content="Short SEO description (~155 chars)."
+                                        placement="right"></field-help>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Full Description (HTML)</label>
+                        <div id="quill-editor-desc-@i" class="border rounded" data-quill-product-editor="true"></div>
+                        <textarea asp-for="Translations[@i].FullDescriptionHtml" class="d-none"></textarea>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <hr />
+
+        <h5>Variants</h5>
+        @for (int j = 0; j < Model.Variants.Count; j++)
+        {
+            <div class="border rounded p-3 mb-3">
+                <input type="hidden" name="Variants.Index" value="@j" />
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">SKU</label>
+                        <field-help title="SKU"
+                                    content="Seller's stock keeping unit."
+                                    placement="right"></field-help>
+                        <div class="d-flex align-items-center">
+                            <input asp-for="Variants[@j].Sku" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">GTIN</label>
+                        <input asp-for="Variants[@j].Gtin" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Currency</label>
+                        <select asp-for="Variants[@j].Currency" class="form-select">
+                            @foreach (var cur in (IEnumerable<string>)ViewBag.Currencies)
+                            {
+                                <option value="@cur" selected="@(Model.Variants[j].Currency == cur)">@cur</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Tax Category</label>
+                        <select asp-for="Variants[@j].TaxCategoryId" class="form-select"
+                                asp-items="@(new SelectList(ViewBag.TaxCategories, "Id", "Name"))"></select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Base Price (Net, minor units)</label>
+                        <div class="d-flex align-items-center">
+                            <input asp-for="Variants[@j].BasePriceNetMinor" class="form-control" />
+                            <field-help title="Minor Units"
+                                        content="Store prices as integer minor units (e.g., cents). Avoids floating-point errors."
+                                        placement="right"></field-help>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Compare At (Net, minor units)</label>
+                        <input asp-for="Variants[@j].CompareAtPriceNetMinor" class="form-control" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Stock On Hand</label>
+                        <input asp-for="Variants[@j].StockOnHand" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Reorder Point</label>
+                        <input asp-for="Variants[@j].ReorderPoint" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card-footer text-end">
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</div>

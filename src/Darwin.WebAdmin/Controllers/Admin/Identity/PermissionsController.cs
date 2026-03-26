@@ -103,7 +103,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!ModelState.IsValid)
             {
                 TempData["Warning"] = "Please fix validation errors and try again.";
-                return View(vm);
+                return RenderCreateEditor(vm);
             }
 
             var result = await _create.HandleAsync(vm.Key?.Trim() ?? string.Empty, 
@@ -113,11 +113,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded)
             {
                 TempData["Error"] = result.Error ?? "Failed to create permission.";
-                return View(vm);
+                return RenderCreateEditor(vm);
             }
 
             TempData["Success"] = "Permission created successfully.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         /// <summary>
@@ -137,14 +137,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var vm = new PermissionEditVm
             {
                 Id = dto.Id,
+                Key = dto.Key,
                 RowVersion = dto.RowVersion,
                 DisplayName = dto.DisplayName ?? string.Empty,
-                Description = dto.Description
+                Description = dto.Description,
+                IsSystem = dto.IsSystem
             };
 
-            // Key/IsSystem are not editable, but we can pass them via ViewBag to display
-            ViewBag.Key = dto.Key;
-            ViewBag.IsSystem = dto.IsSystem;
             return View(vm);
         }
 
@@ -158,7 +157,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!ModelState.IsValid)
             {
                 TempData["Warning"] = "Please fix validation errors and try again.";
-                return View(vm);
+                return RenderEditEditor(vm);
             }
 
             var dto = new PermissionEditDto
@@ -173,11 +172,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded)
             {
                 TempData["Error"] = result.Error ?? "Failed to update permission.";
-                return View(vm);
+                return RenderEditEditor(vm);
             }
 
             TempData["Success"] = "Permission updated successfully.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
         }
 
         /// <summary>
@@ -204,5 +203,42 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
             return RedirectToAction(nameof(Index));
         }
+
+        private IActionResult RenderCreateEditor(PermissionCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Permissions/_PermissionCreateEditorShell.cshtml", vm);
+            }
+
+            return View("Create", vm);
+        }
+
+        private IActionResult RenderEditEditor(PermissionEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Permissions/_PermissionEditEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
     }
 }

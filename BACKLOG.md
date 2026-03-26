@@ -58,6 +58,8 @@ The immediate direction is:
 - Completed: repair legacy delete affordances in category, product, and role screens so destructive actions consistently use the shared confirmation modal and concurrency tokens.
 - Completed: remove stray cross-module navigation elements from legacy identity screens so each admin module stays focused on its own workflow.
 - Completed: migrate the legacy Categories create/edit screens onto HTMX-aware editor shells with partial-only invalid responses and HTMX-safe success redirects.
+- Completed: migrate the legacy Products create/edit screens onto HTMX-aware editor shells and move Quill initialization into shell-safe scripts so validation round-trips still preserve rich-text editing after HTMX swaps.
+- Completed: migrate the legacy Permissions and Roles create/edit screens onto HTMX-aware editor shells and align their edit projections so immutable fields (`Key`, `IsSystem`) stay consistent across GET, POST, and delete affordances.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
 - Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.

@@ -32,9 +32,11 @@ namespace Darwin.Application.Identity.Queries
                     return new RoleEditDto
                     {
                         Id = r.Id,
+                        Key = r.Key,
                         RowVersion = r.RowVersion,
                         DisplayName = r.DisplayName ?? string.Empty,
-                        Description = r.Description
+                        Description = r.Description,
+                        IsSystem = r.IsSystem
                     };
                 }, ct);
         }

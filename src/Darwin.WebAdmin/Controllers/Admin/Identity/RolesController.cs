@@ -108,7 +108,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!ModelState.IsValid)
             {
                 TempData["Warning"] = "Please fix validation errors and try again.";
-                return View(model);
+                return RenderCreateEditor(model);
             }
 
             var dto = new RoleCreateDto
@@ -122,11 +122,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded)
             {
                 TempData["Error"] = result.Error ?? "Failed to create role.";
-                return View(model);
+                return RenderCreateEditor(model);
             }
 
             TempData["Success"] = "Role created successfully.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         /// <summary>
@@ -145,9 +145,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var vm = new RoleEditVm
             {
                 Id = dto.Id,
+                Key = dto.Key,
                 RowVersion = dto.RowVersion,
                 DisplayName = dto.DisplayName,
-                Description = dto.Description
+                Description = dto.Description,
+                IsSystem = dto.IsSystem
             };
             return View(vm);
         }
@@ -158,31 +160,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(RoleEditDto model, CancellationToken ct = default)
+        public async Task<IActionResult> Edit(RoleEditVm model, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
             {
                 TempData["Warning"] = "Please fix validation errors and try again.";
-                return View(model);
+                return RenderEditEditor(model);
             }
 
             var dto = new RoleEditDto
             {
                 Id = model.Id,
+                Key = model.Key,
                 RowVersion = model.RowVersion,
                 DisplayName = model.DisplayName?.Trim() ?? string.Empty,
-                Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim()
+                Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
+                IsSystem = model.IsSystem
             };
 
             var result = await _update.HandleAsync(dto, ct);
             if (!result.Succeeded)
             {
                 TempData["Error"] = result.Error ?? "Failed to update role.";
-                return View(model);
+                return RenderEditEditor(model);
             }
 
             TempData["Success"] = "Role updated successfully.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Edit), new { id = model.Id });
         }
 
         /// <summary>
@@ -211,6 +215,42 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private IActionResult RenderCreateEditor(RoleCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Roles/_RoleCreateEditorShell.cshtml", vm);
+            }
+
+            return View("Create", vm);
+        }
+
+        private IActionResult RenderEditEditor(RoleEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Roles/_RoleEditEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
 

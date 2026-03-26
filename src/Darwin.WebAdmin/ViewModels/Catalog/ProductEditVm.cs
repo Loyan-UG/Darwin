@@ -3,15 +3,9 @@ using System.Collections.Generic;
 
 namespace Darwin.WebAdmin.ViewModels.Catalog
 {
-    public sealed class ProductEditVm
+    public sealed class ProductEditVm : ProductEditorVm
     {
         public Guid Id { get; set; }
-        public Guid? BrandId { get; set; }
-        public Guid? PrimaryCategoryId { get; set; }
-        public string Kind { get; set; } = "Simple";
         public byte[]? RowVersion { get; set; }
-
-        public List<ProductTranslationVm> Translations { get; set; } = new();
-        public List<ProductVariantCreateVm> Variants { get; set; } = new();
     }
 }

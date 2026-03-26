@@ -36,9 +36,11 @@ namespace Darwin.Application.Identity.Queries
             return Result<PermissionEditDto>.Ok(new PermissionEditDto
             {
                 Id = permission.Id,
+                Key = permission.Key,
                 RowVersion = permission.RowVersion,
                 DisplayName = permission.DisplayName,
-                Description = permission.Description
+                Description = permission.Description,
+                IsSystem = permission.IsSystem
             });
         }
     }
