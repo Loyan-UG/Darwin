@@ -1,4 +1,5 @@
 using Darwin.Application.Common.Queries;
+using Darwin.Application.Common.DTOs;
 using Darwin.Application.Inventory.Queries;
 using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
@@ -282,8 +283,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 Currency = dto.Currency
             };
 
-            ViewBag.OrderHeader = CreateHeader(dto);
-            return View(vm);
+            SetOrderHeader(CreateHeader(dto));
+            return RenderPaymentEditor(vm);
         }
 
         [HttpPost]
@@ -292,8 +293,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Invalid payment data.";
-                return RedirectToAction(nameof(AddPayment), new { orderId = vm.OrderId });
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderPaymentEditor(vm);
             }
 
             var dto = new PaymentCreateDto
@@ -314,10 +315,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderPaymentEditor(vm);
             }
 
-            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+            return RedirectOrHtmxDetails(vm.OrderId);
         }
 
         [HttpGet]
@@ -341,8 +344,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 }).ToList()
             };
 
-            ViewBag.OrderHeader = CreateHeader(dto);
-            return View(vm);
+            SetOrderHeader(CreateHeader(dto));
+            return RenderShipmentEditor(vm);
         }
 
         [HttpPost]
@@ -351,8 +354,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Invalid shipment data.";
-                return RedirectToAction(nameof(AddShipment), new { orderId = vm.OrderId });
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderShipmentEditor(vm);
             }
 
             var dto = new ShipmentCreateDto
@@ -379,10 +382,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderShipmentEditor(vm);
             }
 
-            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+            return RedirectOrHtmxDetails(vm.OrderId);
         }
 
         [HttpGet]
@@ -406,8 +411,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 }).ToList()
             };
 
-            ViewBag.OrderHeader = CreateHeader(dto);
-            return View(vm);
+            SetOrderHeader(CreateHeader(dto));
+            return RenderRefundEditor(vm);
         }
 
         [HttpPost]
@@ -416,8 +421,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Invalid refund data.";
-                return RedirectToAction(nameof(AddRefund), new { orderId = vm.OrderId });
+                await PopulateRefundOptionsAsync(vm, ct).ConfigureAwait(false);
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderRefundEditor(vm);
             }
 
             try
@@ -435,10 +441,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateRefundOptionsAsync(vm, ct).ConfigureAwait(false);
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderRefundEditor(vm);
             }
 
-            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+            return RedirectOrHtmxDetails(vm.OrderId);
         }
 
         [HttpGet]
@@ -457,26 +466,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var vm = new OrderInvoiceCreateVm
             {
                 OrderId = dto.Id,
-                DueAtUtc = DateTime.UtcNow.AddDays(14),
-                PaymentOptions = dto.Payments.Select(x => new SelectListItem
-                {
-                    Value = x.Id.ToString(),
-                    Text = $"{x.Provider} | {x.Currency} {(x.AmountMinor / 100.0M):0.00} | {x.Status}"
-                }).Prepend(new SelectListItem { Value = string.Empty, Text = "No linked payment" }).ToList(),
-                BusinessOptions = businessOptions.Select(x => new SelectListItem
-                {
-                    Value = x.Id.ToString(),
-                    Text = x.SecondaryLabel is null ? x.Label : $"{x.Label} ({x.SecondaryLabel})"
-                }).Prepend(new SelectListItem { Value = string.Empty, Text = "No business scope" }).ToList(),
-                CustomerOptions = customerOptions.Select(x => new SelectListItem
-                {
-                    Value = x.Id.ToString(),
-                    Text = x.SecondaryLabel is null ? x.Label : $"{x.Label} ({x.SecondaryLabel})"
-                }).Prepend(new SelectListItem { Value = string.Empty, Text = "Auto-resolve from user" }).ToList()
+                DueAtUtc = DateTime.UtcNow.AddDays(14)
             };
 
-            ViewBag.OrderHeader = CreateHeader(dto);
-            return View(vm);
+            await PopulateOrderInvoiceOptionsAsync(vm, businessOptions, customerOptions, dto).ConfigureAwait(false);
+            SetOrderHeader(CreateHeader(dto));
+            return RenderInvoiceCreateEditor(vm);
         }
 
         [HttpPost]
@@ -485,8 +480,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Invalid invoice data.";
-                return RedirectToAction(nameof(CreateInvoice), new { orderId = vm.OrderId });
+                await PopulateOrderInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderInvoiceCreateEditor(vm);
             }
 
             try
@@ -504,10 +500,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateOrderInvoiceOptionsAsync(vm, ct).ConfigureAwait(false);
+                SetOrderHeader(await GetOrderHeaderAsync(vm.OrderId, ct).ConfigureAwait(false));
+                return RenderInvoiceCreateEditor(vm);
             }
 
-            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+            return RedirectOrHtmxDetails(vm.OrderId);
         }
 
         [HttpPost]
@@ -549,6 +548,144 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 Currency = dto.Currency,
                 GrandTotalGrossMinor = dto.GrandTotalGrossMinor
             };
+        }
+
+        private IActionResult RenderPaymentEditor(PaymentCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/_PaymentCreateShell.cshtml", vm);
+            }
+
+            return View("AddPayment", vm);
+        }
+
+        private IActionResult RenderShipmentEditor(ShipmentCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/_ShipmentCreateShell.cshtml", vm);
+            }
+
+            return View("AddShipment", vm);
+        }
+
+        private IActionResult RenderRefundEditor(RefundCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/_RefundCreateShell.cshtml", vm);
+            }
+
+            return View("AddRefund", vm);
+        }
+
+        private IActionResult RenderInvoiceCreateEditor(OrderInvoiceCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/_InvoiceCreateShell.cshtml", vm);
+            }
+
+            return View("CreateInvoice", vm);
+        }
+
+        private IActionResult RedirectOrHtmxDetails(Guid orderId)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(nameof(Details), new { id = orderId }) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(nameof(Details), new { id = orderId });
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void SetOrderHeader(OrderHeaderVm? header)
+        {
+            ViewData["OrderHeader"] = header;
+        }
+
+        private async Task<OrderHeaderVm?> GetOrderHeaderAsync(Guid orderId, CancellationToken ct)
+        {
+            var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
+            return dto is null ? null : CreateHeader(dto);
+        }
+
+        private async Task PopulateRefundOptionsAsync(RefundCreateVm vm, CancellationToken ct)
+        {
+            var dto = await _getOrderForView.HandleAsync(vm.OrderId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                vm.PaymentOptions = new List<SelectListItem>();
+                return;
+            }
+
+            vm.Currency = string.IsNullOrWhiteSpace(vm.Currency) ? dto.Currency : vm.Currency;
+            vm.PaymentOptions = dto.Payments.Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = $"{x.Provider} | {x.Currency} {(x.AmountMinor / 100.0M):0.00} | {x.Status}",
+                Selected = vm.PaymentId == x.Id
+            }).ToList();
+        }
+
+        private async Task PopulateOrderInvoiceOptionsAsync(OrderInvoiceCreateVm vm, CancellationToken ct)
+        {
+            var businessOptions = await _getBusinessLookup.HandleAsync(ct).ConfigureAwait(false);
+            var customerOptions = await _getCustomerLookup.HandleAsync(ct).ConfigureAwait(false);
+            var orderDto = await _getOrderForView.HandleAsync(vm.OrderId, ct).ConfigureAwait(false);
+            await PopulateOrderInvoiceOptionsAsync(vm, businessOptions, customerOptions, orderDto).ConfigureAwait(false);
+        }
+
+        private Task PopulateOrderInvoiceOptionsAsync(
+            OrderInvoiceCreateVm vm,
+            IReadOnlyCollection<LookupItemDto> businessOptions,
+            IReadOnlyCollection<LookupItemDto> customerOptions,
+            OrderDetailDto? orderDto)
+        {
+            vm.BusinessOptions = businessOptions.Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.SecondaryLabel is null ? x.Label : $"{x.Label} ({x.SecondaryLabel})",
+                Selected = vm.BusinessId == x.Id
+            }).Prepend(new SelectListItem
+            {
+                Value = string.Empty,
+                Text = "No business scope",
+                Selected = !vm.BusinessId.HasValue
+            }).ToList();
+
+            vm.CustomerOptions = customerOptions.Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.SecondaryLabel is null ? x.Label : $"{x.Label} ({x.SecondaryLabel})",
+                Selected = vm.CustomerId == x.Id
+            }).Prepend(new SelectListItem
+            {
+                Value = string.Empty,
+                Text = "Auto-resolve from user",
+                Selected = !vm.CustomerId.HasValue
+            }).ToList();
+
+            vm.PaymentOptions = (orderDto?.Payments ?? new List<PaymentDetailDto>()).Select(x => new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = $"{x.Provider} | {x.Currency} {(x.AmountMinor / 100.0M):0.00} | {x.Status}",
+                Selected = vm.PaymentId == x.Id
+            }).Prepend(new SelectListItem
+            {
+                Value = string.Empty,
+                Text = "No linked payment",
+                Selected = !vm.PaymentId.HasValue
+            }).ToList();
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,0 +1,69 @@
+@model Darwin.WebAdmin.ViewModels.Orders.PaymentCreateVm
+@{
+    var header = ViewData["OrderHeader"] as Darwin.WebAdmin.ViewModels.Orders.OrderHeaderVm;
+}
+
+<div id="order-payment-shell" class="card mb-3">
+    <div class="card-body">
+        <h2 class="h4 mb-3"><i class="fa fa-credit-card"></i> Add Payment</h2>
+        <partial name="~/Views/Shared/_Alerts.cshtml" />
+
+        @if (header is not null)
+        {
+            <div class="alert alert-info">
+                <strong>Order:</strong> @header.OrderNumber | <strong>Total:</strong> @header.Currency @((header.GrandTotalGrossMinor / 100.0M).ToString("0.00"))
+            </div>
+        }
+
+        <form asp-controller="Orders"
+              asp-action="AddPayment"
+              method="post"
+              hx-post="@Url.Action("AddPayment", "Orders")"
+              hx-target="#order-payment-shell"
+              hx-swap="outerHTML"
+              class="row g-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="OrderId" />
+            <div class="col-md-4">
+                <label asp-for="Provider" class="form-label"></label>
+                <input asp-for="Provider" class="form-control" />
+                <span asp-validation-for="Provider" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="ProviderReference" class="form-label"></label>
+                <input asp-for="ProviderReference" class="form-control" />
+                <span asp-validation-for="ProviderReference" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="AmountMinor" class="form-label"></label>
+                <input asp-for="AmountMinor" class="form-control" />
+                <span asp-validation-for="AmountMinor" class="text-danger"></span>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Currency" class="form-label"></label>
+                <input asp-for="Currency" class="form-control" />
+                <span asp-validation-for="Currency" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Status" class="form-label"></label>
+                <select asp-for="Status" class="form-select">
+                    <option value="Captured">Captured</option>
+                    <option value="Authorized">Authorized</option>
+                    <option value="Failed">Failed</option>
+                </select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="col-md-8">
+                <label asp-for="FailureReason" class="form-label"></label>
+                <input asp-for="FailureReason" class="form-control" />
+                <span asp-validation-for="FailureReason" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary">
+                    <i class="fa fa-arrow-left"></i> Back
+                </a>
+                <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i> Save</button>
+            </div>
+        </form>
+    </div>
+</div>

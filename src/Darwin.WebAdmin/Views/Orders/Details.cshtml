@@ -32,22 +32,52 @@
                     </select>
                     <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa fa-sync"></i> Change Status</button>
                 </form>
-                <a asp-controller="Orders" asp-action="AddPayment" asp-route-orderId="@Model.Id" class="btn btn-sm btn-success">
+                <a asp-controller="Orders"
+                   asp-action="AddPayment"
+                   asp-route-orderId="@Model.Id"
+                   class="btn btn-sm btn-success"
+                   hx-get="@Url.Action("AddPayment", "Orders", new { orderId = Model.Id })"
+                   hx-target="#order-operation-shell"
+                   hx-swap="innerHTML"
+                   hx-push-url="false">
                     <i class="fa fa-credit-card"></i> Add Payment
                 </a>
-                <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@Model.Id" class="btn btn-sm btn-outline-primary">
+                <a asp-controller="Orders"
+                   asp-action="AddShipment"
+                   asp-route-orderId="@Model.Id"
+                   class="btn btn-sm btn-outline-primary"
+                   hx-get="@Url.Action("AddShipment", "Orders", new { orderId = Model.Id })"
+                   hx-target="#order-operation-shell"
+                   hx-swap="innerHTML"
+                   hx-push-url="false">
                     <i class="fa fa-truck"></i> Add Shipment
                 </a>
-                <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.Id" class="btn btn-sm btn-outline-danger">
+                <a asp-controller="Orders"
+                   asp-action="AddRefund"
+                   asp-route-orderId="@Model.Id"
+                   class="btn btn-sm btn-outline-danger"
+                   hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.Id })"
+                   hx-target="#order-operation-shell"
+                   hx-swap="innerHTML"
+                   hx-push-url="false">
                     <i class="fa fa-rotate-left"></i> Add Refund
                 </a>
-                <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@Model.Id" class="btn btn-sm btn-outline-secondary">
+                <a asp-controller="Orders"
+                   asp-action="CreateInvoice"
+                   asp-route-orderId="@Model.Id"
+                   class="btn btn-sm btn-outline-secondary"
+                   hx-get="@Url.Action("CreateInvoice", "Orders", new { orderId = Model.Id })"
+                   hx-target="#order-operation-shell"
+                   hx-swap="innerHTML"
+                   hx-push-url="false">
                     <i class="fa fa-file-invoice"></i> Create Invoice
                 </a>
             </div>
         </div>
     </div>
 </div>
+
+<div id="order-operation-shell" class="mb-3"></div>
 
 <div class="card mt-3">
     <div class="card-header d-flex justify-content-between align-items-center">

@@ -1,0 +1,80 @@
+@model Darwin.WebAdmin.ViewModels.Orders.ShipmentCreateVm
+@{
+    var header = ViewData["OrderHeader"] as Darwin.WebAdmin.ViewModels.Orders.OrderHeaderVm;
+}
+
+<div id="order-shipment-shell" class="card mb-3">
+    <div class="card-body">
+        <h2 class="h4 mb-3"><i class="fa fa-truck"></i> Add Shipment</h2>
+
+        @if (header is not null)
+        {
+            <div class="alert alert-info">
+                <strong>Order:</strong> @header.OrderNumber
+            </div>
+        }
+
+        <form asp-action="AddShipment"
+              method="post"
+              hx-post="@Url.Action("AddShipment", "Orders")"
+              hx-target="#order-shipment-shell"
+              hx-swap="outerHTML"
+              class="row g-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="OrderId" />
+            <div class="col-md-4">
+                <label asp-for="Carrier" class="form-label"></label>
+                <input asp-for="Carrier" class="form-control" />
+                <span asp-validation-for="Carrier" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Service" class="form-label"></label>
+                <input asp-for="Service" class="form-control" />
+                <span asp-validation-for="Service" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="TrackingNumber" class="form-label"></label>
+                <input asp-for="TrackingNumber" class="form-control" />
+                <span asp-validation-for="TrackingNumber" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="TotalWeight" class="form-label"></label>
+                <input asp-for="TotalWeight" class="form-control" />
+                <span asp-validation-for="TotalWeight" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <h5>Shipment Lines</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order Line</th>
+                                <th class="text-end">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Lines.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Model.Lines[i].Label
+                                        <input type="hidden" asp-for="Lines[i].OrderLineId" />
+                                        <input type="hidden" asp-for="Lines[i].Label" />
+                                    </td>
+                                    <td class="text-end" style="width:180px">
+                                        <input asp-for="Lines[i].Quantity" class="form-control text-end" />
+                                        <span asp-validation-for="Lines[i].Quantity" class="text-danger"></span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-12">
+                <a asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary">Back</a>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>

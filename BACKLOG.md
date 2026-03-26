@@ -49,9 +49,10 @@ The immediate direction is:
 - Completed: extend the HTMX editor-shell pattern to financial account, expense, warehouse, and supplier screens so those forms no longer rely on full-page postbacks by default.
 - Completed: harden HTMX editor shells so repeated in-place submissions keep a stable target container instead of losing the shell after the first swap.
 - Completed: extend the HTMX editor-shell pattern to the remaining multi-line journal entry, stock transfer, and purchase order editors.
+- Completed: move order operation screens (`AddPayment`, `AddShipment`, `AddRefund`, `CreateInvoice`) onto HTMX-backed shells with inline loading from order details and proper fallback pages.
 - Task: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages.
 - Task: standardize alert refresh, partial loading, list filtering, and modal submission patterns across all existing and newly added modules.
-- Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and order-operation screens where it reduces full-page postbacks.
+- Task: extend the HTMX editor-shell pattern to the remaining legacy admin forms and any inline order/accounting operations where it reduces full-page postbacks.
 
 ### Epic: Orders, fulfillment, and billing admin
 

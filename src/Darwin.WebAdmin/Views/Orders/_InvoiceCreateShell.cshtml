@@ -1,0 +1,48 @@
+@model Darwin.WebAdmin.ViewModels.Orders.OrderInvoiceCreateVm
+@{
+    var header = ViewData["OrderHeader"] as Darwin.WebAdmin.ViewModels.Orders.OrderHeaderVm;
+}
+
+<div id="order-invoice-shell" class="card mb-3">
+    <div class="card-body">
+        <h2 class="h4 mb-3"><i class="fa fa-file-invoice"></i> Create Invoice</h2>
+
+        @if (header is not null)
+        {
+            <div class="alert alert-info">
+                <strong>Order:</strong> @header.OrderNumber
+            </div>
+        }
+
+        <form asp-action="CreateInvoice"
+              method="post"
+              hx-post="@Url.Action("CreateInvoice", "Orders")"
+              hx-target="#order-invoice-shell"
+              hx-swap="outerHTML"
+              class="row g-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="OrderId" />
+            <div class="col-md-4">
+                <label asp-for="BusinessId" class="form-label"></label>
+                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="CustomerId" class="form-label"></label>
+                <select asp-for="CustomerId" asp-items="Model.CustomerOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PaymentId" class="form-label"></label>
+                <select asp-for="PaymentId" asp-items="Model.PaymentOptions" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="DueAtUtc" class="form-label"></label>
+                <input asp-for="DueAtUtc" type="datetime-local" class="form-control" />
+                <span asp-validation-for="DueAtUtc" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <a asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary">Back</a>
+                <button type="submit" class="btn btn-primary">Create Invoice</button>
+            </div>
+        </form>
+    </div>
+</div>
