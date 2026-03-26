@@ -120,6 +120,10 @@
                            LineBreakMode="WordWrap"
                            IsVisible="{Binding HasDefaultShippingAddress}" />
 
+                    <Button Text="{x:Static res:AppResources.ProfileManageAddressesButton}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Clicked="OnManageAddressesClicked" />
+
                     <BoxView HeightRequest="1"
                              Color="{StaticResource Neutral300}" />
 

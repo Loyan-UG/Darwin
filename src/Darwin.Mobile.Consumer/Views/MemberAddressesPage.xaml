@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
+    xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
+    x:Class="Darwin.Mobile.Consumer.Views.MemberAddressesPage"
+    x:DataType="vm:MemberAddressesViewModel"
+    Title="{x:Static res:AppResources.MemberAddressesTitle}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="{x:Static res:AppResources.MemberAddressesTitle}"
+                   Style="{StaticResource TitleLabelStyle}" />
+
+            <Label Text="{Binding SuccessMessage}"
+                   TextColor="Green"
+                   FontSize="14"
+                   IsVisible="{Binding HasSuccess}" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red"
+                   FontSize="14"
+                   IsVisible="{Binding HasError}" />
+
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="{x:Static res:AppResources.MemberAddressesRefreshButton}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding RefreshCommand}" />
+                <Button Text="{x:Static res:AppResources.MemberAddressesCreateButton}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding StartCreateCommand}" />
+            </HorizontalStackLayout>
+
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.MemberAddressesSavedSectionTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesEmpty}"
+                           FontSize="13"
+                           IsVisible="{Binding HasAddresses, Converter={StaticResource InverseBoolConverter}}" />
+
+                    <VerticalStackLayout Spacing="10"
+                                         BindableLayout.ItemsSource="{Binding Addresses}"
+                                         IsVisible="{Binding HasAddresses}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MemberAddressItemViewModel">
+                                <Border Stroke="{StaticResource Neutral200}" StrokeThickness="1" StrokeShape="RoundRectangle 10" Padding="12">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding FullName}" FontAttributes="Bold" />
+                                        <Label Text="{Binding Summary}" FontSize="13" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Company}" FontSize="13" IsVisible="{Binding HasCompany}" />
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Label Text="{x:Static res:AppResources.MemberAddressesDefaultBillingBadge}"
+                                                   FontSize="12"
+                                                   IsVisible="{Binding IsDefaultBilling}" />
+                                            <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingBadge}"
+                                                   FontSize="12"
+                                                   IsVisible="{Binding IsDefaultShipping}" />
+                                        </HorizontalStackLayout>
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Button Text="{x:Static res:AppResources.MemberAddressesEditButton}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            <Button Text="{x:Static res:AppResources.MemberAddressesSetBillingButton}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultBillingCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            <Button Text="{x:Static res:AppResources.MemberAddressesSetShippingButton}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SetDefaultShippingCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            <Button Text="{x:Static res:AppResources.MemberAddressesDeleteButton}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding EditorTitle}"
+                           FontAttributes="Bold"
+                           FontSize="16" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesFullNameLabel}" />
+                    <Entry Text="{Binding FullName}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesCompanyLabel}" />
+                    <Entry Text="{Binding Company}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesStreet1Label}" />
+                    <Entry Text="{Binding Street1}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesStreet2Label}" />
+                    <Entry Text="{Binding Street2}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesPostalCodeLabel}" />
+                    <Entry Text="{Binding PostalCode}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesCityLabel}" />
+                    <Entry Text="{Binding City}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesStateLabel}" />
+                    <Entry Text="{Binding State}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesCountryCodeLabel}" />
+                    <Entry Text="{Binding CountryCode}" />
+
+                    <Label Text="{x:Static res:AppResources.MemberAddressesPhoneLabel}" />
+                    <Entry Text="{Binding PhoneE164}" Keyboard="Telephone" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label Text="{x:Static res:AppResources.MemberAddressesDefaultBillingSwitchLabel}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                        <Switch Grid.Column="1" IsToggled="{Binding IsDefaultBilling}" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label Text="{x:Static res:AppResources.MemberAddressesDefaultShippingSwitchLabel}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                        <Switch Grid.Column="1" IsToggled="{Binding IsDefaultShipping}" />
+                    </Grid>
+
+                    <HorizontalStackLayout Spacing="12">
+                        <Button Text="{x:Static res:AppResources.MemberAddressesSaveButton}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding SaveCommand}" />
+                        <Button Text="{x:Static res:AppResources.MemberAddressesCancelButton}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding CancelEditCommand}" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                               IsRunning="{Binding IsBusy}"
+                               Color="{StaticResource BrandGold500}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

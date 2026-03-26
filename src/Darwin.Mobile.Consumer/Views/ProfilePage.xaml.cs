@@ -35,6 +35,14 @@ public partial class ProfilePage : ContentPage
         await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.AccountDeletion));
     }
 
+    /// <summary>
+    /// Opens the member address-book management screen from the profile page.
+    /// </summary>
+    private async void OnManageAddressesClicked(object? sender, EventArgs e)
+    {
+        await MainThread.InvokeOnMainThreadAsync(() => NavigateSafelyAsync(Routes.MemberAddresses));
+    }
+
     private static async Task NavigateSafelyAsync(string route)
     {
         if (Shell.Current is null || string.IsNullOrWhiteSpace(route))

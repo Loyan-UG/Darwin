@@ -51,6 +51,11 @@ public static class Routes
     public const string MemberCommerce = "member-commerce";
 
     /// <summary>
+    /// Dedicated member address-book route.
+    /// </summary>
+    public const string MemberAddresses = "member-addresses";
+
+    /// <summary>
     /// Dedicated password change screen route.
     /// </summary>
     public const string ChangePassword = "change-password";

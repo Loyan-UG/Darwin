@@ -328,6 +328,9 @@
   <data name="ProfileDefaultShippingAddressFormat" xml:space="preserve">
     <value>Default shipping: {0}</value>
   </data>
+  <data name="ProfileManageAddressesButton" xml:space="preserve">
+    <value>Manage addresses</value>
+  </data>
   <data name="ProfileCustomerContextSectionTitle" xml:space="preserve">
     <value>Customer context</value>
   </data>
@@ -498,6 +501,111 @@
   </data>
   <data name="MemberCommerceDocumentDownloadFailed" xml:space="preserve">
     <value>Unable to download the document right now.</value>
+  </data>
+  <data name="MemberAddressesTitle" xml:space="preserve">
+    <value>Address book</value>
+  </data>
+  <data name="MemberAddressesRefreshButton" xml:space="preserve">
+    <value>Refresh addresses</value>
+  </data>
+  <data name="MemberAddressesCreateButton" xml:space="preserve">
+    <value>New address</value>
+  </data>
+  <data name="MemberAddressesSavedSectionTitle" xml:space="preserve">
+    <value>Saved addresses</value>
+  </data>
+  <data name="MemberAddressesEmpty" xml:space="preserve">
+    <value>No addresses are saved yet.</value>
+  </data>
+  <data name="MemberAddressesDefaultBillingBadge" xml:space="preserve">
+    <value>Default billing</value>
+  </data>
+  <data name="MemberAddressesDefaultShippingBadge" xml:space="preserve">
+    <value>Default shipping</value>
+  </data>
+  <data name="MemberAddressesEditButton" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="MemberAddressesDeleteButton" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="MemberAddressesSetBillingButton" xml:space="preserve">
+    <value>Set billing</value>
+  </data>
+  <data name="MemberAddressesSetShippingButton" xml:space="preserve">
+    <value>Set shipping</value>
+  </data>
+  <data name="MemberAddressesEditorTitleCreate" xml:space="preserve">
+    <value>Create address</value>
+  </data>
+  <data name="MemberAddressesEditorTitleEdit" xml:space="preserve">
+    <value>Edit address</value>
+  </data>
+  <data name="MemberAddressesFullNameLabel" xml:space="preserve">
+    <value>Full name</value>
+  </data>
+  <data name="MemberAddressesCompanyLabel" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="MemberAddressesStreet1Label" xml:space="preserve">
+    <value>Street line 1</value>
+  </data>
+  <data name="MemberAddressesStreet2Label" xml:space="preserve">
+    <value>Street line 2</value>
+  </data>
+  <data name="MemberAddressesPostalCodeLabel" xml:space="preserve">
+    <value>Postal code</value>
+  </data>
+  <data name="MemberAddressesCityLabel" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="MemberAddressesStateLabel" xml:space="preserve">
+    <value>State / region</value>
+  </data>
+  <data name="MemberAddressesCountryCodeLabel" xml:space="preserve">
+    <value>Country code</value>
+  </data>
+  <data name="MemberAddressesPhoneLabel" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="MemberAddressesDefaultBillingSwitchLabel" xml:space="preserve">
+    <value>Use as default billing address</value>
+  </data>
+  <data name="MemberAddressesDefaultShippingSwitchLabel" xml:space="preserve">
+    <value>Use as default shipping address</value>
+  </data>
+  <data name="MemberAddressesSaveButton" xml:space="preserve">
+    <value>Save address</value>
+  </data>
+  <data name="MemberAddressesCancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="MemberAddressesLoadFailed" xml:space="preserve">
+    <value>Unable to load addresses.</value>
+  </data>
+  <data name="MemberAddressesValidationFailed" xml:space="preserve">
+    <value>Please complete the required address fields before saving.</value>
+  </data>
+  <data name="MemberAddressesSaveFailed" xml:space="preserve">
+    <value>Unable to save the address right now.</value>
+  </data>
+  <data name="MemberAddressesDeleteFailed" xml:space="preserve">
+    <value>Unable to delete the address right now.</value>
+  </data>
+  <data name="MemberAddressesDefaultFailed" xml:space="preserve">
+    <value>Unable to update the default address right now.</value>
+  </data>
+  <data name="MemberAddressesCreated" xml:space="preserve">
+    <value>Address created successfully.</value>
+  </data>
+  <data name="MemberAddressesUpdated" xml:space="preserve">
+    <value>Address updated successfully.</value>
+  </data>
+  <data name="MemberAddressesDeleted" xml:space="preserve">
+    <value>Address deleted successfully.</value>
+  </data>
+  <data name="MemberAddressesDefaultUpdated" xml:space="preserve">
+    <value>Default address updated successfully.</value>
   </data>
   <data name="RegisterTitle" xml:space="preserve">
     <value>Create account</value>
