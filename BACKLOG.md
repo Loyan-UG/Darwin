@@ -48,9 +48,10 @@ Status terms used below:
 
 ### Authentication and account lifecycle
 
-- `Planned / Near-term`: complete signup, invitation, activation, forgot-password, and reset-password operational flows
+- `In Progress`: complete signup, invitation, activation, forgot-password, and reset-password operational flows
 - `Completed`: WebAdmin now supports lock/unlock, admin email confirmation override, and password-reset initiation support for operator troubleshooting
-- `Planned / Near-term`: add resend activation and true self-service activation completion once the platform has a real confirm-email token consumption flow
+- `Completed`: platform now has a real confirm-email token flow plus resend-activation email issuance via public auth endpoints and WebAdmin support actions
+- `Planned / Near-term`: decide when sign-in should actively enforce email confirmation for phase-1 go-live without breaking current mobile and consumer onboarding expectations
 - `Completed`: business-app token refresh now preserves preferred business context during onboarding-safe refresh cycles
 - `Planned / Near-term`: ensure business-user status directly affects access in mobile and admin-backed support workflows
 
@@ -95,6 +96,7 @@ Status terms used below:
 - `Completed`: business/tenant management foundation now exists in WebAdmin with business CRUD, owner assignment, member management, and location management
 - `Completed`: business invitations can now be created, listed, resent, and revoked from WebAdmin
 - `Completed`: user edit screens now expose operational account state and support actions for confirm-email override, password reset email, and lock/unlock
+- `Completed`: user edit screens now also support sending activation emails for unconfirmed accounts
 - `Completed`: shared search/reset/pager behavior now covers legacy and newer operator lists across catalog, CMS, identity, billing, inventory, and orders
 - `Planned / Near-term`: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages
 - `Planned / Near-term`: standardize remaining partial loading, modal submission, and alert refresh patterns
@@ -249,3 +251,4 @@ Status terms used below:
 - `Decision pending`: decide whether invitation acceptance in phase 1 should be token-entry driven, magic-link driven, or both across `Darwin.Mobile.Business` and future front-end onboarding flows
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh
 - `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live
+- `Decision pending`: decide when authentication should reject unconfirmed accounts by policy, since activation tokens now exist but login is still backward-compatible for current clients

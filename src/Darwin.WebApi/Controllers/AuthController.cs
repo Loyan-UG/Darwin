@@ -29,6 +29,8 @@ namespace Darwin.WebApi.Controllers
         private readonly RevokeRefreshTokensHandler _revoke;
         private readonly RegisterUserHandler _registerUser;
         private readonly ChangePasswordHandler _changePassword;
+        private readonly RequestEmailConfirmationHandler _requestEmailConfirmation;
+        private readonly ConfirmEmailHandler _confirmEmail;
         private readonly RequestPasswordResetHandler _requestPasswordReset;
         private readonly ResetPasswordHandler _resetPassword;
         private readonly GetRoleIdByKeyHandler _getRoleIdByKey;
@@ -47,6 +49,8 @@ namespace Darwin.WebApi.Controllers
             RevokeRefreshTokensHandler revoke,
             RegisterUserHandler registerUser,
             ChangePasswordHandler changePassword,
+            RequestEmailConfirmationHandler requestEmailConfirmation,
+            ConfirmEmailHandler confirmEmail,
             RequestPasswordResetHandler requestPasswordReset,
             ResetPasswordHandler resetPassword,
             GetRoleIdByKeyHandler getRoleIdByKey,
@@ -57,6 +61,8 @@ namespace Darwin.WebApi.Controllers
             _revoke = revoke ?? throw new ArgumentNullException(nameof(revoke));
             _registerUser = registerUser ?? throw new ArgumentNullException(nameof(registerUser));
             _changePassword = changePassword ?? throw new ArgumentNullException(nameof(changePassword));
+            _requestEmailConfirmation = requestEmailConfirmation ?? throw new ArgumentNullException(nameof(requestEmailConfirmation));
+            _confirmEmail = confirmEmail ?? throw new ArgumentNullException(nameof(confirmEmail));
             _requestPasswordReset = requestPasswordReset ?? throw new ArgumentNullException(nameof(requestPasswordReset));
             _resetPassword = resetPassword ?? throw new ArgumentNullException(nameof(resetPassword));
             _getRoleIdByKey = getRoleIdByKey ?? throw new ArgumentNullException(nameof(getRoleIdByKey));
@@ -332,10 +338,23 @@ namespace Darwin.WebApi.Controllers
             var result = await _registerUser.HandleAsync(dto, defaultRoleId, ct).ConfigureAwait(false);
             if (result.Succeeded && result.Value != Guid.Empty)
             {
+                var confirmationEmailSent = false;
+                try
+                {
+                    var confirmationResult = await _requestEmailConfirmation.HandleAsync(
+                        new RequestEmailConfirmationDto { Email = dto.Email },
+                        ct).ConfigureAwait(false);
+                    confirmationEmailSent = confirmationResult.Succeeded;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send confirmation email for newly registered user {Email}.", dto.Email);
+                }
+
                 var response = new RegisterResponse
                 {
                     DisplayName = $"{dto.FirstName} {dto.LastName}".Trim(),
-                    ConfirmationEmailSent = false
+                    ConfirmationEmailSent = confirmationEmailSent
                 };
                 return Ok(response);
             }
@@ -391,6 +410,69 @@ namespace Darwin.WebApi.Controllers
             return ProblemFromResult(result);
         }
 
+
+        /// <summary>
+        /// Issues or resends an email confirmation token for the specified account. Always returns 200/OK to avoid account enumeration.
+        /// </summary>
+        [HttpPost("email/request-confirmation")]
+        [HttpPost("/api/v1/auth/email/request-confirmation")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RequestEmailConfirmationAsync(
+            [FromBody] RequestEmailConfirmationRequest request,
+            CancellationToken ct)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            try
+            {
+                await _requestEmailConfirmation.HandleAsync(
+                    new RequestEmailConfirmationDto
+                    {
+                        Email = request.Email ?? string.Empty
+                    },
+                    ct).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing email confirmation request for email {Email}", request.Email);
+            }
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Completes an email confirmation using the supplied token.
+        /// </summary>
+        [HttpPost("email/confirm")]
+        [HttpPost("/api/v1/auth/email/confirm")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmEmailAsync(
+            [FromBody] ConfirmEmailRequest request,
+            CancellationToken ct)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            var result = await _confirmEmail.HandleAsync(
+                new ConfirmEmailDto
+                {
+                    Email = request.Email ?? string.Empty,
+                    Token = request.Token ?? string.Empty
+                },
+                ct).ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+
+            return ProblemFromResult(result);
+        }
 
         /// <summary>
         /// Initiates a password reset by generating a token and sending notification (email/SMS). Always returns 200/OK to prevent user enumeration.

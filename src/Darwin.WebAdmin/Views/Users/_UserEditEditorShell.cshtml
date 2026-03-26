@@ -51,6 +51,19 @@
             @if (!Model.EmailConfirmed)
             {
                 <form asp-controller="Users"
+                      asp-action="SendActivationEmail"
+                      method="post"
+                      hx-post="@Url.Action("SendActivationEmail", "Users")"
+                      hx-target="#user-edit-editor-shell"
+                      hx-swap="outerHTML"
+                      class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fa fa-paper-plane"></i> Send Activation Email
+                    </button>
+                </form>
+                <form asp-controller="Users"
                       asp-action="ConfirmEmail"
                       method="post"
                       hx-post="@Url.Action("ConfirmEmail", "Users")"

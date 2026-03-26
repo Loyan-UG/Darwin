@@ -19,6 +19,8 @@ public sealed class WebApiRouteAliasSourceTests
         source.Should().Contain("/api/v1/auth/logout");
         source.Should().Contain("/api/v1/auth/logout-all");
         source.Should().Contain("/api/v1/auth/register");
+        source.Should().Contain("/api/v1/auth/email/request-confirmation");
+        source.Should().Contain("/api/v1/auth/email/confirm");
         source.Should().Contain("/api/v1/auth/password/change");
         source.Should().Contain("/api/v1/auth/password/request-reset");
         source.Should().Contain("/api/v1/auth/password/reset");

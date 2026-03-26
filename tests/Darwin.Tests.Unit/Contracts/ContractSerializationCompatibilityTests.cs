@@ -144,6 +144,32 @@ public sealed class ContractSerializationCompatibilityTests
     }
 
     /// <summary>
+    ///     Verifies that email-confirmation request contracts preserve stable camelCase fields
+    ///     for activation and resend flows.
+    /// </summary>
+    [Fact]
+    public void EmailConfirmationRequests_Should_Serialize_WithExpectedPropertyNames()
+    {
+        var request = new RequestEmailConfirmationRequest
+        {
+            Email = "member@example.test"
+        };
+
+        var confirm = new ConfirmEmailRequest
+        {
+            Email = "member@example.test",
+            Token = "confirm-token-123"
+        };
+
+        var requestJson = JsonSerializer.Serialize(request, JsonOptions);
+        var confirmJson = JsonSerializer.Serialize(confirm, JsonOptions);
+
+        requestJson.Should().Contain("\"email\"");
+        confirmJson.Should().Contain("\"email\"");
+        confirmJson.Should().Contain("\"token\"");
+    }
+
+    /// <summary>
     ///     Verifies that business invitation preview contracts serialize onboarding payload fields
     ///     with stable camelCase names for business-mobile clients.
     /// </summary>

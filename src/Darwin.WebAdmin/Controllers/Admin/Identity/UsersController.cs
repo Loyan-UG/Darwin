@@ -25,6 +25,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         private readonly ChangeUserEmailHandler _changeUserEmail;
         private readonly SetUserPasswordByAdminHandler _setUserPasswordByAdmin;
         private readonly RequestPasswordResetHandler _requestPasswordReset;
+        private readonly RequestEmailConfirmationHandler _requestEmailConfirmation;
         private readonly ConfirmUserEmailByAdminHandler _confirmUserEmail;
         private readonly LockUserByAdminHandler _lockUser;
         private readonly UnlockUserByAdminHandler _unlockUser;
@@ -52,6 +53,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             ChangeUserEmailHandler changeUserEmail,
             SetUserPasswordByAdminHandler setUserPasswordByAdmin,
             RequestPasswordResetHandler requestPasswordReset,
+            RequestEmailConfirmationHandler requestEmailConfirmation,
             ConfirmUserEmailByAdminHandler confirmUserEmail,
             LockUserByAdminHandler lockUser,
             UnlockUserByAdminHandler unlockUser,
@@ -70,6 +72,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             _changeUserEmail = changeUserEmail;
             _setUserPasswordByAdmin = setUserPasswordByAdmin;
             _requestPasswordReset = requestPasswordReset;
+            _requestEmailConfirmation = requestEmailConfirmation;
             _confirmUserEmail = confirmUserEmail;
             _lockUser = lockUser;
             _unlockUser = unlockUser;
@@ -299,6 +302,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? "Email marked as confirmed."
                 : (result.Error ?? "Failed to confirm email.");
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
+        }
+
+        /// <summary>
+        /// Sends or resends an activation email to the user's current email address.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendActivationEmail([FromForm] Guid id, CancellationToken ct = default)
+        {
+            var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
+            if (!userResult.Succeeded || userResult.Value is null)
+            {
+                TempData["Error"] = userResult.Error ?? "User not found.";
+                return RedirectOrHtmx(nameof(Edit), new { id });
+            }
+
+            var result = await _requestEmailConfirmation.HandleAsync(
+                new RequestEmailConfirmationDto { Email = userResult.Value.Email },
+                ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Activation email sent."
+                : (result.Error ?? "Failed to send activation email.");
 
             return RedirectOrHtmx(nameof(Edit), new { id });
         }
