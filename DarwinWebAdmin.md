@@ -59,7 +59,7 @@ This is especially important because early operational usage is expected to star
 | Area | Status | Notes |
 | --- | --- | --- |
 | Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
-| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, and invitation management now exist; `Darwin.Mobile.Business` can now accept invitations, while activation, approval, and tenant/customer provisioning remain near-term. |
+| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, and onboarding checklist visibility now exist; `Darwin.Mobile.Business` can accept invitations, while tenant/customer provisioning and approval-gated access policy remain near-term. |
 | Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist; Stripe-specific lifecycle support is still pending. |
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; reporting and support depth still need improvement. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, and purchase orders exist; receipt/adjustment/exception flows still need work. |
@@ -117,7 +117,8 @@ Target workflow:
 
 - `In Progress`: business creation, owner assignment, member management, location management, and invitation/resend/revoke now exist in WebAdmin
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
-- `Planned / Near-term`: explicit onboarding state machine, approval transitions, resend-activation support, and tenant/customer provisioning still need completion
+- `Completed`: approval, suspension, and reactivation actions now exist in WebAdmin, together with a readiness checklist for owner, primary location, contact email, and legal-name completion
+- `Planned / Near-term`: explicit onboarding state machine, approval-gated access policy, resend-activation support, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support
 

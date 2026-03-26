@@ -38,10 +38,17 @@ namespace Darwin.Application.Businesses.Queries
                     DefaultCurrency = x.DefaultCurrency,
                     DefaultCulture = x.DefaultCulture,
                     IsActive = x.IsActive,
+                    OperationalStatus = x.OperationalStatus,
+                    ApprovedAtUtc = x.ApprovedAtUtc,
+                    SuspendedAtUtc = x.SuspendedAtUtc,
+                    SuspensionReason = x.SuspensionReason,
                     MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id),
                     ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
                     LocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted),
-                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending)
+                    PrimaryLocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary),
+                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending),
+                    HasContactEmailConfigured = !string.IsNullOrWhiteSpace(x.ContactEmail),
+                    HasLegalNameConfigured = !string.IsNullOrWhiteSpace(x.LegalName)
                 })
                 .FirstOrDefaultAsync(ct);
         }

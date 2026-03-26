@@ -40,10 +40,17 @@ namespace Darwin.Application.Businesses.DTOs
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
         public bool IsActive { get; set; } = true;
+        public BusinessOperationalStatus OperationalStatus { get; set; } = BusinessOperationalStatus.PendingApproval;
+        public DateTime? ApprovedAtUtc { get; set; }
+        public DateTime? SuspendedAtUtc { get; set; }
+        public string? SuspensionReason { get; set; }
         public int MemberCount { get; set; }
         public int ActiveOwnerCount { get; set; }
         public int LocationCount { get; set; }
+        public int PrimaryLocationCount { get; set; }
         public int InvitationCount { get; set; }
+        public bool HasContactEmailConfigured { get; set; }
+        public bool HasLegalNameConfigured { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -66,12 +73,23 @@ namespace Darwin.Application.Businesses.DTOs
         public string? LegalName { get; set; }
         public BusinessCategoryKind Category { get; set; }
         public bool IsActive { get; set; }
+        public BusinessOperationalStatus OperationalStatus { get; set; } = BusinessOperationalStatus.PendingApproval;
         public int MemberCount { get; set; }
         public int ActiveOwnerCount { get; set; }
         public int LocationCount { get; set; }
         public DateTime? CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    /// <summary>
+    /// Minimal DTO used for approval, suspension, and reactivation actions.
+    /// </summary>
+    public sealed class BusinessLifecycleActionDto
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public string? Note { get; set; }
     }
     
 }

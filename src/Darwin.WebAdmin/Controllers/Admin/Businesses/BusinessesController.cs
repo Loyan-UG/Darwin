@@ -45,6 +45,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly CreateBusinessInvitationHandler _createBusinessInvitation;
         private readonly ResendBusinessInvitationHandler _resendBusinessInvitation;
         private readonly RevokeBusinessInvitationHandler _revokeBusinessInvitation;
+        private readonly ApproveBusinessHandler _approveBusiness;
+        private readonly SuspendBusinessHandler _suspendBusiness;
+        private readonly ReactivateBusinessHandler _reactivateBusiness;
         private readonly AdminReferenceDataService _referenceData;
 
         public BusinessesController(
@@ -67,6 +70,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             CreateBusinessInvitationHandler createBusinessInvitation,
             ResendBusinessInvitationHandler resendBusinessInvitation,
             RevokeBusinessInvitationHandler revokeBusinessInvitation,
+            ApproveBusinessHandler approveBusiness,
+            SuspendBusinessHandler suspendBusiness,
+            ReactivateBusinessHandler reactivateBusiness,
             AdminReferenceDataService referenceData)
         {
             _getBusinessesPage = getBusinessesPage;
@@ -88,6 +94,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _createBusinessInvitation = createBusinessInvitation;
             _resendBusinessInvitation = resendBusinessInvitation;
             _revokeBusinessInvitation = revokeBusinessInvitation;
+            _approveBusiness = approveBusiness;
+            _suspendBusiness = suspendBusiness;
+            _reactivateBusiness = reactivateBusiness;
             _referenceData = referenceData;
         }
 
@@ -110,6 +119,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     LegalName = x.LegalName,
                     Category = x.Category,
                     IsActive = x.IsActive,
+                    OperationalStatus = x.OperationalStatus,
                     MemberCount = x.MemberCount,
                     ActiveOwnerCount = x.ActiveOwnerCount,
                     LocationCount = x.LocationCount,
@@ -125,7 +135,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken ct = default)
         {
-            var vm = new BusinessEditVm();
+            var vm = new BusinessEditVm
+            {
+                IsActive = false
+            };
             await PopulateBusinessFormOptionsAsync(vm, ct);
             return View(vm);
         }
@@ -255,6 +268,70 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 result.Succeeded ? "Business archived." : (result.Error ?? "Failed to archive business.");
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        {
+            try
+            {
+                await _approveBusiness.HandleAsync(new BusinessLifecycleActionDto
+                {
+                    Id = id,
+                    RowVersion = rowVersion ?? Array.Empty<byte>()
+                }, ct);
+
+                TempData["Success"] = "Business approved for operational use.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] string? note, CancellationToken ct = default)
+        {
+            try
+            {
+                await _suspendBusiness.HandleAsync(new BusinessLifecycleActionDto
+                {
+                    Id = id,
+                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    Note = note
+                }, ct);
+
+                TempData["Success"] = "Business suspended.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
+        {
+            try
+            {
+                await _reactivateBusiness.HandleAsync(new BusinessLifecycleActionDto
+                {
+                    Id = id,
+                    RowVersion = rowVersion ?? Array.Empty<byte>()
+                }, ct);
+
+                TempData["Success"] = "Business reactivated.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
         }
 
         [HttpGet]
@@ -826,10 +903,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 LegalName = dto.LegalName,
                 Category = dto.Category,
                 IsActive = dto.IsActive,
+                OperationalStatus = dto.OperationalStatus,
+                ApprovedAtUtc = dto.ApprovedAtUtc,
+                SuspendedAtUtc = dto.SuspendedAtUtc,
+                SuspensionReason = dto.SuspensionReason,
                 MemberCount = dto.MemberCount,
                 ActiveOwnerCount = dto.ActiveOwnerCount,
                 LocationCount = dto.LocationCount,
-                InvitationCount = dto.InvitationCount
+                PrimaryLocationCount = dto.PrimaryLocationCount,
+                InvitationCount = dto.InvitationCount,
+                HasContactEmailConfigured = dto.HasContactEmailConfigured,
+                HasLegalNameConfigured = dto.HasLegalNameConfigured
             };
         }
 
@@ -889,10 +973,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 DefaultCurrency = dto.DefaultCurrency,
                 DefaultCulture = dto.DefaultCulture,
                 IsActive = dto.IsActive,
+                OperationalStatus = dto.OperationalStatus,
+                ApprovedAtUtc = dto.ApprovedAtUtc,
+                SuspendedAtUtc = dto.SuspendedAtUtc,
+                SuspensionReason = dto.SuspensionReason,
                 MemberCount = dto.MemberCount,
                 ActiveOwnerCount = dto.ActiveOwnerCount,
                 LocationCount = dto.LocationCount,
-                InvitationCount = dto.InvitationCount
+                PrimaryLocationCount = dto.PrimaryLocationCount,
+                InvitationCount = dto.InvitationCount,
+                HasContactEmailConfigured = dto.HasContactEmailConfigured,
+                HasLegalNameConfigured = dto.HasLegalNameConfigured
             };
         }
 

@@ -28,6 +28,11 @@
 
     @if (!isCreate)
     {
+        var checklistComplete = Model.ActiveOwnerCount > 0 &&
+                                Model.PrimaryLocationCount > 0 &&
+                                Model.HasContactEmailConfigured &&
+                                Model.HasLegalNameConfigured;
+
         <div class="row g-3 mb-3">
             <div class="col-md-3">
                 <div class="border rounded p-3 h-100">
@@ -55,7 +60,108 @@
             </div>
         </div>
 
-        @if (Model.ActiveOwnerCount == 0 || Model.LocationCount == 0)
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <div class="text-muted small text-uppercase mb-1">Operational Status</div>
+                    @if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
+                    {
+                        <span class="badge text-bg-warning">Pending approval</span>
+                    }
+                    else if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved)
+                    {
+                        <span class="badge text-bg-success">Approved</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-danger">Suspended</span>
+                    }
+
+                    @if (Model.ApprovedAtUtc.HasValue)
+                    {
+                        <div class="small text-muted mt-2">Approved at @Model.ApprovedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC</div>
+                    }
+
+                    @if (Model.SuspendedAtUtc.HasValue)
+                    {
+                        <div class="small text-muted mt-1">Suspended at @Model.SuspendedAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.SuspensionReason))
+                    {
+                        <div class="small text-muted mt-1">Reason: @Model.SuspensionReason</div>
+                    }
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    @if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
+                    {
+                        <form asp-action="Approve" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                            <button type="submit" class="btn btn-success">Approve</button>
+                        </form>
+                    }
+                    else if (Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
+                    {
+                        <form asp-action="Reactivate" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                            <button type="submit" class="btn btn-success">Reactivate</button>
+                        </form>
+                    }
+
+                    @if (Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
+                    {
+                        <form asp-action="Suspend" method="post" class="d-flex gap-2 flex-wrap">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                            <input type="text" name="note" class="form-control" style="min-width: 240px;" placeholder="Optional suspension reason" />
+                            <button type="submit" class="btn btn-outline-danger">Suspend</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <div class="text-muted small text-uppercase mb-1">Onboarding Checklist</div>
+                    <div class="fw-semibold">@(checklistComplete ? "Ready for go-live review" : "Setup still incomplete")</div>
+                </div>
+                <div>
+                    @if (checklistComplete)
+                    {
+                        <span class="badge text-bg-success">Checklist complete</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-warning">Checklist incomplete</span>
+                    }
+                </div>
+            </div>
+
+            <div class="row g-2 mt-2">
+                <div class="col-md-6">
+                    <div class="small">@((Model.ActiveOwnerCount > 0) ? "Yes" : "No") - Active owner assigned</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small">@((Model.PrimaryLocationCount > 0) ? "Yes" : "No") - Primary location configured</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small">@(Model.HasContactEmailConfigured ? "Yes" : "No") - Contact email configured</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small">@(Model.HasLegalNameConfigured ? "Yes" : "No") - Legal business name configured</div>
+                </div>
+            </div>
+        </div>
+
+        @if (!checklistComplete)
         {
             <div class="alert alert-warning">
                 This business is not onboarding-complete yet.
@@ -63,13 +169,29 @@
                 {
                     <span>Add at least one active owner.</span>
                 }
-                @if (Model.ActiveOwnerCount == 0 && Model.LocationCount == 0)
+                @if (Model.ActiveOwnerCount == 0 && (Model.PrimaryLocationCount == 0 || !Model.HasContactEmailConfigured || !Model.HasLegalNameConfigured))
                 {
                     <span class="mx-1">and</span>
                 }
-                @if (Model.LocationCount == 0)
+                @if (Model.PrimaryLocationCount == 0)
                 {
                     <span>Add a primary location.</span>
+                }
+                @if (Model.PrimaryLocationCount == 0 && (!Model.HasContactEmailConfigured || !Model.HasLegalNameConfigured))
+                {
+                    <span class="mx-1">and</span>
+                }
+                @if (!Model.HasContactEmailConfigured)
+                {
+                    <span>configure a contact email.</span>
+                }
+                @if (!Model.HasContactEmailConfigured && !Model.HasLegalNameConfigured)
+                {
+                    <span class="mx-1">and</span>
+                }
+                @if (!Model.HasLegalNameConfigured)
+                {
+                    <span>complete the legal business name.</span>
                 }
             </div>
         }

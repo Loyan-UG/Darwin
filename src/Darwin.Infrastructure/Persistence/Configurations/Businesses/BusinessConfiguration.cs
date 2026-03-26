@@ -57,10 +57,17 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
             builder.Property(x => x.IsActive)
                 .IsRequired();
 
+            builder.Property(x => x.OperationalStatus)
+                .IsRequired();
+
+            builder.Property(x => x.SuspensionReason)
+                .HasMaxLength(500);
+
             // Helpful lookups
             builder.HasIndex(x => x.Name);
             builder.HasIndex(x => x.Category);
             builder.HasIndex(x => x.IsActive);
+            builder.HasIndex(x => x.OperationalStatus);
 
             // Relationships
             builder.HasMany(x => x.Members)

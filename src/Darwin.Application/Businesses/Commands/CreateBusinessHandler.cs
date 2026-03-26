@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Enums;
 using FluentValidation;
 
 namespace Darwin.Application.Businesses.Commands
@@ -45,7 +46,9 @@ namespace Darwin.Application.Businesses.Commands
                 Category = dto.Category,
                 DefaultCurrency = dto.DefaultCurrency.Trim(),
                 DefaultCulture = dto.DefaultCulture.Trim(),
-                IsActive = dto.IsActive
+                // New businesses remain inactive until an explicit approval action completes onboarding.
+                IsActive = false,
+                OperationalStatus = BusinessOperationalStatus.PendingApproval
             };
 
             _db.Set<Business>().Add(entity);

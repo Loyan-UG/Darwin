@@ -65,13 +65,21 @@
                     </td>
                     <td>@item.Category</td>
                     <td class="text-center">
-                        @if (item.IsActive)
+                        @if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
+                        {
+                            <span class="badge text-bg-warning">Pending approval</span>
+                        }
+                        else if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended)
+                        {
+                            <span class="badge text-bg-danger">Suspended</span>
+                        }
+                        else if (item.IsActive)
                         {
                             <span class="badge text-bg-success">Active</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">Inactive</span>
+                            <span class="badge text-bg-secondary">Approved, inactive</span>
                         }
                     </td>
                     <td class="text-center">

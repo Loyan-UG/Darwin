@@ -33,4 +33,16 @@ namespace Darwin.Domain.Enums
         OtherRetail = 50,
         Services = 60
     }
+
+    /// <summary>
+    /// Operational lifecycle status of a business during onboarding and post-approval operation.
+    /// This status is distinct from <c>Business.IsActive</c>; the latter controls general enablement,
+    /// while this enum communicates whether the tenant is still pending review, approved, or suspended.
+    /// </summary>
+    public enum BusinessOperationalStatus : short
+    {
+        PendingApproval = 0,
+        Approved = 10,
+        Suspended = 20
+    }
 }

@@ -218,6 +218,9 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateBusinessHandler>();
             services.AddScoped<UpdateBusinessHandler>();
             services.AddScoped<SoftDeleteBusinessHandler>();
+            services.AddScoped<ApproveBusinessHandler>();
+            services.AddScoped<SuspendBusinessHandler>();
+            services.AddScoped<ReactivateBusinessHandler>();
             services.AddScoped<GetBusinessLocationsPageHandler>();
             services.AddScoped<GetBusinessLocationForEditHandler>();
             services.AddScoped<CreateBusinessLocationHandler>();

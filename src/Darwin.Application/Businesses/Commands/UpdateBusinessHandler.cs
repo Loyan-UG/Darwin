@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Enums;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,7 +51,7 @@ namespace Darwin.Application.Businesses.Commands
             entity.Category = dto.Category;
             entity.DefaultCurrency = dto.DefaultCurrency.Trim();
             entity.DefaultCulture = dto.DefaultCulture.Trim();
-            entity.IsActive = dto.IsActive;
+            entity.IsActive = entity.OperationalStatus == BusinessOperationalStatus.Approved && dto.IsActive;
 
             await _db.SaveChangesAsync(ct);
         }

@@ -57,4 +57,17 @@ namespace Darwin.Application.Businesses.Validators
         }
     }
 
+    /// <summary>
+    /// Validator for business lifecycle actions such as approve, suspend, and reactivate.
+    /// </summary>
+    public sealed class BusinessLifecycleActionDtoValidator : AbstractValidator<BusinessLifecycleActionDto>
+    {
+        public BusinessLifecycleActionDtoValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.RowVersion).NotNull().NotEmpty();
+            RuleFor(x => x.Note).MaximumLength(500);
+        }
+    }
+
 }

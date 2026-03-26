@@ -43,7 +43,8 @@ Status terms used below:
 - `In Progress`: support owner/admin assignment during onboarding
 - `In Progress`: support invitation-based onboarding for owners/staff when no existing platform user is available
 - `Completed`: `Darwin.Mobile.Business` now supports token-entry invitation preview and acceptance for phase-1 onboarding
-- `Planned / Near-term`: model and expose onboarding state, activation state, approval state, and suspension/reactivation rules
+- `Completed`: WebAdmin now supports business approval, suspension, reactivation, and an onboarding-readiness checklist covering owner, primary location, legal name, and contact email
+- `In Progress`: model and expose onboarding state, activation state, approval state, and suspension/reactivation rules
 - `In Progress`: seed and apply initial defaults during onboarding (locale, branding basics, payment/shipping defaults, communication defaults where applicable)
 
 ### Authentication and account lifecycle
@@ -99,6 +100,7 @@ Status terms used below:
 - `Completed`: business/tenant management foundation now exists in WebAdmin with business CRUD, owner assignment, member management, and location management
 - `Completed`: business invitations can now be created, listed, resent, and revoked from WebAdmin
 - `Completed`: business member lists in WebAdmin now expose activation/lock visibility for faster onboarding troubleshooting
+- `Completed`: business list/detail views now surface operational lifecycle state instead of relying only on `IsActive`
 - `Completed`: user edit screens now expose operational account state and support actions for confirm-email override, password reset email, and lock/unlock
 - `Completed`: user edit screens now also support sending activation emails for unconfirmed accounts
 - `Completed`: shared search/reset/pager behavior now covers legacy and newer operator lists across catalog, CMS, identity, billing, inventory, and orders
@@ -257,3 +259,4 @@ Status terms used below:
 - `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live
 - `Decision made`: phase-1 password authentication now rejects unconfirmed accounts and locked accounts; follow-up UX should add self-service resend-activation where appropriate
 - `Decision pending`: decide whether self-service activation resend should remain email-entry based in phase 1, or also support deep-link/magic-link recovery entry in later auth UX
+- `Decision pending`: decide whether `Darwin.Mobile.Business` sign-in should also enforce `BusinessOperationalStatus.Approved`, or whether phase-1 should allow support/onboarding access before approval

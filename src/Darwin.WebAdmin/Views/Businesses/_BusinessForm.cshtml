@@ -1,6 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
 @{
     var isCreate = (bool?)ViewData["IsCreate"] == true || Model.Id == Guid.Empty;
+    var canToggleActive = !isCreate && Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved;
 }
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -56,9 +57,13 @@
     }
     <div class="col-12">
         <div class="form-check">
-            <input asp-for="IsActive" class="form-check-input" />
+            <input asp-for="IsActive" class="form-check-input" disabled="@(!canToggleActive)" />
             <label asp-for="IsActive" class="form-check-label">Business is active</label>
         </div>
+        @if (!canToggleActive)
+        {
+            <div class="form-text">Businesses can be activated only after approval. Suspension also forces the business inactive.</div>
+        }
     </div>
 </div>
 

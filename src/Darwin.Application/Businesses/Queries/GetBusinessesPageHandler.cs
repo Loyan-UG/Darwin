@@ -49,6 +49,7 @@ namespace Darwin.Application.Businesses.Queries
                     LegalName = x.LegalName,
                     Category = x.Category,
                     IsActive = x.IsActive,
+                    OperationalStatus = x.OperationalStatus,
                     MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id),
                     ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
                     LocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted),

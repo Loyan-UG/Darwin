@@ -73,6 +73,28 @@ namespace Darwin.Domain.Entities.Businesses
         public bool IsActive { get; set; } = true;
 
         /// <summary>
+        /// Operational lifecycle state used by onboarding, approval, and suspension workflows.
+        /// This value helps WebAdmin and support tooling distinguish "not approved yet" from "suspended after go-live".
+        /// </summary>
+        public BusinessOperationalStatus OperationalStatus { get; set; } = BusinessOperationalStatus.PendingApproval;
+
+        /// <summary>
+        /// Timestamp of the latest approval decision. This is null until the business is approved at least once.
+        /// </summary>
+        public DateTime? ApprovedAtUtc { get; set; }
+
+        /// <summary>
+        /// Timestamp of the latest suspension action. This is cleared when the business is reactivated.
+        /// </summary>
+        public DateTime? SuspendedAtUtc { get; set; }
+
+        /// <summary>
+        /// Optional operator-entered note that explains why the business was suspended.
+        /// This should remain concise and must not contain secrets or unnecessary PII.
+        /// </summary>
+        public string? SuspensionReason { get; set; }
+
+        /// <summary>
         /// Navigation: Members (users with roles) belonging to this business.
         /// </summary>
         public ICollection<BusinessMember> Members { get; } = new List<BusinessMember>();
