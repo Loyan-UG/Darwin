@@ -1,0 +1,36 @@
+@model Darwin.WebAdmin.ViewModels.Catalog.AddOnGroupEditVm
+@{
+    ViewData["Title"] = "Edit Add-on Group";
+}
+
+<div id="add-on-group-editor-shell">
+    <h1 class="mb-3"><i class="fa fa-pen"></i> Edit: @Model.Name</h1>
+
+    <form asp-action="Edit"
+          method="post"
+          class="needs-validation"
+          novalidate
+          hx-post="@Url.Action("Edit", "AddOnGroups")"
+          hx-target="#add-on-group-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="RowVersion" />
+        <partial name="_AddOnGroupForm" model="Model" />
+    </form>
+</div>
+
+<script>
+    (function () {
+      const shell = document.getElementById('add-on-group-editor-shell');
+      if (!shell) return;
+
+      const currency = shell.querySelector('#Currency');
+      if (currency && !currency.dataset.uppercaseBound) {
+        currency.dataset.uppercaseBound = 'true';
+        currency.addEventListener('input', function () {
+          this.value = this.value.toUpperCase();
+        });
+      }
+    })();
+</script>

@@ -21,6 +21,9 @@
     @Html.AntiForgeryToken()
     <input type="hidden" name="AddOnGroupId" value="@Model.AddOnGroupId" />
     <input type="hidden" name="RowVersion" value="@(Model.RowVersion is null ? "" : Convert.ToBase64String(Model.RowVersion))" />
+    <input type="hidden" name="Page" value="@Model.Page" />
+    <input type="hidden" name="PageSize" value="@Model.PageSize" />
+    <input type="hidden" name="Query" value="@Model.Query" />
 
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
@@ -65,7 +68,6 @@
     <pager page="Model.Page"
            page-size="Model.PageSize"
            total="Model.Total"
-          
            asp-controller="AddOnGroups"
            asp-action="AttachToProducts"
            asp-route-id="@Model.AddOnGroupId"

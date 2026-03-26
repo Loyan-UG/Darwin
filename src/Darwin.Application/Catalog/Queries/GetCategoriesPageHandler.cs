@@ -20,10 +20,22 @@ namespace Darwin.Application.Catalog.Queries
         public async Task<(IReadOnlyList<CategoryListItemDto> Items, int Total)>
             HandleAsync(int page = 1, int pageSize = 20, string? culture = "de-DE", CancellationToken ct = default)
         {
+            return await HandleAsync(page, pageSize, culture, query: null, ct);
+        }
+
+        public async Task<(IReadOnlyList<CategoryListItemDto> Items, int Total)>
+            HandleAsync(int page, int pageSize, string? culture, string? query, CancellationToken ct = default)
+        {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 
-            var q = _db.Set<Category>().AsNoTracking();
+            var q = _db.Set<Category>()
+                .AsNoTracking()
+                .Where(c =>
+                    query == null ||
+                    c.Translations.Any(t => t.Name.Contains(query)) ||
+                    c.Translations.Any(t => t.Slug != null && t.Slug.Contains(query)));
 
             var total = await q.CountAsync(ct);
             var items = await q

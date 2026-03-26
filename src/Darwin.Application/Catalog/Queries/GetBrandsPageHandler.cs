@@ -21,10 +21,22 @@ namespace Darwin.Application.Catalog.Queries
         public async Task<(List<BrandListItemDto> Items, int Total)> HandleAsync(
             int page, int pageSize, string culture = "de-DE", CancellationToken ct = default)
         {
+            return await HandleAsync(page, pageSize, culture, query: null, ct);
+        }
+
+        public async Task<(List<BrandListItemDto> Items, int Total)> HandleAsync(
+            int page, int pageSize, string culture, string? query, CancellationToken ct = default)
+        {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 
-            var baseQuery = _db.Set<Brand>().AsNoTracking();
+            var baseQuery = _db.Set<Brand>()
+                .AsNoTracking()
+                .Where(b =>
+                    query == null ||
+                    (b.Slug != null && b.Slug.Contains(query)) ||
+                    b.Translations.Any(t => t.Name.Contains(query)));
 
             var total = await baseQuery.CountAsync(ct);
 

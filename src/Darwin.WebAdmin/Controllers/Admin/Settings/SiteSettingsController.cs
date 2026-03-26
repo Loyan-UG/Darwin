@@ -6,6 +6,7 @@ using Darwin.WebAdmin.ViewModels.Settings;
 using Darwin.WebAdmin.Services.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Settings
 {
@@ -47,7 +48,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
         public async Task<IActionResult> Edit(SiteSettingVm vm, CancellationToken ct)
         {
             if (!ModelState.IsValid)
-                return View(vm);
+                return RenderEditor(vm);
 
             var dto = MapToUpdateDto(vm);
 
@@ -56,19 +57,45 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
                 await _update.HandleAsync(dto, ct);
                 _cache.Invalidate();
                 TempData["Success"] = "Settings have been updated.";
-                return RedirectToAction(nameof(Edit));
+                return RedirectOrHtmx(nameof(Edit));
             }
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, "Concurrency conflict: the settings were modified by another user.");
-                return View(vm);
+                return RenderEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors)
                     ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
-                return View(vm);
+                return RenderEditor(vm);
             }
+        }
+
+        private IActionResult RenderEditor(SiteSettingVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/SiteSettings/_SiteSettingsEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

@@ -46,7 +46,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, 
             string? query = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getPage.HandleAsync(page, pageSize, "de-DE", ct);
+            var (items, total) = await _getPage.HandleAsync(page, pageSize, "de-DE", query, ct);
 
             var vm = new BrandsListVm
             {

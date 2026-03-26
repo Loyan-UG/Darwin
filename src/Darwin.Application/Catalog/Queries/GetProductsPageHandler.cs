@@ -33,11 +33,27 @@ namespace Darwin.Application.Catalog.Queries
 
         public async Task<(IReadOnlyList<ProductListItemDto> Items, int Total)> HandleAsync(int page = 1, int pageSize = 20, string? culture = "de-DE", CancellationToken ct = default)
         {
+            return await HandleAsync(page, pageSize, culture, query: null, ct);
+        }
+
+        public async Task<(IReadOnlyList<ProductListItemDto> Items, int Total)> HandleAsync(
+            int page,
+            int pageSize,
+            string? culture,
+            string? query,
+            CancellationToken ct = default)
+        {
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : pageSize;
+            query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 
-            var query = _db.Set<Product>()
+            var productsQuery = _db.Set<Product>()
                 .AsNoTracking()
+                .Where(p =>
+                    query == null ||
+                    p.Translations.Any(t => t.Name.Contains(query)) ||
+                    p.Translations.Any(t => t.Slug != null && t.Slug.Contains(query)) ||
+                    p.Variants.Any(v => v.Sku.Contains(query)))
                 .Select(p => new ProductListItemDto
                 {
                     Id = p.Id,
@@ -51,8 +67,8 @@ namespace Darwin.Application.Catalog.Queries
                     VariantCount = p.Variants.Count
                 });
 
-            var total = await query.CountAsync(ct);
-            var items = await query
+            var total = await productsQuery.CountAsync(ct);
+            var items = await productsQuery
                 .OrderBy(x => x.DefaultName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

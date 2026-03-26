@@ -71,9 +71,9 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     }
 
     /// <summary>
-    /// Form model for creating an Add-on Group.
+    /// Shared editor model for Add-on Group create and edit screens.
     /// </summary>
-    public sealed class AddOnGroupCreateVm
+    public abstract class AddOnGroupEditorVm
     {
         [Required, MaxLength(200)]
         public string Name { get; set; } = string.Empty;
@@ -97,33 +97,21 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
     }
 
     /// <summary>
+    /// Form model for creating an Add-on Group.
+    /// </summary>
+    public sealed class AddOnGroupCreateVm : AddOnGroupEditorVm
+    {
+    }
+
+    /// <summary>
     /// Form model for editing an existing Add-on Group with optimistic concurrency.
     /// </summary>
-    public sealed class AddOnGroupEditVm
+    public sealed class AddOnGroupEditVm : AddOnGroupEditorVm
     {
         public Guid Id { get; set; }
 
         /// <summary>Optimistic concurrency token.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
-
-        [Required, MaxLength(200)]
-        public string Name { get; set; } = string.Empty;
-
-        [Required, StringLength(3)]
-        public string Currency { get; set; } = "EUR";
-
-        public bool IsGlobal { get; set; } = false;
-
-        public AddOnSelectionMode SelectionMode { get; set; } = AddOnSelectionMode.Single;
-
-        [Range(0, int.MaxValue)]
-        public int MinSelections { get; set; } = 0;
-
-        public int? MaxSelections { get; set; }
-
-        public bool IsActive { get; set; } = true;
-
-        public List<AddOnOptionVm> Options { get; set; } = new();
     }
 
 

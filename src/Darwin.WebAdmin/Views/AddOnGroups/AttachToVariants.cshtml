@@ -3,7 +3,7 @@
     ViewData["Title"] = "Attach add-on group to variants";
 }
 
-<h1 class="mb-4">Attach ì@Model.AddOnGroupNameî to Variants</h1>
+<h1 class="mb-4">Attach ‚Äú@Model.AddOnGroupName‚Äù to Variants</h1>
 
 <form method="get" class="mb-3">
     <input type="hidden" name="id" value="@Model.AddOnGroupId" />
@@ -17,6 +17,9 @@
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="AddOnGroupId" />
     <input type="hidden" asp-for="RowVersion" />
+    <input type="hidden" asp-for="Page" />
+    <input type="hidden" asp-for="PageSize" />
+    <input type="hidden" asp-for="Query" />
 
     <!-- Persist selected IDs across pages -->
     <div id="selected-container">
@@ -43,7 +46,7 @@
             @foreach (var it in Model.Items)
             {
                 var id = it.Id;
-                var parts = (it.Display ?? string.Empty).Split(" ó ");
+                var parts = (it.Display ?? string.Empty).Split(" ‚Äî ");
                 var sku = parts.Length > 0 ? parts[0] : "";
                 var name = parts.Length > 1 ? parts[1] : "";
 
@@ -71,7 +74,14 @@
 </form>
 
 <div class="pt-3">
-    <pager page="@Model.Page" page-size="@Model.PageSize" total="@Model.Total"></pager>
+    <pager page="@Model.Page"
+           page-size="@Model.PageSize"
+           total="@Model.Total"
+           asp-controller="AddOnGroups"
+           asp-action="AttachToVariants"
+           asp-route-id="@Model.AddOnGroupId"
+           asp-route-q="@Model.Query">
+    </pager>
 </div>
 
 @section Scripts {

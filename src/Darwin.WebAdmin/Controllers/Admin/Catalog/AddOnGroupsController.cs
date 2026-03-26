@@ -134,7 +134,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             vm.Options ??= new();
             foreach (var o in vm.Options) o.Values ??= new();
 
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid) return RenderCreateEditor(vm);
 
             var dto = new AddOnGroupCreateDto
             {
@@ -164,17 +164,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _create.HandleAsync(dto, ct); // Application: Task (no Result)
                 TempData["Success"] = "Add-on group created.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors) ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
-                return View(vm);
+                return RenderCreateEditor(vm);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return View(vm);
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return RenderCreateEditor(vm);
             }
         }
 
@@ -224,7 +224,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             vm.Options ??= new();
             foreach (var o in vm.Options) o.Values ??= new();
 
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid) return RenderEditEditor(vm);
 
             var dto = new AddOnGroupEditDto
             {
@@ -256,22 +256,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 await _update.HandleAsync(dto, ct); // Application: Task (no Result)
                 TempData["Success"] = "Add-on group updated.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Edit), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 ModelState.AddModelError(string.Empty, "Concurrency conflict: the record was modified by another user.");
-                return View(vm);
+                return RenderEditEditor(vm);
             }
             catch (FluentValidation.ValidationException ex)
             {
                 foreach (var e in ex.Errors) ModelState.AddModelError(e.PropertyName, e.ErrorMessage);
-                return View(vm);
+                return RenderEditEditor(vm);
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
-                return View(vm);
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return RenderEditEditor(vm);
             }
         }
 
@@ -303,13 +303,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         /// Mirrors the paging/filtering UI but marks Selected based on current attachments.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> AttachToProducts(Guid id, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> AttachToProducts(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
                 return NotFound();
 
-            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", ct); // culture-based list
+            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, ct); // culture-based list
 
             // Load attached ids
             var attached = await _getAttachedProducts.HandleAsync(id, ct);
@@ -323,6 +323,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Query = query ?? string.Empty,
                 Items = items.Select(p => new SelectableItemVm
                 {
                     Id = p.Id,
@@ -357,13 +358,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         // ---------------- Attach: Categories ----------------
 
         [HttpGet]
-        public async Task<IActionResult> AttachToCategories(Guid id, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> AttachToCategories(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
                 return NotFound();
 
-            var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", ct);
+            var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", query, ct);
 
             var attached = await _getAttachedCategories.HandleAsync(id, ct);
             var attachedSet = attached.ToHashSet();
@@ -376,6 +377,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Query = query ?? string.Empty,
                 Items = items.Select(c => new SelectableItemVm
                 {
                     Id = c.Id,
@@ -409,13 +411,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         // ---------------- Attach: Brands ----------------
 
         [HttpGet]
-        public async Task<IActionResult> AttachToBrands(Guid id, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> AttachToBrands(Guid id, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
                 return NotFound();
 
-            var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, "de-DE", ct);
+            var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, "de-DE", query, ct);
 
             var attached = await _getAttachedBrands.HandleAsync(id, ct);
             var attachedSet = attached.ToHashSet();
@@ -428,6 +430,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Query = query ?? string.Empty,
                 Items = items.Select(b => new SelectableItemVm
                 {
                     Id = b.Id,
@@ -525,6 +528,42 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             TempData["Success"] = "Attached to variants.";
             return RedirectToAction(nameof(Index));
+        }
+
+        private IActionResult RenderCreateEditor(AddOnGroupCreateVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/AddOnGroups/_AddOnGroupCreateEditorShell.cshtml", vm);
+            }
+
+            return View("Create", vm);
+        }
+
+        private IActionResult RenderEditEditor(AddOnGroupEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/AddOnGroups/_AddOnGroupEditEditorShell.cshtml", vm);
+            }
+
+            return View("Edit", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
