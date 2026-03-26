@@ -1,0 +1,118 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessInvitationsListVm
+@{
+    ViewData["Title"] = "Business Invitations";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-envelope me-2"></i>Business Invitations</h1>
+        <p class="text-muted mb-0">@Model.Business.Name</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Back to business</a>
+        <a asp-action="Members" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Members</a>
+        <a asp-action="CreateInvitation" asp-route-businessId="@Model.Business.Id" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Invite user
+        </a>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <input type="hidden" name="businessId" value="@Model.Business.Id" />
+    <div class="col-md-4">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by email, role or status" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <a asp-action="Invitations" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Invited by</th>
+                <th>Expires (UTC)</th>
+                <th class="text-end" style="width:320px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted py-4">No invitations found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div>@item.Email</div>
+                        @if (!string.IsNullOrWhiteSpace(item.Note))
+                        {
+                            <div class="small text-muted">@item.Note</div>
+                        }
+                    </td>
+                    <td>@item.Role</td>
+                    <td>
+                        @switch (item.Status)
+                        {
+                            case Darwin.Domain.Enums.BusinessInvitationStatus.Pending:
+                                <span class="badge text-bg-primary">Pending</span>
+                                break;
+                            case Darwin.Domain.Enums.BusinessInvitationStatus.Accepted:
+                                <span class="badge text-bg-success">Accepted</span>
+                                break;
+                            case Darwin.Domain.Enums.BusinessInvitationStatus.Revoked:
+                                <span class="badge text-bg-secondary">Revoked</span>
+                                break;
+                            case Darwin.Domain.Enums.BusinessInvitationStatus.Expired:
+                                <span class="badge text-bg-warning">Expired</span>
+                                break;
+                        }
+                    </td>
+                    <td>@item.InvitedByDisplayName</td>
+                    <td>@item.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-end">
+                        @if (item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Pending || item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Expired)
+                        {
+                            <form asp-action="ResendInvitation" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    <i class="fa-solid fa-paper-plane"></i> Resend
+                                </button>
+                            </form>
+                        }
+                        @if (item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Pending || item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Expired)
+                        {
+                            <form asp-action="RevokeInvitation" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa-solid fa-ban"></i> Revoke
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Businesses"
+       asp-action="Invitations"
+       asp-route-businessId="@Model.Business.Id"
+       asp-route-query="@Model.Query">
+</pager>

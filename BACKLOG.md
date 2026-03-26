@@ -41,6 +41,7 @@ Status terms used below:
 - `In Progress`: business creation and onboarding workflow now has a real WebAdmin foundation, not only raw entity persistence
 - `Planned / Near-term`: support tenant/customer provisioning for new business onboarding
 - `In Progress`: support owner/admin assignment during onboarding
+- `In Progress`: support invitation-based onboarding for owners/staff when no existing platform user is available
 - `Planned / Near-term`: model and expose onboarding state, activation state, approval state, and suspension/reactivation rules
 - `In Progress`: seed and apply initial defaults during onboarding (locale, branding basics, payment/shipping defaults, communication defaults where applicable)
 
@@ -54,6 +55,7 @@ Status terms used below:
 
 - `Planned / Near-term`: implement minimum viable Communication Core with email as the first operational channel
 - `Planned / Near-term`: support signup email, account activation email, invitation email, forgot-password email, reset-password email, and important account notifications
+- `In Progress`: business invitation emails now exist via SMTP-backed operational email sending, but still use simple transactional composition rather than a full Communication Core template/logging model
 - `Planned / Near-term`: add provider abstraction, template support, delivery logging, retry handling, and admin visibility for email operations
 
 ### Payment integration
@@ -88,11 +90,12 @@ Status terms used below:
 - `Completed`: HTMX is established in shared WebAdmin layouts and representative module flows
 - `Completed`: CRM, inventory, billing, media, CMS, catalog, identity, and order modules are exposed in WebAdmin
 - `Completed`: business/tenant management foundation now exists in WebAdmin with business CRUD, owner assignment, member management, and location management
+- `Completed`: business invitations can now be created, listed, resent, and revoked from WebAdmin
 - `Completed`: shared search/reset/pager behavior now covers legacy and newer operator lists across catalog, CMS, identity, billing, inventory, and orders
 - `Planned / Near-term`: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages
 - `Planned / Near-term`: standardize remaining partial loading, modal submission, and alert refresh patterns
 - `Planned / Near-term`: deepen operator workflows in Orders, CRM, and Media beyond structural refactor
-- `Planned / Near-term`: deepen business onboarding from CRUD into invitation, activation, approval, and support workflows
+- `Planned / Near-term`: deepen business onboarding from CRUD/invitation into activation, approval, and support workflows
 
 ### Communication management
 
@@ -237,3 +240,4 @@ Status terms used below:
 - `Decision pending`: decide how far initial tenant/customer separation should go for SME onboarding in the first go-live wave versus a lighter business-first provisioning model
 - `Decision pending`: decide whether phase-1 business onboarding should remain "assign existing user as owner" or include invitation-first owner creation before the Communication Core MVP is complete
 - `Decision pending`: decide whether support admins should have an explicit emergency override for the "last active owner cannot be removed or disabled" policy
+- `Decision pending`: decide whether invitation acceptance in phase 1 should be token-entry driven, magic-link driven, or both across `Darwin.Mobile.Business` and future front-end onboarding flows

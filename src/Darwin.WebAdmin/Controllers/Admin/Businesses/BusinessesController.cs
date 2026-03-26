@@ -41,6 +41,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly CreateBusinessMemberHandler _createBusinessMember;
         private readonly UpdateBusinessMemberHandler _updateBusinessMember;
         private readonly DeleteBusinessMemberHandler _deleteBusinessMember;
+        private readonly GetBusinessInvitationsPageHandler _getBusinessInvitationsPage;
+        private readonly CreateBusinessInvitationHandler _createBusinessInvitation;
+        private readonly ResendBusinessInvitationHandler _resendBusinessInvitation;
+        private readonly RevokeBusinessInvitationHandler _revokeBusinessInvitation;
         private readonly AdminReferenceDataService _referenceData;
 
         public BusinessesController(
@@ -59,6 +63,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             CreateBusinessMemberHandler createBusinessMember,
             UpdateBusinessMemberHandler updateBusinessMember,
             DeleteBusinessMemberHandler deleteBusinessMember,
+            GetBusinessInvitationsPageHandler getBusinessInvitationsPage,
+            CreateBusinessInvitationHandler createBusinessInvitation,
+            ResendBusinessInvitationHandler resendBusinessInvitation,
+            RevokeBusinessInvitationHandler revokeBusinessInvitation,
             AdminReferenceDataService referenceData)
         {
             _getBusinessesPage = getBusinessesPage;
@@ -76,6 +84,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _createBusinessMember = createBusinessMember;
             _updateBusinessMember = updateBusinessMember;
             _deleteBusinessMember = deleteBusinessMember;
+            _getBusinessInvitationsPage = getBusinessInvitationsPage;
+            _createBusinessInvitation = createBusinessInvitation;
+            _resendBusinessInvitation = resendBusinessInvitation;
+            _revokeBusinessInvitation = revokeBusinessInvitation;
             _referenceData = referenceData;
         }
 
@@ -475,6 +487,138 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        public async Task<IActionResult> Invitations(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        {
+            var business = await LoadBusinessContextAsync(businessId, ct);
+            if (business is null)
+            {
+                TempData["Error"] = "Business not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var (items, total) = await _getBusinessInvitationsPage.HandleAsync(businessId, page, pageSize, query, ct);
+
+            var vm = new BusinessInvitationsListVm
+            {
+                Business = business,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = query ?? string.Empty,
+                Items = items.Select(x => new BusinessInvitationListItemVm
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    Email = x.Email,
+                    Role = x.Role,
+                    Status = x.Status,
+                    InvitedByDisplayName = x.InvitedByDisplayName,
+                    ExpiresAtUtc = x.ExpiresAtUtc,
+                    AcceptedAtUtc = x.AcceptedAtUtc,
+                    RevokedAtUtc = x.RevokedAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    Note = x.Note
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateInvitation(Guid businessId, CancellationToken ct = default)
+        {
+            var business = await LoadBusinessContextAsync(businessId, ct);
+            if (business is null)
+            {
+                TempData["Error"] = "Business not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var vm = new BusinessInvitationCreateVm
+            {
+                BusinessId = businessId,
+                Business = business,
+                Role = BusinessMemberRole.Owner,
+                ExpiresInDays = 7
+            };
+            PopulateInvitationFormOptions(vm);
+            return View(vm);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateInvitation(BusinessInvitationCreateVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateBusinessContextAsync(vm, ct);
+                PopulateInvitationFormOptions(vm);
+                return RenderInvitationEditor(vm);
+            }
+
+            try
+            {
+                await _createBusinessInvitation.HandleAsync(new BusinessInvitationCreateDto
+                {
+                    BusinessId = vm.BusinessId,
+                    Email = vm.Email,
+                    Role = vm.Role,
+                    ExpiresInDays = vm.ExpiresInDays,
+                    Note = vm.Note
+                }, ct);
+
+                TempData["Success"] = "Invitation sent.";
+                return RedirectOrHtmx(nameof(Invitations), new { businessId = vm.BusinessId });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateBusinessContextAsync(vm, ct);
+                PopulateInvitationFormOptions(vm);
+                return RenderInvitationEditor(vm);
+            }
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
+        {
+            try
+            {
+                await _resendBusinessInvitation.HandleAsync(new BusinessInvitationResendDto
+                {
+                    Id = id,
+                    ExpiresInDays = 7
+                }, ct);
+                TempData["Success"] = "Invitation reissued and emailed again.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Invitations), new { businessId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> RevokeInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
+        {
+            try
+            {
+                await _revokeBusinessInvitation.HandleAsync(new BusinessInvitationRevokeDto
+                {
+                    Id = id,
+                    Note = "Revoked from WebAdmin."
+                }, ct);
+                TempData["Success"] = "Invitation revoked.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(Invitations), new { businessId });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> CreateMember(Guid businessId, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -651,6 +795,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             vm.Business = await LoadBusinessContextAsync(vm.BusinessId, ct) ?? new BusinessContextVm { Id = vm.BusinessId };
         }
 
+        private async Task PopulateBusinessContextAsync(BusinessInvitationCreateVm vm, CancellationToken ct)
+        {
+            vm.Business = await LoadBusinessContextAsync(vm.BusinessId, ct) ?? new BusinessContextVm { Id = vm.BusinessId };
+        }
+
+        private static void PopulateInvitationFormOptions(BusinessInvitationCreateVm vm)
+        {
+            vm.RoleOptions = Enum.GetValues<BusinessMemberRole>()
+                .Select(x => new SelectListItem(x.ToString(), x.ToString(), vm.Role == x))
+                .ToList();
+        }
+
         private async Task<BusinessContextVm?> LoadBusinessContextAsync(Guid id, CancellationToken ct)
         {
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
@@ -689,6 +845,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             ViewData["IsCreate"] = isCreate;
             return isCreate ? View("CreateMember", vm) : View("EditMember", vm);
+        }
+
+        private IActionResult RenderInvitationEditor(BusinessInvitationCreateVm vm)
+        {
+            return View("CreateInvitation", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

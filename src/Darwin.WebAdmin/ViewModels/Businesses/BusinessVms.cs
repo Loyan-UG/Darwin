@@ -178,4 +178,49 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public IEnumerable<SelectListItem> UserOptions { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> RoleOptions { get; set; } = Array.Empty<SelectListItem>();
     }
+
+    /// <summary>
+    /// Lightweight business-invitation row for the admin listing page.
+    /// </summary>
+    public sealed class BusinessInvitationListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
+        public BusinessInvitationStatus Status { get; set; } = BusinessInvitationStatus.Pending;
+        public string InvitedByDisplayName { get; set; } = string.Empty;
+        public DateTime ExpiresAtUtc { get; set; }
+        public DateTime? AcceptedAtUtc { get; set; }
+        public DateTime? RevokedAtUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public string? Note { get; set; }
+    }
+
+    /// <summary>
+    /// Listing page state for business invitations.
+    /// </summary>
+    public sealed class BusinessInvitationsListVm
+    {
+        public BusinessContextVm Business { get; set; } = new();
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public List<BusinessInvitationListItemVm> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Form state for business-invitation create flows.
+    /// </summary>
+    public sealed class BusinessInvitationCreateVm
+    {
+        public Guid BusinessId { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
+        public int ExpiresInDays { get; set; } = 7;
+        public string? Note { get; set; }
+        public BusinessContextVm Business { get; set; } = new();
+        public IEnumerable<SelectListItem> RoleOptions { get; set; } = Array.Empty<SelectListItem>();
+    }
 }

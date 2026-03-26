@@ -228,6 +228,10 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateBusinessMemberHandler>();
             services.AddScoped<UpdateBusinessMemberHandler>();
             services.AddScoped<DeleteBusinessMemberHandler>();
+            services.AddScoped<GetBusinessInvitationsPageHandler>();
+            services.AddScoped<CreateBusinessInvitationHandler>();
+            services.AddScoped<ResendBusinessInvitationHandler>();
+            services.AddScoped<RevokeBusinessInvitationHandler>();
 
             // Orders – queries
             services.AddScoped<GetOrdersPageHandler>();

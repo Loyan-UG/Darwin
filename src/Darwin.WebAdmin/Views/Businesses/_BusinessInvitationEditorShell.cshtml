@@ -1,0 +1,22 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessInvitationCreateVm
+
+<div id="business-invitation-editor-shell">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-1">Create Business Invitation</h1>
+            <p class="text-muted mb-0">@Model.Business.Name</p>
+        </div>
+        <a asp-action="Invitations" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back to invitations</a>
+    </div>
+
+    <form asp-action="CreateInvitation"
+          method="post"
+          hx-post="@Url.Action("CreateInvitation", "Businesses")"
+          hx-target="#business-invitation-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="BusinessId" />
+
+        <partial name="_BusinessInvitationForm" model="Model" />
+    </form>
+</div>
