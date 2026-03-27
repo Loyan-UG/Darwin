@@ -2,6 +2,14 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.CRM.DTOs
 {
+    public enum OpportunityQueueFilter
+    {
+        All = 0,
+        Open = 1,
+        ClosingSoon = 2,
+        HighValue = 3
+    }
+
     public sealed class OpportunityItemDto
     {
         public Guid? Id { get; set; }

@@ -7,6 +7,16 @@
      hx-target="this"
      hx-swap="outerHTML"
      hx-push-url="false">
+    <form asp-controller="Orders" asp-action="Payments" method="get" class="d-flex gap-2 mb-3">
+        <input type="hidden" name="orderId" value="@Model.OrderId" />
+        <select name="filter" asp-items="Model.FilterItems" class="form-select form-select-sm"></select>
+        <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+    </form>
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Failed" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Failed ? "btn-danger" : "btn-outline-danger")">Failed</a>
+        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" asp-route-filter="Refunded" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.PaymentQueueFilter.Refunded ? "btn-warning" : "btn-outline-warning")">Refunded</a>
+        <a asp-controller="Orders" asp-action="Payments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
+    </div>
     <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
             <thead>
@@ -71,6 +81,7 @@
            total="Model.Total"
            asp-controller="Orders"
            asp-action="Payments"
-           asp-route-orderId="@Model.OrderId">
+           asp-route-orderId="@Model.OrderId"
+           asp-route-filter="@Model.Filter">
     </pager>
 </div>

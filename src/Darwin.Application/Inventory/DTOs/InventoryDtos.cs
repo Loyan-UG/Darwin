@@ -2,6 +2,52 @@
 
 namespace Darwin.Application.Inventory.DTOs
 {
+    public enum StockLevelQueueFilter
+    {
+        All = 0,
+        LowStock = 1,
+        Reserved = 2,
+        InTransit = 3
+    }
+
+    public enum PurchaseOrderQueueFilter
+    {
+        All = 0,
+        Draft = 1,
+        Issued = 2,
+        Received = 3
+    }
+
+    public enum StockTransferQueueFilter
+    {
+        All = 0,
+        Draft = 1,
+        InTransit = 2,
+        Completed = 3
+    }
+
+    public enum WarehouseQueueFilter
+    {
+        All = 0,
+        Default = 1,
+        NoStockLevels = 2
+    }
+
+    public enum SupplierQueueFilter
+    {
+        All = 0,
+        MissingAddress = 1,
+        HasPurchaseOrders = 2
+    }
+
+    public enum InventoryLedgerQueueFilter
+    {
+        All = 0,
+        Inbound = 1,
+        Outbound = 2,
+        Reservations = 3
+    }
+
     /// <summary>Manual or system-driven inventory adjustment.</summary>
     public sealed class InventoryAdjustDto
     {

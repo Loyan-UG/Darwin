@@ -14,7 +14,7 @@ namespace Darwin.Application.Inventory.Queries
         public GetInventoryLedgerHandler(IAppDbContext db) => _db = db;
 
         public async Task<(List<InventoryTransactionRowDto> Items, int Total)> HandleAsync(
-            Guid? variantId, int page, int pageSize, Guid? warehouseId = null, CancellationToken ct = default)
+            Guid? variantId, int page, int pageSize, Guid? warehouseId = null, InventoryLedgerQueueFilter filter = InventoryLedgerQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 50;
@@ -27,6 +27,16 @@ namespace Darwin.Application.Inventory.Queries
                 q = q.Where(x => x.transaction.ProductVariantId == variantId.Value);
             if (warehouseId.HasValue)
                 q = q.Where(x => x.transaction.WarehouseId == warehouseId.Value);
+
+            q = filter switch
+            {
+                InventoryLedgerQueueFilter.Inbound => q.Where(x => x.transaction.QuantityDelta > 0),
+                InventoryLedgerQueueFilter.Outbound => q.Where(x => x.transaction.QuantityDelta < 0),
+                InventoryLedgerQueueFilter.Reservations => q.Where(x =>
+                    x.transaction.Reason.Contains("Reserve") ||
+                    x.transaction.Reason.Contains("Reservation")),
+                _ => q
+            };
 
             var total = await q.CountAsync(ct);
 

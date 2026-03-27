@@ -5,6 +5,7 @@ using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.ViewModels.Inventory;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Inventory
@@ -89,7 +90,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         public IActionResult Index() => RedirectToAction(nameof(Warehouses));
 
         [HttpGet]
-        public async Task<IActionResult> Warehouses(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Warehouses(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, WarehouseQueueFilter filter = WarehouseQueueFilter.All, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
 
@@ -97,7 +98,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getWarehousesPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getWarehousesPage.HandleAsync(businessId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new WarehouseListItemVm
                 {
                     Id = x.Id,
@@ -116,6 +117,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildWarehouseFilterItems(filter),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -232,14 +235,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> Suppliers(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Suppliers(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, SupplierQueueFilter filter = SupplierQueueFilter.All, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<SupplierListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getSuppliersPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getSuppliersPage.HandleAsync(businessId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new SupplierListItemVm
                 {
                     Id = x.Id,
@@ -258,6 +261,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildSupplierFilterItems(filter),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -377,7 +382,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> StockLevels(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> StockLevels(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, StockLevelQueueFilter filter = StockLevelQueueFilter.All, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             warehouseId = await _referenceData.ResolveWarehouseIdAsync(warehouseId, businessId, ct).ConfigureAwait(false);
@@ -386,7 +391,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var total = 0;
             if (warehouseId.HasValue)
             {
-                var result = await _getStockLevelsPage.HandleAsync(warehouseId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getStockLevelsPage.HandleAsync(warehouseId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new StockLevelListItemVm
                 {
                     Id = x.Id,
@@ -408,6 +413,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 WarehouseId = warehouseId,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildStockLevelFilterItems(filter),
                 WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -532,7 +539,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> StockTransfers(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> StockTransfers(Guid? warehouseId = null, Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, StockTransferQueueFilter filter = StockTransferQueueFilter.All, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             warehouseId = await _referenceData.ResolveWarehouseIdAsync(warehouseId, businessId, ct).ConfigureAwait(false);
@@ -541,7 +548,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var total = 0;
             if (warehouseId.HasValue)
             {
-                var result = await _getStockTransfersPage.HandleAsync(warehouseId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getStockTransfersPage.HandleAsync(warehouseId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new StockTransferListItemVm
                 {
                     Id = x.Id,
@@ -559,6 +566,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 WarehouseId = warehouseId,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildStockTransferFilterItems(filter),
                 WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -696,14 +705,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public async Task<IActionResult> PurchaseOrders(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> PurchaseOrders(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, PurchaseOrderQueueFilter filter = PurchaseOrderQueueFilter.All, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<PurchaseOrderListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getPurchaseOrdersPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getPurchaseOrdersPage.HandleAsync(businessId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new PurchaseOrderListItemVm
                 {
                     Id = x.Id,
@@ -722,6 +731,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildPurchaseOrderFilterItems(filter),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -873,13 +884,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         /// Paged ledger for a single variant.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> VariantLedger(Guid variantId, Guid? warehouseId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> VariantLedger(Guid variantId, Guid? warehouseId = null, int page = 1, int pageSize = 20, InventoryLedgerQueueFilter filter = InventoryLedgerQueueFilter.All, CancellationToken ct = default)
         {
-            var dto = await _getLedger.HandleAsync(variantId, page, pageSize, warehouseId, ct).ConfigureAwait(false);
+            var dto = await _getLedger.HandleAsync(variantId, page, pageSize, warehouseId, filter, ct).ConfigureAwait(false);
             var vm = new InventoryLedgerListVm
             {
                 VariantId = variantId,
                 WarehouseId = warehouseId,
+                Filter = filter,
+                FilterItems = BuildInventoryLedgerFilterItems(filter),
                 Items = dto.Items.Select(x => new InventoryLedgerItemVm
                 {
                     WarehouseId = x.WarehouseId,
@@ -898,11 +911,57 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             return View(vm);
         }
 
+        private static IEnumerable<SelectListItem> BuildInventoryLedgerFilterItems(InventoryLedgerQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All ledger entries", InventoryLedgerQueueFilter.All.ToString(), selectedFilter == InventoryLedgerQueueFilter.All);
+            yield return new SelectListItem("Inbound", InventoryLedgerQueueFilter.Inbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Inbound);
+            yield return new SelectListItem("Outbound", InventoryLedgerQueueFilter.Outbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Outbound);
+            yield return new SelectListItem("Reservations", InventoryLedgerQueueFilter.Reservations.ToString(), selectedFilter == InventoryLedgerQueueFilter.Reservations);
+        }
+
         private async Task PopulateStockLevelOptionsAsync(StockLevelEditVm vm, Guid? businessId, CancellationToken ct)
         {
             var resolvedBusinessId = businessId ?? await _referenceData.ResolveBusinessIdAsync(null, ct).ConfigureAwait(false);
             vm.WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(vm.WarehouseId, resolvedBusinessId, ct).ConfigureAwait(false);
             vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(vm.ProductVariantId, ct).ConfigureAwait(false);
+        }
+
+        private static IEnumerable<SelectListItem> BuildStockLevelFilterItems(StockLevelQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All stock levels", StockLevelQueueFilter.All.ToString(), selectedFilter == StockLevelQueueFilter.All);
+            yield return new SelectListItem("Low stock", StockLevelQueueFilter.LowStock.ToString(), selectedFilter == StockLevelQueueFilter.LowStock);
+            yield return new SelectListItem("Reserved", StockLevelQueueFilter.Reserved.ToString(), selectedFilter == StockLevelQueueFilter.Reserved);
+            yield return new SelectListItem("In transit", StockLevelQueueFilter.InTransit.ToString(), selectedFilter == StockLevelQueueFilter.InTransit);
+        }
+
+        private static IEnumerable<SelectListItem> BuildPurchaseOrderFilterItems(PurchaseOrderQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All purchase orders", PurchaseOrderQueueFilter.All.ToString(), selectedFilter == PurchaseOrderQueueFilter.All);
+            yield return new SelectListItem("Draft", PurchaseOrderQueueFilter.Draft.ToString(), selectedFilter == PurchaseOrderQueueFilter.Draft);
+            yield return new SelectListItem("Issued", PurchaseOrderQueueFilter.Issued.ToString(), selectedFilter == PurchaseOrderQueueFilter.Issued);
+            yield return new SelectListItem("Received", PurchaseOrderQueueFilter.Received.ToString(), selectedFilter == PurchaseOrderQueueFilter.Received);
+        }
+
+        private static IEnumerable<SelectListItem> BuildStockTransferFilterItems(StockTransferQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All transfers", StockTransferQueueFilter.All.ToString(), selectedFilter == StockTransferQueueFilter.All);
+            yield return new SelectListItem("Draft", StockTransferQueueFilter.Draft.ToString(), selectedFilter == StockTransferQueueFilter.Draft);
+            yield return new SelectListItem("In transit", StockTransferQueueFilter.InTransit.ToString(), selectedFilter == StockTransferQueueFilter.InTransit);
+            yield return new SelectListItem("Completed", StockTransferQueueFilter.Completed.ToString(), selectedFilter == StockTransferQueueFilter.Completed);
+        }
+
+        private static IEnumerable<SelectListItem> BuildWarehouseFilterItems(WarehouseQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All warehouses", WarehouseQueueFilter.All.ToString(), selectedFilter == WarehouseQueueFilter.All);
+            yield return new SelectListItem("Default", WarehouseQueueFilter.Default.ToString(), selectedFilter == WarehouseQueueFilter.Default);
+            yield return new SelectListItem("No stock levels", WarehouseQueueFilter.NoStockLevels.ToString(), selectedFilter == WarehouseQueueFilter.NoStockLevels);
+        }
+
+        private static IEnumerable<SelectListItem> BuildSupplierFilterItems(SupplierQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All suppliers", SupplierQueueFilter.All.ToString(), selectedFilter == SupplierQueueFilter.All);
+            yield return new SelectListItem("Missing address", SupplierQueueFilter.MissingAddress.ToString(), selectedFilter == SupplierQueueFilter.MissingAddress);
+            yield return new SelectListItem("Has purchase orders", SupplierQueueFilter.HasPurchaseOrders.ToString(), selectedFilter == SupplierQueueFilter.HasPurchaseOrders);
         }
 
         private async Task PopulateStockTransferOptionsAsync(StockTransferEditVm vm, Guid? businessId, CancellationToken ct)

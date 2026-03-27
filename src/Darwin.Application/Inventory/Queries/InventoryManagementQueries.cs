@@ -36,7 +36,7 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetWarehousesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<WarehouseListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
+        public async Task<(List<WarehouseListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, WarehouseQueueFilter filter = WarehouseQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -50,6 +50,13 @@ namespace Darwin.Application.Inventory.Queries
                     (x.Description != null && x.Description.Contains(term)) ||
                     (x.Location != null && x.Location.Contains(term)));
             }
+
+            warehousesQuery = filter switch
+            {
+                WarehouseQueueFilter.Default => warehousesQuery.Where(x => x.IsDefault),
+                WarehouseQueueFilter.NoStockLevels => warehousesQuery.Where(x => !x.StockLevels.Any()),
+                _ => warehousesQuery
+            };
 
             var total = await warehousesQuery.CountAsync(ct).ConfigureAwait(false);
 
@@ -107,7 +114,7 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetSuppliersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<SupplierListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
+        public async Task<(List<SupplierListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, SupplierQueueFilter filter = SupplierQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -122,6 +129,13 @@ namespace Darwin.Application.Inventory.Queries
                     x.Phone.Contains(term) ||
                     (x.Address != null && x.Address.Contains(term)));
             }
+
+            suppliersQuery = filter switch
+            {
+                SupplierQueueFilter.MissingAddress => suppliersQuery.Where(x => x.Address == null || x.Address == string.Empty),
+                SupplierQueueFilter.HasPurchaseOrders => suppliersQuery.Where(x => x.PurchaseOrders.Any()),
+                _ => suppliersQuery
+            };
 
             var total = await suppliersQuery.CountAsync(ct).ConfigureAwait(false);
 
@@ -179,7 +193,7 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetStockLevelsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<StockLevelListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, string? query = null, CancellationToken ct = default)
+        public async Task<(List<StockLevelListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, string? query = null, StockLevelQueueFilter filter = StockLevelQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -198,6 +212,14 @@ namespace Darwin.Application.Inventory.Queries
                     x.variant.Sku.Contains(term) ||
                     x.warehouse.Name.Contains(term));
             }
+
+            stockLevelsQuery = filter switch
+            {
+                StockLevelQueueFilter.LowStock => stockLevelsQuery.Where(x => x.stockLevel.AvailableQuantity <= x.stockLevel.ReorderPoint),
+                StockLevelQueueFilter.Reserved => stockLevelsQuery.Where(x => x.stockLevel.ReservedQuantity > 0),
+                StockLevelQueueFilter.InTransit => stockLevelsQuery.Where(x => x.stockLevel.InTransitQuantity > 0),
+                _ => stockLevelsQuery
+            };
 
             var total = await stockLevelsQuery.CountAsync(ct).ConfigureAwait(false);
 
@@ -259,7 +281,7 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetStockTransfersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<StockTransferListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, string? query = null, CancellationToken ct = default)
+        public async Task<(List<StockTransferListItemDto> Items, int Total)> HandleAsync(Guid warehouseId, int page, int pageSize, string? query = null, StockTransferQueueFilter filter = StockTransferQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -279,6 +301,14 @@ namespace Darwin.Application.Inventory.Queries
                     x.toWarehouse.Name.Contains(term) ||
                     x.transfer.Status.ToString().Contains(term));
             }
+
+            stockTransfersQuery = filter switch
+            {
+                StockTransferQueueFilter.Draft => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.Draft),
+                StockTransferQueueFilter.InTransit => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.InTransit),
+                StockTransferQueueFilter.Completed => stockTransfersQuery.Where(x => x.transfer.Status == Domain.Enums.TransferStatus.Completed),
+                _ => stockTransfersQuery
+            };
 
             var total = await stockTransfersQuery.CountAsync(ct).ConfigureAwait(false);
 
@@ -349,7 +379,7 @@ namespace Darwin.Application.Inventory.Queries
 
         public GetPurchaseOrdersPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<PurchaseOrderListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
+        public async Task<(List<PurchaseOrderListItemDto> Items, int Total)> HandleAsync(Guid businessId, int page, int pageSize, string? query = null, PurchaseOrderQueueFilter filter = PurchaseOrderQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -368,6 +398,14 @@ namespace Darwin.Application.Inventory.Queries
                     x.supplier.Name.Contains(term) ||
                     x.order.Status.ToString().Contains(term));
             }
+
+            purchaseOrdersQuery = filter switch
+            {
+                PurchaseOrderQueueFilter.Draft => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Draft),
+                PurchaseOrderQueueFilter.Issued => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Issued),
+                PurchaseOrderQueueFilter.Received => purchaseOrdersQuery.Where(x => x.order.Status == Domain.Enums.PurchaseOrderStatus.Received),
+                _ => purchaseOrdersQuery
+            };
 
             var total = await purchaseOrdersQuery.CountAsync(ct).ConfigureAwait(false);
 

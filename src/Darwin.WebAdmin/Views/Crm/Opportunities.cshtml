@@ -8,12 +8,20 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Opportunities" method="get" class="d-flex gap-2">
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search opportunities">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
     </form>
 
     <a asp-action="CreateOpportunity" class="btn btn-primary">
         <i class="fa fa-plus"></i> New Opportunity
     </a>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="Opportunities" asp-route-filter="Open" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.Open ? "btn-primary" : "btn-outline-primary")">Open</a>
+    <a asp-action="Opportunities" asp-route-filter="ClosingSoon" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.ClosingSoon ? "btn-warning" : "btn-outline-warning")">Closing Soon</a>
+    <a asp-action="Opportunities" asp-route-filter="HighValue" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.OpportunityQueueFilter.HighValue ? "btn-info" : "btn-outline-info")">High Value</a>
+    <a asp-action="Opportunities" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
 </div>
 
 <div class="table-responsive">
@@ -62,5 +70,6 @@
        total="Model.Total"
        asp-controller="Crm"
        asp-action="Opportunities"
-       asp-route-q="@Model.Query">
+       asp-route-q="@Model.Query"
+       asp-route-filter="@Model.Filter">
 </pager>

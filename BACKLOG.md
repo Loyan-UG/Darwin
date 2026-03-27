@@ -37,6 +37,14 @@ Status terms used below:
 - `Planned / Near-term`: close high-friction support gaps in orders, CRM, media, settings, and business/user management
 - `Completed foundation`: the admin media library now supports queue-style filters for missing alt text, editor-only assets, and library assets, so content cleanup can be worked as an operator queue instead of a flat gallery
 - `Completed foundation`: the CRM customers list now supports queue-style filters for linked-user customers, customers needing segmentation, and customers with open opportunity context, making customer operations less list-heavy
+- `Completed foundation`: the CRM leads list now also supports queue-style filters for qualified, unassigned, and unconverted leads, so pipeline follow-up can be worked as an operator queue instead of a flat list
+- `Completed foundation`: the CRM opportunities list now supports queue-style filters for open, closing-soon, and high-value opportunities, so revenue follow-up is less dependent on a flat pipeline list
+- `Completed foundation`: the admin orders list now supports queue-style filters for open orders, payment-issue orders, and fulfillment-attention orders, so post-order operations are less dependent on a flat status list
+- `Completed foundation`: order detail tabs for payments, shipments, refunds, and invoices now support queue-style filters too, so operators can work failed/refunded/pending/outstanding subsets without scanning full grids
+- `Completed foundation`: inventory purchase orders and stock levels now support queue-style filters for draft/issued/received replenishment work and low-stock/reserved/in-transit stock review, so inventory ops are less dependent on flat lists
+- `Completed foundation`: stock transfers now support queue-style filters for draft, in-transit, and completed transfer work, so replenishment follow-up is less dependent on manual scanning
+- `Completed foundation`: warehouse and supplier lists now support queue-style filters for default/no-stock-level warehouses and missing-address/active suppliers, so inventory setup review is less dependent on flat lists
+- `Completed foundation`: inventory ledger now supports queue-style filters for inbound, outbound, and reservation movements, and stock-level rows link directly into variant ledger review for faster stock troubleshooting
 
 ### Business and tenant onboarding
 

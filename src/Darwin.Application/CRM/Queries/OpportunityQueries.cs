@@ -16,6 +16,7 @@ namespace Darwin.Application.CRM.Queries
             int page,
             int pageSize,
             string? query = null,
+            OpportunityQueueFilter filter = OpportunityQueueFilter.All,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -39,6 +40,23 @@ namespace Darwin.Application.CRM.Queries
                     (x.user != null && x.user.FirstName != null && x.user.FirstName.Contains(q)) ||
                     (x.user != null && x.user.LastName != null && x.user.LastName.Contains(q)));
             }
+
+            var closingSoonThreshold = DateTime.UtcNow.Date.AddDays(14);
+
+            baseQuery = filter switch
+            {
+                OpportunityQueueFilter.Open => baseQuery.Where(x =>
+                    x.opportunity.Stage != Domain.Enums.OpportunityStage.ClosedWon &&
+                    x.opportunity.Stage != Domain.Enums.OpportunityStage.ClosedLost),
+                OpportunityQueueFilter.ClosingSoon => baseQuery.Where(x =>
+                    x.opportunity.Stage != Domain.Enums.OpportunityStage.ClosedWon &&
+                    x.opportunity.Stage != Domain.Enums.OpportunityStage.ClosedLost &&
+                    x.opportunity.ExpectedCloseDateUtc.HasValue &&
+                    x.opportunity.ExpectedCloseDateUtc.Value <= closingSoonThreshold),
+                OpportunityQueueFilter.HighValue => baseQuery.Where(x =>
+                    x.opportunity.EstimatedValueMinor >= 100000),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
 

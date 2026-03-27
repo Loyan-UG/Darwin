@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Darwin.Application.Inventory.DTOs;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
@@ -51,6 +52,9 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         /// <summary>Optional end date (UTC) filter.</summary>
         public DateTime? ToUtc { get; set; }
+
+        public InventoryLedgerQueueFilter Filter { get; set; } = InventoryLedgerQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
 
         /// <summary>Current page items.</summary>
         public List<InventoryLedgerItemVm> Items { get; set; } = new();
@@ -150,6 +154,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public WarehouseQueueFilter Filter { get; set; } = WarehouseQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<WarehouseListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -195,6 +201,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public SupplierQueueFilter Filter { get; set; } = SupplierQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SupplierListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -248,6 +256,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     {
         public Guid? WarehouseId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public StockLevelQueueFilter Filter { get; set; } = StockLevelQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<StockLevelListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -304,6 +314,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     {
         public Guid? WarehouseId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public StockTransferQueueFilter Filter { get; set; } = StockTransferQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<StockTransferListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -354,6 +366,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public PurchaseOrderQueueFilter Filter { get; set; } = PurchaseOrderQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<PurchaseOrderListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;

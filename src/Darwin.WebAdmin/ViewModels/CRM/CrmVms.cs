@@ -128,6 +128,8 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public LeadQueueFilter Filter { get; set; } = LeadQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     }
 
     public sealed class LeadListItemVm
@@ -199,6 +201,8 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public OpportunityQueueFilter Filter { get; set; } = OpportunityQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     }
 
     public sealed class OpportunityListItemVm

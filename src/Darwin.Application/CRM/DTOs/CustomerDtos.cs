@@ -10,6 +10,14 @@ namespace Darwin.Application.CRM.DTOs
         HasOpportunities = 3
     }
 
+    public enum LeadQueueFilter
+    {
+        All = 0,
+        Qualified = 1,
+        Unassigned = 2,
+        Unconverted = 3
+    }
+
     public sealed class CustomerListItemDto
     {
         public Guid Id { get; set; }

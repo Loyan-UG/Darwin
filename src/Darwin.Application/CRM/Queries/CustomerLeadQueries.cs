@@ -205,6 +205,7 @@ namespace Darwin.Application.CRM.Queries
             int page,
             int pageSize,
             string? query = null,
+            LeadQueueFilter filter = LeadQueueFilter.All,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -222,6 +223,14 @@ namespace Darwin.Application.CRM.Queries
                     x.Phone.Contains(q) ||
                     (x.CompanyName != null && x.CompanyName.Contains(q)));
             }
+
+            baseQuery = filter switch
+            {
+                LeadQueueFilter.Qualified => baseQuery.Where(x => x.Status == LeadStatus.Qualified),
+                LeadQueueFilter.Unassigned => baseQuery.Where(x => !x.AssignedToUserId.HasValue),
+                LeadQueueFilter.Unconverted => baseQuery.Where(x => !x.CustomerId.HasValue),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
 

@@ -14,6 +14,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public OrderQueueFilter Filter { get; set; } = OrderQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<OrderListItemVm> Items { get; set; } = new();
     }
 
@@ -24,6 +26,9 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string Currency { get; set; } = "EUR";
         public long GrandTotalGrossMinor { get; set; }
         public OrderStatus Status { get; set; }
+        public int PaymentCount { get; set; }
+        public int FailedPaymentCount { get; set; }
+        public int ShipmentCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -103,6 +108,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
+        public PaymentQueueFilter Filter { get; set; } = PaymentQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<PaymentListItemVm> Items { get; set; } = new();
     }
 
@@ -158,6 +165,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
+        public ShipmentQueueFilter Filter { get; set; } = ShipmentQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<ShipmentListItemVm> Items { get; set; } = new();
     }
 
@@ -246,6 +255,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
+        public RefundQueueFilter Filter { get; set; } = RefundQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<RefundListItemVm> Items { get; set; } = new();
     }
 
@@ -282,6 +293,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
+        public InvoiceQueueFilter Filter { get; set; } = InvoiceQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<OrderInvoiceListItemVm> Items { get; set; } = new();
     }
 

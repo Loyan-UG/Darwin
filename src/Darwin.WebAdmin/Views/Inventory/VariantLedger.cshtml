@@ -8,6 +8,21 @@
 
 <h2 class="mb-3">Inventory Ledger</h2>
 
+<form asp-action="VariantLedger" method="get" class="d-flex gap-2 mb-3">
+    <input type="hidden" name="variantId" value="@Model.VariantId" />
+    <input type="hidden" name="warehouseId" value="@Model.WarehouseId" />
+    <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+    <button class="btn btn-outline-secondary" type="submit">Filter</button>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Reset</a>
+</form>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Inbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Inbound ? "btn-success" : "btn-outline-success")">Inbound</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Outbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Outbound ? "btn-danger" : "btn-outline-danger")">Outbound</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reservations" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Reservations ? "btn-warning" : "btn-outline-warning")">Reservations</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+</div>
+
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
@@ -44,11 +59,11 @@
 <pager page="Model.Page"
        page-size="Model.PageSize"
        total="Model.Total"
-      
        asp-controller="Inventory"
        asp-action="VariantLedger"
        asp-route-variantId="@Model.VariantId"
-       asp-route-warehouseId="@Model.WarehouseId">
+       asp-route-warehouseId="@Model.WarehouseId"
+       asp-route-filter="@Model.Filter">
 </pager>
 
 <div class="mt-3">

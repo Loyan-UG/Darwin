@@ -4,6 +4,42 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Orders.DTOs
 {
+    public enum OrderQueueFilter
+    {
+        All = 0,
+        Open = 1,
+        PaymentIssues = 2,
+        FulfillmentAttention = 3
+    }
+
+    public enum PaymentQueueFilter
+    {
+        All = 0,
+        Failed = 1,
+        Refunded = 2
+    }
+
+    public enum ShipmentQueueFilter
+    {
+        All = 0,
+        Pending = 1,
+        Shipped = 2
+    }
+
+    public enum RefundQueueFilter
+    {
+        All = 0,
+        Pending = 1,
+        Completed = 2
+    }
+
+    public enum InvoiceQueueFilter
+    {
+        All = 0,
+        Outstanding = 1,
+        Paid = 2
+    }
+
     /// <summary>
     /// Input for creating an order. Totals are computed server-side from lines.
     /// </summary>
@@ -56,6 +92,10 @@ namespace Darwin.Application.Orders.DTOs
 
         /// <summary>Current status in the order state machine.</summary>
         public OrderStatus Status { get; set; }
+
+        public int PaymentCount { get; set; }
+        public int FailedPaymentCount { get; set; }
+        public int ShipmentCount { get; set; }
 
         /// <summary>Creation timestamp (UTC) for display/sorting.</summary>
         public DateTime CreatedAtUtc { get; set; }

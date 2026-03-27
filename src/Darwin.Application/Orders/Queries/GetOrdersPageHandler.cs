@@ -19,10 +19,10 @@ namespace Darwin.Application.Orders.Queries
 
         public async Task<(List<OrderListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, CancellationToken ct = default)
         {
-            return await HandleAsync(page, pageSize, query: null, ct).ConfigureAwait(false);
+            return await HandleAsync(page, pageSize, query: null, filter: OrderQueueFilter.All, ct).ConfigureAwait(false);
         }
 
-        public async Task<(List<OrderListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query, CancellationToken ct = default)
+        public async Task<(List<OrderListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query, OrderQueueFilter filter = OrderQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -34,6 +34,22 @@ namespace Darwin.Application.Orders.Queries
                     query == null ||
                     o.OrderNumber.Contains(query) ||
                     o.Currency.Contains(query));
+
+            baseQuery = filter switch
+            {
+                OrderQueueFilter.Open => baseQuery.Where(o =>
+                    o.Status != Domain.Enums.OrderStatus.Cancelled &&
+                    o.Status != Domain.Enums.OrderStatus.Refunded &&
+                    o.Status != Domain.Enums.OrderStatus.Completed),
+                OrderQueueFilter.PaymentIssues => baseQuery.Where(o =>
+                    o.Status != Domain.Enums.OrderStatus.Cancelled &&
+                    o.Payments.Any(p => p.Status == Domain.Enums.PaymentStatus.Failed)),
+                OrderQueueFilter.FulfillmentAttention => baseQuery.Where(o =>
+                    o.Status == Domain.Enums.OrderStatus.Paid ||
+                    o.Status == Domain.Enums.OrderStatus.PartiallyShipped),
+                _ => baseQuery
+            };
+
             var total = await baseQuery.CountAsync(ct);
 
             var items = await baseQuery
@@ -46,6 +62,9 @@ namespace Darwin.Application.Orders.Queries
                     Currency = o.Currency,
                     GrandTotalGrossMinor = o.GrandTotalGrossMinor,
                     Status = o.Status,
+                    PaymentCount = o.Payments.Count,
+                    FailedPaymentCount = o.Payments.Count(p => p.Status == Domain.Enums.PaymentStatus.Failed),
+                    ShipmentCount = o.Shipments.Count,
                     CreatedAtUtc = o.CreatedAtUtc,
                     RowVersion = o.RowVersion
                 })

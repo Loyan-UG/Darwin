@@ -19,7 +19,7 @@ namespace Darwin.Application.Orders.Queries
 
         public GetOrderRefundsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<RefundListItemDto> Items, int Total)> HandleAsync(Guid orderId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<RefundListItemDto> Items, int Total)> HandleAsync(Guid orderId, int page, int pageSize, RefundQueueFilter filter = RefundQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -27,6 +27,13 @@ namespace Darwin.Application.Orders.Queries
             var baseQuery = _db.Set<Refund>()
                 .AsNoTracking()
                 .Where(x => x.OrderId == orderId);
+
+            baseQuery = filter switch
+            {
+                RefundQueueFilter.Pending => baseQuery.Where(x => x.Status == RefundStatus.Pending),
+                RefundQueueFilter.Completed => baseQuery.Where(x => x.Status == RefundStatus.Completed),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
             var items = await baseQuery
@@ -81,7 +88,7 @@ namespace Darwin.Application.Orders.Queries
 
         public GetOrderInvoicesPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<OrderInvoiceListItemDto> Items, int Total)> HandleAsync(Guid orderId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<OrderInvoiceListItemDto> Items, int Total)> HandleAsync(Guid orderId, int page, int pageSize, InvoiceQueueFilter filter = InvoiceQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -89,6 +96,13 @@ namespace Darwin.Application.Orders.Queries
             var baseQuery = _db.Set<Invoice>()
                 .AsNoTracking()
                 .Where(x => x.OrderId == orderId);
+
+            baseQuery = filter switch
+            {
+                InvoiceQueueFilter.Outstanding => baseQuery.Where(x => x.Status != InvoiceStatus.Paid),
+                InvoiceQueueFilter.Paid => baseQuery.Where(x => x.Status == InvoiceStatus.Paid),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
             var items = await baseQuery

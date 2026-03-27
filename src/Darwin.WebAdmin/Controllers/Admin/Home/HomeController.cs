@@ -97,9 +97,9 @@ namespace Darwin.WebAdmin.Controllers.Admin
             if (selectedBusinessId.HasValue)
             {
                 paymentsTask = _getPaymentsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
-                warehousesTask = _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
-                suppliersTask = _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
-                purchaseOrdersTask = _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
+                warehousesTask = _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.WarehouseQueueFilter.All, ct);
+                suppliersTask = _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.SupplierQueueFilter.All, ct);
+                purchaseOrdersTask = _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.All, ct);
             }
 
             await Task.WhenAll(new Task[] { crmSummaryTask, productsTask, pagesTask, ordersTask, usersTask, businessSupportTask, communicationOpsTask, siteSettingsTask }

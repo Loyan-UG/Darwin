@@ -25,12 +25,18 @@ namespace Darwin.Application.Orders.Queries
         /// <summary>
         /// Executes a paged query over payments of a given order.
         /// </summary>
-        public async Task<(List<PaymentListItemDto> Items, int Total)> HandleAsync(Guid orderId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<(List<PaymentListItemDto> Items, int Total)> HandleAsync(Guid orderId, int page, int pageSize, PaymentQueueFilter filter = PaymentQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
             var baseQuery = _db.Set<Payment>().AsNoTracking().Where(p => p.OrderId == orderId);
+            baseQuery = filter switch
+            {
+                PaymentQueueFilter.Failed => baseQuery.Where(p => p.Status == PaymentStatus.Failed),
+                PaymentQueueFilter.Refunded => baseQuery.Where(p => p.Status == PaymentStatus.Refunded),
+                _ => baseQuery
+            };
             var total = await baseQuery.CountAsync(ct);
 
             var items = await baseQuery

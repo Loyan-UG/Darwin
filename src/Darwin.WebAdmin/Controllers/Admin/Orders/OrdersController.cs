@@ -65,15 +65,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, OrderQueueFilter filter = OrderQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrdersPage.HandleAsync(page, pageSize, query, ct).ConfigureAwait(false);
+            var (items, total) = await _getOrdersPage.HandleAsync(page, pageSize, query, filter, ct).ConfigureAwait(false);
             var vm = new OrdersListVm
             {
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildOrderFilterItems(filter),
                 Items = items.Select(o => new OrderListItemVm
                 {
                     Id = o.Id,
@@ -81,6 +83,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     Status = o.Status,
                     Currency = o.Currency,
                     GrandTotalGrossMinor = o.GrandTotalGrossMinor,
+                    PaymentCount = o.PaymentCount,
+                    FailedPaymentCount = o.FailedPaymentCount,
+                    ShipmentCount = o.ShipmentCount,
                     CreatedAtUtc = o.CreatedAtUtc,
                     RowVersion = o.RowVersion
                 }).ToList()
@@ -156,15 +161,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         }
 
         [HttpGet]
-        public async Task<IActionResult> Payments(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        public async Task<IActionResult> Payments(Guid orderId, int page = 1, int pageSize = 10, PaymentQueueFilter filter = PaymentQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrderPaymentsPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
+            var (items, total) = await _getOrderPaymentsPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderPaymentsPageVm
             {
                 OrderId = orderId,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Filter = filter,
+                FilterItems = BuildPaymentFilterItems(filter),
                 Items = items.Select(x => new PaymentListItemVm
                 {
                     Id = x.Id,
@@ -189,15 +196,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         }
 
         [HttpGet]
-        public async Task<IActionResult> Shipments(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        public async Task<IActionResult> Shipments(Guid orderId, int page = 1, int pageSize = 10, ShipmentQueueFilter filter = ShipmentQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrderShipmentsPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
+            var (items, total) = await _getOrderShipmentsPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderShipmentsPageVm
             {
                 OrderId = orderId,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Filter = filter,
+                FilterItems = BuildShipmentFilterItems(filter),
                 Items = items.Select(x => new ShipmentListItemVm
                 {
                     Id = x.Id,
@@ -216,15 +225,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         }
 
         [HttpGet]
-        public async Task<IActionResult> Refunds(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        public async Task<IActionResult> Refunds(Guid orderId, int page = 1, int pageSize = 10, RefundQueueFilter filter = RefundQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrderRefundsPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
+            var (items, total) = await _getOrderRefundsPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderRefundsPageVm
             {
                 OrderId = orderId,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Filter = filter,
+                FilterItems = BuildRefundFilterItems(filter),
                 Items = items.Select(x => new RefundListItemVm
                 {
                     Id = x.Id,
@@ -245,15 +256,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         }
 
         [HttpGet]
-        public async Task<IActionResult> Invoices(Guid orderId, int page = 1, int pageSize = 10, CancellationToken ct = default)
+        public async Task<IActionResult> Invoices(Guid orderId, int page = 1, int pageSize = 10, InvoiceQueueFilter filter = InvoiceQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrderInvoicesPage.HandleAsync(orderId, page, pageSize, ct).ConfigureAwait(false);
+            var (items, total) = await _getOrderInvoicesPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderInvoicesPageVm
             {
                 OrderId = orderId,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
+                Filter = filter,
+                FilterItems = BuildInvoiceFilterItems(filter),
                 Items = items.Select(x => new OrderInvoiceListItemVm
                 {
                     Id = x.Id,
@@ -548,6 +561,42 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
 
             return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+        }
+
+        private static IEnumerable<SelectListItem> BuildOrderFilterItems(OrderQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All orders", OrderQueueFilter.All.ToString(), selectedFilter == OrderQueueFilter.All);
+            yield return new SelectListItem("Open", OrderQueueFilter.Open.ToString(), selectedFilter == OrderQueueFilter.Open);
+            yield return new SelectListItem("Payment issues", OrderQueueFilter.PaymentIssues.ToString(), selectedFilter == OrderQueueFilter.PaymentIssues);
+            yield return new SelectListItem("Fulfillment attention", OrderQueueFilter.FulfillmentAttention.ToString(), selectedFilter == OrderQueueFilter.FulfillmentAttention);
+        }
+
+        private static IEnumerable<SelectListItem> BuildPaymentFilterItems(PaymentQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All payments", PaymentQueueFilter.All.ToString(), selectedFilter == PaymentQueueFilter.All);
+            yield return new SelectListItem("Failed", PaymentQueueFilter.Failed.ToString(), selectedFilter == PaymentQueueFilter.Failed);
+            yield return new SelectListItem("Refunded", PaymentQueueFilter.Refunded.ToString(), selectedFilter == PaymentQueueFilter.Refunded);
+        }
+
+        private static IEnumerable<SelectListItem> BuildShipmentFilterItems(ShipmentQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All shipments", ShipmentQueueFilter.All.ToString(), selectedFilter == ShipmentQueueFilter.All);
+            yield return new SelectListItem("Pending/Packed", ShipmentQueueFilter.Pending.ToString(), selectedFilter == ShipmentQueueFilter.Pending);
+            yield return new SelectListItem("Shipped/Delivered", ShipmentQueueFilter.Shipped.ToString(), selectedFilter == ShipmentQueueFilter.Shipped);
+        }
+
+        private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All refunds", RefundQueueFilter.All.ToString(), selectedFilter == RefundQueueFilter.All);
+            yield return new SelectListItem("Pending", RefundQueueFilter.Pending.ToString(), selectedFilter == RefundQueueFilter.Pending);
+            yield return new SelectListItem("Completed", RefundQueueFilter.Completed.ToString(), selectedFilter == RefundQueueFilter.Completed);
+        }
+
+        private static IEnumerable<SelectListItem> BuildInvoiceFilterItems(InvoiceQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All invoices", InvoiceQueueFilter.All.ToString(), selectedFilter == InvoiceQueueFilter.All);
+            yield return new SelectListItem("Outstanding", InvoiceQueueFilter.Outstanding.ToString(), selectedFilter == InvoiceQueueFilter.Outstanding);
+            yield return new SelectListItem("Paid", InvoiceQueueFilter.Paid.ToString(), selectedFilter == InvoiceQueueFilter.Paid);
         }
 
         private static OrderHeaderVm CreateHeader(OrderDetailDto dto)

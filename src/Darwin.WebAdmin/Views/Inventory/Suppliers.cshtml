@@ -9,10 +9,17 @@
     <form asp-action="Suppliers" method="get" class="d-flex gap-2">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search suppliers">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit">Filter</button>
         <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Reset</a>
     </form>
     <a asp-action="CreateSupplier" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Supplier</a>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="MissingAddress" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.SupplierQueueFilter.MissingAddress ? "btn-warning" : "btn-outline-warning")">Missing Address</a>
+    <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-filter="HasPurchaseOrders" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.SupplierQueueFilter.HasPurchaseOrders ? "btn-primary" : "btn-outline-primary")">Has Purchase Orders</a>
+    <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
 </div>
 
 <div class="table-responsive">
@@ -40,4 +47,4 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter"></pager>

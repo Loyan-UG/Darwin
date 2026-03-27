@@ -504,9 +504,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public async Task<IActionResult> Leads(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Leads(int page = 1, int pageSize = 20, string? q = null, LeadQueueFilter filter = LeadQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getLeadsPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var (items, total) = await _getLeadsPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var vm = new LeadsListVm
             {
@@ -515,6 +515,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildLeadFilterItems(filter),
                 Items = items.Select(x => new LeadListItemVm
                 {
                     Id = x.Id,
@@ -659,15 +661,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public async Task<IActionResult> Opportunities(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Opportunities(int page = 1, int pageSize = 20, string? q = null, OpportunityQueueFilter filter = OpportunityQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getOpportunitiesPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var (items, total) = await _getOpportunitiesPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var vm = new OpportunitiesListVm
             {
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildOpportunityFilterItems(filter),
                 Items = items.Select(x => new OpportunityListItemVm
                 {
                     Id = x.Id,
@@ -1274,6 +1278,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             yield return new SelectListItem("Linked user", CustomerQueueFilter.LinkedUser.ToString(), selectedFilter == CustomerQueueFilter.LinkedUser);
             yield return new SelectListItem("Needs segmentation", CustomerQueueFilter.NeedsSegmentation.ToString(), selectedFilter == CustomerQueueFilter.NeedsSegmentation);
             yield return new SelectListItem("Has opportunities", CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities);
+        }
+
+        private static IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All leads", LeadQueueFilter.All.ToString(), selectedFilter == LeadQueueFilter.All);
+            yield return new SelectListItem("Qualified", LeadQueueFilter.Qualified.ToString(), selectedFilter == LeadQueueFilter.Qualified);
+            yield return new SelectListItem("Unassigned", LeadQueueFilter.Unassigned.ToString(), selectedFilter == LeadQueueFilter.Unassigned);
+            yield return new SelectListItem("Unconverted", LeadQueueFilter.Unconverted.ToString(), selectedFilter == LeadQueueFilter.Unconverted);
+        }
+
+        private static IEnumerable<SelectListItem> BuildOpportunityFilterItems(OpportunityQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All opportunities", OpportunityQueueFilter.All.ToString(), selectedFilter == OpportunityQueueFilter.All);
+            yield return new SelectListItem("Open", OpportunityQueueFilter.Open.ToString(), selectedFilter == OpportunityQueueFilter.Open);
+            yield return new SelectListItem("Closing soon", OpportunityQueueFilter.ClosingSoon.ToString(), selectedFilter == OpportunityQueueFilter.ClosingSoon);
+            yield return new SelectListItem("High value", OpportunityQueueFilter.HighValue.ToString(), selectedFilter == OpportunityQueueFilter.HighValue);
         }
 
         private IActionResult RenderCustomerEditor(CustomerEditVm vm, string actionName)
