@@ -36,6 +36,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public BusinessCommunicationOpsSummaryPanelVm Summary { get; set; } = new();
         public List<BusinessCommunicationSetupListItemVm> Items { get; set; } = new();
         public List<BuiltInCommunicationFlowVm> BuiltInFlows { get; set; } = new();
+        public List<CommunicationCapabilityCoverageVm> CapabilityCoverage { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
@@ -69,6 +70,14 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Trigger { get; set; } = string.Empty;
         public string DeliveryPath { get; set; } = string.Empty;
         public string CurrentImplementationStatus { get; set; } = string.Empty;
+        public string NextStep { get; set; } = string.Empty;
+    }
+
+    public sealed class CommunicationCapabilityCoverageVm
+    {
+        public string Capability { get; set; } = string.Empty;
+        public string CurrentState { get; set; } = string.Empty;
+        public string OperatorVisibility { get; set; } = string.Empty;
         public string NextStep { get; set; } = string.Empty;
     }
 

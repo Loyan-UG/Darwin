@@ -113,6 +113,38 @@
 </div>
 
 <div class="card mb-4">
+    <div class="card-header">Capability Coverage and Retry Visibility</div>
+    <div class="card-body">
+        <div class="alert alert-secondary">
+            This matrix is intentionally operational, not aspirational. It shows what operators can already inspect today and where Communication Core work is still missing.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Capability</th>
+                        <th>Current State</th>
+                        <th>Operator Visibility</th>
+                        <th>Next Step</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.CapabilityCoverage)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Capability</td>
+                        <td>@item.CurrentState</td>
+                        <td>@item.OperatorVisibility</td>
+                        <td>@item.NextStep</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
     <div class="card-header">Recent Email Delivery Activity</div>
     <div class="card-body">
         <div class="alert alert-secondary">

@@ -94,6 +94,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     BusinessesRequiringEmailSetupCount = summary.BusinessesRequiringEmailSetupCount
                 },
                 BuiltInFlows = BuildBuiltInFlows(),
+                CapabilityCoverage = BuildCapabilityCoverage(),
                 RecentEmailAudits = emailAudits.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
@@ -296,6 +297,41 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     DeliveryPath = "Configuration exists, full flow not yet centralized",
                     CurrentImplementationStatus = "Partially configured, not a complete Communication Core workflow",
                     NextStep = "Implement reusable alert pipeline + logs"
+                }
+            };
+        }
+
+        private static List<CommunicationCapabilityCoverageVm> BuildCapabilityCoverage()
+        {
+            return new List<CommunicationCapabilityCoverageVm>
+            {
+                new()
+                {
+                    Capability = "Template Engine",
+                    CurrentState = "Not implemented as a reusable platform capability",
+                    OperatorVisibility = "Flows are documented in the workspace, but body/subject editing is not exposed",
+                    NextStep = "Move invitation, activation, and password reset into Communication Core templates"
+                },
+                new()
+                {
+                    Capability = "Delivery Logging",
+                    CurrentState = "Phase-1 SMTP audit rows exist with flow and optional business correlation",
+                    OperatorVisibility = "Dashboard preview and full email-audit screen are available",
+                    NextStep = "Expand into searchable multi-channel Communication Core delivery logs"
+                },
+                new()
+                {
+                    Capability = "Retry / Resend Workflow",
+                    CurrentState = "Only business invitations have explicit resend actions today",
+                    OperatorVisibility = "Operators can resend invitations, but generic failed-email retry does not exist",
+                    NextStep = "Design controlled retry/resend policies per flow before adding a shared retry action"
+                },
+                new()
+                {
+                    Capability = "Per-Business Policy Visibility",
+                    CurrentState = "Branding, sender defaults, reply-to, and phase-1 communication toggles are stored on Business",
+                    OperatorVisibility = "Queue, detail, and setup screens now expose these policies",
+                    NextStep = "Split further into template policy, channel policy, and delivery visibility"
                 }
             };
         }

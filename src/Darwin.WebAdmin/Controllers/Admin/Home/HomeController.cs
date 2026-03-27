@@ -140,6 +140,20 @@ namespace Darwin.WebAdmin.Controllers.Admin
             return View(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> CommunicationOpsFragment(Guid? businessId = null, CancellationToken ct = default)
+        {
+            var vm = await BuildCommunicationOpsCardVmAsync(businessId, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Home/_CommunicationOpsCard.cshtml", vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> BusinessSupportQueueFragment(Guid? businessId = null, CancellationToken ct = default)
+        {
+            var vm = await BuildBusinessSupportCardVmAsync(businessId, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Home/_BusinessSupportQueueCard.cshtml", vm);
+        }
+
         /// <summary>
         /// Returns the shared alerts partial so HTMX flows can refresh feedback banners without
         /// coupling the shared layout to a feature-specific controller.
@@ -148,6 +162,43 @@ namespace Darwin.WebAdmin.Controllers.Admin
         public IActionResult AlertsFragment()
         {
             return PartialView("~/Views/Shared/_Alerts.cshtml");
+        }
+
+        private async Task<AdminDashboardVm> BuildCommunicationOpsCardVmAsync(Guid? businessId, CancellationToken ct)
+        {
+            var businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId: businessId, ct).ConfigureAwait(false);
+            var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
+
+            var communicationOpsTask = _getBusinessCommunicationOpsSummary.HandleAsync(ct);
+            var siteSettingsTask = _siteSettingCache.GetAsync(ct);
+
+            await Task.WhenAll(communicationOpsTask, siteSettingsTask).ConfigureAwait(false);
+
+            return new AdminDashboardVm
+            {
+                SelectedBusinessId = selectedBusinessId,
+                SelectedBusinessLabel = businessOptions.FirstOrDefault(x => x.Selected)?.Text ?? string.Empty,
+                CommunicationOps = MapCommunicationOpsSummary(
+                    await communicationOpsTask.ConfigureAwait(false),
+                    await siteSettingsTask.ConfigureAwait(false))
+            };
+        }
+
+        private async Task<AdminDashboardVm> BuildBusinessSupportCardVmAsync(Guid? businessId, CancellationToken ct)
+        {
+            var businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId: businessId, ct).ConfigureAwait(false);
+            var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+            businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
+
+            var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
+
+            return new AdminDashboardVm
+            {
+                SelectedBusinessId = selectedBusinessId,
+                SelectedBusinessLabel = businessOptions.FirstOrDefault(x => x.Selected)?.Text ?? string.Empty,
+                BusinessSupport = MapBusinessSupportSummary(businessSupport)
+            };
         }
 
         private static CrmSummaryVm MapCrmSummary(CrmSummaryDto dto)
