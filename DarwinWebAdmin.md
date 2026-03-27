@@ -189,6 +189,7 @@ Settings UI must be:
 - `Partial`: a basic settings UI exists
 - `Completed foundation`: the global site settings screen is now grouped into operational categories and exposes JWT/security, mobile bootstrap, and soft-delete retention controls instead of hiding those fields behind DTO-only configuration
 - `Completed foundation`: business setup now has its own grouped workspace, persists business-level branding/localization/time-zone/communication defaults, and makes the remaining global phase-1 dependencies explicit
+- `Completed foundation`: the business setup workspace now also shows communication readiness against global SMTP/SMS/WhatsApp/admin-alert routing, which gives operators immediate visibility into whether saved business preferences can actually be delivered
 - `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
 
 ## 10. Payment Operations UI
@@ -256,6 +257,7 @@ Communication is a platform capability and must be visible in WebAdmin.
 ### Current state
 
 - `Planned / Near-term`: platform communication management is not yet complete enough for go-live-critical email flows
+- `Completed foundation`: business setup now exposes a readiness summary that compares business-level communication preferences with global transport configuration, reducing onboarding ambiguity before full template/logging management exists
 
 ## 13. Localization Readiness in WebAdmin
 

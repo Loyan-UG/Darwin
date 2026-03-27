@@ -14,6 +14,7 @@ using Darwin.Shared.Results;
 using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Security;
 using Darwin.WebAdmin.Services.Admin;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Businesses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -58,6 +59,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly LockUserByAdminHandler _lockUser;
         private readonly UnlockUserByAdminHandler _unlockUser;
         private readonly AdminReferenceDataService _referenceData;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public BusinessesController(
             GetBusinessesPageHandler getBusinessesPage,
@@ -88,7 +90,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             ConfirmUserEmailByAdminHandler confirmUserEmail,
             LockUserByAdminHandler lockUser,
             UnlockUserByAdminHandler unlockUser,
-            AdminReferenceDataService referenceData)
+            AdminReferenceDataService referenceData,
+            ISiteSettingCache siteSettingCache)
         {
             _getBusinessesPage = getBusinessesPage;
             _getBusinessForEdit = getBusinessForEdit;
@@ -119,6 +122,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _lockUser = lockUser;
             _unlockUser = unlockUser;
             _referenceData = referenceData;
+            _siteSettingCache = siteSettingCache;
         }
 
         [HttpGet]
@@ -1266,6 +1270,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 .ToList();
 
             vm.OwnerUserOptions = await _referenceData.GetUserOptionsAsync(vm.OwnerUserId, includeEmpty: true, ct);
+            vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(ct);
         }
 
         private async Task PopulateMemberFormOptionsAsync(BusinessMemberEditVm vm, bool includeUserSelection, CancellationToken ct)
@@ -1293,6 +1298,50 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private async Task PopulateBusinessContextAsync(BusinessInvitationCreateVm vm, CancellationToken ct)
         {
             vm.Business = await LoadBusinessContextAsync(vm.BusinessId, ct) ?? new BusinessContextVm { Id = vm.BusinessId };
+        }
+
+        private async Task<BusinessCommunicationReadinessVm> BuildBusinessCommunicationReadinessAsync(CancellationToken ct)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct);
+
+            var emailConfigured = settings.SmtpEnabled &&
+                                  !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
+                                  !string.IsNullOrWhiteSpace(settings.SmtpFromAddress);
+
+            var smsConfigured = settings.SmsEnabled &&
+                                !string.IsNullOrWhiteSpace(settings.SmsProvider);
+
+            var whatsAppConfigured = settings.WhatsAppEnabled &&
+                                     !string.IsNullOrWhiteSpace(settings.WhatsAppBusinessPhoneId) &&
+                                     !string.IsNullOrWhiteSpace(settings.WhatsAppAccessToken) &&
+                                     !string.IsNullOrWhiteSpace(settings.WhatsAppFromPhoneE164);
+
+            var adminEmailRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertEmailsCsv);
+            var adminSmsRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertSmsRecipientsCsv);
+
+            return new BusinessCommunicationReadinessVm
+            {
+                EmailTransportEnabled = settings.SmtpEnabled,
+                EmailTransportConfigured = emailConfigured,
+                SmsTransportEnabled = settings.SmsEnabled,
+                SmsTransportConfigured = smsConfigured,
+                WhatsAppTransportEnabled = settings.WhatsAppEnabled,
+                WhatsAppTransportConfigured = whatsAppConfigured,
+                AdminAlertEmailsConfigured = adminEmailRoutingConfigured,
+                AdminAlertSmsConfigured = adminSmsRoutingConfigured,
+                EmailTransportSummary = emailConfigured
+                    ? "SMTP is enabled and has the minimum sender configuration required for business transactional email."
+                    : "SMTP is not fully configured yet. Business transactional email defaults may be saved, but delivery is not operational.",
+                SmsTransportSummary = smsConfigured
+                    ? "SMS transport is enabled and has a provider configured."
+                    : "SMS transport is still incomplete or disabled at platform level.",
+                WhatsAppTransportSummary = whatsAppConfigured
+                    ? "WhatsApp transport is enabled and has phone, token, and sender configuration."
+                    : "WhatsApp transport is still incomplete or disabled at platform level.",
+                AdminRoutingSummary = adminEmailRoutingConfigured || adminSmsRoutingConfigured
+                    ? "Global admin alert routing exists for at least one channel."
+                    : "Admin alert routing is not configured yet, so business operational alerts may lack an escalation target."
+            };
         }
 
         private static void PopulateInvitationFormOptions(BusinessInvitationCreateVm vm)

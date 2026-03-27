@@ -85,8 +85,29 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int InvitationCount { get; set; }
         public bool HasContactEmailConfigured { get; set; }
         public bool HasLegalNameConfigured { get; set; }
+        public BusinessCommunicationReadinessVm CommunicationReadiness { get; set; } = new();
         public IEnumerable<SelectListItem> OwnerUserOptions { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> CategoryOptions { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    /// <summary>
+    /// Summarizes whether business-scoped communication preferences can be executed
+    /// given the currently configured global transport settings.
+    /// </summary>
+    public sealed class BusinessCommunicationReadinessVm
+    {
+        public bool EmailTransportEnabled { get; set; }
+        public bool EmailTransportConfigured { get; set; }
+        public bool SmsTransportEnabled { get; set; }
+        public bool SmsTransportConfigured { get; set; }
+        public bool WhatsAppTransportEnabled { get; set; }
+        public bool WhatsAppTransportConfigured { get; set; }
+        public bool AdminAlertEmailsConfigured { get; set; }
+        public bool AdminAlertSmsConfigured { get; set; }
+        public string EmailTransportSummary { get; set; } = string.Empty;
+        public string SmsTransportSummary { get; set; } = string.Empty;
+        public string WhatsAppTransportSummary { get; set; } = string.Empty;
+        public string AdminRoutingSummary { get; set; } = string.Empty;
     }
 
     /// <summary>

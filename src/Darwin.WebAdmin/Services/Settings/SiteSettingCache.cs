@@ -94,10 +94,21 @@ namespace Darwin.WebAdmin.Services.Settings
                 TimeFormat = string.IsNullOrWhiteSpace(s.TimeFormat) ? "HH:mm" : s.TimeFormat,
 
                 // JWT (additional)
+                JwtEnabled = s.JwtEnabled,
+                JwtIssuer = string.IsNullOrWhiteSpace(s.JwtIssuer) ? "Darwin" : s.JwtIssuer,
+                JwtAudience = string.IsNullOrWhiteSpace(s.JwtAudience) ? "Darwin.PublicApi" : s.JwtAudience,
+                JwtAccessTokenMinutes = s.JwtAccessTokenMinutes,
+                JwtRefreshTokenDays = s.JwtRefreshTokenDays,
+                JwtSigningKey = s.JwtSigningKey ?? string.Empty,
+                JwtPreviousSigningKey = s.JwtPreviousSigningKey,
+                JwtEmitScopes = s.JwtEmitScopes,
                 JwtSingleDeviceOnly = s.JwtSingleDeviceOnly,
                 JwtRequireDeviceBinding = s.JwtRequireDeviceBinding,
                 JwtClockSkewSeconds = s.JwtClockSkewSeconds,
 
+                // Mobile bootstrap
+                MobileQrTokenRefreshSeconds = s.MobileQrTokenRefreshSeconds,
+                MobileMaxOutboxItems = s.MobileMaxOutboxItems,
 
                 // Soft delete / data retention
                 SoftDeleteCleanupEnabled = s.SoftDeleteCleanupEnabled,

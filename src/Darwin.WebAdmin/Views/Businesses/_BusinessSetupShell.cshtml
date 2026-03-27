@@ -229,6 +229,58 @@
         </div>
 
         <div class="card mb-4">
+            <div class="card-header">Communication Readiness</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-lg-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="fw-semibold">Email delivery</div>
+                                <span class="badge @(Model.CommunicationReadiness.EmailTransportConfigured ? "bg-success" : "bg-warning text-dark")">
+                                    @(Model.CommunicationReadiness.EmailTransportConfigured ? "Ready" : "Needs setup")
+                                </span>
+                            </div>
+                            <div class="small text-muted">@Model.CommunicationReadiness.EmailTransportSummary</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="fw-semibold">SMS delivery</div>
+                                <span class="badge @(Model.CommunicationReadiness.SmsTransportConfigured ? "bg-success" : "bg-secondary")">
+                                    @(Model.CommunicationReadiness.SmsTransportConfigured ? "Ready" : "Not ready")
+                                </span>
+                            </div>
+                            <div class="small text-muted">@Model.CommunicationReadiness.SmsTransportSummary</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="fw-semibold">WhatsApp delivery</div>
+                                <span class="badge @(Model.CommunicationReadiness.WhatsAppTransportConfigured ? "bg-success" : "bg-secondary")">
+                                    @(Model.CommunicationReadiness.WhatsAppTransportConfigured ? "Ready" : "Not ready")
+                                </span>
+                            </div>
+                            <div class="small text-muted">@Model.CommunicationReadiness.WhatsAppTransportSummary</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-xl-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="fw-semibold">Admin alert routing</div>
+                                <span class="badge @((Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured) ? "bg-success" : "bg-warning text-dark")">
+                                    @((Model.CommunicationReadiness.AdminAlertEmailsConfigured || Model.CommunicationReadiness.AdminAlertSmsConfigured) ? "Configured" : "Missing")
+                                </span>
+                            </div>
+                            <div class="small text-muted">@Model.CommunicationReadiness.AdminRoutingSummary</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
             <div class="card-header">Operational Setup Actions</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
