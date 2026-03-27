@@ -148,6 +148,7 @@ WebAdmin should support or coordinate:
 - `Completed`: WebAdmin now supports admin-triggered password reset email, lock/unlock, email-confirm override, and activation-email resend from the user edit workflow
 - `Completed`: the same activation/reset/lock/unlock support actions are now available directly inside the business-member workspace, which removes a major operator detour during onboarding troubleshooting
 - `Completed`: the business-member edit flow now supports a controlled `FullAdmin` override for the "last active owner" rule, with mandatory reason capture, explicit danger-state UI, and persisted audit records
+- `Completed`: owner-override audit history is now visible inside the business workspace, so sensitive ownership exceptions are reviewable without querying the database directly
 - `Completed foundation`: the platform now has public confirm-email token endpoints, so admin activation support is no longer only a placeholder
 - `Planned / Near-term`: decide when activation/email-confirm must become an enforced sign-in prerequisite rather than a supported-but-nonblocking lifecycle step
 

@@ -283,4 +283,34 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int OpenCount { get; set; }
         public List<BusinessInvitationListItemVm> Items { get; set; } = new();
     }
+
+    /// <summary>
+    /// Lightweight owner-override audit row for admin review.
+    /// </summary>
+    public sealed class BusinessOwnerOverrideAuditListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid BusinessMemberId { get; set; }
+        public Guid AffectedUserId { get; set; }
+        public string AffectedUserDisplayName { get; set; } = string.Empty;
+        public string AffectedUserEmail { get; set; } = string.Empty;
+        public BusinessOwnerOverrideActionKind ActionKind { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string? ActorDisplayName { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+    }
+
+    /// <summary>
+    /// Listing state for owner-override audit rows.
+    /// </summary>
+    public sealed class BusinessOwnerOverrideAuditsListVm
+    {
+        public BusinessContextVm Business { get; set; } = new();
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public List<BusinessOwnerOverrideAuditListItemVm> Items { get; set; } = new();
+    }
 }

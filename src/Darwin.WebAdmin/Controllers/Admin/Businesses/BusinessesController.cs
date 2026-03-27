@@ -41,6 +41,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly SoftDeleteBusinessLocationHandler _deleteBusinessLocation;
         private readonly GetBusinessMembersPageHandler _getBusinessMembersPage;
         private readonly GetBusinessMemberForEditHandler _getBusinessMemberForEdit;
+        private readonly GetBusinessOwnerOverrideAuditsPageHandler _getBusinessOwnerOverrideAuditsPage;
         private readonly CreateBusinessMemberHandler _createBusinessMember;
         private readonly UpdateBusinessMemberHandler _updateBusinessMember;
         private readonly DeleteBusinessMemberHandler _deleteBusinessMember;
@@ -71,6 +72,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             SoftDeleteBusinessLocationHandler deleteBusinessLocation,
             GetBusinessMembersPageHandler getBusinessMembersPage,
             GetBusinessMemberForEditHandler getBusinessMemberForEdit,
+            GetBusinessOwnerOverrideAuditsPageHandler getBusinessOwnerOverrideAuditsPage,
             CreateBusinessMemberHandler createBusinessMember,
             UpdateBusinessMemberHandler updateBusinessMember,
             DeleteBusinessMemberHandler deleteBusinessMember,
@@ -100,6 +102,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _deleteBusinessLocation = deleteBusinessLocation;
             _getBusinessMembersPage = getBusinessMembersPage;
             _getBusinessMemberForEdit = getBusinessMemberForEdit;
+            _getBusinessOwnerOverrideAuditsPage = getBusinessOwnerOverrideAuditsPage;
             _createBusinessMember = createBusinessMember;
             _updateBusinessMember = updateBusinessMember;
             _deleteBusinessMember = deleteBusinessMember;
@@ -803,6 +806,43 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     RevokedAtUtc = x.RevokedAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
                     Note = x.Note
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> OwnerOverrideAudits(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        {
+            var business = await LoadBusinessContextAsync(businessId, ct);
+            if (business is null)
+            {
+                TempData["Error"] = "Business not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var (items, total) = await _getBusinessOwnerOverrideAuditsPage.HandleAsync(businessId, page, pageSize, query, ct);
+
+            var vm = new BusinessOwnerOverrideAuditsListVm
+            {
+                Business = business,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = query ?? string.Empty,
+                Items = items.Select(x => new BusinessOwnerOverrideAuditListItemVm
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    BusinessMemberId = x.BusinessMemberId,
+                    AffectedUserId = x.AffectedUserId,
+                    AffectedUserDisplayName = x.AffectedUserDisplayName,
+                    AffectedUserEmail = x.AffectedUserEmail,
+                    ActionKind = x.ActionKind,
+                    Reason = x.Reason,
+                    ActorDisplayName = x.ActorDisplayName,
+                    CreatedAtUtc = x.CreatedAtUtc
                 }).ToList()
             };
 

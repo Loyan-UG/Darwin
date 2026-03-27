@@ -12,6 +12,7 @@
         <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Back to business</a>
         <a asp-action="Setup" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Setup</a>
         <a asp-action="Invitations" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Invitations</a>
+        <a asp-action="OwnerOverrideAudits" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Owner override audit</a>
         <a asp-action="CreateMember" asp-route-businessId="@Model.Business.Id" class="btn btn-primary">
             <i class="fa-solid fa-plus"></i> Assign member
         </a>

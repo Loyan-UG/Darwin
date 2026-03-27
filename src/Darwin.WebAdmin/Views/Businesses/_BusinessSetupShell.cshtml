@@ -26,6 +26,9 @@
             <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
                 <i class="fa-solid fa-envelope"></i> Invitations
             </a>
+            <a asp-action="OwnerOverrideAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-clipboard-list"></i> Override Audit
+            </a>
         </div>
     </div>
 
@@ -243,6 +246,9 @@
                     </a>
                     <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
                         <i class="fa-solid fa-list-check"></i> Review Invitations
+                    </a>
+                    <a asp-action="OwnerOverrideAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-clipboard-list"></i> Review Override Audit
                     </a>
                 </div>
             </div>

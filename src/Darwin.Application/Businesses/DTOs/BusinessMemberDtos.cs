@@ -78,4 +78,21 @@ namespace Darwin.Application.Businesses.DTOs
         public bool IsLastActiveOwner { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
+
+    /// <summary>
+    /// Lightweight row for owner-override audit visibility in WebAdmin.
+    /// </summary>
+    public sealed class BusinessOwnerOverrideAuditListItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
+        public Guid BusinessMemberId { get; set; }
+        public Guid AffectedUserId { get; set; }
+        public string AffectedUserDisplayName { get; set; } = string.Empty;
+        public string AffectedUserEmail { get; set; } = string.Empty;
+        public BusinessOwnerOverrideActionKind ActionKind { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string? ActorDisplayName { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+    }
 }

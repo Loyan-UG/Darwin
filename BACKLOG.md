@@ -107,6 +107,7 @@ Status terms used below:
 - `Completed`: business invitations can now be created, listed, resent, and revoked from WebAdmin
 - `Completed`: business member lists in WebAdmin now expose activation/lock visibility for faster onboarding troubleshooting
 - `Completed`: business member management now includes inline support actions for activation resend, email confirmation, password reset email, and lock/unlock without leaving the business workspace
+- `Completed`: business setup and member workspaces now expose owner-override audit visibility so sensitive FullAdmin ownership exceptions can be reviewed operationally
 - `Completed`: business list/detail views now surface operational lifecycle state instead of relying only on `IsActive`
 - `Completed`: user edit screens now expose operational account state and support actions for confirm-email override, password reset email, and lock/unlock
 - `Completed`: user edit screens now also support sending activation emails for unconfirmed accounts
