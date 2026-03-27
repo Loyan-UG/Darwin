@@ -54,6 +54,57 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "Time Format")]
         public string? TimeFormat { get; set; } = "HH:mm";
 
+        // ---------- Security / JWT ----------
+        [Display(Name = "JWT Enabled")]
+        public bool JwtEnabled { get; set; } = true;
+
+        [Display(Name = "JWT Issuer")]
+        public string JwtIssuer { get; set; } = "Darwin";
+
+        [Display(Name = "JWT Audience")]
+        public string JwtAudience { get; set; } = "Darwin.PublicApi";
+
+        [Display(Name = "Access Token Lifetime (Minutes)")]
+        public int JwtAccessTokenMinutes { get; set; } = 15;
+
+        [Display(Name = "Refresh Token Lifetime (Days)")]
+        public int JwtRefreshTokenDays { get; set; } = 30;
+
+        [Display(Name = "Signing Key")]
+        public string JwtSigningKey { get; set; } = string.Empty;
+
+        [Display(Name = "Previous Signing Key")]
+        public string? JwtPreviousSigningKey { get; set; }
+
+        [Display(Name = "Emit Scopes")]
+        public bool JwtEmitScopes { get; set; }
+
+        [Display(Name = "Single Device Only")]
+        public bool JwtSingleDeviceOnly { get; set; }
+
+        [Display(Name = "Require Device Binding")]
+        public bool JwtRequireDeviceBinding { get; set; } = true;
+
+        [Display(Name = "Clock Skew Seconds")]
+        public int JwtClockSkewSeconds { get; set; } = 60;
+
+        // ---------- Mobile bootstrap ----------
+        [Display(Name = "QR Token Refresh Seconds")]
+        public int MobileQrTokenRefreshSeconds { get; set; }
+
+        [Display(Name = "Max Outbox Items")]
+        public int MobileMaxOutboxItems { get; set; }
+
+        // ---------- Soft delete / retention ----------
+        [Display(Name = "Soft Delete Cleanup Enabled")]
+        public bool SoftDeleteCleanupEnabled { get; set; } = true;
+
+        [Display(Name = "Soft Delete Retention Days")]
+        public int SoftDeleteRetentionDays { get; set; } = 90;
+
+        [Display(Name = "Soft Delete Cleanup Batch Size")]
+        public int SoftDeleteCleanupBatchSize { get; set; } = 500;
+
         // ---------- Units & Formatting ----------
         [Display(Name = "Measurement System")]
         public string MeasurementSystem { get; set; } = "Metric";

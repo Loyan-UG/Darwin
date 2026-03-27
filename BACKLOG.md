@@ -140,6 +140,7 @@ Status terms used below:
 ### Settings UI and architecture
 
 - `In Progress`: basic site settings UI exists
+- `Completed foundation`: site settings UI now exposes grouped controls for security/JWT, mobile bootstrap, and soft-delete retention in addition to existing localization, SEO, and communications fields
 - `Planned / Near-term`: restructure settings into categories such as General, Business Profile, Localization, Branding, Payments, Shipping, Communications, Users & Roles, Security, Integrations, Tax & Invoicing, and Advanced
 - `In Progress`: business setup workspace now separates business-owned defaults from global phase-1 settings, but true tenant/business settings storage still needs domain and UI expansion
 - `Completed foundation`: business-level branding, localization defaults, time zone, and phase-1 communication defaults now persist on the `Business` aggregate and are editable from the setup workspace

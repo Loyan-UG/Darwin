@@ -123,6 +123,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             DateFormat = dto.DateFormat,
             TimeFormat = dto.TimeFormat,
 
+            // Security / JWT
+            JwtEnabled = dto.JwtEnabled,
+            JwtIssuer = dto.JwtIssuer,
+            JwtAudience = dto.JwtAudience,
+            JwtAccessTokenMinutes = dto.JwtAccessTokenMinutes,
+            JwtRefreshTokenDays = dto.JwtRefreshTokenDays,
+            JwtSigningKey = dto.JwtSigningKey,
+            JwtPreviousSigningKey = dto.JwtPreviousSigningKey,
+            JwtEmitScopes = dto.JwtEmitScopes,
+            JwtSingleDeviceOnly = dto.JwtSingleDeviceOnly,
+            JwtRequireDeviceBinding = dto.JwtRequireDeviceBinding,
+            JwtClockSkewSeconds = dto.JwtClockSkewSeconds,
+
+            // Mobile bootstrap
+            MobileQrTokenRefreshSeconds = dto.MobileQrTokenRefreshSeconds,
+            MobileMaxOutboxItems = dto.MobileMaxOutboxItems,
+
+            // Retention
+            SoftDeleteCleanupEnabled = dto.SoftDeleteCleanupEnabled,
+            SoftDeleteRetentionDays = dto.SoftDeleteRetentionDays,
+            SoftDeleteCleanupBatchSize = dto.SoftDeleteCleanupBatchSize,
+
             // Units & formatting
             MeasurementSystem = dto.MeasurementSystem,
             DisplayWeightUnit = dto.DisplayWeightUnit,
@@ -205,6 +227,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             TimeZone = vm.TimeZone,
             DateFormat = vm.DateFormat,
             TimeFormat = vm.TimeFormat,
+
+            // Security / JWT
+            JwtEnabled = vm.JwtEnabled,
+            JwtIssuer = vm.JwtIssuer,
+            JwtAudience = vm.JwtAudience,
+            JwtAccessTokenMinutes = vm.JwtAccessTokenMinutes,
+            JwtRefreshTokenDays = vm.JwtRefreshTokenDays,
+            JwtSigningKey = vm.JwtSigningKey,
+            JwtPreviousSigningKey = vm.JwtPreviousSigningKey,
+            JwtEmitScopes = vm.JwtEmitScopes,
+            JwtSingleDeviceOnly = vm.JwtSingleDeviceOnly,
+            JwtRequireDeviceBinding = vm.JwtRequireDeviceBinding,
+            JwtClockSkewSeconds = vm.JwtClockSkewSeconds,
+
+            // Mobile bootstrap
+            MobileQrTokenRefreshSeconds = vm.MobileQrTokenRefreshSeconds,
+            MobileMaxOutboxItems = vm.MobileMaxOutboxItems,
+
+            // Retention
+            SoftDeleteCleanupEnabled = vm.SoftDeleteCleanupEnabled,
+            SoftDeleteRetentionDays = vm.SoftDeleteRetentionDays,
+            SoftDeleteCleanupBatchSize = vm.SoftDeleteCleanupBatchSize,
 
             // Units & formatting
             MeasurementSystem = vm.MeasurementSystem,

@@ -187,6 +187,7 @@ Settings UI must be:
 ### Current state
 
 - `Partial`: a basic settings UI exists
+- `Completed foundation`: the global site settings screen is now grouped into operational categories and exposes JWT/security, mobile bootstrap, and soft-delete retention controls instead of hiding those fields behind DTO-only configuration
 - `Completed foundation`: business setup now has its own grouped workspace, persists business-level branding/localization/time-zone/communication defaults, and makes the remaining global phase-1 dependencies explicit
 - `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
 

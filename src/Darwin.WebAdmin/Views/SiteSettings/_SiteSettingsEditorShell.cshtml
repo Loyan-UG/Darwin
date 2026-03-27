@@ -18,8 +18,27 @@
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="RowVersion" />
 
+    <div class="alert alert-secondary mb-4" role="alert">
+        <div class="fw-semibold mb-2">Settings Categories</div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-basics">General</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-localization">Localization</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-security">Security</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-mobile">Mobile</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-retention">Operational</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">Units</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-seo">SEO</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-analytics">Analytics</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-whatsapp">WhatsApp</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-webauthn">WebAuthn</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-smtp">SMTP</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-sms">SMS</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-admin-routing">Admin Alerts</a>
+        </div>
+    </div>
+
     <!-- Basics -->
-    <div class="card mb-4">
+    <div id="site-settings-basics" class="card mb-4">
         <div class="card-header">Basics</div>
         <div class="card-body">
             <div class="mb-3">
@@ -47,7 +66,7 @@
     </div>
 
     <!-- Localization -->
-    <div class="card mb-4">
+    <div id="site-settings-localization" class="card mb-4">
         <div class="card-header">Localization</div>
         <div class="card-body">
             <div class="row">
@@ -115,8 +134,133 @@
         </div>
     </div>
 
+    <!-- Security -->
+    <div id="site-settings-security" class="card mb-4">
+        <div class="card-header">Security & JWT</div>
+        <div class="card-body">
+            <div class="alert alert-warning mb-3" role="alert">
+                Treat signing keys and token lifetimes as production-sensitive settings. Changes here affect public APIs and mobile authentication.
+            </div>
+
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" asp-for="JwtEnabled" />
+                <label class="form-check-label" asp-for="JwtEnabled"></label>
+                <field-help title="JWT enabled" content="Disables issuing and accepting JWT access/refresh tokens when turned off." placement="right"></field-help>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="JwtIssuer" class="form-label"></label>
+                    <input asp-for="JwtIssuer" class="form-control" />
+                    <span asp-validation-for="JwtIssuer" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="JwtAudience" class="form-label"></label>
+                    <input asp-for="JwtAudience" class="form-control" />
+                    <span asp-validation-for="JwtAudience" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="JwtClockSkewSeconds" class="form-label"></label>
+                    <input asp-for="JwtClockSkewSeconds" class="form-control" type="number" min="0" />
+                    <span asp-validation-for="JwtClockSkewSeconds" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label asp-for="JwtAccessTokenMinutes" class="form-label"></label>
+                    <input asp-for="JwtAccessTokenMinutes" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="JwtAccessTokenMinutes" class="text-danger"></span>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="JwtRefreshTokenDays" class="form-label"></label>
+                    <input asp-for="JwtRefreshTokenDays" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="JwtRefreshTokenDays" class="text-danger"></span>
+                </div>
+                <div class="col-md-3 mb-3 d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="JwtEmitScopes" />
+                        <label class="form-check-label" asp-for="JwtEmitScopes"></label>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3 d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="JwtSingleDeviceOnly" />
+                        <label class="form-check-label" asp-for="JwtSingleDeviceOnly"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" asp-for="JwtRequireDeviceBinding" />
+                <label class="form-check-label" asp-for="JwtRequireDeviceBinding"></label>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="JwtSigningKey" class="form-label"></label>
+                    <field-help title="Signing key" content="Use a long high-entropy secret in production. Rotating this key affects active tokens." placement="right"></field-help>
+                    <input asp-for="JwtSigningKey" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="JwtSigningKey" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="JwtPreviousSigningKey" class="form-label"></label>
+                    <field-help title="Previous signing key" content="Optional rotation slot so validators can accept tokens signed before a key change." placement="right"></field-help>
+                    <input asp-for="JwtPreviousSigningKey" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="JwtPreviousSigningKey" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile -->
+    <div id="site-settings-mobile" class="card mb-4">
+        <div class="card-header">Mobile Bootstrap</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="MobileQrTokenRefreshSeconds" class="form-label"></label>
+                    <field-help title="QR token refresh" content="Refresh cadence for mobile QR/session tokens. Lower values improve security but increase refresh traffic." placement="right"></field-help>
+                    <input asp-for="MobileQrTokenRefreshSeconds" class="form-control" type="number" min="0" />
+                    <span asp-validation-for="MobileQrTokenRefreshSeconds" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="MobileMaxOutboxItems" class="form-label"></label>
+                    <field-help title="Max outbox items" content="Upper bound for offline/mobile outbox buffering before the client must flush or block." placement="right"></field-help>
+                    <input asp-for="MobileMaxOutboxItems" class="form-control" type="number" min="0" />
+                    <span asp-validation-for="MobileMaxOutboxItems" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Operational -->
+    <div id="site-settings-retention" class="card mb-4">
+        <div class="card-header">Operational Retention</div>
+        <div class="card-body">
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" asp-for="SoftDeleteCleanupEnabled" />
+                <label class="form-check-label" asp-for="SoftDeleteCleanupEnabled"></label>
+                <field-help title="Cleanup enabled" content="Allows background cleanup of soft-deleted records after the retention window has elapsed." placement="right"></field-help>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="SoftDeleteRetentionDays" class="form-label"></label>
+                    <input asp-for="SoftDeleteRetentionDays" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="SoftDeleteRetentionDays" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="SoftDeleteCleanupBatchSize" class="form-label"></label>
+                    <input asp-for="SoftDeleteCleanupBatchSize" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="SoftDeleteCleanupBatchSize" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Measurement -->
-    <div class="card mb-4">
+    <div id="site-settings-measurement" class="card mb-4">
         <div class="card-header">Measurement & Units</div>
         <div class="card-body">
             <div class="row">
@@ -150,7 +294,7 @@
     </div>
 
     <!-- SEO -->
-    <div class="card mb-4">
+    <div id="site-settings-seo" class="card mb-4">
         <div class="card-header">SEO</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
@@ -178,7 +322,7 @@
     </div>
 
     <!-- Analytics -->
-    <div class="card mb-4">
+    <div id="site-settings-analytics" class="card mb-4">
         <div class="card-header">Analytics</div>
         <div class="card-body">
             <div class="row">
@@ -204,7 +348,7 @@
     </div>
 
     <!-- WhatsApp -->
-    <div class="card mb-4">
+    <div id="site-settings-whatsapp" class="card mb-4">
         <div class="card-header">WhatsApp</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
@@ -238,7 +382,7 @@
     </div>
 
     <!-- WebAuthn -->
-    <div class="card mb-4">
+    <div id="site-settings-webauthn" class="card mb-4">
         <div class="card-header">WebAuthn (Passkeys)</div>
         <div class="card-body">
             <div class="row">
@@ -266,7 +410,7 @@
     </div>
 
     <!-- SMTP -->
-    <div class="card mb-4">
+    <div id="site-settings-smtp" class="card mb-4">
         <div class="card-header">Email (SMTP)</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
@@ -313,7 +457,7 @@
     </div>
 
     <!-- SMS -->
-    <div class="card mb-4">
+    <div id="site-settings-sms" class="card mb-4">
         <div class="card-header">SMS</div>
         <div class="card-body">
             <div class="form-check form-switch mb-3">
@@ -350,7 +494,7 @@
     </div>
 
     <!-- Admin Routing -->
-    <div class="card mb-4">
+    <div id="site-settings-admin-routing" class="card mb-4">
         <div class="card-header">Admin Alert Routing</div>
         <div class="card-body">
             <div class="mb-3">
