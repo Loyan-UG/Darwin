@@ -138,6 +138,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var (recentAudits, _) = await _getEmailDispatchAuditsPage
+                .HandleAsync(1, 5, null, null, null, businessId, ct)
+                .ConfigureAwait(false);
             var emailTransportConfigured = settings.SmtpEnabled &&
                                            !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
                                            settings.SmtpPort.HasValue &&
@@ -177,7 +180,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 WhatsAppTransportConfigured = whatsAppTransportConfigured,
                 AdminAlertRoutingConfigured = adminAlertRoutingConfigured,
                 ActiveFlowNames = BuildActiveFlowNames(profile),
-                ReadinessIssues = BuildReadinessIssues(profile, emailTransportConfigured, adminAlertRoutingConfigured)
+                ReadinessIssues = BuildReadinessIssues(profile, emailTransportConfigured, adminAlertRoutingConfigured),
+                RecommendedActions = BuildRecommendedActions(profile, emailTransportConfigured, adminAlertRoutingConfigured),
+                RecentEmailAudits = recentAudits.Select(x => new EmailDispatchAuditListItemVm
+                {
+                    Id = x.Id,
+                    Provider = x.Provider,
+                    FlowKey = x.FlowKey,
+                    BusinessId = x.BusinessId,
+                    RecipientEmail = x.RecipientEmail,
+                    Subject = x.Subject,
+                    Status = x.Status,
+                    AttemptedAtUtc = x.AttemptedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc,
+                    FailureMessage = x.FailureMessage
+                }).ToList()
             };
 
             return View(vm);
@@ -401,6 +418,56 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return issues;
+        }
+
+        private static List<string> BuildRecommendedActions(
+            BusinessCommunicationProfileDto profile,
+            bool emailTransportConfigured,
+            bool adminAlertRoutingConfigured)
+        {
+            var actions = new List<string>();
+
+            if (profile.MissingSupportEmail || profile.MissingSenderIdentity)
+            {
+                actions.Add("Open business setup and complete support email, sender name, and reply-to defaults.");
+            }
+
+            if ((profile.CustomerEmailNotificationsEnabled || profile.CustomerMarketingEmailsEnabled) && !emailTransportConfigured)
+            {
+                actions.Add("Open global SMTP settings before relying on transactional or marketing email for this business.");
+            }
+
+            if (profile.OperationalAlertEmailsEnabled && !adminAlertRoutingConfigured)
+            {
+                actions.Add("Configure admin alert routing so business operational alerts have a real escalation target.");
+            }
+
+            if (profile.PendingActivationMemberCount > 0)
+            {
+                actions.Add("Review business members and send activation email or confirm email where policy allows.");
+            }
+
+            if (profile.OpenInvitationCount > 0)
+            {
+                actions.Add("Review open invitations and resend or revoke stale invites before go-live.");
+            }
+
+            if (profile.LockedMemberCount > 0)
+            {
+                actions.Add("Review locked members and unlock only after support validation.");
+            }
+
+            if (string.Equals(profile.OperationalStatus, "PendingApproval", System.StringComparison.OrdinalIgnoreCase))
+            {
+                actions.Add("Complete communication setup before approving the business for live operations.");
+            }
+
+            if (actions.Count == 0)
+            {
+                actions.Add("No immediate operator action is recommended from communication readiness alone.");
+            }
+
+            return actions;
         }
     }
 }

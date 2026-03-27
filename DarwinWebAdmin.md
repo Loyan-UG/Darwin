@@ -275,6 +275,7 @@ Communication is a platform capability and must be visible in WebAdmin.
 - `Completed foundation`: each queued business can now be opened into a communication-profile detail screen that combines business defaults, global transport dependency state, current phase-1 flow implications, and support/onboarding signals in one troubleshooting view
 - `Completed foundation`: phase-1 email delivery audits now also store flow classification and optional business correlation, so operators can distinguish invitation, activation, and password-reset email failures without waiting for the full Communication Core delivery model
 - `Completed foundation`: the workspace now also includes an explicit capability-coverage matrix for template management, retry/resend, and delivery visibility, so operators are not misled into assuming Communication Core features already exist when they do not
+- `Completed foundation`: each business communication-profile screen now also surfaces recommended next actions and recent business-scoped email activity, so operators can move from diagnosis into support/setup action without leaving the communication workspace
 
 ## 13. Localization Readiness in WebAdmin
 

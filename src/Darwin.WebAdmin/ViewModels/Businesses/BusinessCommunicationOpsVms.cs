@@ -137,5 +137,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool AdminAlertRoutingConfigured { get; set; }
         public List<string> ActiveFlowNames { get; set; } = new();
         public List<string> ReadinessIssues { get; set; } = new();
+        public List<string> RecommendedActions { get; set; } = new();
+        public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
     }
 }

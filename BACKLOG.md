@@ -137,6 +137,7 @@ Status terms used below:
 - `Completed foundation`: each business in the communication queue now has a dedicated communication-profile screen that combines sender/support defaults, policy flags, global dependency readiness, and onboarding/support signals for troubleshooting
 - `Completed foundation`: phase-1 email audits are now tagged with flow metadata (`BusinessInvitation`, `AccountActivation`, `PasswordReset`) and optional business correlation, so delivery failures are more diagnosable before full Communication Core logging exists
 - `Completed foundation`: the `Business Communications` workspace now also exposes a capability-coverage matrix so operators can see which template, retry, and delivery-visibility capabilities are truly live today versus still planned Communication Core work
+- `Completed foundation`: each business communication profile now includes recommended next actions and recent business-scoped email activity, so troubleshooting can move from visibility into operator action without leaving the workspace
 
 ### Payments, refunds, reconciliation, disputes
 
