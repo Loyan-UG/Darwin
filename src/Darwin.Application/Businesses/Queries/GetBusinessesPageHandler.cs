@@ -21,7 +21,12 @@ namespace Darwin.Application.Businesses.Queries
         public GetBusinessesPageHandler(IAppDbContext db) => _db = db;
 
         public async Task<(List<BusinessListItemDto> Items, int Total)> HandleAsync(
-            int page, int pageSize, string? query = null, CancellationToken ct = default)
+            int page,
+            int pageSize,
+            string? query = null,
+            BusinessOperationalStatus? operationalStatus = null,
+            bool attentionOnly = false,
+            CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -34,6 +39,22 @@ namespace Darwin.Application.Businesses.Queries
                 baseQuery = baseQuery.Where(x =>
                     x.Name.Contains(q) ||
                     (x.LegalName != null && x.LegalName.Contains(q)));
+            }
+
+            if (operationalStatus.HasValue)
+            {
+                baseQuery = baseQuery.Where(x => x.OperationalStatus == operationalStatus.Value);
+            }
+
+            if (attentionOnly)
+            {
+                baseQuery = baseQuery.Where(x =>
+                    x.OperationalStatus != BusinessOperationalStatus.Approved ||
+                    !x.IsActive ||
+                    !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner) ||
+                    !_db.Set<BusinessLocation>().Any(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary) ||
+                    string.IsNullOrWhiteSpace(x.ContactEmail) ||
+                    string.IsNullOrWhiteSpace(x.LegalName));
             }
 
             var total = await baseQuery.CountAsync(ct);
@@ -53,6 +74,10 @@ namespace Darwin.Application.Businesses.Queries
                     MemberCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id),
                     ActiveOwnerCount = _db.Set<BusinessMember>().Count(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner),
                     LocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted),
+                    PrimaryLocationCount = _db.Set<BusinessLocation>().Count(l => l.BusinessId == x.Id && !l.IsDeleted && l.IsPrimary),
+                    InvitationCount = _db.Set<BusinessInvitation>().Count(i => i.BusinessId == x.Id && i.Status == BusinessInvitationStatus.Pending),
+                    HasContactEmailConfigured = !string.IsNullOrWhiteSpace(x.ContactEmail),
+                    HasLegalNameConfigured = !string.IsNullOrWhiteSpace(x.LegalName),
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
                     RowVersion = x.RowVersion

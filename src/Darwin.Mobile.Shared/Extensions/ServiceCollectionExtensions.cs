@@ -131,6 +131,7 @@ namespace Darwin.Mobile.Shared.Extensions
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<ILoyaltyService, LoyaltyService>();
             services.AddSingleton<IBusinessService, BusinessService>();
+            services.AddSingleton<IBusinessAccessService, BusinessAccessService>();
             services.AddSingleton<IMemberCommerceService, MemberCommerceService>();
             services.AddSingleton<IProfileService, ProfileService>();
             services.AddSingleton<IPushRegistrationService, PushRegistrationService>();

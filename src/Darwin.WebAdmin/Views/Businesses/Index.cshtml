@@ -17,6 +17,9 @@
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business or legal name" />
     </div>
+    <div class="col-md-3">
+        <select name="operationalStatus" asp-items="Model.OperationalStatusItems" class="form-select"></select>
+    </div>
     <div class="col-auto">
         <select name="pageSize" class="form-select">
             @foreach (var item in Model.PageSizeItems)
@@ -24,6 +27,12 @@
                 <option value="@item.Value" selected="@item.Selected">@item.Text</option>
             }
         </select>
+    </div>
+    <div class="col-auto">
+        <div class="form-check mt-2">
+            <input type="checkbox" name="attentionOnly" value="true" class="form-check-input" id="attentionOnly" checked="@(Model.AttentionOnly ? "checked" : null)" />
+            <label class="form-check-label" for="attentionOnly">Needs attention only</label>
+        </div>
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
@@ -41,6 +50,7 @@
                 <th class="text-center">Owners</th>
                 <th class="text-center">Members</th>
                 <th class="text-center">Locations</th>
+                <th>Attention</th>
                 <th class="text-end" style="width:360px">Actions</th>
             </tr>
         </thead>
@@ -48,7 +58,7 @@
         @if (Model.Items.Count == 0)
         {
             <tr>
-                <td colspan="7" class="text-center text-muted py-4">No businesses found.</td>
+                <td colspan="8" class="text-center text-muted py-4">No businesses found.</td>
             </tr>
         }
         else
@@ -103,6 +113,32 @@
                             <span class="badge text-bg-warning">Missing</span>
                         }
                     </td>
+                    <td>
+                        @if (item.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval)
+                        {
+                            <div class="small"><span class="badge text-bg-warning">Approval pending</span></div>
+                        }
+                        @if (item.ActiveOwnerCount == 0)
+                        {
+                            <div class="small text-muted">Missing active owner</div>
+                        }
+                        @if (item.PrimaryLocationCount == 0)
+                        {
+                            <div class="small text-muted">Missing primary location</div>
+                        }
+                        @if (!item.HasContactEmailConfigured)
+                        {
+                            <div class="small text-muted">Missing contact email</div>
+                        }
+                        @if (!item.HasLegalNameConfigured)
+                        {
+                            <div class="small text-muted">Missing legal name</div>
+                        }
+                        @if (item.InvitationCount > 0)
+                        {
+                            <div class="small text-muted">@item.InvitationCount pending invite(s)</div>
+                        }
+                    </td>
                     <td class="text-end">
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
                             <i class="fa-solid fa-pen"></i> Edit
@@ -136,7 +172,9 @@
        total="Model.Total"
        asp-controller="Businesses"
        asp-action="Index"
-       asp-route-query="@Model.Query">
+       asp-route-query="@Model.Query"
+       asp-route-operationalStatus="@Model.OperationalStatus"
+       asp-route-attentionOnly="@Model.AttentionOnly">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

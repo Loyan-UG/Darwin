@@ -24,6 +24,13 @@
     </div>
 }
 
+@if (Model.Items.Exists(x => !x.EmailConfirmed))
+{
+    <div class="alert alert-info">
+        Some members are still pending activation. Use the inline support actions below to resend activation or confirm the email manually when support policy allows it.
+    </div>
+}
+
 <form method="get" class="row g-2 mb-3">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
@@ -44,7 +51,7 @@
                 <th>Status</th>
                 <th>Role</th>
                 <th class="text-center">Active</th>
-                <th class="text-end" style="width:240px">Actions</th>
+                <th class="text-end" style="width:440px">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -86,20 +93,76 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="EditMember" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                            <i class="fa-solid fa-pen"></i> Edit
-                        </a>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger"
-                                data-bs-toggle="modal"
-                                data-bs-target="#confirmDeleteModal"
-                                data-action="@Url.Action("DeleteMember", "Businesses")"
-                                data-id="@item.Id"
-                                data-name="@item.UserDisplayName"
-                                data-rowversion="@Convert.ToBase64String(item.RowVersion)"
-                                data-userid="@Model.Business.Id">
-                            <i class="fa-solid fa-user-minus"></i> Remove
-                        </button>
+                        <div class="d-flex flex-wrap justify-content-end gap-2">
+                            <a asp-action="EditMember" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </a>
+                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa-solid fa-user"></i> Open User
+                            </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("DeleteMember", "Businesses")"
+                                    data-id="@item.Id"
+                                    data-name="@item.UserDisplayName"
+                                    data-rowversion="@Convert.ToBase64String(item.RowVersion)"
+                                    data-userid="@Model.Business.Id">
+                                <i class="fa-solid fa-user-minus"></i> Remove
+                            </button>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-end gap-2 mt-2">
+                            @if (!item.EmailConfirmed)
+                            {
+                                <form asp-action="SendMemberActivationEmail" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa-solid fa-paper-plane"></i> Send activation
+                                    </button>
+                                </form>
+                                <form asp-action="ConfirmMemberEmail" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fa-solid fa-check"></i> Confirm email
+                                    </button>
+                                </form>
+                            }
+                            <form asp-action="SendMemberPasswordReset" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                    <i class="fa-solid fa-key"></i> Send reset
+                                </button>
+                            </form>
+                            @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
+                            {
+                                <form asp-action="UnlockMemberUser" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fa-solid fa-lock-open"></i> Unlock
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="LockMemberUser" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="businessId" value="@item.BusinessId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fa-solid fa-lock"></i> Lock
+                                    </button>
+                                </form>
+                            }
+                        </div>
                     </td>
                 </tr>
             }

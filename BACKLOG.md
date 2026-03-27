@@ -44,7 +44,11 @@ Status terms used below:
 - `In Progress`: support invitation-based onboarding for owners/staff when no existing platform user is available
 - `Completed`: `Darwin.Mobile.Business` now supports token-entry invitation preview and acceptance for phase-1 onboarding
 - `Completed`: WebAdmin now supports business approval, suspension, reactivation, and an onboarding-readiness checklist covering owner, primary location, legal name, and contact email
-- `In Progress`: model and expose onboarding state, activation state, approval state, and suspension/reactivation rules
+- `Completed`: business edit screens now expose actionable onboarding shortcuts, so missing owner/location/profile steps can be completed directly from the onboarding shell
+- `Completed`: businesses index now supports operational-status and needs-attention filtering, so approval and onboarding queues are easier to work through operationally
+- `Completed`: business-facing access-state API now exposes approval/suspension readiness to authenticated business clients
+- `Completed`: phase-1 `Soft Gate` policy is now implemented in `Darwin.Mobile.Business`: pending-approval businesses can sign in and complete setup, but live operations stay blocked until approval
+- `In Progress`: model and expose richer onboarding state, activation state, approval state, and suspension/reactivation rules beyond the current soft-gate snapshot
 - `In Progress`: seed and apply initial defaults during onboarding (locale, branding basics, payment/shipping defaults, communication defaults where applicable)
 
 ### Authentication and account lifecycle
@@ -100,6 +104,7 @@ Status terms used below:
 - `Completed`: business/tenant management foundation now exists in WebAdmin with business CRUD, owner assignment, member management, and location management
 - `Completed`: business invitations can now be created, listed, resent, and revoked from WebAdmin
 - `Completed`: business member lists in WebAdmin now expose activation/lock visibility for faster onboarding troubleshooting
+- `Completed`: business member management now includes inline support actions for activation resend, email confirmation, password reset email, and lock/unlock without leaving the business workspace
 - `Completed`: business list/detail views now surface operational lifecycle state instead of relying only on `IsActive`
 - `Completed`: user edit screens now expose operational account state and support actions for confirm-email override, password reset email, and lock/unlock
 - `Completed`: user edit screens now also support sending activation emails for unconfirmed accounts
@@ -223,6 +228,7 @@ Status terms used below:
 - `Completed`: `Darwin.Mobile.Business` is usable enough to influence delivery priorities
 - `Completed`: `Darwin.Mobile.Business` invitation acceptance now works end-to-end against canonical business-auth endpoints
 - `Planned / Near-term`: ensure onboarding/account lifecycle backend and admin support flows satisfy business mobile usage
+- `Completed`: `Darwin.Mobile.Business` now keeps `Home` and `Settings` available during `PendingApproval`, while `Scanner`, `Session`, `Dashboard`, and `Rewards` are approval-gated
 - `Planned / Near-term`: keep mobile route and contract compatibility intact whenever backend changes touch mobile-used flows
 
 ### Security and performance
@@ -255,8 +261,10 @@ Status terms used below:
 - `Decision pending`: decide whether phase-1 business onboarding should remain "assign existing user as owner" or include invitation-first owner creation before the Communication Core MVP is complete
 - `Decision pending`: decide whether support admins should have an explicit emergency override for the "last active owner cannot be removed or disabled" policy
 - `Decision pending`: decide whether invitation acceptance in phase 1 should be token-entry driven, magic-link driven, or both across `Darwin.Mobile.Business` and future front-end onboarding flows
+- `Decision pending`: decide whether business-scoped admins should eventually receive delegated versions of the current FullAdmin-only onboarding/support actions for members and invitations
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh
 - `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live
 - `Decision made`: phase-1 password authentication now rejects unconfirmed accounts and locked accounts; follow-up UX should add self-service resend-activation where appropriate
 - `Decision pending`: decide whether self-service activation resend should remain email-entry based in phase 1, or also support deep-link/magic-link recovery entry in later auth UX
-- `Decision pending`: decide whether `Darwin.Mobile.Business` sign-in should also enforce `BusinessOperationalStatus.Approved`, or whether phase-1 should allow support/onboarding access before approval
+- `Decision made`: phase-1 business approval policy is `Soft Gate`; `Darwin.Mobile.Business` sign-in remains allowed for `PendingApproval`, but live operational screens/actions stay blocked until `BusinessOperationalStatus.Approved`
+- `Decision pending`: decide whether the current soft-gate should later evolve into a dedicated onboarding workspace/tab instead of screen-level blocking on operational pages

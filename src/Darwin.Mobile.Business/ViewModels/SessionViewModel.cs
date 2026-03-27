@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
+using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 using Darwin.Mobile.Business.Services.Reporting;
@@ -21,6 +22,7 @@ public sealed class SessionViewModel : BaseViewModel
     private readonly INavigationService _navigationService;
     private readonly IBusinessActivityTracker _activityTracker;
     private readonly IBusinessAuthorizationService _businessAuthorizationService;
+    private readonly IBusinessAccessService _businessAccessService;
 
     private string _sessionToken = string.Empty;
     private string? _customerName;
@@ -29,6 +31,7 @@ public sealed class SessionViewModel : BaseViewModel
     private bool _canConfirmRedemption;
     private bool _hasAccrualPermission = true;
     private bool _hasRedemptionPermission = true;
+    private bool _isOperationsAllowed = true;
     private int _pointsToAccrue = 1;
     private string _operatorRole = "—";
 
@@ -43,12 +46,18 @@ public sealed class SessionViewModel : BaseViewModel
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionViewModel"/> class.
     /// </summary>
-    public SessionViewModel(ILoyaltyService loyaltyService, INavigationService navigationService, IBusinessActivityTracker activityTracker, IBusinessAuthorizationService businessAuthorizationService)
+    public SessionViewModel(
+        ILoyaltyService loyaltyService,
+        INavigationService navigationService,
+        IBusinessActivityTracker activityTracker,
+        IBusinessAuthorizationService businessAuthorizationService,
+        IBusinessAccessService businessAccessService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
         _businessAuthorizationService = businessAuthorizationService ?? throw new ArgumentNullException(nameof(businessAuthorizationService));
+        _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
 
         LoadSessionCommand = new AsyncCommand(LoadSessionAsync);
         ConfirmAccrualCommand = new AsyncCommand(ConfirmAccrualAsync, () => CanExecuteAccrual && !IsBusy);
@@ -167,12 +176,12 @@ public sealed class SessionViewModel : BaseViewModel
     /// <summary>
     /// UI helper: session and role both allow accrual confirmation.
     /// </summary>
-    public bool CanExecuteAccrual => CanConfirmAccrual && HasAccrualPermission;
+    public bool CanExecuteAccrual => _isOperationsAllowed && CanConfirmAccrual && HasAccrualPermission;
 
     /// <summary>
     /// UI helper: session and role both allow redemption confirmation.
     /// </summary>
-    public bool CanExecuteRedemption => CanConfirmRedemption && HasRedemptionPermission;
+    public bool CanExecuteRedemption => _isOperationsAllowed && CanConfirmRedemption && HasRedemptionPermission;
 
     /// <summary>
     /// Success banner text shown at top of page.
@@ -232,6 +241,7 @@ public sealed class SessionViewModel : BaseViewModel
     public override async Task OnAppearingAsync()
     {
         await RefreshAuthorizationAsync().ConfigureAwait(false);
+        await EnsureOperationsAllowedAsync().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -241,6 +251,11 @@ public sealed class SessionViewModel : BaseViewModel
     public async Task LoadSessionAsync()
     {
         ClearFeedback();
+
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(SessionToken))
         {
@@ -291,6 +306,11 @@ public sealed class SessionViewModel : BaseViewModel
         if (!CanConfirmAccrual)
         {
             SetWarning("Accrual is not allowed for this session.");
+            return;
+        }
+
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
             return;
         }
 
@@ -346,6 +366,11 @@ public sealed class SessionViewModel : BaseViewModel
         if (!CanConfirmRedemption)
         {
             SetWarning("Redemption is not allowed for this session.");
+            return;
+        }
+
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
             return;
         }
 
@@ -434,5 +459,41 @@ public sealed class SessionViewModel : BaseViewModel
         OperatorRole = authSnapshot.Value.RoleDisplayName;
         HasAccrualPermission = authSnapshot.Value.CanConfirmAccrual;
         HasRedemptionPermission = authSnapshot.Value.CanConfirmRedemption;
+    }
+
+    private async Task<bool> EnsureOperationsAllowedAsync()
+    {
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            _isOperationsAllowed = false;
+            RunOnMain(() =>
+            {
+                SetWarning(AppResources.BusinessAccessStateLoadFailed);
+                ConfirmAccrualCommand.RaiseCanExecuteChanged();
+                ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanExecuteAccrual));
+                OnPropertyChanged(nameof(CanExecuteRedemption));
+            });
+
+            return false;
+        }
+
+        _isOperationsAllowed = result.Value.IsOperationsAllowed;
+        RunOnMain(() =>
+        {
+            ConfirmAccrualCommand.RaiseCanExecuteChanged();
+            ConfirmRedemptionCommand.RaiseCanExecuteChanged();
+            OnPropertyChanged(nameof(CanExecuteAccrual));
+            OnPropertyChanged(nameof(CanExecuteRedemption));
+        });
+
+        if (_isOperationsAllowed)
+        {
+            return true;
+        }
+
+        RunOnMain(() => SetWarning(BusinessAccessStateUiMapper.GetOperationalStatusMessage(result.Value)));
+        return false;
     }
 }

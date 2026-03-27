@@ -7,6 +7,8 @@ using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Common.DTOs;
+using Darwin.Application.Identity.Commands;
+using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Results;
 using Darwin.WebAdmin.Controllers.Admin;
@@ -48,6 +50,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly ApproveBusinessHandler _approveBusiness;
         private readonly SuspendBusinessHandler _suspendBusiness;
         private readonly ReactivateBusinessHandler _reactivateBusiness;
+        private readonly RequestPasswordResetHandler _requestPasswordReset;
+        private readonly RequestEmailConfirmationHandler _requestEmailConfirmation;
+        private readonly ConfirmUserEmailByAdminHandler _confirmUserEmail;
+        private readonly LockUserByAdminHandler _lockUser;
+        private readonly UnlockUserByAdminHandler _unlockUser;
         private readonly AdminReferenceDataService _referenceData;
 
         public BusinessesController(
@@ -73,6 +80,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             ApproveBusinessHandler approveBusiness,
             SuspendBusinessHandler suspendBusiness,
             ReactivateBusinessHandler reactivateBusiness,
+            RequestPasswordResetHandler requestPasswordReset,
+            RequestEmailConfirmationHandler requestEmailConfirmation,
+            ConfirmUserEmailByAdminHandler confirmUserEmail,
+            LockUserByAdminHandler lockUser,
+            UnlockUserByAdminHandler unlockUser,
             AdminReferenceDataService referenceData)
         {
             _getBusinessesPage = getBusinessesPage;
@@ -97,13 +109,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _approveBusiness = approveBusiness;
             _suspendBusiness = suspendBusiness;
             _reactivateBusiness = reactivateBusiness;
+            _requestPasswordReset = requestPasswordReset;
+            _requestEmailConfirmation = requestEmailConfirmation;
+            _confirmUserEmail = confirmUserEmail;
+            _lockUser = lockUser;
+            _unlockUser = unlockUser;
             _referenceData = referenceData;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            BusinessOperationalStatus? operationalStatus = null,
+            bool attentionOnly = false,
+            CancellationToken ct = default)
         {
-            var (items, total) = await _getBusinessesPage.HandleAsync(page, pageSize, query, ct);
+            var (items, total) = await _getBusinessesPage.HandleAsync(
+                page,
+                pageSize,
+                query,
+                operationalStatus,
+                attentionOnly,
+                ct);
 
             var vm = new BusinessesListVm
             {
@@ -111,7 +140,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                OperationalStatus = operationalStatus,
+                AttentionOnly = attentionOnly,
                 PageSizeItems = BuildPageSizeItems(pageSize),
+                OperationalStatusItems = BuildBusinessStatusItems(operationalStatus),
                 Items = items.Select(x => new BusinessListItemVm
                 {
                     Id = x.Id,
@@ -123,6 +155,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     MemberCount = x.MemberCount,
                     ActiveOwnerCount = x.ActiveOwnerCount,
                     LocationCount = x.LocationCount,
+                    PrimaryLocationCount = x.PrimaryLocationCount,
+                    InvitationCount = x.InvitationCount,
+                    HasContactEmailConfigured = x.HasContactEmailConfigured,
+                    HasLegalNameConfigured = x.HasLegalNameConfigured,
                     CreatedAtUtc = x.CreatedAtUtc,
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
@@ -845,6 +881,140 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return RedirectToAction(nameof(Members), new { businessId });
         }
 
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendMemberActivationEmail(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] bool returnToEdit = false,
+            CancellationToken ct = default)
+        {
+            var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
+            if (member is null)
+            {
+                TempData["Error"] = "Business member not found.";
+                return RedirectMemberSupport(returnToEdit, id, businessId);
+            }
+
+            var result = await _requestEmailConfirmation.HandleAsync(
+                new RequestEmailConfirmationDto
+                {
+                    Email = member.UserEmail
+                },
+                ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Activation email sent."
+                : (result.Error ?? "Failed to send activation email.");
+
+            return RedirectMemberSupport(returnToEdit, id, businessId);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmMemberEmail(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] bool returnToEdit = false,
+            CancellationToken ct = default)
+        {
+            var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
+            if (member is null)
+            {
+                TempData["Error"] = "Business member not found.";
+                return RedirectMemberSupport(returnToEdit, id, businessId);
+            }
+
+            var result = await _confirmUserEmail.HandleAsync(new UserAdminActionDto
+            {
+                Id = member.UserId
+            }, ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Email marked as confirmed."
+                : (result.Error ?? "Failed to confirm email.");
+
+            return RedirectMemberSupport(returnToEdit, id, businessId);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendMemberPasswordReset(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] bool returnToEdit = false,
+            CancellationToken ct = default)
+        {
+            var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
+            if (member is null)
+            {
+                TempData["Error"] = "Business member not found.";
+                return RedirectMemberSupport(returnToEdit, id, businessId);
+            }
+
+            var result = await _requestPasswordReset.HandleAsync(
+                new RequestPasswordResetDto
+                {
+                    Email = member.UserEmail
+                },
+                ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Password reset email sent."
+                : (result.Error ?? "Failed to send password reset email.");
+
+            return RedirectMemberSupport(returnToEdit, id, businessId);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> LockMemberUser(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] bool returnToEdit = false,
+            CancellationToken ct = default)
+        {
+            var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
+            if (member is null)
+            {
+                TempData["Error"] = "Business member not found.";
+                return RedirectMemberSupport(returnToEdit, id, businessId);
+            }
+
+            var result = await _lockUser.HandleAsync(new UserAdminActionDto
+            {
+                Id = member.UserId
+            }, ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Account locked."
+                : (result.Error ?? "Failed to lock account.");
+
+            return RedirectMemberSupport(returnToEdit, id, businessId);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnlockMemberUser(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] bool returnToEdit = false,
+            CancellationToken ct = default)
+        {
+            var member = await _getBusinessMemberForEdit.HandleAsync(id, ct);
+            if (member is null)
+            {
+                TempData["Error"] = "Business member not found.";
+                return RedirectMemberSupport(returnToEdit, id, businessId);
+            }
+
+            var result = await _unlockUser.HandleAsync(new UserAdminActionDto
+            {
+                Id = member.UserId
+            }, ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "Account unlocked."
+                : (result.Error ?? "Failed to unlock account.");
+
+            return RedirectMemberSupport(returnToEdit, id, businessId);
+        }
+
         private async Task PopulateBusinessFormOptionsAsync(BusinessEditVm vm, CancellationToken ct)
         {
             vm.CategoryOptions = Enum.GetValues<BusinessCategoryKind>()
@@ -938,6 +1108,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private IActionResult RenderInvitationEditor(BusinessInvitationCreateVm vm)
         {
             return View("CreateInvitation", vm);
+        }
+
+        private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId)
+        {
+            return returnToEdit
+                ? RedirectOrHtmx(nameof(EditMember), new { id = membershipId })
+                : RedirectToAction(nameof(Members), new { businessId });
+        }
+
+        private static IEnumerable<SelectListItem> BuildBusinessStatusItems(BusinessOperationalStatus? selectedStatus)
+        {
+            yield return new SelectListItem("All statuses", string.Empty, !selectedStatus.HasValue);
+
+            foreach (var status in Enum.GetValues<BusinessOperationalStatus>())
+            {
+                yield return new SelectListItem(status.ToString(), status.ToString(), selectedStatus == status);
+            }
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

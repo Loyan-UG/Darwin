@@ -59,6 +59,14 @@ namespace Darwin.Mobile.Shared.Api
         }
 
         /// <summary>
+        /// Business-account endpoints used by the Business mobile app after sign-in.
+        /// </summary>
+        public static class BusinessAccount
+        {
+            public const string GetAccessState = "api/v1/business/account/access-state";
+        }
+
+        /// <summary>
         /// Provides API endpoint paths for profile-related operations.
         /// </summary>
         /// <remarks>This class contains constant string values representing the relative paths for

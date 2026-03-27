@@ -11,6 +11,7 @@ using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Commands;
+using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 using Darwin.Shared.Results;
@@ -35,9 +36,12 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private readonly ILoyaltyService _loyaltyService;
     private readonly IBusinessAuthorizationService _authorizationService;
     private readonly IBusinessActivityTracker _activityTracker;
+    private readonly IBusinessAccessService _businessAccessService;
     private readonly List<BusinessCampaignEditorItem> _allCampaigns = new();
 
     private bool _loadedOnce;
+    private bool _isOperationsAllowed = true;
+    private bool _hasRewardManagementPermission = true;
     private bool _canManageRewards = true;
     private string _operatorRole = "—";
     private Guid _editingRewardTierId;
@@ -83,11 +87,16 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private const string RewardTypePercentDiscount = "PercentDiscount";
     private const string RewardTypeAmountDiscount = "AmountDiscount";
 
-    public RewardsViewModel(ILoyaltyService loyaltyService, IBusinessAuthorizationService authorizationService, IBusinessActivityTracker activityTracker)
+    public RewardsViewModel(
+        ILoyaltyService loyaltyService,
+        IBusinessAuthorizationService authorizationService,
+        IBusinessActivityTracker activityTracker,
+        IBusinessAccessService businessAccessService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
+        _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
 
         RewardTiers = new ObservableCollection<RewardTierEditorItem>();
         Campaigns = new ObservableCollection<BusinessCampaignEditorItem>();
@@ -874,6 +883,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
         _loadedOnce = true;
         await RefreshAuthorizationAsync().ConfigureAwait(false);
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
         await LoadConfigurationAsync().ConfigureAwait(false);
     }
 
@@ -883,6 +897,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public async Task LoadConfigurationAsync()
     {
         if (IsBusy)
+        {
+            return;
+        }
+
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
         {
             return;
         }
@@ -1026,6 +1045,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
         if (!CanManageRewards)
         {
             RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
@@ -1100,6 +1124,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     private async Task DeleteAsync()
     {
         if (IsBusy || !IsEditMode)
+        {
+            return;
+        }
+
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
         {
             return;
         }
@@ -1522,6 +1551,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
             return;
         }
 
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
         if (!CanManageRewards)
         {
             RunOnMain(() => ErrorMessage = AppResources.BusinessPermissionDeniedRewardEdit);
@@ -1697,16 +1731,50 @@ public sealed partial class RewardsViewModel : BaseViewModel
             if (snapshot.Succeeded && snapshot.Value is not null)
             {
                 OperatorRole = snapshot.Value.RoleDisplayName;
-                CanManageRewards = snapshot.Value.CanEditRewards;
+                _hasRewardManagementPermission = snapshot.Value.CanEditRewards;
+                CanManageRewards = _isOperationsAllowed && _hasRewardManagementPermission;
             }
             else
             {
                 OperatorRole = "—";
+                _hasRewardManagementPermission = false;
                 CanManageRewards = false;
             }
 
             RaiseCommandCanExecuteChanged();
         });
+    }
+
+    private async Task<bool> EnsureOperationsAllowedAsync()
+    {
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            RunOnMain(() =>
+            {
+                _isOperationsAllowed = false;
+                CanManageRewards = false;
+                ErrorMessage = AppResources.BusinessAccessStateLoadFailed;
+                RaiseCommandCanExecuteChanged();
+            });
+
+            return false;
+        }
+
+        _isOperationsAllowed = result.Value.IsOperationsAllowed;
+        RunOnMain(() =>
+        {
+            CanManageRewards = _isOperationsAllowed && _hasRewardManagementPermission;
+            RaiseCommandCanExecuteChanged();
+        });
+
+        if (_isOperationsAllowed)
+        {
+            return true;
+        }
+
+        RunOnMain(() => ErrorMessage = BusinessAccessStateUiMapper.GetOperationalStatusMessage(result.Value));
+        return false;
     }
 
     /// <summary>
@@ -1750,6 +1818,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// </summary>
     private async Task ReloadConfigurationAfterMutationAsync()
     {
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
         var response = await _loyaltyService
             .GetBusinessRewardConfigurationAsync(CancellationToken.None)
             .ConfigureAwait(false);
@@ -2070,6 +2143,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
         }
 
         if (IsBusy)
+        {
+            return;
+        }
+
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
         {
             return;
         }

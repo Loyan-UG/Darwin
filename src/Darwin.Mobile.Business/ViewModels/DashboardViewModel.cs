@@ -8,8 +8,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Business.Resources;
+using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Business.Services.Reporting;
 using Darwin.Mobile.Shared.Commands;
+using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.ViewModels;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
@@ -23,8 +25,10 @@ namespace Darwin.Mobile.Business.ViewModels;
 public sealed class DashboardViewModel : BaseViewModel
 {
     private readonly IBusinessActivityTracker _activityTracker;
+    private readonly IBusinessAccessService _businessAccessService;
 
     private bool _loadedOnce;
+    private bool _isOperationsAllowed = true;
     private int _lookbackDays = 7;
     private BusinessDashboardSnapshot? _lastSnapshot;
 
@@ -38,17 +42,18 @@ public sealed class DashboardViewModel : BaseViewModel
     private int _totalAccruedPoints;
     private int _totalRedeemedPoints;
 
-    public DashboardViewModel(IBusinessActivityTracker activityTracker)
+    public DashboardViewModel(IBusinessActivityTracker activityTracker, IBusinessAccessService businessAccessService)
     {
         _activityTracker = activityTracker ?? throw new ArgumentNullException(nameof(activityTracker));
+        _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
 
         TopCustomers = new ObservableCollection<BusinessTopCustomerItem>();
         RecentActivities = new ObservableCollection<BusinessActivityFeedItem>();
         LookbackDayOptions = new ObservableCollection<int> { 1, 7, 14, 30 };
 
-        RefreshCommand = new AsyncCommand(LoadAsync, () => !IsBusy);
-        ExportCsvCommand = new AsyncCommand(ExportCsvAsync, () => !IsBusy && _lastSnapshot is not null);
-        ExportPdfCommand = new AsyncCommand(ExportPdfAsync, () => !IsBusy && _lastSnapshot is not null);
+        RefreshCommand = new AsyncCommand(LoadAsync, () => !IsBusy && _isOperationsAllowed);
+        ExportCsvCommand = new AsyncCommand(ExportCsvAsync, () => !IsBusy && _isOperationsAllowed && _lastSnapshot is not null);
+        ExportPdfCommand = new AsyncCommand(ExportPdfAsync, () => !IsBusy && _isOperationsAllowed && _lastSnapshot is not null);
     }
 
     public int LookbackDays
@@ -194,6 +199,11 @@ public sealed class DashboardViewModel : BaseViewModel
             return;
         }
 
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
         IsBusy = true;
         RefreshCommand.RaiseCanExecuteChanged();
         ExportCsvCommand.RaiseCanExecuteChanged();
@@ -261,6 +271,11 @@ public sealed class DashboardViewModel : BaseViewModel
             return;
         }
 
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+        {
+            return;
+        }
+
         try
         {
             var csv = BuildDashboardCsv(_lastSnapshot, LookbackDays);
@@ -287,6 +302,11 @@ public sealed class DashboardViewModel : BaseViewModel
     private async Task ExportPdfAsync()
     {
         if (IsBusy || _lastSnapshot is null)
+        {
+            return;
+        }
+
+        if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
         {
             return;
         }
@@ -533,5 +553,53 @@ public sealed class DashboardViewModel : BaseViewModel
         }
 
         return "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+    }
+
+    private async Task<bool> EnsureOperationsAllowedAsync()
+    {
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            ApplyOperationsBlockedState(AppResources.BusinessAccessStateLoadFailed);
+            return false;
+        }
+
+        _isOperationsAllowed = result.Value.IsOperationsAllowed;
+        if (_isOperationsAllowed)
+        {
+            RefreshCommand.RaiseCanExecuteChanged();
+            ExportCsvCommand.RaiseCanExecuteChanged();
+            ExportPdfCommand.RaiseCanExecuteChanged();
+            return true;
+        }
+
+        ApplyOperationsBlockedState(BusinessAccessStateUiMapper.GetOperationalStatusMessage(result.Value));
+        return false;
+    }
+
+    private void ApplyOperationsBlockedState(string message)
+    {
+        RunOnMain(() =>
+        {
+            _isOperationsAllowed = false;
+            _lastSnapshot = null;
+            TotalSessions = 0;
+            AccrualCount = 0;
+            RedemptionCount = 0;
+            SubscriptionStatusRefreshFailures = 0;
+            CampaignTargetingFixAppliedCount = 0;
+            CampaignTargetingFixNoChangeCount = 0;
+            CampaignTargetingFixMetricsResetCount = 0;
+            TotalAccruedPoints = 0;
+            TotalRedeemedPoints = 0;
+            TopCustomers.Clear();
+            RecentActivities.Clear();
+            OnPropertyChanged(nameof(HasTopCustomers));
+            OnPropertyChanged(nameof(HasRecentActivities));
+            ErrorMessage = message;
+            RefreshCommand.RaiseCanExecuteChanged();
+            ExportCsvCommand.RaiseCanExecuteChanged();
+            ExportPdfCommand.RaiseCanExecuteChanged();
+        });
     }
 }

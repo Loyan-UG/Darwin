@@ -72,6 +72,7 @@ For authenticated business-side or operational mobile scenarios:
 - campaigns
 - subscriptions
 - business discovery and onboarding
+- business access-state and approval-aware operational gating
 
 This surface is consumed by `Darwin.Mobile.Business` and business-oriented workflows.
 
@@ -125,6 +126,7 @@ Recent route organization changes:
 - public storefront cart and shipping estimation now have dedicated canonical route roots under `api/v1/public/cart` and `api/v1/public/shipping`, while legacy `/api/v1/cart*` and `/api/v1/shipping/rates` aliases remain available during migration
 - public storefront checkout order placement now has a dedicated canonical route root under `api/v1/public/checkout/orders`, while the legacy `/api/v1/checkout/orders` alias remains available during migration
 - public storefront checkout intent, payment intent, and confirmation now live under the dedicated canonical `api/v1/public/checkout/*` route group, while legacy `/api/v1/checkout/*` aliases remain available during migration
+- business mobile now also has a dedicated account-access route under `api/v1/business/account/access-state` so approval/suspension state can be consumed without leaking admin DTOs into public business detail contracts
 
 ### Required public groups
 
@@ -207,6 +209,13 @@ Current member commerce ownership:
 - mobile shared profile services now also cover the canonical member address-book endpoints, so MAUI self-service address flows can move to the audience-first route surface without adding app-local route logic
 - legacy `/api/v1/orders/*` and `/api/v1/invoices/*` aliases remain only for compatibility and should not be used for new development
 - mobile shared route constants should prefer the canonical audience-first roots (`public`, `member`, `business`) even when the legacy aliases still exist server-side
+
+Current business-mobile access-state ownership:
+
+- `GET /api/v1/business/account/access-state` returns the authenticated business lifecycle/access snapshot used by `Darwin.Mobile.Business`
+- the payload includes operational status, active/inactive state, approval/suspension timestamps, suspension reason, onboarding checklist booleans, and derived `isOperationsAllowed` / `isSetupComplete` flags
+- this route is intentionally additive and business-scoped; it avoids polluting public business discovery/detail contracts with admin-only lifecycle context
+- current phase-1 policy is a `Soft Gate`: business operators may sign in during `PendingApproval`, but live operational screens should block against this access-state until the business is approved and active
 
 ### Required CRM admin/integration groups
 

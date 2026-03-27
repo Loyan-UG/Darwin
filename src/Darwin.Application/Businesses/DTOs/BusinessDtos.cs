@@ -77,6 +77,10 @@ namespace Darwin.Application.Businesses.DTOs
         public int MemberCount { get; set; }
         public int ActiveOwnerCount { get; set; }
         public int LocationCount { get; set; }
+        public int PrimaryLocationCount { get; set; }
+        public int InvitationCount { get; set; }
+        public bool HasContactEmailConfigured { get; set; }
+        public bool HasLegalNameConfigured { get; set; }
         public DateTime? CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();

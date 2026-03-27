@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Darwin.Mobile.Business.Constants;
 using Darwin.Mobile.Business.Resources;
 using Darwin.Mobile.Business.Services.Identity;
+using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.ViewModels;
+using Darwin.Contracts.Businesses;
 
 namespace Darwin.Mobile.Business.ViewModels
 {
@@ -23,6 +25,7 @@ namespace Darwin.Mobile.Business.ViewModels
         private readonly INavigationService _navigationService;
         private readonly IBusinessIdentityContextService _businessIdentityContextService;
         private readonly IBusinessAuthorizationService _businessAuthorizationService;
+        private readonly IBusinessAccessService _businessAccessService;
 
         private bool _loadedOnce;
         private string _businessName = AppResources.HomeUnavailableValue;
@@ -31,18 +34,24 @@ namespace Darwin.Mobile.Business.ViewModels
         private string _operatorEmail = AppResources.HomeUnavailableValue;
         private string _businessDescription = string.Empty;
         private string _operatorRole = AppResources.HomeUnavailableValue;
+        private string _businessOperationalStatusLabel = AppResources.HomeUnavailableValue;
+        private string _businessOperationalStatusMessage = string.Empty;
+        private string _setupChecklistSummary = string.Empty;
+        private bool _isOperationsAllowed;
 
         public HomeViewModel(
             INavigationService navigationService,
             IBusinessIdentityContextService businessIdentityContextService,
-            IBusinessAuthorizationService businessAuthorizationService)
+            IBusinessAuthorizationService businessAuthorizationService,
+            IBusinessAccessService businessAccessService)
         {
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
             _businessIdentityContextService = businessIdentityContextService ?? throw new ArgumentNullException(nameof(businessIdentityContextService));
             _businessAuthorizationService = businessAuthorizationService ?? throw new ArgumentNullException(nameof(businessAuthorizationService));
+            _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
 
             LoadContextCommand = new AsyncCommand(LoadContextAsync, () => !IsBusy);
-            ScanCommand = new AsyncCommand(OpenScannerAsync, () => !IsBusy);
+            ScanCommand = new AsyncCommand(OpenScannerAsync, () => !IsBusy && IsOperationsAllowed);
         }
 
         /// <summary>
@@ -106,6 +115,70 @@ namespace Darwin.Mobile.Business.ViewModels
         }
 
         /// <summary>
+        /// Gets the localized operational status label for the current business.
+        /// </summary>
+        public string BusinessOperationalStatusLabel
+        {
+            get => _businessOperationalStatusLabel;
+            private set => SetProperty(ref _businessOperationalStatusLabel, value);
+        }
+
+        /// <summary>
+        /// Gets the operator-facing status message for the current business lifecycle state.
+        /// </summary>
+        public string BusinessOperationalStatusMessage
+        {
+            get => _businessOperationalStatusMessage;
+            private set
+            {
+                if (SetProperty(ref _businessOperationalStatusMessage, value))
+                {
+                    OnPropertyChanged(nameof(HasBusinessOperationalStatusMessage));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether live operational workflows are currently allowed.
+        /// </summary>
+        public bool IsOperationsAllowed
+        {
+            get => _isOperationsAllowed;
+            private set
+            {
+                if (SetProperty(ref _isOperationsAllowed, value))
+                {
+                    ScanCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether a business status message should be shown.
+        /// </summary>
+        public bool HasBusinessOperationalStatusMessage => !string.IsNullOrWhiteSpace(BusinessOperationalStatusMessage);
+
+        /// <summary>
+        /// Gets the setup checklist summary used for soft-gated onboarding guidance.
+        /// </summary>
+        public string SetupChecklistSummary
+        {
+            get => _setupChecklistSummary;
+            private set
+            {
+                if (SetProperty(ref _setupChecklistSummary, value))
+                {
+                    OnPropertyChanged(nameof(HasSetupChecklistSummary));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the setup checklist should be shown.
+        /// </summary>
+        public bool HasSetupChecklistSummary => !string.IsNullOrWhiteSpace(SetupChecklistSummary);
+
+        /// <summary>
         /// Indicates whether a business context has been resolved.
         /// </summary>
         public bool HasBusinessContext => !string.IsNullOrWhiteSpace(BusinessName) && BusinessName != AppResources.HomeUnavailableValue;
@@ -147,6 +220,10 @@ namespace Darwin.Mobile.Business.ViewModels
                         OperatorEmail = AppResources.HomeUnavailableValue;
                         BusinessDescription = string.Empty;
                         OperatorRole = AppResources.HomeUnavailableValue;
+                        BusinessOperationalStatusLabel = AppResources.HomeUnavailableValue;
+                        BusinessOperationalStatusMessage = string.Empty;
+                        SetupChecklistSummary = string.Empty;
+                        IsOperationsAllowed = false;
 
                         ErrorMessage = result.Error ?? AppResources.HomeResolveCurrentBusinessContextFailed;
                         OnPropertyChanged(nameof(HasBusinessContext));
@@ -183,12 +260,22 @@ namespace Darwin.Mobile.Business.ViewModels
                         OperatorRole = AppResources.HomeUnavailableValue;
                     }
                 });
+
+                var accessStateResult = await _businessAccessService
+                    .GetCurrentAccessStateAsync(CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                RunOnMain(() => ApplyAccessState(accessStateResult.Succeeded ? accessStateResult.Value : null));
             }
             catch (Exception)
             {
                 RunOnMain(() =>
                 {
                     ErrorMessage = AppResources.HomeLoadBusinessInfoFailed;
+                    BusinessOperationalStatusLabel = AppResources.HomeUnavailableValue;
+                    BusinessOperationalStatusMessage = AppResources.BusinessAccessStateLoadFailed;
+                    SetupChecklistSummary = string.Empty;
+                    IsOperationsAllowed = false;
                     OnPropertyChanged(nameof(HasBusinessContext));
                 });
             }
@@ -205,7 +292,32 @@ namespace Darwin.Mobile.Business.ViewModels
 
         private async Task OpenScannerAsync()
         {
+            if (!IsOperationsAllowed)
+            {
+                ErrorMessage = BusinessOperationalStatusMessage;
+                return;
+            }
+
             await _navigationService.GoToAsync($"//{Routes.Scanner}");
+        }
+
+        private void ApplyAccessState(BusinessAccessStateResponse? state)
+        {
+            if (state is null)
+            {
+                BusinessOperationalStatusLabel = AppResources.HomeUnavailableValue;
+                BusinessOperationalStatusMessage = AppResources.BusinessAccessStateLoadFailed;
+                SetupChecklistSummary = string.Empty;
+                IsOperationsAllowed = false;
+                return;
+            }
+
+            BusinessOperationalStatusLabel = BusinessAccessStateUiMapper.GetOperationalStatusLabel(state);
+            BusinessOperationalStatusMessage = BusinessAccessStateUiMapper.GetOperationalStatusMessage(state);
+            SetupChecklistSummary = (!state.IsOperationsAllowed || !state.IsSetupComplete)
+                ? BusinessAccessStateUiMapper.BuildSetupChecklistSummary(state)
+                : string.Empty;
+            IsOperationsAllowed = state.IsOperationsAllowed;
         }
     }
 }

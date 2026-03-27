@@ -19,6 +19,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int MemberCount { get; set; }
         public int ActiveOwnerCount { get; set; }
         public int LocationCount { get; set; }
+        public int PrimaryLocationCount { get; set; }
+        public int InvitationCount { get; set; }
+        public bool HasContactEmailConfigured { get; set; }
+        public bool HasLegalNameConfigured { get; set; }
         public DateTime? CreatedAtUtc { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -33,8 +37,11 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public BusinessOperationalStatus? OperationalStatus { get; set; }
+        public bool AttentionOnly { get; set; }
         public List<BusinessListItemVm> Items { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> OperationalStatusItems { get; set; } = Array.Empty<SelectListItem>();
     }
 
     /// <summary>

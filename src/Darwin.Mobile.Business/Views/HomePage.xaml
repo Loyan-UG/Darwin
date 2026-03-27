@@ -137,6 +137,49 @@
                     <RoundRectangle CornerRadius="10" />
                 </Border.StrokeShape>
                 <VerticalStackLayout Padding="12" Spacing="6">
+                    <Label Text="{x:Static res:AppResources.HomeBusinessOperationalStatusTitle}"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Neutral0}" />
+                    <Label Text="{Binding BusinessOperationalStatusLabel}"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Neutral0}" />
+                    <Label Text="{Binding BusinessOperationalStatusMessage}"
+                           FontSize="13"
+                           TextColor="{StaticResource Neutral0}"
+                           Opacity="0.82"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding HasBusinessOperationalStatusMessage}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border StrokeThickness="1"
+                    Stroke="#555555"
+                    BackgroundColor="#222222"
+                    IsVisible="{Binding HasSetupChecklistSummary}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Padding="12" Spacing="6">
+                    <Label Text="{x:Static res:AppResources.HomeSetupChecklistTitle}"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Neutral0}" />
+                    <Label Text="{Binding SetupChecklistSummary}"
+                           FontSize="13"
+                           TextColor="{StaticResource Neutral0}"
+                           Opacity="0.82"
+                           LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Guidance card -->
+            <Border StrokeThickness="1"
+                    Stroke="#555555"
+                    BackgroundColor="#222222">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Padding="12" Spacing="6">
                     <Label Text="{x:Static res:AppResources.HomeTestingHintTitle}"
                            FontAttributes="Bold"
                            TextColor="{StaticResource Neutral0}" />

@@ -84,6 +84,7 @@ Required scenarios:
 - `Completed`: password sign-in now enforces email confirmation and account lockout, so mobile clients follow the same activation/support policy as admin-backed operations
 - `Completed`: `Darwin.Mobile.Consumer` registration now stops after account creation when confirmation is pending instead of attempting an immediate auto-login
 - `Completed`: both mobile apps now expose self-service activation-email request actions on their login surfaces
+- `Completed`: `Darwin.Mobile.Business` now uses a phase-1 `Soft Gate` approval policy; pending-approval businesses can sign in and continue setup, while live operational screens stay blocked until approval
 - `Planned / Near-term`: the surrounding onboarding, activation, invitation, and support lifecycle must be completed end-to-end through backend and WebAdmin
 
 ### Phase-1 invitation acceptance mode
@@ -118,6 +119,17 @@ Mobile usage depends on WebAdmin and backend being able to:
 - support activation and password recovery
 - inspect and troubleshoot account/payment/shipment issues
 - apply initial defaults and configuration
+- apply approval, suspension, and reactivation decisions that now directly affect business-app operational access
+
+### Business approval access policy
+
+Current phase-1 behavior:
+
+- `Completed`: `Darwin.Mobile.Business` can sign in while the linked business is `PendingApproval`
+- `Completed`: `Home` and `Settings` remain accessible so operators can continue setup and support troubleshooting
+- `Completed`: `Scanner`, `Session`, `Dashboard`, and `Rewards` now check the authenticated business access-state API and block live operations until the business is both `Approved` and active
+- `Completed`: `Suspended` businesses are treated as operationally blocked and now surface suspension context to the operator
+- `Planned / Near-term`: decide whether later phases should move from screen-level soft gating to a dedicated onboarding workspace or stricter route composition
 
 This is why WebAdmin completion is currently more important than broader front-office expansion.
 

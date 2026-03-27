@@ -8,6 +8,7 @@ using Darwin.Mobile.Business.Services.Identity;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Integration;
 using Darwin.Mobile.Shared.Navigation;
+using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Business.ViewModels;
@@ -26,10 +27,12 @@ public sealed class ScannerViewModel : BaseViewModel
     private readonly IScanner _scanner;
     private readonly INavigationService _navigationService;
     private readonly IBusinessAuthorizationService _authorizationService;
+    private readonly IBusinessAccessService _businessAccessService;
 
     private string _lastScannedToken = string.Empty;
     private bool _hasRedemptionPermission = true;
     private bool _hasAccrualPermission = true;
+    private bool _isOperationsAllowed = true;
     private string _operatorRole = "—";
 
     private string? _successMessage;
@@ -49,11 +52,13 @@ public sealed class ScannerViewModel : BaseViewModel
     public ScannerViewModel(
         IScanner scanner,
         INavigationService navigationService,
-        IBusinessAuthorizationService authorizationService)
+        IBusinessAuthorizationService authorizationService,
+        IBusinessAccessService businessAccessService)
     {
         _scanner = scanner ?? throw new ArgumentNullException(nameof(scanner));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+        _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
 
         ScanCommand = new AsyncCommand(ScanAsync);
     }
@@ -108,7 +113,7 @@ public sealed class ScannerViewModel : BaseViewModel
     /// <summary>
     /// Gets whether scanner action should be enabled for the current operator and UI busy state.
     /// </summary>
-    public bool CanStartScan => HasAnyProcessingPermission && !IsBusy;
+    public bool CanStartScan => HasAnyProcessingPermission && _isOperationsAllowed && !IsBusy;
 
     /// <summary>
     /// Gets the last scanned QR token, mainly for debugging or display only.
@@ -167,6 +172,7 @@ public sealed class ScannerViewModel : BaseViewModel
     public override async Task OnAppearingAsync()
     {
         await RefreshAuthorizationAsync().ConfigureAwait(false);
+        await EnsureOperationsAllowedAsync().ConfigureAwait(false);
     }
 
     private async Task ScanAsync()
@@ -182,6 +188,11 @@ public sealed class ScannerViewModel : BaseViewModel
 
         try
         {
+            if (!await EnsureOperationsAllowedAsync().ConfigureAwait(false))
+            {
+                return;
+            }
+
             // Read a QR code from the scanner. If the user cancels or no QR is found,
             // scanner returns null or empty string.
             // IMPORTANT: keep default await context in view-model methods because we update
@@ -264,5 +275,32 @@ public sealed class ScannerViewModel : BaseViewModel
         {
             SetWarning(AppResources.BusinessNoScannerPermissionWarning);
         }
+    }
+
+    private async Task<bool> EnsureOperationsAllowedAsync()
+    {
+        var result = await _businessAccessService.GetCurrentAccessStateAsync(CancellationToken.None).ConfigureAwait(false);
+        if (!result.Succeeded || result.Value is null)
+        {
+            _isOperationsAllowed = false;
+            RunOnMain(() =>
+            {
+                SetWarning(AppResources.BusinessAccessStateLoadFailed);
+                OnPropertyChanged(nameof(CanStartScan));
+            });
+
+            return false;
+        }
+
+        _isOperationsAllowed = result.Value.IsOperationsAllowed;
+        RunOnMain(() => OnPropertyChanged(nameof(CanStartScan)));
+
+        if (_isOperationsAllowed)
+        {
+            return true;
+        }
+
+        RunOnMain(() => SetWarning(BusinessAccessStateUiMapper.GetOperationalStatusMessage(result.Value)));
+        return false;
     }
 }
