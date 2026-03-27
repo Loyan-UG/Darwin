@@ -74,6 +74,11 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public BusinessSupportSummaryVm BusinessSupport { get; set; } = new();
 
         /// <summary>
+        /// Gets or sets communication-readiness metrics used by operators.
+        /// </summary>
+        public BusinessCommunicationOpsSummaryVm CommunicationOps { get; set; } = new();
+
+        /// <summary>
         /// Gets or sets the business selector options shown on the dashboard.
         /// </summary>
         public IReadOnlyList<SelectListItem> BusinessOptions { get; set; } = Array.Empty<SelectListItem>();
@@ -94,5 +99,22 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public int SelectedBusinessOpenInvitationCount { get; set; }
         public int SelectedBusinessPendingActivationCount { get; set; }
         public int SelectedBusinessLockedMemberCount { get; set; }
+    }
+
+    /// <summary>
+    /// Global and business-level communication readiness snapshot for the dashboard.
+    /// </summary>
+    public sealed class BusinessCommunicationOpsSummaryVm
+    {
+        public bool EmailTransportConfigured { get; set; }
+        public bool SmsTransportConfigured { get; set; }
+        public bool WhatsAppTransportConfigured { get; set; }
+        public bool AdminAlertRoutingConfigured { get; set; }
+        public int TransactionalEmailBusinessesCount { get; set; }
+        public int MarketingEmailBusinessesCount { get; set; }
+        public int OperationalAlertBusinessesCount { get; set; }
+        public int MissingSupportEmailCount { get; set; }
+        public int MissingSenderIdentityCount { get; set; }
+        public int BusinessesRequiringEmailSetupCount { get; set; }
     }
 }

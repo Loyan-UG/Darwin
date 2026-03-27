@@ -8,6 +8,7 @@ using Darwin.Application.Identity.Queries;
 using Darwin.Application.Inventory.Queries;
 using Darwin.Application.Orders.Queries;
 using Darwin.WebAdmin.Services.Admin;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Admin;
 using Darwin.WebAdmin.ViewModels.CRM;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +32,9 @@ namespace Darwin.WebAdmin.Controllers.Admin
         private readonly GetSuppliersPageHandler _getSuppliersPage;
         private readonly GetPurchaseOrdersPageHandler _getPurchaseOrdersPage;
         private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
+        private readonly GetBusinessCommunicationOpsSummaryHandler _getBusinessCommunicationOpsSummary;
         private readonly AdminReferenceDataService _referenceData;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HomeController"/> class.
@@ -47,7 +50,9 @@ namespace Darwin.WebAdmin.Controllers.Admin
             GetSuppliersPageHandler getSuppliersPage,
             GetPurchaseOrdersPageHandler getPurchaseOrdersPage,
             GetBusinessSupportSummaryHandler getBusinessSupportSummary,
-            AdminReferenceDataService referenceData)
+            GetBusinessCommunicationOpsSummaryHandler getBusinessCommunicationOpsSummary,
+            AdminReferenceDataService referenceData,
+            ISiteSettingCache siteSettingCache)
         {
             _getCrmSummary = getCrmSummary ?? throw new ArgumentNullException(nameof(getCrmSummary));
             _getProductsPage = getProductsPage ?? throw new ArgumentNullException(nameof(getProductsPage));
@@ -59,7 +64,9 @@ namespace Darwin.WebAdmin.Controllers.Admin
             _getSuppliersPage = getSuppliersPage ?? throw new ArgumentNullException(nameof(getSuppliersPage));
             _getPurchaseOrdersPage = getPurchaseOrdersPage ?? throw new ArgumentNullException(nameof(getPurchaseOrdersPage));
             _getBusinessSupportSummary = getBusinessSupportSummary ?? throw new ArgumentNullException(nameof(getBusinessSupportSummary));
+            _getBusinessCommunicationOpsSummary = getBusinessCommunicationOpsSummary ?? throw new ArgumentNullException(nameof(getBusinessCommunicationOpsSummary));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
+            _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
 
         /// <summary>
@@ -79,6 +86,8 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var ordersTask = _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct);
             var usersTask = _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, ct);
             var businessSupportTask = _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct);
+            var communicationOpsTask = _getBusinessCommunicationOpsSummary.HandleAsync(ct);
+            var siteSettingsTask = _siteSettingCache.GetAsync(ct);
 
             Task<(List<Darwin.Application.Billing.DTOs.PaymentListItemDto> Items, int Total)>? paymentsTask = null;
             Task<(List<Darwin.Application.Inventory.DTOs.WarehouseListItemDto> Items, int Total)>? warehousesTask = null;
@@ -93,7 +102,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 purchaseOrdersTask = _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
             }
 
-            await Task.WhenAll(new Task[] { crmSummaryTask, productsTask, pagesTask, ordersTask, usersTask, businessSupportTask }
+            await Task.WhenAll(new Task[] { crmSummaryTask, productsTask, pagesTask, ordersTask, usersTask, businessSupportTask, communicationOpsTask, siteSettingsTask }
                 .Concat(paymentsTask is null ? Array.Empty<Task>() : new[] { paymentsTask })
                 .Concat(warehousesTask is null ? Array.Empty<Task>() : new[] { warehousesTask })
                 .Concat(suppliersTask is null ? Array.Empty<Task>() : new[] { suppliersTask })
@@ -106,6 +115,8 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var orders = await ordersTask.ConfigureAwait(false);
             var users = await usersTask.ConfigureAwait(false);
             var businessSupport = await businessSupportTask.ConfigureAwait(false);
+            var communicationOps = await communicationOpsTask.ConfigureAwait(false);
+            var siteSettings = await siteSettingsTask.ConfigureAwait(false);
 
             var vm = new AdminDashboardVm
             {
@@ -119,6 +130,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 UserCount = users.Total,
                 Crm = MapCrmSummary(crmSummary),
                 BusinessSupport = MapBusinessSupportSummary(businessSupport),
+                CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings),
                 PaymentCount = paymentsTask is null ? null : (await paymentsTask.ConfigureAwait(false)).Total,
                 WarehouseCount = warehousesTask is null ? null : (await warehousesTask.ConfigureAwait(false)).Total,
                 SupplierCount = suppliersTask is null ? null : (await suppliersTask.ConfigureAwait(false)).Total,
@@ -166,6 +178,33 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 SelectedBusinessOpenInvitationCount = dto.SelectedBusinessOpenInvitationCount,
                 SelectedBusinessPendingActivationCount = dto.SelectedBusinessPendingActivationCount,
                 SelectedBusinessLockedMemberCount = dto.SelectedBusinessLockedMemberCount
+            };
+        }
+
+        private static BusinessCommunicationOpsSummaryVm MapCommunicationOpsSummary(
+            Darwin.Application.Businesses.DTOs.BusinessCommunicationOpsSummaryDto dto,
+            Darwin.Application.Settings.DTOs.SiteSettingDto siteSettings)
+        {
+            return new BusinessCommunicationOpsSummaryVm
+            {
+                EmailTransportConfigured = siteSettings.SmtpEnabled &&
+                                           !string.IsNullOrWhiteSpace(siteSettings.SmtpHost) &&
+                                           siteSettings.SmtpPort.HasValue &&
+                                           !string.IsNullOrWhiteSpace(siteSettings.SmtpFromAddress),
+                SmsTransportConfigured = siteSettings.SmsEnabled &&
+                                         !string.IsNullOrWhiteSpace(siteSettings.SmsProvider) &&
+                                         !string.IsNullOrWhiteSpace(siteSettings.SmsFromPhoneE164),
+                WhatsAppTransportConfigured = siteSettings.WhatsAppEnabled &&
+                                              !string.IsNullOrWhiteSpace(siteSettings.WhatsAppBusinessPhoneId) &&
+                                              !string.IsNullOrWhiteSpace(siteSettings.WhatsAppAccessToken),
+                AdminAlertRoutingConfigured = !string.IsNullOrWhiteSpace(siteSettings.AdminAlertEmailsCsv) ||
+                                              !string.IsNullOrWhiteSpace(siteSettings.AdminAlertSmsRecipientsCsv),
+                TransactionalEmailBusinessesCount = dto.BusinessesWithCustomerEmailNotificationsEnabledCount,
+                MarketingEmailBusinessesCount = dto.BusinessesWithMarketingEmailsEnabledCount,
+                OperationalAlertBusinessesCount = dto.BusinessesWithOperationalAlertEmailsEnabledCount,
+                MissingSupportEmailCount = dto.BusinessesMissingSupportEmailCount,
+                MissingSenderIdentityCount = dto.BusinessesMissingSenderIdentityCount,
+                BusinessesRequiringEmailSetupCount = dto.BusinessesRequiringEmailSetupCount
             };
         }
     }

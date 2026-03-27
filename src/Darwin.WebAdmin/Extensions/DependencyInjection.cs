@@ -215,6 +215,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<SoftDeleteBrandHandler>();
             services.AddScoped<GetBusinessesPageHandler>();
             services.AddScoped<GetBusinessSupportSummaryHandler>();
+            services.AddScoped<GetBusinessCommunicationOpsSummaryHandler>();
             services.AddScoped<GetBusinessForEditHandler>();
             services.AddScoped<CreateBusinessHandler>();
             services.AddScoped<UpdateBusinessHandler>();

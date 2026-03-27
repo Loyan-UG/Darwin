@@ -149,6 +149,7 @@ Status terms used below:
 - `In Progress`: business setup workspace now separates business-owned defaults from global phase-1 settings, but true tenant/business settings storage still needs domain and UI expansion
 - `Completed foundation`: business-level branding, localization defaults, time zone, and phase-1 communication defaults now persist on the `Business` aggregate and are editable from the setup workspace
 - `Completed foundation`: business setup now surfaces communication readiness against global transports, so operators can see whether business email/SMS/WhatsApp preferences are actually executable with current platform configuration
+- `Completed foundation`: the admin dashboard now includes a communication-operations snapshot covering global transport readiness and business-level sender/support-email gaps, so communication setup debt is visible before full template/log management exists
 - `Planned / Near-term`: split business communication defaults further into templates, channel policies, and delivery visibility once Communication Core moves out of direct SMTP composition
 - `Planned / Near-term`: make settings UI tenant-aware, permission-aware, and future-safe
 
