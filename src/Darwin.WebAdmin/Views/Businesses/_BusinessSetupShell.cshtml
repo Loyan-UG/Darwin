@@ -48,7 +48,7 @@
             <div class="border rounded p-3 h-100">
                 <div class="text-muted small text-uppercase">Defaults</div>
                 <div class="fw-semibold mt-1">@Model.DefaultCulture / @Model.DefaultCurrency</div>
-                <div class="small text-muted mt-2">Business-level locale and currency</div>
+                <div class="small text-muted mt-2">@Model.DefaultTimeZoneId</div>
             </div>
         </div>
         <div class="col-md-3">
@@ -141,6 +141,11 @@
                         <input asp-for="DefaultCurrency" class="form-control" maxlength="3" />
                     </div>
                     <div class="col-md-4">
+                        <label asp-for="DefaultTimeZoneId" class="form-label">Default time zone</label>
+                        <input asp-for="DefaultTimeZoneId" class="form-control" />
+                        <div class="form-text">Use an IANA time zone such as <code>Europe/Berlin</code>.</div>
+                    </div>
+                    <div class="col-md-4">
                         <div class="form-check mt-4 pt-2">
                             <input asp-for="IsActive" class="form-check-input" disabled="@(Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Approved)" />
                             <label asp-for="IsActive" class="form-check-label">Business is active</label>
@@ -195,9 +200,27 @@
                         <label asp-for="CommunicationReplyToEmail" class="form-label">Reply-to email</label>
                         <input asp-for="CommunicationReplyToEmail" class="form-control" />
                     </div>
+                    <div class="col-md-4">
+                        <div class="form-check mt-4 pt-2">
+                            <input asp-for="CustomerEmailNotificationsEnabled" class="form-check-input" />
+                            <label asp-for="CustomerEmailNotificationsEnabled" class="form-check-label">Customer transactional emails enabled</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mt-4 pt-2">
+                            <input asp-for="CustomerMarketingEmailsEnabled" class="form-check-input" />
+                            <label asp-for="CustomerMarketingEmailsEnabled" class="form-check-label">Customer marketing emails enabled</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mt-4 pt-2">
+                            <input asp-for="OperationalAlertEmailsEnabled" class="form-check-input" />
+                            <label asp-for="OperationalAlertEmailsEnabled" class="form-check-label">Operational alert emails enabled</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-text mt-2">
-                    These are business-level communication preferences. SMTP transport and provider credentials remain global in phase 1.
+                    These are business-level communication preferences. SMTP transport and provider credentials remain global in phase 1, but enablement and sender defaults are now business-scoped.
                 </div>
             </div>
         </div>

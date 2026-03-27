@@ -200,6 +200,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = vm.Category,
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
+                DefaultTimeZoneId = vm.DefaultTimeZoneId,
                 BrandDisplayName = vm.BrandDisplayName,
                 BrandLogoUrl = vm.BrandLogoUrl,
                 BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
@@ -207,6 +208,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SupportEmail = vm.SupportEmail,
                 CommunicationSenderName = vm.CommunicationSenderName,
                 CommunicationReplyToEmail = vm.CommunicationReplyToEmail,
+                CustomerEmailNotificationsEnabled = vm.CustomerEmailNotificationsEnabled,
+                CustomerMarketingEmailsEnabled = vm.CustomerMarketingEmailsEnabled,
+                OperationalAlertEmailsEnabled = vm.OperationalAlertEmailsEnabled,
                 IsActive = vm.IsActive
             };
 
@@ -371,6 +375,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = vm.Category,
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
+                DefaultTimeZoneId = vm.DefaultTimeZoneId,
                 BrandDisplayName = vm.BrandDisplayName,
                 BrandLogoUrl = vm.BrandLogoUrl,
                 BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
@@ -378,6 +383,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SupportEmail = vm.SupportEmail,
                 CommunicationSenderName = vm.CommunicationSenderName,
                 CommunicationReplyToEmail = vm.CommunicationReplyToEmail,
+                CustomerEmailNotificationsEnabled = vm.CustomerEmailNotificationsEnabled,
+                CustomerMarketingEmailsEnabled = vm.CustomerMarketingEmailsEnabled,
+                OperationalAlertEmailsEnabled = vm.OperationalAlertEmailsEnabled,
                 IsActive = vm.IsActive
             };
 
@@ -1330,6 +1338,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = dto.Category,
                 DefaultCurrency = dto.DefaultCurrency,
                 DefaultCulture = dto.DefaultCulture,
+                DefaultTimeZoneId = dto.DefaultTimeZoneId,
                 BrandDisplayName = dto.BrandDisplayName,
                 BrandLogoUrl = dto.BrandLogoUrl,
                 BrandPrimaryColorHex = dto.BrandPrimaryColorHex,
@@ -1337,6 +1346,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SupportEmail = dto.SupportEmail,
                 CommunicationSenderName = dto.CommunicationSenderName,
                 CommunicationReplyToEmail = dto.CommunicationReplyToEmail,
+                CustomerEmailNotificationsEnabled = dto.CustomerEmailNotificationsEnabled,
+                CustomerMarketingEmailsEnabled = dto.CustomerMarketingEmailsEnabled,
+                OperationalAlertEmailsEnabled = dto.OperationalAlertEmailsEnabled,
                 IsActive = dto.IsActive,
                 OperationalStatus = dto.OperationalStatus,
                 ApprovedAtUtc = dto.ApprovedAtUtc,

@@ -13,6 +13,7 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.DefaultCurrency).NotEmpty().MaximumLength(3);
             RuleFor(x => x.DefaultCulture).NotEmpty().MaximumLength(20);
+            RuleFor(x => x.DefaultTimeZoneId).NotEmpty().MaximumLength(64);
 
             RuleFor(x => x.WebsiteUrl).MaximumLength(500);
             RuleFor(x => x.BrandDisplayName).MaximumLength(200);
@@ -41,6 +42,7 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.DefaultCurrency).NotEmpty().MaximumLength(3);
             RuleFor(x => x.DefaultCulture).NotEmpty().MaximumLength(20);
+            RuleFor(x => x.DefaultTimeZoneId).NotEmpty().MaximumLength(64);
 
             RuleFor(x => x.WebsiteUrl).MaximumLength(500);
             RuleFor(x => x.BrandDisplayName).MaximumLength(200);

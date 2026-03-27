@@ -49,7 +49,7 @@ Status terms used below:
 - `Completed`: business-facing access-state API now exposes approval/suspension readiness to authenticated business clients
 - `Completed`: phase-1 `Soft Gate` policy is now implemented in `Darwin.Mobile.Business`: pending-approval businesses can sign in and complete setup, but live operations stay blocked until approval
 - `In Progress`: model and expose richer onboarding state, activation state, approval state, and suspension/reactivation rules beyond the current soft-gate snapshot
-- `In Progress`: seed and apply initial defaults during onboarding (locale, branding basics, payment/shipping defaults, communication defaults where applicable)
+- `In Progress`: seed and apply initial defaults during onboarding (locale, time zone, branding basics, payment/shipping defaults, communication defaults where applicable)
 - `Completed`: business onboarding now includes a dedicated setup workspace in WebAdmin for grouped profile/defaults editing, onboarding shortcuts, and visibility into phase-1 global settings dependencies
 - `Completed`: the business setup workspace now also shows inline previews for members needing support action and open invitations, reducing page-hopping during onboarding troubleshooting
 
@@ -141,7 +141,8 @@ Status terms used below:
 - `In Progress`: basic site settings UI exists
 - `Planned / Near-term`: restructure settings into categories such as General, Business Profile, Localization, Branding, Payments, Shipping, Communications, Users & Roles, Security, Integrations, Tax & Invoicing, and Advanced
 - `In Progress`: business setup workspace now separates business-owned defaults from global phase-1 settings, but true tenant/business settings storage still needs domain and UI expansion
-- `Completed foundation`: business-level branding, localization defaults, and communication defaults now persist on the `Business` aggregate and are editable from the setup workspace
+- `Completed foundation`: business-level branding, localization defaults, time zone, and phase-1 communication defaults now persist on the `Business` aggregate and are editable from the setup workspace
+- `Planned / Near-term`: split business communication defaults further into templates, channel policies, and delivery visibility once Communication Core moves out of direct SMTP composition
 - `Planned / Near-term`: make settings UI tenant-aware, permission-aware, and future-safe
 
 ### Localization readiness

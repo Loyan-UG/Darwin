@@ -120,7 +120,7 @@ Target workflow:
 - `Completed`: the business list now supports operational-status and needs-attention filtering, making approval and setup queues easier for operators to process
 - `Completed`: a dedicated business setup workspace now groups profile, localization/defaults, onboarding shortcuts, and phase-1 settings dependencies instead of forcing operators to infer setup from scattered screens
 - `Completed`: the setup workspace now also surfaces inline previews of members needing activation/lockout support and open invitations, so operators can troubleshoot onboarding from one place
-- `Completed foundation`: business setup now persists business-level branding, localization defaults, and communication defaults instead of treating all setup as a thin wrapper around global settings
+- `Completed foundation`: business setup now persists business-level branding, localization defaults, time zone, and phase-1 communication toggles/defaults instead of treating all setup as a thin wrapper around global settings
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
 - `Decision made`: phase-1 owner onboarding supports both assigning an existing platform user and invitation-first owner creation
 - `Completed foundation`: invitation issue/resend emails can now carry both the manual token and a configurable magic-link path
@@ -185,7 +185,7 @@ Settings UI must be:
 ### Current state
 
 - `Partial`: a basic settings UI exists
-- `Completed foundation`: business setup now has its own grouped workspace, persists business-level branding/localization/communication defaults, and makes the remaining global phase-1 dependencies explicit
+- `Completed foundation`: business setup now has its own grouped workspace, persists business-level branding/localization/time-zone/communication defaults, and makes the remaining global phase-1 dependencies explicit
 - `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
 
 ## 10. Payment Operations UI

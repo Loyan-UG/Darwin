@@ -51,6 +51,10 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
                 .IsRequired()
                 .HasMaxLength(16);
 
+            builder.Property(x => x.DefaultTimeZoneId)
+                .IsRequired()
+                .HasMaxLength(64);
+
             builder.Property(x => x.BrandDisplayName)
                 .HasMaxLength(200);
 
@@ -71,6 +75,15 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
 
             builder.Property(x => x.CommunicationReplyToEmail)
                 .HasMaxLength(256);
+
+            builder.Property(x => x.CustomerEmailNotificationsEnabled)
+                .IsRequired();
+
+            builder.Property(x => x.CustomerMarketingEmailsEnabled)
+                .IsRequired();
+
+            builder.Property(x => x.OperationalAlertEmailsEnabled)
+                .IsRequired();
 
             builder.Property(x => x.Category)
                 .IsRequired();

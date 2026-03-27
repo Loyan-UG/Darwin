@@ -68,6 +68,12 @@ namespace Darwin.Domain.Entities.Businesses
         public string DefaultCulture { get; set; } = "de-DE";
 
         /// <summary>
+        /// IANA time zone identifier used for business-facing scheduling, timestamps, and operational messaging.
+        /// This remains business-scoped even when the hosting platform itself runs in a different server time zone.
+        /// </summary>
+        public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
+
+        /// <summary>
         /// Optional display name used for branded customer-facing content when it should differ from the internal business name.
         /// This is useful for storefront, email templates, and receipts without changing the legal or operational business names.
         /// </summary>
@@ -108,6 +114,24 @@ namespace Darwin.Domain.Entities.Businesses
         /// When omitted, outbound communication should fall back to the broader support or contact email strategy.
         /// </summary>
         public string? CommunicationReplyToEmail { get; set; }
+
+        /// <summary>
+        /// Indicates whether transactional customer emails are enabled for this business.
+        /// This is a business-level preference and does not replace provider-level transport configuration.
+        /// </summary>
+        public bool CustomerEmailNotificationsEnabled { get; set; } = true;
+
+        /// <summary>
+        /// Indicates whether customer-facing marketing emails are allowed for this business.
+        /// Consent and audience eligibility rules still apply separately.
+        /// </summary>
+        public bool CustomerMarketingEmailsEnabled { get; set; }
+
+        /// <summary>
+        /// Indicates whether operational alert emails should be sent to business-facing recipients.
+        /// Examples include onboarding warnings, payment exceptions, and shipping issues.
+        /// </summary>
+        public bool OperationalAlertEmailsEnabled { get; set; } = true;
 
         /// <summary>
         /// Whether the business is active on the platform. Inactive businesses are hidden from discovery and blocked from scanning.

@@ -19,6 +19,7 @@ namespace Darwin.Application.Businesses.DTOs
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
+        public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
         public string? BrandPrimaryColorHex { get; set; }
@@ -26,6 +27,9 @@ namespace Darwin.Application.Businesses.DTOs
         public string? SupportEmail { get; set; }
         public string? CommunicationSenderName { get; set; }
         public string? CommunicationReplyToEmail { get; set; }
+        public bool CustomerEmailNotificationsEnabled { get; set; } = true;
+        public bool CustomerMarketingEmailsEnabled { get; set; }
+        public bool OperationalAlertEmailsEnabled { get; set; } = true;
         public bool IsActive { get; set; } = true;
     }
 
@@ -46,6 +50,7 @@ namespace Darwin.Application.Businesses.DTOs
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
+        public string DefaultTimeZoneId { get; set; } = "Europe/Berlin";
         public string? BrandDisplayName { get; set; }
         public string? BrandLogoUrl { get; set; }
         public string? BrandPrimaryColorHex { get; set; }
@@ -53,6 +58,9 @@ namespace Darwin.Application.Businesses.DTOs
         public string? SupportEmail { get; set; }
         public string? CommunicationSenderName { get; set; }
         public string? CommunicationReplyToEmail { get; set; }
+        public bool CustomerEmailNotificationsEnabled { get; set; } = true;
+        public bool CustomerMarketingEmailsEnabled { get; set; }
+        public bool OperationalAlertEmailsEnabled { get; set; } = true;
         public bool IsActive { get; set; } = true;
         public BusinessOperationalStatus OperationalStatus { get; set; } = BusinessOperationalStatus.PendingApproval;
         public DateTime? ApprovedAtUtc { get; set; }

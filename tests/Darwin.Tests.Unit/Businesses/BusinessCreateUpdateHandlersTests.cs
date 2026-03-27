@@ -28,12 +28,20 @@ public sealed class BusinessCreateUpdateHandlersTests
             Name = "Baeckerei Morgenstern",
             DefaultCurrency = "EUR",
             DefaultCulture = "de-DE",
+            DefaultTimeZoneId = "Europe/Berlin",
+            CustomerEmailNotificationsEnabled = true,
+            CustomerMarketingEmailsEnabled = true,
+            OperationalAlertEmailsEnabled = true,
             IsActive = true
         }, TestContext.Current.CancellationToken);
 
         var persisted = await db.Set<Business>().AsNoTracking().SingleAsync(x => x.Id == id, TestContext.Current.CancellationToken);
         persisted.OperationalStatus.Should().Be(BusinessOperationalStatus.PendingApproval);
         persisted.IsActive.Should().BeFalse();
+        persisted.DefaultTimeZoneId.Should().Be("Europe/Berlin");
+        persisted.CustomerEmailNotificationsEnabled.Should().BeTrue();
+        persisted.CustomerMarketingEmailsEnabled.Should().BeTrue();
+        persisted.OperationalAlertEmailsEnabled.Should().BeTrue();
     }
 
     [Fact]
@@ -56,6 +64,7 @@ public sealed class BusinessCreateUpdateHandlersTests
             Category = entity.Category,
             DefaultCurrency = entity.DefaultCurrency,
             DefaultCulture = entity.DefaultCulture,
+            DefaultTimeZoneId = entity.DefaultTimeZoneId,
             IsActive = true
         }, TestContext.Current.CancellationToken);
 
@@ -85,6 +94,11 @@ public sealed class BusinessCreateUpdateHandlersTests
             Category = entity.Category,
             DefaultCurrency = entity.DefaultCurrency,
             DefaultCulture = entity.DefaultCulture,
+            DefaultTimeZoneId = "Europe/Vienna",
+            SupportEmail = "support@morgenstern.de",
+            CustomerEmailNotificationsEnabled = true,
+            CustomerMarketingEmailsEnabled = true,
+            OperationalAlertEmailsEnabled = false,
             IsActive = true
         }, TestContext.Current.CancellationToken);
 
@@ -92,6 +106,11 @@ public sealed class BusinessCreateUpdateHandlersTests
         persisted.OperationalStatus.Should().Be(BusinessOperationalStatus.Approved);
         persisted.IsActive.Should().BeTrue();
         persisted.Name.Should().Be("Baeckerei Morgenstern Innenstadt");
+        persisted.DefaultTimeZoneId.Should().Be("Europe/Vienna");
+        persisted.SupportEmail.Should().Be("support@morgenstern.de");
+        persisted.CustomerEmailNotificationsEnabled.Should().BeTrue();
+        persisted.CustomerMarketingEmailsEnabled.Should().BeTrue();
+        persisted.OperationalAlertEmailsEnabled.Should().BeFalse();
     }
 
     private static Business CreateBusiness(BusinessOperationalStatus status, bool isActive)
@@ -103,6 +122,7 @@ public sealed class BusinessCreateUpdateHandlersTests
             Category = BusinessCategoryKind.Bakery,
             DefaultCurrency = "EUR",
             DefaultCulture = "de-DE",
+            DefaultTimeZoneId = "Europe/Berlin",
             OperationalStatus = status,
             IsActive = isActive,
             RowVersion = [1, 2, 3]
@@ -138,6 +158,7 @@ public sealed class BusinessCreateUpdateHandlersTests
                 builder.Property(x => x.Name).IsRequired();
                 builder.Property(x => x.DefaultCurrency).IsRequired();
                 builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.DefaultTimeZoneId).IsRequired();
                 builder.Property(x => x.RowVersion).IsRequired();
             });
         }
