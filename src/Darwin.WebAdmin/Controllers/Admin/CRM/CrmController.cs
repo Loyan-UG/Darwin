@@ -126,15 +126,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public async Task<IActionResult> Customers(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Customers(int page = 1, int pageSize = 20, string? q = null, CustomerQueueFilter filter = CustomerQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getCustomersPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var (items, total) = await _getCustomersPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var vm = new CustomersListVm
             {
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildCustomerFilterItems(filter),
                 Items = items.Select(x => new CustomerListItemVm
                 {
                     Id = x.Id,
@@ -1264,6 +1266,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 SegmentCount = dto.SegmentCount,
                 RecentInteractionCount = dto.RecentInteractionCount
             };
+        }
+
+        private static IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All customers", CustomerQueueFilter.All.ToString(), selectedFilter == CustomerQueueFilter.All);
+            yield return new SelectListItem("Linked user", CustomerQueueFilter.LinkedUser.ToString(), selectedFilter == CustomerQueueFilter.LinkedUser);
+            yield return new SelectListItem("Needs segmentation", CustomerQueueFilter.NeedsSegmentation.ToString(), selectedFilter == CustomerQueueFilter.NeedsSegmentation);
+            yield return new SelectListItem("Has opportunities", CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities);
         }
 
         private IActionResult RenderCustomerEditor(CustomerEditVm vm, string actionName)

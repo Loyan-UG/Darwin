@@ -36,6 +36,7 @@ Status terms used below:
 - `Planned / Near-term`: run a functional audit of all admin navigation, quick actions, and operator workflows from the perspective of daily SME usage
 - `Planned / Near-term`: close high-friction support gaps in orders, CRM, media, settings, and business/user management
 - `Completed foundation`: the admin media library now supports queue-style filters for missing alt text, editor-only assets, and library assets, so content cleanup can be worked as an operator queue instead of a flat gallery
+- `Completed foundation`: the CRM customers list now supports queue-style filters for linked-user customers, customers needing segmentation, and customers with open opportunity context, making customer operations less list-heavy
 
 ### Business and tenant onboarding
 

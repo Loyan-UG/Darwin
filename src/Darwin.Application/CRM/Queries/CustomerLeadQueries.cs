@@ -17,6 +17,7 @@ namespace Darwin.Application.CRM.Queries
             int page,
             int pageSize,
             string? query = null,
+            CustomerQueueFilter filter = CustomerQueueFilter.All,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -40,6 +41,14 @@ namespace Darwin.Application.CRM.Queries
                     (x.user != null && x.user.FirstName != null && x.user.FirstName.Contains(q)) ||
                     (x.user != null && x.user.LastName != null && x.user.LastName.Contains(q)));
             }
+
+            baseQuery = filter switch
+            {
+                CustomerQueueFilter.LinkedUser => baseQuery.Where(x => x.customer.UserId.HasValue),
+                CustomerQueueFilter.NeedsSegmentation => baseQuery.Where(x => x.customer.CustomerSegments.Count == 0),
+                CustomerQueueFilter.HasOpportunities => baseQuery.Where(x => x.customer.Opportunities.Count > 0),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
 

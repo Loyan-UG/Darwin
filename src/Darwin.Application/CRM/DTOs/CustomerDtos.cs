@@ -2,6 +2,14 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.CRM.DTOs
 {
+    public enum CustomerQueueFilter
+    {
+        All = 0,
+        LinkedUser = 1,
+        NeedsSegmentation = 2,
+        HasOpportunities = 3
+    }
+
     public sealed class CustomerListItemDto
     {
         public Guid Id { get; set; }
