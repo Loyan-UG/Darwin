@@ -1,4 +1,6 @@
-﻿using Darwin.Application.Abstractions.Notifications;
+using Darwin.Application.Abstractions.Notifications;
+using Darwin.Application.Abstractions.Services;
+using Darwin.Infrastructure.Notifications.BusinessInvitations;
 using Darwin.Infrastructure.Notifications.InactiveReminders;
 using Darwin.Infrastructure.Notifications.Smtp;
 using Microsoft.Extensions.Configuration;
@@ -20,9 +22,11 @@ namespace Darwin.Infrastructure.Extensions
         public static IServiceCollection AddNotificationsInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<SmtpEmailOptions>(configuration.GetSection("Email:Smtp"));
+            services.Configure<BusinessInvitationLinkOptions>(configuration.GetSection("BusinessOnboarding:InvitationMagicLink"));
             services.Configure<InactiveReminderPushGatewayOptions>(configuration.GetSection("Notifications:InactiveReminderPushGateway"));
 
             services.AddSingleton<IEmailSender, SmtpEmailSender>();
+            services.AddSingleton<IBusinessInvitationLinkBuilder, ConfigBusinessInvitationLinkBuilder>();
             services.AddHttpClient<HttpInactiveReminderDispatcher>();
             services.AddScoped<IInactiveReminderDispatcher, HttpInactiveReminderDispatcher>();
             return services;

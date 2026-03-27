@@ -50,7 +50,7 @@ Current usable areas include:
 - loyalty scanning and operational business usage
 - dashboard and business-side workflows already implemented in the app
 - account/profile/password flows that now depend on cleaner backend and admin support
-- business invitation preview and token-entry acceptance for phase-1 onboarding
+- business invitation preview plus token-entry and configurable magic-link acceptance for phase-1 onboarding
 
 ### `Darwin.Mobile.Shared`
 
@@ -93,7 +93,8 @@ Current implementation is intentionally staged:
 
 - token-entry invitation acceptance already exists in `Darwin.Mobile.Business`
 - `Decision made`: phase-1 invitation acceptance should support both token-entry and magic-link entry points
-- magic-link is now a planned extension on top of the existing token-entry baseline, not a replacement for it
+- `Completed`: onboarding invitation emails now include a configurable magic link in addition to the manual token path
+- `Planned / Near-term`: if production app-link registration needs stronger guarantees, extend the current config-driven magic-link base to verified universal/app-link handling per platform
 - a full multi-business switcher is still later work; current behavior only preserves the active business context during refresh
 
 ## 5. Email Dependency

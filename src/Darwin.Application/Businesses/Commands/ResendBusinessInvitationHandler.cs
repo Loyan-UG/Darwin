@@ -21,17 +21,20 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IAppDbContext _db;
         private readonly IEmailSender _emailSender;
         private readonly IClock _clock;
+        private readonly IBusinessInvitationLinkBuilder _businessInvitationLinkBuilder;
         private readonly IValidator<BusinessInvitationResendDto> _validator;
 
         public ResendBusinessInvitationHandler(
             IAppDbContext db,
             IEmailSender emailSender,
             IClock clock,
+            IBusinessInvitationLinkBuilder businessInvitationLinkBuilder,
             IValidator<BusinessInvitationResendDto> validator)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _businessInvitationLinkBuilder = businessInvitationLinkBuilder ?? throw new ArgumentNullException(nameof(businessInvitationLinkBuilder));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
@@ -65,10 +68,14 @@ namespace Darwin.Application.Businesses.Commands
 
             await _db.SaveChangesAsync(ct);
 
+            var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(invitation.Token);
             var subject = $"Invitation to join {business.Name} on Darwin";
             var body =
                 $"<p>Hello,</p>" +
                 $"<p>Your invitation to join <strong>{business.Name}</strong> on Darwin as <strong>{invitation.Role}</strong> has been reissued.</p>" +
+                (string.IsNullOrWhiteSpace(acceptanceLink)
+                    ? string.Empty
+                    : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>") +
                 $"<p>Your new invitation token is:</p>" +
                 $"<p><code>{invitation.Token}</code></p>" +
                 $"<p>This invitation expires at <strong>{invitation.ExpiresAtUtc:u}</strong>.</p>";

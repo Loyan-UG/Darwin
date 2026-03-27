@@ -46,6 +46,13 @@ namespace Darwin.Application.Businesses.Commands
                 Category = dto.Category,
                 DefaultCurrency = dto.DefaultCurrency.Trim(),
                 DefaultCulture = dto.DefaultCulture.Trim(),
+                BrandDisplayName = string.IsNullOrWhiteSpace(dto.BrandDisplayName) ? null : dto.BrandDisplayName.Trim(),
+                BrandLogoUrl = string.IsNullOrWhiteSpace(dto.BrandLogoUrl) ? null : dto.BrandLogoUrl.Trim(),
+                BrandPrimaryColorHex = string.IsNullOrWhiteSpace(dto.BrandPrimaryColorHex) ? null : dto.BrandPrimaryColorHex.Trim(),
+                BrandSecondaryColorHex = string.IsNullOrWhiteSpace(dto.BrandSecondaryColorHex) ? null : dto.BrandSecondaryColorHex.Trim(),
+                SupportEmail = string.IsNullOrWhiteSpace(dto.SupportEmail) ? null : dto.SupportEmail.Trim(),
+                CommunicationSenderName = string.IsNullOrWhiteSpace(dto.CommunicationSenderName) ? null : dto.CommunicationSenderName.Trim(),
+                CommunicationReplyToEmail = string.IsNullOrWhiteSpace(dto.CommunicationReplyToEmail) ? null : dto.CommunicationReplyToEmail.Trim(),
                 // New businesses remain inactive until an explicit approval action completes onboarding.
                 IsActive = false,
                 OperationalStatus = BusinessOperationalStatus.PendingApproval

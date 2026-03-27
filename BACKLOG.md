@@ -141,6 +141,7 @@ Status terms used below:
 - `In Progress`: basic site settings UI exists
 - `Planned / Near-term`: restructure settings into categories such as General, Business Profile, Localization, Branding, Payments, Shipping, Communications, Users & Roles, Security, Integrations, Tax & Invoicing, and Advanced
 - `In Progress`: business setup workspace now separates business-owned defaults from global phase-1 settings, but true tenant/business settings storage still needs domain and UI expansion
+- `Completed foundation`: business-level branding, localization defaults, and communication defaults now persist on the `Business` aggregate and are editable from the setup workspace
 - `Planned / Near-term`: make settings UI tenant-aware, permission-aware, and future-safe
 
 ### Localization readiness
@@ -261,10 +262,13 @@ Status terms used below:
 - `Decision made`: retire the legacy `/admin` and `/dashboard` redirects after `Darwin.WebAdmin` is functionally complete and post-completion testing confirms they are no longer needed
 - `Planned / Near-term`: add a cleanup task to remove the legacy `/admin` and `/dashboard` redirects once the WebAdmin completion audit and test pass are finished
 - `Decision made`: `MediaAsset` deletion follows a hybrid strategy: keep metadata-level soft delete now, then add reference-aware physical purge/orphan cleanup later
-- `Decision pending`: decide how far initial tenant/customer separation should go for SME onboarding in the first go-live wave versus a lighter business-first provisioning model
+- `Decision made`: SME onboarding follows a staged rollout; phase 1 stays business-first, while deeper tenant/customer separation remains a later design/implementation decision
 - `Decision made`: phase-1 business owner onboarding should support both assigning an existing platform user and invitation-first owner creation
-- `Decision pending`: decide whether support admins should have an explicit emergency override for the "last active owner cannot be removed or disabled" policy
+- `Decision made`: the "last active owner cannot be removed or disabled" policy may be overridden only by `FullAdmin`, with required reason capture and explicit audit logging
+- `Planned / Near-term`: add the `FullAdmin` override workflow for the "last active owner" policy, including required reason entry, clear UI warning, and audit log persistence
+- `Future / Later phase`: add a site-setting option to require dual approval for the last-owner override path in enterprise-heavy deployments
 - `Decision made`: invitation acceptance in phase 1 should support both token-entry and magic-link driven flows
+- `Completed`: phase-1 invitation emails now include both the manual token path and a configurable magic-link path
 - `Decision made`: business-scoped admins should receive delegated onboarding/support actions selectively; invitation issue/resend and reset-support are good candidates, while approval/suspension remain FullAdmin-only
 - `Decision made`: settings should move via staged split from global to business-specific; start with branding/localization/communications, then move payment/shipping once provider integrations mature
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh

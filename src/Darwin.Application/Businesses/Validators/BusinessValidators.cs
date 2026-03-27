@@ -15,6 +15,13 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.DefaultCulture).NotEmpty().MaximumLength(20);
 
             RuleFor(x => x.WebsiteUrl).MaximumLength(500);
+            RuleFor(x => x.BrandDisplayName).MaximumLength(200);
+            RuleFor(x => x.BrandLogoUrl).MaximumLength(500);
+            RuleFor(x => x.BrandPrimaryColorHex).MaximumLength(16);
+            RuleFor(x => x.BrandSecondaryColorHex).MaximumLength(16);
+            RuleFor(x => x.SupportEmail).MaximumLength(200).EmailAddress().When(x => x.SupportEmail != null);
+            RuleFor(x => x.CommunicationSenderName).MaximumLength(200);
+            RuleFor(x => x.CommunicationReplyToEmail).MaximumLength(200).EmailAddress().When(x => x.CommunicationReplyToEmail != null);
             RuleFor(x => x.ContactEmail).MaximumLength(200).EmailAddress().When(x => x.ContactEmail != null);
             RuleFor(x => x.ContactPhoneE164).MaximumLength(30);
             RuleFor(x => x.LegalName).MaximumLength(300);
@@ -36,6 +43,13 @@ namespace Darwin.Application.Businesses.Validators
             RuleFor(x => x.DefaultCulture).NotEmpty().MaximumLength(20);
 
             RuleFor(x => x.WebsiteUrl).MaximumLength(500);
+            RuleFor(x => x.BrandDisplayName).MaximumLength(200);
+            RuleFor(x => x.BrandLogoUrl).MaximumLength(500);
+            RuleFor(x => x.BrandPrimaryColorHex).MaximumLength(16);
+            RuleFor(x => x.BrandSecondaryColorHex).MaximumLength(16);
+            RuleFor(x => x.SupportEmail).MaximumLength(200).EmailAddress().When(x => x.SupportEmail != null);
+            RuleFor(x => x.CommunicationSenderName).MaximumLength(200);
+            RuleFor(x => x.CommunicationReplyToEmail).MaximumLength(200).EmailAddress().When(x => x.CommunicationReplyToEmail != null);
             RuleFor(x => x.ContactEmail).MaximumLength(200).EmailAddress().When(x => x.ContactEmail != null);
             RuleFor(x => x.ContactPhoneE164).MaximumLength(30);
             RuleFor(x => x.LegalName).MaximumLength(300);

@@ -200,6 +200,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = vm.Category,
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
+                BrandDisplayName = vm.BrandDisplayName,
+                BrandLogoUrl = vm.BrandLogoUrl,
+                BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
+                BrandSecondaryColorHex = vm.BrandSecondaryColorHex,
+                SupportEmail = vm.SupportEmail,
+                CommunicationSenderName = vm.CommunicationSenderName,
+                CommunicationReplyToEmail = vm.CommunicationReplyToEmail,
                 IsActive = vm.IsActive
             };
 
@@ -364,6 +371,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = vm.Category,
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
+                BrandDisplayName = vm.BrandDisplayName,
+                BrandLogoUrl = vm.BrandLogoUrl,
+                BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
+                BrandSecondaryColorHex = vm.BrandSecondaryColorHex,
+                SupportEmail = vm.SupportEmail,
+                CommunicationSenderName = vm.CommunicationSenderName,
+                CommunicationReplyToEmail = vm.CommunicationReplyToEmail,
                 IsActive = vm.IsActive
             };
 
@@ -409,6 +423,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = vm.Category,
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
+                BrandDisplayName = vm.BrandDisplayName,
+                BrandLogoUrl = vm.BrandLogoUrl,
+                BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
+                BrandSecondaryColorHex = vm.BrandSecondaryColorHex,
+                SupportEmail = vm.SupportEmail,
+                CommunicationSenderName = vm.CommunicationSenderName,
+                CommunicationReplyToEmail = vm.CommunicationReplyToEmail,
                 IsActive = vm.IsActive
             };
 
@@ -1309,6 +1330,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = dto.Category,
                 DefaultCurrency = dto.DefaultCurrency,
                 DefaultCulture = dto.DefaultCulture,
+                BrandDisplayName = dto.BrandDisplayName,
+                BrandLogoUrl = dto.BrandLogoUrl,
+                BrandPrimaryColorHex = dto.BrandPrimaryColorHex,
+                BrandSecondaryColorHex = dto.BrandSecondaryColorHex,
+                SupportEmail = dto.SupportEmail,
+                CommunicationSenderName = dto.CommunicationSenderName,
+                CommunicationReplyToEmail = dto.CommunicationReplyToEmail,
                 IsActive = dto.IsActive,
                 OperationalStatus = dto.OperationalStatus,
                 ApprovedAtUtc = dto.ApprovedAtUtc,

@@ -6,6 +6,14 @@
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
+<input type="hidden" asp-for="BrandDisplayName" />
+<input type="hidden" asp-for="BrandLogoUrl" />
+<input type="hidden" asp-for="BrandPrimaryColorHex" />
+<input type="hidden" asp-for="BrandSecondaryColorHex" />
+<input type="hidden" asp-for="SupportEmail" />
+<input type="hidden" asp-for="CommunicationSenderName" />
+<input type="hidden" asp-for="CommunicationReplyToEmail" />
+
 <div class="row g-3">
     <div class="col-md-6">
         <label asp-for="Name" class="form-label">Business name</label>

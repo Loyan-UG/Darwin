@@ -155,6 +155,54 @@
         </div>
 
         <div class="card mb-4">
+            <div class="card-header">Branding</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="BrandDisplayName" class="form-label">Brand display name</label>
+                        <input asp-for="BrandDisplayName" class="form-control" />
+                        <div class="form-text">Use when customer-facing branding should differ from the legal or internal business name.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BrandLogoUrl" class="form-label">Brand logo URL</label>
+                        <input asp-for="BrandLogoUrl" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BrandPrimaryColorHex" class="form-label">Primary brand color</label>
+                        <input asp-for="BrandPrimaryColorHex" class="form-control" placeholder="#0055AA" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BrandSecondaryColorHex" class="form-label">Secondary brand color</label>
+                        <input asp-for="BrandSecondaryColorHex" class="form-control" placeholder="#FFCC00" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Business Communication Defaults</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="SupportEmail" class="form-label">Support email</label>
+                        <input asp-for="SupportEmail" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CommunicationSenderName" class="form-label">Sender display name</label>
+                        <input asp-for="CommunicationSenderName" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="CommunicationReplyToEmail" class="form-label">Reply-to email</label>
+                        <input asp-for="CommunicationReplyToEmail" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-text mt-2">
+                    These are business-level communication preferences. SMTP transport and provider credentials remain global in phase 1.
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
             <div class="card-header">Operational Setup Actions</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">

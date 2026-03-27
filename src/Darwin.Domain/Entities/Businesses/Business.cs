@@ -68,6 +68,48 @@ namespace Darwin.Domain.Entities.Businesses
         public string DefaultCulture { get; set; } = "de-DE";
 
         /// <summary>
+        /// Optional display name used for branded customer-facing content when it should differ from the internal business name.
+        /// This is useful for storefront, email templates, and receipts without changing the legal or operational business names.
+        /// </summary>
+        public string? BrandDisplayName { get; set; }
+
+        /// <summary>
+        /// Optional logo URL used for business-branded content such as emails, hosted pages, or future storefront widgets.
+        /// The value should be an absolute or application-relative URL and must not point to private internal storage paths.
+        /// </summary>
+        public string? BrandLogoUrl { get; set; }
+
+        /// <summary>
+        /// Optional primary brand color in hex format (for example, "#0055AA").
+        /// This is intended for lightweight branding and should remain a presentational hint, not a security-sensitive field.
+        /// </summary>
+        public string? BrandPrimaryColorHex { get; set; }
+
+        /// <summary>
+        /// Optional secondary or accent brand color in hex format.
+        /// This complements <see cref="BrandPrimaryColorHex"/> for future storefront and communication theming.
+        /// </summary>
+        public string? BrandSecondaryColorHex { get; set; }
+
+        /// <summary>
+        /// Optional email address used for customer support or outbound communication reply handling.
+        /// This may differ from the public contact email and should be suitable for operational support traffic.
+        /// </summary>
+        public string? SupportEmail { get; set; }
+
+        /// <summary>
+        /// Optional display name used as the sender name in business-scoped email communication.
+        /// This is a business-level communication preference and not a transport-level SMTP setting.
+        /// </summary>
+        public string? CommunicationSenderName { get; set; }
+
+        /// <summary>
+        /// Optional reply-to email address for business-scoped communication templates.
+        /// When omitted, outbound communication should fall back to the broader support or contact email strategy.
+        /// </summary>
+        public string? CommunicationReplyToEmail { get; set; }
+
+        /// <summary>
         /// Whether the business is active on the platform. Inactive businesses are hidden from discovery and blocked from scanning.
         /// </summary>
         public bool IsActive { get; set; } = true;

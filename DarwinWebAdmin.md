@@ -120,9 +120,11 @@ Target workflow:
 - `Completed`: the business list now supports operational-status and needs-attention filtering, making approval and setup queues easier for operators to process
 - `Completed`: a dedicated business setup workspace now groups profile, localization/defaults, onboarding shortcuts, and phase-1 settings dependencies instead of forcing operators to infer setup from scattered screens
 - `Completed`: the setup workspace now also surfaces inline previews of members needing activation/lockout support and open invitations, so operators can troubleshoot onboarding from one place
+- `Completed foundation`: business setup now persists business-level branding, localization defaults, and communication defaults instead of treating all setup as a thin wrapper around global settings
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
 - `Decision made`: phase-1 owner onboarding supports both assigning an existing platform user and invitation-first owner creation
-- `Decision made`: phase-1 invitation acceptance should evolve toward supporting both token-entry and magic-link flows
+- `Completed foundation`: invitation issue/resend emails can now carry both the manual token and a configurable magic-link path
+- `Planned / Near-term`: harden the current config-driven magic-link path into fully verified app-link handling if production mobile onboarding needs it
 - `Completed`: approval, suspension, and reactivation actions now exist in WebAdmin, together with a readiness checklist for owner, primary location, contact email, and legal-name completion
 - `Completed`: approval decisions now have operational impact because `Darwin.Mobile.Business` uses a phase-1 soft gate against the business access-state API
 - `Planned / Near-term`: explicit onboarding state machine, richer setup workspace UX, and tenant/customer provisioning still need completion
@@ -183,7 +185,7 @@ Settings UI must be:
 ### Current state
 
 - `Partial`: a basic settings UI exists
-- `Completed foundation`: business setup now has its own grouped workspace and makes the current split between business-owned data and global phase-1 settings explicit
+- `Completed foundation`: business setup now has its own grouped workspace, persists business-level branding/localization/communication defaults, and makes the remaining global phase-1 dependencies explicit
 - `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
 
 ## 10. Payment Operations UI

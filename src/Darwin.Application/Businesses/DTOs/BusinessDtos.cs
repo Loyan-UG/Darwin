@@ -19,6 +19,13 @@ namespace Darwin.Application.Businesses.DTOs
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
+        public string? BrandDisplayName { get; set; }
+        public string? BrandLogoUrl { get; set; }
+        public string? BrandPrimaryColorHex { get; set; }
+        public string? BrandSecondaryColorHex { get; set; }
+        public string? SupportEmail { get; set; }
+        public string? CommunicationSenderName { get; set; }
+        public string? CommunicationReplyToEmail { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
@@ -39,6 +46,13 @@ namespace Darwin.Application.Businesses.DTOs
         public BusinessCategoryKind Category { get; set; } = BusinessCategoryKind.Unknown;
         public string DefaultCurrency { get; set; } = "EUR";
         public string DefaultCulture { get; set; } = "de-DE";
+        public string? BrandDisplayName { get; set; }
+        public string? BrandLogoUrl { get; set; }
+        public string? BrandPrimaryColorHex { get; set; }
+        public string? BrandSecondaryColorHex { get; set; }
+        public string? SupportEmail { get; set; }
+        public string? CommunicationSenderName { get; set; }
+        public string? CommunicationReplyToEmail { get; set; }
         public bool IsActive { get; set; } = true;
         public BusinessOperationalStatus OperationalStatus { get; set; } = BusinessOperationalStatus.PendingApproval;
         public DateTime? ApprovedAtUtc { get; set; }

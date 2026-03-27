@@ -464,6 +464,7 @@ This is especially important because early operational usage is expected to star
 ### Current state
 
 - `Completed`: a basic site settings capability already exists
+- `Completed foundation`: the `Business` aggregate now stores initial business-scoped branding, localization-default, and communication-default fields as the first step of a staged split away from purely global settings
 - `Planned / Near-term`: settings still need explicit domain architecture to avoid uncontrolled key/value sprawl
 
 ### Required settings scopes

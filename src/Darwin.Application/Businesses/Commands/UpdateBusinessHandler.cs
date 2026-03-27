@@ -51,6 +51,13 @@ namespace Darwin.Application.Businesses.Commands
             entity.Category = dto.Category;
             entity.DefaultCurrency = dto.DefaultCurrency.Trim();
             entity.DefaultCulture = dto.DefaultCulture.Trim();
+            entity.BrandDisplayName = string.IsNullOrWhiteSpace(dto.BrandDisplayName) ? null : dto.BrandDisplayName.Trim();
+            entity.BrandLogoUrl = string.IsNullOrWhiteSpace(dto.BrandLogoUrl) ? null : dto.BrandLogoUrl.Trim();
+            entity.BrandPrimaryColorHex = string.IsNullOrWhiteSpace(dto.BrandPrimaryColorHex) ? null : dto.BrandPrimaryColorHex.Trim();
+            entity.BrandSecondaryColorHex = string.IsNullOrWhiteSpace(dto.BrandSecondaryColorHex) ? null : dto.BrandSecondaryColorHex.Trim();
+            entity.SupportEmail = string.IsNullOrWhiteSpace(dto.SupportEmail) ? null : dto.SupportEmail.Trim();
+            entity.CommunicationSenderName = string.IsNullOrWhiteSpace(dto.CommunicationSenderName) ? null : dto.CommunicationSenderName.Trim();
+            entity.CommunicationReplyToEmail = string.IsNullOrWhiteSpace(dto.CommunicationReplyToEmail) ? null : dto.CommunicationReplyToEmail.Trim();
             entity.IsActive = entity.OperationalStatus == BusinessOperationalStatus.Approved && dto.IsActive;
 
             await _db.SaveChangesAsync(ct);

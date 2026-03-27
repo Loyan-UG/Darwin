@@ -25,6 +25,7 @@ namespace Darwin.Application.Businesses.Commands
         private readonly IEmailSender _emailSender;
         private readonly IClock _clock;
         private readonly ICurrentUserService _currentUser;
+        private readonly IBusinessInvitationLinkBuilder _businessInvitationLinkBuilder;
         private readonly IValidator<BusinessInvitationCreateDto> _validator;
 
         public CreateBusinessInvitationHandler(
@@ -32,12 +33,14 @@ namespace Darwin.Application.Businesses.Commands
             IEmailSender emailSender,
             IClock clock,
             ICurrentUserService currentUser,
+            IBusinessInvitationLinkBuilder businessInvitationLinkBuilder,
             IValidator<BusinessInvitationCreateDto> validator)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _emailSender = emailSender ?? throw new ArgumentNullException(nameof(emailSender));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+            _businessInvitationLinkBuilder = businessInvitationLinkBuilder ?? throw new ArgumentNullException(nameof(businessInvitationLinkBuilder));
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
@@ -93,10 +96,14 @@ namespace Darwin.Application.Businesses.Commands
             _db.Set<BusinessInvitation>().Add(entity);
             await _db.SaveChangesAsync(ct);
 
+            var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(token);
             var subject = $"Invitation to join {business.Name} on Darwin";
             var body =
                 $"<p>Hello,</p>" +
                 $"<p>You have been invited to join <strong>{business.Name}</strong> on Darwin as <strong>{dto.Role}</strong>.</p>" +
+                (string.IsNullOrWhiteSpace(acceptanceLink)
+                    ? string.Empty
+                    : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>") +
                 $"<p>Your invitation token is:</p>" +
                 $"<p><code>{token}</code></p>" +
                 $"<p>This invitation expires at <strong>{expiresAtUtc:u}</strong>.</p>" +

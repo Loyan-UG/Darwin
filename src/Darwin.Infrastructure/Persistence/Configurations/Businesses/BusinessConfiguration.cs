@@ -51,6 +51,27 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Businesses
                 .IsRequired()
                 .HasMaxLength(16);
 
+            builder.Property(x => x.BrandDisplayName)
+                .HasMaxLength(200);
+
+            builder.Property(x => x.BrandLogoUrl)
+                .HasMaxLength(500);
+
+            builder.Property(x => x.BrandPrimaryColorHex)
+                .HasMaxLength(16);
+
+            builder.Property(x => x.BrandSecondaryColorHex)
+                .HasMaxLength(16);
+
+            builder.Property(x => x.SupportEmail)
+                .HasMaxLength(256);
+
+            builder.Property(x => x.CommunicationSenderName)
+                .HasMaxLength(200);
+
+            builder.Property(x => x.CommunicationReplyToEmail)
+                .HasMaxLength(256);
+
             builder.Property(x => x.Category)
                 .IsRequired();
 
