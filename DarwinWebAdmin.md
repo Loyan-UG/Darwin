@@ -59,7 +59,7 @@ This is especially important because early operational usage is expected to star
 | Area | Status | Notes |
 | --- | --- | --- |
 | Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
-| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, onboarding checklist visibility, actionable next-step shortcuts, and business mobile soft-gate policy now exist; tenant/customer provisioning and richer onboarding-state orchestration remain near-term. |
+| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, onboarding checklist visibility, actionable next-step shortcuts, delegated support access, and business mobile soft-gate policy now exist; tenant/customer provisioning and richer onboarding-state orchestration remain near-term. |
 | Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist; Stripe-specific lifecycle support is still pending. |
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; reporting and support depth still need improvement. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, and purchase orders exist; receipt/adjustment/exception flows still need work. |
@@ -127,6 +127,7 @@ Target workflow:
 - `Planned / Near-term`: harden the current config-driven magic-link path into fully verified app-link handling if production mobile onboarding needs it
 - `Completed`: approval, suspension, and reactivation actions now exist in WebAdmin, together with a readiness checklist for owner, primary location, contact email, and legal-name completion
 - `Completed`: approval decisions now have operational impact because `Darwin.Mobile.Business` uses a phase-1 soft gate against the business access-state API
+- `Completed foundation`: delegated business-support operators can now access business listing, member-support, and invitation workflows through a dedicated permission path, while business lifecycle and ownership-sensitive actions remain FullAdmin-only
 - `Planned / Near-term`: explicit onboarding state machine, richer setup workspace UX, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support
@@ -147,6 +148,7 @@ WebAdmin should support or coordinate:
 - `In Progress`: invite issuance/reissue/revoke now exists for business onboarding
 - `Completed`: WebAdmin now supports admin-triggered password reset email, lock/unlock, email-confirm override, and activation-email resend from the user edit workflow
 - `Completed`: the same activation/reset/lock/unlock support actions are now available directly inside the business-member workspace, which removes a major operator detour during onboarding troubleshooting
+- `Completed foundation`: selective delegation is now enforced in both controller authorization and view affordances, so support operators can work with invitations and member support without inheriting approval, archive, location, or owner-management powers
 - `Completed`: the business-member edit flow now supports a controlled `FullAdmin` override for the "last active owner" rule, with mandatory reason capture, explicit danger-state UI, and persisted audit records
 - `Completed`: owner-override audit history is now visible inside the business workspace, so sensitive ownership exceptions are reviewable without querying the database directly
 - `Completed foundation`: the platform now has public confirm-email token endpoints, so admin activation support is no longer only a placeholder

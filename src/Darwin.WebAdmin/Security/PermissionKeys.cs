@@ -8,5 +8,6 @@ namespace Darwin.WebAdmin.Security
     {
         public const string FullAdminAccess = "FullAdminAccess";
         public const string AccessMemberArea = "AccessMemberArea";
+        public const string ManageBusinessSupport = "ManageBusinessSupport";
     }
 }

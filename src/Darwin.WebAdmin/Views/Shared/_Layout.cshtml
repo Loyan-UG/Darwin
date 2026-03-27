@@ -1,6 +1,10 @@
 @using Microsoft.AspNetCore.Antiforgery
 @inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
 @inject IAntiforgery Antiforgery
+@{
+    var canManageBusinesses = await Perms.HasAsync("ManageBusinessSupport");
+    var canManageIdentity = await Perms.HasAsync("FullAdminAccess");
+}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -150,14 +154,17 @@
                         <i class="fa-solid fa-scale-balanced me-2"></i> Journal Entries
                     </active-nav>
 
-                    @* Protected sections (FullAdminAccess) *@
-                    @if (await Perms.HasAsync("FullAdminAccess"))
+                    @if (canManageBusinesses)
                     {
                         <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Business Setup</div>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="Businesses" asp-action="Index">
                             <i class="fa-solid fa-building me-2"></i> Businesses
                         </active-nav>
+                    }
 
+                    @* Protected sections (FullAdminAccess) *@
+                    @if (canManageIdentity)
+                    {
                         <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">Identity</div>
                         <active-nav class="list-group-item list-group-item-action" asp-controller="Users" asp-action="Index">
                             <i class="fa-solid fa-user-group me-2"></i> Users
@@ -254,6 +261,6 @@
         });
     </script>
 
-    @RenderSection("Scripts", required: false)
+@RenderSection("Scripts", required: false)
 </body>
 </html>

@@ -25,9 +25,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 {
     /// <summary>
     /// Admin controller for merchant/business onboarding and lifecycle management.
-    /// This is a FullAdmin-only surface because it controls tenant creation and owner assignment.
+    /// Most lifecycle actions remain FullAdmin-only, while selected support actions are delegated
+    /// through <see cref="PermissionKeys.ManageBusinessSupport"/>.
     /// </summary>
-    [PermissionAuthorize("FullAdminAccess")]
+    [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
     public sealed class BusinessesController : AdminBaseController
     {
         private readonly GetBusinessesPageHandler _getBusinessesPage;
@@ -126,6 +127,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> Index(
             int page = 1,
             int pageSize = 20,
@@ -177,6 +179,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Create(CancellationToken ct = default)
         {
             var vm = new BusinessEditVm
@@ -188,6 +191,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Create(BusinessEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -251,6 +255,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct = default)
         {
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
@@ -266,6 +271,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Setup(Guid id, CancellationToken ct = default)
         {
             var dto = await _getBusinessForEdit.HandleAsync(id, ct);
@@ -281,6 +287,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> SetupMembersPreview(Guid businessId, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -321,6 +328,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> SetupInvitationsPreview(Guid businessId, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -361,6 +369,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Edit(BusinessEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -417,6 +426,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Setup(BusinessEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -469,6 +479,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Delete([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
             Result result = await _deleteBusiness.HandleAsync(new BusinessDeleteDto
@@ -484,6 +495,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Approve([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
             try
@@ -505,6 +517,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Suspend([FromForm] Guid id, [FromForm] byte[]? rowVersion, [FromForm] string? note, CancellationToken ct = default)
         {
             try
@@ -527,6 +540,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Reactivate([FromForm] Guid id, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
             try
@@ -548,6 +562,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Locations(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -584,6 +599,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> CreateLocation(Guid businessId, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -602,6 +618,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> CreateLocation(BusinessLocationEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -640,6 +657,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditLocation(Guid id, CancellationToken ct = default)
         {
             var dto = await _getBusinessLocationForEdit.HandleAsync(id, ct);
@@ -681,6 +699,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditLocation(BusinessLocationEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -726,6 +745,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> DeleteLocation([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
             var result = await _deleteBusinessLocation.HandleAsync(new BusinessLocationDeleteDto
@@ -741,6 +761,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> Members(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -779,6 +800,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> Invitations(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -817,6 +839,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> OwnerOverrideAudits(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -854,6 +877,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> CreateInvitation(Guid businessId, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -875,6 +899,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> CreateInvitation(BusinessInvitationCreateVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -908,6 +933,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> ResendInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
         {
             try
@@ -928,6 +954,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> RevokeInvitation([FromForm] Guid id, [FromForm] Guid businessId, CancellationToken ct = default)
         {
             try
@@ -948,6 +975,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> CreateMember(Guid businessId, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
@@ -969,6 +997,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> CreateMember(BusinessMemberEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -1001,6 +1030,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditMember(Guid id, CancellationToken ct = default)
         {
             var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);
@@ -1038,6 +1068,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditMember(BusinessMemberEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
@@ -1080,6 +1111,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> DeleteMember([FromForm] Guid id, [FromForm(Name = "userId")] Guid businessId, [FromForm] byte[]? rowVersion, CancellationToken ct = default)
         {
             try
@@ -1101,6 +1133,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> ForceDeleteMember(
             [FromForm] Guid id,
             [FromForm] Guid businessId,
@@ -1130,6 +1163,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> SendMemberActivationEmail(
             [FromForm] Guid id,
             [FromForm] Guid businessId,
@@ -1158,6 +1192,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> ConfirmMemberEmail(
             [FromForm] Guid id,
             [FromForm] Guid businessId,
@@ -1184,6 +1219,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> SendMemberPasswordReset(
             [FromForm] Guid id,
             [FromForm] Guid businessId,
@@ -1212,6 +1248,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> LockMemberUser(
             [FromForm] Guid id,
             [FromForm] Guid businessId,
@@ -1238,6 +1275,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> UnlockMemberUser(
             [FromForm] Guid id,
             [FromForm] Guid businessId,

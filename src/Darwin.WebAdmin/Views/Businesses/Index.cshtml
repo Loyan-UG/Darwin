@@ -1,6 +1,8 @@
 @model Darwin.WebAdmin.ViewModels.Businesses.BusinessesListVm
+@inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
 @{
     ViewData["Title"] = "Businesses";
+    var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -8,9 +10,12 @@
         <h1 class="mb-0"><i class="fa-solid fa-building me-2"></i>Businesses</h1>
         <p class="text-muted mb-0">Create and maintain merchant tenants, owner assignments, and operational readiness.</p>
     </div>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="fa-solid fa-plus"></i> Create Business
-    </a>
+    @if (isFullAdmin)
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Create Business
+        </a>
+    }
 </div>
 
 <form method="get" class="row g-2 mb-3">
@@ -140,28 +145,34 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                            <i class="fa-solid fa-pen"></i> Edit
-                        </a>
-                        <a asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
-                            <i class="fa-solid fa-sliders"></i> Setup
-                        </a>
                         <a asp-action="Members" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
                             <i class="fa-solid fa-user-group"></i> Members
                         </a>
-                        <a asp-action="Locations" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
-                            <i class="fa-solid fa-location-dot"></i> Locations
+                        <a asp-action="Invitations" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-envelope"></i> Invitations
                         </a>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger"
-                                data-bs-toggle="modal"
-                                data-bs-target="#confirmDeleteModal"
-                                data-action="@Url.Action("Delete", "Businesses")"
-                                data-id="@item.Id"
-                                data-name="@item.Name"
-                                data-rowversion="@Convert.ToBase64String(item.RowVersion)">
-                            <i class="fa-solid fa-box-archive"></i> Archive
-                        </button>
+                        @if (isFullAdmin)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </a>
+                            <a asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa-solid fa-sliders"></i> Setup
+                            </a>
+                            <a asp-action="Locations" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa-solid fa-location-dot"></i> Locations
+                            </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-action="@Url.Action("Delete", "Businesses")"
+                                    data-id="@item.Id"
+                                    data-name="@item.Name"
+                                    data-rowversion="@Convert.ToBase64String(item.RowVersion)">
+                                <i class="fa-solid fa-box-archive"></i> Archive
+                            </button>
+                        }
                     </td>
                 </tr>
             }

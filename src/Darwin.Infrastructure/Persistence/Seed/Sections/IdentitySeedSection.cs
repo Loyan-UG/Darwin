@@ -53,6 +53,7 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 ("AccessAdminPanel", "Access Admin Panel", "Can sign in to the admin UI"),
                 ("RecycleBinAccess", "Recycle Bin Access", "View and restore soft-deleted items"),
                 ("AccessMemberArea", "Access Member Area", "Signed-in members area access"),
+                ("ManageBusinessSupport", "Manage Business Support", "Access delegated business onboarding and support workflows in WebAdmin."),
                 ("AccessLoyaltyBusiness", "Access Loyalty Business Features",
                     "Can process loyalty scan sessions and related business operations via Web and WebApi.")
             };
@@ -78,6 +79,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var businessRole = await EnsureRoleAsync(db, "business", "Business Users", true,
                 "Business app users with loyalty access", null, ct);
+            var businessSupportRole = await EnsureRoleAsync(db, "business-support-admins", "Business Support Admins", true,
+                "Delegated WebAdmin operators for business onboarding support actions", null, ct);
 
             var webUsersRole = await EnsureRoleAsync(db, "web-users", "Web Users", false,
                 "Website-only accounts with limited access", null, ct);
@@ -87,12 +90,15 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
 
             var pFullAdmin = allPerms.First(p => p.Key == "FullAdminAccess");
             var pMemberArea = allPerms.First(p => p.Key == "AccessMemberArea");
+            var pBusinessSupport = allPerms.First(p => p.Key == "ManageBusinessSupport");
             var pLoyaltyBiz = allPerms.First(p => p.Key == "AccessLoyaltyBusiness");
             var pAccessAdminPanel = allPerms.First(p => p.Key == "AccessAdminPanel");
 
             await EnsureRolePermissionAsync(db, adminRole.Id, pFullAdmin.Id, ct);
             await EnsureRolePermissionAsync(db, membersRole.Id, pMemberArea.Id, ct);
             await EnsureRolePermissionAsync(db, businessRole.Id, pLoyaltyBiz.Id, ct);
+            await EnsureRolePermissionAsync(db, businessSupportRole.Id, pAccessAdminPanel.Id, ct);
+            await EnsureRolePermissionAsync(db, businessSupportRole.Id, pBusinessSupport.Id, ct);
             await EnsureRolePermissionAsync(db, webUsersRole.Id, pAccessAdminPanel.Id, ct);
 
             // ----------------------------
