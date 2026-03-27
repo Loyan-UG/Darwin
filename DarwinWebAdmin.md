@@ -64,7 +64,7 @@ This is especially important because early operational usage is expected to star
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; reporting and support depth still need improvement. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, and purchase orders exist; receipt/adjustment/exception flows still need work. |
 | Identity/Admin Support | In Progress | Users, roles, permissions, and core admin identity flows exist; invite/activation/support actions need completion. |
-| Settings | Partial | Basic settings UI exists, but settings information architecture still needs redesign and categorization. |
+| Settings | In Progress | Global site settings exist and business onboarding now has a dedicated setup workspace, but full tenant-aware settings architecture still needs domain and UI expansion. |
 | Communication Management | Planned / Near-term | Must become first-class for email templates, delivery logs, resend/retry, and admin visibility. |
 | Shipping Operations | Partial | Generic order shipment visibility exists; DHL-first operational workspace is still near-term work. |
 
@@ -118,7 +118,11 @@ Target workflow:
 - `In Progress`: business creation, owner assignment, member management, location management, and invitation/resend/revoke now exist in WebAdmin
 - `Completed`: business onboarding shells now surface direct next actions for missing owner, location, invitation, and profile-completion steps instead of only passive checklist warnings
 - `Completed`: the business list now supports operational-status and needs-attention filtering, making approval and setup queues easier for operators to process
+- `Completed`: a dedicated business setup workspace now groups profile, localization/defaults, onboarding shortcuts, and phase-1 settings dependencies instead of forcing operators to infer setup from scattered screens
+- `Completed`: the setup workspace now also surfaces inline previews of members needing activation/lockout support and open invitations, so operators can troubleshoot onboarding from one place
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
+- `Decision made`: phase-1 owner onboarding supports both assigning an existing platform user and invitation-first owner creation
+- `Decision made`: phase-1 invitation acceptance should evolve toward supporting both token-entry and magic-link flows
 - `Completed`: approval, suspension, and reactivation actions now exist in WebAdmin, together with a readiness checklist for owner, primary location, contact email, and legal-name completion
 - `Completed`: approval decisions now have operational impact because `Darwin.Mobile.Business` uses a phase-1 soft gate against the business access-state API
 - `Planned / Near-term`: explicit onboarding state machine, richer setup workspace UX, and tenant/customer provisioning still need completion
@@ -179,6 +183,7 @@ Settings UI must be:
 ### Current state
 
 - `Partial`: a basic settings UI exists
+- `Completed foundation`: business setup now has its own grouped workspace and makes the current split between business-owned data and global phase-1 settings explicit
 - `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
 
 ## 10. Payment Operations UI

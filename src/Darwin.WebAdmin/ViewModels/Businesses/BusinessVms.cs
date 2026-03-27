@@ -249,4 +249,24 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public BusinessContextVm Business { get; set; } = new();
         public IEnumerable<SelectListItem> RoleOptions { get; set; } = Array.Empty<SelectListItem>();
     }
+
+    /// <summary>
+    /// Compact member preview for the business setup workspace.
+    /// </summary>
+    public sealed class BusinessSetupMembersPreviewVm
+    {
+        public Guid BusinessId { get; set; }
+        public int AttentionCount { get; set; }
+        public List<BusinessMemberListItemVm> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Compact invitation preview for the business setup workspace.
+    /// </summary>
+    public sealed class BusinessSetupInvitationsPreviewVm
+    {
+        public Guid BusinessId { get; set; }
+        public int OpenCount { get; set; }
+        public List<BusinessInvitationListItemVm> Items { get; set; } = new();
+    }
 }

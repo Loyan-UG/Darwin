@@ -10,6 +10,7 @@
     </div>
     <div class="d-flex gap-2">
         <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Back to business</a>
+        <a asp-action="Setup" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Setup</a>
         <a asp-action="Members" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Members</a>
         <a asp-action="CreateInvitation" asp-route-businessId="@Model.Business.Id" class="btn btn-primary">
             <i class="fa-solid fa-plus"></i> Invite user

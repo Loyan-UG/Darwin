@@ -1,0 +1,46 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessSetupMembersPreviewVm
+
+@if (Model.AttentionCount == 0)
+{
+    <div class="text-success">No members currently need activation or lockout support.</div>
+    <a asp-action="Members" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary mt-3">Open Members</a>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-semibold">@Model.AttentionCount member(s) need support action</div>
+        <a asp-action="Members" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Open Members</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@item.UserDisplayName</div>
+                        <div class="small text-muted">@item.UserEmail</div>
+                    </td>
+                    <td>
+                        @if (!item.EmailConfirmed)
+                        {
+                            <span class="badge text-bg-warning">Pending activation</span>
+                        }
+                        @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
+                        {
+                            <span class="badge text-bg-danger ms-1">Locked</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

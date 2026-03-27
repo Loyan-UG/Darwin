@@ -1,0 +1,48 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessSetupInvitationsPreviewVm
+
+@if (Model.OpenCount == 0)
+{
+    <div class="text-success">No pending or expired invitations require attention right now.</div>
+    <a asp-action="Invitations" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary mt-3">Open Invitations</a>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-semibold">@Model.OpenCount open invitation(s)</div>
+        <a asp-action="Invitations" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Open Invitations</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@item.Email</div>
+                        <div class="small text-muted">Expires @item.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</div>
+                    </td>
+                    <td>
+                        @if (item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Pending)
+                        {
+                            <span class="badge text-bg-primary">Pending</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-warning">Expired</span>
+                        }
+                    </td>
+                    <td>@item.Role</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

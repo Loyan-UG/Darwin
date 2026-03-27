@@ -16,6 +16,9 @@
                 <a asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
                     <i class="fa-solid fa-user-group"></i> Members
                 </a>
+                <a asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-sliders"></i> Setup
+                </a>
                 <a asp-action="Locations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
                     <i class="fa-solid fa-location-dot"></i> Locations
                 </a>
@@ -194,6 +197,9 @@
                 }
                 <a asp-action="CreateInvitation" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
                     <i class="fa-solid fa-envelope"></i> Invite User
+                </a>
+                <a asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-sliders"></i> Open Setup Workspace
                 </a>
                 @if (Model.InvitationCount > 0)
                 {

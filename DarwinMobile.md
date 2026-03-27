@@ -89,10 +89,11 @@ Required scenarios:
 
 ### Phase-1 invitation acceptance mode
 
-Current implementation is intentionally conservative:
+Current implementation is intentionally staged:
 
-- invitation acceptance is token-entry based in `Darwin.Mobile.Business`
-- the same flow is future-ready for deep-link or magic-link entry, but those are not phase-1 requirements yet
+- token-entry invitation acceptance already exists in `Darwin.Mobile.Business`
+- `Decision made`: phase-1 invitation acceptance should support both token-entry and magic-link entry points
+- magic-link is now a planned extension on top of the existing token-entry baseline, not a replacement for it
 - a full multi-business switcher is still later work; current behavior only preserves the active business context during refresh
 
 ## 5. Email Dependency

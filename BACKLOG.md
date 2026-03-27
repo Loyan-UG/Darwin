@@ -50,6 +50,8 @@ Status terms used below:
 - `Completed`: phase-1 `Soft Gate` policy is now implemented in `Darwin.Mobile.Business`: pending-approval businesses can sign in and complete setup, but live operations stay blocked until approval
 - `In Progress`: model and expose richer onboarding state, activation state, approval state, and suspension/reactivation rules beyond the current soft-gate snapshot
 - `In Progress`: seed and apply initial defaults during onboarding (locale, branding basics, payment/shipping defaults, communication defaults where applicable)
+- `Completed`: business onboarding now includes a dedicated setup workspace in WebAdmin for grouped profile/defaults editing, onboarding shortcuts, and visibility into phase-1 global settings dependencies
+- `Completed`: the business setup workspace now also shows inline previews for members needing support action and open invitations, reducing page-hopping during onboarding troubleshooting
 
 ### Authentication and account lifecycle
 
@@ -138,6 +140,7 @@ Status terms used below:
 
 - `In Progress`: basic site settings UI exists
 - `Planned / Near-term`: restructure settings into categories such as General, Business Profile, Localization, Branding, Payments, Shipping, Communications, Users & Roles, Security, Integrations, Tax & Invoicing, and Advanced
+- `In Progress`: business setup workspace now separates business-owned defaults from global phase-1 settings, but true tenant/business settings storage still needs domain and UI expansion
 - `Planned / Near-term`: make settings UI tenant-aware, permission-aware, and future-safe
 
 ### Localization readiness
@@ -255,13 +258,15 @@ Status terms used below:
 
 ## 8. Decision Log
 
-- `Decision pending`: decide when it is safe to retire the legacy `/admin` and `/dashboard` redirects still served by `DashboardController`
-- `Decision pending`: decide whether `MediaAsset` deletion should remain metadata-only soft delete or evolve into reference-aware physical file purge/orphan cleanup
+- `Decision made`: retire the legacy `/admin` and `/dashboard` redirects after `Darwin.WebAdmin` is functionally complete and post-completion testing confirms they are no longer needed
+- `Planned / Near-term`: add a cleanup task to remove the legacy `/admin` and `/dashboard` redirects once the WebAdmin completion audit and test pass are finished
+- `Decision made`: `MediaAsset` deletion follows a hybrid strategy: keep metadata-level soft delete now, then add reference-aware physical purge/orphan cleanup later
 - `Decision pending`: decide how far initial tenant/customer separation should go for SME onboarding in the first go-live wave versus a lighter business-first provisioning model
-- `Decision pending`: decide whether phase-1 business onboarding should remain "assign existing user as owner" or include invitation-first owner creation before the Communication Core MVP is complete
+- `Decision made`: phase-1 business owner onboarding should support both assigning an existing platform user and invitation-first owner creation
 - `Decision pending`: decide whether support admins should have an explicit emergency override for the "last active owner cannot be removed or disabled" policy
-- `Decision pending`: decide whether invitation acceptance in phase 1 should be token-entry driven, magic-link driven, or both across `Darwin.Mobile.Business` and future front-end onboarding flows
-- `Decision pending`: decide whether business-scoped admins should eventually receive delegated versions of the current FullAdmin-only onboarding/support actions for members and invitations
+- `Decision made`: invitation acceptance in phase 1 should support both token-entry and magic-link driven flows
+- `Decision made`: business-scoped admins should receive delegated onboarding/support actions selectively; invitation issue/resend and reset-support are good candidates, while approval/suspension remain FullAdmin-only
+- `Decision made`: settings should move via staged split from global to business-specific; start with branding/localization/communications, then move payment/shipping once provider integrations mature
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh
 - `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live
 - `Decision made`: phase-1 password authentication now rejects unconfirmed accounts and locked accounts; follow-up UX should add self-service resend-activation where appropriate

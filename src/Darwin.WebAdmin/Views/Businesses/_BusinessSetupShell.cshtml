@@ -1,0 +1,246 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessEditVm
+@{
+    ViewData["Title"] = "Business Setup";
+    var checklistComplete = Model.ActiveOwnerCount > 0 &&
+                            Model.PrimaryLocationCount > 0 &&
+                            Model.HasContactEmailConfigured &&
+                            Model.HasLegalNameConfigured;
+}
+
+<div id="business-setup-shell">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-1">Business Setup</h1>
+            <p class="text-muted mb-0">@Model.Name</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-pen"></i> Edit Business
+            </a>
+            <a asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-user-group"></i> Members
+            </a>
+            <a asp-action="Locations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-location-dot"></i> Locations
+            </a>
+            <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-envelope"></i> Invitations
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small text-uppercase">Operational Status</div>
+                <div class="fw-semibold mt-1">@Model.OperationalStatus</div>
+                <div class="small text-muted mt-2">@(Model.IsActive ? "Business is active" : "Business is inactive")</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small text-uppercase">Checklist</div>
+                <div class="fw-semibold mt-1">@(checklistComplete ? "Complete" : "Incomplete")</div>
+                <div class="small text-muted mt-2">@Model.ActiveOwnerCount owner(s), @Model.PrimaryLocationCount primary location(s)</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small text-uppercase">Defaults</div>
+                <div class="fw-semibold mt-1">@Model.DefaultCulture / @Model.DefaultCurrency</div>
+                <div class="small text-muted mt-2">Business-level locale and currency</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="border rounded p-3 h-100">
+                <div class="text-muted small text-uppercase">Go-live Readiness</div>
+                <div class="fw-semibold mt-1">@(checklistComplete && Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Approved ? "Operationally ready" : "Still pending setup")</div>
+                <div class="small text-muted mt-2">Approval and checklist must both be satisfied.</div>
+            </div>
+        </div>
+    </div>
+
+    @if (!checklistComplete)
+    {
+        <div class="alert alert-warning">
+            Setup is still incomplete. Finish owner assignment, primary location, legal name, and contact email before operational approval.
+        </div>
+    }
+
+    <form asp-action="Setup"
+          method="post"
+          hx-post="@Url.Action("Setup", "Businesses")"
+          hx-target="#business-setup-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="RowVersion" />
+        <input type="hidden" asp-for="OperationalStatus" />
+        <input type="hidden" asp-for="ApprovedAtUtc" />
+        <input type="hidden" asp-for="SuspendedAtUtc" />
+        <input type="hidden" asp-for="SuspensionReason" />
+        <input type="hidden" asp-for="MemberCount" />
+        <input type="hidden" asp-for="ActiveOwnerCount" />
+        <input type="hidden" asp-for="LocationCount" />
+        <input type="hidden" asp-for="PrimaryLocationCount" />
+        <input type="hidden" asp-for="InvitationCount" />
+        <input type="hidden" asp-for="HasContactEmailConfigured" />
+        <input type="hidden" asp-for="HasLegalNameConfigured" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="card mb-4" id="business-profile-settings">
+            <div class="card-header">Business Profile</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label">Business name</label>
+                        <input asp-for="Name" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="LegalName" class="form-label">Legal name</label>
+                        <input asp-for="LegalName" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="TaxId" class="form-label">Tax / VAT ID</label>
+                        <input asp-for="TaxId" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Category" class="form-label">Category</label>
+                        <select asp-for="Category" asp-items="Model.CategoryOptions" class="form-select"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="WebsiteUrl" class="form-label">Website</label>
+                        <input asp-for="WebsiteUrl" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ContactPhoneE164" class="form-label">Contact phone (E.164)</label>
+                        <input asp-for="ContactPhoneE164" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ContactEmail" class="form-label">Contact email</label>
+                        <input asp-for="ContactEmail" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="ShortDescription" class="form-label">Short description</label>
+                        <textarea asp-for="ShortDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Localization and Operational Defaults</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="DefaultCulture" class="form-label">Default culture</label>
+                        <input asp-for="DefaultCulture" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DefaultCurrency" class="form-label">Default currency</label>
+                        <input asp-for="DefaultCurrency" class="form-control" maxlength="3" />
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mt-4 pt-2">
+                            <input asp-for="IsActive" class="form-check-input" disabled="@(Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Approved)" />
+                            <label asp-for="IsActive" class="form-check-label">Business is active</label>
+                        </div>
+                        @if (Model.OperationalStatus != Darwin.Domain.Enums.BusinessOperationalStatus.Approved)
+                        {
+                            <div class="form-text">Activation remains blocked until the business is approved.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Operational Setup Actions</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-action="CreateMember" asp-route-businessId="@Model.Id" class="btn btn-outline-primary">
+                        <i class="fa-solid fa-user-plus"></i> Assign Member
+                    </a>
+                    <a asp-action="CreateLocation" asp-route-businessId="@Model.Id" class="btn btn-outline-primary">
+                        <i class="fa-solid fa-location-dot"></i> Add Location
+                    </a>
+                    <a asp-action="CreateInvitation" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-envelope"></i> Invite User
+                    </a>
+                    <a asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-user-group"></i> Review Members
+                    </a>
+                    <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-list-check"></i> Review Invitations
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">Members Requiring Attention</div>
+                    <div class="card-body"
+                         hx-get="@Url.Action("SetupMembersPreview", "Businesses", new { businessId = Model.Id })"
+                         hx-trigger="load"
+                         hx-target="this"
+                         hx-swap="innerHTML">
+                        <div class="text-muted">Loading member status…</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">Open Invitations</div>
+                    <div class="card-body"
+                         hx-get="@Url.Action("SetupInvitationsPreview", "Businesses", new { businessId = Model.Id })"
+                         hx-trigger="load"
+                         hx-target="this"
+                         hx-swap="innerHTML">
+                        <div class="text-muted">Loading invitation status…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Phase-1 Platform Settings Dependencies</div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Some settings are still managed globally in phase 1. Business-specific provider configuration is planned, but not yet part of the domain model.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="fw-semibold">Payments</div>
+                            <div class="small text-muted mt-2">Stripe-first setup currently depends on platform-level configuration.</div>
+                            <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-sm btn-outline-secondary mt-3">Open Site Settings</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="fw-semibold">Shipping</div>
+                            <div class="small text-muted mt-2">DHL-first shipping defaults are still planned as platform settings and later business-level overrides.</div>
+                            <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-sm btn-outline-secondary mt-3">Open Site Settings</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 h-100">
+                            <div class="fw-semibold">Communications</div>
+                            <div class="small text-muted mt-2">SMTP and notification delivery settings are global right now and will later flow into Communication Core.</div>
+                            <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-sm btn-outline-secondary mt-3">Open Site Settings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> Save Setup
+            </button>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Back to business</a>
+        </div>
+    </form>
+</div>

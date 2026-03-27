@@ -246,6 +246,101 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Setup(Guid id, CancellationToken ct = default)
+        {
+            var dto = await _getBusinessForEdit.HandleAsync(id, ct);
+            if (dto is null)
+            {
+                TempData["Error"] = "Business not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var vm = MapBusinessEditVm(dto);
+            await PopulateBusinessFormOptionsAsync(vm, ct);
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SetupMembersPreview(Guid businessId, CancellationToken ct = default)
+        {
+            var business = await LoadBusinessContextAsync(businessId, ct);
+            if (business is null)
+            {
+                return PartialView("~/Views/Businesses/_SetupMembersPreview.cshtml", new BusinessSetupMembersPreviewVm
+                {
+                    BusinessId = businessId
+                });
+            }
+
+            var (items, _) = await _getBusinessMembersPage.HandleAsync(businessId, 1, 50, null, ct);
+            var attentionMembers = items
+                .Where(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > DateTime.UtcNow))
+                .Take(5)
+                .Select(x => new BusinessMemberListItemVm
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    UserId = x.UserId,
+                    UserDisplayName = x.UserDisplayName,
+                    UserEmail = x.UserEmail,
+                    EmailConfirmed = x.EmailConfirmed,
+                    LockoutEndUtc = x.LockoutEndUtc,
+                    Role = x.Role,
+                    IsActive = x.IsActive,
+                    ModifiedAtUtc = x.ModifiedAtUtc,
+                    RowVersion = x.RowVersion
+                })
+                .ToList();
+
+            return PartialView("~/Views/Businesses/_SetupMembersPreview.cshtml", new BusinessSetupMembersPreviewVm
+            {
+                BusinessId = businessId,
+                AttentionCount = items.Count(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > DateTime.UtcNow)),
+                Items = attentionMembers
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SetupInvitationsPreview(Guid businessId, CancellationToken ct = default)
+        {
+            var business = await LoadBusinessContextAsync(businessId, ct);
+            if (business is null)
+            {
+                return PartialView("~/Views/Businesses/_SetupInvitationsPreview.cshtml", new BusinessSetupInvitationsPreviewVm
+                {
+                    BusinessId = businessId
+                });
+            }
+
+            var (items, _) = await _getBusinessInvitationsPage.HandleAsync(businessId, 1, 50, null, ct);
+            var openInvitations = items
+                .Where(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired)
+                .Take(5)
+                .Select(x => new BusinessInvitationListItemVm
+                {
+                    Id = x.Id,
+                    BusinessId = x.BusinessId,
+                    Email = x.Email,
+                    Role = x.Role,
+                    Status = x.Status,
+                    InvitedByDisplayName = x.InvitedByDisplayName,
+                    ExpiresAtUtc = x.ExpiresAtUtc,
+                    AcceptedAtUtc = x.AcceptedAtUtc,
+                    RevokedAtUtc = x.RevokedAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    Note = x.Note
+                })
+                .ToList();
+
+            return PartialView("~/Views/Businesses/_SetupInvitationsPreview.cshtml", new BusinessSetupInvitationsPreviewVm
+            {
+                BusinessId = businessId,
+                OpenCount = items.Count(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired),
+                Items = openInvitations
+            });
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(BusinessEditVm vm, CancellationToken ct = default)
         {
@@ -288,6 +383,51 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateBusinessFormOptionsAsync(vm, ct);
                 return RenderBusinessEditor(vm, isCreate: false);
+            }
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Setup(BusinessEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateBusinessFormOptionsAsync(vm, ct);
+                return RenderBusinessSetupEditor(vm);
+            }
+
+            var dto = new BusinessEditDto
+            {
+                Id = vm.Id,
+                RowVersion = vm.RowVersion ?? Array.Empty<byte>(),
+                Name = vm.Name,
+                LegalName = vm.LegalName,
+                TaxId = vm.TaxId,
+                ShortDescription = vm.ShortDescription,
+                WebsiteUrl = vm.WebsiteUrl,
+                ContactEmail = vm.ContactEmail,
+                ContactPhoneE164 = vm.ContactPhoneE164,
+                Category = vm.Category,
+                DefaultCurrency = vm.DefaultCurrency,
+                DefaultCulture = vm.DefaultCulture,
+                IsActive = vm.IsActive
+            };
+
+            try
+            {
+                await _updateBusiness.HandleAsync(dto, ct);
+                TempData["Success"] = "Business setup saved.";
+                return RedirectOrHtmx(nameof(Setup), new { id = vm.Id });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["Error"] = "Concurrency conflict. Reload the business and try again.";
+                return RedirectOrHtmx(nameof(Setup), new { id = vm.Id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateBusinessFormOptionsAsync(vm, ct);
+                return RenderBusinessSetupEditor(vm);
             }
         }
 
@@ -1108,6 +1248,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private IActionResult RenderInvitationEditor(BusinessInvitationCreateVm vm)
         {
             return View("CreateInvitation", vm);
+        }
+
+        private IActionResult RenderBusinessSetupEditor(BusinessEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Businesses/_BusinessSetupShell.cshtml", vm);
+            }
+
+            return View("Setup", vm);
         }
 
         private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId)
