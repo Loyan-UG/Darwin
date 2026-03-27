@@ -48,14 +48,16 @@
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Status</th>
+                <th>Owner</th>
                 <th>Interactions</th>
+                <th>Updated (UTC)</th>
                 <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted">No leads found.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted">No leads found.</td></tr>
         }
         else
         {
@@ -67,14 +69,34 @@
                     <td>@item.Email</td>
                     <td>@item.Phone</td>
                     <td><span class="badge text-bg-light">@item.Status</span></td>
+                    <td>@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? "-" : item.AssignedToUserDisplayName)</td>
                     <td>@item.InteractionCount</td>
+                    <td>@item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="text-end">
                         @if (item.CustomerId.HasValue)
                         {
                             <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="btn btn-sm btn-outline-success">
                                 <i class="fa fa-user"></i> Customer
                             </a>
+                            <a asp-action="CreateOpportunity" asp-route-customerId="@item.CustomerId.Value" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-briefcase"></i> Opportunity
+                            </a>
                         }
+                        else if (item.Status == Darwin.Domain.Enums.LeadStatus.Qualified)
+                        {
+                            <form asp-controller="Crm" asp-action="ConvertLead" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="LeadId" value="@item.Id" />
+                                <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                <input type="hidden" name="CopyNotesToCustomer" value="true" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    <i class="fa fa-arrow-right"></i> Convert
+                                </button>
+                            </form>
+                        }
+                        <a asp-action="EditLead" asp-route-id="@item.Id" asp-fragment="lead-interactions-grid" class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-comments"></i> Interactions
+                        </a>
                         <a asp-action="EditLead" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> Edit
                         </a>

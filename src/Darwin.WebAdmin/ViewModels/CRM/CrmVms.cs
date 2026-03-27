@@ -141,7 +141,10 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public LeadStatus Status { get; set; }
+        public Guid? AssignedToUserId { get; set; }
+        public string? AssignedToUserDisplayName { get; set; }
         public int InteractionCount { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -208,13 +211,17 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     public sealed class OpportunityListItemVm
     {
         public Guid Id { get; set; }
+        public Guid CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public long EstimatedValueMinor { get; set; }
         public OpportunityStage Stage { get; set; }
         public DateTime? ExpectedCloseDateUtc { get; set; }
+        public Guid? AssignedToUserId { get; set; }
+        public string? AssignedToUserDisplayName { get; set; }
         public int ItemCount { get; set; }
         public int InteractionCount { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

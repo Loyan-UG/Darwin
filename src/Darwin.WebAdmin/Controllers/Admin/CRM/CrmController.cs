@@ -526,7 +526,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Email = x.Email,
                     Phone = x.Phone,
                     Status = x.Status,
+                    AssignedToUserId = x.AssignedToUserId,
+                    AssignedToUserDisplayName = x.AssignedToUserDisplayName,
                     InteractionCount = x.InteractionCount,
+                    ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -675,13 +678,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Items = items.Select(x => new OpportunityListItemVm
                 {
                     Id = x.Id,
+                    CustomerId = x.CustomerId,
                     CustomerDisplayName = x.CustomerDisplayName,
                     Title = x.Title,
                     EstimatedValueMinor = x.EstimatedValueMinor,
                     Stage = x.Stage,
                     ExpectedCloseDateUtc = x.ExpectedCloseDateUtc,
+                    AssignedToUserId = x.AssignedToUserId,
+                    AssignedToUserDisplayName = x.AssignedToUserDisplayName,
                     ItemCount = x.ItemCount,
                     InteractionCount = x.InteractionCount,
+                    ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -690,9 +697,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public async Task<IActionResult> CreateOpportunity(CancellationToken ct = default)
+        public async Task<IActionResult> CreateOpportunity(Guid? customerId = null, CancellationToken ct = default)
         {
-            var vm = new OpportunityEditVm();
+            var vm = new OpportunityEditVm
+            {
+                CustomerId = customerId ?? Guid.Empty
+            };
             EnsureOpportunityLineRows(vm);
             await PopulateOpportunityOptionsAsync(vm, ct).ConfigureAwait(false);
             return RenderOpportunityEditor(vm, nameof(CreateOpportunity));

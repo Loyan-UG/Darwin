@@ -28,6 +28,7 @@ namespace Darwin.Application.CRM.DTOs
         public OpportunityStage Stage { get; set; }
         public DateTime? ExpectedCloseDateUtc { get; set; }
         public Guid? AssignedToUserId { get; set; }
+        public string? AssignedToUserDisplayName { get; set; }
         public int ItemCount { get; set; }
         public int InteractionCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }

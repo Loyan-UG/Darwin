@@ -39,12 +39,16 @@ Status terms used below:
 - `Completed foundation`: the CRM customers list now supports queue-style filters for linked-user customers, customers needing segmentation, and customers with open opportunity context, making customer operations less list-heavy
 - `Completed foundation`: the CRM leads list now also supports queue-style filters for qualified, unassigned, and unconverted leads, so pipeline follow-up can be worked as an operator queue instead of a flat list
 - `Completed foundation`: the CRM opportunities list now supports queue-style filters for open, closing-soon, and high-value opportunities, so revenue follow-up is less dependent on a flat pipeline list
+- `Completed foundation`: CRM lead and opportunity lists now expose richer follow-up context and direct quick actions, including assigned-owner visibility, quick lead conversion for qualified rows, customer deep-links, and prefilled opportunity creation from customer-linked leads
 - `Completed foundation`: the admin orders list now supports queue-style filters for open orders, payment-issue orders, and fulfillment-attention orders, so post-order operations are less dependent on a flat status list
 - `Completed foundation`: order detail tabs for payments, shipments, refunds, and invoices now support queue-style filters too, so operators can work failed/refunded/pending/outstanding subsets without scanning full grids
+- `Completed foundation`: the orders queue now also exposes direct quick actions for add payment, add shipment, and create invoice from list rows, so common support follow-up no longer always requires entering the full order detail first
 - `Completed foundation`: inventory purchase orders and stock levels now support queue-style filters for draft/issued/received replenishment work and low-stock/reserved/in-transit stock review, so inventory ops are less dependent on flat lists
 - `Completed foundation`: stock transfers now support queue-style filters for draft, in-transit, and completed transfer work, so replenishment follow-up is less dependent on manual scanning
 - `Completed foundation`: warehouse and supplier lists now support queue-style filters for default/no-stock-level warehouses and missing-address/active suppliers, so inventory setup review is less dependent on flat lists
 - `Completed foundation`: inventory ledger now supports queue-style filters for inbound, outbound, and reservation movements, and stock-level rows link directly into variant ledger review for faster stock troubleshooting
+- `Completed foundation`: stock-level rows now expose direct `adjust`, `reserve`, and `release reservation` actions in WebAdmin, so inventory troubleshooting can move from queue detection into manual corrective action without leaving the operational context
+- `Completed foundation`: stock-level rows now also expose a direct `return receipt` action, so phase-1 customer return intake can increase inventory from the same operational workspace without dropping into ad hoc scripts or database fixes
 
 ### Business and tenant onboarding
 

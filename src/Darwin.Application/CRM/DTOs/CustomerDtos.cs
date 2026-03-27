@@ -96,6 +96,7 @@ namespace Darwin.Application.CRM.DTOs
         public string Phone { get; set; } = string.Empty;
         public LeadStatus Status { get; set; }
         public Guid? AssignedToUserId { get; set; }
+        public string? AssignedToUserDisplayName { get; set; }
         public Guid? CustomerId { get; set; }
         public int InteractionCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }

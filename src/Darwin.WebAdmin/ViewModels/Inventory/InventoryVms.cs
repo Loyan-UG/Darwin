@@ -255,6 +255,7 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
     public sealed class StockLevelsListVm
     {
         public Guid? WarehouseId { get; set; }
+        public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
         public StockLevelQueueFilter Filter { get; set; } = StockLevelQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
@@ -308,6 +309,61 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<SelectListItem> VariantOptions { get; set; } = new();
+    }
+
+    public class InventoryStockActionVm
+    {
+        public Guid StockLevelId { get; set; }
+        public Guid? BusinessId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public Guid ProductVariantId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public string VariantSku { get; set; } = string.Empty;
+        public int AvailableQuantity { get; set; }
+        public int ReservedQuantity { get; set; }
+        public Guid? ReferenceId { get; set; }
+        public List<SelectListItem> WarehouseOptions { get; set; } = new();
+        public List<SelectListItem> VariantOptions { get; set; } = new();
+    }
+
+    public sealed class InventoryAdjustActionVm : InventoryStockActionVm
+    {
+        [Range(-1000000, 1000000)]
+        public int QuantityDelta { get; set; }
+
+        [Required]
+        [StringLength(120)]
+        public string Reason { get; set; } = "ManualAdjustment";
+    }
+
+    public sealed class InventoryReserveActionVm : InventoryStockActionVm
+    {
+        [Range(1, 1000000)]
+        public int Quantity { get; set; } = 1;
+
+        [Required]
+        [StringLength(120)]
+        public string Reason { get; set; } = "ManualReserve";
+    }
+
+    public sealed class InventoryReleaseReservationActionVm : InventoryStockActionVm
+    {
+        [Range(1, 1000000)]
+        public int Quantity { get; set; } = 1;
+
+        [Required]
+        [StringLength(120)]
+        public string Reason { get; set; } = "ManualRelease";
+    }
+
+    public sealed class InventoryReturnReceiptActionVm : InventoryStockActionVm
+    {
+        [Range(1, 1000000)]
+        public int Quantity { get; set; } = 1;
+
+        [Required]
+        [StringLength(120)]
+        public string Reason { get; set; } = "ReturnReceipt";
     }
 
     public sealed class StockTransfersListVm

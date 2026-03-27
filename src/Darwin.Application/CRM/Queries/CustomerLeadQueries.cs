@@ -211,48 +211,58 @@ namespace Darwin.Application.CRM.Queries
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var baseQuery = _db.Set<Lead>().AsNoTracking();
+            var baseQuery =
+                from lead in _db.Set<Lead>().AsNoTracking()
+                join assignedUser in _db.Set<User>().AsNoTracking() on lead.AssignedToUserId equals (Guid?)assignedUser.Id into assignedUsers
+                from assignedUser in assignedUsers.DefaultIfEmpty()
+                select new { lead, assignedUser };
 
             if (!string.IsNullOrWhiteSpace(query))
             {
                 var q = query.Trim();
                 baseQuery = baseQuery.Where(x =>
-                    x.FirstName.Contains(q) ||
-                    x.LastName.Contains(q) ||
-                    x.Email.Contains(q) ||
-                    x.Phone.Contains(q) ||
-                    (x.CompanyName != null && x.CompanyName.Contains(q)));
+                    x.lead.FirstName.Contains(q) ||
+                    x.lead.LastName.Contains(q) ||
+                    x.lead.Email.Contains(q) ||
+                    x.lead.Phone.Contains(q) ||
+                    (x.lead.CompanyName != null && x.lead.CompanyName.Contains(q)) ||
+                    (x.assignedUser != null && x.assignedUser.Email.Contains(q)) ||
+                    (x.assignedUser != null && x.assignedUser.FirstName != null && x.assignedUser.FirstName.Contains(q)) ||
+                    (x.assignedUser != null && x.assignedUser.LastName != null && x.assignedUser.LastName.Contains(q)));
             }
 
             baseQuery = filter switch
             {
-                LeadQueueFilter.Qualified => baseQuery.Where(x => x.Status == LeadStatus.Qualified),
-                LeadQueueFilter.Unassigned => baseQuery.Where(x => !x.AssignedToUserId.HasValue),
-                LeadQueueFilter.Unconverted => baseQuery.Where(x => !x.CustomerId.HasValue),
+                LeadQueueFilter.Qualified => baseQuery.Where(x => x.lead.Status == LeadStatus.Qualified),
+                LeadQueueFilter.Unassigned => baseQuery.Where(x => !x.lead.AssignedToUserId.HasValue),
+                LeadQueueFilter.Unconverted => baseQuery.Where(x => !x.lead.CustomerId.HasValue),
                 _ => baseQuery
             };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
 
             var items = await baseQuery
-                .OrderByDescending(x => x.ModifiedAtUtc ?? x.CreatedAtUtc)
+                .OrderByDescending(x => x.lead.ModifiedAtUtc ?? x.lead.CreatedAtUtc)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(x => new LeadListItemDto
                 {
-                    Id = x.Id,
-                    FirstName = x.FirstName,
-                    LastName = x.LastName,
-                    CompanyName = x.CompanyName,
-                    Email = x.Email,
-                    Phone = x.Phone,
-                    Status = x.Status,
-                    AssignedToUserId = x.AssignedToUserId,
-                    CustomerId = x.CustomerId,
-                    InteractionCount = x.Interactions.Count,
-                    CreatedAtUtc = x.CreatedAtUtc,
-                    ModifiedAtUtc = x.ModifiedAtUtc,
-                    RowVersion = x.RowVersion
+                    Id = x.lead.Id,
+                    FirstName = x.lead.FirstName,
+                    LastName = x.lead.LastName,
+                    CompanyName = x.lead.CompanyName,
+                    Email = x.lead.Email,
+                    Phone = x.lead.Phone,
+                    Status = x.lead.Status,
+                    AssignedToUserId = x.lead.AssignedToUserId,
+                    AssignedToUserDisplayName = x.assignedUser == null
+                        ? null
+                        : (((x.assignedUser.FirstName ?? string.Empty) + " " + (x.assignedUser.LastName ?? string.Empty)).Trim()),
+                    CustomerId = x.lead.CustomerId,
+                    InteractionCount = x.lead.Interactions.Count,
+                    CreatedAtUtc = x.lead.CreatedAtUtc,
+                    ModifiedAtUtc = x.lead.ModifiedAtUtc,
+                    RowVersion = x.lead.RowVersion
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);

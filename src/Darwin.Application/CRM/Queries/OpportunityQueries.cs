@@ -27,7 +27,9 @@ namespace Darwin.Application.CRM.Queries
                 join customer in _db.Set<Customer>().AsNoTracking() on opportunity.CustomerId equals customer.Id
                 join user in _db.Set<User>().AsNoTracking() on customer.UserId equals (Guid?)user.Id into users
                 from user in users.DefaultIfEmpty()
-                select new { opportunity, customer, user };
+                join assignedUser in _db.Set<User>().AsNoTracking() on opportunity.AssignedToUserId equals (Guid?)assignedUser.Id into assignedUsers
+                from assignedUser in assignedUsers.DefaultIfEmpty()
+                select new { opportunity, customer, user, assignedUser };
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -76,6 +78,9 @@ namespace Darwin.Application.CRM.Queries
                     Stage = x.opportunity.Stage,
                     ExpectedCloseDateUtc = x.opportunity.ExpectedCloseDateUtc,
                     AssignedToUserId = x.opportunity.AssignedToUserId,
+                    AssignedToUserDisplayName = x.assignedUser == null
+                        ? null
+                        : (((x.assignedUser.FirstName ?? string.Empty) + " " + (x.assignedUser.LastName ?? string.Empty)).Trim()),
                     ItemCount = x.opportunity.Items.Count,
                     InteractionCount = x.opportunity.Interactions.Count,
                     CreatedAtUtc = x.opportunity.CreatedAtUtc,

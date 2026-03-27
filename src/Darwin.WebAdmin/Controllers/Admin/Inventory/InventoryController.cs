@@ -27,6 +27,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         private readonly GetStockLevelForEditHandler _getStockLevelForEdit;
         private readonly CreateStockLevelHandler _createStockLevel;
         private readonly UpdateStockLevelHandler _updateStockLevel;
+        private readonly AdjustInventoryHandler _adjustInventory;
+        private readonly ReserveInventoryHandler _reserveInventory;
+        private readonly ReleaseInventoryReservationHandler _releaseInventoryReservation;
+        private readonly ProcessReturnReceiptHandler _processReturnReceipt;
         private readonly GetStockTransfersPageHandler _getStockTransfersPage;
         private readonly GetStockTransferForEditHandler _getStockTransferForEdit;
         private readonly CreateStockTransferHandler _createStockTransfer;
@@ -51,6 +55,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             GetStockLevelForEditHandler getStockLevelForEdit,
             CreateStockLevelHandler createStockLevel,
             UpdateStockLevelHandler updateStockLevel,
+            AdjustInventoryHandler adjustInventory,
+            ReserveInventoryHandler reserveInventory,
+            ReleaseInventoryReservationHandler releaseInventoryReservation,
+            ProcessReturnReceiptHandler processReturnReceipt,
             GetStockTransfersPageHandler getStockTransfersPage,
             GetStockTransferForEditHandler getStockTransferForEdit,
             CreateStockTransferHandler createStockTransfer,
@@ -74,6 +82,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             _getStockLevelForEdit = getStockLevelForEdit;
             _createStockLevel = createStockLevel;
             _updateStockLevel = updateStockLevel;
+            _adjustInventory = adjustInventory;
+            _reserveInventory = reserveInventory;
+            _releaseInventoryReservation = releaseInventoryReservation;
+            _processReturnReceipt = processReturnReceipt;
             _getStockTransfersPage = getStockTransfersPage;
             _getStockTransferForEdit = getStockTransferForEdit;
             _createStockTransfer = createStockTransfer;
@@ -411,6 +423,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             var vm = new StockLevelsListVm
             {
+                BusinessId = businessId,
                 WarehouseId = warehouseId,
                 Query = q ?? string.Empty,
                 Filter = filter,
@@ -423,6 +436,186 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
             ViewBag.BusinessId = businessId;
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AdjustStock(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
+        {
+            var vm = await BuildInventoryAdjustActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
+            if (vm is null)
+            {
+                TempData["Error"] = "Stock level not found.";
+                return RedirectToAction(nameof(StockLevels), new { businessId });
+            }
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdjustStock(InventoryAdjustActionVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
+
+            try
+            {
+                await _adjustInventory.HandleAsync(new InventoryAdjustDto
+                {
+                    WarehouseId = vm.WarehouseId,
+                    VariantId = vm.ProductVariantId,
+                    QuantityDelta = vm.QuantityDelta,
+                    Reason = vm.Reason,
+                    ReferenceId = vm.ReferenceId
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Stock adjusted.";
+                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReserveStock(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
+        {
+            var vm = await BuildInventoryReserveActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
+            if (vm is null)
+            {
+                TempData["Error"] = "Stock level not found.";
+                return RedirectToAction(nameof(StockLevels), new { businessId });
+            }
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReserveStock(InventoryReserveActionVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
+
+            try
+            {
+                await _reserveInventory.HandleAsync(new InventoryReserveDto
+                {
+                    WarehouseId = vm.WarehouseId,
+                    VariantId = vm.ProductVariantId,
+                    Quantity = vm.Quantity,
+                    Reason = vm.Reason,
+                    ReferenceId = vm.ReferenceId
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Stock reserved.";
+                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReleaseReservation(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
+        {
+            var vm = await BuildInventoryReleaseActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
+            if (vm is null)
+            {
+                TempData["Error"] = "Stock level not found.";
+                return RedirectToAction(nameof(StockLevels), new { businessId });
+            }
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReleaseReservation(InventoryReleaseReservationActionVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
+
+            try
+            {
+                await _releaseInventoryReservation.HandleAsync(new InventoryReleaseReservationDto
+                {
+                    WarehouseId = vm.WarehouseId,
+                    VariantId = vm.ProductVariantId,
+                    Quantity = vm.Quantity,
+                    Reason = vm.Reason,
+                    ReferenceId = vm.ReferenceId
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Reservation released.";
+                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReturnReceipt(Guid stockLevelId, Guid? businessId = null, CancellationToken ct = default)
+        {
+            var vm = await BuildInventoryReturnReceiptActionVmAsync(stockLevelId, businessId, ct).ConfigureAwait(false);
+            if (vm is null)
+            {
+                TempData["Error"] = "Stock level not found.";
+                return RedirectToAction(nameof(StockLevels), new { businessId });
+            }
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReturnReceipt(InventoryReturnReceiptActionVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
+
+            try
+            {
+                await _processReturnReceipt.HandleAsync(new InventoryReturnReceiptDto
+                {
+                    WarehouseId = vm.WarehouseId,
+                    VariantId = vm.ProductVariantId,
+                    Quantity = vm.Quantity,
+                    Reason = vm.Reason,
+                    ReferenceId = vm.ReferenceId
+                }, ct).ConfigureAwait(false);
+
+                TempData["Success"] = "Return receipt processed.";
+                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+                return View(vm);
+            }
         }
 
         [HttpGet]
@@ -924,6 +1117,102 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             var resolvedBusinessId = businessId ?? await _referenceData.ResolveBusinessIdAsync(null, ct).ConfigureAwait(false);
             vm.WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(vm.WarehouseId, resolvedBusinessId, ct).ConfigureAwait(false);
             vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(vm.ProductVariantId, ct).ConfigureAwait(false);
+        }
+
+        private async Task PopulateInventoryStockActionOptionsAsync(InventoryStockActionVm vm, CancellationToken ct)
+        {
+            var resolvedBusinessId = vm.BusinessId ?? await _referenceData.ResolveBusinessIdAsync(null, ct).ConfigureAwait(false);
+            vm.WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(vm.WarehouseId, resolvedBusinessId, ct).ConfigureAwait(false);
+            vm.VariantOptions = await _referenceData.GetVariantOptionsAsync(vm.ProductVariantId, ct).ConfigureAwait(false);
+        }
+
+        private async Task<InventoryAdjustActionVm?> BuildInventoryAdjustActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
+        {
+            var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                return null;
+            }
+
+            var vm = new InventoryAdjustActionVm
+            {
+                StockLevelId = dto.Id,
+                BusinessId = businessId,
+                WarehouseId = dto.WarehouseId,
+                ProductVariantId = dto.ProductVariantId,
+                AvailableQuantity = dto.AvailableQuantity,
+                ReservedQuantity = dto.ReservedQuantity
+            };
+
+            await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+            return vm;
+        }
+
+        private async Task<InventoryReserveActionVm?> BuildInventoryReserveActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
+        {
+            var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                return null;
+            }
+
+            var vm = new InventoryReserveActionVm
+            {
+                StockLevelId = dto.Id,
+                BusinessId = businessId,
+                WarehouseId = dto.WarehouseId,
+                ProductVariantId = dto.ProductVariantId,
+                AvailableQuantity = dto.AvailableQuantity,
+                ReservedQuantity = dto.ReservedQuantity
+            };
+
+            await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+            return vm;
+        }
+
+        private async Task<InventoryReleaseReservationActionVm?> BuildInventoryReleaseActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
+        {
+            var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                return null;
+            }
+
+            var vm = new InventoryReleaseReservationActionVm
+            {
+                StockLevelId = dto.Id,
+                BusinessId = businessId,
+                WarehouseId = dto.WarehouseId,
+                ProductVariantId = dto.ProductVariantId,
+                AvailableQuantity = dto.AvailableQuantity,
+                ReservedQuantity = dto.ReservedQuantity,
+                Quantity = dto.ReservedQuantity > 0 ? dto.ReservedQuantity : 1
+            };
+
+            await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+            return vm;
+        }
+
+        private async Task<InventoryReturnReceiptActionVm?> BuildInventoryReturnReceiptActionVmAsync(Guid stockLevelId, Guid? businessId, CancellationToken ct)
+        {
+            var dto = await _getStockLevelForEdit.HandleAsync(stockLevelId, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                return null;
+            }
+
+            var vm = new InventoryReturnReceiptActionVm
+            {
+                StockLevelId = dto.Id,
+                BusinessId = businessId,
+                WarehouseId = dto.WarehouseId,
+                ProductVariantId = dto.ProductVariantId,
+                AvailableQuantity = dto.AvailableQuantity,
+                ReservedQuantity = dto.ReservedQuantity
+            };
+
+            await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
+            return vm;
         }
 
         private static IEnumerable<SelectListItem> BuildStockLevelFilterItems(StockLevelQueueFilter selectedFilter)

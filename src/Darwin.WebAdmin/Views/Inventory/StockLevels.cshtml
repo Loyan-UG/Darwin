@@ -7,21 +7,21 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="StockLevels" method="get" class="d-flex gap-2">
-        <input type="hidden" name="businessId" value="@ViewBag.BusinessId" />
+        <input type="hidden" name="businessId" value="@Model.BusinessId" />
         <select name="warehouseId" asp-items="Model.WarehouseOptions" class="form-select"></select>
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search stock levels">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit">Filter</button>
-        <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Reset</a>
     </form>
-    <a asp-action="CreateStockLevel" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary">New Stock Level</a>
+    <a asp-action="CreateStockLevel" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-primary">New Stock Level</a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="LowStock" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.LowStock ? "btn-danger" : "btn-outline-danger")">Low Stock</a>
-    <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reserved" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.Reserved ? "btn-warning" : "btn-outline-warning")">Reserved</a>
-    <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.InTransit ? "btn-info" : "btn-outline-info")">In Transit</a>
-    <a asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+    <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="LowStock" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.LowStock ? "btn-danger" : "btn-outline-danger")">Low Stock</a>
+    <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reserved" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.Reserved ? "btn-warning" : "btn-outline-warning")">Reserved</a>
+    <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="InTransit" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.StockLevelQueueFilter.InTransit ? "btn-info" : "btn-outline-info")">In Transit</a>
+    <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
 </div>
 
 <div class="table-responsive">
@@ -42,6 +42,10 @@
                     <td>@item.ReservedQuantity</td>
                     <td>@item.ReorderPoint</td>
                     <td class="text-end">
+                        <a asp-action="AdjustStock" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-success">Adjust</a>
+                        <a asp-action="ReserveStock" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-warning">Reserve</a>
+                        <a asp-action="ReleaseReservation" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-info">Release</a>
+                        <a asp-action="ReturnReceipt" asp-route-stockLevelId="@item.Id" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-dark">Return</a>
                         <a asp-action="VariantLedger" asp-route-variantId="@item.ProductVariantId" asp-route-warehouseId="@item.WarehouseId" class="btn btn-sm btn-outline-primary">Ledger</a>
                         <a asp-action="EditStockLevel" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
                     </td>
@@ -52,4 +56,4 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="StockLevels" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter"></pager>

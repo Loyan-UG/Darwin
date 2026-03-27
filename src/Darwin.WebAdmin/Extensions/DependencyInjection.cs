@@ -42,6 +42,8 @@ using Darwin.Application.Shipping.Queries;
 using Darwin.Application.Shipping.Validators;
 using Darwin.Infrastructure.Adapters.Time;
 using Darwin.Infrastructure.Extensions;
+using Darwin.Infrastructure.Security.Jwt;
+using Darwin.Infrastructure.Security.LoginRateLimiter;
 using Darwin.WebAdmin.Auth;
 using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.Services.Seo;
@@ -87,6 +89,9 @@ namespace Darwin.WebAdmin.Extensions
             // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
             // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
             services.AddIdentityInfrastructure();
+            services.AddJwtAuthCore();
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddSingleton<Application.Abstractions.Security.ILoginRateLimiter, MemoryLoginRateLimiter>();
 
 
 
@@ -160,6 +165,11 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<ChangeUserEmailHandler>();
             services.AddScoped<ChangePasswordHandler>();
             services.AddScoped<SetUserPasswordByAdminHandler>();
+            services.AddScoped<RequestPasswordResetHandler>();
+            services.AddScoped<RequestEmailConfirmationHandler>();
+            services.AddScoped<ConfirmUserEmailByAdminHandler>();
+            services.AddScoped<LockUserByAdminHandler>();
+            services.AddScoped<UnlockUserByAdminHandler>();
             services.AddScoped<SoftDeleteUserHandler>();
 
             services.AddScoped<GetUserWithAddressesForEditHandler>();
@@ -233,6 +243,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<SoftDeleteBusinessLocationHandler>();
             services.AddScoped<GetBusinessMembersPageHandler>();
             services.AddScoped<GetBusinessMemberForEditHandler>();
+            services.AddScoped<GetBusinessOwnerOverrideAuditsPageHandler>();
             services.AddScoped<CreateBusinessMemberHandler>();
             services.AddScoped<UpdateBusinessMemberHandler>();
             services.AddScoped<DeleteBusinessMemberHandler>();
@@ -256,6 +267,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetProductVariantLookupHandler>();
             services.AddScoped<GetSupplierLookupHandler>();
             services.AddScoped<GetFinancialAccountLookupHandler>();
+            services.AddScoped<GetPaymentLookupHandler>();
 
             // Orders – commands
             services.AddScoped<AddPaymentHandler>();
@@ -330,10 +342,13 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetPurchaseOrderForEditHandler>();
             services.AddScoped<CreatePurchaseOrderHandler>();
             services.AddScoped<UpdatePurchaseOrderHandler>();
+            services.AddScoped<GetInventoryLedgerHandler>();
 
             // Inventory – commands
+            services.AddScoped<AdjustInventoryHandler>();
             services.AddScoped<ReserveInventoryHandler>();
             services.AddScoped<ReleaseInventoryReservationHandler>();
+            services.AddScoped<ProcessReturnReceiptHandler>();
             services.AddScoped<AllocateInventoryForOrderHandler>();
 
 

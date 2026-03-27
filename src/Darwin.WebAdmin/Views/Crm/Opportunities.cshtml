@@ -33,14 +33,16 @@
                 <th>Stage</th>
                 <th>Estimated</th>
                 <th>Close date</th>
+                <th>Owner</th>
                 <th>Items</th>
+                <th>Updated (UTC)</th>
                 <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted">No opportunities found.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted">No opportunities found.</td></tr>
         }
         else
         {
@@ -52,8 +54,16 @@
                     <td><span class="badge text-bg-light">@item.Stage</span></td>
                     <td>EUR @((item.EstimatedValueMinor / 100M).ToString("0.00"))</td>
                     <td>@item.ExpectedCloseDateUtc?.ToString("yyyy-MM-dd")</td>
+                    <td>@(string.IsNullOrWhiteSpace(item.AssignedToUserDisplayName) ? "-" : item.AssignedToUserDisplayName)</td>
                     <td>@item.ItemCount</td>
+                    <td>@item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="text-end">
+                        <a asp-action="EditCustomer" asp-route-id="@item.CustomerId" class="btn btn-sm btn-outline-success">
+                            <i class="fa fa-user"></i> Customer
+                        </a>
+                        <a asp-action="EditOpportunity" asp-route-id="@item.Id" asp-fragment="opportunity-interactions-grid" class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-comments"></i> Interactions
+                        </a>
                         <a asp-action="EditOpportunity" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> Edit
                         </a>

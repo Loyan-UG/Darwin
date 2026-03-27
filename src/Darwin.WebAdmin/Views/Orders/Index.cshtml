@@ -57,6 +57,24 @@
                         </td>
                         <td>@o.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                         <td class="text-end">
+                            @if (o.FailedPaymentCount > 0 || Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.PaymentIssues)
+                            {
+                                <a asp-controller="Orders" asp-action="AddPayment" asp-route-orderId="@o.Id" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa fa-credit-card"></i> Payment
+                                </a>
+                            }
+                            @if (o.Status == Darwin.Domain.Enums.OrderStatus.Paid || Model.Filter == Darwin.Application.Orders.DTOs.OrderQueueFilter.FulfillmentAttention)
+                            {
+                                <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@o.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="fa fa-truck"></i> Shipment
+                                </a>
+                            }
+                            @if (o.PaymentCount > 0)
+                            {
+                                <a asp-controller="Orders" asp-action="CreateInvoice" asp-route-orderId="@o.Id" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa fa-file-invoice"></i> Invoice
+                                </a>
+                            }
                             <a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id" class="btn btn-sm btn-outline-primary">
                                 <i class="fa fa-eye"></i> View
                             </a>
