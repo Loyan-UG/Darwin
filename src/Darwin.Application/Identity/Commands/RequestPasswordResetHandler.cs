@@ -102,7 +102,15 @@ namespace Darwin.Application.Identity.Commands
 
             try
             {
-                await _email.SendAsync(user.Email, subject, body, ct);
+                await _email.SendAsync(
+                    user.Email,
+                    subject,
+                    body,
+                    ct,
+                    new EmailDispatchContext
+                    {
+                        FlowKey = "PasswordReset"
+                    });
             }
             catch (Exception ex)
             {

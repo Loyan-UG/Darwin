@@ -46,6 +46,8 @@ public sealed class EmailConfirmationHandlersTests
 
         result.Succeeded.Should().BeTrue();
         email.SentMessages.Should().HaveCount(1);
+        email.SentMessages[0].Context.Should().NotBeNull();
+        email.SentMessages[0].Context!.FlowKey.Should().Be("AccountActivation");
 
         var token = await db.Set<UserToken>()
             .SingleAsync(x => x.UserId == user.Id && x.Purpose == "EmailConfirmation", TestContext.Current.CancellationToken);
@@ -122,11 +124,16 @@ public sealed class EmailConfirmationHandlersTests
 
     private sealed class FakeEmailSender : IEmailSender
     {
-        public System.Collections.Generic.List<(string To, string Subject, string Body)> SentMessages { get; } = new();
+        public System.Collections.Generic.List<(string To, string Subject, string Body, EmailDispatchContext? Context)> SentMessages { get; } = new();
 
-        public Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
+        public Task SendAsync(
+            string toEmail,
+            string subject,
+            string htmlBody,
+            CancellationToken ct = default,
+            EmailDispatchContext? context = null)
         {
-            SentMessages.Add((toEmail, subject, htmlBody));
+            SentMessages.Add((toEmail, subject, htmlBody, context));
             return Task.CompletedTask;
         }
     }

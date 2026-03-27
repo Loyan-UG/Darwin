@@ -4,6 +4,8 @@ using System.Net.Mail;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
+using Darwin.Application.Abstractions.Persistence;
+using Darwin.Domain.Entities.Integration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -18,16 +20,21 @@ namespace Darwin.Infrastructure.Notifications.Smtp
     {
         private readonly SmtpEmailOptions _options;
         private readonly ILogger<SmtpEmailSender> _logger;
+        private readonly IAppDbContext _db;
 
         /// <summary>
         ///     Creates an instance of the SMTP email sender.
         /// </summary>
         /// <param name="options">Bound configuration for SMTP host, port, credentials and defaults.</param>
         /// <param name="logger">Logger for operational diagnostics.</param>
-        public SmtpEmailSender(IOptions<SmtpEmailOptions> options, ILogger<SmtpEmailSender> logger)
+        public SmtpEmailSender(
+            IOptions<SmtpEmailOptions> options,
+            ILogger<SmtpEmailSender> logger,
+            IAppDbContext db)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _db = db ?? throw new ArgumentNullException(nameof(db));
         }
 
         /// <summary>
@@ -37,9 +44,28 @@ namespace Darwin.Infrastructure.Notifications.Smtp
         /// <param name="subject">Email subject line (plain text).</param>
         /// <param name="htmlBody">Email body in HTML format.</param>
         /// <param name="ct">Cancellation token.</param>
-        public async Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
+        public async Task SendAsync(
+            string toEmail,
+            string subject,
+            string htmlBody,
+            CancellationToken ct = default,
+            EmailDispatchContext? context = null)
         {
             if (string.IsNullOrWhiteSpace(toEmail)) throw new ArgumentNullException(nameof(toEmail));
+            var attemptedAtUtc = DateTime.UtcNow;
+            var audit = new EmailDispatchAudit
+            {
+                Provider = "SMTP",
+                FlowKey = string.IsNullOrWhiteSpace(context?.FlowKey) ? null : context.FlowKey.Trim(),
+                BusinessId = context?.BusinessId,
+                RecipientEmail = toEmail,
+                Subject = subject ?? string.Empty,
+                Status = "Pending",
+                AttemptedAtUtc = attemptedAtUtc,
+                CreatedAtUtc = attemptedAtUtc
+            };
+            _db.Set<EmailDispatchAudit>().Add(audit);
+
             using var message = new MailMessage
             {
                 From = new MailAddress(_options.FromAddress, _options.FromDisplayName),
@@ -59,9 +85,22 @@ namespace Darwin.Infrastructure.Notifications.Smtp
             if (!string.IsNullOrWhiteSpace(_options.Username))
                 client.Credentials = new NetworkCredential(_options.Username, _options.Password);
 
-            // SmtpClient has no truly async send on .NET (it provides SendMailAsync)
-            await client.SendMailAsync(message);
-            _logger.LogInformation("SMTP email sent to {Recipient} via {Host}:{Port}", toEmail, _options.Host, _options.Port);
+            try
+            {
+                await client.SendMailAsync(message);
+                audit.Status = "Sent";
+                audit.CompletedAtUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+                _logger.LogInformation("SMTP email sent to {Recipient} via {Host}:{Port}", toEmail, _options.Host, _options.Port);
+            }
+            catch (Exception ex)
+            {
+                audit.Status = "Failed";
+                audit.CompletedAtUtc = DateTime.UtcNow;
+                audit.FailureMessage = ex.Message.Length > 2000 ? ex.Message.Substring(0, 2000) : ex.Message;
+                await _db.SaveChangesAsync(ct);
+                throw;
+            }
         }
     }
 }

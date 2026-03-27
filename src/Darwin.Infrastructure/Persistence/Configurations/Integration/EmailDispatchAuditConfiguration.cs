@@ -1,0 +1,45 @@
+using Darwin.Domain.Entities.Integration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Darwin.Infrastructure.Persistence.Configurations.Integration
+{
+    /// <summary>
+    /// EF configuration for phase-1 email dispatch audit entries.
+    /// </summary>
+    public sealed class EmailDispatchAuditConfiguration : IEntityTypeConfiguration<EmailDispatchAudit>
+    {
+        public void Configure(EntityTypeBuilder<EmailDispatchAudit> builder)
+        {
+            builder.ToTable("EmailDispatchAudits");
+
+            builder.Property(x => x.Provider)
+                .IsRequired()
+                .HasMaxLength(32);
+
+            builder.Property(x => x.FlowKey)
+                .HasMaxLength(64);
+
+            builder.Property(x => x.RecipientEmail)
+                .IsRequired()
+                .HasMaxLength(320);
+
+            builder.Property(x => x.Subject)
+                .IsRequired()
+                .HasMaxLength(300);
+
+            builder.Property(x => x.Status)
+                .IsRequired()
+                .HasMaxLength(32);
+
+            builder.Property(x => x.FailureMessage)
+                .HasMaxLength(2000);
+
+            builder.HasIndex(x => x.AttemptedAtUtc);
+            builder.HasIndex(x => x.Status);
+            builder.HasIndex(x => x.RecipientEmail);
+            builder.HasIndex(x => x.FlowKey);
+            builder.HasIndex(x => x.BusinessId);
+        }
+    }
+}

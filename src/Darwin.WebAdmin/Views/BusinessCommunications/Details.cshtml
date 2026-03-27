@@ -1,0 +1,162 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessCommunicationProfileVm
+@{
+    ViewData["Title"] = "Business Communication Profile";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-envelope-open me-2"></i>@Model.Name</h1>
+        <p class="text-muted mb-0">Business-level communication readiness, current policy flags, and phase-1 operational implications.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Communications</a>
+        <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Email Audits</a>
+        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-primary">Open Setup</a>
+        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Members</a>
+        <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Invitations</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Business Profile</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Legal Name</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.LegalName) ? "Missing" : Model.LegalName)</dd>
+                    <dt class="col-sm-4">Contact Email</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.ContactEmail) ? "Missing" : Model.ContactEmail)</dd>
+                    <dt class="col-sm-4">Culture</dt>
+                    <dd class="col-sm-8">@Model.DefaultCulture</dd>
+                    <dt class="col-sm-4">Time Zone</dt>
+                    <dd class="col-sm-8">@Model.DefaultTimeZoneId</dd>
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge text-bg-secondary">@Model.OperationalStatus</span>
+                        @if (!Model.IsActive)
+                        {
+                            <span class="badge text-bg-warning ms-1">Inactive</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Sender Defaults</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Support</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.SupportEmail) ? "Missing" : Model.SupportEmail)</dd>
+                    <dt class="col-sm-4">Sender</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationSenderName) ? "Missing" : Model.CommunicationSenderName)</dd>
+                    <dt class="col-sm-4">Reply-To</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.CommunicationReplyToEmail) ? "Missing" : Model.CommunicationReplyToEmail)</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Support Signals</div>
+            <div class="card-body">
+                <div class="mb-2">Open Invitations: <strong>@Model.OpenInvitationCount</strong></div>
+                <div class="mb-2">Pending Activation Members: <strong>@Model.PendingActivationMemberCount</strong></div>
+                <div>Locked Members: <strong>@Model.LockedMemberCount</strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Policy Flags</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge @(Model.CustomerEmailNotificationsEnabled ? "text-bg-primary" : "text-bg-light")">Transactional Email</span>
+                    <span class="badge @(Model.CustomerMarketingEmailsEnabled ? "text-bg-info" : "text-bg-light")">Marketing Email</span>
+                    <span class="badge @(Model.OperationalAlertEmailsEnabled ? "text-bg-secondary" : "text-bg-light")">Operational Alerts</span>
+                </div>
+                <div class="small text-muted mt-3">
+                    These toggles reflect business intent only. They still depend on global transport and alert-routing readiness.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Global Dependency Readiness</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge @(Model.EmailTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMTP @(Model.EmailTransportConfigured ? "Ready" : "Missing")</span>
+                    <span class="badge @(Model.SmsTransportConfigured ? "text-bg-success" : "text-bg-warning")">SMS @(Model.SmsTransportConfigured ? "Ready" : "Missing")</span>
+                    <span class="badge @(Model.WhatsAppTransportConfigured ? "text-bg-success" : "text-bg-warning")">WhatsApp @(Model.WhatsAppTransportConfigured ? "Ready" : "Missing")</span>
+                    <span class="badge @(Model.AdminAlertRoutingConfigured ? "text-bg-success" : "text-bg-warning")">Admin Alerts @(Model.AdminAlertRoutingConfigured ? "Ready" : "Missing")</span>
+                </div>
+                <div class="mt-3">
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">SMTP</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary">SMS</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary">WhatsApp</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary">Admin Alerts</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Readiness Issues</div>
+            <div class="card-body">
+                @if (Model.ReadinessIssues.Count == 0)
+                {
+                    <div class="alert alert-success mb-0">No immediate communication readiness issues are visible for this business.</div>
+                }
+                else
+                {
+                    <ul class="mb-0">
+                    @foreach (var issue in Model.ReadinessIssues)
+                    {
+                        <li>@issue</li>
+                    }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Currently Relevant Phase-1 Flows</div>
+            <div class="card-body">
+                @if (Model.ActiveFlowNames.Count == 0)
+                {
+                    <div class="text-muted">No currently relevant built-in flows were inferred for this business.</div>
+                }
+                else
+                {
+                    <ul class="mb-0">
+                    @foreach (var flow in Model.ActiveFlowNames)
+                    {
+                        <li>@flow</li>
+                    }
+                    </ul>
+                }
+                <div class="small text-muted mt-3">
+                    This is an operational implication view only. It does not claim a reusable template engine or full Communication Core delivery policy yet.
+                </div>
+                @if (Model.OpenInvitationCount > 0)
+                {
+                    <div class="mt-3">
+                        <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">
+                            View Invitation Email Audits
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

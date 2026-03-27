@@ -80,7 +80,16 @@ namespace Darwin.Application.Businesses.Commands
                 $"<p><code>{invitation.Token}</code></p>" +
                 $"<p>This invitation expires at <strong>{invitation.ExpiresAtUtc:u}</strong>.</p>";
 
-            await _emailSender.SendAsync(invitation.Email, subject, body, ct);
+            await _emailSender.SendAsync(
+                invitation.Email,
+                subject,
+                body,
+                ct,
+                new EmailDispatchContext
+                {
+                    FlowKey = "BusinessInvitation",
+                    BusinessId = invitation.BusinessId
+                });
         }
     }
 }

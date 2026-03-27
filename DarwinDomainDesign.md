@@ -400,6 +400,7 @@ The target lifecycle should be explicit:
 ### Current state
 
 - `In Progress`: notification and email infrastructure exists in the platform
+- `Completed foundation`: phase-1 SMTP email dispatch now writes append-only `EmailDispatchAudit` rows with provider, status, flow classification, and optional business correlation
 - `Planned / Near-term`: Communication Core is not yet formalized as a proper domain/module-level capability
 
 ### Required capability

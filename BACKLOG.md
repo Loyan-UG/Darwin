@@ -128,6 +128,13 @@ Status terms used below:
 - `Planned / Near-term`: introduce localization-aware notification/email template management
 - `Planned / Near-term`: move password-reset, invitation, and future activation emails from direct SMTP composition into Communication Core templates and delivery logging
 - `Completed foundation`: a dedicated `Business Communications` workspace now exists in WebAdmin for operator visibility into phase-1 transport readiness and business-level sender/support-email setup gaps
+- `Completed foundation`: the `Business Communications` workspace now includes a pageable business queue for missing support-email and sender-identity setup, with direct links into business setup and global transport settings
+- `Completed foundation`: the same workspace now documents the currently live hard-coded transactional email flows so operators can distinguish implemented email behavior from future Communication Core template/log capabilities
+- `Completed foundation`: the `Business Communications` workspace now includes queue filters for missing support email, missing sender identity, and policy-enabled subsets, so communication debt can be worked as an operator queue rather than a static report
+- `Completed foundation`: phase-1 SMTP email delivery now creates `EmailDispatchAudit` records, and the `Business Communications` workspace surfaces recent delivery attempts/failures for operational visibility
+- `Completed foundation`: the `Business Communications` workspace now also has a full email audit-log screen with search/status filters, so SMTP delivery attempts and failures are no longer limited to a dashboard preview
+- `Completed foundation`: each business in the communication queue now has a dedicated communication-profile screen that combines sender/support defaults, policy flags, global dependency readiness, and onboarding/support signals for troubleshooting
+- `Completed foundation`: phase-1 email audits are now tagged with flow metadata (`BusinessInvitation`, `AccountActivation`, `PasswordReset`) and optional business correlation, so delivery failures are more diagnosable before full Communication Core logging exists
 
 ### Payments, refunds, reconciliation, disputes
 

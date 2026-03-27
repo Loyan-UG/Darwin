@@ -9,6 +9,7 @@
         <p class="text-muted mb-0">Operational visibility for phase-1 communication readiness before full template and delivery-log tooling exists.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="EmailAudits" class="btn btn-outline-secondary">Email Audits</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary">SMTP</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary">SMS</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary">WhatsApp</a>
@@ -75,9 +76,120 @@
     Operational alerts enabled: <strong>@Model.Summary.OperationalAlertBusinessesCount</strong>
 </div>
 
+<div class="card mb-4">
+    <div class="card-header">Current Transactional Communication Flows</div>
+    <div class="card-body">
+        <div class="alert alert-secondary">
+            This is a phase-1 visibility catalog. These flows are operational, but they still use direct transactional composition and do not yet provide a full template engine, delivery log, retry queue, or reusable Communication Core workflow.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Flow</th>
+                        <th>Channel</th>
+                        <th>Trigger</th>
+                        <th>Delivery Path</th>
+                        <th>Current Status</th>
+                        <th>Next Step</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var flow in Model.BuiltInFlows)
+                {
+                    <tr>
+                        <td class="fw-semibold">@flow.Name</td>
+                        <td>@flow.Channel</td>
+                        <td>@flow.Trigger</td>
+                        <td>@flow.DeliveryPath</td>
+                        <td>@flow.CurrentImplementationStatus</td>
+                        <td>@flow.NextStep</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Recent Email Delivery Activity</div>
+    <div class="card-body">
+        <div class="alert alert-secondary">
+            This is a phase-1 email audit trail. It captures delivery attempts and failures for current SMTP-based transactional emails, but it is not yet a full Communication Core delivery-log/search/retry system.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>When (UTC)</th>
+                        <th>Flow</th>
+                        <th>Recipient</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.RecentEmailAudits.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-3">No email delivery activity has been recorded yet.</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.RecentEmailAudits)
+                    {
+                        <tr>
+                            <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                            <td>@item.RecipientEmail</td>
+                            <td>@item.Subject</td>
+                            <td>
+                                @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-success">Sent</span>
+                                }
+                                else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-danger">Failed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
+                                {
+                                    <div class="small text-danger">@item.FailureMessage</div>
+                                }
+                                else if (item.CompletedAtUtc.HasValue)
+                                {
+                                    <div class="small text-muted">Completed @item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                }
+                                else
+                                {
+                                    <div class="small text-muted">Attempt recorded</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3">
+            <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary">Open Full Email Audit Log</a>
+        </div>
+    </div>
+</div>
+
 <form method="get" class="row g-2 mb-3">
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business, legal name, support email, or sender" />
+    </div>
+    <div class="col-md-3">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-auto">
         <select name="pageSize" class="form-select">
@@ -167,6 +279,9 @@
                         }
                     </td>
                     <td class="text-end">
+                        <a asp-action="Details" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-dark">
+                            <i class="fa-solid fa-circle-info"></i> Inspect
+                        </a>
                         <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
                             <i class="fa-solid fa-sliders"></i> Open Setup
                         </a>
@@ -187,5 +302,6 @@
        asp-controller="BusinessCommunications"
        asp-action="Index"
        asp-route-query="@Model.Query"
-       asp-route-setupOnly="@Model.SetupOnly">
+       asp-route-setupOnly="@Model.SetupOnly"
+       asp-route-filter="@Model.Filter">
 </pager>

@@ -1,3 +1,4 @@
+using Darwin.Application.Businesses.DTOs;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.ViewModels.Businesses
@@ -30,10 +31,14 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
         public bool SetupOnly { get; set; } = true;
+        public BusinessCommunicationSetupFilter Filter { get; set; } = BusinessCommunicationSetupFilter.NeedsSetup;
         public BusinessCommunicationOpsTransportVm Transport { get; set; } = new();
         public BusinessCommunicationOpsSummaryPanelVm Summary { get; set; } = new();
         public List<BusinessCommunicationSetupListItemVm> Items { get; set; } = new();
+        public List<BuiltInCommunicationFlowVm> BuiltInFlows { get; set; } = new();
+        public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     }
 
     public sealed class BusinessCommunicationOpsTransportVm
@@ -52,5 +57,76 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int MissingSupportEmailCount { get; set; }
         public int MissingSenderIdentityCount { get; set; }
         public int BusinessesRequiringEmailSetupCount { get; set; }
+    }
+
+    /// <summary>
+    /// Describes currently implemented transactional communication flows without implying a full template engine.
+    /// </summary>
+    public sealed class BuiltInCommunicationFlowVm
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public string Trigger { get; set; } = string.Empty;
+        public string DeliveryPath { get; set; } = string.Empty;
+        public string CurrentImplementationStatus { get; set; } = string.Empty;
+        public string NextStep { get; set; } = string.Empty;
+    }
+
+    public sealed class EmailDispatchAuditListItemVm
+    {
+        public Guid Id { get; set; }
+        public string Provider { get; set; } = string.Empty;
+        public string? FlowKey { get; set; }
+        public Guid? BusinessId { get; set; }
+        public string RecipientEmail { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime AttemptedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+        public string? FailureMessage { get; set; }
+    }
+
+    public sealed class EmailDispatchAuditsListVm
+    {
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string FlowKey { get; set; } = string.Empty;
+        public Guid? BusinessId { get; set; }
+        public List<EmailDispatchAuditListItemVm> Items { get; set; } = new();
+        public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> StatusItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> FlowItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class BusinessCommunicationProfileVm
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? LegalName { get; set; }
+        public string? ContactEmail { get; set; }
+        public string DefaultCulture { get; set; } = string.Empty;
+        public string DefaultTimeZoneId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string OperationalStatus { get; set; } = string.Empty;
+        public string? SupportEmail { get; set; }
+        public string? CommunicationSenderName { get; set; }
+        public string? CommunicationReplyToEmail { get; set; }
+        public bool CustomerEmailNotificationsEnabled { get; set; }
+        public bool CustomerMarketingEmailsEnabled { get; set; }
+        public bool OperationalAlertEmailsEnabled { get; set; }
+        public bool MissingSupportEmail { get; set; }
+        public bool MissingSenderIdentity { get; set; }
+        public int OpenInvitationCount { get; set; }
+        public int PendingActivationMemberCount { get; set; }
+        public int LockedMemberCount { get; set; }
+        public bool EmailTransportConfigured { get; set; }
+        public bool SmsTransportConfigured { get; set; }
+        public bool WhatsAppTransportConfigured { get; set; }
+        public bool AdminAlertRoutingConfigured { get; set; }
+        public List<string> ActiveFlowNames { get; set; } = new();
+        public List<string> ReadinessIssues { get; set; } = new();
     }
 }

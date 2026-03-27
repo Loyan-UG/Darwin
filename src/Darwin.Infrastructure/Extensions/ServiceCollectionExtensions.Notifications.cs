@@ -25,7 +25,7 @@ namespace Darwin.Infrastructure.Extensions
             services.Configure<BusinessInvitationLinkOptions>(configuration.GetSection("BusinessOnboarding:InvitationMagicLink"));
             services.Configure<InactiveReminderPushGatewayOptions>(configuration.GetSection("Notifications:InactiveReminderPushGateway"));
 
-            services.AddSingleton<IEmailSender, SmtpEmailSender>();
+            services.AddScoped<IEmailSender, SmtpEmailSender>();
             services.AddSingleton<IBusinessInvitationLinkBuilder, ConfigBusinessInvitationLinkBuilder>();
             services.AddHttpClient<HttpInactiveReminderDispatcher>();
             services.AddScoped<IInactiveReminderDispatcher, HttpInactiveReminderDispatcher>();

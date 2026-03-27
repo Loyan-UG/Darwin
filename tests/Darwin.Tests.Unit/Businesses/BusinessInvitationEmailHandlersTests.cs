@@ -59,6 +59,9 @@ public sealed class BusinessInvitationEmailHandlersTests
         emailSender.LastBody.Should().Contain("Open your invitation");
         emailSender.LastBody.Should().Contain("darwin-business://InvitationAcceptance?token=MAGIC");
         emailSender.LastBody.Should().Contain("<code>");
+        emailSender.LastContext.Should().NotBeNull();
+        emailSender.LastContext!.FlowKey.Should().Be("BusinessInvitation");
+        emailSender.LastContext.BusinessId.Should().Be(businessId);
     }
 
     [Fact]
@@ -108,15 +111,25 @@ public sealed class BusinessInvitationEmailHandlersTests
 
         emailSender.LastBody.Should().Contain("<code>");
         emailSender.LastBody.Should().NotContain("Open your invitation");
+        emailSender.LastContext.Should().NotBeNull();
+        emailSender.LastContext!.FlowKey.Should().Be("BusinessInvitation");
+        emailSender.LastContext.BusinessId.Should().Be(businessId);
     }
 
     private sealed class CapturingEmailSender : IEmailSender
     {
         public string LastBody { get; private set; } = string.Empty;
+        public EmailDispatchContext? LastContext { get; private set; }
 
-        public Task SendAsync(string toEmail, string subject, string htmlBody, CancellationToken ct = default)
+        public Task SendAsync(
+            string toEmail,
+            string subject,
+            string htmlBody,
+            CancellationToken ct = default,
+            EmailDispatchContext? context = null)
         {
             LastBody = htmlBody;
+            LastContext = context;
             return Task.CompletedTask;
         }
     }

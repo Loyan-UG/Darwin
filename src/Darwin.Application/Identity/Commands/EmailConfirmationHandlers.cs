@@ -84,7 +84,15 @@ namespace Darwin.Application.Identity.Commands
             var body = $"Use the following token to confirm your email address: <b>{tokenValue}</b><br/>" +
                        $"This token expires at {expiresAtUtc:u}.";
 
-            await _email.SendAsync(user.Email, subject, body, ct);
+            await _email.SendAsync(
+                user.Email,
+                subject,
+                body,
+                ct,
+                new EmailDispatchContext
+                {
+                    FlowKey = "AccountActivation"
+                });
             _logger.LogInformation("Email confirmation token issued for {Email}.", MaskEmail(user.Email));
             return Result.Ok();
         }

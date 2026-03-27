@@ -4,6 +4,7 @@ using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    partial class DarwinDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327204345_EmailDispatchAudits")]
+    partial class EmailDispatchAudits
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4509,9 +4512,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<DateTime>("AttemptedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -4524,10 +4524,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<string>("FailureMessage")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("FlowKey")
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -4567,10 +4563,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AttemptedAtUtc");
-
-                    b.HasIndex("BusinessId");
-
-                    b.HasIndex("FlowKey");
 
                     b.HasIndex("RecipientEmail");
 

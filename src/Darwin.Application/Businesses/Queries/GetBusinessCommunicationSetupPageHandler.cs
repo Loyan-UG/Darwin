@@ -27,6 +27,7 @@ namespace Darwin.Application.Businesses.Queries
             int pageSize,
             string? query = null,
             bool setupOnly = true,
+            BusinessCommunicationSetupFilter filter = BusinessCommunicationSetupFilter.NeedsSetup,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -53,6 +54,19 @@ namespace Darwin.Application.Businesses.Queries
                      string.IsNullOrWhiteSpace(x.CommunicationSenderName) ||
                      string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail)));
             }
+
+            baseQuery = filter switch
+            {
+                BusinessCommunicationSetupFilter.MissingSupportEmail => baseQuery.Where(x => string.IsNullOrWhiteSpace(x.SupportEmail)),
+                BusinessCommunicationSetupFilter.MissingSenderIdentity => baseQuery.Where(x =>
+                    string.IsNullOrWhiteSpace(x.CommunicationSenderName) ||
+                    string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail)),
+                BusinessCommunicationSetupFilter.TransactionalEnabled => baseQuery.Where(x => x.CustomerEmailNotificationsEnabled),
+                BusinessCommunicationSetupFilter.MarketingEnabled => baseQuery.Where(x => x.CustomerMarketingEmailsEnabled),
+                BusinessCommunicationSetupFilter.OperationalAlertsEnabled => baseQuery.Where(x => x.OperationalAlertEmailsEnabled),
+                BusinessCommunicationSetupFilter.All => baseQuery,
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
 

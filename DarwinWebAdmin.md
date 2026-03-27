@@ -266,6 +266,13 @@ Communication is a platform capability and must be visible in WebAdmin.
 - `Completed foundation`: business setup now exposes a readiness summary that compares business-level communication preferences with global transport configuration, reducing onboarding ambiguity before full template/logging management exists
 - `Completed foundation`: dashboard-level communication-operations metrics now expose transport readiness and business communication-default gaps, giving operators an earlier signal before delivery failures become support tickets
 - `Completed foundation`: a dedicated `Business Communications` workspace now gives operators a read-only operational queue for businesses missing support-email or sender defaults, with direct links back into business setup and global transport settings
+- `Completed foundation`: that workspace now also includes a pageable business queue, so operators can work communication setup debt as an explicit list instead of relying only on dashboard counts
+- `Completed foundation`: the workspace also catalogs the currently live transactional email flows and labels them correctly as hard-coded phase-1 compositions, which reduces confusion before the real Communication Core template/log implementation lands
+- `Completed foundation`: the workspace now also supports operator queue filters for missing support-email, missing sender identity, and policy-enabled subsets, making communication debt triage more actionable
+- `Completed foundation`: current SMTP-based transactional emails now write `EmailDispatchAudit` records, and the workspace surfaces recent delivery attempts/failures as a stopgap audit trail before the full Communication Core logging pipeline exists
+- `Completed foundation`: the same workspace now includes a full email audit-log page with search and status filters, which turns delivery visibility into an operator workflow rather than a dashboard-only preview
+- `Completed foundation`: each queued business can now be opened into a communication-profile detail screen that combines business defaults, global transport dependency state, current phase-1 flow implications, and support/onboarding signals in one troubleshooting view
+- `Completed foundation`: phase-1 email delivery audits now also store flow classification and optional business correlation, so operators can distinguish invitation, activation, and password-reset email failures without waiting for the full Communication Core delivery model
 
 ## 13. Localization Readiness in WebAdmin
 

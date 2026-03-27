@@ -105,6 +105,7 @@ namespace Darwin.Infrastructure.Persistence.Db
         public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
         public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
         public DbSet<EventLog> EventLogs => Set<EventLog>();
+        public DbSet<EmailDispatchAudit> EmailDispatchAudits => Set<EmailDispatchAudit>();
         public DbSet<RedirectRule> RedirectRules => Set<RedirectRule>();
         public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
 
