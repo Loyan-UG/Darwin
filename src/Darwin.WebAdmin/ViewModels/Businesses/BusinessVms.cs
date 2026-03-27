@@ -46,6 +46,40 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     }
 
     /// <summary>
+    /// Operator-facing support queue that combines business attention and failed communication signals.
+    /// </summary>
+    public sealed class BusinessSupportQueueVm
+    {
+        public BusinessSupportSummaryVm Summary { get; set; } = new();
+        public List<BusinessListItemVm> AttentionBusinesses { get; set; } = new();
+        public List<BusinessSupportFailedEmailVm> FailedEmails { get; set; } = new();
+    }
+
+    public sealed class BusinessSupportSummaryVm
+    {
+        public int AttentionBusinessCount { get; set; }
+        public int PendingApprovalBusinessCount { get; set; }
+        public int SuspendedBusinessCount { get; set; }
+        public int MissingOwnerBusinessCount { get; set; }
+        public int OpenInvitationCount { get; set; }
+        public int PendingActivationMemberCount { get; set; }
+        public int LockedMemberCount { get; set; }
+    }
+
+    public sealed class BusinessSupportFailedEmailVm
+    {
+        public Guid Id { get; set; }
+        public string FlowKey { get; set; } = string.Empty;
+        public Guid? BusinessId { get; set; }
+        public string? BusinessName { get; set; }
+        public string RecipientEmail { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public DateTime AttemptedAtUtc { get; set; }
+        public string? FailureMessage { get; set; }
+        public string RecommendedAction { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// Form state for business create and edit flows.
     /// </summary>
     public sealed class BusinessEditVm

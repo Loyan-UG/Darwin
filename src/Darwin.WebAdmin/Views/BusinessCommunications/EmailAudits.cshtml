@@ -13,9 +13,60 @@
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-header">Operator Playbooks by Flow</div>
+    <div class="card-body">
+        <div class="alert alert-secondary">
+            This is a response-planning surface, not a shared retry queue. Use the flow-specific actions below instead of treating failed emails as generic resend jobs.
+        </div>
+        <div class="row g-3">
+            @foreach (var playbook in Model.Playbooks)
+            {
+                <div class="col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div class="fw-semibold">@playbook.Title</div>
+                            <a asp-action="EmailAudits"
+                               asp-route-status="Failed"
+                               asp-route-flowKey="@playbook.FlowKey"
+                               asp-route-businessId="@Model.BusinessId"
+                               class="btn btn-sm btn-outline-secondary">Open Failed</a>
+                        </div>
+                        <div class="small text-muted mb-2">@playbook.ScopeNote</div>
+                        <div class="small"><strong>Allowed action:</strong> @playbook.AllowedAction</div>
+                        <div class="small text-muted mt-2"><strong>Escalation:</strong> @playbook.EscalationRule</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="EmailAudits"
+       asp-route-status="Failed"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-danger">Failed Only</a>
+    <a asp-action="EmailAudits"
+       asp-route-status="Failed"
+       asp-route-flowKey="BusinessInvitation"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary">Failed Invitations</a>
+    <a asp-action="EmailAudits"
+       asp-route-status="Failed"
+       asp-route-flowKey="AccountActivation"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary">Failed Activations</a>
+    <a asp-action="EmailAudits"
+       asp-route-status="Failed"
+       asp-route-flowKey="PasswordReset"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary">Failed Password Resets</a>
+</div>
+
 <form method="get" class="row g-2 mb-3">
     <div class="col-md-4">
-        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by recipient, subject, provider, or status" />
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by recipient, subject, provider, flow, or business" />
     </div>
     <div class="col-md-3">
         <select name="status" asp-items="Model.StatusItems" class="form-select"></select>
@@ -49,15 +100,16 @@
                 <th>Recipient</th>
                 <th>Subject</th>
                 <th>Flow</th>
+                <th>Business</th>
                 <th>Provider</th>
                 <th>Status</th>
-                <th>Details</th>
+                <th>Operator Response</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted py-4">No email audits matched the selected filters.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted py-4">No email audits matched the selected filters.</td></tr>
         }
         else
         {
@@ -68,6 +120,16 @@
                     <td>@item.RecipientEmail</td>
                     <td>@item.Subject</td>
                     <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                    <td>
+                        @if (item.BusinessId.HasValue)
+                        {
+                            <a asp-action="Details" asp-route-businessId="@item.BusinessId">@(!string.IsNullOrWhiteSpace(item.BusinessName) ? item.BusinessName : item.BusinessId.ToString())</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">N/A</span>
+                        }
+                    </td>
                     <td>@item.Provider</td>
                     <td>
                         @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
@@ -84,17 +146,24 @@
                         }
                     </td>
                     <td>
+                        <div class="small">@item.RecommendedAction</div>
                         @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
                         {
-                            <div class="small text-danger">@item.FailureMessage</div>
+                            <div class="small text-danger mt-1">@item.FailureMessage</div>
                         }
                         else if (item.CompletedAtUtc.HasValue)
                         {
-                            <div class="small text-muted">Completed @item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                            <div class="small text-muted mt-1">Completed @item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                         }
                         else
                         {
-                            <div class="small text-muted">Attempt recorded</div>
+                            <div class="small text-muted mt-1">Attempt recorded</div>
+                        }
+                        @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="mt-2">
+                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary">Open Invitations</a>
+                            </div>
                         }
                     </td>
                 </tr>

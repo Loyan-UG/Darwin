@@ -10,12 +10,17 @@
         <h1 class="mb-0"><i class="fa-solid fa-building me-2"></i>Businesses</h1>
         <p class="text-muted mb-0">Create and maintain merchant tenants, owner assignments, and operational readiness.</p>
     </div>
-    @if (isFullAdmin)
-    {
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> Create Business
+    <div class="d-flex gap-2">
+        <a asp-action="SupportQueue" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-life-ring"></i> Support Queue
         </a>
-    }
+        @if (isFullAdmin)
+        {
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Create Business
+            </a>
+        }
+    </div>
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">

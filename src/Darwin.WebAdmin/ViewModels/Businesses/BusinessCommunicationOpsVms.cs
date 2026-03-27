@@ -87,12 +87,14 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Provider { get; set; } = string.Empty;
         public string? FlowKey { get; set; }
         public Guid? BusinessId { get; set; }
+        public string? BusinessName { get; set; }
         public string RecipientEmail { get; set; } = string.Empty;
         public string Subject { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
         public string? FailureMessage { get; set; }
+        public string RecommendedAction { get; set; } = string.Empty;
     }
 
     public sealed class EmailDispatchAuditsListVm
@@ -105,9 +107,19 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string FlowKey { get; set; } = string.Empty;
         public Guid? BusinessId { get; set; }
         public List<EmailDispatchAuditListItemVm> Items { get; set; } = new();
+        public List<CommunicationFlowPlaybookVm> Playbooks { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> StatusItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> FlowItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class CommunicationFlowPlaybookVm
+    {
+        public string FlowKey { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string AllowedAction { get; set; } = string.Empty;
+        public string EscalationRule { get; set; } = string.Empty;
     }
 
     public sealed class BusinessCommunicationProfileVm

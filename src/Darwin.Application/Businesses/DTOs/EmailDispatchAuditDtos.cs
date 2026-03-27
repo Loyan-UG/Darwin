@@ -11,6 +11,7 @@ namespace Darwin.Application.Businesses.DTOs
         public string Provider { get; set; } = string.Empty;
         public string? FlowKey { get; set; }
         public Guid? BusinessId { get; set; }
+        public string? BusinessName { get; set; }
         public string RecipientEmail { get; set; } = string.Empty;
         public string Subject { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;

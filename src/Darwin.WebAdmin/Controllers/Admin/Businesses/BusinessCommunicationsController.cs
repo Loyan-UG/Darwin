@@ -101,12 +101,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
                     BusinessId = x.BusinessId,
+                    BusinessName = x.BusinessName,
                     RecipientEmail = x.RecipientEmail,
                     Subject = x.Subject,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
-                    FailureMessage = x.FailureMessage
+                    FailureMessage = x.FailureMessage,
+                    RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList(),
                 Items = items.Select(x => new BusinessCommunicationSetupListItemVm
                 {
@@ -188,12 +190,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
                     BusinessId = x.BusinessId,
+                    BusinessName = x.BusinessName,
                     RecipientEmail = x.RecipientEmail,
                     Subject = x.Subject,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
-                    FailureMessage = x.FailureMessage
+                    FailureMessage = x.FailureMessage,
+                    RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList()
             };
 
@@ -224,18 +228,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 StatusItems = BuildAuditStatusItems(status),
                 FlowItems = BuildAuditFlowItems(flowKey),
+                Playbooks = BuildAuditPlaybooks(),
                 Items = items.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
                     Provider = x.Provider,
                     FlowKey = x.FlowKey,
                     BusinessId = x.BusinessId,
+                    BusinessName = x.BusinessName,
                     RecipientEmail = x.RecipientEmail,
                     Subject = x.Subject,
                     Status = x.Status,
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
-                    FailureMessage = x.FailureMessage
+                    FailureMessage = x.FailureMessage,
+                    RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList()
             };
 
@@ -468,6 +475,64 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return actions;
+        }
+
+        private static string BuildAuditRecommendedAction(EmailDispatchAuditListItemDto item)
+        {
+            if (string.Equals(item.Status, "Sent", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return "No immediate operator action required.";
+            }
+
+            if (string.Equals(item.FlowKey, "BusinessInvitation", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return item.BusinessId.HasValue
+                    ? "Check SMTP readiness, then review the business invitation and use resend/revoke from the business workspace."
+                    : "Check SMTP readiness, then review the invitation source before resending.";
+            }
+
+            if (string.Equals(item.FlowKey, "AccountActivation", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return "Check SMTP readiness, then direct the user to self-service resend activation or use admin activation support.";
+            }
+
+            if (string.Equals(item.FlowKey, "PasswordReset", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return "Check SMTP readiness, then reissue password reset only after support validation.";
+            }
+
+            return "Review global transport readiness and the source workflow before attempting manual intervention.";
+        }
+
+        private static List<CommunicationFlowPlaybookVm> BuildAuditPlaybooks()
+        {
+            return new List<CommunicationFlowPlaybookVm>
+            {
+                new()
+                {
+                    FlowKey = "BusinessInvitation",
+                    Title = "Invitation failures",
+                    ScopeNote = "Use business-scoped invitation actions only.",
+                    AllowedAction = "Check SMTP readiness, then open the business invitation workspace and resend or revoke the invitation.",
+                    EscalationRule = "If repeated failures continue after transport readiness is green, treat it as communication-platform debt instead of repeatedly sending the same invitation."
+                },
+                new()
+                {
+                    FlowKey = "AccountActivation",
+                    Title = "Activation failures",
+                    ScopeNote = "Prefer self-service resend; admin override only where current policy allows.",
+                    AllowedAction = "Check SMTP readiness, then direct the user to resend activation from login or use the admin activation-support action.",
+                    EscalationRule = "Do not silently bypass confirmation policy. If failures persist after resend, escalate as auth/communication troubleshooting."
+                },
+                new()
+                {
+                    FlowKey = "PasswordReset",
+                    Title = "Password reset failures",
+                    ScopeNote = "Reset support must stay identity-safe.",
+                    AllowedAction = "Validate the requester first, then reissue password reset only after support validation and transport checks.",
+                    EscalationRule = "Avoid repeated resets without user verification. Persistent failures should be escalated as communication or account-lifecycle issues."
+                }
+            };
         }
     }
 }

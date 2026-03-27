@@ -33,6 +33,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
     {
         private readonly GetBusinessesPageHandler _getBusinessesPage;
         private readonly GetBusinessForEditHandler _getBusinessForEdit;
+        private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
+        private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly CreateBusinessHandler _createBusiness;
         private readonly UpdateBusinessHandler _updateBusiness;
         private readonly SoftDeleteBusinessHandler _deleteBusiness;
@@ -65,6 +67,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         public BusinessesController(
             GetBusinessesPageHandler getBusinessesPage,
             GetBusinessForEditHandler getBusinessForEdit,
+            GetBusinessSupportSummaryHandler getBusinessSupportSummary,
+            GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
             CreateBusinessHandler createBusiness,
             UpdateBusinessHandler updateBusiness,
             SoftDeleteBusinessHandler deleteBusiness,
@@ -96,6 +100,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             _getBusinessesPage = getBusinessesPage;
             _getBusinessForEdit = getBusinessForEdit;
+            _getBusinessSupportSummary = getBusinessSupportSummary;
+            _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _createBusiness = createBusiness;
             _updateBusiness = updateBusiness;
             _deleteBusiness = deleteBusiness;
@@ -172,6 +178,68 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CreatedAtUtc = x.CreatedAtUtc,
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
+        public async Task<IActionResult> SupportQueue(CancellationToken ct = default)
+        {
+            var summaryTask = _getBusinessSupportSummary.HandleAsync(null, ct);
+            var attentionTask = _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct);
+            var failedEmailsTask = _getEmailDispatchAuditsPage.HandleAsync(1, 8, null, "Failed", null, null, ct);
+
+            await Task.WhenAll(summaryTask, attentionTask, failedEmailsTask).ConfigureAwait(false);
+
+            var summary = await summaryTask.ConfigureAwait(false);
+            var (attentionBusinesses, _) = await attentionTask.ConfigureAwait(false);
+            var (failedEmails, _) = await failedEmailsTask.ConfigureAwait(false);
+
+            var vm = new BusinessSupportQueueVm
+            {
+                Summary = new BusinessSupportSummaryVm
+                {
+                    AttentionBusinessCount = summary.AttentionBusinessCount,
+                    PendingApprovalBusinessCount = summary.PendingApprovalBusinessCount,
+                    SuspendedBusinessCount = summary.SuspendedBusinessCount,
+                    MissingOwnerBusinessCount = summary.MissingOwnerBusinessCount,
+                    OpenInvitationCount = summary.OpenInvitationCount,
+                    PendingActivationMemberCount = summary.PendingActivationMemberCount,
+                    LockedMemberCount = summary.LockedMemberCount
+                },
+                AttentionBusinesses = attentionBusinesses.Select(x => new BusinessListItemVm
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    LegalName = x.LegalName,
+                    Category = x.Category,
+                    IsActive = x.IsActive,
+                    OperationalStatus = x.OperationalStatus,
+                    MemberCount = x.MemberCount,
+                    ActiveOwnerCount = x.ActiveOwnerCount,
+                    LocationCount = x.LocationCount,
+                    PrimaryLocationCount = x.PrimaryLocationCount,
+                    InvitationCount = x.InvitationCount,
+                    HasContactEmailConfigured = x.HasContactEmailConfigured,
+                    HasLegalNameConfigured = x.HasLegalNameConfigured,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    ModifiedAtUtc = x.ModifiedAtUtc,
+                    RowVersion = x.RowVersion
+                }).ToList(),
+                FailedEmails = failedEmails.Select(x => new BusinessSupportFailedEmailVm
+                {
+                    Id = x.Id,
+                    FlowKey = x.FlowKey ?? string.Empty,
+                    BusinessId = x.BusinessId,
+                    BusinessName = x.BusinessName,
+                    RecipientEmail = x.RecipientEmail,
+                    Subject = x.Subject,
+                    AttemptedAtUtc = x.AttemptedAtUtc,
+                    FailureMessage = x.FailureMessage,
+                    RecommendedAction = BuildSupportAuditRecommendedAction(x)
                 }).ToList()
             };
 
@@ -1600,6 +1668,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             var sizes = new[] { 10, 20, 50, 100 };
             return sizes.Select(x => new SelectListItem(x.ToString(), x.ToString(), x == selectedPageSize)).ToList();
+        }
+
+        private static string BuildSupportAuditRecommendedAction(EmailDispatchAuditListItemDto item)
+        {
+            if (string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
+            {
+                return item.BusinessId.HasValue
+                    ? "Open invitations for the business and use resend or revoke after checking transport readiness."
+                    : "Review the source invitation workflow and transport readiness before resending.";
+            }
+
+            if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase))
+            {
+                return item.BusinessId.HasValue
+                    ? "Open members for the business and use activation support only after verifying the account state."
+                    : "Use activation support only after verifying the account state.";
+            }
+
+            if (string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Reissue reset only after support validation and communication checks.";
+            }
+
+            return "Review the related workflow and communication readiness before manual intervention.";
         }
     }
 }
