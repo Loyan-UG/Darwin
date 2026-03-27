@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Admin Dashboard";
     var canManageIdentity = await Perms.HasAsync("FullAdminAccess");
+    var canManageBusinesses = await Perms.HasAsync("ManageBusinessSupport");
 }
 
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
@@ -200,6 +201,10 @@
             <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-primary">Orders</a>
             <a asp-controller="Crm" asp-action="Customers" class="btn btn-outline-primary">Customers</a>
             <a asp-controller="Crm" asp-action="Leads" class="btn btn-outline-primary">Leads</a>
+            @if (canManageBusinesses)
+            {
+                <a asp-controller="Businesses" asp-action="Index" class="btn btn-outline-primary">Businesses</a>
+            }
             @if (Model.SelectedBusinessId.HasValue)
             {
                 <a asp-controller="Inventory" asp-action="Warehouses" asp-route-businessId="@Model.SelectedBusinessId" class="btn btn-outline-primary">Warehouses</a>

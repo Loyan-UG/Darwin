@@ -27,6 +27,9 @@
                 <div class="card-header">Assign roles to user</div>
                 <div class="card-body">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="alert alert-info">
+                        <strong>Delegated support role:</strong> the built-in <code>business-support-admins</code> role is intended for invitation and business-member support actions only. Approval, suspension, owner overrides, and business lifecycle changes remain FullAdmin-only.
+                    </div>
                     @if (Model.AllRoles.Count > 0)
                     {
                         <div class="row row-cols-1 row-cols-md-2 g-2">
@@ -42,6 +45,10 @@
                                                @(isChecked ? "checked" : "") />
                                         <label class="form-check-label">
                                             <strong>@r.DisplayName</strong>
+                                            @if (string.Equals(r.Key, "business-support-admins", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <span class="badge bg-info text-dark ms-2">Delegated support</span>
+                                            }
                                             <small class="text-muted d-block">@r.Key - @r.Description</small>
                                         </label>
                                     </div>

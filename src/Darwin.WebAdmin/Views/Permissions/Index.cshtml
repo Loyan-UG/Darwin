@@ -7,6 +7,9 @@
 
 <div class="card mb-3">
     <div class="card-body">
+        <div class="alert alert-info mb-3">
+            <strong>Delegated business support:</strong> the built-in <code>ManageBusinessSupport</code> permission is for invitation and member-support workflows only. Approval, suspension, owner overrides, and business lifecycle actions still belong to <code>FullAdminAccess</code>.
+        </div>
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-4">
                 <label for="q" class="form-label">Search</label>
@@ -59,6 +62,10 @@
                                 else { <span class="text-muted">No</span> }
                             </td>
                             <td class="text-end">
+                                @if (string.Equals(p.Key, "ManageBusinessSupport", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge bg-info text-dark me-2">Delegated support</span>
+                                }
                                 <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary me-1">
                                     <i class="fa fa-pen"></i> Edit
                                 </a>

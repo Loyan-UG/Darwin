@@ -53,6 +53,7 @@ Status terms used below:
 - `Completed`: business onboarding now includes a dedicated setup workspace in WebAdmin for grouped profile/defaults editing, onboarding shortcuts, and visibility into phase-1 global settings dependencies
 - `Completed`: the business setup workspace now also shows inline previews for members needing support action and open invitations, reducing page-hopping during onboarding troubleshooting
 - `Completed foundation`: delegated business-support access now exists in WebAdmin through a dedicated permission/role path for member support and invitation operations without exposing approval, lifecycle, or owner-management actions
+- `Completed foundation`: identity/admin screens now surface the delegated business-support role and permission more clearly, so assigning support access no longer depends on tribal knowledge
 
 ### Authentication and account lifecycle
 
@@ -276,6 +277,7 @@ Status terms used below:
 - `Completed`: phase-1 invitation emails now include both the manual token path and a configurable magic-link path
 - `Decision made`: business-scoped admins should receive delegated onboarding/support actions selectively; invitation issue/resend and reset-support are good candidates, while approval/suspension remain FullAdmin-only
 - `Completed foundation`: WebAdmin now enforces that selective delegation model by allowing business-support operators into business list/member/invitation support flows while keeping business lifecycle, owner management, and archive actions FullAdmin-only
+- `Planned / Near-term`: normalize legacy-encoded identity/admin views such as the role-permissions editor so future permission UX work does not keep tripping over file-encoding debt
 - `Decision made`: settings should move via staged split from global to business-specific; start with branding/localization/communications, then move payment/shipping once provider integrations mature
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh
 - `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live

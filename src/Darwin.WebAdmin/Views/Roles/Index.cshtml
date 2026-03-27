@@ -70,6 +70,10 @@
                                     }
                                 </td>
                                 <td class="text-end">
+                                    @if (string.Equals(r.Key, "business-support-admins", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="badge bg-info text-dark me-2">Delegated support</span>
+                                    }
                                     <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary me-1">
                                         <i class="fa fa-pen"></i> Edit
                                     </a>

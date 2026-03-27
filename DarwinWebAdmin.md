@@ -128,6 +128,7 @@ Target workflow:
 - `Completed`: approval, suspension, and reactivation actions now exist in WebAdmin, together with a readiness checklist for owner, primary location, contact email, and legal-name completion
 - `Completed`: approval decisions now have operational impact because `Darwin.Mobile.Business` uses a phase-1 soft gate against the business access-state API
 - `Completed foundation`: delegated business-support operators can now access business listing, member-support, and invitation workflows through a dedicated permission path, while business lifecycle and ownership-sensitive actions remain FullAdmin-only
+- `Completed foundation`: dashboard, user-role assignment, and permission listing screens now call out the delegated business-support role/permission explicitly, making support access assignment operationally discoverable
 - `Planned / Near-term`: explicit onboarding state machine, richer setup workspace UX, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support
