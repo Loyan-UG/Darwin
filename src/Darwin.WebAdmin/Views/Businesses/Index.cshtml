@@ -18,6 +18,21 @@
     }
 </div>
 
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Index" asp-route-attentionOnly="true" class="btn btn-sm @(Model.AttentionOnly ? "btn-warning" : "btn-outline-warning")">
+        <i class="fa-solid fa-triangle-exclamation"></i> Needs Attention
+    </a>
+    <a asp-action="Index" asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval" class="btn btn-sm @(Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval ? "btn-warning" : "btn-outline-warning")">
+        <i class="fa-solid fa-hourglass-half"></i> Pending Approval
+    </a>
+    <a asp-action="Index" asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.Suspended" class="btn btn-sm @(Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended ? "btn-danger" : "btn-outline-danger")">
+        <i class="fa-solid fa-ban"></i> Suspended
+    </a>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-rotate-left"></i> Clear Queue Filters
+    </a>
+</div>
+
 <form method="get" class="row g-2 mb-3">
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business or legal name" />

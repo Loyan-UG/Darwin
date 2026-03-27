@@ -54,6 +54,8 @@ Status terms used below:
 - `Completed`: the business setup workspace now also shows inline previews for members needing support action and open invitations, reducing page-hopping during onboarding troubleshooting
 - `Completed foundation`: delegated business-support access now exists in WebAdmin through a dedicated permission/role path for member support and invitation operations without exposing approval, lifecycle, or owner-management actions
 - `Completed foundation`: identity/admin screens now surface the delegated business-support role and permission more clearly, so assigning support access no longer depends on tribal knowledge
+- `Completed foundation`: the WebAdmin dashboard now exposes a business-support queue with onboarding/support counts, and the business member/invitation lists now support actionable queue filters for pending activation, locked users, and open invitations
+- `Completed foundation`: the businesses index now exposes quick queue shortcuts for needs-attention, pending-approval, and suspended businesses, reducing filter setup for support/admin operators
 
 ### Authentication and account lifecycle
 

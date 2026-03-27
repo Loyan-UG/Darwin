@@ -1,4 +1,5 @@
 using Darwin.Application.Billing.Queries;
+using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Catalog.Queries;
 using Darwin.Application.CMS.Queries;
 using Darwin.Application.CRM.DTOs;
@@ -29,6 +30,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
         private readonly GetWarehousesPageHandler _getWarehousesPage;
         private readonly GetSuppliersPageHandler _getSuppliersPage;
         private readonly GetPurchaseOrdersPageHandler _getPurchaseOrdersPage;
+        private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
         private readonly AdminReferenceDataService _referenceData;
 
         /// <summary>
@@ -44,6 +46,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             GetWarehousesPageHandler getWarehousesPage,
             GetSuppliersPageHandler getSuppliersPage,
             GetPurchaseOrdersPageHandler getPurchaseOrdersPage,
+            GetBusinessSupportSummaryHandler getBusinessSupportSummary,
             AdminReferenceDataService referenceData)
         {
             _getCrmSummary = getCrmSummary ?? throw new ArgumentNullException(nameof(getCrmSummary));
@@ -55,6 +58,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             _getWarehousesPage = getWarehousesPage ?? throw new ArgumentNullException(nameof(getWarehousesPage));
             _getSuppliersPage = getSuppliersPage ?? throw new ArgumentNullException(nameof(getSuppliersPage));
             _getPurchaseOrdersPage = getPurchaseOrdersPage ?? throw new ArgumentNullException(nameof(getPurchaseOrdersPage));
+            _getBusinessSupportSummary = getBusinessSupportSummary ?? throw new ArgumentNullException(nameof(getBusinessSupportSummary));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
         }
 
@@ -74,6 +78,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var pagesTask = _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct: ct);
             var ordersTask = _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct);
             var usersTask = _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, ct);
+            var businessSupportTask = _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct);
 
             Task<(List<Darwin.Application.Billing.DTOs.PaymentListItemDto> Items, int Total)>? paymentsTask = null;
             Task<(List<Darwin.Application.Inventory.DTOs.WarehouseListItemDto> Items, int Total)>? warehousesTask = null;
@@ -88,7 +93,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 purchaseOrdersTask = _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
             }
 
-            await Task.WhenAll(new Task[] { crmSummaryTask, productsTask, pagesTask, ordersTask, usersTask }
+            await Task.WhenAll(new Task[] { crmSummaryTask, productsTask, pagesTask, ordersTask, usersTask, businessSupportTask }
                 .Concat(paymentsTask is null ? Array.Empty<Task>() : new[] { paymentsTask })
                 .Concat(warehousesTask is null ? Array.Empty<Task>() : new[] { warehousesTask })
                 .Concat(suppliersTask is null ? Array.Empty<Task>() : new[] { suppliersTask })
@@ -100,6 +105,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var pages = await pagesTask.ConfigureAwait(false);
             var orders = await ordersTask.ConfigureAwait(false);
             var users = await usersTask.ConfigureAwait(false);
+            var businessSupport = await businessSupportTask.ConfigureAwait(false);
 
             var vm = new AdminDashboardVm
             {
@@ -112,6 +118,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 OrderCount = orders.Total,
                 UserCount = users.Total,
                 Crm = MapCrmSummary(crmSummary),
+                BusinessSupport = MapBusinessSupportSummary(businessSupport),
                 PaymentCount = paymentsTask is null ? null : (await paymentsTask.ConfigureAwait(false)).Total,
                 WarehouseCount = warehousesTask is null ? null : (await warehousesTask.ConfigureAwait(false)).Total,
                 SupplierCount = suppliersTask is null ? null : (await suppliersTask.ConfigureAwait(false)).Total,
@@ -142,6 +149,23 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 OpenPipelineMinor = dto.OpenPipelineMinor,
                 SegmentCount = dto.SegmentCount,
                 RecentInteractionCount = dto.RecentInteractionCount
+            };
+        }
+
+        private static BusinessSupportSummaryVm MapBusinessSupportSummary(Darwin.Application.Businesses.DTOs.BusinessSupportSummaryDto dto)
+        {
+            return new BusinessSupportSummaryVm
+            {
+                AttentionBusinessCount = dto.AttentionBusinessCount,
+                PendingApprovalBusinessCount = dto.PendingApprovalBusinessCount,
+                SuspendedBusinessCount = dto.SuspendedBusinessCount,
+                MissingOwnerBusinessCount = dto.MissingOwnerBusinessCount,
+                OpenInvitationCount = dto.OpenInvitationCount,
+                PendingActivationMemberCount = dto.PendingActivationMemberCount,
+                LockedMemberCount = dto.LockedMemberCount,
+                SelectedBusinessOpenInvitationCount = dto.SelectedBusinessOpenInvitationCount,
+                SelectedBusinessPendingActivationCount = dto.SelectedBusinessPendingActivationCount,
+                SelectedBusinessLockedMemberCount = dto.SelectedBusinessLockedMemberCount
             };
         }
     }

@@ -4,6 +4,17 @@ using Darwin.Domain.Enums;
 namespace Darwin.Application.Businesses.DTOs
 {
     /// <summary>
+    /// Optional operational queue filters for business-member support screens.
+    /// </summary>
+    public enum BusinessMemberSupportFilter
+    {
+        All = 0,
+        Attention = 1,
+        PendingActivation = 2,
+        Locked = 3
+    }
+
+    /// <summary>
     /// DTO for linking a user to a business (member).
     /// Hard-managed entity; no soft-delete.
     /// </summary>

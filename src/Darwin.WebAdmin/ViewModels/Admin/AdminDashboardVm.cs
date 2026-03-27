@@ -69,8 +69,30 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public int? PurchaseOrderCount { get; set; }
 
         /// <summary>
+        /// Gets or sets business-support queue metrics used by onboarding and support operators.
+        /// </summary>
+        public BusinessSupportSummaryVm BusinessSupport { get; set; } = new();
+
+        /// <summary>
         /// Gets or sets the business selector options shown on the dashboard.
         /// </summary>
         public IReadOnlyList<SelectListItem> BusinessOptions { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    /// <summary>
+    /// Support-focused business onboarding and member-help summary.
+    /// </summary>
+    public sealed class BusinessSupportSummaryVm
+    {
+        public int AttentionBusinessCount { get; set; }
+        public int PendingApprovalBusinessCount { get; set; }
+        public int SuspendedBusinessCount { get; set; }
+        public int MissingOwnerBusinessCount { get; set; }
+        public int OpenInvitationCount { get; set; }
+        public int PendingActivationMemberCount { get; set; }
+        public int LockedMemberCount { get; set; }
+        public int SelectedBusinessOpenInvitationCount { get; set; }
+        public int SelectedBusinessPendingActivationCount { get; set; }
+        public int SelectedBusinessLockedMemberCount { get; set; }
     }
 }

@@ -129,6 +129,8 @@ Target workflow:
 - `Completed`: approval decisions now have operational impact because `Darwin.Mobile.Business` uses a phase-1 soft gate against the business access-state API
 - `Completed foundation`: delegated business-support operators can now access business listing, member-support, and invitation workflows through a dedicated permission path, while business lifecycle and ownership-sensitive actions remain FullAdmin-only
 - `Completed foundation`: dashboard, user-role assignment, and permission listing screens now call out the delegated business-support role/permission explicitly, making support access assignment operationally discoverable
+- `Completed foundation`: the admin dashboard now exposes a business-support queue with attention, approval, invitation, activation, and lockout counts, and the business member/invitation screens now support queue-oriented filters so support operators can jump directly into pending-activation or open-invitation work
+- `Completed foundation`: the businesses index now includes quick queue shortcuts for needs-attention, pending-approval, and suspended businesses, which cuts down operator filter setup during onboarding/support review
 - `Planned / Near-term`: explicit onboarding state machine, richer setup workspace UX, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support

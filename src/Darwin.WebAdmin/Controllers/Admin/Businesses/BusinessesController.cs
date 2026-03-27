@@ -299,7 +299,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 });
             }
 
-            var (items, _) = await _getBusinessMembersPage.HandleAsync(businessId, 1, 50, null, ct);
+            var (items, _) = await _getBusinessMembersPage.HandleAsync(
+                businessId,
+                1,
+                50,
+                query: null,
+                filter: BusinessMemberSupportFilter.All,
+                ct);
             var attentionMembers = items
                 .Where(x => !x.EmailConfirmed || (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > DateTime.UtcNow))
                 .Take(5)
@@ -340,7 +346,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 });
             }
 
-            var (items, _) = await _getBusinessInvitationsPage.HandleAsync(businessId, 1, 50, null, ct);
+            var (items, _) = await _getBusinessInvitationsPage.HandleAsync(
+                businessId,
+                1,
+                50,
+                query: null,
+                filter: BusinessInvitationQueueFilter.All,
+                ct);
             var openInvitations = items
                 .Where(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired)
                 .Take(5)
@@ -762,7 +774,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> Members(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Members(
+            Guid businessId,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
+            CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
@@ -771,7 +789,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectToAction(nameof(Index));
             }
 
-            var (items, total) = await _getBusinessMembersPage.HandleAsync(businessId, page, pageSize, query, ct);
+            var (items, total) = await _getBusinessMembersPage.HandleAsync(businessId, page, pageSize, query, filter, ct);
 
             var vm = new BusinessMembersListVm
             {
@@ -780,6 +798,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildBusinessMemberFilterItems(filter),
                 Items = items.Select(x => new BusinessMemberListItemVm
                 {
                     Id = x.Id,
@@ -801,7 +821,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
-        public async Task<IActionResult> Invitations(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Invitations(
+            Guid businessId,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All,
+            CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
@@ -810,7 +836,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectToAction(nameof(Index));
             }
 
-            var (items, total) = await _getBusinessInvitationsPage.HandleAsync(businessId, page, pageSize, query, ct);
+            var (items, total) = await _getBusinessInvitationsPage.HandleAsync(businessId, page, pageSize, query, filter, ct);
 
             var vm = new BusinessInvitationsListVm
             {
@@ -819,6 +845,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildBusinessInvitationFilterItems(filter),
                 Items = items.Select(x => new BusinessInvitationListItemVm
                 {
                     Id = x.Id,
@@ -1466,6 +1494,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 yield return new SelectListItem(status.ToString(), status.ToString(), selectedStatus == status);
             }
+        }
+
+        private static IEnumerable<SelectListItem> BuildBusinessMemberFilterItems(BusinessMemberSupportFilter selectedFilter)
+        {
+            yield return new SelectListItem("All members", BusinessMemberSupportFilter.All.ToString(), selectedFilter == BusinessMemberSupportFilter.All);
+            yield return new SelectListItem("Needs attention", BusinessMemberSupportFilter.Attention.ToString(), selectedFilter == BusinessMemberSupportFilter.Attention);
+            yield return new SelectListItem("Pending activation", BusinessMemberSupportFilter.PendingActivation.ToString(), selectedFilter == BusinessMemberSupportFilter.PendingActivation);
+            yield return new SelectListItem("Locked", BusinessMemberSupportFilter.Locked.ToString(), selectedFilter == BusinessMemberSupportFilter.Locked);
+        }
+
+        private static IEnumerable<SelectListItem> BuildBusinessInvitationFilterItems(BusinessInvitationQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All invitations", BusinessInvitationQueueFilter.All.ToString(), selectedFilter == BusinessInvitationQueueFilter.All);
+            yield return new SelectListItem("Open invitations", BusinessInvitationQueueFilter.Open.ToString(), selectedFilter == BusinessInvitationQueueFilter.Open);
+            yield return new SelectListItem("Pending", BusinessInvitationQueueFilter.Pending.ToString(), selectedFilter == BusinessInvitationQueueFilter.Pending);
+            yield return new SelectListItem("Expired", BusinessInvitationQueueFilter.Expired.ToString(), selectedFilter == BusinessInvitationQueueFilter.Expired);
+            yield return new SelectListItem("Accepted", BusinessInvitationQueueFilter.Accepted.ToString(), selectedFilter == BusinessInvitationQueueFilter.Accepted);
+            yield return new SelectListItem("Revoked", BusinessInvitationQueueFilter.Revoked.ToString(), selectedFilter == BusinessInvitationQueueFilter.Revoked);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

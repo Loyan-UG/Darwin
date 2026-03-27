@@ -25,6 +25,7 @@ namespace Darwin.Application.Businesses.Queries
             int page,
             int pageSize,
             string? query = null,
+            BusinessMemberSupportFilter filter = BusinessMemberSupportFilter.All,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -56,6 +57,19 @@ namespace Darwin.Application.Businesses.Queries
                     x.UserEmail.Contains(q) ||
                     x.Member.Role.ToString().Contains(q));
             }
+
+            var nowUtc = DateTime.UtcNow;
+
+            baseQuery = filter switch
+            {
+                BusinessMemberSupportFilter.Attention => baseQuery.Where(x =>
+                    !x.EmailConfirmed ||
+                    (x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc)),
+                BusinessMemberSupportFilter.PendingActivation => baseQuery.Where(x => !x.EmailConfirmed),
+                BusinessMemberSupportFilter.Locked => baseQuery.Where(x =>
+                    x.LockoutEndUtc.HasValue && x.LockoutEndUtc.Value > nowUtc),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct);
 

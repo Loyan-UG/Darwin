@@ -43,6 +43,9 @@
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by user name, email or role" />
     </div>
+    <div class="col-md-3">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+    </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
         <a asp-action="Members" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Reset</a>
@@ -187,7 +190,8 @@
        asp-controller="Businesses"
        asp-action="Members"
        asp-route-businessId="@Model.Business.Id"
-       asp-route-query="@Model.Query">
+       asp-route-query="@Model.Query"
+       asp-route-filter="@Model.Filter">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

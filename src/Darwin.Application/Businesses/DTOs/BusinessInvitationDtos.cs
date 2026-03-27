@@ -4,6 +4,19 @@ using Darwin.Domain.Enums;
 namespace Darwin.Application.Businesses.DTOs
 {
     /// <summary>
+    /// Optional queue filters for business-invitation support screens.
+    /// </summary>
+    public enum BusinessInvitationQueueFilter
+    {
+        All = 0,
+        Open = 1,
+        Pending = 2,
+        Expired = 3,
+        Accepted = 4,
+        Revoked = 5
+    }
+
+    /// <summary>
     /// DTO for issuing a new business invitation.
     /// </summary>
     public sealed class BusinessInvitationCreateDto

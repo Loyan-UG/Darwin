@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -214,6 +215,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public BusinessMemberSupportFilter Filter { get; set; } = BusinessMemberSupportFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
         public List<BusinessMemberListItemVm> Items { get; set; } = new();
     }
 
@@ -268,6 +271,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public BusinessInvitationQueueFilter Filter { get; set; } = BusinessInvitationQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
         public List<BusinessInvitationListItemVm> Items { get; set; } = new();
     }
 

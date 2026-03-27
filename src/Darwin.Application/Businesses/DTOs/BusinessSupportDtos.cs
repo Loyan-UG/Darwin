@@ -1,0 +1,21 @@
+using System;
+
+namespace Darwin.Application.Businesses.DTOs
+{
+    /// <summary>
+    /// Aggregated support and onboarding counts used by WebAdmin dashboards and support queues.
+    /// </summary>
+    public sealed class BusinessSupportSummaryDto
+    {
+        public int AttentionBusinessCount { get; set; }
+        public int PendingApprovalBusinessCount { get; set; }
+        public int SuspendedBusinessCount { get; set; }
+        public int MissingOwnerBusinessCount { get; set; }
+        public int OpenInvitationCount { get; set; }
+        public int PendingActivationMemberCount { get; set; }
+        public int LockedMemberCount { get; set; }
+        public int SelectedBusinessOpenInvitationCount { get; set; }
+        public int SelectedBusinessPendingActivationCount { get; set; }
+        public int SelectedBusinessLockedMemberCount { get; set; }
+    }
+}

@@ -27,6 +27,7 @@ namespace Darwin.Application.Businesses.Queries
             int page,
             int pageSize,
             string? query = null,
+            BusinessInvitationQueueFilter filter = BusinessInvitationQueueFilter.All,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -61,6 +62,18 @@ namespace Darwin.Application.Businesses.Queries
                     x.EffectiveStatus.ToString().Contains(q) ||
                     x.Invitation.Role.ToString().Contains(q));
             }
+
+            baseQuery = filter switch
+            {
+                BusinessInvitationQueueFilter.Open => baseQuery.Where(x =>
+                    x.EffectiveStatus == BusinessInvitationStatus.Pending ||
+                    x.EffectiveStatus == BusinessInvitationStatus.Expired),
+                BusinessInvitationQueueFilter.Pending => baseQuery.Where(x => x.EffectiveStatus == BusinessInvitationStatus.Pending),
+                BusinessInvitationQueueFilter.Expired => baseQuery.Where(x => x.EffectiveStatus == BusinessInvitationStatus.Expired),
+                BusinessInvitationQueueFilter.Accepted => baseQuery.Where(x => x.EffectiveStatus == BusinessInvitationStatus.Accepted),
+                BusinessInvitationQueueFilter.Revoked => baseQuery.Where(x => x.EffectiveStatus == BusinessInvitationStatus.Revoked),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct);
 
