@@ -58,6 +58,7 @@ Status terms used below:
 - `Completed foundation`: the businesses index now exposes quick queue shortcuts for needs-attention, pending-approval, and suspended businesses, reducing filter setup for support/admin operators
 - `Completed foundation`: dashboard cards for communication operations and business-support queues are now HTMX-refreshable partials, so operators can refresh live snapshots without reloading the full admin dashboard
 - `Completed foundation`: WebAdmin now also has a dedicated `Business Support Queue` workspace that combines attention businesses and recent failed communication events, reducing page-hopping during onboarding and support triage
+- `Completed foundation`: the dedicated `Business Support Queue` workspace is now split into HTMX-refreshable summary, attention, and failed-email fragments, so operators can refresh triage data without reloading the full page
 
 ### Authentication and account lifecycle
 
@@ -141,6 +142,7 @@ Status terms used below:
 - `Completed foundation`: each business communication profile now includes recommended next actions and recent business-scoped email activity, so troubleshooting can move from visibility into operator action without leaving the workspace
 - `Completed foundation`: the email audit-log now includes flow-specific operator playbooks, failed-flow quick filters, and business-linked shortcuts, so failed invitation/activation/password-reset emails are no longer only raw diagnostics
 - `Completed foundation`: the dedicated `Business Support Queue` now links business attention signals with recent failed invitation/activation/password-reset emails, so support operators can triage cross-workflow issues from one place before full automation exists
+- `Completed foundation`: the same support queue now refreshes summary, attention businesses, and failed-email signals independently via HTMX fragments, making operational triage faster under active support load
 
 ### Payments, refunds, reconciliation, disputes
 

@@ -1,0 +1,82 @@
+@model IReadOnlyList<Darwin.WebAdmin.ViewModels.Businesses.BusinessListItemVm>
+
+<div id="support-queue-attention" class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Attention Businesses</span>
+        <div class="d-flex gap-2">
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    hx-get="@Url.Action("SupportQueueAttentionFragment", "Businesses")"
+                    hx-target="#support-queue-attention"
+                    hx-swap="outerHTML">
+                Refresh
+            </button>
+            <a asp-action="Index" asp-route-attentionOnly="true" class="btn btn-sm btn-outline-secondary">Full Queue</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Business</th>
+                        <th>Status</th>
+                        <th>Signals</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-muted py-4">No attention businesses are currently queued.</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@item.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(item.LegalName))
+                                {
+                                    <div class="small text-muted">@item.LegalName</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge text-bg-secondary">@item.OperationalStatus</span>
+                                @if (!item.IsActive)
+                                {
+                                    <span class="badge text-bg-warning ms-1">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.ActiveOwnerCount == 0)
+                                {
+                                    <div class="small text-muted">Missing owner</div>
+                                }
+                                @if (item.PrimaryLocationCount == 0)
+                                {
+                                    <div class="small text-muted">Missing primary location</div>
+                                }
+                                @if (!item.HasContactEmailConfigured)
+                                {
+                                    <div class="small text-muted">Missing contact email</div>
+                                }
+                                @if (!item.HasLegalNameConfigured)
+                                {
+                                    <div class="small text-muted">Missing legal name</div>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Setup</a>
+                                <a asp-action="Members" asp-route-businessId="@item.Id" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary">Members</a>
+                                <a asp-action="Invitations" asp-route-businessId="@item.Id" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary">Invites</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

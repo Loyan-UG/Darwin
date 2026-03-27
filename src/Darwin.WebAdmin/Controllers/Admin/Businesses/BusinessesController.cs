@@ -247,6 +247,63 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         }
 
         [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
+        public async Task<IActionResult> SupportQueueSummaryFragment(CancellationToken ct = default)
+        {
+            var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
+            return PartialView("~/Views/Businesses/_SupportQueueSummary.cshtml", MapSupportSummaryVm(summary));
+        }
+
+        [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
+        public async Task<IActionResult> SupportQueueAttentionFragment(CancellationToken ct = default)
+        {
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct).ConfigureAwait(false);
+            var vm = attentionBusinesses.Select(x => new BusinessListItemVm
+            {
+                Id = x.Id,
+                Name = x.Name,
+                LegalName = x.LegalName,
+                Category = x.Category,
+                IsActive = x.IsActive,
+                OperationalStatus = x.OperationalStatus,
+                MemberCount = x.MemberCount,
+                ActiveOwnerCount = x.ActiveOwnerCount,
+                LocationCount = x.LocationCount,
+                PrimaryLocationCount = x.PrimaryLocationCount,
+                InvitationCount = x.InvitationCount,
+                HasContactEmailConfigured = x.HasContactEmailConfigured,
+                HasLegalNameConfigured = x.HasLegalNameConfigured,
+                CreatedAtUtc = x.CreatedAtUtc,
+                ModifiedAtUtc = x.ModifiedAtUtc,
+                RowVersion = x.RowVersion
+            }).ToList();
+
+            return PartialView("~/Views/Businesses/_SupportQueueAttentionBusinesses.cshtml", vm);
+        }
+
+        [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
+        public async Task<IActionResult> SupportQueueFailedEmailsFragment(CancellationToken ct = default)
+        {
+            var (failedEmails, _) = await _getEmailDispatchAuditsPage.HandleAsync(1, 8, null, "Failed", null, null, ct).ConfigureAwait(false);
+            var vm = failedEmails.Select(x => new BusinessSupportFailedEmailVm
+            {
+                Id = x.Id,
+                FlowKey = x.FlowKey ?? string.Empty,
+                BusinessId = x.BusinessId,
+                BusinessName = x.BusinessName,
+                RecipientEmail = x.RecipientEmail,
+                Subject = x.Subject,
+                AttemptedAtUtc = x.AttemptedAtUtc,
+                FailureMessage = x.FailureMessage,
+                RecommendedAction = BuildSupportAuditRecommendedAction(x)
+            }).ToList();
+
+            return PartialView("~/Views/Businesses/_SupportQueueFailedEmails.cshtml", vm);
+        }
+
+        [HttpGet]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> Create(CancellationToken ct = default)
         {
@@ -1668,6 +1725,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             var sizes = new[] { 10, 20, 50, 100 };
             return sizes.Select(x => new SelectListItem(x.ToString(), x.ToString(), x == selectedPageSize)).ToList();
+        }
+
+        private static BusinessSupportSummaryVm MapSupportSummaryVm(BusinessSupportSummaryDto summary)
+        {
+            return new BusinessSupportSummaryVm
+            {
+                AttentionBusinessCount = summary.AttentionBusinessCount,
+                PendingApprovalBusinessCount = summary.PendingApprovalBusinessCount,
+                SuspendedBusinessCount = summary.SuspendedBusinessCount,
+                MissingOwnerBusinessCount = summary.MissingOwnerBusinessCount,
+                OpenInvitationCount = summary.OpenInvitationCount,
+                PendingActivationMemberCount = summary.PendingActivationMemberCount,
+                LockedMemberCount = summary.LockedMemberCount
+            };
         }
 
         private static string BuildSupportAuditRecommendedAction(EmailDispatchAuditListItemDto item)

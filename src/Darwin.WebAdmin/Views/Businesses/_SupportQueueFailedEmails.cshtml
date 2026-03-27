@@ -1,0 +1,66 @@
+@model IReadOnlyList<Darwin.WebAdmin.ViewModels.Businesses.BusinessSupportFailedEmailVm>
+
+<div id="support-queue-failed-emails" class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Recent Failed Email Events</span>
+        <div class="d-flex gap-2">
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    hx-get="@Url.Action("SupportQueueFailedEmailsFragment", "Businesses")"
+                    hx-target="#support-queue-failed-emails"
+                    hx-swap="outerHTML">
+                Refresh
+            </button>
+            <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" class="btn btn-sm btn-outline-secondary">Full Audit Log</a>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.Count == 0)
+        {
+            <div class="text-muted">No failed phase-1 email events are currently queued.</div>
+        }
+        else
+        {
+            <div class="list-group list-group-flush">
+                @foreach (var item in Model)
+                {
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div>
+                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</div>
+                                <div class="small text-muted">@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</div>
+                            </div>
+                            @if (item.BusinessId.HasValue)
+                            {
+                                <a asp-controller="BusinessCommunications" asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary">Business</a>
+                            }
+                        </div>
+                        <div class="small mt-2">@item.RecipientEmail</div>
+                        <div class="small text-muted">@item.Subject</div>
+                        @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
+                        {
+                            <div class="small text-danger mt-2">@item.FailureMessage</div>
+                        }
+                        <div class="small mt-2">@item.RecommendedAction</div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
+                            <a asp-controller="BusinessCommunications"
+                               asp-action="EmailAudits"
+                               asp-route-status="Failed"
+                               asp-route-flowKey="@item.FlowKey"
+                               asp-route-businessId="@item.BusinessId"
+                               class="btn btn-sm btn-outline-secondary">Open Similar Failures</a>
+                            @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <a asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-filter="Open" class="btn btn-sm btn-outline-primary">Open Invitations</a>
+                            }
+                            else if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <a asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-filter="PendingActivation" class="btn btn-sm btn-outline-primary">Open Members</a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

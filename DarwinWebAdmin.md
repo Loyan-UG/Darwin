@@ -133,6 +133,7 @@ Target workflow:
 - `Completed foundation`: the businesses index now includes quick queue shortcuts for needs-attention, pending-approval, and suspended businesses, which cuts down operator filter setup during onboarding/support review
 - `Completed foundation`: the dashboard communication-operations card and business-support queue card are now HTMX-refreshable partials, so operators can refresh live summaries without reloading the full admin dashboard
 - `Completed foundation`: WebAdmin now also includes a dedicated `Business Support Queue` workspace that combines attention businesses with recent failed invitation/activation/password-reset emails, reducing page-hopping during onboarding and support triage
+- `Completed foundation`: that support queue is now broken into HTMX-refreshable summary, attention-business, and failed-email fragments, so operators can refresh live triage data without a full page reload
 - `Planned / Near-term`: explicit onboarding state machine, richer setup workspace UX, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support
@@ -279,6 +280,7 @@ Communication is a platform capability and must be visible in WebAdmin.
 - `Completed foundation`: each business communication-profile screen now also surfaces recommended next actions and recent business-scoped email activity, so operators can move from diagnosis into support/setup action without leaving the communication workspace
 - `Completed foundation`: the email audit-log now also includes flow-specific operator playbooks, failed-flow quick filters, and business-linked shortcuts, which makes invitation/activation/password-reset failures actionable without pretending a generic retry queue already exists
 - `Completed foundation`: the new `Business Support Queue` links those failed-flow email signals back to business attention/setup/member/invitation actions, so communication failures can be triaged in the same operator workspace as onboarding/support issues
+- `Completed foundation`: the same queue now refreshes its summary and triage panels independently via HTMX, improving support responsiveness before a fuller real-time ops surface exists
 
 ## 13. Localization Readiness in WebAdmin
 
