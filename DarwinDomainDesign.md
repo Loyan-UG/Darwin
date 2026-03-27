@@ -453,6 +453,7 @@ Onboarding should explicitly address:
 - invitation and activation token flows
 - onboarding state
 - activation state
+- explicit exceptional-policy records for sensitive ownership overrides (for example, removing the final active owner under controlled admin action)
 - approval state
 - suspension / deactivation / reactivation state
 - initial defaults and setup policies

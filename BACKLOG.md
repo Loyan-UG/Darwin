@@ -266,7 +266,7 @@ Status terms used below:
 - `Decision made`: SME onboarding follows a staged rollout; phase 1 stays business-first, while deeper tenant/customer separation remains a later design/implementation decision
 - `Decision made`: phase-1 business owner onboarding should support both assigning an existing platform user and invitation-first owner creation
 - `Decision made`: the "last active owner cannot be removed or disabled" policy may be overridden only by `FullAdmin`, with required reason capture and explicit audit logging
-- `Planned / Near-term`: add the `FullAdmin` override workflow for the "last active owner" policy, including required reason entry, clear UI warning, and audit log persistence
+- `Completed`: the `FullAdmin` override workflow for the "last active owner" policy now exists in business-member editing, with required reason entry, explicit UI warning, and persisted audit records
 - `Future / Later phase`: add a site-setting option to require dual approval for the last-owner override path in enterprise-heavy deployments
 - `Decision made`: invitation acceptance in phase 1 should support both token-entry and magic-link driven flows
 - `Completed`: phase-1 invitation emails now include both the manual token path and a configurable magic-link path

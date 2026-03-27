@@ -25,6 +25,9 @@ namespace Darwin.Application.Businesses.DTOs
         public Guid UserId { get; set; }
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public bool IsActive { get; set; } = true;
+        public bool AllowLastOwnerOverride { get; set; }
+        public string? OverrideReason { get; set; }
+        public string? OverrideActorDisplayName { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -34,6 +37,9 @@ namespace Darwin.Application.Businesses.DTOs
     public sealed class BusinessMemberDeleteDto
     {
         public Guid Id { get; set; }
+        public bool AllowLastOwnerOverride { get; set; }
+        public string? OverrideReason { get; set; }
+        public string? OverrideActorDisplayName { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
@@ -69,6 +75,7 @@ namespace Darwin.Application.Businesses.DTOs
         public DateTime? LockoutEndUtc { get; set; }
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public bool IsActive { get; set; }
+        public bool IsLastActiveOwner { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }

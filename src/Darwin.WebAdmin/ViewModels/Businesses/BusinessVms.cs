@@ -211,6 +211,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public DateTime? LockoutEndUtc { get; set; }
         public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
         public bool IsActive { get; set; } = true;
+        public bool IsLastActiveOwner { get; set; }
+        public bool AllowLastOwnerOverride { get; set; }
+        public string? OverrideReason { get; set; }
         public BusinessContextVm Business { get; set; } = new();
         public IEnumerable<SelectListItem> UserOptions { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> RoleOptions { get; set; } = Array.Empty<SelectListItem>();

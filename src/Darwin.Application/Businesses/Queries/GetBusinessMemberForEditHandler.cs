@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Businesses.Queries
@@ -41,6 +42,14 @@ namespace Darwin.Application.Businesses.Queries
                     LockoutEndUtc = user == null ? null : user.LockoutEndUtc,
                     Role = member.Role,
                     IsActive = member.IsActive,
+                    IsLastActiveOwner =
+                        member.Role == BusinessMemberRole.Owner &&
+                        member.IsActive &&
+                        !_db.Set<BusinessMember>().Any(x =>
+                            x.BusinessId == member.BusinessId &&
+                            x.Id != member.Id &&
+                            x.Role == BusinessMemberRole.Owner &&
+                            x.IsActive),
                     RowVersion = member.RowVersion
                 })
                 .FirstOrDefaultAsync(ct);

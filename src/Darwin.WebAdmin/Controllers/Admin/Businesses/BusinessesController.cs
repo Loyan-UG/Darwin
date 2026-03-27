@@ -18,6 +18,7 @@ using Darwin.WebAdmin.ViewModels.Businesses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 {
@@ -984,6 +985,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 LockoutEndUtc = dto.LockoutEndUtc,
                 Role = dto.Role,
                 IsActive = dto.IsActive,
+                IsLastActiveOwner = dto.IsLastActiveOwner,
+                OverrideReason = null,
                 Business = business
             };
             await PopulateMemberFormOptionsAsync(vm, includeUserSelection: false, ct);
@@ -1009,6 +1012,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     UserId = vm.UserId,
                     Role = vm.Role,
                     IsActive = vm.IsActive,
+                    AllowLastOwnerOverride = vm.AllowLastOwnerOverride,
+                    OverrideReason = vm.OverrideReason,
+                    OverrideActorDisplayName = GetCurrentActorDisplayName(),
                     RowVersion = vm.RowVersion ?? Array.Empty<byte>()
                 }, ct);
 
@@ -1048,6 +1054,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return RedirectToAction(nameof(Members), new { businessId });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForceDeleteMember(
+            [FromForm] Guid id,
+            [FromForm] Guid businessId,
+            [FromForm] byte[]? rowVersion,
+            [FromForm] string? overrideReason,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                await _deleteBusinessMember.HandleAsync(new BusinessMemberDeleteDto
+                {
+                    Id = id,
+                    RowVersion = rowVersion ?? Array.Empty<byte>(),
+                    AllowLastOwnerOverride = true,
+                    OverrideReason = overrideReason,
+                    OverrideActorDisplayName = GetCurrentActorDisplayName()
+                }, ct);
+
+                TempData["Success"] = "Business member removed under controlled owner override.";
+                return RedirectToAction(nameof(Members), new { businessId });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return RedirectOrHtmx(nameof(EditMember), new { id });
+            }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1320,6 +1355,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private bool IsHtmxRequest()
         {
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string? GetCurrentActorDisplayName()
+        {
+            var explicitName = User.FindFirstValue(ClaimTypes.Name)
+                               ?? User.FindFirstValue(ClaimTypes.Email)
+                               ?? User.Identity?.Name;
+
+            return string.IsNullOrWhiteSpace(explicitName) ? null : explicitName.Trim();
         }
 
         private static BusinessEditVm MapBusinessEditVm(BusinessEditDto dto)

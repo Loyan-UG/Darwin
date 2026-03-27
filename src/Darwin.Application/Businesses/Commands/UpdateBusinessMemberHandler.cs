@@ -54,7 +54,20 @@ namespace Darwin.Application.Businesses.Commands
                         x.IsActive, ct);
 
                 if (!hasAnotherActiveOwner)
-                    throw new InvalidOperationException("At least one active owner must remain assigned to the business.");
+                {
+                    if (!dto.AllowLastOwnerOverride)
+                        throw new InvalidOperationException("At least one active owner must remain assigned to the business. Open the membership details to force an override with an explicit reason.");
+
+                    _db.Set<BusinessOwnerOverrideAudit>().Add(new BusinessOwnerOverrideAudit
+                    {
+                        BusinessId = entity.BusinessId,
+                        BusinessMemberId = entity.Id,
+                        AffectedUserId = entity.UserId,
+                        ActionKind = BusinessOwnerOverrideActionKind.DemoteOrDeactivate,
+                        Reason = dto.OverrideReason!.Trim(),
+                        ActorDisplayName = string.IsNullOrWhiteSpace(dto.OverrideActorDisplayName) ? null : dto.OverrideActorDisplayName.Trim()
+                    });
+                }
             }
 
             entity.Role = dto.Role;

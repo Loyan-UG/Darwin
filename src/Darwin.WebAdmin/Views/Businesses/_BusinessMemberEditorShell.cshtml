@@ -12,6 +12,13 @@
         <a asp-action="Members" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back to members</a>
     </div>
 
+    @if (!isCreate && Model.IsLastActiveOwner)
+    {
+        <div class="alert alert-danger">
+            This member is currently the last active owner for the business. Demoting, deactivating, or removing this membership requires a FullAdmin override with a mandatory reason. The override will be audit-logged.
+        </div>
+    }
+
     @if (!isCreate)
     {
         <div class="card mb-4">
@@ -142,4 +149,34 @@
 
         <partial name="_BusinessMemberForm" model="Model" />
     </form>
+
+    @if (!isCreate && Model.IsLastActiveOwner)
+    {
+        <div class="card border-danger mt-4">
+            <div class="card-header text-danger">Controlled Owner Override</div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Use this only when support must remove the final active owner and there is no safer recovery path.
+                </p>
+                <form asp-action="ForceDeleteMember"
+                      method="post"
+                      hx-post="@Url.Action("ForceDeleteMember", "Businesses")"
+                      hx-target="#business-member-editor-shell"
+                      hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <div class="mb-3">
+                        <label asp-for="OverrideReason" class="form-label">Override reason</label>
+                        <textarea asp-for="OverrideReason" class="form-control" rows="3" placeholder="Explain why this last-owner override is necessary."></textarea>
+                        <span asp-validation-for="OverrideReason" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Force Remove Last Active Owner
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
 </div>

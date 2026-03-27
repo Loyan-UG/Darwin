@@ -58,5 +58,10 @@ namespace Darwin.Infrastructure.Persistence.Db
         /// Invitations used for onboarding users into a business workspace.
         /// </summary>
         public DbSet<BusinessInvitation> BusinessInvitations => Set<BusinessInvitation>();
+
+        /// <summary>
+        /// Explicit audit records for controlled last-owner overrides.
+        /// </summary>
+        public DbSet<BusinessOwnerOverrideAudit> BusinessOwnerOverrideAudits => Set<BusinessOwnerOverrideAudit>();
     }
 }

@@ -45,4 +45,13 @@ namespace Darwin.Domain.Enums
         Approved = 10,
         Suspended = 20
     }
+
+    /// <summary>
+    /// Type of controlled override performed against the "last active owner" protection rule.
+    /// </summary>
+    public enum BusinessOwnerOverrideActionKind : short
+    {
+        DemoteOrDeactivate = 10,
+        ForceRemove = 20
+    }
 }
