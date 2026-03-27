@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Darwin.Application.CMS.Media.DTOs;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.ViewModels.CMS
 {
@@ -31,7 +33,9 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public int PageSize { get; set; } = 24;
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public MediaAssetQueueFilter Filter { get; set; } = MediaAssetQueueFilter.All;
         public List<MediaAssetListItemVm> Items { get; set; } = new();
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     }
 
     /// <summary>

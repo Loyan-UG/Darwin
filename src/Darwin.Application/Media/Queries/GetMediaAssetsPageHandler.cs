@@ -17,7 +17,7 @@ namespace Darwin.Application.CMS.Media.Queries
         private readonly IAppDbContext _db;
         public GetMediaAssetsPageHandler(IAppDbContext db) => _db = db;
 
-        public async Task<(List<MediaAssetListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query = null, CancellationToken ct = default)
+        public async Task<(List<MediaAssetListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query = null, MediaAssetQueueFilter filter = MediaAssetQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -33,6 +33,14 @@ namespace Darwin.Application.CMS.Media.Queries
                     (m.Title != null && m.Title.Contains(term)) ||
                     (m.Role != null && m.Role.Contains(term)));
             }
+
+            baseQuery = filter switch
+            {
+                MediaAssetQueueFilter.MissingAlt => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Alt)),
+                MediaAssetQueueFilter.EditorAssets => baseQuery.Where(m => m.Role != null && m.Role.Contains("EditorAsset")),
+                MediaAssetQueueFilter.LibraryAssets => baseQuery.Where(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset")),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct);
 

@@ -64,6 +64,7 @@ This is especially important because early operational usage is expected to star
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; reporting and support depth still need improvement. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, and purchase orders exist; receipt/adjustment/exception flows still need work. |
 | Identity/Admin Support | In Progress | Users, roles, permissions, and core admin identity flows exist; invite/activation/support actions need completion. |
+| Media | In Progress | Media library exists and now supports content-ops queue filters; deeper reference tracking and purge workflows are still later work. |
 | Settings | In Progress | Global site settings exist and business onboarding now has a dedicated setup workspace, but full tenant-aware settings architecture still needs domain and UI expansion. |
 | Communication Management | Planned / Near-term | Must become first-class for email templates, delivery logs, resend/retry, and admin visibility. |
 | Shipping Operations | Partial | Generic order shipment visibility exists; DHL-first operational workspace is still near-term work. |

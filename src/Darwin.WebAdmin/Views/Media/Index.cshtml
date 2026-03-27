@@ -14,9 +14,19 @@
     </a>
 </div>
 
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="Index" asp-route-filter="MissingAlt" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.MissingAlt ? "btn-warning" : "btn-outline-warning")">Missing Alt</a>
+    <a asp-action="Index" asp-route-filter="EditorAssets" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.EditorAssets ? "btn-info" : "btn-outline-info")">Editor Assets</a>
+    <a asp-action="Index" asp-route-filter="LibraryAssets" class="btn btn-sm @(Model.Filter == Darwin.Application.CMS.Media.DTOs.MediaAssetQueueFilter.LibraryAssets ? "btn-secondary" : "btn-outline-secondary")">Library Assets</a>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+</div>
+
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-sm-8 col-lg-5">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by title, alt, filename, role, or URL" />
+    </div>
+    <div class="col-sm-4 col-lg-3">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-sm-auto">
         <button class="btn btn-outline-secondary" type="submit">
@@ -86,7 +96,8 @@
            total="Model.Total"
            asp-controller="Media"
            asp-action="Index"
-           asp-route-query="@Model.Query"></pager>
+           asp-route-query="@Model.Query"
+           asp-route-filter="@Model.Filter"></pager>
 </div>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

@@ -2,6 +2,14 @@
 
 namespace Darwin.Application.CMS.Media.DTOs
 {
+    public enum MediaAssetQueueFilter
+    {
+        All = 0,
+        MissingAlt = 1,
+        EditorAssets = 2,
+        LibraryAssets = 3
+    }
+
     /// <summary>
     /// Create payload for a media asset. In phase 1, the file is already stored and we persist metadata only.
     /// </summary>

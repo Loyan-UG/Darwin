@@ -61,15 +61,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         /// Lists media assets already registered in the Admin library.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 24, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 24, string? query = null, MediaAssetQueueFilter filter = MediaAssetQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getPage.HandleAsync(page, pageSize, query, ct).ConfigureAwait(false);
+            var (items, total) = await _getPage.HandleAsync(page, pageSize, query, filter, ct).ConfigureAwait(false);
             var vm = new MediaAssetsListVm
             {
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildFilterItems(filter),
                 Items = items.Select(x => new MediaAssetListItemVm
                 {
                     Id = x.Id,
@@ -87,6 +89,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             };
 
             return View(vm);
+        }
+
+        private static IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> BuildFilterItems(MediaAssetQueueFilter selectedFilter)
+        {
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("All media", MediaAssetQueueFilter.All.ToString(), selectedFilter == MediaAssetQueueFilter.All);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Missing alt", MediaAssetQueueFilter.MissingAlt.ToString(), selectedFilter == MediaAssetQueueFilter.MissingAlt);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Editor assets", MediaAssetQueueFilter.EditorAssets.ToString(), selectedFilter == MediaAssetQueueFilter.EditorAssets);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Library assets", MediaAssetQueueFilter.LibraryAssets.ToString(), selectedFilter == MediaAssetQueueFilter.LibraryAssets);
         }
 
         /// <summary>
