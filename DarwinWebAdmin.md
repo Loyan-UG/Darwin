@@ -265,6 +265,7 @@ Communication is a platform capability and must be visible in WebAdmin.
 - `Planned / Near-term`: platform communication management is not yet complete enough for go-live-critical email flows
 - `Completed foundation`: business setup now exposes a readiness summary that compares business-level communication preferences with global transport configuration, reducing onboarding ambiguity before full template/logging management exists
 - `Completed foundation`: dashboard-level communication-operations metrics now expose transport readiness and business communication-default gaps, giving operators an earlier signal before delivery failures become support tickets
+- `Completed foundation`: a dedicated `Business Communications` workspace now gives operators a read-only operational queue for businesses missing support-email or sender defaults, with direct links back into business setup and global transport settings
 
 ## 13. Localization Readiness in WebAdmin
 

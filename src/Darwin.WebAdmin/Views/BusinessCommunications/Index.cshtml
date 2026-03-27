@@ -1,0 +1,191 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessCommunicationOpsVm
+@{
+    ViewData["Title"] = "Business Communications";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-envelope-circle-check me-2"></i>Business Communications</h1>
+        <p class="text-muted mb-0">Operational visibility for phase-1 communication readiness before full template and delivery-log tooling exists.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary">SMTP</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary">SMS</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary">WhatsApp</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary">Admin Alerts</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Email Transport</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.EmailTransportConfigured ? "Ready" : "Needs setup")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">SMS Transport</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.SmsTransportConfigured ? "Ready" : "Not ready")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">WhatsApp Transport</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTransportConfigured ? "Ready" : "Not ready")</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Admin Alert Routing</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.AdminAlertRoutingConfigured ? "Configured" : "Missing")</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Businesses Requiring Email Setup</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.BusinessesRequiringEmailSetupCount</div>
+            <div class="small text-muted mt-2">Businesses with email-related toggles enabled but missing support or sender defaults.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Missing Support Email</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingSupportEmailCount</div>
+            <div class="small text-muted mt-2">Counts businesses that still have no business-level support mailbox configured.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Missing Sender Identity</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingSenderIdentityCount</div>
+            <div class="small text-muted mt-2">Counts businesses missing sender name or reply-to defaults.</div>
+        </div>
+    </div>
+</div>
+
+<div class="small text-muted mb-3">
+    Transactional email enabled: <strong>@Model.Summary.TransactionalEmailBusinessesCount</strong>
+    <span class="mx-2">|</span>
+    Marketing email enabled: <strong>@Model.Summary.MarketingEmailBusinessesCount</strong>
+    <span class="mx-2">|</span>
+    Operational alerts enabled: <strong>@Model.Summary.OperationalAlertBusinessesCount</strong>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business, legal name, support email, or sender" />
+    </div>
+    <div class="col-auto">
+        <select name="pageSize" class="form-select">
+            @foreach (var item in Model.PageSizeItems)
+            {
+                <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <div class="form-check mt-2">
+            <input type="checkbox" name="setupOnly" value="true" class="form-check-input" id="setupOnly" checked="@(Model.SetupOnly ? "checked" : null)" />
+            <label class="form-check-label" for="setupOnly">Needs setup only</label>
+        </div>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Business</th>
+                <th>Support Email</th>
+                <th>Sender Identity</th>
+                <th>Enabled Policies</th>
+                <th>Gaps</th>
+                <th class="text-end" style="width:220px">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted py-4">No businesses matched the communication filters.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@item.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(item.LegalName))
+                        {
+                            <div class="small text-muted">@item.LegalName</div>
+                        }
+                    </td>
+                    <td>
+                        @if (string.IsNullOrWhiteSpace(item.SupportEmail))
+                        {
+                            <span class="badge text-bg-warning">Missing</span>
+                        }
+                        else
+                        {
+                            <span>@item.SupportEmail</span>
+                        }
+                    </td>
+                    <td>
+                        <div>@(string.IsNullOrWhiteSpace(item.CommunicationSenderName) ? "Missing sender name" : item.CommunicationSenderName)</div>
+                        <div class="small text-muted">@(string.IsNullOrWhiteSpace(item.CommunicationReplyToEmail) ? "Missing reply-to" : item.CommunicationReplyToEmail)</div>
+                    </td>
+                    <td>
+                        @if (item.CustomerEmailNotificationsEnabled)
+                        {
+                            <span class="badge text-bg-primary">Transactional</span>
+                        }
+                        @if (item.CustomerMarketingEmailsEnabled)
+                        {
+                            <span class="badge text-bg-info">Marketing</span>
+                        }
+                        @if (item.OperationalAlertEmailsEnabled)
+                        {
+                            <span class="badge text-bg-secondary">Alerts</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.MissingSupportEmail)
+                        {
+                            <div class="small text-muted">Support email missing</div>
+                        }
+                        @if (item.MissingSenderIdentity)
+                        {
+                            <div class="small text-muted">Sender identity incomplete</div>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-sliders"></i> Open Setup
+                        </a>
+                        <a asp-controller="Businesses" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="BusinessCommunications"
+       asp-action="Index"
+       asp-route-query="@Model.Query"
+       asp-route-setupOnly="@Model.SetupOnly">
+</pager>

@@ -1,0 +1,83 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Darwin.Application.Abstractions.Persistence;
+using Darwin.Application.Businesses.DTOs;
+using Darwin.Domain.Entities.Businesses;
+using Microsoft.EntityFrameworkCore;
+
+namespace Darwin.Application.Businesses.Queries
+{
+    /// <summary>
+    /// Returns a paged list of businesses that need phase-1 communication setup attention.
+    /// </summary>
+    public sealed class GetBusinessCommunicationSetupPageHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetBusinessCommunicationSetupPageHandler(IAppDbContext db)
+        {
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+        }
+
+        public async Task<(List<BusinessCommunicationSetupListItemDto> Items, int Total)> HandleAsync(
+            int page,
+            int pageSize,
+            string? query = null,
+            bool setupOnly = true,
+            CancellationToken ct = default)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var baseQuery = _db.Set<Business>().AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var q = query.Trim();
+                baseQuery = baseQuery.Where(x =>
+                    x.Name.Contains(q) ||
+                    (x.LegalName != null && x.LegalName.Contains(q)) ||
+                    (x.SupportEmail != null && x.SupportEmail.Contains(q)) ||
+                    (x.CommunicationSenderName != null && x.CommunicationSenderName.Contains(q)) ||
+                    (x.CommunicationReplyToEmail != null && x.CommunicationReplyToEmail.Contains(q)));
+            }
+
+            if (setupOnly)
+            {
+                baseQuery = baseQuery.Where(x =>
+                    (x.CustomerEmailNotificationsEnabled || x.CustomerMarketingEmailsEnabled || x.OperationalAlertEmailsEnabled) &&
+                    (string.IsNullOrWhiteSpace(x.SupportEmail) ||
+                     string.IsNullOrWhiteSpace(x.CommunicationSenderName) ||
+                     string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail)));
+            }
+
+            var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
+
+            var items = await baseQuery
+                .OrderBy(x => x.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new BusinessCommunicationSetupListItemDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    LegalName = x.LegalName,
+                    SupportEmail = x.SupportEmail,
+                    CommunicationSenderName = x.CommunicationSenderName,
+                    CommunicationReplyToEmail = x.CommunicationReplyToEmail,
+                    CustomerEmailNotificationsEnabled = x.CustomerEmailNotificationsEnabled,
+                    CustomerMarketingEmailsEnabled = x.CustomerMarketingEmailsEnabled,
+                    OperationalAlertEmailsEnabled = x.OperationalAlertEmailsEnabled,
+                    MissingSupportEmail = string.IsNullOrWhiteSpace(x.SupportEmail),
+                    MissingSenderIdentity = string.IsNullOrWhiteSpace(x.CommunicationSenderName) || string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail)
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            return (items, total);
+        }
+    }
+}

@@ -216,6 +216,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetBusinessesPageHandler>();
             services.AddScoped<GetBusinessSupportSummaryHandler>();
             services.AddScoped<GetBusinessCommunicationOpsSummaryHandler>();
+            services.AddScoped<GetBusinessCommunicationSetupPageHandler>();
             services.AddScoped<GetBusinessForEditHandler>();
             services.AddScoped<CreateBusinessHandler>();
             services.AddScoped<UpdateBusinessHandler>();

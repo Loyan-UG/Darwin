@@ -127,6 +127,7 @@ Status terms used below:
 - `Planned / Near-term`: add per-business communication settings
 - `Planned / Near-term`: introduce localization-aware notification/email template management
 - `Planned / Near-term`: move password-reset, invitation, and future activation emails from direct SMTP composition into Communication Core templates and delivery logging
+- `Completed foundation`: a dedicated `Business Communications` workspace now exists in WebAdmin for operator visibility into phase-1 transport readiness and business-level sender/support-email setup gaps
 
 ### Payments, refunds, reconciliation, disputes
 
