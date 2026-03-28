@@ -47,6 +47,8 @@ namespace Darwin.Application.CRM.Queries
                 CustomerQueueFilter.LinkedUser => baseQuery.Where(x => x.customer.UserId.HasValue),
                 CustomerQueueFilter.NeedsSegmentation => baseQuery.Where(x => x.customer.CustomerSegments.Count == 0),
                 CustomerQueueFilter.HasOpportunities => baseQuery.Where(x => x.customer.Opportunities.Count > 0),
+                CustomerQueueFilter.Business => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business),
+                CustomerQueueFilter.MissingVatId => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.customer.VatId)),
                 _ => baseQuery
             };
 
@@ -66,6 +68,8 @@ namespace Darwin.Application.CRM.Queries
                     Email = x.customer.UserId.HasValue && x.user != null ? x.user.Email : x.customer.Email,
                     Phone = x.customer.UserId.HasValue && x.user != null ? x.user.PhoneE164 : x.customer.Phone,
                     CompanyName = x.customer.CompanyName,
+                    TaxProfileType = x.customer.TaxProfileType,
+                    VatId = x.customer.VatId,
                     SegmentCount = x.customer.CustomerSegments.Count,
                     OpportunityCount = x.customer.Opportunities.Count,
                     CreatedAtUtc = x.customer.CreatedAtUtc,
@@ -166,6 +170,8 @@ namespace Darwin.Application.CRM.Queries
                 Email = customer.Email,
                 Phone = customer.Phone,
                 CompanyName = customer.CompanyName,
+                TaxProfileType = customer.TaxProfileType,
+                VatId = customer.VatId,
                 Notes = customer.Notes,
                 EffectiveFirstName = user?.FirstName ?? customer.FirstName,
                 EffectiveLastName = user?.LastName ?? customer.LastName,

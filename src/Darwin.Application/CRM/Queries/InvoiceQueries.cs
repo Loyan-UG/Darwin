@@ -49,6 +49,8 @@ namespace Darwin.Application.CRM.Queries
                     PaymentId = x.PaymentId,
                     Status = x.Status,
                     Currency = x.Currency,
+                    TotalNetMinor = x.TotalNetMinor,
+                    TotalTaxMinor = x.TotalTaxMinor,
                     TotalGrossMinor = x.TotalGrossMinor,
                     DueDateUtc = x.DueDateUtc,
                     PaidAtUtc = x.PaidAtUtc,
@@ -104,6 +106,8 @@ namespace Darwin.Application.CRM.Queries
                 if (item.CustomerId.HasValue && customerMap.TryGetValue(item.CustomerId.Value, out var customer))
                 {
                     item.CustomerDisplayName = Darwin.Application.Billing.Queries.BillingPaymentDisplayFormatter.BuildCustomerDisplayName(customer, users);
+                    item.CustomerTaxProfileType = customer.TaxProfileType;
+                    item.CustomerVatId = customer.VatId;
                 }
 
                 if (item.OrderId.HasValue && orders.TryGetValue(item.OrderId.Value, out var orderNumber))
@@ -159,9 +163,10 @@ namespace Darwin.Application.CRM.Queries
             }
 
             string customerDisplayName = string.Empty;
+            Customer? customer = null;
             if (invoice.CustomerId.HasValue)
             {
-                var customer = await _db.Set<Customer>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == invoice.CustomerId.Value, ct).ConfigureAwait(false);
+                customer = await _db.Set<Customer>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == invoice.CustomerId.Value, ct).ConfigureAwait(false);
                 if (customer is not null)
                 {
                     User? linkedUser = null;
@@ -209,6 +214,8 @@ namespace Darwin.Application.CRM.Queries
                 BusinessId = invoice.BusinessId,
                 CustomerId = invoice.CustomerId,
                 CustomerDisplayName = customerDisplayName,
+                CustomerTaxProfileType = customer?.TaxProfileType,
+                CustomerVatId = customer?.VatId,
                 OrderId = invoice.OrderId,
                 OrderNumber = orderNumber,
                 PaymentId = invoice.PaymentId,

@@ -49,6 +49,56 @@
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Tax & Invoicing Readiness</span>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">VAT Enabled</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.VatEnabled ? "Yes" : "No")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Default VAT</div>
+                    <div class="fw-semibold mt-1">@Model.Tax.DefaultVatRatePercent.ToString("0.##")%</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Price Mode</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.PricesIncludeVat ? "VAT Inclusive" : "VAT Exclusive")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Reverse Charge</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.AllowReverseCharge ? "Allowed" : "Disabled")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Issuer</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.IssuerConfigured ? Model.Tax.InvoiceIssuerLegalName : "Missing")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Tax ID</div>
+                    <div class="fw-semibold mt-1">@(Model.Tax.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
+                </div>
+            </div>
+        </div>
+        <div class="small text-muted mt-3">
+            This is a phase-1 compliance surface for VAT defaults and invoice issuer identity. It improves billing support visibility without claiming full tax-engine, reverse-charge automation, or e-invoicing completion.
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <span>Webhook Lifecycle Visibility</span>
         <a asp-action="Webhooks" class="btn btn-sm btn-outline-secondary">Open Webhook Queue</a>
     </div>

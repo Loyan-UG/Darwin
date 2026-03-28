@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,9 +47,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// Displays a paged list of permissions. Supports search by key/display name.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, PermissionQueueFilter filter = PermissionQueueFilter.All, CancellationToken ct = default)
         {
-            var result = await _getPage.HandleAsync(page, pageSize, q, ct);
+            var result = await _getPage.HandleAsync(1, 500, q, ct);
             if (!result.Succeeded || result.Value == null)
             {
                 TempData["Error"] = result.Error ?? "Failed to load permissions.";
@@ -67,13 +68,29 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     RowVersion = d.RowVersion
                 }).ToList();
 
+            var filteredItems = ApplyPermissionFilter(listItems, filter).ToList();
+            var total = filteredItems.Count;
+            var pagedItems = filteredItems
+                .Skip((Math.Max(page, 1) - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
             var vm = new PermissionsListVm
             {
-                Items = listItems,
+                Items = pagedItems,
                 Page = page,
                 PageSize = pageSize,
-                Total = pageData.TotalCount,
+                Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildPermissionFilterItems(filter),
+                Summary = new PermissionOpsSummaryVm
+                {
+                    TotalCount = listItems.Count,
+                    SystemCount = listItems.Count(x => x.IsSystem),
+                    CustomCount = listItems.Count(x => !x.IsSystem),
+                    DelegatedSupportCount = listItems.Count(IsDelegatedSupportPermission)
+                },
                 PageSizeItems = new[]
                 {
                     new SelectListItem("10",  "10",  pageSize == 10),
@@ -83,6 +100,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 }
             };
             return View(vm);
+        }
+
+        private static IEnumerable<PermissionListItemVm> ApplyPermissionFilter(IEnumerable<PermissionListItemVm> items, PermissionQueueFilter filter)
+        {
+            return filter switch
+            {
+                PermissionQueueFilter.System => items.Where(x => x.IsSystem),
+                PermissionQueueFilter.Custom => items.Where(x => !x.IsSystem),
+                PermissionQueueFilter.DelegatedSupport => items.Where(IsDelegatedSupportPermission),
+                _ => items
+            };
+        }
+
+        private static bool IsDelegatedSupportPermission(PermissionListItemVm item)
+        {
+            return string.Equals(item.Key, "ManageBusinessSupport", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static IEnumerable<SelectListItem> BuildPermissionFilterItems(PermissionQueueFilter selected)
+        {
+            return new List<SelectListItem>
+            {
+                new("All", PermissionQueueFilter.All.ToString(), selected == PermissionQueueFilter.All),
+                new("System", PermissionQueueFilter.System.ToString(), selected == PermissionQueueFilter.System),
+                new("Custom", PermissionQueueFilter.Custom.ToString(), selected == PermissionQueueFilter.Custom),
+                new("Delegated Support", PermissionQueueFilter.DelegatedSupport.ToString(), selected == PermissionQueueFilter.DelegatedSupport)
+            };
         }
 
         /// <summary>Shows the create permission form.</summary>

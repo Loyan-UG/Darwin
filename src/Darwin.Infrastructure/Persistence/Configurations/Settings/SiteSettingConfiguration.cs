@@ -80,6 +80,16 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.StripeSecretKey).HasMaxLength(256);
             builder.Property(x => x.StripeWebhookSecret).HasMaxLength(256);
             builder.Property(x => x.StripeMerchantDisplayName).HasMaxLength(200);
+            builder.Property(x => x.VatEnabled).IsRequired();
+            builder.Property(x => x.DefaultVatRatePercent).HasPrecision(5, 2);
+            builder.Property(x => x.PricesIncludeVat).IsRequired();
+            builder.Property(x => x.AllowReverseCharge).IsRequired();
+            builder.Property(x => x.InvoiceIssuerLegalName).HasMaxLength(200);
+            builder.Property(x => x.InvoiceIssuerTaxId).HasMaxLength(128);
+            builder.Property(x => x.InvoiceIssuerAddressLine1).HasMaxLength(300);
+            builder.Property(x => x.InvoiceIssuerPostalCode).HasMaxLength(32);
+            builder.Property(x => x.InvoiceIssuerCity).HasMaxLength(120);
+            builder.Property(x => x.InvoiceIssuerCountry).HasMaxLength(2);
             builder.Property(x => x.DhlEnabled).IsRequired();
             builder.Property(x => x.DhlEnvironment).HasMaxLength(50);
             builder.Property(x => x.DhlApiBaseUrl).HasMaxLength(500);
@@ -119,6 +129,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.AdminAlertSmsRecipientsCsv).HasMaxLength(1000);
             builder.Property(x => x.TransactionalEmailSubjectPrefix).HasMaxLength(120);
             builder.Property(x => x.CommunicationTestInboxEmail).HasMaxLength(256);
+            builder.Property(x => x.CommunicationTestSmsRecipientE164).HasMaxLength(32);
+            builder.Property(x => x.CommunicationTestWhatsAppRecipientE164).HasMaxLength(32);
             builder.Property(x => x.BusinessInvitationEmailSubjectTemplate).HasMaxLength(300);
             builder.Property(x => x.BusinessInvitationEmailBodyTemplate).HasMaxLength(8000);
             builder.Property(x => x.AccountActivationEmailSubjectTemplate).HasMaxLength(300);

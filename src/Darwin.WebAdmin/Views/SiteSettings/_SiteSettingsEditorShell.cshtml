@@ -27,6 +27,7 @@
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-mobile">Mobile</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-business-app">Business App</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-payments">Payments</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-tax">Tax & Invoicing</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-shipping">Shipping</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-retention">Operational</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">Units</a>
@@ -306,6 +307,75 @@
                     <label asp-for="StripeWebhookSecret" class="form-label"></label>
                     <input asp-for="StripeWebhookSecret" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="StripeWebhookSecret" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="site-settings-tax" class="card mb-4">
+        <div class="card-header">Tax & Invoicing (Phase-1 VAT)</div>
+        <div class="card-body">
+            <div class="alert alert-secondary mb-3">
+                These settings define the global VAT and invoice-issuer defaults used by phase-1 billing and invoice support surfaces until deeper business-specific tax policies are introduced.
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3 d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="VatEnabled" />
+                        <label class="form-check-label" asp-for="VatEnabled"></label>
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="PricesIncludeVat" />
+                        <label class="form-check-label" asp-for="PricesIncludeVat"></label>
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" asp-for="AllowReverseCharge" />
+                        <label class="form-check-label" asp-for="AllowReverseCharge"></label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="DefaultVatRatePercent" class="form-label"></label>
+                    <input asp-for="DefaultVatRatePercent" class="form-control" type="number" step="0.01" min="0" max="100" />
+                    <span asp-validation-for="DefaultVatRatePercent" class="text-danger"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <div class="fw-semibold mb-3">Invoice Issuer Defaults</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="InvoiceIssuerLegalName" class="form-label"></label>
+                    <input asp-for="InvoiceIssuerLegalName" class="form-control" />
+                    <span asp-validation-for="InvoiceIssuerLegalName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="InvoiceIssuerTaxId" class="form-label"></label>
+                    <input asp-for="InvoiceIssuerTaxId" class="form-control" />
+                    <span asp-validation-for="InvoiceIssuerTaxId" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="InvoiceIssuerAddressLine1" class="form-label"></label>
+                    <input asp-for="InvoiceIssuerAddressLine1" class="form-control" />
+                    <span asp-validation-for="InvoiceIssuerAddressLine1" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="InvoiceIssuerPostalCode" class="form-label"></label>
+                    <input asp-for="InvoiceIssuerPostalCode" class="form-control" />
+                    <span asp-validation-for="InvoiceIssuerPostalCode" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="InvoiceIssuerCity" class="form-label"></label>
+                    <input asp-for="InvoiceIssuerCity" class="form-control" />
+                    <span asp-validation-for="InvoiceIssuerCity" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="InvoiceIssuerCountry" class="form-label"></label>
+                    <input asp-for="InvoiceIssuerCountry" class="form-control" />
+                    <span asp-validation-for="InvoiceIssuerCountry" class="text-danger"></span>
                 </div>
             </div>
         </div>
@@ -700,6 +770,18 @@
                     <input asp-for="CommunicationTestInboxEmail" class="form-control" placeholder="qa-inbox@example.com" />
                     <span asp-validation-for="CommunicationTestInboxEmail" class="text-danger"></span>
                     <div class="form-text">When set, phase-1 transactional emails are rerouted here and include the original recipient in the body.</div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CommunicationTestSmsRecipientE164" class="form-label"></label>
+                    <input asp-for="CommunicationTestSmsRecipientE164" class="form-control" placeholder="+4915112345678" />
+                    <span asp-validation-for="CommunicationTestSmsRecipientE164" class="text-danger"></span>
+                    <div class="form-text">Reserved test target for SMS rollout and staged provider validation.</div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CommunicationTestWhatsAppRecipientE164" class="form-label"></label>
+                    <input asp-for="CommunicationTestWhatsAppRecipientE164" class="form-control" placeholder="+4915112345678" />
+                    <span asp-validation-for="CommunicationTestWhatsAppRecipientE164" class="text-danger"></span>
+                    <div class="form-text">Reserved test target for WhatsApp rollout and staged provider validation.</div>
                 </div>
             </div>
             <div class="alert alert-light border mt-3 mb-3 small">

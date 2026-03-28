@@ -11,6 +11,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string Query { get; set; } = string.Empty;
         public PaymentQueueFilter? QueueFilter { get; set; }
         public StripeOperationsVm Stripe { get; set; } = new();
+        public TaxOperationsVm Tax { get; set; } = new();
         public PaymentOpsSummaryVm Summary { get; set; } = new();
         public BillingWebhookOpsSummaryVm Webhooks { get; set; } = new();
         public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
@@ -56,6 +57,18 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public bool WebhookSecretConfigured { get; set; }
         public bool MerchantDisplayNameConfigured { get; set; }
         public string MerchantDisplayName { get; set; } = string.Empty;
+    }
+
+    public sealed class TaxOperationsVm
+    {
+        public bool VatEnabled { get; set; }
+        public decimal DefaultVatRatePercent { get; set; }
+        public bool PricesIncludeVat { get; set; }
+        public bool AllowReverseCharge { get; set; }
+        public bool IssuerConfigured { get; set; }
+        public string InvoiceIssuerLegalName { get; set; } = string.Empty;
+        public string InvoiceIssuerCountry { get; set; } = string.Empty;
+        public bool InvoiceIssuerTaxIdConfigured { get; set; }
     }
 
     public sealed class PaymentOpsSummaryVm

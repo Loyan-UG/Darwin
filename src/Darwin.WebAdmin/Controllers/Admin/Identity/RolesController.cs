@@ -8,6 +8,8 @@ using Darwin.WebAdmin.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -55,9 +57,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// Displays a paged list of roles. Supports simple text search.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, RoleQueueFilter filter = RoleQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getRole.HandleAsync(page, pageSize, q, ct);
+            var (items, _) = await _getRole.HandleAsync(1, 500, q, ct);
 
             // Map Application DTOs to lightweight view models for listing.
             var listVms = items.Select(dto => new RoleListItemVm
@@ -70,13 +72,29 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 IsSystem = dto.IsSystem
             }).ToList();
 
+            var filteredItems = ApplyRoleFilter(listVms, filter).ToList();
+            var total = filteredItems.Count;
+            var pagedItems = filteredItems
+                .Skip((Math.Max(page, 1) - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
             var vm = new RolesListItemVm
             {
-                Items = listVms,
+                Items = pagedItems,
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildRoleFilterItems(filter),
+                Summary = new RoleOpsSummaryVm
+                {
+                    TotalCount = listVms.Count,
+                    SystemCount = listVms.Count(x => x.IsSystem),
+                    CustomCount = listVms.Count(x => !x.IsSystem),
+                    DelegatedSupportCount = listVms.Count(IsDelegatedSupportRole)
+                },
                 PageSizeItems = new[]
                 {
                     new SelectListItem("10",  "10",  pageSize == 10),
@@ -152,6 +170,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 IsSystem = dto.IsSystem
             };
             return View(vm);
+        }
+
+        private static IEnumerable<RoleListItemVm> ApplyRoleFilter(IEnumerable<RoleListItemVm> items, RoleQueueFilter filter)
+        {
+            return filter switch
+            {
+                RoleQueueFilter.System => items.Where(x => x.IsSystem),
+                RoleQueueFilter.Custom => items.Where(x => !x.IsSystem),
+                RoleQueueFilter.DelegatedSupport => items.Where(IsDelegatedSupportRole),
+                _ => items
+            };
+        }
+
+        private static bool IsDelegatedSupportRole(RoleListItemVm item)
+        {
+            return string.Equals(item.Key, "business-support-admins", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static IEnumerable<SelectListItem> BuildRoleFilterItems(RoleQueueFilter selected)
+        {
+            return new List<SelectListItem>
+            {
+                new("All", RoleQueueFilter.All.ToString(), selected == RoleQueueFilter.All),
+                new("System", RoleQueueFilter.System.ToString(), selected == RoleQueueFilter.System),
+                new("Custom", RoleQueueFilter.Custom.ToString(), selected == RoleQueueFilter.Custom),
+                new("Delegated Support", RoleQueueFilter.DelegatedSupport.ToString(), selected == RoleQueueFilter.DelegatedSupport)
+            };
         }
 
         /// <summary>

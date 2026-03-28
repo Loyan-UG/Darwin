@@ -124,6 +124,36 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(200)
                 .When(x => !string.IsNullOrWhiteSpace(x.StripeMerchantDisplayName));
 
+            RuleFor(x => x.DefaultVatRatePercent)
+                .GreaterThanOrEqualTo(0)
+                .LessThanOrEqualTo(100)
+                .WithMessage("DefaultVatRatePercent must be between 0 and 100.");
+
+            RuleFor(x => x.InvoiceIssuerLegalName)
+                .MaximumLength(200)
+                .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerLegalName));
+
+            RuleFor(x => x.InvoiceIssuerTaxId)
+                .MaximumLength(128)
+                .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerTaxId));
+
+            RuleFor(x => x.InvoiceIssuerAddressLine1)
+                .MaximumLength(300)
+                .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerAddressLine1));
+
+            RuleFor(x => x.InvoiceIssuerPostalCode)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerPostalCode));
+
+            RuleFor(x => x.InvoiceIssuerCity)
+                .MaximumLength(120)
+                .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerCity));
+
+            RuleFor(x => x.InvoiceIssuerCountry)
+                .Matches("^[A-Z]{2}$")
+                .When(x => !string.IsNullOrWhiteSpace(x.InvoiceIssuerCountry))
+                .WithMessage("InvoiceIssuerCountry must be a 2-letter uppercase country code.");
+
             RuleFor(x => x.DhlEnvironment)
                 .MaximumLength(50)
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlEnvironment));
@@ -364,6 +394,14 @@ namespace Darwin.Application.Settings.Validators
                 .EmailAddress()
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestInboxEmail));
+
+            RuleFor(x => x.CommunicationTestSmsRecipientE164)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestSmsRecipientE164));
+
+            RuleFor(x => x.CommunicationTestWhatsAppRecipientE164)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestWhatsAppRecipientE164));
 
             RuleFor(x => x.BusinessInvitationEmailSubjectTemplate)
                 .MaximumLength(300)

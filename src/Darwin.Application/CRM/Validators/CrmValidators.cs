@@ -26,8 +26,17 @@ namespace Darwin.Application.CRM.Validators
             RuleFor(x => x.Email).MaximumLength(256).EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email));
             RuleFor(x => x.Phone).MaximumLength(50);
             RuleFor(x => x.CompanyName).MaximumLength(200);
+            RuleFor(x => x.TaxProfileType).IsInEnum();
+            RuleFor(x => x.VatId).MaximumLength(64);
             RuleFor(x => x.Notes).MaximumLength(2000);
             RuleForEach(x => x.Addresses).SetValidator(new CustomerAddressValidator());
+
+            When(x => x.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business, () =>
+            {
+                RuleFor(x => x.CompanyName)
+                    .NotEmpty()
+                    .WithMessage("Business customers should include a company name.");
+            });
 
             When(x => !x.UserId.HasValue, () =>
             {

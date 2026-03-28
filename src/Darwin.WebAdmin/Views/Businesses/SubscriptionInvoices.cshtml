@@ -16,6 +16,9 @@
         <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
             <i class="fa-solid fa-money-bill-wave"></i> Payments
         </a>
+        <a asp-controller="Billing" asp-action="Refunds" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-danger">
+            <i class="fa-solid fa-rotate-left"></i> Refund Queue
+        </a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-outline-secondary">
             <i class="fa-solid fa-sliders"></i> Payment Settings
         </a>
@@ -59,6 +62,18 @@
             <div class="fs-4 fw-semibold">@Model.Summary.StripeCount</div>
         </div>
     </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Overdue</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.OverdueCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">PDF Missing</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PdfMissingCount</div>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -68,6 +83,8 @@
             <li>Open invoices normally indicate a billing follow-up or payment failure path that finance support should verify before changing subscription lifecycle flags.</li>
             <li>Uncollectible invoices usually require provider-side review, customer outreach, or cancel-at-period-end confirmation before manual escalation.</li>
             <li>Missing hosted invoice links mean provider synchronization is incomplete, so operators should use payment settings and provider references before escalating.</li>
+            <li>Overdue invoices need customer follow-up or payment reconciliation before operators make subscription-lifecycle decisions.</li>
+            <li>Missing PDFs are a document-visibility gap; use hosted links and payment history first, then escalate if download artifacts are required.</li>
         </ul>
     </div>
 </div>
@@ -80,9 +97,6 @@
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
         <a asp-action="SubscriptionInvoices" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Reset</a>
     </form>
-    <a asp-controller="Billing" asp-action="Refunds" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-danger">
-        <i class="fa fa-rotate-left"></i> Refund Queue
-    </a>
 </div>
 
 <div class="table-responsive">
@@ -126,6 +140,14 @@
                         @if (!string.IsNullOrWhiteSpace(item.FailureReason))
                         {
                             <div class="small text-danger mt-1">@item.FailureReason</div>
+                        }
+                        @if (item.IsOverdue)
+                        {
+                            <div><span class="badge bg-danger mt-1">Overdue</span></div>
+                        }
+                        @if (!item.HasPdfUrl)
+                        {
+                            <div><span class="badge bg-warning text-dark mt-1">PDF missing</span></div>
                         }
                     </td>
                     <td>@item.Currency @((item.TotalMinor / 100M).ToString("0.00"))</td>

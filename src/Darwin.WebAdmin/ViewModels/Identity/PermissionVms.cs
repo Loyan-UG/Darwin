@@ -4,6 +4,14 @@ using System.Collections.Generic;
 
 namespace Darwin.WebAdmin.ViewModels.Identity
 {
+    public enum PermissionQueueFilter
+    {
+        All = 0,
+        System = 1,
+        Custom = 2,
+        DelegatedSupport = 3
+    }
+
     /// <summary>
     /// Represents a single permission item in a list.
     /// </summary>
@@ -27,7 +35,18 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public PermissionQueueFilter Filter { get; set; } = PermissionQueueFilter.All;
+        public PermissionOpsSummaryVm Summary { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+    }
+
+    public sealed class PermissionOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int SystemCount { get; set; }
+        public int CustomCount { get; set; }
+        public int DelegatedSupportCount { get; set; }
     }
 
     /// <summary>View model used to create a new permission.</summary>

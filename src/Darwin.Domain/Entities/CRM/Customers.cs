@@ -48,6 +48,16 @@ namespace Darwin.Domain.Entities.CRM
         public string? CompanyName { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the customer should be treated as B2C or B2B for billing support.
+        /// </summary>
+        public CustomerTaxProfileType TaxProfileType { get; set; } = CustomerTaxProfileType.Consumer;
+
+        /// <summary>
+        /// Gets or sets the optional VAT / tax id for business customers.
+        /// </summary>
+        public string? VatId { get; set; }
+
+        /// <summary>
         /// Gets or sets internal notes visible to operators.
         /// Do not store credentials, payment secrets, or regulated personal data beyond approved policy.
         /// </summary>

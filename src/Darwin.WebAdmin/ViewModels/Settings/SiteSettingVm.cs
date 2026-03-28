@@ -126,6 +126,37 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "Stripe Merchant Display Name")]
         public string? StripeMerchantDisplayName { get; set; }
 
+        // ---------- Tax / VAT / Invoicing ----------
+        [Display(Name = "VAT Enabled")]
+        public bool VatEnabled { get; set; } = true;
+
+        [Display(Name = "Default VAT Rate (%)")]
+        public decimal DefaultVatRatePercent { get; set; } = 19m;
+
+        [Display(Name = "Prices Include VAT")]
+        public bool PricesIncludeVat { get; set; } = true;
+
+        [Display(Name = "Allow Reverse Charge")]
+        public bool AllowReverseCharge { get; set; } = false;
+
+        [Display(Name = "Invoice Issuer Legal Name")]
+        public string? InvoiceIssuerLegalName { get; set; }
+
+        [Display(Name = "Invoice Issuer Tax ID")]
+        public string? InvoiceIssuerTaxId { get; set; }
+
+        [Display(Name = "Invoice Issuer Address Line 1")]
+        public string? InvoiceIssuerAddressLine1 { get; set; }
+
+        [Display(Name = "Invoice Issuer Postal Code")]
+        public string? InvoiceIssuerPostalCode { get; set; }
+
+        [Display(Name = "Invoice Issuer City")]
+        public string? InvoiceIssuerCity { get; set; }
+
+        [Display(Name = "Invoice Issuer Country")]
+        public string? InvoiceIssuerCountry { get; set; }
+
         // ---------- Shipping (DHL-first) ----------
         [Display(Name = "Enable DHL")]
         public bool DhlEnabled { get; set; }
@@ -313,6 +344,12 @@ namespace Darwin.WebAdmin.ViewModels.Settings
 
         [Display(Name = "Communication Test Inbox")]
         public string? CommunicationTestInboxEmail { get; set; }
+
+        [Display(Name = "Communication Test SMS Recipient")]
+        public string? CommunicationTestSmsRecipientE164 { get; set; }
+
+        [Display(Name = "Communication Test WhatsApp Recipient")]
+        public string? CommunicationTestWhatsAppRecipientE164 { get; set; }
 
         [Display(Name = "Business Invitation Subject Template")]
         public string? BusinessInvitationEmailSubjectTemplate { get; set; }

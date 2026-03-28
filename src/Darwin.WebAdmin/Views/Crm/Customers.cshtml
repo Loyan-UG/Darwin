@@ -21,6 +21,8 @@
     <a asp-action="Customers" asp-route-filter="LinkedUser" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.LinkedUser ? "btn-info" : "btn-outline-info")">Linked User</a>
     <a asp-action="Customers" asp-route-filter="NeedsSegmentation" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.NeedsSegmentation ? "btn-warning" : "btn-outline-warning")">Needs Segmentation</a>
     <a asp-action="Customers" asp-route-filter="HasOpportunities" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.HasOpportunities ? "btn-primary" : "btn-outline-primary")">Has Opportunities</a>
+    <a asp-action="Customers" asp-route-filter="Business" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.Business ? "btn-dark" : "btn-outline-dark")">B2B</a>
+    <a asp-action="Customers" asp-route-filter="MissingVatId" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")">B2B Missing VAT ID</a>
     <a asp-action="Customers" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
 </div>
 
@@ -32,6 +34,7 @@
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Company</th>
+                <th>Tax Profile</th>
                 <th>Segments</th>
                 <th>Opportunities</th>
                 <th>Updated</th>
@@ -41,7 +44,7 @@
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="8" class="text-center text-muted">No customers found.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted">No customers found.</td></tr>
         }
         else
         {
@@ -58,6 +61,17 @@
                     <td>@item.Email</td>
                     <td>@item.Phone</td>
                     <td>@item.CompanyName</td>
+                    <td>
+                        <span class="badge @(item.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@item.TaxProfileType</span>
+                        @if (!string.IsNullOrWhiteSpace(item.VatId))
+                        {
+                            <div class="small text-muted">@item.VatId</div>
+                        }
+                        else if (item.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business)
+                        {
+                            <div class="small text-danger">VAT ID missing</div>
+                        }
+                    </td>
                     <td>@item.SegmentCount</td>
                     <td>@item.OpportunityCount</td>
                     <td>

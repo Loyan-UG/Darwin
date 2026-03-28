@@ -10,6 +10,56 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Tax &amp; Invoicing Policy</span>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">VAT Enabled</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.VatEnabled ? "Yes" : "No")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Default VAT</div>
+                    <div class="fw-semibold mt-1">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Price Mode</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.PricesIncludeVat ? "VAT Inclusive" : "VAT Exclusive")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Reverse Charge</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.AllowReverseCharge ? "Allowed" : "Disabled")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Issuer</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Tax ID</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
+                </div>
+            </div>
+        </div>
+        <div class="small text-muted mt-3">
+            This is a phase-1 VAT support surface for invoice review. It exposes current tax defaults and issuer identity without claiming full tax-engine automation or compliance completion.
+        </div>
+    </div>
+</div>
+
 <form asp-action="Invoices" method="get" class="row g-2 mb-3">
     <div class="col-md-4">
         <input name="q" value="@Model.Query" class="form-control" placeholder="Search by id, order, customer, payment" />
@@ -27,7 +77,8 @@
                 <th>Customer</th>
                 <th>Order</th>
                 <th>Payment</th>
-                <th class="text-end">Total</th>
+                <th>Tax Profile</th>
+                <th class="text-end">Net / Tax / Gross</th>
                 <th>Status</th>
                 <th>Due</th>
                 <th class="text-end">Actions</th>
@@ -36,7 +87,7 @@
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="8" class="text-center text-muted">No invoices found.</td></tr>
+                <tr><td colspan="9" class="text-center text-muted">No invoices found.</td></tr>
             }
             else
             {
@@ -78,8 +129,28 @@
                                 <span class="text-muted">Unlinked</span>
                             }
                         </td>
+                        <td>
+                            @if (item.CustomerTaxProfileType.HasValue)
+                            {
+                                <span class="badge @(item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@item.CustomerTaxProfileType</span>
+                                @if (!string.IsNullOrWhiteSpace(item.CustomerVatId))
+                                {
+                                    <div class="small text-muted">@item.CustomerVatId</div>
+                                }
+                                else if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business)
+                                {
+                                    <div class="small text-danger">VAT ID missing</div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
                         <td class="text-end">
-                            <div>@item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="small text-muted">Net: @item.Currency @((item.TotalNetMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="small text-muted">Tax: @item.Currency @((item.TotalTaxMinor / 100.0M).ToString("0.00"))</div>
+                            <div class="fw-semibold">Gross: @item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
                             @if (item.RefundedAmountMinor > 0)
                             {
                                 <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>

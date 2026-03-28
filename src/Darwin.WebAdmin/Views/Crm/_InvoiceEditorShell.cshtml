@@ -33,6 +33,20 @@
                 {
                     <span class="text-muted">-</span>
                 }
+                @if (Model.CustomerTaxProfileType.HasValue)
+                {
+                    <div class="small mt-1">
+                        <span class="badge @(Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@Model.CustomerTaxProfileType</span>
+                        @if (!string.IsNullOrWhiteSpace(Model.CustomerVatId))
+                        {
+                            <span class="text-muted ms-1">@Model.CustomerVatId</span>
+                        }
+                        else if (Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business)
+                        {
+                            <span class="text-danger ms-1">VAT ID missing</span>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -91,11 +105,49 @@
     </div>
 
     <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="small text-uppercase text-muted fw-semibold">Tax &amp; Invoicing Policy</div>
+                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
+                    </div>
+                    <div class="row g-3 small">
+                        <div class="col-md-2">
+                            <div class="text-muted">VAT Enabled</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.VatEnabled ? "Yes" : "No")</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-muted">Default VAT</div>
+                            <div class="fw-semibold">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-muted">Price Mode</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.PricesIncludeVat ? "VAT Inclusive" : "VAT Exclusive")</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-muted">Reverse Charge</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.AllowReverseCharge ? "Allowed" : "Disabled")</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-muted">Issuer</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-muted">Tax ID</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="col-md-4">
             <div class="card h-100 border-0 bg-light">
                 <div class="card-body py-3">
-                    <div class="small text-uppercase text-muted fw-semibold">Gross Total</div>
-                    <div class="fs-5">@Model.Currency @((Model.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
+                    <div class="small text-uppercase text-muted fw-semibold">Net / Tax / Gross</div>
+                    <div>@Model.Currency @((Model.TotalNetMinor / 100.0M).ToString("0.00")) net</div>
+                    <div>@Model.Currency @((Model.TotalTaxMinor / 100.0M).ToString("0.00")) tax</div>
+                    <div class="fs-5">@Model.Currency @((Model.TotalGrossMinor / 100.0M).ToString("0.00")) gross</div>
                 </div>
             </div>
         </div>

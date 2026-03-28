@@ -82,8 +82,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                                                   !string.IsNullOrWhiteSpace(settings.AdminAlertSmsRecipientsCsv),
                     TransactionalSubjectPrefixConfigured = !string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix),
                     TestInboxConfigured = !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail),
+                    SmsTestRecipientConfigured = !string.IsNullOrWhiteSpace(settings.CommunicationTestSmsRecipientE164),
+                    WhatsAppTestRecipientConfigured = !string.IsNullOrWhiteSpace(settings.CommunicationTestWhatsAppRecipientE164),
                     TransactionalSubjectPrefix = settings.TransactionalEmailSubjectPrefix,
                     TestInboxEmail = settings.CommunicationTestInboxEmail,
+                    TestSmsRecipientE164 = settings.CommunicationTestSmsRecipientE164,
+                    TestWhatsAppRecipientE164 = settings.CommunicationTestWhatsAppRecipientE164,
                     CanSendTestEmail = settings.SmtpEnabled &&
                                        !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
                                        settings.SmtpPort.HasValue &&
@@ -395,6 +399,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     DeliveryPath = "Configuration exists, full flow not yet centralized",
                     CurrentImplementationStatus = "Partially configured, not a complete Communication Core workflow",
                     NextStep = "Implement reusable alert pipeline + logs"
+                },
+                new()
+                {
+                    Name = "SMS and WhatsApp Test Targets",
+                    Channel = "SMS / WhatsApp",
+                    Trigger = "Operator-side staged rollout validation",
+                    DeliveryPath = "Configuration only; no shared test-send workflow implemented yet",
+                    CurrentImplementationStatus = "Configured in site settings for visibility and later remediation planning",
+                    NextStep = "Add provider-backed test and delivery diagnostics when multi-channel Communication Core lands"
                 }
             };
         }
@@ -430,6 +443,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CurrentState = "Branding, sender defaults, reply-to, and phase-1 communication toggles are stored on Business",
                     OperatorVisibility = "Queue, detail, and setup screens now expose these policies",
                     NextStep = "Split further into template policy, channel policy, and delivery visibility"
+                },
+                new()
+                {
+                    Capability = "Channel Test Targets",
+                    CurrentState = "Email, SMS, and WhatsApp test recipients are now configurable in site settings",
+                    OperatorVisibility = "Workspace shows whether each channel has a safe test target before go-live validation",
+                    NextStep = "Add provider-backed test-send actions only after channel-specific delivery handling is in place"
                 }
             };
         }

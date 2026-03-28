@@ -52,14 +52,14 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">Transactional Subject Prefix</div>
             <div class="fw-semibold mt-1">@(Model.Transport.TransactionalSubjectPrefixConfigured ? Model.Transport.TransactionalSubjectPrefix : "No prefix configured")</div>
             <div class="small text-muted mt-2">Applied to the current invitation, activation, and password-reset email subjects.</div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">Communication Test Inbox</div>
             <div class="fw-semibold mt-1">@(Model.Transport.TestInboxConfigured ? Model.Transport.TestInboxEmail : "Not rerouting")</div>
@@ -72,6 +72,20 @@
             {
                 <div class="small text-muted mt-2">Configure both SMTP and the communication test inbox to enable a safe operator-side test email action.</div>
             }
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">SMS Test Target</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.SmsTestRecipientConfigured ? Model.Transport.TestSmsRecipientE164 : "Not configured")</div>
+            <div class="small text-muted mt-2">Visibility-only until a provider-backed SMS test action exists.</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">WhatsApp Test Target</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.WhatsAppTestRecipientConfigured ? Model.Transport.TestWhatsAppRecipientE164 : "Not configured")</div>
+            <div class="small text-muted mt-2">Visibility-only until a provider-backed WhatsApp test action exists.</div>
         </div>
     </div>
 </div>

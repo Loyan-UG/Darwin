@@ -117,6 +117,13 @@ namespace Darwin.Domain.Enums
         ClosedLost = 4
     }
 
+    /// <summary>CRM customer tax profile used for B2C/B2B support and invoice context.</summary>
+    public enum CustomerTaxProfileType
+    {
+        Consumer = 0,
+        Business = 1
+    }
+
     /// <summary>Invoice lifecycle status.</summary>
     public enum InvoiceStatus
     {

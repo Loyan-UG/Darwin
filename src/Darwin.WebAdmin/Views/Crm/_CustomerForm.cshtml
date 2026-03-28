@@ -13,6 +13,18 @@
         <span asp-validation-for="CompanyName" class="text-danger"></span>
     </div>
 
+    <div class="col-md-3">
+        <label asp-for="TaxProfileType" class="form-label"></label>
+        <select asp-for="TaxProfileType" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.CustomerTaxProfileType>()" class="form-select"></select>
+        <span asp-validation-for="TaxProfileType" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="VatId" class="form-label"></label>
+        <input asp-for="VatId" class="form-control" />
+        <span asp-validation-for="VatId" class="text-danger"></span>
+    </div>
+
     <div class="col-md-6">
         <label asp-for="FirstName" class="form-label"></label>
         <input asp-for="FirstName" class="form-control" />
@@ -50,7 +62,12 @@
         <strong>Effective profile</strong><br />
         Name: @($"{Model.EffectiveFirstName} {Model.EffectiveLastName}".Trim())<br />
         Email: @Model.EffectiveEmail<br />
-        Phone: @Model.EffectivePhone
+        Phone: @Model.EffectivePhone<br />
+        Tax profile: @Model.TaxProfileType
+        @if (!string.IsNullOrWhiteSpace(Model.VatId))
+        {
+            <><br />VAT ID: @Model.VatId</>
+        }
     </div>
 }
 

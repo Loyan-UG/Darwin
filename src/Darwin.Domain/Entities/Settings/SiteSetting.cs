@@ -128,6 +128,28 @@ namespace Darwin.Domain.Entities.Settings
         /// <summary>Human-facing merchant label shown in hosted payment surfaces.</summary>
         public string? StripeMerchantDisplayName { get; set; }
 
+        // Phase-1 tax / VAT foundation
+        /// <summary>Enable VAT-aware operational support surfaces in admin and billing workbenches.</summary>
+        public bool VatEnabled { get; set; } = true;
+        /// <summary>Default VAT rate percent applied when no business-specific tax policy exists yet.</summary>
+        public decimal DefaultVatRatePercent { get; set; } = 19m;
+        /// <summary>Indicates whether listed prices are interpreted as VAT-inclusive by default.</summary>
+        public bool PricesIncludeVat { get; set; } = true;
+        /// <summary>Allows reverse-charge handling to be configured for B2B invoicing support paths.</summary>
+        public bool AllowReverseCharge { get; set; } = false;
+        /// <summary>Legal issuer name used in phase-1 invoice/compliance support surfaces.</summary>
+        public string? InvoiceIssuerLegalName { get; set; }
+        /// <summary>Issuer tax/VAT identifier used in phase-1 invoice/compliance support surfaces.</summary>
+        public string? InvoiceIssuerTaxId { get; set; }
+        /// <summary>Issuer address line used in phase-1 invoice/compliance support surfaces.</summary>
+        public string? InvoiceIssuerAddressLine1 { get; set; }
+        /// <summary>Issuer postal code used in phase-1 invoice/compliance support surfaces.</summary>
+        public string? InvoiceIssuerPostalCode { get; set; }
+        /// <summary>Issuer city used in phase-1 invoice/compliance support surfaces.</summary>
+        public string? InvoiceIssuerCity { get; set; }
+        /// <summary>Issuer country code used in phase-1 invoice/compliance support surfaces.</summary>
+        public string? InvoiceIssuerCountry { get; set; }
+
         // Phase-1 shipping provider (DHL-first)
         /// <summary>Enable DHL-backed shipment operations as the primary phase-1 carrier.</summary>
         public bool DhlEnabled { get; set; } = false;
@@ -309,6 +331,10 @@ namespace Darwin.Domain.Entities.Settings
 
         /// <summary>Optional override inbox used to reroute transactional emails for testing or staged go-live verification.</summary>
         public string? CommunicationTestInboxEmail { get; set; }
+        /// <summary>Optional SMS test recipient used for operator-side transport validation in phase-1 support workflows.</summary>
+        public string? CommunicationTestSmsRecipientE164 { get; set; }
+        /// <summary>Optional WhatsApp test recipient used for operator-side transport validation in phase-1 support workflows.</summary>
+        public string? CommunicationTestWhatsAppRecipientE164 { get; set; }
 
         /// <summary>Optional subject template for business invitations. Supports placeholders such as {business_name}, {role}, and {invitation_action}.</summary>
         public string? BusinessInvitationEmailSubjectTemplate { get; set; }

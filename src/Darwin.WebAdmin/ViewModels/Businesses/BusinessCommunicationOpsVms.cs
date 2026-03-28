@@ -50,8 +50,12 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool AdminAlertRoutingConfigured { get; set; }
         public bool TransactionalSubjectPrefixConfigured { get; set; }
         public bool TestInboxConfigured { get; set; }
+        public bool SmsTestRecipientConfigured { get; set; }
+        public bool WhatsAppTestRecipientConfigured { get; set; }
         public string? TransactionalSubjectPrefix { get; set; }
         public string? TestInboxEmail { get; set; }
+        public string? TestSmsRecipientE164 { get; set; }
+        public string? TestWhatsAppRecipientE164 { get; set; }
         public bool CanSendTestEmail { get; set; }
     }
 

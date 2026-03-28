@@ -7,7 +7,9 @@ namespace Darwin.Application.CRM.DTOs
         All = 0,
         LinkedUser = 1,
         NeedsSegmentation = 2,
-        HasOpportunities = 3
+        HasOpportunities = 3,
+        Business = 4,
+        MissingVatId = 5
     }
 
     public enum LeadQueueFilter
@@ -26,6 +28,8 @@ namespace Darwin.Application.CRM.DTOs
         public string Email { get; set; } = string.Empty;
         public string? Phone { get; set; }
         public string? CompanyName { get; set; }
+        public CustomerTaxProfileType TaxProfileType { get; set; }
+        public string? VatId { get; set; }
         public int SegmentCount { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -70,6 +74,8 @@ namespace Darwin.Application.CRM.DTOs
         public string Email { get; set; } = string.Empty;
         public string? Phone { get; set; }
         public string? CompanyName { get; set; }
+        public CustomerTaxProfileType TaxProfileType { get; set; } = CustomerTaxProfileType.Consumer;
+        public string? VatId { get; set; }
         public string? Notes { get; set; }
         public List<CustomerAddressDto> Addresses { get; set; } = new();
     }

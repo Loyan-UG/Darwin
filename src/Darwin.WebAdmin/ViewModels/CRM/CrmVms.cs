@@ -27,6 +27,8 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string Email { get; set; } = string.Empty;
         public string? Phone { get; set; }
         public string? CompanyName { get; set; }
+        public CustomerTaxProfileType TaxProfileType { get; set; }
+        public string? VatId { get; set; }
         public int SegmentCount { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -103,6 +105,13 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         [Display(Name = "Company")]
         [StringLength(200)]
         public string? CompanyName { get; set; }
+
+        [Display(Name = "Tax profile")]
+        public CustomerTaxProfileType TaxProfileType { get; set; } = CustomerTaxProfileType.Consumer;
+
+        [Display(Name = "VAT ID")]
+        [StringLength(64)]
+        public string? VatId { get; set; }
 
         [StringLength(2000)]
         public string? Notes { get; set; }
@@ -388,6 +397,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     public sealed class InvoicesListVm
     {
         public CrmSummaryVm Summary { get; set; } = new();
+        public TaxPolicySnapshotVm TaxPolicy { get; set; } = new();
         public List<InvoiceListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
@@ -401,12 +411,16 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public Guid? BusinessId { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
+        public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
+        public string? CustomerVatId { get; set; }
         public Guid? OrderId { get; set; }
         public string? OrderNumber { get; set; }
         public Guid? PaymentId { get; set; }
         public string PaymentSummary { get; set; } = string.Empty;
         public InvoiceStatus Status { get; set; }
         public string Currency { get; set; } = "EUR";
+        public long TotalNetMinor { get; set; }
+        public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long SettledAmountMinor { get; set; }
@@ -420,9 +434,12 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     {
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public TaxPolicySnapshotVm TaxPolicy { get; set; } = new();
         public Guid? BusinessId { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
+        public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
+        public string? CustomerVatId { get; set; }
         public Guid? OrderId { get; set; }
         public string? OrderNumber { get; set; }
         public Guid? PaymentId { get; set; }
@@ -451,6 +468,17 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public List<SelectListItem> PaymentOptions { get; set; } = new();
+    }
+
+    public sealed class TaxPolicySnapshotVm
+    {
+        public bool VatEnabled { get; set; }
+        public decimal DefaultVatRatePercent { get; set; }
+        public bool PricesIncludeVat { get; set; }
+        public bool AllowReverseCharge { get; set; }
+        public bool IssuerConfigured { get; set; }
+        public string InvoiceIssuerLegalName { get; set; } = string.Empty;
+        public bool InvoiceIssuerTaxIdConfigured { get; set; }
     }
 
     public sealed class InvoiceStatusTransitionVm

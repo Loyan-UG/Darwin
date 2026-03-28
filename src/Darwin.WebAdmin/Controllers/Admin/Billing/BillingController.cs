@@ -144,6 +144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Query = q ?? string.Empty,
                 QueueFilter = queue,
                 Stripe = await BuildStripeOperationsVmAsync(ct).ConfigureAwait(false),
+                Tax = await BuildTaxOperationsVmAsync(ct).ConfigureAwait(false),
                 Webhooks = await BuildBillingWebhookOpsSummaryVmAsync(ct).ConfigureAwait(false),
                 Summary = businessId.HasValue
                     ? await BuildPaymentOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
@@ -281,6 +282,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 StripeCount = summary.StripeCount,
                 MissingProviderRefCount = summary.MissingProviderRefCount,
                 FailedStripeCount = summary.FailedStripeCount
+            };
+        }
+
+        private async Task<TaxOperationsVm> BuildTaxOperationsVmAsync(CancellationToken ct)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            return new TaxOperationsVm
+            {
+                VatEnabled = settings.VatEnabled,
+                DefaultVatRatePercent = settings.DefaultVatRatePercent,
+                PricesIncludeVat = settings.PricesIncludeVat,
+                AllowReverseCharge = settings.AllowReverseCharge,
+                IssuerConfigured =
+                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerLegalName) &&
+                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerAddressLine1) &&
+                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerPostalCode) &&
+                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerCity) &&
+                    !string.IsNullOrWhiteSpace(settings.InvoiceIssuerCountry),
+                InvoiceIssuerLegalName = settings.InvoiceIssuerLegalName ?? string.Empty,
+                InvoiceIssuerCountry = settings.InvoiceIssuerCountry ?? string.Empty,
+                InvoiceIssuerTaxIdConfigured = !string.IsNullOrWhiteSpace(settings.InvoiceIssuerTaxId)
             };
         }
 

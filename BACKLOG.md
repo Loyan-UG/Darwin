@@ -49,6 +49,8 @@ Status terms used below:
 - `Completed foundation`: the CRM opportunities list now supports queue-style filters for open, closing-soon, and high-value opportunities, so revenue follow-up is less dependent on a flat pipeline list
 - `Completed foundation`: CRM lead and opportunity lists now expose richer follow-up context and direct quick actions, including assigned-owner visibility, quick lead conversion for qualified rows, customer deep-links, and prefilled opportunity creation from customer-linked leads
 - `Completed foundation`: the CRM invoices queue now also exposes direct quick actions for customer/order/payment follow-up and common draft-to-open / open-to-paid transitions, so routine invoice operations no longer always require entering the full invoice editor first
+- `Completed foundation`: the CRM invoice queue and invoice editor now also expose net/tax/gross splits together with the live VAT and invoice-issuer policy snapshot from site settings, so finance and support operators can review tax context without leaving the CRM workflow
+- `Completed foundation`: CRM customers now carry an explicit B2C/B2B tax profile plus optional VAT ID, and both the customer queue and invoice screens surface that state so operators can triage business customers and missing VAT metadata directly from WebAdmin
 - `Completed foundation`: the admin orders list now supports queue-style filters for open orders, payment-issue orders, and fulfillment-attention orders, so post-order operations are less dependent on a flat status list
 - `Completed foundation`: order detail tabs for payments, shipments, refunds, and invoices now support queue-style filters too, so operators can work failed/refunded/pending/outstanding subsets without scanning full grids
 - `Completed foundation`: the orders queue now also exposes direct quick actions for add payment, add shipment, and create invoice from list rows, so common support follow-up no longer always requires entering the full order detail first
@@ -88,11 +90,14 @@ Status terms used below:
 - `Completed foundation`: the business setup workspace now also shows a business subscription snapshot and the key business-app legal/billing handoff dependencies, so support/admin can audit mobile-facing account state without leaving WebAdmin
 - `Completed foundation`: WebAdmin now also has a dedicated business subscription workspace with current plan snapshot, active-plan readiness, external billing-website handoff visibility, and FullAdmin cancel-at-period-end control, so subscription support is no longer trapped in the mobile app or external support playbooks
 - `Completed foundation`: the same subscription workspace now also exposes provider invoice history with queue-style triage for open/paid/draft/uncollectible cases, hosted/PDF visibility, and direct payment follow-up links, so subscription billing support no longer depends only on the provider dashboard
+- `Completed foundation`: that subscription invoice workspace now also exposes `Overdue` and `PDF Missing` triage plus direct refund-queue handoff, so subscription billing support can split collection problems from provider-document gaps inside WebAdmin
 - `Completed foundation`: the payments workspace now also exposes webhook-lifecycle visibility with active subscription counts, pending/failed/retry delivery signals, and a dedicated webhook queue for callback history, so Stripe-first support can inspect callback drift without leaving WebAdmin
 - `Completed foundation`: site settings now also expose phase-1 Stripe and DHL provider configuration from the admin UI, so payment/shipping credentials and shipper defaults are no longer config-file-only
+- `Completed foundation`: site settings now also expose phase-1 VAT/invoicing defaults, including VAT mode, default VAT rate, reverse-charge allowance, and invoice-issuer identity, and the payments workspace now surfaces that readiness directly for billing support
 - `Completed foundation`: delegated business-support access now exists in WebAdmin through a dedicated permission/role path for member support and invitation operations without exposing approval, lifecycle, or owner-management actions
 - `Completed foundation`: identity/admin screens now surface the delegated business-support role and permission more clearly, so assigning support access no longer depends on tribal knowledge
 - `Completed foundation`: the users workspace now also exposes queue-style lifecycle filters and quick support actions for unconfirmed, locked, inactive, and mobile-linked accounts, so admin-side identity support is no longer trapped inside individual user-edit pages
+- `Completed foundation`: the roles and permissions workspaces now also expose queue-style filters, live summary cards, and lightweight ops playbooks for system/custom/delegated-support review, so access-governance cleanup is less dependent on scanning flat lists
 - `Completed foundation`: the WebAdmin dashboard now exposes a business-support queue with onboarding/support counts, and the business member/invitation lists now support actionable queue filters for pending activation, locked users, and open invitations
 - `Completed foundation`: the businesses index now exposes quick queue shortcuts for needs-attention, pending-approval, and suspended businesses, reducing filter setup for support/admin operators
 - `Completed foundation`: dashboard cards for communication operations and business-support queues are now HTMX-refreshable partials, so operators can refresh live snapshots without reloading the full admin dashboard
@@ -240,8 +245,9 @@ Status terms used below:
 
 ### Tax, VAT, and invoice improvement
 
+- `Completed foundation`: site settings now expose global phase-1 VAT and invoice-issuer defaults, and billing surfaces now show VAT/invoice readiness to operators
 - `Planned / Near-term`: improve tax/VAT-aware order and invoice snapshots
-- `Planned / Near-term`: add VAT ID support and B2B/B2C differentiation
+- `Completed foundation`: VAT ID support and B2B/B2C differentiation now exist on CRM customers and are surfaced in customer and invoice operations, while deeper country-aware tax automation still remains near-term
 - `Planned / Near-term`: define reverse-charge readiness and country-aware taxation rules
 - `Planned / Near-term`: improve invoice immutability, archive readiness, and structured export readiness
 
@@ -303,6 +309,7 @@ Status terms used below:
 - `Planned / Near-term`: deepen payment domain lifecycle and provider audit trail
 - `In Progress`: deepen shipment/return domain model and delivery exception lifecycle; phase-1 admin queues now include configurable handoff-delay and tracking-grace thresholds from Site Settings, and shipping-method admin screens now expose operational subsets for missing rates, global coverage, and multi-rate review
 - `Planned / Near-term`: model Communication Core as a platform capability rather than feature-local helper code
+- `In Progress`: expand Communication Core admin surfaces pragmatically; email test flow exists, and phase-1 SMS/WhatsApp test targets are now configurable for staged rollout visibility
 - `Planned / Near-term`: formalize merchant/tenant onboarding domain rules
 - `Planned / Near-term`: formalize settings domain architecture across global and business scopes
 

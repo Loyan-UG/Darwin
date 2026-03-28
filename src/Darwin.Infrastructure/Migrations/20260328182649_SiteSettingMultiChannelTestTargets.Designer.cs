@@ -4,6 +4,7 @@ using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    partial class DarwinDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260328182649_SiteSettingMultiChannelTestTargets")]
+    partial class SiteSettingMultiChannelTestTargets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1816,15 +1819,8 @@ namespace Darwin.Infrastructure.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<int>("TaxProfileType")
-                        .HasColumnType("int");
-
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("VatId")
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
 
                     b.HasKey("Id");
 
@@ -6470,9 +6466,6 @@ namespace Darwin.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<bool>("AllowReverseCharge")
-                        .HasColumnType("bit");
-
                     b.Property<string>("BusinessInvitationEmailBodyTemplate")
                         .HasMaxLength(8000)
                         .HasColumnType("nvarchar(max)");
@@ -6531,10 +6524,6 @@ namespace Darwin.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
-
-                    b.Property<decimal>("DefaultVatRatePercent")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
 
                     b.Property<string>("DhlAccountNumber")
                         .HasMaxLength(128)
@@ -6628,30 +6617,6 @@ namespace Darwin.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("InvoiceIssuerAddressLine1")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("InvoiceIssuerCity")
-                        .HasMaxLength(120)
-                        .HasColumnType("nvarchar(120)");
-
-                    b.Property<string>("InvoiceIssuerCountry")
-                        .HasMaxLength(2)
-                        .HasColumnType("nvarchar(2)");
-
-                    b.Property<string>("InvoiceIssuerLegalName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("InvoiceIssuerPostalCode")
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
-
-                    b.Property<string>("InvoiceIssuerTaxId")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -6728,9 +6693,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<string>("PasswordResetEmailSubjectTemplate")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
-
-                    b.Property<bool>("PricesIncludeVat")
-                        .HasColumnType("bit");
 
                     b.Property<string>("PrivacyPolicyUrl")
                         .HasMaxLength(500)
@@ -6859,9 +6821,6 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<string>("TransactionalEmailSubjectPrefix")
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
-
-                    b.Property<bool>("VatEnabled")
-                        .HasColumnType("bit");
 
                     b.Property<string>("WebAuthnAllowedOriginsCsv")
                         .IsRequired()

@@ -132,6 +132,18 @@ namespace Darwin.Application.Settings.DTOs
         public string? StripeWebhookSecret { get; set; }
         public string? StripeMerchantDisplayName { get; set; }
 
+        // -------- Tax / VAT / Invoicing --------
+        public bool VatEnabled { get; set; } = true;
+        public decimal DefaultVatRatePercent { get; set; } = 19m;
+        public bool PricesIncludeVat { get; set; } = true;
+        public bool AllowReverseCharge { get; set; } = false;
+        public string? InvoiceIssuerLegalName { get; set; }
+        public string? InvoiceIssuerTaxId { get; set; }
+        public string? InvoiceIssuerAddressLine1 { get; set; }
+        public string? InvoiceIssuerPostalCode { get; set; }
+        public string? InvoiceIssuerCity { get; set; }
+        public string? InvoiceIssuerCountry { get; set; }
+
         // -------- Shipping (DHL-first) --------
         public bool DhlEnabled { get; set; } = false;
         public string? DhlEnvironment { get; set; }
@@ -212,6 +224,8 @@ namespace Darwin.Application.Settings.DTOs
         public string? AdminAlertSmsRecipientsCsv { get; set; }
         public string? TransactionalEmailSubjectPrefix { get; set; }
         public string? CommunicationTestInboxEmail { get; set; }
+        public string? CommunicationTestSmsRecipientE164 { get; set; }
+        public string? CommunicationTestWhatsAppRecipientE164 { get; set; }
         public string? BusinessInvitationEmailSubjectTemplate { get; set; }
         public string? BusinessInvitationEmailBodyTemplate { get; set; }
         public string? AccountActivationEmailSubjectTemplate { get; set; }

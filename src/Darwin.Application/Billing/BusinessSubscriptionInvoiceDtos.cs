@@ -15,7 +15,9 @@ public enum BusinessSubscriptionInvoiceQueueFilter
     Draft = 3,
     Uncollectible = 4,
     HostedLinkMissing = 5,
-    Stripe = 6
+    Stripe = 6,
+    Overdue = 7,
+    PdfMissing = 8
 }
 
 /// <summary>
@@ -42,6 +44,7 @@ public sealed class BusinessSubscriptionInvoiceListItemDto
     public bool HasHostedInvoiceUrl => !string.IsNullOrWhiteSpace(HostedInvoiceUrl);
     public bool HasPdfUrl => !string.IsNullOrWhiteSpace(PdfUrl);
     public bool IsStripe => string.Equals(Provider, "Stripe", StringComparison.OrdinalIgnoreCase);
+    public bool IsOverdue => Status == SubscriptionInvoiceStatus.Open && DueAtUtc.HasValue && DueAtUtc.Value < DateTime.UtcNow;
 }
 
 /// <summary>
@@ -56,6 +59,8 @@ public sealed class BusinessSubscriptionInvoiceOpsSummaryDto
     public int UncollectibleCount { get; init; }
     public int HostedLinkMissingCount { get; init; }
     public int StripeCount { get; init; }
+    public int OverdueCount { get; init; }
+    public int PdfMissingCount { get; init; }
 }
 
 /// <summary>

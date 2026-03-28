@@ -2,6 +2,7 @@ using Darwin.Application.CRM.Commands;
 using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
 using Darwin.WebAdmin.Services.Admin;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.CRM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -47,6 +48,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         private readonly AssignCustomerSegmentHandler _assignCustomerSegment;
         private readonly RemoveCustomerSegmentMembershipHandler _removeCustomerSegmentMembership;
         private readonly AdminReferenceDataService _referenceData;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public CrmController(
             GetCustomersPageHandler getCustomersPage,
@@ -81,7 +83,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             CreateConsentHandler createConsent,
             AssignCustomerSegmentHandler assignCustomerSegment,
             RemoveCustomerSegmentMembershipHandler removeCustomerSegmentMembership,
-            AdminReferenceDataService referenceData)
+            AdminReferenceDataService referenceData,
+            ISiteSettingCache siteSettingCache)
         {
             _getCustomersPage = getCustomersPage;
             _getCustomerForEdit = getCustomerForEdit;
@@ -116,6 +119,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             _assignCustomerSegment = assignCustomerSegment;
             _removeCustomerSegmentMembership = removeCustomerSegmentMembership;
             _referenceData = referenceData;
+            _siteSettingCache = siteSettingCache;
         }
 
         [HttpGet]
@@ -145,6 +149,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Email = x.Email,
                     Phone = x.Phone,
                     CompanyName = x.CompanyName,
+                    TaxProfileType = x.TaxProfileType,
+                    VatId = x.VatId,
                     SegmentCount = x.SegmentCount,
                     OpportunityCount = x.OpportunityCount,
                     CreatedAtUtc = x.CreatedAtUtc,
@@ -192,6 +198,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Email = vm.Email,
                     Phone = vm.Phone,
                     CompanyName = vm.CompanyName,
+                    TaxProfileType = vm.TaxProfileType,
+                    VatId = vm.VatId,
                     Notes = vm.Notes,
                     Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
                 }, ct).ConfigureAwait(false);
@@ -228,6 +236,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Email = dto.Email,
                 Phone = dto.Phone,
                 CompanyName = dto.CompanyName,
+                TaxProfileType = dto.TaxProfileType,
+                VatId = dto.VatId,
                 Notes = dto.Notes,
                 EffectiveFirstName = dto.EffectiveFirstName,
                 EffectiveLastName = dto.EffectiveLastName,
@@ -301,6 +311,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     Email = vm.Email,
                     Phone = vm.Phone,
                     CompanyName = vm.CompanyName,
+                    TaxProfileType = vm.TaxProfileType,
+                    VatId = vm.VatId,
                     Notes = vm.Notes,
                     Addresses = vm.Addresses.Select(MapCustomerAddress).ToList()
                 }, ct).ConfigureAwait(false);
@@ -327,9 +339,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             return View(new InvoicesListVm
             {
                 Summary = MapSummary(summary),
+                TaxPolicy = MapTaxPolicy(settings),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -340,12 +354,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     BusinessId = x.BusinessId,
                     CustomerId = x.CustomerId,
                     CustomerDisplayName = x.CustomerDisplayName,
+                    CustomerTaxProfileType = x.CustomerTaxProfileType,
+                    CustomerVatId = x.CustomerVatId,
                     OrderId = x.OrderId,
                     OrderNumber = x.OrderNumber,
                     PaymentId = x.PaymentId,
                     PaymentSummary = x.PaymentSummary,
                     Status = x.Status,
                     Currency = x.Currency,
+                    TotalNetMinor = x.TotalNetMinor,
+                    TotalTaxMinor = x.TotalTaxMinor,
                     TotalGrossMinor = x.TotalGrossMinor,
                     RefundedAmountMinor = x.RefundedAmountMinor,
                     SettledAmountMinor = x.SettledAmountMinor,
@@ -367,13 +385,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return RedirectToAction(nameof(Invoices));
             }
 
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var vm = new InvoiceEditVm
             {
                 Id = dto.Id,
                 RowVersion = dto.RowVersion,
+                TaxPolicy = MapTaxPolicy(settings),
                 BusinessId = dto.BusinessId,
                 CustomerId = dto.CustomerId,
                 CustomerDisplayName = dto.CustomerDisplayName,
+                CustomerTaxProfileType = dto.CustomerTaxProfileType,
+                CustomerVatId = dto.CustomerVatId,
                 OrderId = dto.OrderId,
                 OrderNumber = dto.OrderNumber,
                 PaymentId = dto.PaymentId,
@@ -1283,12 +1305,28 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             };
         }
 
+        private static TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
+        {
+            return new TaxPolicySnapshotVm
+            {
+                VatEnabled = dto.VatEnabled,
+                DefaultVatRatePercent = dto.DefaultVatRatePercent,
+                PricesIncludeVat = dto.PricesIncludeVat,
+                AllowReverseCharge = dto.AllowReverseCharge,
+                IssuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName),
+                InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
+                InvoiceIssuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId)
+            };
+        }
+
         private static IEnumerable<SelectListItem> BuildCustomerFilterItems(CustomerQueueFilter selectedFilter)
         {
             yield return new SelectListItem("All customers", CustomerQueueFilter.All.ToString(), selectedFilter == CustomerQueueFilter.All);
             yield return new SelectListItem("Linked user", CustomerQueueFilter.LinkedUser.ToString(), selectedFilter == CustomerQueueFilter.LinkedUser);
             yield return new SelectListItem("Needs segmentation", CustomerQueueFilter.NeedsSegmentation.ToString(), selectedFilter == CustomerQueueFilter.NeedsSegmentation);
             yield return new SelectListItem("Has opportunities", CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities);
+            yield return new SelectListItem("B2B", CustomerQueueFilter.Business.ToString(), selectedFilter == CustomerQueueFilter.Business);
+            yield return new SelectListItem("B2B missing VAT ID", CustomerQueueFilter.MissingVatId.ToString(), selectedFilter == CustomerQueueFilter.MissingVatId);
         }
 
         private static IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)

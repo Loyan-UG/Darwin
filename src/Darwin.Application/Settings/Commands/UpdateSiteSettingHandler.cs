@@ -88,6 +88,16 @@ namespace Darwin.Application.Settings.Commands
             s.StripeSecretKey = dto.StripeSecretKey;
             s.StripeWebhookSecret = dto.StripeWebhookSecret;
             s.StripeMerchantDisplayName = dto.StripeMerchantDisplayName;
+            s.VatEnabled = dto.VatEnabled;
+            s.DefaultVatRatePercent = dto.DefaultVatRatePercent;
+            s.PricesIncludeVat = dto.PricesIncludeVat;
+            s.AllowReverseCharge = dto.AllowReverseCharge;
+            s.InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName;
+            s.InvoiceIssuerTaxId = dto.InvoiceIssuerTaxId;
+            s.InvoiceIssuerAddressLine1 = dto.InvoiceIssuerAddressLine1;
+            s.InvoiceIssuerPostalCode = dto.InvoiceIssuerPostalCode;
+            s.InvoiceIssuerCity = dto.InvoiceIssuerCity;
+            s.InvoiceIssuerCountry = dto.InvoiceIssuerCountry;
             s.DhlEnabled = dto.DhlEnabled;
             s.DhlEnvironment = dto.DhlEnvironment;
             s.DhlApiBaseUrl = dto.DhlApiBaseUrl;
@@ -169,6 +179,8 @@ namespace Darwin.Application.Settings.Commands
             s.AdminAlertSmsRecipientsCsv = dto.AdminAlertSmsRecipientsCsv;
             s.TransactionalEmailSubjectPrefix = dto.TransactionalEmailSubjectPrefix;
             s.CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail;
+            s.CommunicationTestSmsRecipientE164 = dto.CommunicationTestSmsRecipientE164;
+            s.CommunicationTestWhatsAppRecipientE164 = dto.CommunicationTestWhatsAppRecipientE164;
             s.BusinessInvitationEmailSubjectTemplate = dto.BusinessInvitationEmailSubjectTemplate;
             s.BusinessInvitationEmailBodyTemplate = dto.BusinessInvitationEmailBodyTemplate;
             s.AccountActivationEmailSubjectTemplate = dto.AccountActivationEmailSubjectTemplate;

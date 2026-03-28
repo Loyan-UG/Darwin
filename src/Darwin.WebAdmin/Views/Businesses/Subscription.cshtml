@@ -152,13 +152,25 @@
                     <div class="fw-semibold mt-1">@Model.InvoiceSummary.UncollectibleCount</div>
                 </div>
             </div>
-            <div class="col-md-2">
-                <div class="border rounded p-3 h-100">
-                    <div class="text-muted small text-uppercase">Hosted Link Missing</div>
-                    <div class="fw-semibold mt-1">@Model.InvoiceSummary.HostedLinkMissingCount</div>
-                </div>
-            </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">Hosted Link Missing</div>
+            <div class="fw-semibold mt-1">@Model.InvoiceSummary.HostedLinkMissingCount</div>
         </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">Overdue</div>
+            <div class="fw-semibold mt-1">@Model.InvoiceSummary.OverdueCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">PDF Missing</div>
+            <div class="fw-semibold mt-1">@Model.InvoiceSummary.PdfMissingCount</div>
+        </div>
+    </div>
+</div>
         <div class="small text-muted mt-3">
             These provider invoice signals help finance support distinguish open Stripe billing work from historical subscription snapshots.
         </div>
@@ -272,6 +284,14 @@
                                 @if (!string.IsNullOrWhiteSpace(invoice.FailureReason))
                                 {
                                     <div class="small text-danger mt-1">@invoice.FailureReason</div>
+                                }
+                                @if (invoice.IsOverdue)
+                                {
+                                    <div><span class="badge bg-danger mt-1">Overdue</span></div>
+                                }
+                                @if (!invoice.HasPdfUrl)
+                                {
+                                    <div><span class="badge bg-warning text-dark mt-1">PDF missing</span></div>
                                 }
                             </td>
                             <td>@invoice.Currency @((invoice.TotalMinor / 100M).ToString("0.00"))</td>

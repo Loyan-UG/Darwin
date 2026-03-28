@@ -189,6 +189,8 @@ public sealed class BusinessSubscriptionInvoiceOpsSummaryVm
     public int UncollectibleCount { get; set; }
     public int HostedLinkMissingCount { get; set; }
     public int StripeCount { get; set; }
+    public int OverdueCount { get; set; }
+    public int PdfMissingCount { get; set; }
 }
 
 public sealed class BusinessSubscriptionInvoiceListItemVm
@@ -212,6 +214,7 @@ public sealed class BusinessSubscriptionInvoiceListItemVm
     public bool HasHostedInvoiceUrl { get; set; }
     public bool HasPdfUrl { get; set; }
     public bool IsStripe { get; set; }
+    public bool IsOverdue { get; set; }
 }
 
 public sealed class BusinessSubscriptionInvoicesListVm

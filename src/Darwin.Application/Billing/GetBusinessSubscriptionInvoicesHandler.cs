@@ -69,6 +69,11 @@ public sealed class GetBusinessSubscriptionInvoicesPageHandler
             BusinessSubscriptionInvoiceQueueFilter.Uncollectible => invoices.Where(x => x.Status == SubscriptionInvoiceStatus.Uncollectible),
             BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing => invoices.Where(x => string.IsNullOrWhiteSpace(x.HostedInvoiceUrl)),
             BusinessSubscriptionInvoiceQueueFilter.Stripe => invoices.Where(x => x.Provider == "Stripe"),
+            BusinessSubscriptionInvoiceQueueFilter.Overdue => invoices.Where(x =>
+                x.Status == SubscriptionInvoiceStatus.Open &&
+                x.DueAtUtc.HasValue &&
+                x.DueAtUtc.Value < DateTime.UtcNow),
+            BusinessSubscriptionInvoiceQueueFilter.PdfMissing => invoices.Where(x => string.IsNullOrWhiteSpace(x.PdfUrl)),
             _ => invoices
         };
 
@@ -125,7 +130,12 @@ public sealed class GetBusinessSubscriptionInvoiceOpsSummaryHandler
             DraftCount = await invoices.CountAsync(x => x.Status == SubscriptionInvoiceStatus.Draft, ct).ConfigureAwait(false),
             UncollectibleCount = await invoices.CountAsync(x => x.Status == SubscriptionInvoiceStatus.Uncollectible, ct).ConfigureAwait(false),
             HostedLinkMissingCount = await invoices.CountAsync(x => x.HostedInvoiceUrl == null || x.HostedInvoiceUrl == string.Empty, ct).ConfigureAwait(false),
-            StripeCount = await invoices.CountAsync(x => x.Provider == "Stripe", ct).ConfigureAwait(false)
+            StripeCount = await invoices.CountAsync(x => x.Provider == "Stripe", ct).ConfigureAwait(false),
+            OverdueCount = await invoices.CountAsync(x =>
+                x.Status == SubscriptionInvoiceStatus.Open &&
+                x.DueAtUtc.HasValue &&
+                x.DueAtUtc.Value < DateTime.UtcNow, ct).ConfigureAwait(false),
+            PdfMissingCount = await invoices.CountAsync(x => x.PdfUrl == null || x.PdfUrl == string.Empty, ct).ConfigureAwait(false)
         };
     }
 }

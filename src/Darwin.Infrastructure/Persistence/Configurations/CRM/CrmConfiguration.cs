@@ -33,6 +33,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.CRM
             builder.Property(x => x.Email).IsRequired().HasMaxLength(320);
             builder.Property(x => x.Phone).IsRequired().HasMaxLength(50);
             builder.Property(x => x.CompanyName).HasMaxLength(200);
+            builder.Property(x => x.TaxProfileType).IsRequired();
+            builder.Property(x => x.VatId).HasMaxLength(64);
             builder.Property(x => x.Notes).HasMaxLength(4000);
 
             builder.HasIndex(x => x.Email);

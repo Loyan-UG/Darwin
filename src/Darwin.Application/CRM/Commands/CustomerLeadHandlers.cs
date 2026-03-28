@@ -44,6 +44,8 @@ namespace Darwin.Application.CRM.Commands
                 Email = dto.Email.Trim(),
                 Phone = dto.Phone?.Trim() ?? string.Empty,
                 CompanyName = NormalizeOptional(dto.CompanyName),
+                TaxProfileType = dto.TaxProfileType,
+                VatId = NormalizeOptional(dto.VatId),
                 Notes = NormalizeOptional(dto.Notes),
                 Addresses = dto.Addresses.Select(MapAddress).ToList()
             };
@@ -122,6 +124,8 @@ namespace Darwin.Application.CRM.Commands
             customer.Email = dto.Email.Trim();
             customer.Phone = dto.Phone?.Trim() ?? string.Empty;
             customer.CompanyName = NormalizeOptional(dto.CompanyName);
+            customer.TaxProfileType = dto.TaxProfileType;
+            customer.VatId = NormalizeOptional(dto.VatId);
             customer.Notes = NormalizeOptional(dto.Notes);
 
             var requestedAddressIds = dto.Addresses
@@ -336,6 +340,9 @@ namespace Darwin.Application.CRM.Commands
                     Email = lead.Email.Trim(),
                     Phone = lead.Phone.Trim(),
                     CompanyName = NormalizeOptional(lead.CompanyName),
+                    TaxProfileType = string.IsNullOrWhiteSpace(lead.CompanyName)
+                        ? Darwin.Domain.Enums.CustomerTaxProfileType.Consumer
+                        : Darwin.Domain.Enums.CustomerTaxProfileType.Business,
                     Notes = dto.CopyNotesToCustomer ? NormalizeOptional(lead.Notes) : null
                 };
 

@@ -2007,7 +2007,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 DraftCount = dto.DraftCount,
                 UncollectibleCount = dto.UncollectibleCount,
                 HostedLinkMissingCount = dto.HostedLinkMissingCount,
-                StripeCount = dto.StripeCount
+                StripeCount = dto.StripeCount,
+                OverdueCount = dto.OverdueCount,
+                PdfMissingCount = dto.PdfMissingCount
             };
         }
 
@@ -2033,7 +2035,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PlanCode = dto.PlanCode,
                 HasHostedInvoiceUrl = dto.HasHostedInvoiceUrl,
                 HasPdfUrl = dto.HasPdfUrl,
-                IsStripe = dto.IsStripe
+                IsStripe = dto.IsStripe,
+                IsOverdue = dto.IsOverdue
             };
         }
 
@@ -2081,6 +2084,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem("Uncollectible", BusinessSubscriptionInvoiceQueueFilter.Uncollectible.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Uncollectible);
             yield return new SelectListItem("Hosted Link Missing", BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing);
             yield return new SelectListItem("Stripe", BusinessSubscriptionInvoiceQueueFilter.Stripe.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Stripe);
+            yield return new SelectListItem("Overdue", BusinessSubscriptionInvoiceQueueFilter.Overdue.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Overdue);
+            yield return new SelectListItem("PDF Missing", BusinessSubscriptionInvoiceQueueFilter.PdfMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.PdfMissing);
         }
 
         private static string BuildStaffAccessBadgePayload(BusinessMemberDetailDto member, BusinessContextVm business, DateTime issuedAtUtc, DateTime expiresAtUtc)

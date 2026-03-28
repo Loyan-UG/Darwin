@@ -4,6 +4,14 @@ using System.Collections.Generic;
 
 namespace Darwin.WebAdmin.ViewModels.Identity
 {
+    public enum RoleQueueFilter
+    {
+        All = 0,
+        System = 1,
+        Custom = 2,
+        DelegatedSupport = 3
+    }
+
     /// <summary>
     /// Represents a single role item in a list. This avoids leaking Application DTOs into the Web layer.
     /// </summary>
@@ -30,11 +38,22 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public RoleQueueFilter Filter { get; set; } = RoleQueueFilter.All;
+        public RoleOpsSummaryVm Summary { get; set; } = new();
 
         /// <summary>
         /// Options for selecting different page sizes.
         /// </summary>
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+    }
+
+    public sealed class RoleOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int SystemCount { get; set; }
+        public int CustomCount { get; set; }
+        public int DelegatedSupportCount { get; set; }
     }
 
     /// <summary>

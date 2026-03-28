@@ -5,6 +5,24 @@
 
 <h1 class="mb-3"><i class="fa fa-key"></i> Permissions</h1>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">System</div><div class="fs-4 fw-semibold">@Model.Summary.SystemCount</div></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Custom</div><div class="fs-4 fw-semibold">@Model.Summary.CustomCount</div></div></div></div>
+    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Delegated support</div><div class="fs-4 fw-semibold">@Model.Summary.DelegatedSupportCount</div></div></div></div>
+</div>
+
+<div class="card mb-3 border-info-subtle">
+    <div class="card-body">
+        <h2 class="h6 mb-2">Permission Ops Playbook</h2>
+        <ul class="mb-0">
+            <li>Review `System` permissions before changing role bindings.</li>
+            <li>Use `Delegated Support` to verify business-support scope stays narrower than `FullAdminAccess`.</li>
+            <li>Use `Custom` when cleaning up older permission experiments before completion audit.</li>
+        </ul>
+    </div>
+</div>
+
 <div class="card mb-3">
     <div class="card-body">
         <div class="alert alert-info mb-3">
@@ -20,7 +38,11 @@
                 <label for="pageSize" class="form-label">Page size</label>
                 <select id="pageSize" name="pageSize" class="form-select" asp-items="Model.PageSizeItems"></select>
             </div>
-            <div class="col-md-6 d-flex justify-content-end gap-2">
+            <div class="col-md-3">
+                <label for="filter" class="form-label">Queue</label>
+                <select id="filter" name="filter" class="form-select" asp-items="Model.FilterItems"></select>
+            </div>
+            <div class="col-md-3 d-flex justify-content-end gap-2">
                 <button type="submit" class="btn btn-outline-secondary">
                     <i class="fa fa-search"></i> Search
                 </button>
@@ -97,7 +119,8 @@
        total="Model.Total"
        asp-controller="Permissions"
        asp-action="Index"
-       asp-route-q="@Model.Query">
+       asp-route-q="@Model.Query"
+       asp-route-filter="@Model.Filter">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
