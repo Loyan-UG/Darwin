@@ -201,6 +201,9 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
         public DateTime CreatedAtUtc { get; set; }
 
+        public bool IsDhl { get; set; }
+        public bool NeedsCarrierReview { get; set; }
+
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -395,9 +398,40 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
         public ShipmentQueueFilter Filter { get; set; } = ShipmentQueueFilter.All;
+        public DhlOperationsVm Dhl { get; set; } = new();
+        public ShipmentOpsSummaryVm Summary { get; set; } = new();
+        public List<ShipmentPlaybookVm> Playbooks { get; set; } = new();
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
         public List<ShipmentListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class DhlOperationsVm
+    {
+        public bool Enabled { get; set; }
+        public bool ApiBaseUrlConfigured { get; set; }
+        public bool ApiCredentialsConfigured { get; set; }
+        public bool AccountNumberConfigured { get; set; }
+        public bool ShipperIdentityConfigured { get; set; }
+        public string EnvironmentLabel { get; set; } = string.Empty;
+    }
+
+    public sealed class ShipmentOpsSummaryVm
+    {
+        public int PendingCount { get; set; }
+        public int ShippedCount { get; set; }
+        public int MissingTrackingCount { get; set; }
+        public int ReturnedCount { get; set; }
+        public int DhlCount { get; set; }
+        public int MissingServiceCount { get; set; }
+    }
+
+    public sealed class ShipmentPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
+        public string SettingsDependency { get; set; } = string.Empty;
     }
 
     

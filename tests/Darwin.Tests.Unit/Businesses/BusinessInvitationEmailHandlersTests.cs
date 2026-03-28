@@ -11,6 +11,7 @@ using Darwin.Application.Businesses.Validators;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Businesses;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -238,6 +239,15 @@ public sealed class BusinessInvitationEmailHandlersTests
             {
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Role).IsRequired();
+            });
+
+            modelBuilder.Entity<SiteSetting>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRowVersion();
+                builder.Property(x => x.Title).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.SupportedCulturesCsv).IsRequired();
             });
         }
     }

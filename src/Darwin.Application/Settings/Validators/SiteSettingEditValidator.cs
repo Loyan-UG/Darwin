@@ -107,6 +107,75 @@ namespace Darwin.Application.Settings.Validators
                 .When(x => !string.IsNullOrWhiteSpace(x.AccountDeletionUrl))
                 .WithMessage("AccountDeletionUrl must be an absolute HTTPS URL.");
 
+            // -------- Phase-1 payment and shipping providers --------
+            RuleFor(x => x.StripePublishableKey)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.StripePublishableKey));
+
+            RuleFor(x => x.StripeSecretKey)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.StripeSecretKey));
+
+            RuleFor(x => x.StripeWebhookSecret)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.StripeWebhookSecret));
+
+            RuleFor(x => x.StripeMerchantDisplayName)
+                .MaximumLength(200)
+                .When(x => !string.IsNullOrWhiteSpace(x.StripeMerchantDisplayName));
+
+            RuleFor(x => x.DhlEnvironment)
+                .MaximumLength(50)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlEnvironment));
+
+            RuleFor(x => x.DhlApiBaseUrl)
+                .MaximumLength(500)
+                .Must(BeHttpsAbsoluteUrl)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlApiBaseUrl))
+                .WithMessage("DhlApiBaseUrl must be an absolute HTTPS URL.");
+
+            RuleFor(x => x.DhlApiKey)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlApiKey));
+
+            RuleFor(x => x.DhlApiSecret)
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlApiSecret));
+
+            RuleFor(x => x.DhlAccountNumber)
+                .MaximumLength(128)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlAccountNumber));
+
+            RuleFor(x => x.DhlShipperName)
+                .MaximumLength(200)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperName));
+
+            RuleFor(x => x.DhlShipperEmail)
+                .EmailAddress()
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperEmail));
+
+            RuleFor(x => x.DhlShipperPhoneE164)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperPhoneE164));
+
+            RuleFor(x => x.DhlShipperStreet)
+                .MaximumLength(300)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperStreet));
+
+            RuleFor(x => x.DhlShipperPostalCode)
+                .MaximumLength(32)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperPostalCode));
+
+            RuleFor(x => x.DhlShipperCity)
+                .MaximumLength(120)
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperCity));
+
+            RuleFor(x => x.DhlShipperCountry)
+                .Matches("^[A-Z]{2}$")
+                .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperCountry))
+                .WithMessage("DhlShipperCountry must be a 2-letter uppercase country code.");
+
 
 
             // -------- Soft delete / data retention --------
@@ -276,6 +345,15 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.AdminAlertSmsRecipientsCsv)
                 .MaximumLength(1000)
                 .When(x => !string.IsNullOrWhiteSpace(x.AdminAlertSmsRecipientsCsv));
+
+            RuleFor(x => x.TransactionalEmailSubjectPrefix)
+                .MaximumLength(120)
+                .When(x => !string.IsNullOrWhiteSpace(x.TransactionalEmailSubjectPrefix));
+
+            RuleFor(x => x.CommunicationTestInboxEmail)
+                .EmailAddress()
+                .MaximumLength(256)
+                .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestInboxEmail));
         }
 
         private static bool IsCulture(string culture)

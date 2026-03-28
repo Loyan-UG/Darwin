@@ -75,6 +75,24 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.PrivacyPolicyUrl).HasMaxLength(500);
             builder.Property(x => x.BusinessTermsUrl).HasMaxLength(500);
             builder.Property(x => x.AccountDeletionUrl).HasMaxLength(500);
+            builder.Property(x => x.StripeEnabled).IsRequired();
+            builder.Property(x => x.StripePublishableKey).HasMaxLength(256);
+            builder.Property(x => x.StripeSecretKey).HasMaxLength(256);
+            builder.Property(x => x.StripeWebhookSecret).HasMaxLength(256);
+            builder.Property(x => x.StripeMerchantDisplayName).HasMaxLength(200);
+            builder.Property(x => x.DhlEnabled).IsRequired();
+            builder.Property(x => x.DhlEnvironment).HasMaxLength(50);
+            builder.Property(x => x.DhlApiBaseUrl).HasMaxLength(500);
+            builder.Property(x => x.DhlApiKey).HasMaxLength(256);
+            builder.Property(x => x.DhlApiSecret).HasMaxLength(256);
+            builder.Property(x => x.DhlAccountNumber).HasMaxLength(128);
+            builder.Property(x => x.DhlShipperName).HasMaxLength(200);
+            builder.Property(x => x.DhlShipperEmail).HasMaxLength(256);
+            builder.Property(x => x.DhlShipperPhoneE164).HasMaxLength(32);
+            builder.Property(x => x.DhlShipperStreet).HasMaxLength(300);
+            builder.Property(x => x.DhlShipperPostalCode).HasMaxLength(32);
+            builder.Property(x => x.DhlShipperCity).HasMaxLength(120);
+            builder.Property(x => x.DhlShipperCountry).HasMaxLength(2);
 
             // --- Email (SMTP) ---
             builder.Property(x => x.SmtpEnabled).IsRequired();
@@ -97,6 +115,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             // --- Admin notification defaults ---
             builder.Property(x => x.AdminAlertEmailsCsv).HasMaxLength(2000);
             builder.Property(x => x.AdminAlertSmsRecipientsCsv).HasMaxLength(1000);
+            builder.Property(x => x.TransactionalEmailSubjectPrefix).HasMaxLength(120);
+            builder.Property(x => x.CommunicationTestInboxEmail).HasMaxLength(256);
 
             // Helpful lookups
             builder.HasIndex(x => x.ContactEmail);

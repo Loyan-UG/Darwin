@@ -1,10 +1,11 @@
-@model IReadOnlyList<Darwin.Application.Catalog.DTOs.ProductListItemDto>
+@model Darwin.WebAdmin.ViewModels.Catalog.ProductsIndexVm
 @{
     ViewData["Title"] = "Products";
-    var currentPage = (int)(ViewBag.Page ?? 1);
-    var currentPageSize = (int)(ViewBag.PageSize ?? 20);
-    var total = (int)(ViewBag.Total ?? 0);
-    var query = (string)(ViewBag.Query ?? string.Empty);
+    var currentPage = Model.Page;
+    var currentPageSize = Model.PageSize;
+    var total = Model.Total;
+    var query = Model.Query;
+    var filter = Model.Filter;
 }
 
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
@@ -12,12 +13,90 @@
     <div class="d-flex flex-wrap gap-2">
         <form asp-action="Index" method="get" class="d-flex gap-2">
             <input type="text" name="query" value="@query" class="form-control" placeholder="Search..." />
+            <input type="hidden" name="filter" value="@filter" />
             <button class="btn btn-outline-secondary" type="submit">
                 <i class="fa fa-search"></i> Search
             </button>
             <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
         </form>
         <a asp-action="Create" class="btn btn-primary">Create New</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Inactive</div>
+                <div class="display-6 fw-semibold">@Model.Summary.InactiveCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Hidden</div>
+                <div class="display-6 fw-semibold">@Model.Summary.HiddenCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Single Variant</div>
+                <div class="display-6 fw-semibold">@Model.Summary.SingleVariantCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Scheduled</div>
+                <div class="display-6 fw-semibold">@Model.Summary.ScheduledCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")">All</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="inactive" class="btn @(filter == "inactive" ? "btn-primary" : "btn-outline-primary")">Inactive</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="hidden" class="btn @(filter == "hidden" ? "btn-primary" : "btn-outline-primary")">Hidden</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="single-variant" class="btn @(filter == "single-variant" ? "btn-primary" : "btn-outline-primary")">Single Variant</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="scheduled" class="btn @(filter == "scheduled" ? "btn-primary" : "btn-outline-primary")">Scheduled</a>
+            </div>
+            <div class="text-muted small">Total products: @Model.Summary.TotalCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-light fw-semibold">Catalog Operations Playbooks</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Queue</th>
+                        <th>Why It Matters</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var playbook in Model.Playbooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@playbook.QueueLabel</td>
+                            <td>@playbook.WhyItMatters</td>
+                            <td>@playbook.OperatorAction</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -31,22 +110,29 @@
                         <th class="text-center">Variants</th>
                         <th class="text-center">Active</th>
                         <th class="text-center">Visible</th>
+                        <th>Modified</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model.Count == 0)
+                    @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No products found.</td>
+                            <td colspan="6" class="text-center text-muted py-4">No products found.</td>
                         </tr>
                     }
                     else
                     {
-                        foreach (var p in Model)
+                        foreach (var p in Model.Items)
                         {
                             <tr>
-                                <td>@(string.IsNullOrWhiteSpace(p.DefaultName) ? "-" : p.DefaultName)</td>
+                                <td>
+                                    <div class="fw-semibold">@(string.IsNullOrWhiteSpace(p.DefaultName) ? "-" : p.DefaultName)</div>
+                                    @if (p.PublishStartUtc != null || p.PublishEndUtc != null)
+                                    {
+                                        <div class="small text-muted">Window: @(p.PublishStartUtc?.ToString("u") ?? "-") to @(p.PublishEndUtc?.ToString("u") ?? "-")</div>
+                                    }
+                                </td>
                                 <td class="text-center"><span class="badge bg-secondary">@p.VariantCount</span></td>
                                 <td class="text-center">
                                     @if (p.IsActive)
@@ -70,6 +156,7 @@
                                         <span class="badge bg-outline-secondary border">No</span>
                                     }
                                 </td>
+                                <td class="text-nowrap text-muted small">@p.ModifiedAtUtc.ToString("u")</td>
                                 <td class="text-end">
                                     <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-edit"></i> Edit
@@ -98,7 +185,8 @@
                total="@total"
                asp-controller="Products"
                asp-action="Index"
-               asp-route-query="@query"></pager>
+               asp-route-query="@query"
+               asp-route-filter="@filter"></pager>
 
         <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 

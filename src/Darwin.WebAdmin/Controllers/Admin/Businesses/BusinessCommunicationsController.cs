@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
+using Darwin.Application.Abstractions.Notifications;
 using Darwin.WebAdmin.Security;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Admin;
@@ -23,19 +24,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetBusinessCommunicationProfileHandler _getProfile;
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly ISiteSettingCache _siteSettingCache;
+        private readonly IEmailSender _emailSender;
 
         public BusinessCommunicationsController(
             GetBusinessCommunicationOpsSummaryHandler getSummary,
             GetBusinessCommunicationSetupPageHandler getSetupPage,
             GetBusinessCommunicationProfileHandler getProfile,
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
-            ISiteSettingCache siteSettingCache)
+            ISiteSettingCache siteSettingCache,
+            IEmailSender emailSender)
         {
             _getSummary = getSummary;
             _getSetupPage = getSetupPage;
             _getProfile = getProfile;
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _siteSettingCache = siteSettingCache;
+            _emailSender = emailSender;
         }
 
         [HttpGet]
@@ -75,7 +79,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                                                   !string.IsNullOrWhiteSpace(settings.WhatsAppBusinessPhoneId) &&
                                                   !string.IsNullOrWhiteSpace(settings.WhatsAppAccessToken),
                     AdminAlertRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertEmailsCsv) ||
-                                                  !string.IsNullOrWhiteSpace(settings.AdminAlertSmsRecipientsCsv)
+                                                  !string.IsNullOrWhiteSpace(settings.AdminAlertSmsRecipientsCsv),
+                    TransactionalSubjectPrefixConfigured = !string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix),
+                    TestInboxConfigured = !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail),
+                    TransactionalSubjectPrefix = settings.TransactionalEmailSubjectPrefix,
+                    TestInboxEmail = settings.CommunicationTestInboxEmail,
+                    CanSendTestEmail = settings.SmtpEnabled &&
+                                       !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
+                                       settings.SmtpPort.HasValue &&
+                                       !string.IsNullOrWhiteSpace(settings.SmtpFromAddress) &&
+                                       !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail)
                 },
                 Summary = new BusinessCommunicationOpsSummaryPanelVm
                 {
@@ -148,6 +161,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                                               !string.IsNullOrWhiteSpace(settings.WhatsAppAccessToken);
             var adminAlertRoutingConfigured = !string.IsNullOrWhiteSpace(settings.AdminAlertEmailsCsv) ||
                                               !string.IsNullOrWhiteSpace(settings.AdminAlertSmsRecipientsCsv);
+            var transactionalSubjectPrefixConfigured = !string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix);
+            var testInboxConfigured = !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail);
 
             var vm = new BusinessCommunicationProfileVm
             {
@@ -174,6 +189,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SmsTransportConfigured = smsTransportConfigured,
                 WhatsAppTransportConfigured = whatsAppTransportConfigured,
                 AdminAlertRoutingConfigured = adminAlertRoutingConfigured,
+                TransactionalSubjectPrefixConfigured = transactionalSubjectPrefixConfigured,
+                TestInboxConfigured = testInboxConfigured,
+                TransactionalSubjectPrefix = settings.TransactionalEmailSubjectPrefix,
+                TestInboxEmail = settings.CommunicationTestInboxEmail,
                 ActiveFlowNames = BuildActiveFlowNames(profile),
                 ReadinessIssues = BuildReadinessIssues(profile, emailTransportConfigured, adminAlertRoutingConfigured),
                 RecommendedActions = BuildRecommendedActions(profile, emailTransportConfigured, adminAlertRoutingConfigured),
@@ -242,6 +261,58 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View(vm);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendTestEmail(CancellationToken ct = default)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var emailTransportConfigured = settings.SmtpEnabled &&
+                                           !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
+                                           settings.SmtpPort.HasValue &&
+                                           !string.IsNullOrWhiteSpace(settings.SmtpFromAddress);
+
+            if (!emailTransportConfigured)
+            {
+                TempData["Error"] = "SMTP transport is not ready. Complete email settings before sending a communication test email.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail))
+            {
+                TempData["Error"] = "Communication test inbox is not configured. Add it in site settings before sending a test email.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var prefix = string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix)
+                ? string.Empty
+                : $"{settings.TransactionalEmailSubjectPrefix.Trim()} ";
+            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
+            var subject = $"{prefix}Darwin Communication Test";
+            var htmlBody = $@"
+<p>This is a Darwin WebAdmin communication test email.</p>
+<ul>
+  <li><strong>Requested by:</strong> {System.Net.WebUtility.HtmlEncode(requestedBy)}</li>
+  <li><strong>Attempted at (UTC):</strong> {System.DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}</li>
+  <li><strong>SMTP configured:</strong> {(emailTransportConfigured ? "Yes" : "No")}</li>
+  <li><strong>Transactional subject prefix:</strong> {System.Net.WebUtility.HtmlEncode(settings.TransactionalEmailSubjectPrefix ?? "(none)")}</li>
+  <li><strong>Test inbox:</strong> {System.Net.WebUtility.HtmlEncode(settings.CommunicationTestInboxEmail)}</li>
+</ul>
+<p>This test is intentionally sent only to the configured communication test inbox.</p>";
+
+            await _emailSender.SendAsync(
+                settings.CommunicationTestInboxEmail!,
+                subject,
+                htmlBody,
+                ct,
+                new EmailDispatchContext
+                {
+                    FlowKey = "AdminCommunicationTest"
+                }).ConfigureAwait(false);
+
+            TempData["Success"] = $"Communication test email sent to {settings.CommunicationTestInboxEmail}.";
+            return RedirectToAction(nameof(Index));
+        }
+
         private static IEnumerable<SelectListItem> BuildPageSizeItems(int selectedPageSize)
         {
             var sizes = new[] { 10, 20, 50, 100 };
@@ -273,6 +344,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem("Business Invitation", "BusinessInvitation", string.Equals(selectedFlowKey, "BusinessInvitation", System.StringComparison.OrdinalIgnoreCase));
             yield return new SelectListItem("Account Activation", "AccountActivation", string.Equals(selectedFlowKey, "AccountActivation", System.StringComparison.OrdinalIgnoreCase));
             yield return new SelectListItem("Password Reset", "PasswordReset", string.Equals(selectedFlowKey, "PasswordReset", System.StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem("Admin Communication Test", "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", System.StringComparison.OrdinalIgnoreCase));
         }
 
         private static List<BuiltInCommunicationFlowVm> BuildBuiltInFlows()
@@ -305,6 +377,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     DeliveryPath = "SMTP via IEmailSender",
                     CurrentImplementationStatus = "Live, token-based hard-coded composition",
                     NextStep = "Move to template engine + delivery/audit visibility"
+                },
+                new()
+                {
+                    Name = "Admin Communication Test",
+                    Channel = "Email",
+                    Trigger = "Manual operator validation from WebAdmin",
+                    DeliveryPath = "SMTP via IEmailSender to the configured test inbox only",
+                    CurrentImplementationStatus = "Live, operator-safe diagnostic action",
+                    NextStep = "Later fold into Communication Core test/delivery diagnostics"
                 },
                 new()
                 {
@@ -524,6 +605,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     ScopeNote = "Reset support must stay identity-safe.",
                     AllowedAction = "Validate the requester first, then reissue password reset only after support validation and transport checks.",
                     EscalationRule = "Avoid repeated resets without user verification. Persistent failures should be escalated as communication or account-lifecycle issues."
+                },
+                new()
+                {
+                    FlowKey = "AdminCommunicationTest",
+                    Title = "Communication test failures",
+                    ScopeNote = "Use this only for operator-side transport validation.",
+                    AllowedAction = "Check SMTP and test-inbox settings, then rerun the test email from the communication workspace after configuration is corrected.",
+                    EscalationRule = "Do not send repeated test emails to production recipients. Keep tests scoped to the configured test inbox."
                 }
             };
         }

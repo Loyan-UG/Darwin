@@ -114,6 +114,24 @@ namespace Darwin.WebAdmin.Services.Settings
                 PrivacyPolicyUrl = s.PrivacyPolicyUrl,
                 BusinessTermsUrl = s.BusinessTermsUrl,
                 AccountDeletionUrl = s.AccountDeletionUrl,
+                StripeEnabled = s.StripeEnabled,
+                StripePublishableKey = s.StripePublishableKey,
+                StripeSecretKey = s.StripeSecretKey,
+                StripeWebhookSecret = s.StripeWebhookSecret,
+                StripeMerchantDisplayName = s.StripeMerchantDisplayName,
+                DhlEnabled = s.DhlEnabled,
+                DhlEnvironment = s.DhlEnvironment,
+                DhlApiBaseUrl = s.DhlApiBaseUrl,
+                DhlApiKey = s.DhlApiKey,
+                DhlApiSecret = s.DhlApiSecret,
+                DhlAccountNumber = s.DhlAccountNumber,
+                DhlShipperName = s.DhlShipperName,
+                DhlShipperEmail = s.DhlShipperEmail,
+                DhlShipperPhoneE164 = s.DhlShipperPhoneE164,
+                DhlShipperStreet = s.DhlShipperStreet,
+                DhlShipperPostalCode = s.DhlShipperPostalCode,
+                DhlShipperCity = s.DhlShipperCity,
+                DhlShipperCountry = s.DhlShipperCountry,
 
                 // Soft delete / data retention
                 SoftDeleteCleanupEnabled = s.SoftDeleteCleanupEnabled,
@@ -173,6 +191,8 @@ namespace Darwin.WebAdmin.Services.Settings
                 // Admin routing
                 AdminAlertEmailsCsv = s.AdminAlertEmailsCsv,
                 AdminAlertSmsRecipientsCsv = s.AdminAlertSmsRecipientsCsv,
+                TransactionalEmailSubjectPrefix = s.TransactionalEmailSubjectPrefix,
+                CommunicationTestInboxEmail = s.CommunicationTestInboxEmail,
 
                 // Routing
                 HomeSlug = string.IsNullOrWhiteSpace(s.HomeSlug) ? "home" : s.HomeSlug

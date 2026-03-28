@@ -14,6 +14,13 @@
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary">SMS</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary">WhatsApp</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary">Admin Alerts</a>
+        @if (Model.Transport.CanSendTestEmail)
+        {
+            <form asp-action="SendTestEmail" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-primary">Send Test Email</button>
+            </form>
+        }
     </div>
 </div>
 
@@ -40,6 +47,31 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">Admin Alert Routing</div>
             <div class="fw-semibold mt-1">@(Model.Transport.AdminAlertRoutingConfigured ? "Configured" : "Missing")</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Transactional Subject Prefix</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.TransactionalSubjectPrefixConfigured ? Model.Transport.TransactionalSubjectPrefix : "No prefix configured")</div>
+            <div class="small text-muted mt-2">Applied to the current invitation, activation, and password-reset email subjects.</div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Communication Test Inbox</div>
+            <div class="fw-semibold mt-1">@(Model.Transport.TestInboxConfigured ? Model.Transport.TestInboxEmail : "Not rerouting")</div>
+            <div class="small text-muted mt-2">When configured, current transactional emails are redirected here and include the original recipient in the body.</div>
+            @if (Model.Transport.CanSendTestEmail)
+            {
+                <div class="small text-success mt-2">A test email can be sent safely from this workspace because SMTP and the test inbox are both configured.</div>
+            }
+            else
+            {
+                <div class="small text-muted mt-2">Configure both SMTP and the communication test inbox to enable a safe operator-side test email action.</div>
+            }
         </div>
     </div>
 </div>

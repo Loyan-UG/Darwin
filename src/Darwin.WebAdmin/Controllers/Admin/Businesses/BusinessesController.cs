@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Businesses.Commands;
@@ -20,6 +22,7 @@ using Darwin.WebAdmin.ViewModels.Businesses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using QRCoder;
 using System.Security.Claims;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Businesses
@@ -36,6 +39,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetBusinessForEditHandler _getBusinessForEdit;
         private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
         private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatus;
+        private readonly GetBillingPlansHandler _getBillingPlans;
+        private readonly SetCancelAtPeriodEndHandler _setCancelAtPeriodEnd;
+        private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntent;
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly CreateBusinessHandler _createBusiness;
         private readonly UpdateBusinessHandler _updateBusiness;
@@ -71,6 +77,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             GetBusinessForEditHandler getBusinessForEdit,
             GetBusinessSupportSummaryHandler getBusinessSupportSummary,
             GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatus,
+            GetBillingPlansHandler getBillingPlans,
+            SetCancelAtPeriodEndHandler setCancelAtPeriodEnd,
+            CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntent,
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
             CreateBusinessHandler createBusiness,
             UpdateBusinessHandler updateBusiness,
@@ -105,6 +114,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _getBusinessForEdit = getBusinessForEdit;
             _getBusinessSupportSummary = getBusinessSupportSummary;
             _getBusinessSubscriptionStatus = getBusinessSubscriptionStatus;
+            _getBillingPlans = getBillingPlans;
+            _setCancelAtPeriodEnd = setCancelAtPeriodEnd;
+            _createSubscriptionCheckoutIntent = createSubscriptionCheckoutIntent;
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _createBusiness = createBusiness;
             _updateBusiness = updateBusiness;
@@ -407,6 +419,49 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var vm = MapBusinessEditVm(dto);
             await PopulateBusinessFormOptionsAsync(vm, ct);
             return View(vm);
+        }
+
+        [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
+        public async Task<IActionResult> Subscription(Guid businessId, CancellationToken ct = default)
+        {
+            var business = await LoadBusinessContextAsync(businessId, ct);
+            if (business is null)
+            {
+                TempData["Error"] = "Business not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var vm = await BuildBusinessSubscriptionWorkspaceAsync(business, ct);
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> SetSubscriptionCancelAtPeriodEnd(
+            [FromForm] Guid businessId,
+            [FromForm] Guid subscriptionId,
+            [FromForm] bool cancelAtPeriodEnd,
+            [FromForm] string rowVersion,
+            CancellationToken ct = default)
+        {
+            var parsedRowVersion = string.IsNullOrWhiteSpace(rowVersion)
+                ? Array.Empty<byte>()
+                : Convert.FromBase64String(rowVersion);
+
+            var result = await _setCancelAtPeriodEnd.HandleAsync(
+                businessId,
+                subscriptionId,
+                cancelAtPeriodEnd,
+                parsedRowVersion,
+                ct);
+
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? (cancelAtPeriodEnd ? "Subscription will cancel at period end." : "Subscription renewal restored.")
+                : (result.Error ?? "Failed to update subscription cancellation policy.");
+
+            return RedirectToAction(nameof(Subscription), new { businessId });
         }
 
         [HttpGet]
@@ -1222,6 +1277,48 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View(vm);
         }
 
+        [HttpGet]
+        [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
+        public async Task<IActionResult> StaffAccessBadge(Guid id, CancellationToken ct = default)
+        {
+            var dto = await _getBusinessMemberForEdit.HandleAsync(id, ct);
+            if (dto is null)
+            {
+                TempData["Error"] = "Business member not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var business = await LoadBusinessContextAsync(dto.BusinessId, ct);
+            if (business is null)
+            {
+                TempData["Error"] = "Business not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var issuedAtUtc = DateTime.UtcNow;
+            var expiresAtUtc = issuedAtUtc.AddMinutes(2);
+            var payload = BuildStaffAccessBadgePayload(dto, business, issuedAtUtc, expiresAtUtc);
+
+            var vm = new BusinessStaffAccessBadgeVm
+            {
+                MembershipId = dto.Id,
+                UserId = dto.UserId,
+                UserDisplayName = dto.UserDisplayName,
+                UserEmail = dto.UserEmail,
+                Role = dto.Role,
+                IsActive = dto.IsActive,
+                EmailConfirmed = dto.EmailConfirmed,
+                LockoutEndUtc = dto.LockoutEndUtc,
+                Business = business,
+                IssuedAtUtc = issuedAtUtc,
+                ExpiresAtUtc = expiresAtUtc,
+                BadgePayload = payload,
+                BadgeImageDataUrl = BuildQrCodeDataUrl(payload)
+            };
+
+            return View(vm);
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
         public async Task<IActionResult> EditMember(BusinessMemberEditVm vm, CancellationToken ct = default)
@@ -1729,15 +1826,57 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return new BusinessSubscriptionSnapshotVm
             {
                 HasSubscription = result.Value.HasSubscription,
+                SubscriptionId = result.Value.SubscriptionId,
+                RowVersion = result.Value.RowVersion,
                 Status = result.Value.Status,
                 Provider = result.Value.Provider,
+                PlanCode = result.Value.PlanCode,
                 PlanName = result.Value.PlanName,
                 Currency = result.Value.Currency,
                 UnitPriceMinor = result.Value.UnitPriceMinor,
                 StartedAtUtc = result.Value.StartedAtUtc,
                 CurrentPeriodEndUtc = result.Value.CurrentPeriodEndUtc,
                 TrialEndsAtUtc = result.Value.TrialEndsAtUtc,
+                CanceledAtUtc = result.Value.CanceledAtUtc,
                 CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd
+            };
+        }
+
+        private async Task<BusinessSubscriptionWorkspaceVm> BuildBusinessSubscriptionWorkspaceAsync(BusinessContextVm business, CancellationToken ct)
+        {
+            var subscription = await BuildBusinessSubscriptionSnapshotAsync(business.Id, ct);
+            var settings = await _siteSettingCache.GetAsync(ct);
+            var plans = await _getBillingPlans.HandleAsync(activeOnly: true, ct);
+            var planVms = new List<BusinessBillingPlanVm>();
+
+            foreach (var x in plans.Items)
+            {
+                var validation = await _createSubscriptionCheckoutIntent.ValidateAsync(business.Id, x.Id, ct);
+                planVms.Add(new BusinessBillingPlanVm
+                {
+                    Id = x.Id,
+                    Code = x.Code,
+                    Name = x.Name,
+                    Description = x.Description,
+                    PriceMinor = x.PriceMinor,
+                    Currency = x.Currency,
+                    Interval = x.Interval,
+                    IntervalCount = x.IntervalCount,
+                    TrialDays = x.TrialDays,
+                    IsActive = x.IsActive,
+                    CheckoutReady = validation.Succeeded,
+                    CheckoutReadinessLabel = validation.Succeeded ? "Checkout-ready" : (validation.Error ?? "Not ready")
+                });
+            }
+
+            return new BusinessSubscriptionWorkspaceVm
+            {
+                Business = business,
+                Subscription = subscription,
+                ManagementWebsiteConfigured = !string.IsNullOrWhiteSpace(settings.BusinessManagementWebsiteUrl),
+                ManagementWebsiteUrl = settings.BusinessManagementWebsiteUrl,
+                Plans = planVms,
+                Playbooks = BuildSubscriptionPlaybooks(subscription, !string.IsNullOrWhiteSpace(settings.BusinessManagementWebsiteUrl))
             };
         }
 
@@ -1798,6 +1937,68 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return "Review the related workflow and communication readiness before manual intervention.";
+        }
+
+        private static List<BusinessSubscriptionPlaybookVm> BuildSubscriptionPlaybooks(BusinessSubscriptionSnapshotVm subscription, bool managementWebsiteConfigured)
+        {
+            var items = new List<BusinessSubscriptionPlaybookVm>
+            {
+                new()
+                {
+                    QueueLabel = "Management Website",
+                    WhyItMatters = "Business app subscription changes rely on the external management website handoff in phase 1.",
+                    OperatorAction = managementWebsiteConfigured
+                        ? "Use the configured management website for upgrade, checkout, and billing handoff."
+                        : "Configure the business management website in site settings before handing operators off to external billing management."
+                },
+                new()
+                {
+                    QueueLabel = "Cancellation Policy",
+                    WhyItMatters = "Cancel-at-period-end changes directly affect business continuity and renewal expectations.",
+                    OperatorAction = subscription.HasSubscription
+                        ? "Review renewal intent and toggle cancel-at-period-end only after confirming the business wants to stop renewal."
+                        : "No active subscription exists yet, so cancellation control is not applicable."
+                }
+            };
+
+            if (!subscription.HasSubscription)
+            {
+                items.Add(new BusinessSubscriptionPlaybookVm
+                {
+                    QueueLabel = "No Active Plan",
+                    WhyItMatters = "Businesses without an active subscription may still expect access or billing support from admin.",
+                    OperatorAction = "Review available plans and use the external billing-management handoff when the business is ready to start or upgrade."
+                });
+            }
+
+            return items;
+        }
+
+        private static string BuildStaffAccessBadgePayload(BusinessMemberDetailDto member, BusinessContextVm business, DateTime issuedAtUtc, DateTime expiresAtUtc)
+        {
+            var payload = new
+            {
+                Type = "staff-access-badge",
+                Version = 1,
+                BusinessId = business.Id,
+                BusinessName = business.Name,
+                OperatorEmail = member.UserEmail,
+                Role = member.Role.ToString(),
+                IssuedAtUtc = issuedAtUtc,
+                ExpiresAtUtc = expiresAtUtc,
+                Nonce = Guid.NewGuid().ToString("N")
+            };
+
+            return JsonSerializer.Serialize(payload);
+        }
+
+        private static string BuildQrCodeDataUrl(string payload)
+        {
+            using var generator = new QRCodeGenerator();
+            using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
+            var png = new PngByteQRCode(data);
+            var bytes = png.GetGraphic(20);
+            return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
         }
     }
 }

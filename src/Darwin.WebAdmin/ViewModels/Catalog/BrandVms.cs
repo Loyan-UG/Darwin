@@ -19,6 +19,10 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         /// <summary>Optional culture-invariant slug for brand landing pages.</summary>
         public string? Slug { get; set; }
 
+        public Guid? LogoMediaId { get; set; }
+
+        public bool IsPublished { get; set; }
+
         /// <summary>Last modified timestamp in UTC (optional).</summary>
         public DateTime? ModifiedAtUtc { get; set; }
 
@@ -47,11 +51,25 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         /// <summary>Optional search query (free text, depends on controller/query behavior).</summary>
         public string Query { get; set; } = string.Empty;
 
+        public string Filter { get; set; } = string.Empty;
+
+        public BrandOpsSummaryVm Summary { get; set; } = new();
+
+        public IReadOnlyList<OperationalPlaybookVm> Playbooks { get; set; } = Array.Empty<OperationalPlaybookVm>();
+
         /// <summary>Current page items.</summary>
         public List<BrandListItemVm> Items { get; set; } = new();
 
         /// <summary>Prebuilt items for a page-size dropdown in the Index view.</summary>
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class BrandOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int UnpublishedCount { get; set; }
+        public int MissingSlugCount { get; set; }
+        public int MissingLogoCount { get; set; }
     }
 
     /// <summary>

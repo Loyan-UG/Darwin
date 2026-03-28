@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using Darwin.Application.Catalog.DTOs;
 using Darwin.Domain.Enums;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.ViewModels.Catalog
 {
@@ -17,6 +20,10 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public AddOnGroupQueueFilter Filter { get; set; } = AddOnGroupQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Enumerable.Empty<SelectListItem>();
+        public AddOnGroupOpsSummaryVm Summary { get; set; } = new();
+        public List<AddOnGroupPlaybookVm> Playbooks { get; set; } = new();
 
         public List<AddOnGroupListItemVm> Items { get; set; } = new();
     }
@@ -32,8 +39,25 @@ namespace Darwin.WebAdmin.ViewModels.Catalog
         public bool IsGlobal { get; set; }
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
+        public int AttachmentCount { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class AddOnGroupOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int GlobalCount { get; set; }
+        public int UnattachedCount { get; set; }
+        public int VariantLinkedCount { get; set; }
+    }
+
+    public sealed class AddOnGroupPlaybookVm
+    {
+        public string QueueLabel { get; set; } = string.Empty;
+        public string WhyItMatters { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
 

@@ -5,9 +5,48 @@
 
 <h1 class="mb-3"><i class="fa fa-layer-group"></i> Add-on Groups</h1>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Total</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Inactive</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Global</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.GlobalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Unattached</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.UnattachedCount</div>
+                <div class="small text-muted mt-1">Linked groups: @Model.Summary.VariantLinkedCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <form method="get" class="row g-2 mb-3">
     <div class="col-auto">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search name/currency..." />
+    </div>
+    <div class="col-auto">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-auto">
         <button class="btn btn-outline-primary"><i class="fa fa-search"></i> Search</button>
@@ -20,6 +59,33 @@
     </div>
 </form>
 
+<div class="card shadow-sm mb-3">
+    <div class="card-header">Add-on Operations Playbooks</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Queue</th>
+                        <th>Why It Matters</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var playbook in Model.Playbooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@playbook.QueueLabel</td>
+                            <td>@playbook.WhyItMatters</td>
+                            <td>@playbook.OperatorAction</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
@@ -29,6 +95,7 @@
                 <th class="text-center">Global</th>
                 <th class="text-center">Active</th>
                 <th class="text-center">Options</th>
+                <th class="text-center">Attachments</th>
                 <th>Modified</th>
                 <th class="text-end" style="width:420px">Actions</th>
             </tr>
@@ -36,7 +103,7 @@
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="7" class="text-center text-muted">No groups.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted">No groups.</td></tr>
             }
             else
             {
@@ -52,6 +119,7 @@
                             <span class="badge @(g.IsActive ? "text-bg-success" : "text-bg-secondary")">@(g.IsActive ? "Yes" : "No")</span>
                         </td>
                         <td class="text-center">@g.OptionsCount</td>
+                        <td class="text-center">@g.AttachmentCount</td>
                         <td>@g.ModifiedAtUtc?.ToLocalTime()</td>
                         <td class="text-end">
                             <a asp-controller="AddOnGroups" asp-action="Edit" asp-route-id="@g.Id" class="btn btn-sm btn-outline-secondary">
@@ -103,7 +171,8 @@
       
        asp-controller="AddOnGroups"
        asp-action="Index"
-       asp-route-query="@Model.Query">
+       asp-route-query="@Model.Query"
+       asp-route-filter="@Model.Filter">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

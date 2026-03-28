@@ -144,6 +144,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             PrivacyPolicyUrl = dto.PrivacyPolicyUrl,
             BusinessTermsUrl = dto.BusinessTermsUrl,
             AccountDeletionUrl = dto.AccountDeletionUrl,
+            StripeEnabled = dto.StripeEnabled,
+            StripePublishableKey = dto.StripePublishableKey,
+            StripeSecretKey = dto.StripeSecretKey,
+            StripeWebhookSecret = dto.StripeWebhookSecret,
+            StripeMerchantDisplayName = dto.StripeMerchantDisplayName,
+            DhlEnabled = dto.DhlEnabled,
+            DhlEnvironment = dto.DhlEnvironment,
+            DhlApiBaseUrl = dto.DhlApiBaseUrl,
+            DhlApiKey = dto.DhlApiKey,
+            DhlApiSecret = dto.DhlApiSecret,
+            DhlAccountNumber = dto.DhlAccountNumber,
+            DhlShipperName = dto.DhlShipperName,
+            DhlShipperEmail = dto.DhlShipperEmail,
+            DhlShipperPhoneE164 = dto.DhlShipperPhoneE164,
+            DhlShipperStreet = dto.DhlShipperStreet,
+            DhlShipperPostalCode = dto.DhlShipperPostalCode,
+            DhlShipperCity = dto.DhlShipperCity,
+            DhlShipperCountry = dto.DhlShipperCountry,
 
             // Retention
             SoftDeleteCleanupEnabled = dto.SoftDeleteCleanupEnabled,
@@ -205,7 +223,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
 
             // Admin routing
             AdminAlertEmailsCsv = dto.AdminAlertEmailsCsv,
-            AdminAlertSmsRecipientsCsv = dto.AdminAlertSmsRecipientsCsv
+            AdminAlertSmsRecipientsCsv = dto.AdminAlertSmsRecipientsCsv,
+            TransactionalEmailSubjectPrefix = dto.TransactionalEmailSubjectPrefix,
+            CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail
         };
 
         /// <summary>
@@ -254,6 +274,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             PrivacyPolicyUrl = vm.PrivacyPolicyUrl,
             BusinessTermsUrl = vm.BusinessTermsUrl,
             AccountDeletionUrl = vm.AccountDeletionUrl,
+            StripeEnabled = vm.StripeEnabled,
+            StripePublishableKey = vm.StripePublishableKey,
+            StripeSecretKey = vm.StripeSecretKey,
+            StripeWebhookSecret = vm.StripeWebhookSecret,
+            StripeMerchantDisplayName = vm.StripeMerchantDisplayName,
+            DhlEnabled = vm.DhlEnabled,
+            DhlEnvironment = vm.DhlEnvironment,
+            DhlApiBaseUrl = vm.DhlApiBaseUrl,
+            DhlApiKey = vm.DhlApiKey,
+            DhlApiSecret = vm.DhlApiSecret,
+            DhlAccountNumber = vm.DhlAccountNumber,
+            DhlShipperName = vm.DhlShipperName,
+            DhlShipperEmail = vm.DhlShipperEmail,
+            DhlShipperPhoneE164 = vm.DhlShipperPhoneE164,
+            DhlShipperStreet = vm.DhlShipperStreet,
+            DhlShipperPostalCode = vm.DhlShipperPostalCode,
+            DhlShipperCity = vm.DhlShipperCity,
+            DhlShipperCountry = vm.DhlShipperCountry,
 
             // Retention
             SoftDeleteCleanupEnabled = vm.SoftDeleteCleanupEnabled,
@@ -315,7 +353,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
 
             // Admin routing
             AdminAlertEmailsCsv = vm.AdminAlertEmailsCsv,
-            AdminAlertSmsRecipientsCsv = vm.AdminAlertSmsRecipientsCsv
+            AdminAlertSmsRecipientsCsv = vm.AdminAlertSmsRecipientsCsv,
+            TransactionalEmailSubjectPrefix = vm.TransactionalEmailSubjectPrefix,
+            CommunicationTestInboxEmail = vm.CommunicationTestInboxEmail
         };
     }
 }

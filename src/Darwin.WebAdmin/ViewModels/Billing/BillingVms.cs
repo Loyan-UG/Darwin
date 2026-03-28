@@ -9,11 +9,45 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public PaymentQueueFilter? QueueFilter { get; set; }
+        public StripeOperationsVm Stripe { get; set; } = new();
+        public PaymentOpsSummaryVm Summary { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<PaymentListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
+    }
+
+    public sealed class StripeOperationsVm
+    {
+        public bool Enabled { get; set; }
+        public bool PublishableKeyConfigured { get; set; }
+        public bool SecretKeyConfigured { get; set; }
+        public bool WebhookSecretConfigured { get; set; }
+        public bool MerchantDisplayNameConfigured { get; set; }
+        public string MerchantDisplayName { get; set; } = string.Empty;
+    }
+
+    public sealed class PaymentOpsSummaryVm
+    {
+        public int PendingCount { get; set; }
+        public int FailedCount { get; set; }
+        public int RefundedCount { get; set; }
+        public int UnlinkedCount { get; set; }
+        public int ProviderLinkedCount { get; set; }
+        public int StripeCount { get; set; }
+        public int MissingProviderRefCount { get; set; }
+        public int FailedStripeCount { get; set; }
+    }
+
+    public sealed class ProviderPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
+        public string SettingsDependency { get; set; } = string.Empty;
     }
 
     public sealed class PaymentListItemVm
@@ -36,9 +70,13 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public PaymentStatus Status { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
+        public string? FailureReason { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long NetCapturedAmountMinor { get; set; }
+        public bool IsStripe { get; set; }
+        public bool NeedsSupportAttention { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

@@ -46,12 +46,22 @@ namespace Darwin.Application.Catalog.DTOs
         public Guid Id { get; set; }
         public string Name { get; set; } = "?";
         public string? Slug { get; set; }
+        public Guid? LogoMediaId { get; set; }
+        public bool IsPublished { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
 
         /// <summary>
         /// Concurrency token required by delete operations initiated from the list view.
         /// </summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class BrandOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int UnpublishedCount { get; set; }
+        public int MissingSlugCount { get; set; }
+        public int MissingLogoCount { get; set; }
     }
 
     /// <summary>

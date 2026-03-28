@@ -1,0 +1,97 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessStaffAccessBadgeVm
+@{
+    ViewData["Title"] = "Staff Access Badge";
+    var isLocked = Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow;
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1">Staff Access Badge</h1>
+        <p class="text-muted mb-0">@Model.Business.Name · @Model.UserDisplayName</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="EditMember" asp-route-id="@Model.MembershipId" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-user-pen"></i> Edit Member
+        </a>
+        <a asp-action="Members" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Members
+        </a>
+        <a asp-action="StaffAccessBadge" asp-route-id="@Model.MembershipId" class="btn btn-primary">
+            <i class="fa-solid fa-rotate"></i> Refresh Badge
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    This QR mirrors the phase-1 staff badge behavior in <code>Darwin.Mobile.Business</code>. It is a short-lived support preview only; server-side authorization remains the source of truth.
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">Badge Preview</div>
+            <div class="card-body text-center">
+                <img src="@Model.BadgeImageDataUrl" alt="Staff access badge QR" class="img-fluid border rounded p-3 bg-white" style="max-width:320px" />
+                <div class="mt-3 fw-semibold">@Model.UserDisplayName</div>
+                <div class="text-muted small">@Model.UserEmail</div>
+                <div class="small text-muted mt-2">Role: @Model.Role</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">Badge Context</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase">Business</div>
+                        <div class="fw-semibold">@Model.Business.Name</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase">Member Role</div>
+                        <div class="fw-semibold">@Model.Role</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase">Issued At</div>
+                        <div class="fw-semibold">@Model.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase">Expires At</div>
+                        <div class="fw-semibold">@Model.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase">Email State</div>
+                        <div class="fw-semibold">@(Model.EmailConfirmed ? "Confirmed" : "Pending activation")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase">Access State</div>
+                        <div class="fw-semibold">
+                            @(Model.IsActive ? "Membership active" : "Membership inactive")
+                            @if (isLocked)
+                            {
+                                <span class="text-danger"> · Locked</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @if (!Model.EmailConfirmed || !Model.IsActive || isLocked)
+                {
+                    <div class="alert alert-warning mt-3 mb-0">
+                        This badge can be previewed for support purposes, but the member still has an account or membership constraint that may block real business operations.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">Payload</div>
+    <div class="card-body">
+        <p class="text-muted">
+            Use this only for diagnostics or internal support. The nonce and expiry change every refresh.
+        </p>
+        <textarea class="form-control font-monospace" rows="10" readonly>@Model.BadgePayload</textarea>
+    </div>
+</div>

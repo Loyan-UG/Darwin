@@ -49,6 +49,9 @@
                     <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-outline-secondary">
                         <i class="fa-solid fa-user"></i> Open User Profile
                     </a>
+                    <a asp-action="StaffAccessBadge" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-qrcode"></i> Staff Badge
+                    </a>
                     @if (!Model.EmailConfirmed)
                     {
                         <form asp-action="SendMemberActivationEmail"

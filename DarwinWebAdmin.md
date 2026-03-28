@@ -58,15 +58,15 @@ This is especially important because early operational usage is expected to star
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
-| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, onboarding checklist visibility, actionable next-step shortcuts, delegated support access, business subscription snapshot visibility, and business mobile soft-gate policy now exist; tenant/customer provisioning and richer onboarding-state orchestration remain near-term. |
+| Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; products, pages, categories, brands, and add-on groups now have queue-style filters, live summary cards, attachment/context visibility where relevant, and operator playbooks, but broader catalog/CMS operational completeness still needs audit. |
+| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, onboarding checklist visibility, actionable next-step shortcuts, delegated support access, dedicated business subscription support, staff-badge support preview, and business mobile soft-gate policy now exist; tenant/customer provisioning and richer onboarding-state orchestration remain near-term. |
 | Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist, and both the orders list and the detail tabs now have queue-style operational filters for open, payment-issue, fulfillment, refund, and invoice follow-up work; the orders list now exposes quick payment/shipment/invoice actions, the billing payments queue now exposes direct invoice/order/customer follow-up actions, expense rows expose supplier follow-up, financial-account rows deep-link into journal-entry follow-up, and financial accounts / journal entries now expose lightweight account-type and recent-or-complex queue filters, while Stripe-specific lifecycle support is still pending. |
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; customer, lead, opportunity, and invoice queues now expose quick follow-up actions like linked-user review, interaction/segment deep-links, lead conversion, customer/order/payment deep-links, prefilled opportunity creation, and common invoice status transitions; deeper reporting and support depth still need improvement. |
 | Loyalty | In Progress | WebAdmin now covers loyalty programs, reward tiers, member accounts, admin-side account provisioning, manual point adjustments, account suspend/activate, redemption troubleshooting/confirmation, business campaigns, and recent scan-session diagnostics; the admin dashboard now also surfaces loyalty counts and direct follow-up links, so the main near-term gap is deeper mobile diagnostics rather than basic loyalty operations. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, purchase orders, and ledger views exist, and warehouse, supplier, purchase-order, stock-level, stock-transfer, and ledger screens now have queue-style operational filters or direct troubleshooting links for setup, replenishment, and stock-attention work; supplier rows now deep-link into purchase-order follow-up, warehouse rows deep-link into scoped stock-level review, and manual stock adjustment, reservation, reservation-release, and return-receipt flows are now exposed from stock levels, while richer exception and structured receiving workflows still need work. |
 | Identity/Admin Support | In Progress | Users, roles, permissions, and core admin identity flows exist; invite/activation/support actions need completion. |
 | Media | In Progress | Media library exists and now supports content-ops queue filters plus direct file-open and missing-alt follow-up actions; deeper reference tracking and purge workflows are still later work. |
-| Settings | In Progress | Global site settings exist and business onboarding now has a dedicated setup workspace; business-app legal/billing handoff URLs are now manageable from site settings, but full tenant-aware settings architecture still needs domain and UI expansion. |
+| Settings | In Progress | Global site settings exist and business onboarding now has a dedicated setup workspace; business-app legal/billing handoff URLs plus phase-1 Stripe/DHL provider settings are now manageable from site settings, but full tenant-aware settings architecture still needs domain and UI expansion. |
 | Mobile Operations | In Progress | WebAdmin now includes a dedicated mobile-operations workspace for JWT/mobile bootstrap, onboarding/support dependency counts, communication readiness, device-fleet diagnostics, app-version visibility, device-level filtering for stale installs, missing push tokens, notification-disabled devices, and business-member devices, plus lightweight remediation actions like push-token clearing and device deactivation; the admin dashboard now also surfaces mobile-device health as a first-class entry point, so future work is mainly deeper telemetry or richer remediation rather than basic visibility. |
 | Communication Management | Planned / Near-term | Must become first-class for email templates, delivery logs, resend/retry, and admin visibility. |
 | Shipping Operations | In Progress | Generic order shipment visibility exists, and WebAdmin now exposes both shipping-method configuration with queue filters/editable rate tiers and a cross-order shipment queue for packing/hand-off follow-up; DHL-first shipment/tracking/exception workflows are still near-term work. |
@@ -125,6 +125,7 @@ Target workflow:
 - `Completed`: the setup workspace now also surfaces inline previews of members needing activation/lockout support and open invitations, so operators can troubleshoot onboarding from one place
 - `Completed foundation`: business setup now persists business-level branding, localization defaults, time zone, and phase-1 communication toggles/defaults instead of treating all setup as a thin wrapper around global settings
 - `Completed foundation`: the setup workspace now also shows the current business subscription snapshot so support/admin can confirm plan/provider/renewal context without leaving WebAdmin
+- `Completed foundation`: WebAdmin now also has a dedicated business-subscription workspace with current plan state, active-plan readiness, external management-website handoff visibility, and FullAdmin cancel-at-period-end control
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
 - `Decision made`: phase-1 owner onboarding supports both assigning an existing platform user and invitation-first owner creation
 - `Completed foundation`: invitation issue/resend emails can now carry both the manual token and a configurable magic-link path
@@ -158,6 +159,7 @@ WebAdmin should support or coordinate:
 - `In Progress`: invite issuance/reissue/revoke now exists for business onboarding
 - `Completed`: WebAdmin now supports admin-triggered password reset email, lock/unlock, email-confirm override, and activation-email resend from the user edit workflow
 - `Completed`: the same activation/reset/lock/unlock support actions are now available directly inside the business-member workspace, which removes a major operator detour during onboarding troubleshooting
+- `Completed foundation`: the same business-member workspace now also exposes staff access badge preview/refresh, so support can mirror the rotating QR badge used in `Darwin.Mobile.Business`
 - `Completed foundation`: selective delegation is now enforced in both controller authorization and view affordances, so support operators can work with invitations and member support without inheriting approval, archive, location, or owner-management powers
 - `Completed`: the business-member edit flow now supports a controlled `FullAdmin` override for the "last active owner" rule, with mandatory reason capture, explicit danger-state UI, and persisted audit records
 - `Completed`: owner-override audit history is now visible inside the business workspace, so sensitive ownership exceptions are reviewable without querying the database directly
@@ -204,6 +206,7 @@ Settings UI must be:
 - `Completed foundation`: the business setup workspace now also shows communication readiness against global SMTP/SMS/WhatsApp/admin-alert routing, which gives operators immediate visibility into whether saved business preferences can actually be delivered
 - `Completed foundation`: the admin dashboard now also exposes a communication-operations snapshot, making global transport readiness and business-level sender/support-email gaps visible before full Communication Core template/log UIs are built
 - `Completed foundation`: site settings now also surface business-app legal and billing handoff URLs such as management website, impressum, privacy, business terms, and account deletion, and mobile operations shows whether those handoffs are configured
+- `Completed foundation`: site settings now also expose phase-1 Stripe payment credentials/webhook identity and DHL carrier credentials/default shipper identity directly in the admin UI, instead of leaving those settings implicit or config-file-only
 - `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
 
 ## 10. Payment Operations UI
@@ -214,7 +217,12 @@ WebAdmin must provide operational payment support.
 
 - `Completed foundation`: generic payment list/edit and payment-linked order/invoice visibility exist
 - `Completed foundation`: refund and reconciliation visibility exists
-- `In Progress`: payment operations are still generic rather than Stripe-first operationally
+- `Completed foundation`: the payments workspace now also supports queue-style triage for pending, failed, refunded, unlinked, and provider-linked payments, which makes operator support less dependent on ad-hoc search before Stripe-specific lifecycle tooling exists
+- `Completed foundation`: the payments workspace now also surfaces live queue counts and phase-1 support playbooks, so operators can move from payment triage into an explicit follow-up path without leaving the workspace
+- `Completed foundation`: the global settings UI now also exposes Stripe enablement, publishable/secret/webhook credentials, and merchant display identity needed for phase-1 provider operations
+- `Completed foundation`: the payments workspace now also shows a Stripe readiness panel with direct links into payment settings, so configuration gaps are visible from the same operational surface where support triages payments
+- `Completed foundation`: the same workspace now also supports Stripe-specific queue subsets for Stripe rows, failed-Stripe cases, and missing provider references, with richer created/paid/failure context per row so phase-1 provider triage is not trapped inside generic payment lists
+- `In Progress`: payment operations are now more Stripe-aware for support triage, but webhook lifecycle history, reconciliation, and dispute-depth are still near-term work
 
 ### Required near-term capabilities
 
@@ -239,6 +247,11 @@ WebAdmin must provide shipping visibility and operator support.
 ### Current state
 
 - `Completed foundation`: shipments are visible through order-related flows, shipping methods now have a dedicated WebAdmin module with list/create/edit, queue filters, and editable rate tiers, and operators now also have a cross-order shipment queue for packing and hand-off review
+- `Completed foundation`: that shipment queue now also includes missing-tracking and returned subsets, which makes generic carrier follow-up and return-review workflows more actionable before dedicated DHL-first exception tooling exists
+- `Completed foundation`: the shipment queue now also surfaces live operational counts and support playbooks for pending, missing-tracking, and returned work, so operators have a guided phase-1 follow-up path before deeper DHL exception tooling lands
+- `Completed foundation`: the global settings UI now also exposes DHL enablement, environment/API credentials, account number, and default shipper identity, so phase-1 carrier configuration is centrally manageable
+- `Completed foundation`: the shipment queue now also shows a DHL readiness panel with direct links into shipping settings, so carrier-setup gaps are visible from the same workspace used for shipment follow-up
+- `Completed foundation`: the shipment queue now also supports DHL-only and missing-service subsets, carries forward the configured DHL environment, and flags rows needing carrier review, so phase-1 DHL triage is more explicit from the main queue
 - `Planned / Near-term`: dedicated DHL-first shipment operations, tracking, and exception handling still need to be strengthened
 
 ### Required near-term capabilities
@@ -297,6 +310,7 @@ The dedicated `Mobile Operations` workspace currently provides:
 - app-version visibility by platform
 - pageable device list with filters for stale installs, missing push tokens, notifications-disabled devices, and business-member devices
 - lightweight remediation actions for support: clear push token and deactivate device
+- admin-side staff access badge preview/refresh for business members when support needs to mirror the mobile QR badge
 - direct links into support queue, site settings, and scan-session review
 
 The admin dashboard now also exposes a compact loyalty/mobile snapshot so operators can jump directly into loyalty accounts, pending redemptions, scan sessions, and device diagnostics from the landing page instead of relying only on sidebar navigation.
@@ -328,6 +342,8 @@ Communication is a platform capability and must be visible in WebAdmin.
 - `Completed foundation`: current SMTP-based transactional emails now write `EmailDispatchAudit` records, and the workspace surfaces recent delivery attempts/failures as a stopgap audit trail before the full Communication Core logging pipeline exists
 - `Completed foundation`: the same workspace now includes a full email audit-log page with search and status filters, which turns delivery visibility into an operator workflow rather than a dashboard-only preview
 - `Completed foundation`: each queued business can now be opened into a communication-profile detail screen that combines business defaults, global transport dependency state, current phase-1 flow implications, and support/onboarding signals in one troubleshooting view
+- `Completed foundation`: site settings now also expose transactional email subject-prefix and test-inbox reroute controls, and those controls are visible inside the communication workspace so operators can see when phase-1 invitation/activation/password-reset emails are being prefixed or rerouted
+- `Completed foundation`: the same workspace now also exposes an operator-safe test-email action that only targets the configured communication test inbox, so SMTP readiness and reroute policy can be validated from the admin UI without emailing real customers
 - `Completed foundation`: phase-1 email delivery audits now also store flow classification and optional business correlation, so operators can distinguish invitation, activation, and password-reset email failures without waiting for the full Communication Core delivery model
 - `Completed foundation`: the workspace now also includes an explicit capability-coverage matrix for template management, retry/resend, and delivery visibility, so operators are not misled into assuming Communication Core features already exist when they do not
 - `Completed foundation`: each business communication-profile screen now also surfaces recommended next actions and recent business-scoped email activity, so operators can move from diagnosis into support/setup action without leaving the communication workspace

@@ -20,6 +20,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
     public sealed class BrandsController : AdminBaseController
     {
         private readonly GetBrandsPageHandler _getPage;
+        private readonly GetBrandOpsSummaryHandler _getBrandOpsSummary;
         private readonly GetBrandForEditHandler _getForEdit;
         private readonly CreateBrandHandler _create;
         private readonly UpdateBrandHandler _update;
@@ -27,12 +28,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         public BrandsController(
             GetBrandsPageHandler getPage,
+            GetBrandOpsSummaryHandler getBrandOpsSummary,
             GetBrandForEditHandler getForEdit,
             CreateBrandHandler create,
             UpdateBrandHandler update,
             SoftDeleteBrandHandler softDelete)
         {
             _getPage = getPage;
+            _getBrandOpsSummary = getBrandOpsSummary;
             _getForEdit = getForEdit;
             _create = create;
             _update = update;
@@ -43,10 +46,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         /// Paged list of brands with a simple query (by name/slug if supported at query side).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, 
-            string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20,
+            string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getPage.HandleAsync(page, pageSize, "de-DE", query, ct);
+            var (items, total) = await _getPage.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var summary = await _getBrandOpsSummary.HandleAsync(ct);
 
             var vm = new BrandsListVm
             {
@@ -54,6 +58,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Filter = filter ?? string.Empty,
+                Summary = new BrandOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    UnpublishedCount = summary.UnpublishedCount,
+                    MissingSlugCount = summary.MissingSlugCount,
+                    MissingLogoCount = summary.MissingLogoCount
+                },
+                Playbooks = BuildBrandPlaybooks(),
                 Items = items.Select(b => new BrandListItemVm
                 {
                     Id = b.Id,
@@ -222,6 +235,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 vm.Translations.Add(new BrandTranslationVm { Culture = "de-DE" });
             }
+        }
+
+        private static OperationalPlaybookVm[] BuildBrandPlaybooks()
+        {
+            return
+            [
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Unpublished",
+                    WhyItMatters = "Unpublished brands stay hidden from brand-driven navigation and merchandising flows.",
+                    OperatorAction = "Review whether the brand should remain internal-only, then publish it once storefront exposure is intended."
+                },
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Missing Slug",
+                    WhyItMatters = "Brands without slugs are harder to use in SEO-aware landing pages and direct support handoffs.",
+                    OperatorAction = "Open the brand editor and add a stable slug before marketing or content teams link to the brand publicly."
+                },
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Missing Logo",
+                    WhyItMatters = "Brands without logos create a weak or inconsistent catalog presentation across admin and storefront surfaces.",
+                    OperatorAction = "Review the brand asset setup and attach a media-library logo if the business expects visual brand presentation."
+                }
+            ];
         }
     }
 }

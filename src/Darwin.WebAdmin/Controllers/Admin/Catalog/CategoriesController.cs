@@ -35,6 +35,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly CreateCategoryHandler _create;
         private readonly UpdateCategoryHandler _update;
         private readonly GetCategoriesPageHandler _list;
+        private readonly GetCategoryOpsSummaryHandler _getCategoryOpsSummary;
         private readonly GetCategoryForEditHandler _getForEdit;
         private readonly GetCatalogLookupsHandler _getLookups;
         private readonly GetCulturesHandler _getCultures;
@@ -45,6 +46,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             CreateCategoryHandler create,
             UpdateCategoryHandler update,
             GetCategoriesPageHandler list,
+            GetCategoryOpsSummaryHandler getCategoryOpsSummary,
             GetCategoryForEditHandler getForEdit,
             GetCatalogLookupsHandler getLookups,
             GetCulturesHandler getCultures,
@@ -53,6 +55,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _create = create;
             _update = update;
             _list = list;
+            _getCategoryOpsSummary = getCategoryOpsSummary;
             _getForEdit = getForEdit;
             _getLookups = getLookups;
             _getCultures = getCultures;
@@ -60,14 +63,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", query, ct);
-            ViewBag.Total = total;
-            ViewBag.Page = page;
-            ViewBag.PageSize = pageSize;
-            ViewBag.Query = query ?? string.Empty;
-            return View(items);
+            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var summary = await _getCategoryOpsSummary.HandleAsync(ct);
+
+            var vm = new CategoriesIndexVm
+            {
+                Items = items,
+                Query = query ?? string.Empty,
+                Filter = filter ?? string.Empty,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Summary = new CategoryOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    InactiveCount = summary.InactiveCount,
+                    UnpublishedCount = summary.UnpublishedCount,
+                    RootCount = summary.RootCount,
+                    ChildCount = summary.ChildCount
+                },
+                Playbooks = BuildCategoryPlaybooks()
+            };
+
+            return View(vm);
         }
 
         [HttpGet]
@@ -288,6 +308,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
             }
+        }
+
+        private static OperationalPlaybookVm[] BuildCategoryPlaybooks()
+        {
+            return
+            [
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Inactive",
+                    WhyItMatters = "Inactive categories remove products from expected navigation and business operators may mistake that for missing catalog data.",
+                    OperatorAction = "Review whether the category is intentionally disabled, then reactivate it if the business still expects it in active navigation."
+                },
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Unpublished",
+                    WhyItMatters = "Unpublished categories may block storefront visibility even when translations and products are already ready.",
+                    OperatorAction = "Open the category, confirm publication intent, and publish when merchandising wants the structure live."
+                },
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Child Categories",
+                    WhyItMatters = "Child categories rely on a valid parent structure and often need extra review during navigation refactors.",
+                    OperatorAction = "Review parent assignment and sort order so the catalog tree remains coherent for storefront and business users."
+                }
+            ];
         }
     }
 }

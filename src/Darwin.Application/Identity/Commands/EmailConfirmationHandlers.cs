@@ -7,6 +7,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Shared.Results;
 using Darwin.Shared.Security;
 using FluentValidation;
@@ -80,12 +81,15 @@ namespace Darwin.Application.Identity.Commands
             _db.Set<UserToken>().Add(new UserToken(user.Id, EmailConfirmationPurpose, tokenValue, expiresAtUtc));
             await _db.SaveChangesAsync(ct);
 
-            var subject = "Confirm your Darwin account email";
+            var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var subject = ApplySubjectPrefix(siteSettings?.TransactionalEmailSubjectPrefix, "Confirm your Darwin account email");
             var body = $"Use the following token to confirm your email address: <b>{tokenValue}</b><br/>" +
                        $"This token expires at {expiresAtUtc:u}.";
+            var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
+            body = ApplyRecipientOverrideNotice(user.Email, recipient, body);
 
             await _email.SendAsync(
-                user.Email,
+                recipient,
                 subject,
                 body,
                 ct,
@@ -95,6 +99,21 @@ namespace Darwin.Application.Identity.Commands
                 });
             _logger.LogInformation("Email confirmation token issued for {Email}.", MaskEmail(user.Email));
             return Result.Ok();
+        }
+
+        private static string ApplySubjectPrefix(string? prefix, string subject)
+        {
+            return string.IsNullOrWhiteSpace(prefix) ? subject : $"{prefix.Trim()} {subject}";
+        }
+
+        private static string ApplyRecipientOverrideNotice(string originalRecipient, string effectiveRecipient, string body)
+        {
+            if (string.Equals(originalRecipient, effectiveRecipient, StringComparison.OrdinalIgnoreCase))
+            {
+                return body;
+            }
+
+            return $"<p><strong>Original recipient:</strong> {originalRecipient}</p>{body}";
         }
 
         private static string MaskEmail(string email)

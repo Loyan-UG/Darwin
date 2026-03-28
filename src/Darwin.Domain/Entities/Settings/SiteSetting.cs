@@ -116,6 +116,47 @@ namespace Darwin.Domain.Entities.Settings
         public string? AccountDeletionUrl { get; set; }
 
 
+        // Phase-1 payment provider (Stripe-first)
+        /// <summary>Enable Stripe-backed payment operations as the primary phase-1 provider.</summary>
+        public bool StripeEnabled { get; set; } = false;
+        /// <summary>Stripe publishable key used by web/mobile clients where applicable.</summary>
+        public string? StripePublishableKey { get; set; }
+        /// <summary>Stripe secret key used by server-side payment operations.</summary>
+        public string? StripeSecretKey { get; set; }
+        /// <summary>Webhook signing secret used to verify Stripe callbacks.</summary>
+        public string? StripeWebhookSecret { get; set; }
+        /// <summary>Human-facing merchant label shown in hosted payment surfaces.</summary>
+        public string? StripeMerchantDisplayName { get; set; }
+
+        // Phase-1 shipping provider (DHL-first)
+        /// <summary>Enable DHL-backed shipment operations as the primary phase-1 carrier.</summary>
+        public bool DhlEnabled { get; set; } = false;
+        /// <summary>Environment label for DHL integration (for example Sandbox or Production).</summary>
+        public string? DhlEnvironment { get; set; }
+        /// <summary>Absolute HTTPS API base URL for the DHL integration endpoint.</summary>
+        public string? DhlApiBaseUrl { get; set; }
+        /// <summary>DHL API key or client identifier.</summary>
+        public string? DhlApiKey { get; set; }
+        /// <summary>DHL API secret/password.</summary>
+        public string? DhlApiSecret { get; set; }
+        /// <summary>DHL shipper account number / EKP.</summary>
+        public string? DhlAccountNumber { get; set; }
+        /// <summary>Default shipper legal/display name used on labels.</summary>
+        public string? DhlShipperName { get; set; }
+        /// <summary>Default shipper contact email used on labels/support payloads.</summary>
+        public string? DhlShipperEmail { get; set; }
+        /// <summary>Default shipper contact phone in E.164 format.</summary>
+        public string? DhlShipperPhoneE164 { get; set; }
+        /// <summary>Default shipper street line used on labels.</summary>
+        public string? DhlShipperStreet { get; set; }
+        /// <summary>Default shipper postal code used on labels.</summary>
+        public string? DhlShipperPostalCode { get; set; }
+        /// <summary>Default shipper city used on labels.</summary>
+        public string? DhlShipperCity { get; set; }
+        /// <summary>Default shipper country code used on labels.</summary>
+        public string? DhlShipperCountry { get; set; }
+
+
 
 
         // Data retention / soft-delete cleanup
@@ -258,6 +299,12 @@ namespace Darwin.Domain.Entities.Settings
         public string? AdminAlertEmailsCsv { get; set; }
         /// <summary>Comma-separated default admin recipients for SMS alerts (E.164).</summary>
         public string? AdminAlertSmsRecipientsCsv { get; set; }
+
+        /// <summary>Optional subject prefix added to phase-1 transactional emails for environment/ops signaling.</summary>
+        public string? TransactionalEmailSubjectPrefix { get; set; }
+
+        /// <summary>Optional override inbox used to reroute transactional emails for testing or staged go-live verification.</summary>
+        public string? CommunicationTestInboxEmail { get; set; }
 
     }
 }

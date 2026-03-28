@@ -35,6 +35,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         private readonly CreatePageHandler _create;
         private readonly UpdatePageHandler _update;
         private readonly GetPagesPageHandler _list;
+        private readonly GetPageOpsSummaryHandler _getPageOpsSummary;
         private readonly GetPageForEditHandler _get;
         private readonly GetCulturesHandler _getCultures;
         private readonly SoftDeletePageHandler _softDeletePage;
@@ -43,6 +44,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             CreatePageHandler create,
             UpdatePageHandler update,
             GetPagesPageHandler list,
+            GetPageOpsSummaryHandler getPageOpsSummary,
             GetPageForEditHandler get,
             GetCulturesHandler getCultures,
             SoftDeletePageHandler softDeletePage)
@@ -50,20 +52,38 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             _create = create;
             _update = update;
             _list = list;
+            _getPageOpsSummary = getPageOpsSummary;
             _get = get;
             _getCultures = getCultures;
             _softDeletePage = softDeletePage;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", query, ct);
-            ViewBag.Total = total;
-            ViewBag.Page = page;
-            ViewBag.PageSize = pageSize;
-            ViewBag.Query = query ?? string.Empty;
-            return View(items);
+            var (items, total) = await _list.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var summary = await _getPageOpsSummary.HandleAsync(ct);
+
+            var vm = new PagesIndexVm
+            {
+                Items = items,
+                Query = query ?? string.Empty,
+                Filter = filter ?? string.Empty,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Summary = new PageOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    DraftCount = summary.DraftCount,
+                    PublishedCount = summary.PublishedCount,
+                    WindowedCount = summary.WindowedCount,
+                    LiveWindowCount = summary.LiveWindowCount
+                },
+                Playbooks = BuildPagePlaybooks()
+            };
+
+            return View(vm);
         }
 
         [HttpGet]
@@ -269,6 +289,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             {
                 vm.Translations.Add(new PageTranslationVm());
             }
+        }
+
+        private static PagePlaybookVm[] BuildPagePlaybooks()
+        {
+            return
+            [
+                new PagePlaybookVm
+                {
+                    QueueLabel = "Draft",
+                    WhyItMatters = "Draft pages usually represent unfinished legal, help, onboarding, or marketing content that the business may still be waiting for.",
+                    OperatorAction = "Open the page, complete the translations and publish only after the responsible owner confirms the content."
+                },
+                new PagePlaybookVm
+                {
+                    QueueLabel = "Windowed",
+                    WhyItMatters = "Windowed pages can silently expire or go live at the wrong time if campaign timing drifts.",
+                    OperatorAction = "Review publish start/end dates and make sure they still match campaign or compliance expectations."
+                },
+                new PagePlaybookVm
+                {
+                    QueueLabel = "Live Window",
+                    WhyItMatters = "A page that is currently live within a publish window is timing-sensitive and worth proactive review.",
+                    OperatorAction = "Verify content accuracy, links, and expiry timing while the page is actively visible."
+                }
+            ];
         }
     }
 }

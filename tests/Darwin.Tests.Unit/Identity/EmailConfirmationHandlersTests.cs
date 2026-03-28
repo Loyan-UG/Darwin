@@ -10,6 +10,7 @@ using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Common;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Settings;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -185,6 +186,15 @@ public sealed class EmailConfirmationHandlersTests
                 builder.HasKey(x => x.Id);
                 builder.Property(x => x.Purpose).IsRequired();
                 builder.Property(x => x.Value).IsRequired();
+            });
+
+            modelBuilder.Entity<SiteSetting>(builder =>
+            {
+                builder.HasKey(x => x.Id);
+                builder.Property(x => x.RowVersion).IsRowVersion();
+                builder.Property(x => x.Title).IsRequired();
+                builder.Property(x => x.DefaultCulture).IsRequired();
+                builder.Property(x => x.SupportedCulturesCsv).IsRequired();
             });
         }
     }

@@ -125,6 +125,28 @@ namespace Darwin.Application.Settings.DTOs
         /// </summary>
         public string? AccountDeletionUrl { get; set; }
 
+        // -------- Payments (Stripe-first) --------
+        public bool StripeEnabled { get; set; } = false;
+        public string? StripePublishableKey { get; set; }
+        public string? StripeSecretKey { get; set; }
+        public string? StripeWebhookSecret { get; set; }
+        public string? StripeMerchantDisplayName { get; set; }
+
+        // -------- Shipping (DHL-first) --------
+        public bool DhlEnabled { get; set; } = false;
+        public string? DhlEnvironment { get; set; }
+        public string? DhlApiBaseUrl { get; set; }
+        public string? DhlApiKey { get; set; }
+        public string? DhlApiSecret { get; set; }
+        public string? DhlAccountNumber { get; set; }
+        public string? DhlShipperName { get; set; }
+        public string? DhlShipperEmail { get; set; }
+        public string? DhlShipperPhoneE164 { get; set; }
+        public string? DhlShipperStreet { get; set; }
+        public string? DhlShipperPostalCode { get; set; }
+        public string? DhlShipperCity { get; set; }
+        public string? DhlShipperCountry { get; set; }
+
 
 
         // -------- Soft delete / data retention --------
@@ -186,5 +208,7 @@ namespace Darwin.Application.Settings.DTOs
         // -------- Admin routing --------
         public string? AdminAlertEmailsCsv { get; set; }
         public string? AdminAlertSmsRecipientsCsv { get; set; }
+        public string? TransactionalEmailSubjectPrefix { get; set; }
+        public string? CommunicationTestInboxEmail { get; set; }
     }
 }

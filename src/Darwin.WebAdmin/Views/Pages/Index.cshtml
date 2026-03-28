@@ -1,22 +1,101 @@
-@model IReadOnlyList<Darwin.Application.CMS.DTOs.PageListItemDto>
+@model Darwin.WebAdmin.ViewModels.CMS.PagesIndexVm
 @{
     ViewData["Title"] = "Pages";
-    var currentPage = (int)(ViewBag.Page ?? 1);
-    var currentPageSize = (int)(ViewBag.PageSize ?? 20);
-    var total = (int)(ViewBag.Total ?? 0);
-    var query = (string)(ViewBag.Query ?? string.Empty);
+    var currentPage = Model.Page;
+    var currentPageSize = Model.PageSize;
+    var total = Model.Total;
+    var query = Model.Query;
+    var filter = Model.Filter;
 }
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
     <h2 class="mb-0">Pages</h2>
     <div class="d-flex flex-wrap gap-2">
         <form asp-action="Index" method="get" class="d-flex gap-2">
             <input type="text" name="query" value="@query" class="form-control" placeholder="Search..." />
+            <input type="hidden" name="filter" value="@filter" />
             <button class="btn btn-outline-secondary" type="submit">
                 <i class="fa fa-search"></i> Search
             </button>
             <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
         </form>
         <a asp-action="Create" class="btn btn-primary">Create Page</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Draft</div>
+                <div class="display-6 fw-semibold">@Model.Summary.DraftCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Published</div>
+                <div class="display-6 fw-semibold">@Model.Summary.PublishedCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Windowed</div>
+                <div class="display-6 fw-semibold">@Model.Summary.WindowedCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Live Window</div>
+                <div class="display-6 fw-semibold">@Model.Summary.LiveWindowCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")">All</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="draft" class="btn @(filter == "draft" ? "btn-primary" : "btn-outline-primary")">Draft</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="published" class="btn @(filter == "published" ? "btn-primary" : "btn-outline-primary")">Published</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="windowed" class="btn @(filter == "windowed" ? "btn-primary" : "btn-outline-primary")">Windowed</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="live-window" class="btn @(filter == "live-window" ? "btn-primary" : "btn-outline-primary")">Live Window</a>
+            </div>
+            <div class="text-muted small">Total pages: @Model.Summary.TotalCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-light fw-semibold">Content Operations Playbooks</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Queue</th>
+                        <th>Why It Matters</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var playbook in Model.Playbooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@playbook.QueueLabel</td>
+                            <td>@playbook.WhyItMatters</td>
+                            <td>@playbook.OperatorAction</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 <div class="card shadow-sm">
@@ -33,29 +112,48 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var p in Model)
+                    @if (Model.Items.Count == 0)
                     {
                         <tr>
-                            <td>@(p.Title ?? "-")</td>
-                            <td>@p.Status</td>
-                            <td>@(p.PublishStartUtc?.ToString("u") ?? "-") ? @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
-                            <td>@p.ModifiedAtUtc.ToString("u")</td>
-                            <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-pen"></i> Edit
-                                </a>
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-danger"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#confirmDeleteModal"
-                                        data-action="@Url.Action("Delete", "Pages")"
-                                        data-id="@p.Id"
-                                        data-name="@(p.Title ?? p.Id.ToString())"
-                                        data-rowversion="@Convert.ToBase64String(p.RowVersion)">
-                                    <i class="fa fa-trash"></i> Delete
-                                </button>
-                            </td>
+                            <td colspan="5" class="text-center text-muted py-4">No pages found.</td>
                         </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@(p.Title ?? "-")</div>
+                                    @if (p.IsCurrentlyLive)
+                                    {
+                                        <span class="badge bg-success mt-1">Live</span>
+                                    }
+                                    else if (p.HasPublishWindow)
+                                    {
+                                        <span class="badge bg-warning text-dark mt-1">Windowed</span>
+                                    }
+                                </td>
+                                <td>@p.Status</td>
+                                <td>@(p.PublishStartUtc?.ToString("u") ?? "-") to @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
+                                <td>@p.ModifiedAtUtc.ToString("u")</td>
+                                <td class="text-end">
+                                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-pen"></i> Edit
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmDeleteModal"
+                                            data-action="@Url.Action("Delete", "Pages")"
+                                            data-id="@p.Id"
+                                            data-name="@(p.Title ?? p.Id.ToString())"
+                                            data-rowversion="@Convert.ToBase64String(p.RowVersion)">
+                                        <i class="fa fa-trash"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
@@ -65,7 +163,8 @@
                total="@total"
                asp-controller="Pages"
                asp-action="Index"
-               asp-route-query="@query"></pager>
+               asp-route-query="@query"
+               asp-route-filter="@filter"></pager>
 
         <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 

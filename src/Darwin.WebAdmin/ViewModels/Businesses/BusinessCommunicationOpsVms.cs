@@ -48,6 +48,11 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool SmsTransportConfigured { get; set; }
         public bool WhatsAppTransportConfigured { get; set; }
         public bool AdminAlertRoutingConfigured { get; set; }
+        public bool TransactionalSubjectPrefixConfigured { get; set; }
+        public bool TestInboxConfigured { get; set; }
+        public string? TransactionalSubjectPrefix { get; set; }
+        public string? TestInboxEmail { get; set; }
+        public bool CanSendTestEmail { get; set; }
     }
 
     public sealed class BusinessCommunicationOpsSummaryPanelVm
@@ -147,6 +152,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool SmsTransportConfigured { get; set; }
         public bool WhatsAppTransportConfigured { get; set; }
         public bool AdminAlertRoutingConfigured { get; set; }
+        public bool TransactionalSubjectPrefixConfigured { get; set; }
+        public bool TestInboxConfigured { get; set; }
+        public string? TransactionalSubjectPrefix { get; set; }
+        public string? TestInboxEmail { get; set; }
         public List<string> ActiveFlowNames { get; set; } = new();
         public List<string> ReadinessIssues { get; set; } = new();
         public List<string> RecommendedActions { get; set; } = new();

@@ -11,6 +11,125 @@
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="ShipmentsQueue" asp-route-filter="Pending" class="btn btn-outline-warning btn-sm">Pending/Packed</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="Shipped" class="btn btn-outline-secondary btn-sm">Shipped/Delivered</a>
+        <a asp-action="ShipmentsQueue" asp-route-filter="MissingTracking" class="btn btn-outline-info btn-sm">Missing Tracking</a>
+        <a asp-action="ShipmentsQueue" asp-route-filter="Returned" class="btn btn-outline-dark btn-sm">Returned</a>
+        <a asp-action="ShipmentsQueue" asp-route-filter="Dhl" class="btn btn-outline-primary btn-sm">DHL</a>
+        <a asp-action="ShipmentsQueue" asp-route-filter="MissingService" class="btn btn-outline-warning btn-sm">Missing Service</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Pending / Packed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Shipped / Delivered</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ShippedCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Missing Tracking</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingTrackingCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Returned</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ReturnedCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">DHL Rows</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.DhlCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Missing Service</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingServiceCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>DHL Phase-1 Readiness</span>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-shipping" class="btn btn-sm btn-outline-secondary">Open Shipping Settings</a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Enabled</div>
+                    <div class="fw-semibold mt-1">@(Model.Dhl.Enabled ? "Yes" : "No")</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">API Base URL</div>
+                    <div class="fw-semibold mt-1">@(Model.Dhl.ApiBaseUrlConfigured ? "Ready" : "Missing")</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">API Credentials</div>
+                    <div class="fw-semibold mt-1">@(Model.Dhl.ApiCredentialsConfigured ? "Ready" : "Missing")</div>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Account Number</div>
+                    <div class="fw-semibold mt-1">@(Model.Dhl.AccountNumberConfigured ? "Configured" : "Missing")</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Environment</div>
+                    <div class="fw-semibold mt-1">@Model.Dhl.EnvironmentLabel</div>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Shipper Identity</div>
+                    <div class="fw-semibold mt-1">@(Model.Dhl.ShipperIdentityConfigured ? "Ready" : "Missing")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Phase-1 Shipment Support Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                        <th>Settings Dependency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                        <td>@item.SettingsDependency</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -59,13 +178,25 @@
                         <div class="fw-semibold">@item.OrderNumber</div>
                         <div class="small text-muted">@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
                     </td>
-                    <td>@item.Carrier / @item.Service</td>
-                    <td>@(string.IsNullOrWhiteSpace(item.TrackingNumber) ? "-" : item.TrackingNumber)</td>
+                    <td>
+                        @item.Carrier / @(string.IsNullOrWhiteSpace(item.Service) ? "-" : item.Service)
+                    </td>
+                    <td>
+                        @(string.IsNullOrWhiteSpace(item.TrackingNumber) ? "-" : item.TrackingNumber)
+                        @if (item.NeedsCarrierReview)
+                        {
+                            <div><span class="badge text-bg-warning mt-1">Needs carrier review</span></div>
+                        }
+                    </td>
                     <td>@item.TotalWeight</td>
                     <td>
                         <span class="badge text-bg-@(item.Status == Darwin.Domain.Enums.ShipmentStatus.Delivered ? "success" : item.Status == Darwin.Domain.Enums.ShipmentStatus.Shipped ? "primary" : "warning")">
                             @item.Status
                         </span>
+                        @if (item.IsDhl)
+                        {
+                            <div><span class="badge text-bg-info mt-1">DHL</span></div>
+                        }
                     </td>
                     <td>
                         @if (item.DeliveredAtUtc.HasValue)

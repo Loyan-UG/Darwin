@@ -48,8 +48,19 @@ namespace Darwin.Application.Catalog.DTOs
         public Guid Id { get; set; }
         public string? Name { get; set; } // name in requested or default culture
         public bool IsActive { get; set; }
+        public bool IsPublished { get; set; }
         public int SortOrder { get; set; }
         public Guid? ParentId { get; set; }
+        public DateTime ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class CategoryOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int UnpublishedCount { get; set; }
+        public int RootCount { get; set; }
+        public int ChildCount { get; set; }
     }
 }

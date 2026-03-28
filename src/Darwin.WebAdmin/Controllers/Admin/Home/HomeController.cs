@@ -114,7 +114,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
             if (selectedBusinessId.HasValue)
             {
-                paymentCount = (await _getPaymentsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct).ConfigureAwait(false)).Total;
+                paymentCount = (await _getPaymentsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: null, ct).ConfigureAwait(false)).Total;
                 warehouseCount = (await _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.WarehouseQueueFilter.All, ct).ConfigureAwait(false)).Total;
                 supplierCount = (await _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.SupplierQueueFilter.All, ct).ConfigureAwait(false)).Total;
                 purchaseOrderCount = (await _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.All, ct).ConfigureAwait(false)).Total;

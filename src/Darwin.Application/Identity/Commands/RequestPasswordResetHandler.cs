@@ -8,6 +8,7 @@ using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Identity.DTOs;
 using Darwin.Application.Identity.Validators;
 using Darwin.Domain.Entities.Identity;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Shared.Results;
 using Darwin.Shared.Security;
 using FluentValidation;
@@ -89,9 +90,12 @@ namespace Darwin.Application.Identity.Commands
             await _db.SaveChangesAsync(ct);
 
             // NOTE: For production, switch this to a templating engine and a branded reset URL.
-            var subject = "Reset your Darwin account password";
+            var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var subject = ApplySubjectPrefix(siteSettings?.TransactionalEmailSubjectPrefix, "Reset your Darwin account password");
             var body = $"Use the following token to reset your password: <b>{token}</b><br/>" +
                        $"This token expires at {expires:u}.";
+            var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
+            body = ApplyRecipientOverrideNotice(user.Email, recipient, body);
 
 
             var maskedEmail = MaskEmail(user.Email);
@@ -103,7 +107,7 @@ namespace Darwin.Application.Identity.Commands
             try
             {
                 await _email.SendAsync(
-                    user.Email,
+                    recipient,
                     subject,
                     body,
                     ct,
@@ -123,6 +127,21 @@ namespace Darwin.Application.Identity.Commands
 
             _logger.LogInformation("Password reset email sent successfully to {Email}.", maskedEmail);
             return Result.Ok();
+        }
+
+        private static string ApplySubjectPrefix(string? prefix, string subject)
+        {
+            return string.IsNullOrWhiteSpace(prefix) ? subject : $"{prefix.Trim()} {subject}";
+        }
+
+        private static string ApplyRecipientOverrideNotice(string originalRecipient, string effectiveRecipient, string body)
+        {
+            if (string.Equals(originalRecipient, effectiveRecipient, StringComparison.OrdinalIgnoreCase))
+            {
+                return body;
+            }
+
+            return $"<p><strong>Original recipient:</strong> {originalRecipient}</p>{body}";
         }
 
         /// <summary>

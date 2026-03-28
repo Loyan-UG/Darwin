@@ -74,6 +74,24 @@ namespace Darwin.Application.Settings.Queries
                 PrivacyPolicyUrl = s.PrivacyPolicyUrl,
                 BusinessTermsUrl = s.BusinessTermsUrl,
                 AccountDeletionUrl = s.AccountDeletionUrl,
+                StripeEnabled = s.StripeEnabled,
+                StripePublishableKey = s.StripePublishableKey,
+                StripeSecretKey = s.StripeSecretKey,
+                StripeWebhookSecret = s.StripeWebhookSecret,
+                StripeMerchantDisplayName = s.StripeMerchantDisplayName,
+                DhlEnabled = s.DhlEnabled,
+                DhlEnvironment = s.DhlEnvironment,
+                DhlApiBaseUrl = s.DhlApiBaseUrl,
+                DhlApiKey = s.DhlApiKey,
+                DhlApiSecret = s.DhlApiSecret,
+                DhlAccountNumber = s.DhlAccountNumber,
+                DhlShipperName = s.DhlShipperName,
+                DhlShipperEmail = s.DhlShipperEmail,
+                DhlShipperPhoneE164 = s.DhlShipperPhoneE164,
+                DhlShipperStreet = s.DhlShipperStreet,
+                DhlShipperPostalCode = s.DhlShipperPostalCode,
+                DhlShipperCity = s.DhlShipperCity,
+                DhlShipperCountry = s.DhlShipperCountry,
 
 
                 // Soft delete
@@ -134,7 +152,9 @@ namespace Darwin.Application.Settings.Queries
 
                 // Admin routing
                 AdminAlertEmailsCsv = s.AdminAlertEmailsCsv,
-                AdminAlertSmsRecipientsCsv = s.AdminAlertSmsRecipientsCsv
+                AdminAlertSmsRecipientsCsv = s.AdminAlertSmsRecipientsCsv,
+                TransactionalEmailSubjectPrefix = s.TransactionalEmailSubjectPrefix,
+                CommunicationTestInboxEmail = s.CommunicationTestInboxEmail
             };
         }
     }

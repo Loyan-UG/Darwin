@@ -5,6 +5,7 @@ using Darwin.Application.Orders.Commands;
 using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
 using Darwin.Domain.Enums;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,6 +20,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
     {
         private readonly GetOrdersPageHandler _getOrdersPage;
         private readonly GetShipmentsPageHandler _getShipmentsPage;
+        private readonly GetShipmentOpsSummaryHandler _getShipmentOpsSummary;
         private readonly GetOrderForViewHandler _getOrderForView;
         private readonly GetOrderPaymentsPageHandler _getOrderPaymentsPage;
         private readonly GetOrderShipmentsPageHandler _getOrderShipmentsPage;
@@ -32,10 +34,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private readonly AddRefundHandler _addRefund;
         private readonly CreateOrderInvoiceHandler _createOrderInvoice;
         private readonly UpdateOrderStatusHandler _updateOrderStatus;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public OrdersController(
             GetOrdersPageHandler getOrdersPage,
             GetShipmentsPageHandler getShipmentsPage,
+            GetShipmentOpsSummaryHandler getShipmentOpsSummary,
             GetOrderForViewHandler getOrderForView,
             GetOrderPaymentsPageHandler getOrderPaymentsPage,
             GetOrderShipmentsPageHandler getOrderShipmentsPage,
@@ -48,10 +52,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             AddShipmentHandler addShipment,
             AddRefundHandler addRefund,
             CreateOrderInvoiceHandler createOrderInvoice,
-            UpdateOrderStatusHandler updateOrderStatus)
+            UpdateOrderStatusHandler updateOrderStatus,
+            ISiteSettingCache siteSettingCache)
         {
             _getOrdersPage = getOrdersPage;
             _getShipmentsPage = getShipmentsPage;
+            _getShipmentOpsSummary = getShipmentOpsSummary;
             _getOrderForView = getOrderForView;
             _getOrderPaymentsPage = getOrderPaymentsPage;
             _getOrderShipmentsPage = getOrderShipmentsPage;
@@ -65,6 +71,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             _addRefund = addRefund;
             _createOrderInvoice = createOrderInvoice;
             _updateOrderStatus = updateOrderStatus;
+            _siteSettingCache = siteSettingCache;
         }
 
         [HttpGet]
@@ -108,6 +115,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 Total = total,
                 Query = query ?? string.Empty,
                 Filter = filter,
+                Dhl = await BuildDhlOperationsVmAsync(ct).ConfigureAwait(false),
+                Summary = await BuildShipmentOpsSummaryVmAsync(ct).ConfigureAwait(false),
+                Playbooks = BuildShipmentPlaybooks(),
                 FilterItems = BuildShipmentFilterItems(filter),
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 Items = items.Select(x => new ShipmentListItemVm
@@ -128,6 +138,76 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             };
 
             return View(vm);
+        }
+
+        private async Task<DhlOperationsVm> BuildDhlOperationsVmAsync(CancellationToken ct)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            return new DhlOperationsVm
+            {
+                Enabled = settings.DhlEnabled,
+                ApiBaseUrlConfigured = !string.IsNullOrWhiteSpace(settings.DhlApiBaseUrl),
+                ApiCredentialsConfigured = !string.IsNullOrWhiteSpace(settings.DhlApiKey) && !string.IsNullOrWhiteSpace(settings.DhlApiSecret),
+                AccountNumberConfigured = !string.IsNullOrWhiteSpace(settings.DhlAccountNumber),
+                EnvironmentLabel = string.IsNullOrWhiteSpace(settings.DhlEnvironment) ? "Not set" : settings.DhlEnvironment,
+                ShipperIdentityConfigured =
+                    !string.IsNullOrWhiteSpace(settings.DhlShipperName) &&
+                    !string.IsNullOrWhiteSpace(settings.DhlShipperEmail) &&
+                    !string.IsNullOrWhiteSpace(settings.DhlShipperPhoneE164) &&
+                    !string.IsNullOrWhiteSpace(settings.DhlShipperStreet) &&
+                    !string.IsNullOrWhiteSpace(settings.DhlShipperPostalCode) &&
+                    !string.IsNullOrWhiteSpace(settings.DhlShipperCity) &&
+                    !string.IsNullOrWhiteSpace(settings.DhlShipperCountry)
+            };
+        }
+
+        private async Task<ShipmentOpsSummaryVm> BuildShipmentOpsSummaryVmAsync(CancellationToken ct)
+        {
+            var summary = await _getShipmentOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            return new ShipmentOpsSummaryVm
+            {
+                PendingCount = summary.PendingCount,
+                ShippedCount = summary.ShippedCount,
+                MissingTrackingCount = summary.MissingTrackingCount,
+                ReturnedCount = summary.ReturnedCount,
+                DhlCount = summary.DhlCount,
+                MissingServiceCount = summary.MissingServiceCount
+            };
+        }
+
+        private static List<ShipmentPlaybookVm> BuildShipmentPlaybooks()
+        {
+            return new List<ShipmentPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Pending / packed shipments",
+                    ScopeNote = "Use this queue to push open fulfillment items toward handoff.",
+                    OperatorAction = "Open the order, confirm shipment composition, and add or correct shipment data before carrier handoff.",
+                    SettingsDependency = "DHL shipper identity and account setup should be green before the queue is treated as ready for live carrier operations."
+                },
+                new()
+                {
+                    Title = "Missing tracking",
+                    ScopeNote = "These are shipped or delivered records without tracking context.",
+                    OperatorAction = "Review the order shipment tab and update shipment data through the order workflow when the carrier reference becomes available.",
+                    SettingsDependency = "DHL API/account readiness should be validated first if missing tracking reflects broader provider onboarding issues."
+                },
+                new()
+                {
+                    Title = "DHL rows with incomplete carrier data",
+                    ScopeNote = "Use this when DHL shipments exist but service metadata or tracking discipline is weak.",
+                    OperatorAction = "Open the linked order, confirm the intended DHL service, and normalize shipment data before handoff or support escalation.",
+                    SettingsDependency = "DHL environment, account number, and shipper identity should be configured before these rows are treated as ready for production handoff."
+                },
+                new()
+                {
+                    Title = "Returned shipments",
+                    ScopeNote = "Treat these as return-support follow-up, not just delivery completion.",
+                    OperatorAction = "Open the order and coordinate refund, restock, or customer-support follow-up from the linked order workspace.",
+                    SettingsDependency = "DHL readiness alone does not complete returns; this queue is a phase-1 operational signal until full RMA tooling lands."
+                }
+            };
         }
 
         [HttpGet]
@@ -256,6 +336,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ShippedAtUtc = x.ShippedAtUtc,
                     DeliveredAtUtc = x.DeliveredAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
+                    IsDhl = x.IsDhl,
+                    NeedsCarrierReview = x.NeedsCarrierReview,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -622,6 +704,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem("All shipments", ShipmentQueueFilter.All.ToString(), selectedFilter == ShipmentQueueFilter.All);
             yield return new SelectListItem("Pending/Packed", ShipmentQueueFilter.Pending.ToString(), selectedFilter == ShipmentQueueFilter.Pending);
             yield return new SelectListItem("Shipped/Delivered", ShipmentQueueFilter.Shipped.ToString(), selectedFilter == ShipmentQueueFilter.Shipped);
+            yield return new SelectListItem("Missing tracking", ShipmentQueueFilter.MissingTracking.ToString(), selectedFilter == ShipmentQueueFilter.MissingTracking);
+            yield return new SelectListItem("Returned", ShipmentQueueFilter.Returned.ToString(), selectedFilter == ShipmentQueueFilter.Returned);
+            yield return new SelectListItem("DHL", ShipmentQueueFilter.Dhl.ToString(), selectedFilter == ShipmentQueueFilter.Dhl);
+            yield return new SelectListItem("Missing service", ShipmentQueueFilter.MissingService.ToString(), selectedFilter == ShipmentQueueFilter.MissingService);
         }
 
         private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)

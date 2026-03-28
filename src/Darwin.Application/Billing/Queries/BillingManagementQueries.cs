@@ -20,6 +20,7 @@ namespace Darwin.Application.Billing.Queries
             int page,
             int pageSize,
             string? query = null,
+            PaymentQueueFilter? filter = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -28,6 +29,25 @@ namespace Darwin.Application.Billing.Queries
             var paymentsQuery = _db.Set<Payment>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
+
+            if (filter.HasValue)
+            {
+                paymentsQuery = filter.Value switch
+                {
+                    PaymentQueueFilter.Pending => paymentsQuery.Where(x =>
+                        x.Status == PaymentStatus.Pending || x.Status == PaymentStatus.Authorized),
+                    PaymentQueueFilter.Failed => paymentsQuery.Where(x => x.Status == PaymentStatus.Failed),
+                    PaymentQueueFilter.Refunded => paymentsQuery.Where(x =>
+                        x.Status == PaymentStatus.Refunded ||
+                        _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
+                    PaymentQueueFilter.Unlinked => paymentsQuery.Where(x => !x.OrderId.HasValue && !x.InvoiceId.HasValue),
+                    PaymentQueueFilter.ProviderLinked => paymentsQuery.Where(x => x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty),
+                    PaymentQueueFilter.Stripe => paymentsQuery.Where(x => x.Provider == "Stripe"),
+                    PaymentQueueFilter.MissingProviderRef => paymentsQuery.Where(x => x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty),
+                    PaymentQueueFilter.FailedStripe => paymentsQuery.Where(x => x.Provider == "Stripe" && x.Status == PaymentStatus.Failed),
+                    _ => paymentsQuery
+                };
+            }
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -69,7 +89,10 @@ namespace Darwin.Application.Billing.Queries
                     Status = x.Status,
                     Provider = x.Provider,
                     ProviderTransactionRef = x.ProviderTransactionRef,
+                    FailureReason = x.FailureReason,
                     PaidAtUtc = x.PaidAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    IsStripe = x.Provider == "Stripe",
                     RowVersion = x.RowVersion
                 })
                 .ToListAsync(ct)
@@ -184,7 +207,59 @@ namespace Darwin.Application.Billing.Queries
                     item.AmountMinor,
                     refundTotals.TryGetValue(item.Id, out var refundedAmountMinor) ? refundedAmountMinor : 0L);
                 item.NetCapturedAmountMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(item.AmountMinor, item.RefundedAmountMinor);
+                item.NeedsSupportAttention =
+                    item.Status == PaymentStatus.Failed ||
+                    item.Status == PaymentStatus.Pending ||
+                    (item.IsStripe && string.IsNullOrWhiteSpace(item.ProviderTransactionRef));
             }
+        }
+    }
+
+    public sealed class GetPaymentOpsSummaryHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetPaymentOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public async Task<PaymentOpsSummaryDto> HandleAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var payments = _db.Set<Payment>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            var paymentIds = await payments.Select(x => x.Id).ToListAsync(ct).ConfigureAwait(false);
+            var refundedPaymentIds = paymentIds.Count == 0
+                ? new HashSet<Guid>()
+                : (await _db.Set<Refund>()
+                    .AsNoTracking()
+                    .Where(x => x.Status == RefundStatus.Completed && paymentIds.Contains(x.PaymentId))
+                    .Select(x => x.PaymentId)
+                    .Distinct()
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false))
+                .ToHashSet();
+
+            var refundedStatusIds = await payments
+                .Where(x => x.Status == PaymentStatus.Refunded)
+                .Select(x => x.Id)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            var refundedIds = refundedStatusIds.ToHashSet();
+            refundedIds.UnionWith(refundedPaymentIds);
+
+            var summary = new PaymentOpsSummaryDto
+            {
+                PendingCount = await payments.CountAsync(x => x.Status == PaymentStatus.Pending || x.Status == PaymentStatus.Authorized, ct).ConfigureAwait(false),
+                FailedCount = await payments.CountAsync(x => x.Status == PaymentStatus.Failed, ct).ConfigureAwait(false),
+                UnlinkedCount = await payments.CountAsync(x => !x.OrderId.HasValue && !x.InvoiceId.HasValue, ct).ConfigureAwait(false),
+                ProviderLinkedCount = await payments.CountAsync(x => x.ProviderTransactionRef != null && x.ProviderTransactionRef != string.Empty, ct).ConfigureAwait(false),
+                RefundedCount = refundedIds.Count,
+                StripeCount = await payments.CountAsync(x => x.Provider == "Stripe", ct).ConfigureAwait(false),
+                MissingProviderRefCount = await payments.CountAsync(x => x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty, ct).ConfigureAwait(false),
+                FailedStripeCount = await payments.CountAsync(x => x.Provider == "Stripe" && x.Status == PaymentStatus.Failed, ct).ConfigureAwait(false)
+            };
+            return summary;
         }
     }
 

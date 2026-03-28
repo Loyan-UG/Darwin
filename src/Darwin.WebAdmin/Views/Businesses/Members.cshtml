@@ -104,6 +104,9 @@
                     </td>
                     <td class="text-end">
                         <div class="d-flex flex-wrap justify-content-end gap-2">
+                            <a asp-action="StaffAccessBadge" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa-solid fa-qrcode"></i> Badge
+                            </a>
                             @if (isFullAdmin)
                             {
                                 <a asp-action="EditMember" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">

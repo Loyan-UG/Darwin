@@ -1,0 +1,199 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.BusinessSubscriptionWorkspaceVm
+@inject Darwin.WebAdmin.Infrastructure.PermissionRazorHelper Perms
+@{
+    ViewData["Title"] = "Business Subscription";
+    var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1">Business Subscription</h1>
+        <p class="text-muted mb-0">@Model.Business.Name</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-pen"></i> Edit Business
+        </a>
+        <a asp-action="Setup" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-sliders"></i> Setup
+        </a>
+        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-money-bill-wave"></i> Payments
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Subscription</div>
+                <div class="fw-semibold mt-1">@(Model.Subscription.HasSubscription ? Model.Subscription.PlanName : "No active plan")</div>
+                <div class="small text-muted mt-2">@Model.Subscription.Status</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Provider</div>
+                <div class="fw-semibold mt-1">@(string.IsNullOrWhiteSpace(Model.Subscription.Provider) ? "-" : Model.Subscription.Provider)</div>
+                <div class="small text-muted mt-2">@Model.Subscription.PlanCode</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Renewal</div>
+                <div class="fw-semibold mt-1">@(Model.Subscription.CancelAtPeriodEnd ? "Cancel at period end" : "Renews normally")</div>
+                <div class="small text-muted mt-2">Current period end: @(Model.Subscription.CurrentPeriodEndUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Billing Handoff</div>
+                <div class="fw-semibold mt-1">@(Model.ManagementWebsiteConfigured ? "Configured" : "Missing")</div>
+                <div class="small text-muted mt-2">Phase-1 billing changes are handled through the external management website.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header">Current Subscription</div>
+    <div class="card-body">
+        @if (Model.Subscription.HasSubscription)
+        {
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="small text-muted text-uppercase">Plan</div>
+                    <div class="fw-semibold">@Model.Subscription.PlanName</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="small text-muted text-uppercase">Amount</div>
+                    <div class="fw-semibold">@Model.Subscription.Currency @((Model.Subscription.UnitPriceMinor / 100M).ToString("0.00"))</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="small text-muted text-uppercase">Started</div>
+                    <div class="fw-semibold">@(Model.Subscription.StartedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                </div>
+            </div>
+
+            <div class="mt-3 small text-muted">
+                Trial ends: @(Model.Subscription.TrialEndsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                <span class="mx-2">|</span>
+                Canceled at: @(Model.Subscription.CanceledAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+            </div>
+
+            @if (isFullAdmin)
+            {
+                <form asp-action="SetSubscriptionCancelAtPeriodEnd" method="post" class="d-flex gap-2 flex-wrap mt-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="businessId" value="@Model.Business.Id" />
+                    <input type="hidden" name="subscriptionId" value="@Model.Subscription.SubscriptionId" />
+                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.Subscription.RowVersion)" />
+                    <input type="hidden" name="cancelAtPeriodEnd" value="@((!Model.Subscription.CancelAtPeriodEnd).ToString().ToLowerInvariant())" />
+                    <button type="submit" class="btn @(Model.Subscription.CancelAtPeriodEnd ? "btn-outline-success" : "btn-outline-danger")">
+                        @(Model.Subscription.CancelAtPeriodEnd ? "Restore Renewal" : "Cancel At Period End")
+                    </button>
+                    @if (Model.ManagementWebsiteConfigured)
+                    {
+                        <a href="@Model.ManagementWebsiteUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">
+                            Open Billing Website
+                        </a>
+                    }
+                </form>
+            }
+        }
+        else
+        {
+            <div class="alert alert-secondary mb-0">No active subscription snapshot is available for this business yet.</div>
+        }
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header">Available Billing Plans</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Plan</th>
+                        <th>Price</th>
+                        <th>Interval</th>
+                        <th>Trial</th>
+                        <th>Checkout Readiness</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Plans.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No active billing plans found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var plan in Model.Plans)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@plan.Name</div>
+                                    <div class="small text-muted">@plan.Code</div>
+                                    @if (!string.IsNullOrWhiteSpace(plan.Description))
+                                    {
+                                        <div class="small text-muted mt-1">@plan.Description</div>
+                                    }
+                                </td>
+                                <td>@plan.Currency @((plan.PriceMinor / 100M).ToString("0.00"))</td>
+                                <td>Every @plan.IntervalCount @plan.Interval</td>
+                                <td>@(plan.TrialDays.HasValue ? $"{plan.TrialDays} days" : "-")</td>
+                                <td>
+                                    @if (plan.CheckoutReady)
+                                    {
+                                        <span class="badge bg-success">@plan.CheckoutReadinessLabel</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">@plan.CheckoutReadinessLabel</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">Subscription Operations Playbooks</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Queue</th>
+                        <th>Why It Matters</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var playbook in Model.Playbooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@playbook.QueueLabel</td>
+                            <td>@playbook.WhyItMatters</td>
+                            <td>@playbook.OperatorAction</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

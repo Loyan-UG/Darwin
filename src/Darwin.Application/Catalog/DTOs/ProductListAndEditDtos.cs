@@ -10,7 +10,19 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsActive { get; set; }
         public bool IsVisible { get; set; }
         public int VariantCount { get; set; }
+        public DateTime? PublishStartUtc { get; set; }
+        public DateTime? PublishEndUtc { get; set; }
+        public DateTime ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class ProductOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int HiddenCount { get; set; }
+        public int SingleVariantCount { get; set; }
+        public int ScheduledCount { get; set; }
     }
 
     /// <summary>

@@ -40,6 +40,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private readonly CreateProductHandler _createProduct;
         private readonly UpdateProductHandler _updateProduct;
         private readonly GetProductsPageHandler _getProductsPage;
+        private readonly GetProductOpsSummaryHandler _getProductOpsSummary;
         private readonly GetProductForEditHandler _getProductForEdit;
         private readonly GetCatalogLookupsHandler _getLookups;
         private readonly GetCulturesHandler _getCultures;
@@ -49,6 +50,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             CreateProductHandler createProduct,
             UpdateProductHandler updateProduct,
             GetProductsPageHandler getProductsPage,
+            GetProductOpsSummaryHandler getProductOpsSummary,
             GetProductForEditHandler getProductForEdit,
             GetCatalogLookupsHandler getLookups,
             GetCulturesHandler getCultures,
@@ -57,6 +59,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             _createProduct = createProduct;
             _updateProduct = updateProduct;
             _getProductsPage = getProductsPage;
+            _getProductOpsSummary = getProductOpsSummary;
             _getProductForEdit = getProductForEdit;
             _getLookups = getLookups;
             _getCultures = getCultures;
@@ -64,14 +67,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, string? filter = null, CancellationToken ct = default)
         {
-            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, ct);
-            ViewBag.Total = total;
-            ViewBag.Page = page;
-            ViewBag.PageSize = pageSize;
-            ViewBag.Query = query ?? string.Empty;
-            return View(items);
+            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, filter, ct);
+            var summary = await _getProductOpsSummary.HandleAsync(ct);
+
+            var vm = new ProductsIndexVm
+            {
+                Items = items,
+                Query = query ?? string.Empty,
+                Filter = filter ?? string.Empty,
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Summary = new ProductOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    InactiveCount = summary.InactiveCount,
+                    HiddenCount = summary.HiddenCount,
+                    SingleVariantCount = summary.SingleVariantCount,
+                    ScheduledCount = summary.ScheduledCount
+                },
+                Playbooks = BuildProductPlaybooks()
+            };
+
+            return View(vm);
         }
 
         [HttpGet]
@@ -365,6 +385,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
             }
+        }
+
+        private static OperationalPlaybookVm[] BuildProductPlaybooks()
+        {
+            return
+            [
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Inactive",
+                    WhyItMatters = "Inactive products stay out of live selling flows even when content and inventory already exist.",
+                    OperatorAction = "Review pricing, legal content, and stock readiness, then reactivate from the product editor when the item is ready."
+                },
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Hidden",
+                    WhyItMatters = "Hidden products often indicate merchandising holds, launch timing, or accidental visibility loss.",
+                    OperatorAction = "Confirm whether the product should remain hidden and restore visibility if the business expects it to appear."
+                },
+                new OperationalPlaybookVm
+                {
+                    QueueLabel = "Scheduled",
+                    WhyItMatters = "Publish windows create timing-sensitive catalog behavior around launches, campaigns, and seasonal stock.",
+                    OperatorAction = "Verify the publish window still matches campaign timing and that inventory and content are aligned before the window opens."
+                }
+            ];
         }
     }
 }

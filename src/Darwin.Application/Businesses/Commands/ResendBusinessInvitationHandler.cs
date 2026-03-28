@@ -6,6 +6,7 @@ using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Entities.Businesses;
+using Darwin.Domain.Entities.Settings;
 using Darwin.Domain.Enums;
 using Darwin.Shared.Security;
 using FluentValidation;
@@ -69,7 +70,8 @@ namespace Darwin.Application.Businesses.Commands
             await _db.SaveChangesAsync(ct);
 
             var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(invitation.Token);
-            var subject = $"Invitation to join {business.Name} on Darwin";
+            var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
+            var subject = ApplySubjectPrefix(siteSettings?.TransactionalEmailSubjectPrefix, $"Invitation to join {business.Name} on Darwin");
             var body =
                 $"<p>Hello,</p>" +
                 $"<p>Your invitation to join <strong>{business.Name}</strong> on Darwin as <strong>{invitation.Role}</strong> has been reissued.</p>" +
@@ -79,9 +81,11 @@ namespace Darwin.Application.Businesses.Commands
                 $"<p>Your new invitation token is:</p>" +
                 $"<p><code>{invitation.Token}</code></p>" +
                 $"<p>This invitation expires at <strong>{invitation.ExpiresAtUtc:u}</strong>.</p>";
+            var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? invitation.Email : siteSettings.CommunicationTestInboxEmail!;
+            body = ApplyRecipientOverrideNotice(invitation.Email, recipient, body);
 
             await _emailSender.SendAsync(
-                invitation.Email,
+                recipient,
                 subject,
                 body,
                 ct,
@@ -90,6 +94,21 @@ namespace Darwin.Application.Businesses.Commands
                     FlowKey = "BusinessInvitation",
                     BusinessId = invitation.BusinessId
                 });
+        }
+
+        private static string ApplySubjectPrefix(string? prefix, string subject)
+        {
+            return string.IsNullOrWhiteSpace(prefix) ? subject : $"{prefix.Trim()} {subject}";
+        }
+
+        private static string ApplyRecipientOverrideNotice(string originalRecipient, string effectiveRecipient, string body)
+        {
+            if (string.Equals(originalRecipient, effectiveRecipient, StringComparison.OrdinalIgnoreCase))
+            {
+                return body;
+            }
+
+            return $"<p><strong>Original recipient:</strong> {originalRecipient}</p>{body}";
         }
     }
 }

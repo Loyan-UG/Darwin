@@ -136,6 +136,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateProductHandler>();
             services.AddScoped<UpdateProductHandler>();
             services.AddScoped<GetProductsPageHandler>();
+            services.AddScoped<GetProductOpsSummaryHandler>();
             services.AddScoped<GetProductForEditHandler>();
             services.AddScoped<SoftDeleteProductHandler>();
 
@@ -143,6 +144,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateCategoryHandler>();
             services.AddScoped<UpdateCategoryHandler>();
             services.AddScoped<GetCategoriesPageHandler>();
+            services.AddScoped<GetCategoryOpsSummaryHandler>();
             services.AddScoped<GetCategoryForEditHandler>();
             services.AddScoped<SoftDeleteCategoryHandler>();
 
@@ -150,6 +152,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreatePageHandler>();
             services.AddScoped<UpdatePageHandler>();
             services.AddScoped<GetPagesPageHandler>();
+            services.AddScoped<GetPageOpsSummaryHandler>();
             services.AddScoped<GetPageForEditHandler>();
             services.AddScoped<SoftDeletePageHandler>();
             services.AddScoped<GetMediaAssetsPageHandler>();
@@ -227,6 +230,7 @@ namespace Darwin.WebAdmin.Extensions
 
             // Brands
             services.AddScoped<GetBrandsPageHandler>();
+            services.AddScoped<GetBrandOpsSummaryHandler>();
             services.AddScoped<GetBrandForEditHandler>();
             services.AddScoped<CreateBrandHandler>();
             services.AddScoped<UpdateBrandHandler>();
@@ -263,6 +267,7 @@ namespace Darwin.WebAdmin.Extensions
             // Orders – queries
             services.AddScoped<GetOrdersPageHandler>();
             services.AddScoped<GetShipmentsPageHandler>();
+            services.AddScoped<GetShipmentOpsSummaryHandler>();
             services.AddScoped<GetOrderForViewHandler>();
             services.AddScoped<GetOrderPaymentsPageHandler>();
             services.AddScoped<GetOrderShipmentsPageHandler>();
@@ -342,11 +347,15 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<UpdateInvoiceHandler>();
             services.AddScoped<TransitionInvoiceStatusHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
+            services.AddScoped<GetPaymentOpsSummaryHandler>();
             services.AddScoped<GetPaymentForEditHandler>();
             services.AddScoped<CreatePaymentHandler>();
             services.AddScoped<UpdatePaymentHandler>();
             services.AddScoped<GetFinancialAccountsPageHandler>();
             services.AddScoped<GetFinancialAccountForEditHandler>();
+            services.AddScoped<GetBillingPlansHandler>();
+            services.AddScoped<CreateSubscriptionCheckoutIntentHandler>();
+            services.AddScoped<SetCancelAtPeriodEndHandler>();
             services.AddScoped<CreateFinancialAccountHandler>();
             services.AddScoped<UpdateFinancialAccountHandler>();
             services.AddScoped<GetExpensesPageHandler>();
@@ -389,6 +398,7 @@ namespace Darwin.WebAdmin.Extensions
 
             // inside AddWebComposition(...) or your DI extension where other handlers are registered
             services.AddScoped<GetAddOnGroupsPageHandler>();
+            services.AddScoped<GetAddOnGroupOpsSummaryHandler>();
             services.AddScoped<GetAddOnGroupForEditHandler>();
             services.AddScoped<CreateAddOnGroupHandler>();
             services.AddScoped<UpdateAddOnGroupHandler>();

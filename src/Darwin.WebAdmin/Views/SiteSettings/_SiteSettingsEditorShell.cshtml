@@ -26,6 +26,8 @@
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-security">Security</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-mobile">Mobile</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-business-app">Business App</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-payments">Payments</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-shipping">Shipping</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-retention">Operational</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">Units</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-seo">SEO</a>
@@ -35,6 +37,7 @@
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-smtp">SMTP</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-sms">SMS</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-admin-routing">Admin Alerts</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-communications-policy">Communication Policy</a>
         </div>
     </div>
 
@@ -268,6 +271,125 @@
                     <label asp-for="BusinessTermsUrl" class="form-label"></label>
                     <input asp-for="BusinessTermsUrl" class="form-control" placeholder="https://www.loyan.de/agb-business" />
                     <span asp-validation-for="BusinessTermsUrl" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="site-settings-payments" class="card mb-4">
+        <div class="card-header">Payments (Stripe-first)</div>
+        <div class="card-body">
+            <div class="alert alert-secondary mb-3">
+                Stripe is the phase-1 payment provider. Keep the abstraction generic in code, but manage the near-term operational credentials and webhook verification here.
+            </div>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" asp-for="StripeEnabled" />
+                <label class="form-check-label" asp-for="StripeEnabled"></label>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="StripeMerchantDisplayName" class="form-label"></label>
+                    <input asp-for="StripeMerchantDisplayName" class="form-control" />
+                    <span asp-validation-for="StripeMerchantDisplayName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="StripePublishableKey" class="form-label"></label>
+                    <input asp-for="StripePublishableKey" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="StripePublishableKey" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="StripeSecretKey" class="form-label"></label>
+                    <input asp-for="StripeSecretKey" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="StripeSecretKey" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="StripeWebhookSecret" class="form-label"></label>
+                    <input asp-for="StripeWebhookSecret" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="StripeWebhookSecret" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="site-settings-shipping" class="card mb-4">
+        <div class="card-header">Shipping (DHL-first)</div>
+        <div class="card-body">
+            <div class="alert alert-secondary mb-3">
+                DHL is the phase-1 carrier. This section keeps carrier access, environment, and default shipper identity centrally manageable from the admin UI.
+            </div>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" asp-for="DhlEnabled" />
+                <label class="form-check-label" asp-for="DhlEnabled"></label>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="DhlEnvironment" class="form-label"></label>
+                    <select asp-for="DhlEnvironment" class="form-select">
+                        <option value="">Unspecified</option>
+                        <option value="Sandbox">Sandbox</option>
+                        <option value="Production">Production</option>
+                    </select>
+                    <span asp-validation-for="DhlEnvironment" class="text-danger"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="DhlApiBaseUrl" class="form-label"></label>
+                    <input asp-for="DhlApiBaseUrl" class="form-control" placeholder="https://..." />
+                    <span asp-validation-for="DhlApiBaseUrl" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DhlAccountNumber" class="form-label"></label>
+                    <input asp-for="DhlAccountNumber" class="form-control" />
+                    <span asp-validation-for="DhlAccountNumber" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DhlApiKey" class="form-label"></label>
+                    <input asp-for="DhlApiKey" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="DhlApiKey" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DhlApiSecret" class="form-label"></label>
+                    <input asp-for="DhlApiSecret" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="DhlApiSecret" class="text-danger"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <div class="fw-semibold mb-3">Default Shipper Identity</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="DhlShipperName" class="form-label"></label>
+                    <input asp-for="DhlShipperName" class="form-control" />
+                    <span asp-validation-for="DhlShipperName" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="DhlShipperEmail" class="form-label"></label>
+                    <input asp-for="DhlShipperEmail" class="form-control" />
+                    <span asp-validation-for="DhlShipperEmail" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="DhlShipperPhoneE164" class="form-label"></label>
+                    <input asp-for="DhlShipperPhoneE164" class="form-control" />
+                    <span asp-validation-for="DhlShipperPhoneE164" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="DhlShipperStreet" class="form-label"></label>
+                    <input asp-for="DhlShipperStreet" class="form-control" />
+                    <span asp-validation-for="DhlShipperStreet" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="DhlShipperPostalCode" class="form-label"></label>
+                    <input asp-for="DhlShipperPostalCode" class="form-control" />
+                    <span asp-validation-for="DhlShipperPostalCode" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="DhlShipperCity" class="form-label"></label>
+                    <input asp-for="DhlShipperCity" class="form-control" />
+                    <span asp-validation-for="DhlShipperCity" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="DhlShipperCountry" class="form-label"></label>
+                    <input asp-for="DhlShipperCountry" class="form-control" />
+                    <span asp-validation-for="DhlShipperCountry" class="text-danger"></span>
                 </div>
             </div>
         </div>
@@ -544,6 +666,29 @@
                 <label asp-for="AdminAlertSmsRecipientsCsv" class="form-label"></label>
                 <field-help title="Admin SMS recipients" content="Comma-separated E.164 phone numbers (e.g., +49123456789)." placement="right"></field-help>
                 <input asp-for="AdminAlertSmsRecipientsCsv" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    <div id="site-settings-communications-policy" class="card mb-4">
+        <div class="card-header">Transactional Communication Policy</div>
+        <div class="card-body">
+            <div class="alert alert-secondary mb-3">
+                These phase-1 controls affect the currently implemented invitation, activation, and password-reset email flows.
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="TransactionalEmailSubjectPrefix" class="form-label"></label>
+                    <input asp-for="TransactionalEmailSubjectPrefix" class="form-control" placeholder="[Darwin]" />
+                    <span asp-validation-for="TransactionalEmailSubjectPrefix" class="text-danger"></span>
+                    <div class="form-text">Prepended to current transactional email subjects for environment or ops signaling.</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CommunicationTestInboxEmail" class="form-label"></label>
+                    <input asp-for="CommunicationTestInboxEmail" class="form-control" placeholder="qa-inbox@example.com" />
+                    <span asp-validation-for="CommunicationTestInboxEmail" class="text-danger"></span>
+                    <div class="form-text">When set, phase-1 transactional emails are rerouted here and include the original recipient in the body.</div>
+                </div>
             </div>
         </div>
     </div>

@@ -5,6 +5,7 @@ using Darwin.Application.Catalog.Queries;
 using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.ViewModels.Catalog;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
     {
         // Groups
         private readonly GetAddOnGroupsPageHandler _getPage;
+        private readonly GetAddOnGroupOpsSummaryHandler _getSummary;
         private readonly GetAddOnGroupForEditHandler _getForEdit;
         private readonly CreateAddOnGroupHandler _create;
         private readonly UpdateAddOnGroupHandler _update;
@@ -48,6 +50,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
         public AddOnGroupsController(
             GetAddOnGroupsPageHandler getPage,
+            GetAddOnGroupOpsSummaryHandler getSummary,
             GetAddOnGroupForEditHandler getForEdit,
             CreateAddOnGroupHandler create,
             UpdateAddOnGroupHandler update,
@@ -67,6 +70,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             )
         {
             _getPage = getPage;
+            _getSummary = getSummary;
             _getForEdit = getForEdit;
             _create = create;
             _update = update;
@@ -91,16 +95,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         // ---------------- List ----------------
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            AddOnGroupQueueFilter filter = AddOnGroupQueueFilter.All,
+            CancellationToken ct = default)
         {
             // Application paging contract mirrors Brands (items,total)
-            var (items, total) = await _getPage.HandleAsync(page, pageSize, query, ct);
+            var (items, total) = await _getPage.HandleAsync(page, pageSize, query, filter, ct);
+            var summary = await _getSummary.HandleAsync(query, ct);
             var vm = new AddOnGroupsListVm
             {
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildFilterItems(filter),
+                Summary = new AddOnGroupOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    InactiveCount = summary.InactiveCount,
+                    GlobalCount = summary.GlobalCount,
+                    UnattachedCount = summary.UnattachedCount,
+                    VariantLinkedCount = summary.VariantLinkedCount
+                },
+                Playbooks = BuildPlaybooks(),
                 Items = items.Select(x => new AddOnGroupListItemVm
                 {
                     Id = x.Id,
@@ -109,6 +130,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     IsGlobal = x.IsGlobal,
                     IsActive = x.IsActive,
                     OptionsCount = x.OptionsCount,
+                    AttachmentCount = x.AttachmentCount,
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
                 }).ToList()
@@ -309,7 +331,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (group == null)
                 return NotFound();
 
-            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, ct); // culture-based list
+            var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct); // culture-based list
 
             // Load attached ids
             var attached = await _getAttachedProducts.HandleAsync(id, ct);
@@ -364,7 +386,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (group == null)
                 return NotFound();
 
-            var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", query, ct);
+            var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct);
 
             var attached = await _getAttachedCategories.HandleAsync(id, ct);
             var attachedSet = attached.ToHashSet();
@@ -417,7 +439,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (group == null)
                 return NotFound();
 
-            var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, "de-DE", query, ct);
+            var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct);
 
             var attached = await _getAttachedBrands.HandleAsync(id, ct);
             var attachedSet = attached.ToHashSet();
@@ -564,6 +586,40 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         private bool IsHtmxRequest()
         {
             return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static IEnumerable<SelectListItem> BuildFilterItems(AddOnGroupQueueFilter selected)
+        {
+            yield return new SelectListItem("All groups", AddOnGroupQueueFilter.All.ToString(), selected == AddOnGroupQueueFilter.All);
+            yield return new SelectListItem("Inactive", AddOnGroupQueueFilter.Inactive.ToString(), selected == AddOnGroupQueueFilter.Inactive);
+            yield return new SelectListItem("Global", AddOnGroupQueueFilter.Global.ToString(), selected == AddOnGroupQueueFilter.Global);
+            yield return new SelectListItem("Unattached", AddOnGroupQueueFilter.Unattached.ToString(), selected == AddOnGroupQueueFilter.Unattached);
+            yield return new SelectListItem("Variant/Product linked", AddOnGroupQueueFilter.VariantLinked.ToString(), selected == AddOnGroupQueueFilter.VariantLinked);
+        }
+
+        private static List<AddOnGroupPlaybookVm> BuildPlaybooks()
+        {
+            return
+            [
+                new()
+                {
+                    QueueLabel = "Unattached groups",
+                    WhyItMatters = "Configured add-on groups with no assignments cannot affect product configuration in checkout or ordering flows.",
+                    OperatorAction = "Attach the group to variants, products, categories, or brands depending on the intended scope."
+                },
+                new()
+                {
+                    QueueLabel = "Inactive groups",
+                    WhyItMatters = "Inactive groups stay visible in admin but should not surprise operators expecting them in live product configuration.",
+                    OperatorAction = "Review whether the group is intentionally retired or should be reactivated before business-side menu operations."
+                },
+                new()
+                {
+                    QueueLabel = "Global groups",
+                    WhyItMatters = "Global add-on groups can affect broad portions of the catalog and are higher-risk configuration changes.",
+                    OperatorAction = "Confirm the scope is really global and review downstream product/category/brand expectations before editing."
+                }
+            ];
         }
     }
 }

@@ -61,10 +61,21 @@ namespace Darwin.Application.CMS.DTOs
         public DateTime? PublishStartUtc { get; set; }
         public DateTime? PublishEndUtc { get; set; }
         public DateTime ModifiedAtUtc { get; set; }
+        public bool HasPublishWindow { get; set; }
+        public bool IsCurrentlyLive { get; set; }
 
         /// <summary>
         /// Concurrency token for optimistic concurrency control on inline operations
         /// </summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class PageOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int DraftCount { get; set; }
+        public int PublishedCount { get; set; }
+        public int WindowedCount { get; set; }
+        public int LiveWindowCount { get; set; }
     }
 }

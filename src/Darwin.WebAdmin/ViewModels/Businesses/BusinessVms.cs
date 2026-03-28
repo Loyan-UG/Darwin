@@ -129,15 +129,52 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
     public sealed class BusinessSubscriptionSnapshotVm
     {
         public bool HasSubscription { get; set; }
+        public Guid SubscriptionId { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public string Status { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;
+        public string PlanCode { get; set; } = string.Empty;
         public string PlanName { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
         public long UnitPriceMinor { get; set; }
         public DateTime? StartedAtUtc { get; set; }
         public DateTime? CurrentPeriodEndUtc { get; set; }
         public DateTime? TrialEndsAtUtc { get; set; }
+        public DateTime? CanceledAtUtc { get; set; }
         public bool CancelAtPeriodEnd { get; set; }
+    }
+
+    public sealed class BusinessSubscriptionWorkspaceVm
+    {
+        public BusinessContextVm Business { get; set; } = new();
+        public BusinessSubscriptionSnapshotVm Subscription { get; set; } = new();
+        public bool ManagementWebsiteConfigured { get; set; }
+        public string? ManagementWebsiteUrl { get; set; }
+        public List<BusinessBillingPlanVm> Plans { get; set; } = new();
+        public List<BusinessSubscriptionPlaybookVm> Playbooks { get; set; } = new();
+    }
+
+    public sealed class BusinessBillingPlanVm
+    {
+        public Guid Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public long PriceMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Interval { get; set; } = string.Empty;
+        public int IntervalCount { get; set; }
+        public int? TrialDays { get; set; }
+        public bool IsActive { get; set; }
+        public bool CheckoutReady { get; set; }
+        public string CheckoutReadinessLabel { get; set; } = string.Empty;
+    }
+
+    public sealed class BusinessSubscriptionPlaybookVm
+    {
+        public string QueueLabel { get; set; } = string.Empty;
+        public string WhyItMatters { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -290,6 +327,26 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public BusinessContextVm Business { get; set; } = new();
         public IEnumerable<SelectListItem> UserOptions { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> RoleOptions { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    /// <summary>
+    /// Admin-side preview of the rotating staff access badge used in the business app.
+    /// </summary>
+    public sealed class BusinessStaffAccessBadgeVm
+    {
+        public BusinessContextVm Business { get; set; } = new();
+        public Guid MembershipId { get; set; }
+        public Guid UserId { get; set; }
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string UserEmail { get; set; } = string.Empty;
+        public BusinessMemberRole Role { get; set; } = BusinessMemberRole.Staff;
+        public bool IsActive { get; set; }
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
+        public DateTime IssuedAtUtc { get; set; }
+        public DateTime ExpiresAtUtc { get; set; }
+        public string BadgePayload { get; set; } = string.Empty;
+        public string BadgeImageDataUrl { get; set; } = string.Empty;
     }
 
     /// <summary>

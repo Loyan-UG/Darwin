@@ -83,6 +83,24 @@ namespace Darwin.Application.Settings.Commands
             s.PrivacyPolicyUrl = dto.PrivacyPolicyUrl;
             s.BusinessTermsUrl = dto.BusinessTermsUrl;
             s.AccountDeletionUrl = dto.AccountDeletionUrl;
+            s.StripeEnabled = dto.StripeEnabled;
+            s.StripePublishableKey = dto.StripePublishableKey;
+            s.StripeSecretKey = dto.StripeSecretKey;
+            s.StripeWebhookSecret = dto.StripeWebhookSecret;
+            s.StripeMerchantDisplayName = dto.StripeMerchantDisplayName;
+            s.DhlEnabled = dto.DhlEnabled;
+            s.DhlEnvironment = dto.DhlEnvironment;
+            s.DhlApiBaseUrl = dto.DhlApiBaseUrl;
+            s.DhlApiKey = dto.DhlApiKey;
+            s.DhlApiSecret = dto.DhlApiSecret;
+            s.DhlAccountNumber = dto.DhlAccountNumber;
+            s.DhlShipperName = dto.DhlShipperName;
+            s.DhlShipperEmail = dto.DhlShipperEmail;
+            s.DhlShipperPhoneE164 = dto.DhlShipperPhoneE164;
+            s.DhlShipperStreet = dto.DhlShipperStreet;
+            s.DhlShipperPostalCode = dto.DhlShipperPostalCode;
+            s.DhlShipperCity = dto.DhlShipperCity;
+            s.DhlShipperCountry = dto.DhlShipperCountry;
 
 
             // -------- Soft delete / data retention --------
@@ -147,6 +165,8 @@ namespace Darwin.Application.Settings.Commands
             // -------- Admin routing --------
             s.AdminAlertEmailsCsv = dto.AdminAlertEmailsCsv;
             s.AdminAlertSmsRecipientsCsv = dto.AdminAlertSmsRecipientsCsv;
+            s.TransactionalEmailSubjectPrefix = dto.TransactionalEmailSubjectPrefix;
+            s.CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail;
 
             await _db.SaveChangesAsync(ct);
         }

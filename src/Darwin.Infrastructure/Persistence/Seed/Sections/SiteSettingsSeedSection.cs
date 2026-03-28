@@ -80,6 +80,24 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 PrivacyPolicyUrl = "https://www.loyan.de/datenschutz",
                 BusinessTermsUrl = "https://www.loyan.de/agb-business",
                 AccountDeletionUrl = "https://www.loyan.de/account-deletion",
+                StripeEnabled = false,
+                StripePublishableKey = null,
+                StripeSecretKey = null,
+                StripeWebhookSecret = null,
+                StripeMerchantDisplayName = "Darwin",
+                DhlEnabled = false,
+                DhlEnvironment = "Sandbox",
+                DhlApiBaseUrl = "https://api-sandbox.dhl.example",
+                DhlApiKey = null,
+                DhlApiSecret = null,
+                DhlAccountNumber = null,
+                DhlShipperName = "Darwin",
+                DhlShipperEmail = "ops@darwin.de",
+                DhlShipperPhoneE164 = "+4915112345678",
+                DhlShipperStreet = "Musterstrasse 1",
+                DhlShipperPostalCode = "10115",
+                DhlShipperCity = "Berlin",
+                DhlShipperCountry = "DE",
 
                 // Soft delete / data retention
                 SoftDeleteCleanupEnabled = true,
@@ -125,6 +143,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 // Admin alert channels (email/SMS to ops)
                 AdminAlertEmailsCsv = "ops@darwin.de",
                 AdminAlertSmsRecipientsCsv = "+4915112345678",
+                TransactionalEmailSubjectPrefix = "[Darwin]",
+                CommunicationTestInboxEmail = null,
 
                 // SMS (disabled by default)
                 SmsEnabled = false,

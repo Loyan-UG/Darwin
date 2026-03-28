@@ -8,6 +8,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form asp-action="Index" method="get" class="d-flex gap-2">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search...">
+        <input type="hidden" name="filter" value="@Model.Filter">
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
         <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
     </form>
@@ -17,12 +18,89 @@
     </a>
 </div>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Unpublished</div>
+                <div class="display-6 fw-semibold">@Model.Summary.UnpublishedCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Missing Slug</div>
+                <div class="display-6 fw-semibold">@Model.Summary.MissingSlugCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Missing Logo</div>
+                <div class="display-6 fw-semibold">@Model.Summary.MissingLogoCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Total</div>
+                <div class="display-6 fw-semibold">@Model.Summary.TotalCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Index" asp-route-query="@Model.Query" class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-primary")">All</a>
+                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="unpublished" class="btn @(Model.Filter == "unpublished" ? "btn-primary" : "btn-outline-primary")">Unpublished</a>
+                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-slug" class="btn @(Model.Filter == "missing-slug" ? "btn-primary" : "btn-outline-primary")">Missing Slug</a>
+                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-logo" class="btn @(Model.Filter == "missing-logo" ? "btn-primary" : "btn-outline-primary")">Missing Logo</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-light fw-semibold">Brand Operations Playbooks</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Queue</th>
+                        <th>Why It Matters</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var playbook in Model.Playbooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@playbook.QueueLabel</td>
+                            <td>@playbook.WhyItMatters</td>
+                            <td>@playbook.OperatorAction</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead>
             <tr>
                 <th>Name</th>
                 <th>Slug</th>
+                <th>Published</th>
+                <th>Logo</th>
                 <th>Modified</th>
                 <th class="text-end" style="width:220px;">Actions</th>
             </tr>
@@ -34,7 +112,27 @@
                 {
                     <tr>
                         <td>@b.Name</td>
-                        <td>@b.Slug</td>
+                        <td>@(string.IsNullOrWhiteSpace(b.Slug) ? "-" : b.Slug)</td>
+                        <td>
+                            @if (b.IsPublished)
+                            {
+                                <span class="badge bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-outline-secondary border">No</span>
+                            }
+                        </td>
+                        <td>
+                            @if (b.LogoMediaId != null)
+                            {
+                                <span class="badge bg-success">Configured</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Missing</span>
+                            }
+                        </td>
                         <td>@b.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                         <td class="text-end">
                             <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-secondary">
@@ -57,7 +155,7 @@
             }
             else
             {
-                <tr><td colspan="4" class="text-center text-muted">No brands.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">No brands.</td></tr>
             }
         </tbody>
     </table>
@@ -68,7 +166,8 @@
        total="Model.Total"
        asp-controller="Brands"
        asp-action="Index"
-       asp-route-query="@Model.Query">
+       asp-route-query="@Model.Query"
+       asp-route-filter="@Model.Filter">
 </pager>
 
 

@@ -23,7 +23,11 @@ namespace Darwin.Application.Orders.DTOs
     {
         All = 0,
         Pending = 1,
-        Shipped = 2
+        Shipped = 2,
+        MissingTracking = 3,
+        Returned = 4,
+        Dhl = 5,
+        MissingService = 6
     }
 
     public enum RefundQueueFilter
@@ -332,8 +336,21 @@ namespace Darwin.Application.Orders.DTOs
         /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
         public DateTime CreatedAtUtc { get; set; }
 
+        public bool IsDhl { get; set; }
+        public bool NeedsCarrierReview { get; set; }
+
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class ShipmentOpsSummaryDto
+    {
+        public int PendingCount { get; set; }
+        public int ShippedCount { get; set; }
+        public int MissingTrackingCount { get; set; }
+        public int ReturnedCount { get; set; }
+        public int DhlCount { get; set; }
+        public int MissingServiceCount { get; set; }
     }
 
     /// <summary>

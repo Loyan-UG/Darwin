@@ -2,6 +2,18 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Billing.DTOs
 {
+    public enum PaymentQueueFilter : short
+    {
+        Pending = 1,
+        Failed = 2,
+        Refunded = 3,
+        Unlinked = 4,
+        ProviderLinked = 5,
+        Stripe = 6,
+        MissingProviderRef = 7,
+        FailedStripe = 8
+    }
+
     public enum JournalEntryQueueFilter : short
     {
         Recent = 1,
@@ -29,10 +41,26 @@ namespace Darwin.Application.Billing.DTOs
         public PaymentStatus Status { get; set; }
         public string Provider { get; set; } = string.Empty;
         public string? ProviderTransactionRef { get; set; }
+        public string? FailureReason { get; set; }
         public DateTime? PaidAtUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long NetCapturedAmountMinor { get; set; }
+        public bool IsStripe { get; set; }
+        public bool NeedsSupportAttention { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class PaymentOpsSummaryDto
+    {
+        public int PendingCount { get; set; }
+        public int FailedCount { get; set; }
+        public int RefundedCount { get; set; }
+        public int UnlinkedCount { get; set; }
+        public int ProviderLinkedCount { get; set; }
+        public int StripeCount { get; set; }
+        public int MissingProviderRefCount { get; set; }
+        public int FailedStripeCount { get; set; }
     }
 
     public class PaymentCreateDto

@@ -110,6 +110,62 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "Account Deletion URL")]
         public string? AccountDeletionUrl { get; set; }
 
+        // ---------- Payments (Stripe-first) ----------
+        [Display(Name = "Enable Stripe")]
+        public bool StripeEnabled { get; set; }
+
+        [Display(Name = "Stripe Publishable Key")]
+        public string? StripePublishableKey { get; set; }
+
+        [Display(Name = "Stripe Secret Key")]
+        public string? StripeSecretKey { get; set; }
+
+        [Display(Name = "Stripe Webhook Secret")]
+        public string? StripeWebhookSecret { get; set; }
+
+        [Display(Name = "Stripe Merchant Display Name")]
+        public string? StripeMerchantDisplayName { get; set; }
+
+        // ---------- Shipping (DHL-first) ----------
+        [Display(Name = "Enable DHL")]
+        public bool DhlEnabled { get; set; }
+
+        [Display(Name = "DHL Environment")]
+        public string? DhlEnvironment { get; set; }
+
+        [Display(Name = "DHL API Base URL")]
+        public string? DhlApiBaseUrl { get; set; }
+
+        [Display(Name = "DHL API Key")]
+        public string? DhlApiKey { get; set; }
+
+        [Display(Name = "DHL API Secret")]
+        public string? DhlApiSecret { get; set; }
+
+        [Display(Name = "DHL Account Number")]
+        public string? DhlAccountNumber { get; set; }
+
+        [Display(Name = "DHL Shipper Name")]
+        public string? DhlShipperName { get; set; }
+
+        [Display(Name = "DHL Shipper Email")]
+        public string? DhlShipperEmail { get; set; }
+
+        [Display(Name = "DHL Shipper Phone (E.164)")]
+        public string? DhlShipperPhoneE164 { get; set; }
+
+        [Display(Name = "DHL Shipper Street")]
+        public string? DhlShipperStreet { get; set; }
+
+        [Display(Name = "DHL Shipper Postal Code")]
+        public string? DhlShipperPostalCode { get; set; }
+
+        [Display(Name = "DHL Shipper City")]
+        public string? DhlShipperCity { get; set; }
+
+        [Display(Name = "DHL Shipper Country")]
+        public string? DhlShipperCountry { get; set; }
+
         // ---------- Soft delete / retention ----------
         [Display(Name = "Soft Delete Cleanup Enabled")]
         public bool SoftDeleteCleanupEnabled { get; set; } = true;
@@ -245,5 +301,11 @@ namespace Darwin.WebAdmin.ViewModels.Settings
 
         [Display(Name = "Admin Alert SMS Recipients (CSV, E.164)")]
         public string? AdminAlertSmsRecipientsCsv { get; set; }
+
+        [Display(Name = "Transactional Email Subject Prefix")]
+        public string? TransactionalEmailSubjectPrefix { get; set; }
+
+        [Display(Name = "Communication Test Inbox")]
+        public string? CommunicationTestInboxEmail { get; set; }
     }
 }

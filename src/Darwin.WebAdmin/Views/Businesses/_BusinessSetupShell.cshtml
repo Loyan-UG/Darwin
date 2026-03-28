@@ -26,6 +26,9 @@
             <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
                 <i class="fa-solid fa-envelope"></i> Invitations
             </a>
+            <a asp-action="Subscription" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-credit-card"></i> Subscription
+            </a>
             <a asp-action="OwnerOverrideAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
                 <i class="fa-solid fa-clipboard-list"></i> Override Audit
             </a>
@@ -333,6 +336,7 @@
                 }
                 <div class="d-flex gap-2 mt-3 flex-wrap">
                     <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-secondary">Open Payments</a>
+                    <a asp-action="Subscription" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-secondary">Open Subscription</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary">Business App Handoffs</a>
                 </div>
             </div>

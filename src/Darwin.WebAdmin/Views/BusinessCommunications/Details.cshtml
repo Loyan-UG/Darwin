@@ -107,6 +107,40 @@
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Transactional Communication Policy</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Subject Prefix</dt>
+                    <dd class="col-sm-8">@(Model.TransactionalSubjectPrefixConfigured ? Model.TransactionalSubjectPrefix : "No prefix configured")</dd>
+                    <dt class="col-sm-4">Test Inbox</dt>
+                    <dd class="col-sm-8">@(Model.TestInboxConfigured ? Model.TestInboxEmail : "Not rerouting")</dd>
+                </dl>
+                <div class="small text-muted mt-3">
+                    Current invitation, activation, and password-reset flows apply this prefix and reroute to the test inbox when configured.
+                </div>
+                <div class="mt-3">
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">Open Communication Policy</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Phase-1 Policy Implications</div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Subject prefix applies to current SMTP-based invitation, activation, and password-reset subjects.</li>
+                    <li>Test inbox reroute redirects those emails for controlled validation and prepends the original recipient to the body.</li>
+                    <li>This is an operational control, not a reusable template-engine or retry-queue replacement.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="card h-100">

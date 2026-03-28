@@ -4,6 +4,7 @@ using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    partial class DarwinDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260328125821_SiteSettingStripeAndDhlProviderSettings")]
+    partial class SiteSettingStripeAndDhlProviderSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -6463,10 +6466,6 @@ namespace Darwin.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("CommunicationTestInboxEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
                     b.Property<string>("ContactEmail")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -6776,10 +6775,6 @@ namespace Darwin.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("TransactionalEmailSubjectPrefix")
-                        .HasMaxLength(120)
-                        .HasColumnType("nvarchar(120)");
 
                     b.Property<string>("WebAuthnAllowedOriginsCsv")
                         .IsRequired()

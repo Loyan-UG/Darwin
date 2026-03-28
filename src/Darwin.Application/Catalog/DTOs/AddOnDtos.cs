@@ -5,6 +5,15 @@ using System.Collections.Generic;
 
 namespace Darwin.Application.Catalog.DTOs
 {
+    public enum AddOnGroupQueueFilter
+    {
+        All = 0,
+        Inactive = 1,
+        Global = 2,
+        Unattached = 3,
+        VariantLinked = 4
+    }
+
     /// <summary>
     /// Create payload for an AddOnGroup with nested options/values.
     /// </summary>
@@ -71,6 +80,7 @@ namespace Darwin.Application.Catalog.DTOs
         public bool IsGlobal { get; set; }
         public bool IsActive { get; set; }
         public int OptionsCount { get; set; }
+        public int AttachmentCount { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
 
         /// <summary>
@@ -78,6 +88,15 @@ namespace Darwin.Application.Catalog.DTOs
         /// Required by the Web layer to safely perform inline updates/deletes.
         /// </summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class AddOnGroupOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int GlobalCount { get; set; }
+        public int UnattachedCount { get; set; }
+        public int VariantLinkedCount { get; set; }
     }
 
     /// <summary>

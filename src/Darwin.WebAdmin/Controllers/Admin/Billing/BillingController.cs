@@ -4,6 +4,7 @@ using Darwin.Application.Billing.Queries;
 using Darwin.Domain.Enums;
 using Darwin.WebAdmin.Controllers.Admin;
 using Darwin.WebAdmin.Services.Admin;
+using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Billing;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
     public sealed class BillingController : AdminBaseController
     {
         private readonly GetPaymentsPageHandler _getPaymentsPage;
+        private readonly GetPaymentOpsSummaryHandler _getPaymentOpsSummary;
         private readonly GetPaymentForEditHandler _getPaymentForEdit;
         private readonly CreatePaymentHandler _createPayment;
         private readonly UpdatePaymentHandler _updatePayment;
@@ -32,9 +34,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         private readonly CreateJournalEntryHandler _createJournalEntry;
         private readonly UpdateJournalEntryHandler _updateJournalEntry;
         private readonly AdminReferenceDataService _referenceData;
+        private readonly ISiteSettingCache _siteSettingCache;
 
         public BillingController(
             GetPaymentsPageHandler getPaymentsPage,
+            GetPaymentOpsSummaryHandler getPaymentOpsSummary,
             GetPaymentForEditHandler getPaymentForEdit,
             CreatePaymentHandler createPayment,
             UpdatePaymentHandler updatePayment,
@@ -50,9 +54,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             GetJournalEntryForEditHandler getJournalEntryForEdit,
             CreateJournalEntryHandler createJournalEntry,
             UpdateJournalEntryHandler updateJournalEntry,
-            AdminReferenceDataService referenceData)
+            AdminReferenceDataService referenceData,
+            ISiteSettingCache siteSettingCache)
         {
             _getPaymentsPage = getPaymentsPage;
+            _getPaymentOpsSummary = getPaymentOpsSummary;
             _getPaymentForEdit = getPaymentForEdit;
             _createPayment = createPayment;
             _updatePayment = updatePayment;
@@ -69,13 +75,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             _createJournalEntry = createJournalEntry;
             _updateJournalEntry = updateJournalEntry;
             _referenceData = referenceData;
+            _siteSettingCache = siteSettingCache;
         }
 
         [HttpGet]
         public IActionResult Index() => RedirectToAction(nameof(Payments));
 
         [HttpGet]
-        public async Task<IActionResult> Payments(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Payments(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, PaymentQueueFilter? queue = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
 
@@ -83,7 +90,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getPaymentsPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getPaymentsPage.HandleAsync(businessId.Value, page, pageSize, q, queue, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new PaymentListItemVm
                 {
                     Id = x.Id,
@@ -104,9 +111,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     Status = x.Status,
                     Provider = x.Provider,
                     ProviderTransactionRef = x.ProviderTransactionRef,
+                    FailureReason = x.FailureReason,
                     PaidAtUtc = x.PaidAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
                     RefundedAmountMinor = x.RefundedAmountMinor,
                     NetCapturedAmountMinor = x.NetCapturedAmountMinor,
+                    IsStripe = x.IsStripe,
+                    NeedsSupportAttention = x.NeedsSupportAttention,
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
@@ -116,6 +127,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
+                QueueFilter = queue,
+                Stripe = await BuildStripeOperationsVmAsync(ct).ConfigureAwait(false),
+                Summary = businessId.HasValue
+                    ? await BuildPaymentOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
+                    : new PaymentOpsSummaryVm(),
+                Playbooks = BuildPaymentPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -124,6 +141,71 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
 
             return View(vm);
+        }
+
+        private async Task<StripeOperationsVm> BuildStripeOperationsVmAsync(CancellationToken ct)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            return new StripeOperationsVm
+            {
+                Enabled = settings.StripeEnabled,
+                PublishableKeyConfigured = !string.IsNullOrWhiteSpace(settings.StripePublishableKey),
+                SecretKeyConfigured = !string.IsNullOrWhiteSpace(settings.StripeSecretKey),
+                WebhookSecretConfigured = !string.IsNullOrWhiteSpace(settings.StripeWebhookSecret),
+                MerchantDisplayNameConfigured = !string.IsNullOrWhiteSpace(settings.StripeMerchantDisplayName),
+                MerchantDisplayName = settings.StripeMerchantDisplayName ?? string.Empty
+            };
+        }
+
+        private async Task<PaymentOpsSummaryVm> BuildPaymentOpsSummaryVmAsync(Guid businessId, CancellationToken ct)
+        {
+            var summary = await _getPaymentOpsSummary.HandleAsync(businessId, ct).ConfigureAwait(false);
+            return new PaymentOpsSummaryVm
+            {
+                PendingCount = summary.PendingCount,
+                FailedCount = summary.FailedCount,
+                RefundedCount = summary.RefundedCount,
+                UnlinkedCount = summary.UnlinkedCount,
+                ProviderLinkedCount = summary.ProviderLinkedCount,
+                StripeCount = summary.StripeCount,
+                MissingProviderRefCount = summary.MissingProviderRefCount,
+                FailedStripeCount = summary.FailedStripeCount
+            };
+        }
+
+        private static List<ProviderPlaybookVm> BuildPaymentPlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Pending payments",
+                    ScopeNote = "Use this for payments waiting on capture or manual completion.",
+                    OperatorAction = "Review the order and payment rows, then record or correct payment status from the payment editor when the provider outcome is known.",
+                    SettingsDependency = "Stripe secret key and merchant identity should already be configured before live capture workflows are relied on."
+                },
+                new()
+                {
+                    Title = "Stripe rows without provider reference",
+                    ScopeNote = "These rows are risky because callback/reconciliation correlation is weak.",
+                    OperatorAction = "Open the payment or linked order, verify the real Stripe intent/charge id, and document or correct the provider reference before treating the record as operationally complete.",
+                    SettingsDependency = "Stripe webhook secret and secret key should be configured before assuming provider-linked automation is trustworthy."
+                },
+                new()
+                {
+                    Title = "Failed payments",
+                    ScopeNote = "Treat these as support items first, not silent retries.",
+                    OperatorAction = "Open the linked order/customer, verify the provider reference or failure state, and only add or edit payments after support validation.",
+                    SettingsDependency = "Webhook secret and provider credentials must be configured before trusting automated Stripe lifecycle handling."
+                },
+                new()
+                {
+                    Title = "Unlinked or provider-linked rows",
+                    ScopeNote = "These rows usually represent reconciliation or data-hygiene work.",
+                    OperatorAction = "Link order/invoice context where known, or keep the row documented as a standalone support payment until Stripe-specific reconciliation matures.",
+                    SettingsDependency = "Phase-1 Stripe readiness should be green before treating provider-linked rows as production-grade evidence."
+                }
+            };
         }
 
         [HttpGet]
