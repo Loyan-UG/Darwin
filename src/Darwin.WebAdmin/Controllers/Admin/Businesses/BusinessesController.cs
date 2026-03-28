@@ -188,15 +188,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> SupportQueue(CancellationToken ct = default)
         {
-            var summaryTask = _getBusinessSupportSummary.HandleAsync(null, ct);
-            var attentionTask = _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct);
-            var failedEmailsTask = _getEmailDispatchAuditsPage.HandleAsync(1, 8, null, "Failed", null, null, ct);
-
-            await Task.WhenAll(summaryTask, attentionTask, failedEmailsTask).ConfigureAwait(false);
-
-            var summary = await summaryTask.ConfigureAwait(false);
-            var (attentionBusinesses, _) = await attentionTask.ConfigureAwait(false);
-            var (failedEmails, _) = await failedEmailsTask.ConfigureAwait(false);
+            var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
+            var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct).ConfigureAwait(false);
+            var (failedEmails, _) = await _getEmailDispatchAuditsPage.HandleAsync(1, 8, null, "Failed", null, null, ct).ConfigureAwait(false);
 
             var vm = new BusinessSupportQueueVm
             {

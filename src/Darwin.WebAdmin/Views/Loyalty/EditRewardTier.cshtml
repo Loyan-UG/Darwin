@@ -1,0 +1,45 @@
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyRewardTierEditVm
+@{
+    ViewData["Title"] = "Edit Reward Tier";
+}
+
+<h1 class="mb-1">Edit Reward Tier</h1>
+<div class="text-muted mb-3">@Model.ProgramName</div>
+
+<form asp-action="EditRewardTier" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="LoyaltyProgramId" type="hidden" />
+    <input asp-for="BusinessId" type="hidden" />
+    <input asp-for="ProgramName" type="hidden" />
+    <input asp-for="RowVersion" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="col-md-3">
+        <label asp-for="PointsRequired" class="form-label"></label>
+        <input asp-for="PointsRequired" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="RewardType" class="form-label"></label>
+        <select asp-for="RewardType" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyRewardType>()" class="form-select"></select>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="RewardValue" class="form-label"></label>
+        <input asp-for="RewardValue" class="form-control" />
+    </div>
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="col-12">
+        <label asp-for="MetadataJson" class="form-label"></label>
+        <textarea asp-for="MetadataJson" class="form-control" rows="4"></textarea>
+    </div>
+    <div class="col-12 form-check ms-2">
+        <input asp-for="AllowSelfRedemption" class="form-check-input" />
+        <label asp-for="AllowSelfRedemption" class="form-check-label"></label>
+    </div>
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>

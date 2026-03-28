@@ -24,35 +24,39 @@ namespace Darwin.Application.Businesses.Queries
         {
             var baseQuery = _db.Set<Business>().AsNoTracking();
 
-            var transactionalEnabledTask = baseQuery.CountAsync(x => x.CustomerEmailNotificationsEnabled, ct);
-            var marketingEnabledTask = baseQuery.CountAsync(x => x.CustomerMarketingEmailsEnabled, ct);
-            var operationalAlertsEnabledTask = baseQuery.CountAsync(x => x.OperationalAlertEmailsEnabled, ct);
-            var missingSupportEmailTask = baseQuery.CountAsync(x => string.IsNullOrWhiteSpace(x.SupportEmail), ct);
-            var missingSenderIdentityTask = baseQuery.CountAsync(x =>
-                string.IsNullOrWhiteSpace(x.CommunicationSenderName) ||
-                string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail), ct);
-            var requiresEmailSetupTask = baseQuery.CountAsync(x =>
-                (x.CustomerEmailNotificationsEnabled || x.CustomerMarketingEmailsEnabled || x.OperationalAlertEmailsEnabled) &&
-                (string.IsNullOrWhiteSpace(x.SupportEmail) ||
-                 string.IsNullOrWhiteSpace(x.CommunicationSenderName) ||
-                 string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail)), ct);
-
-            await Task.WhenAll(
-                transactionalEnabledTask,
-                marketingEnabledTask,
-                operationalAlertsEnabledTask,
-                missingSupportEmailTask,
-                missingSenderIdentityTask,
-                requiresEmailSetupTask).ConfigureAwait(false);
+            var transactionalEnabledCount = await baseQuery
+                .CountAsync(x => x.CustomerEmailNotificationsEnabled, ct)
+                .ConfigureAwait(false);
+            var marketingEnabledCount = await baseQuery
+                .CountAsync(x => x.CustomerMarketingEmailsEnabled, ct)
+                .ConfigureAwait(false);
+            var operationalAlertsEnabledCount = await baseQuery
+                .CountAsync(x => x.OperationalAlertEmailsEnabled, ct)
+                .ConfigureAwait(false);
+            var missingSupportEmailCount = await baseQuery
+                .CountAsync(x => string.IsNullOrWhiteSpace(x.SupportEmail), ct)
+                .ConfigureAwait(false);
+            var missingSenderIdentityCount = await baseQuery
+                .CountAsync(x =>
+                    string.IsNullOrWhiteSpace(x.CommunicationSenderName) ||
+                    string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail), ct)
+                .ConfigureAwait(false);
+            var requiresEmailSetupCount = await baseQuery
+                .CountAsync(x =>
+                    (x.CustomerEmailNotificationsEnabled || x.CustomerMarketingEmailsEnabled || x.OperationalAlertEmailsEnabled) &&
+                    (string.IsNullOrWhiteSpace(x.SupportEmail) ||
+                     string.IsNullOrWhiteSpace(x.CommunicationSenderName) ||
+                     string.IsNullOrWhiteSpace(x.CommunicationReplyToEmail)), ct)
+                .ConfigureAwait(false);
 
             return new BusinessCommunicationOpsSummaryDto
             {
-                BusinessesWithCustomerEmailNotificationsEnabledCount = transactionalEnabledTask.Result,
-                BusinessesWithMarketingEmailsEnabledCount = marketingEnabledTask.Result,
-                BusinessesWithOperationalAlertEmailsEnabledCount = operationalAlertsEnabledTask.Result,
-                BusinessesMissingSupportEmailCount = missingSupportEmailTask.Result,
-                BusinessesMissingSenderIdentityCount = missingSenderIdentityTask.Result,
-                BusinessesRequiringEmailSetupCount = requiresEmailSetupTask.Result
+                BusinessesWithCustomerEmailNotificationsEnabledCount = transactionalEnabledCount,
+                BusinessesWithMarketingEmailsEnabledCount = marketingEnabledCount,
+                BusinessesWithOperationalAlertEmailsEnabledCount = operationalAlertsEnabledCount,
+                BusinessesMissingSupportEmailCount = missingSupportEmailCount,
+                BusinessesMissingSenderIdentityCount = missingSenderIdentityCount,
+                BusinessesRequiringEmailSetupCount = requiresEmailSetupCount
             };
         }
     }

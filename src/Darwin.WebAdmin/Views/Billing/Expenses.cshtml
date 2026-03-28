@@ -32,7 +32,13 @@
                     <td>@item.Category</td>
                     <td>@item.Description</td>
                     <td>EUR @((item.AmountMinor / 100M).ToString("0.00"))</td>
-                    <td class="text-end"><a asp-action="EditExpense" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                    <td class="text-end">
+                        <a asp-action="EditExpense" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        @if (item.SupplierId.HasValue)
+                        {
+                            <a asp-controller="Inventory" asp-action="EditSupplier" asp-route-id="@item.SupplierId.Value" class="btn btn-sm btn-outline-info">Supplier</a>
+                        }
+                    </td>
                 </tr>
             }
         }

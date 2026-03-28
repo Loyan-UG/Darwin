@@ -1,0 +1,61 @@
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignsListVm
+@{
+    ViewData["Title"] = "Loyalty Campaigns";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-1">Loyalty Campaigns</h1>
+        <div class="text-muted">Business mobile campaign management and activation control.</div>
+    </div>
+    <a asp-action="CreateCampaign" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Campaign</a>
+</div>
+
+<form asp-action="Campaigns" method="get" class="d-flex gap-2 mb-3">
+    <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+    <button class="btn btn-outline-secondary" type="submit">Filter</button>
+    <a asp-action="Campaigns" class="btn btn-outline-secondary">Reset</a>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>Name</th><th>Title</th><th>State</th><th>Channels</th><th>Window</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted">No campaigns found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Title</td>
+                    <td>@item.CampaignState</td>
+                    <td>@(item.Channels == 3 ? "In-app + Push" : "In-app only")</td>
+                    <td>
+                        <div>@(item.StartsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                        <div class="small text-muted">to @(item.EndsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="EditCampaign" asp-route-id="@item.Id" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <form asp-action="SetCampaignActivation" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <input type="hidden" name="businessId" value="@item.BusinessId" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                            <input type="hidden" name="isActive" value="@((!item.IsActive).ToString())" />
+                            <button type="submit" class="btn btn-sm @(item.IsActive ? "btn-outline-warning" : "btn-outline-success")">
+                                @(item.IsActive ? "Deactivate" : "Activate")
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Campaigns" asp-route-businessId="@Model.BusinessId"></pager>

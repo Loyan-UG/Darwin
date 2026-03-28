@@ -27,6 +27,15 @@ namespace Darwin.Application.Loyalty.DTOs
         public Guid UserId { get; set; }
     }
 
+    /// <summary>
+    /// Admin-side request DTO to provision a loyalty account for a selected user and business.
+    /// </summary>
+    public sealed class CreateLoyaltyAccountByAdminDto
+    {
+        public Guid BusinessId { get; set; }
+        public Guid UserId { get; set; }
+    }
+
 
 
     /// <summary>

@@ -38,52 +38,49 @@ namespace Darwin.Application.Businesses.Queries
                 string.IsNullOrWhiteSpace(x.ContactEmail) ||
                 string.IsNullOrWhiteSpace(x.LegalName));
 
-            var pendingApprovalTask = _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => x.OperationalStatus == BusinessOperationalStatus.PendingApproval, ct);
+            var pendingApprovalCount = await _db.Set<Business>().AsNoTracking()
+                .CountAsync(x => x.OperationalStatus == BusinessOperationalStatus.PendingApproval, ct)
+                .ConfigureAwait(false);
 
-            var suspendedTask = _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => x.OperationalStatus == BusinessOperationalStatus.Suspended, ct);
+            var suspendedCount = await _db.Set<Business>().AsNoTracking()
+                .CountAsync(x => x.OperationalStatus == BusinessOperationalStatus.Suspended, ct)
+                .ConfigureAwait(false);
 
-            var missingOwnerTask = _db.Set<Business>().AsNoTracking()
-                .CountAsync(x => !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner), ct);
+            var missingOwnerCount = await _db.Set<Business>().AsNoTracking()
+                .CountAsync(x => !_db.Set<BusinessMember>().Any(m => m.BusinessId == x.Id && m.IsActive && m.Role == BusinessMemberRole.Owner), ct)
+                .ConfigureAwait(false);
 
-            var attentionTask = attentionBusinessQuery.CountAsync(ct);
+            var attentionCount = await attentionBusinessQuery.CountAsync(ct).ConfigureAwait(false);
 
-            var openInvitationsTask = _db.Set<BusinessInvitation>().AsNoTracking()
-                .CountAsync(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired, ct);
+            var openInvitationsCount = await _db.Set<BusinessInvitation>().AsNoTracking()
+                .CountAsync(x => x.Status == BusinessInvitationStatus.Pending || x.Status == BusinessInvitationStatus.Expired, ct)
+                .ConfigureAwait(false);
 
-            var pendingActivationTask =
+            var pendingActivationCount = await
                 (from member in _db.Set<BusinessMember>().AsNoTracking()
                  join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id
                  where !user.IsDeleted && member.IsActive && !user.EmailConfirmed
                  select member.Id)
-                .CountAsync(ct);
+                .CountAsync(ct)
+                .ConfigureAwait(false);
 
-            var lockedMembersTask =
+            var lockedMembersCount = await
                 (from member in _db.Set<BusinessMember>().AsNoTracking()
                  join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id
                  where !user.IsDeleted && user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > nowUtc
                  select member.Id)
-                .CountAsync(ct);
-
-            await Task.WhenAll(
-                pendingApprovalTask,
-                suspendedTask,
-                missingOwnerTask,
-                attentionTask,
-                openInvitationsTask,
-                pendingActivationTask,
-                lockedMembersTask).ConfigureAwait(false);
+                .CountAsync(ct)
+                .ConfigureAwait(false);
 
             var dto = new BusinessSupportSummaryDto
             {
-                PendingApprovalBusinessCount = pendingApprovalTask.Result,
-                SuspendedBusinessCount = suspendedTask.Result,
-                MissingOwnerBusinessCount = missingOwnerTask.Result,
-                AttentionBusinessCount = attentionTask.Result,
-                OpenInvitationCount = openInvitationsTask.Result,
-                PendingActivationMemberCount = pendingActivationTask.Result,
-                LockedMemberCount = lockedMembersTask.Result
+                PendingApprovalBusinessCount = pendingApprovalCount,
+                SuspendedBusinessCount = suspendedCount,
+                MissingOwnerBusinessCount = missingOwnerCount,
+                AttentionBusinessCount = attentionCount,
+                OpenInvitationCount = openInvitationsCount,
+                PendingActivationMemberCount = pendingActivationCount,
+                LockedMemberCount = lockedMembersCount
             };
 
             if (selectedBusinessId.HasValue)

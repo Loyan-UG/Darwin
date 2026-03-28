@@ -322,6 +322,7 @@ namespace Darwin.Application.Billing.Queries
             int page,
             int pageSize,
             string? query = null,
+            AccountType? type = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -330,6 +331,11 @@ namespace Darwin.Application.Billing.Queries
             var accountsQuery = _db.Set<FinancialAccount>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
+
+            if (type.HasValue)
+            {
+                accountsQuery = accountsQuery.Where(x => x.Type == type.Value);
+            }
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -475,6 +481,7 @@ namespace Darwin.Application.Billing.Queries
             int page,
             int pageSize,
             string? query = null,
+            JournalEntryQueueFilter? filter = null,
             CancellationToken ct = default)
         {
             if (page < 1) page = 1;
@@ -484,10 +491,26 @@ namespace Darwin.Application.Billing.Queries
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
 
+            if (filter.HasValue)
+            {
+                journalEntriesQuery = filter.Value switch
+                {
+                    JournalEntryQueueFilter.Recent => journalEntriesQuery.Where(x => x.EntryDateUtc >= DateTime.UtcNow.AddDays(-7)),
+                    JournalEntryQueueFilter.MultiLine => journalEntriesQuery.Where(x => x.Lines.Count > 2),
+                    _ => journalEntriesQuery
+                };
+            }
+
             if (!string.IsNullOrWhiteSpace(query))
             {
                 var term = query.Trim();
-                journalEntriesQuery = journalEntriesQuery.Where(x => x.Description.Contains(term));
+                journalEntriesQuery = journalEntriesQuery.Where(x =>
+                    x.Description.Contains(term) ||
+                    x.Lines.Any(l =>
+                        _db.Set<FinancialAccount>().Any(a =>
+                            a.Id == l.AccountId &&
+                            (a.Name.Contains(term) ||
+                             (a.Code != null && a.Code.Contains(term))))));
             }
 
             var total = await journalEntriesQuery.CountAsync(ct).ConfigureAwait(false);

@@ -1,0 +1,56 @@
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyProgramsListVm
+@{
+    ViewData["Title"] = "Loyalty Programs";
+}
+
+<h1 class="mb-3">Loyalty Programs</h1>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="Programs" method="get" class="d-flex gap-2">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <a asp-action="Programs" class="btn btn-outline-secondary">Reset</a>
+    </form>
+    <div class="d-flex gap-2">
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Campaigns</a>
+        <a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Scan Sessions</a>
+        <a asp-action="CreateProgram" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Program</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>Name</th><th>Accrual</th><th>Active</th><th>Updated</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="5" class="text-center text-muted">No loyalty programs found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.AccrualMode</td>
+                    <td>@(item.IsActive ? "Yes" : "No")</td>
+                    <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td class="text-end">
+                        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@item.Id" class="btn btn-sm btn-outline-primary">Rewards</a>
+                        <a asp-action="EditProgram" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <form asp-action="DeleteProgram" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <input type="hidden" name="businessId" value="@item.BusinessId" />
+                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Programs" asp-route-businessId="@Model.BusinessId"></pager>

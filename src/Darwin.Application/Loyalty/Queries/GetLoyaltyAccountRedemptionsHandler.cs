@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Loyalty.DTOs;
+using Darwin.Domain.Entities.Identity;
 using Darwin.Domain.Entities.Loyalty;
 using Microsoft.EntityFrameworkCore;
 
@@ -63,13 +64,20 @@ namespace Darwin.Application.Loyalty.Queries
                 .Where(r => r.LoyaltyAccountId == loyaltyAccountId);
 
             var accountQuery = _db.Set<LoyaltyAccount>().AsNoTracking();
+            var userQuery = _db.Set<User>().AsNoTracking();
             var txQuery = _db.Set<LoyaltyPointsTransaction>().AsNoTracking();
             var scanQuery = _db.Set<ScanSession>().AsNoTracking();
+            var rewardTierQuery = _db.Set<LoyaltyRewardTier>().AsNoTracking();
 
             var query =
                 from redemption in redemptionQuery
                 join account in accountQuery
                     on redemption.LoyaltyAccountId equals account.Id
+                join user in userQuery
+                    on account.UserId equals user.Id
+                join rewardTier in rewardTierQuery
+                    on redemption.LoyaltyRewardTierId equals rewardTier.Id into rewardTierGroup
+                from rewardTier in rewardTierGroup.DefaultIfEmpty()
                 join tx in txQuery
                     on redemption.Id equals tx.RewardRedemptionId into txGroup
                 from tx in txGroup.DefaultIfEmpty()
@@ -82,22 +90,27 @@ namespace Darwin.Application.Loyalty.Queries
                     Id = redemption.Id,
                     LoyaltyAccountId = redemption.LoyaltyAccountId,
                     BusinessId = redemption.BusinessId,
-                    // Consumer user is represented by the loyalty account.
                     ConsumerUserId = account.UserId,
-
                     RewardTierId = redemption.LoyaltyRewardTierId,
+                    RewardLabel = rewardTier != null
+                        ? (!string.IsNullOrWhiteSpace(rewardTier.Description)
+                            ? rewardTier.Description!
+                            : rewardTier.RewardType.ToString())
+                        : redemption.LoyaltyRewardTierId.ToString(),
                     PointsSpent = redemption.PointsSpent,
-
-                    // Use entity creation time as the redemption timestamp.
-                    RedeemedAtUtc = redemption.CreatedAtUtc,
-
-                    // Deprecated!
-                    // When a scan session produced this redemption, surface its id.
-                    //ScanSessionId = scan != null ? scan.Id : (Guid?)null,
-
-                    // Domain stores notes on the associated points transaction (if any),
-                    // so we expose that as the "note" for the redemption row.
-                    Note = tx != null ? tx.Notes : null
+                    Status = redemption.Status,
+                    RedeemedAtUtc = redemption.RedeemedAtUtc ?? redemption.CreatedAtUtc,
+                    Note = tx != null ? tx.Notes : null,
+                    ConsumerDisplayName =
+                        string.IsNullOrWhiteSpace(((user.FirstName ?? string.Empty) + " " + (user.LastName ?? string.Empty)).Trim())
+                            ? user.Email
+                            : ((user.FirstName ?? string.Empty) + " " + (user.LastName ?? string.Empty)).Trim(),
+                    ConsumerEmail = user.Email,
+                    ScanStatus = scan != null ? scan.Status : null,
+                    ScanOutcome = scan != null ? scan.Outcome : null,
+                    ScanFailureReason = scan != null ? scan.FailureReason : null,
+                    BusinessLocationId = redemption.BusinessLocationId,
+                    RowVersion = redemption.RowVersion
                 };
 
             var items = await query

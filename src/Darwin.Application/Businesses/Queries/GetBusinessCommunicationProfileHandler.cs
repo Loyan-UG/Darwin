@@ -58,14 +58,16 @@ namespace Darwin.Application.Businesses.Queries
                 return null;
             }
 
-            var pendingActivationTask = (
+            business.PendingActivationMemberCount = await (
                 from member in _db.Set<BusinessMember>().AsNoTracking()
                 join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id into userJoin
                 from user in userJoin.DefaultIfEmpty()
                 where member.BusinessId == businessId && user != null && !user.EmailConfirmed
-                select member.Id).CountAsync(ct);
+                select member.Id)
+                .CountAsync(ct)
+                .ConfigureAwait(false);
 
-            var lockedMembersTask = (
+            business.LockedMemberCount = await (
                 from member in _db.Set<BusinessMember>().AsNoTracking()
                 join user in _db.Set<User>().AsNoTracking() on member.UserId equals user.Id into userJoin
                 from user in userJoin.DefaultIfEmpty()
@@ -73,12 +75,10 @@ namespace Darwin.Application.Businesses.Queries
                       user != null &&
                       user.LockoutEndUtc.HasValue &&
                       user.LockoutEndUtc.Value > nowUtc
-                select member.Id).CountAsync(ct);
+                select member.Id)
+                .CountAsync(ct)
+                .ConfigureAwait(false);
 
-            await Task.WhenAll(pendingActivationTask, lockedMembersTask).ConfigureAwait(false);
-
-            business.PendingActivationMemberCount = pendingActivationTask.Result;
-            business.LockedMemberCount = lockedMembersTask.Result;
             return business;
         }
     }

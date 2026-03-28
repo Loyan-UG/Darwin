@@ -47,17 +47,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             BusinessCommunicationSetupFilter filter = BusinessCommunicationSetupFilter.NeedsSetup,
             CancellationToken ct = default)
         {
-            var summaryTask = _getSummary.HandleAsync(ct);
-            var settingsTask = _siteSettingCache.GetAsync(ct);
-            var setupPageTask = _getSetupPage.HandleAsync(page, pageSize, query, setupOnly, filter, ct);
-            var emailAuditTask = _getEmailDispatchAuditsPage.HandleAsync(1, 10, null, null, null, null, ct);
-
-            await Task.WhenAll(summaryTask, settingsTask, setupPageTask, emailAuditTask).ConfigureAwait(false);
-
-            var summary = await summaryTask.ConfigureAwait(false);
-            var settings = await settingsTask.ConfigureAwait(false);
-            var (items, total) = await setupPageTask.ConfigureAwait(false);
-            var (emailAudits, _) = await emailAuditTask.ConfigureAwait(false);
+            var summary = await _getSummary.HandleAsync(ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var (items, total) = await _getSetupPage.HandleAsync(page, pageSize, query, setupOnly, filter, ct).ConfigureAwait(false);
+            var (emailAudits, _) = await _getEmailDispatchAuditsPage.HandleAsync(1, 10, null, null, null, null, ct).ConfigureAwait(false);
 
             var vm = new BusinessCommunicationOpsVm
             {

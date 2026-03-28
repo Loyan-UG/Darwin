@@ -34,13 +34,14 @@
                 <th>Company</th>
                 <th>Segments</th>
                 <th>Opportunities</th>
+                <th>Updated</th>
                 <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="7" class="text-center text-muted">No customers found.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">No customers found.</td></tr>
         }
         else
         {
@@ -59,9 +60,28 @@
                     <td>@item.CompanyName</td>
                     <td>@item.SegmentCount</td>
                     <td>@item.OpportunityCount</td>
+                    <td>
+                        <div>@(item.ModifiedAtUtc ?? item.CreatedAtUtc).ToString("yyyy-MM-dd")</div>
+                        <div class="small text-muted">@((item.ModifiedAtUtc.HasValue ? "Updated" : "Created"))</div>
+                    </td>
                     <td class="text-end">
                         <a asp-action="EditCustomer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> Edit
+                        </a>
+                        @if (item.UserId.HasValue)
+                        {
+                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId.Value" class="btn btn-sm btn-outline-info">
+                                <i class="fa fa-user"></i> User
+                            </a>
+                        }
+                        <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-comments"></i> Interactions
+                        </a>
+                        <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-segments-section" class="btn btn-sm btn-outline-warning">
+                            <i class="fa fa-tags"></i> Segments
+                        </a>
+                        <a asp-action="CreateOpportunity" asp-route-customerId="@item.Id" class="btn btn-sm btn-outline-success">
+                            <i class="fa fa-briefcase"></i> Opportunity
                         </a>
                     </td>
                 </tr>

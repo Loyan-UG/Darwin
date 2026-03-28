@@ -2,6 +2,12 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Billing.DTOs
 {
+    public enum JournalEntryQueueFilter : short
+    {
+        Recent = 1,
+        MultiLine = 2
+    }
+
     public sealed class PaymentListItemDto
     {
         public Guid Id { get; set; }

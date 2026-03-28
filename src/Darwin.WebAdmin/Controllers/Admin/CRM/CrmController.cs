@@ -148,6 +148,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     SegmentCount = x.SegmentCount,
                     OpportunityCount = x.OpportunityCount,
                     CreatedAtUtc = x.CreatedAtUtc,
+                    ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
                 }).ToList()
             };

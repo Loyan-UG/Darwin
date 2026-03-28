@@ -1,3 +1,4 @@
+using Darwin.Application.Billing.DTOs;
 using Darwin.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
@@ -94,6 +95,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public AccountType? QueueFilter { get; set; }
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<FinancialAccountListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -182,6 +184,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public JournalEntryQueueFilter? QueueFilter { get; set; }
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<JournalEntryListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;

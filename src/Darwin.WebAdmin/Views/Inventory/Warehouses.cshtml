@@ -39,7 +39,13 @@
                     <td>@item.Location</td>
                     <td>@(item.IsDefault ? "Yes" : "No")</td>
                     <td>@item.StockLevelCount</td>
-                    <td class="text-end"><a asp-action="EditWarehouse" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                    <td class="text-end">
+                        <a asp-action="StockLevels"
+                           asp-route-businessId="@Model.BusinessId"
+                           asp-route-warehouseId="@item.Id"
+                           class="btn btn-sm btn-outline-primary">Stock Levels</a>
+                        <a asp-action="EditWarehouse" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    </td>
                 </tr>
             }
         }

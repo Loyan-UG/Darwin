@@ -36,10 +36,13 @@ Status terms used below:
 - `Planned / Near-term`: run a functional audit of all admin navigation, quick actions, and operator workflows from the perspective of daily SME usage
 - `Planned / Near-term`: close high-friction support gaps in orders, CRM, media, settings, and business/user management
 - `Completed foundation`: the admin media library now supports queue-style filters for missing alt text, editor-only assets, and library assets, so content cleanup can be worked as an operator queue instead of a flat gallery
+- `Completed foundation`: the media queue now also exposes direct `Open File` and contextual `Set Alt` follow-up actions plus clearer asset-role badges, so routine content cleanup is less dependent on opening every asset blindly
 - `Completed foundation`: the CRM customers list now supports queue-style filters for linked-user customers, customers needing segmentation, and customers with open opportunity context, making customer operations less list-heavy
+- `Completed foundation`: the CRM customers queue now also exposes direct quick actions for linked user review, interactions, segment membership work, and prefilled opportunity creation, so common follow-up no longer always requires manually navigating through the full customer edit flow
 - `Completed foundation`: the CRM leads list now also supports queue-style filters for qualified, unassigned, and unconverted leads, so pipeline follow-up can be worked as an operator queue instead of a flat list
 - `Completed foundation`: the CRM opportunities list now supports queue-style filters for open, closing-soon, and high-value opportunities, so revenue follow-up is less dependent on a flat pipeline list
 - `Completed foundation`: CRM lead and opportunity lists now expose richer follow-up context and direct quick actions, including assigned-owner visibility, quick lead conversion for qualified rows, customer deep-links, and prefilled opportunity creation from customer-linked leads
+- `Completed foundation`: the CRM invoices queue now also exposes direct quick actions for customer/order/payment follow-up and common draft-to-open / open-to-paid transitions, so routine invoice operations no longer always require entering the full invoice editor first
 - `Completed foundation`: the admin orders list now supports queue-style filters for open orders, payment-issue orders, and fulfillment-attention orders, so post-order operations are less dependent on a flat status list
 - `Completed foundation`: order detail tabs for payments, shipments, refunds, and invoices now support queue-style filters too, so operators can work failed/refunded/pending/outstanding subsets without scanning full grids
 - `Completed foundation`: the orders queue now also exposes direct quick actions for add payment, add shipment, and create invoice from list rows, so common support follow-up no longer always requires entering the full order detail first
@@ -49,6 +52,12 @@ Status terms used below:
 - `Completed foundation`: inventory ledger now supports queue-style filters for inbound, outbound, and reservation movements, and stock-level rows link directly into variant ledger review for faster stock troubleshooting
 - `Completed foundation`: stock-level rows now expose direct `adjust`, `reserve`, and `release reservation` actions in WebAdmin, so inventory troubleshooting can move from queue detection into manual corrective action without leaving the operational context
 - `Completed foundation`: stock-level rows now also expose a direct `return receipt` action, so phase-1 customer return intake can increase inventory from the same operational workspace without dropping into ad hoc scripts or database fixes
+- `Completed foundation`: supplier rows now deep-link into purchase-order follow-up and warehouse rows deep-link into scoped stock-level review, reducing drill-in friction for procurement and stock support work
+- `Completed foundation`: WebAdmin now has first-class loyalty workspaces for programs, reward tiers, accounts, campaigns, and recent scan-session diagnostics, so business-mobile loyalty operations are no longer managed only from the mobile app or raw API usage
+- `Completed foundation`: WebAdmin now has a dedicated `Mobile Operations` workspace for JWT/mobile bootstrap settings, onboarding/support dependency counts, and transport-readiness visibility that affect the mobile apps directly
+- `Completed`: WebAdmin loyalty operations now support admin-side account provisioning for member-support cases where a consumer has not self-enrolled yet
+- `Completed`: WebAdmin loyalty operations now expose a dedicated redemption troubleshooting workspace with pending/completed/cancelled filters and direct confirm actions for pending redemptions
+- `Planned / Near-term`: add deeper mobile diagnostics beyond bootstrap snapshot, especially release/version visibility and richer scanner/session failure analytics if they become part of the support scope
 
 ### Business and tenant onboarding
 
@@ -133,6 +142,9 @@ Status terms used below:
 - `Completed`: user edit screens now expose operational account state and support actions for confirm-email override, password reset email, and lock/unlock
 - `Completed`: user edit screens now also support sending activation emails for unconfirmed accounts
 - `Completed`: shared search/reset/pager behavior now covers legacy and newer operator lists across catalog, CMS, identity, billing, inventory, and orders
+- `Completed foundation`: loyalty administration is now exposed directly in WebAdmin through programs, reward tiers, campaigns, accounts, and recent scan-session review screens
+- `Completed`: loyalty account queues now also allow admin-side account creation, so support can provision accounts without waiting for self-enrollment
+- `Completed foundation`: a dedicated mobile-operations admin page now centralizes mobile bootstrap settings and business-mobile readiness signals instead of leaving them spread across site settings and support queues
 - `Planned / Near-term`: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages
 - `Planned / Near-term`: standardize remaining partial loading, modal submission, and alert refresh patterns
 - `Planned / Near-term`: deepen operator workflows in Orders, CRM, and Media beyond structural refactor
@@ -161,6 +173,9 @@ Status terms used below:
 ### Payments, refunds, reconciliation, disputes
 
 - `Completed`: generic payment list/edit/refund visibility exists in WebAdmin and reconciliation projections exist
+- `Completed foundation`: billing payment rows now expose direct invoice/order/customer follow-up actions, and expense rows expose supplier follow-up, reducing context switching for common finance support work
+- `Completed foundation`: financial-account rows now deep-link into journal-entry follow-up using account-aware search, so finance operators can move from account review into ledger activity without manual re-filtering
+- `Completed foundation`: financial accounts and journal entries now expose lightweight queue filters for account-type and recent-or-complex review, making the accounting screens less list-heavy without overclaiming deeper ERP workflows
 - `Planned / Near-term`: add Stripe-specific operational visibility, provider references, and status history
 - `Planned / Near-term`: deepen refund, reconciliation, dispute, and support workflows
 - `Planned / Near-term`: add webhook/callback audit trail visibility

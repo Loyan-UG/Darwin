@@ -60,12 +60,14 @@ This is especially important because early operational usage is expected to star
 | --- | --- | --- |
 | Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
 | Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, onboarding checklist visibility, actionable next-step shortcuts, delegated support access, and business mobile soft-gate policy now exist; tenant/customer provisioning and richer onboarding-state orchestration remain near-term. |
-| Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist, and both the orders list and the detail tabs now have queue-style operational filters for open, payment-issue, fulfillment, refund, and invoice follow-up work; the orders list now also exposes quick payment/shipment/invoice actions for common support cases, while Stripe-specific lifecycle support is still pending. |
-| CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; customer, lead, and opportunity lists now have queue-style operational filters, and lead/opportunity queues now expose quick follow-up actions like conversion, customer deep-links, and prefilled opportunity creation; deeper reporting and support depth still need improvement. |
-| Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, purchase orders, and ledger views exist, and warehouse, supplier, purchase-order, stock-level, stock-transfer, and ledger screens now have queue-style operational filters or direct troubleshooting links for setup, replenishment, and stock-attention work; manual stock adjustment, reservation, reservation-release, and return-receipt flows are now exposed from stock levels, while richer exception and structured receiving workflows still need work. |
+| Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist, and both the orders list and the detail tabs now have queue-style operational filters for open, payment-issue, fulfillment, refund, and invoice follow-up work; the orders list now exposes quick payment/shipment/invoice actions, the billing payments queue now exposes direct invoice/order/customer follow-up actions, expense rows expose supplier follow-up, financial-account rows deep-link into journal-entry follow-up, and financial accounts / journal entries now expose lightweight account-type and recent-or-complex queue filters, while Stripe-specific lifecycle support is still pending. |
+| CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; customer, lead, opportunity, and invoice queues now expose quick follow-up actions like linked-user review, interaction/segment deep-links, lead conversion, customer/order/payment deep-links, prefilled opportunity creation, and common invoice status transitions; deeper reporting and support depth still need improvement. |
+| Loyalty | In Progress | WebAdmin now covers loyalty programs, reward tiers, member accounts, admin-side account provisioning, manual point adjustments, account suspend/activate, redemption troubleshooting/confirmation, business campaigns, and recent scan-session diagnostics; the main near-term gap is deeper mobile diagnostics rather than basic loyalty operations. |
+| Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, purchase orders, and ledger views exist, and warehouse, supplier, purchase-order, stock-level, stock-transfer, and ledger screens now have queue-style operational filters or direct troubleshooting links for setup, replenishment, and stock-attention work; supplier rows now deep-link into purchase-order follow-up, warehouse rows deep-link into scoped stock-level review, and manual stock adjustment, reservation, reservation-release, and return-receipt flows are now exposed from stock levels, while richer exception and structured receiving workflows still need work. |
 | Identity/Admin Support | In Progress | Users, roles, permissions, and core admin identity flows exist; invite/activation/support actions need completion. |
-| Media | In Progress | Media library exists and now supports content-ops queue filters; deeper reference tracking and purge workflows are still later work. |
+| Media | In Progress | Media library exists and now supports content-ops queue filters plus direct file-open and missing-alt follow-up actions; deeper reference tracking and purge workflows are still later work. |
 | Settings | In Progress | Global site settings exist and business onboarding now has a dedicated setup workspace, but full tenant-aware settings architecture still needs domain and UI expansion. |
+| Mobile Operations | In Progress | WebAdmin now includes a dedicated mobile-operations snapshot for JWT/mobile bootstrap, onboarding/support dependency counts, and communication readiness that affect the mobile apps; deeper release/version/device diagnostics are still near-term work if support scope requires them. |
 | Communication Management | Planned / Near-term | Must become first-class for email templates, delivery logs, resend/retry, and admin visibility. |
 | Shipping Operations | Partial | Generic order shipment visibility exists; DHL-first operational workspace is still near-term work. |
 
@@ -251,7 +253,49 @@ WebAdmin must provide shipping visibility and operator support.
 
 Shipping operations should optimize for DHL first. Additional carriers are later-phase work.
 
-## 12. Communication Management UI
+## 12. Loyalty and Mobile Operations
+
+Loyalty and mobile support are now part of the operational scope of WebAdmin, not only backend/application code.
+
+### Loyalty coverage now in WebAdmin
+
+- loyalty program list/create/edit/delete
+- reward-tier list/create/edit/delete
+- loyalty account queue with search and status filters
+- admin-side loyalty account creation for support-led provisioning
+- loyalty account detail with recent transactions and redemptions
+- manual points adjustment
+- account suspend / activate
+- redemption workspace with pending/completed/cancelled filters and direct confirm actions for pending items
+- business campaign list/create/edit/activate/deactivate
+- recent scan-session diagnostics for business-mobile QR flows
+
+### Why this matters
+
+`Darwin.Mobile.Business` already uses reward configuration, campaigns, and scan-session flows. WebAdmin therefore needs enough surface to let operators:
+
+- configure the loyalty program itself
+- manage business-facing campaign content and activation
+- inspect member account state and intervene with manual adjustments
+- review recent scan/accrual/redemption session behavior when support issues happen
+
+### Remaining near-term loyalty/mobile gaps
+
+- deeper mobile diagnostics beyond bootstrap/support readiness, such as app release/version visibility or device-level operational signals if support requirements justify them
+
+### Current mobile-operations coverage
+
+The dedicated `Mobile Operations` workspace currently provides:
+
+- JWT and device-binding bootstrap visibility
+- QR refresh and mobile outbox bootstrap settings
+- onboarding/support dependency counts that affect business-mobile usage
+- transport-readiness visibility for email/SMS/WhatsApp/admin alerts
+- direct links into support queue, site settings, and scan-session review
+
+This is intentionally an operational snapshot, not yet a full mobile observability suite.
+
+## 13. Communication Management UI
 
 Communication is a platform capability and must be visible in WebAdmin.
 
@@ -283,7 +327,7 @@ Communication is a platform capability and must be visible in WebAdmin.
 - `Completed foundation`: the new `Business Support Queue` links those failed-flow email signals back to business attention/setup/member/invitation actions, so communication failures can be triaged in the same operator workspace as onboarding/support issues
 - `Completed foundation`: the same queue now refreshes its summary and triage panels independently via HTMX, improving support responsiveness before a fuller real-time ops surface exists
 
-## 13. Localization Readiness in WebAdmin
+## 14. Localization Readiness in WebAdmin
 
 WebAdmin is not fully multilingual yet, but it must be built in a localization-friendly way now.
 
@@ -300,7 +344,7 @@ WebAdmin is not fully multilingual yet, but it must be built in a localization-f
 - plan for language/default-locale settings now
 - keep templates and system messages ready for later localization
 
-## 14. Security and Performance Concerns
+## 15. Security and Performance Concerns
 
 These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 
@@ -322,7 +366,7 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - avoid over-fetching
 - background/async handling where provider callbacks or communication delivery are involved
 
-## 15. Controller and View Responsibilities
+## 16. Controller and View Responsibilities
 
 ### Controllers should
 
@@ -345,7 +389,7 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - preserve concurrency tokens such as `RowVersion`
 - reuse shared modal, alert, pager, and partial patterns
 
-## 16. Near-Term WebAdmin Delivery Order
+## 17. Near-Term WebAdmin Delivery Order
 
 1. complete business onboarding and operator account lifecycle support
 2. complete settings architecture and operational visibility

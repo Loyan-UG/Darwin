@@ -1,0 +1,69 @@
+@model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyScanSessionsListVm
+@{
+    ViewData["Title"] = "Loyalty Scan Sessions";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-1">Loyalty Scan Sessions</h1>
+        <div class="text-muted">Recent QR, accrual, and redemption flow diagnostics for business mobile operations.</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Redemptions</a>
+        <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-outline-secondary">Mobile Ops</a>
+    </div>
+</div>
+
+<form asp-action="ScanSessions" method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search customer or outcome" />
+    </div>
+    <div class="col-md-2">
+        <select name="mode" asp-items="Model.ModeItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <select name="status" asp-items="Model.StatusItems" class="form-select"></select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+        <a asp-action="ScanSessions" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>Customer</th><th>Mode</th><th>Status</th><th>Outcome</th><th>Created</th><th>Completed</th><th>Failure</th></tr></thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted">No scan sessions found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div>@item.CustomerDisplayName</div>
+                        <div class="small text-muted">@item.CustomerEmail</div>
+                    </td>
+                    <td>@item.Mode</td>
+                    <td>@item.Status</td>
+                    <td>@item.Outcome</td>
+                    <td>
+                        <div>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="small text-muted">Exp: @item.ExpiresAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                    </td>
+                    <td>@(item.CompletedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td class="small text-muted">@(string.IsNullOrWhiteSpace(item.FailureReason) ? "-" : item.FailureReason)</td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-mode="@Model.ModeFilter" asp-route-status="@Model.StatusFilter"></pager>

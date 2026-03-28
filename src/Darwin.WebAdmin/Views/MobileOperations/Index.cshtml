@@ -1,0 +1,63 @@
+@model Darwin.WebAdmin.ViewModels.Mobile.MobileOperationsVm
+@{
+    ViewData["Title"] = "Mobile Operations";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1">Mobile Operations</h1>
+        <p class="text-muted mb-0">Bootstrap, onboarding, and communication dependencies that directly affect Darwin mobile apps.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="SiteSettings" asp-action="Edit" class="btn btn-outline-secondary">Site Settings</a>
+        <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-outline-secondary">Support Queue</a>
+        <a asp-controller="Loyalty" asp-action="ScanSessions" class="btn btn-outline-secondary">Scan Sessions</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-6">
+        <div class="card h-100">
+            <div class="card-header">Mobile Bootstrap</div>
+            <div class="card-body">
+                <div class="mb-2">JWT Enabled: <strong>@(Model.JwtEnabled ? "Yes" : "No")</strong></div>
+                <div class="mb-2">Single Device Only: <strong>@(Model.JwtSingleDeviceOnly ? "Yes" : "No")</strong></div>
+                <div class="mb-2">Device Binding Required: <strong>@(Model.JwtRequireDeviceBinding ? "Yes" : "No")</strong></div>
+                <div class="mb-2">Access Token Minutes: <strong>@Model.JwtAccessTokenMinutes</strong></div>
+                <div class="mb-2">Refresh Token Days: <strong>@Model.JwtRefreshTokenDays</strong></div>
+                <div class="mb-2">QR Refresh Seconds: <strong>@Model.MobileQrTokenRefreshSeconds</strong></div>
+                <div class="mb-2">Max Outbox Items: <strong>@Model.MobileMaxOutboxItems</strong></div>
+                <div class="mb-2">Default Culture: <strong>@Model.DefaultCulture</strong></div>
+                <div>Time Zone: <strong>@Model.TimeZone</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card h-100">
+            <div class="card-header">Mobile Onboarding Dependencies</div>
+            <div class="card-body">
+                <div class="mb-2">Businesses Needing Attention: <strong>@Model.AttentionBusinessCount</strong></div>
+                <div class="mb-2">Pending Approval Businesses: <strong>@Model.PendingApprovalBusinessCount</strong></div>
+                <div class="mb-2">Open Invitations: <strong>@Model.OpenInvitationCount</strong></div>
+                <div class="mb-2">Pending Activation Members: <strong>@Model.PendingActivationMemberCount</strong></div>
+                <div class="mb-2">Locked Members: <strong>@Model.LockedMemberCount</strong></div>
+                <div>Businesses Requiring Email Setup: <strong>@Model.BusinessesRequiringEmailSetupCount</strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Transport Readiness</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Email</div><div class="fs-5">@(Model.EmailTransportConfigured ? "Ready" : "Missing")</div></div></div>
+            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">SMS</div><div class="fs-5">@(Model.SmsTransportConfigured ? "Ready" : "Missing")</div></div></div>
+            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">WhatsApp</div><div class="fs-5">@(Model.WhatsAppTransportConfigured ? "Ready" : "Missing")</div></div></div>
+            <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Admin Alerts</div><div class="fs-5">@(Model.AdminAlertRoutingConfigured ? "Ready" : "Missing")</div></div></div>
+        </div>
+        <div class="alert alert-secondary mt-3 mb-0">
+            This page is an operations snapshot. Member activation, invitation handling, and communication triage still happen from Businesses, Business Communications, and Site Settings.
+        </div>
+    </div>
+</div>

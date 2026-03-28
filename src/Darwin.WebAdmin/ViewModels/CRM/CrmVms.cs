@@ -30,6 +30,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int SegmentCount { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

@@ -50,7 +50,7 @@
                 </form>
             </div>
         </div>
-        <div class="card mt-3">
+        <div class="card mt-3" id="customer-interactions-section">
             <div class="card-header"><strong>Interactions</strong></div>
             <div class="card-body" id="customer-interactions-grid"
                  hx-get="@Url.Action("CustomerInteractions", "Crm", new { customerId = Model.Id })"
@@ -97,7 +97,7 @@
                 </form>
             </div>
         </div>
-        <div class="card mt-3">
+        <div class="card mt-3" id="customer-consents-section">
             <div class="card-header"><strong>Consent History</strong></div>
             <div class="card-body" id="customer-consents-grid"
                  hx-get="@Url.Action("CustomerConsents", "Crm", new { customerId = Model.Id })"
@@ -107,7 +107,7 @@
     </div>
 
     <div class="col-12">
-        <div class="card">
+        <div class="card" id="customer-segments-section">
             <div class="card-header"><strong>Segment Memberships</strong></div>
             <div class="card-body">
                 <form asp-controller="Crm"

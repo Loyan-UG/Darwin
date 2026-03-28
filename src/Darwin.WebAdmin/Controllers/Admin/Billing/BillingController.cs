@@ -268,14 +268,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
 
         [HttpGet]
-        public async Task<IActionResult> FinancialAccounts(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> FinancialAccounts(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, AccountType? queue = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<FinancialAccountListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getAccountsPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getAccountsPage.HandleAsync(businessId.Value, page, pageSize, q, queue, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new FinancialAccountListItemVm
                 {
                     Id = x.Id,
@@ -291,6 +291,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
+                QueueFilter = queue,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -555,14 +556,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
 
         [HttpGet]
-        public async Task<IActionResult> JournalEntries(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> JournalEntries(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, JournalEntryQueueFilter? queue = null, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<JournalEntryListItemVm>();
             var total = 0;
             if (businessId.HasValue)
             {
-                var result = await _getJournalEntriesPage.HandleAsync(businessId.Value, page, pageSize, q, ct).ConfigureAwait(false);
+                var result = await _getJournalEntriesPage.HandleAsync(businessId.Value, page, pageSize, q, queue, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new JournalEntryListItemVm
                 {
                     Id = x.Id,
@@ -580,6 +581,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
+                QueueFilter = queue,
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,

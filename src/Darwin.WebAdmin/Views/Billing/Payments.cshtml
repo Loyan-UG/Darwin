@@ -104,7 +104,21 @@
                         }
                     </td>
                     <td>@item.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td class="text-end"><a asp-action="EditPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                    <td class="text-end">
+                        <a asp-action="EditPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        @if (item.InvoiceId.HasValue)
+                        {
+                            <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.InvoiceId.Value" class="btn btn-sm btn-outline-primary">Invoice</a>
+                        }
+                        @if (item.OrderId.HasValue)
+                        {
+                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-info">Order</a>
+                        }
+                        @if (item.CustomerId.HasValue)
+                        {
+                            <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-success">Customer</a>
+                        }
+                    </td>
                 </tr>
             }
         }

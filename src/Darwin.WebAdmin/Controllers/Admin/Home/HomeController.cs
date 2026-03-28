@@ -80,43 +80,27 @@ namespace Darwin.WebAdmin.Controllers.Admin
 
             businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
 
-            var crmSummaryTask = _getCrmSummary.HandleAsync(ct);
-            var productsTask = _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct);
-            var pagesTask = _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct: ct);
-            var ordersTask = _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct);
-            var usersTask = _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, ct);
-            var businessSupportTask = _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct);
-            var communicationOpsTask = _getBusinessCommunicationOpsSummary.HandleAsync(ct);
-            var siteSettingsTask = _siteSettingCache.GetAsync(ct);
+            var crmSummary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var products = await _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct).ConfigureAwait(false);
+            var pages = await _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct: ct).ConfigureAwait(false);
+            var orders = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct).ConfigureAwait(false);
+            var users = await _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, ct).ConfigureAwait(false);
+            var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
+            var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
 
-            Task<(List<Darwin.Application.Billing.DTOs.PaymentListItemDto> Items, int Total)>? paymentsTask = null;
-            Task<(List<Darwin.Application.Inventory.DTOs.WarehouseListItemDto> Items, int Total)>? warehousesTask = null;
-            Task<(List<Darwin.Application.Inventory.DTOs.SupplierListItemDto> Items, int Total)>? suppliersTask = null;
-            Task<(List<Darwin.Application.Inventory.DTOs.PurchaseOrderListItemDto> Items, int Total)>? purchaseOrdersTask = null;
+            int? paymentCount = null;
+            int? warehouseCount = null;
+            int? supplierCount = null;
+            int? purchaseOrderCount = null;
 
             if (selectedBusinessId.HasValue)
             {
-                paymentsTask = _getPaymentsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct);
-                warehousesTask = _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.WarehouseQueueFilter.All, ct);
-                suppliersTask = _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.SupplierQueueFilter.All, ct);
-                purchaseOrdersTask = _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.All, ct);
+                paymentCount = (await _getPaymentsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, ct).ConfigureAwait(false)).Total;
+                warehouseCount = (await _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.WarehouseQueueFilter.All, ct).ConfigureAwait(false)).Total;
+                supplierCount = (await _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.SupplierQueueFilter.All, ct).ConfigureAwait(false)).Total;
+                purchaseOrderCount = (await _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.All, ct).ConfigureAwait(false)).Total;
             }
-
-            await Task.WhenAll(new Task[] { crmSummaryTask, productsTask, pagesTask, ordersTask, usersTask, businessSupportTask, communicationOpsTask, siteSettingsTask }
-                .Concat(paymentsTask is null ? Array.Empty<Task>() : new[] { paymentsTask })
-                .Concat(warehousesTask is null ? Array.Empty<Task>() : new[] { warehousesTask })
-                .Concat(suppliersTask is null ? Array.Empty<Task>() : new[] { suppliersTask })
-                .Concat(purchaseOrdersTask is null ? Array.Empty<Task>() : new[] { purchaseOrdersTask }))
-                .ConfigureAwait(false);
-
-            var crmSummary = await crmSummaryTask.ConfigureAwait(false);
-            var products = await productsTask.ConfigureAwait(false);
-            var pages = await pagesTask.ConfigureAwait(false);
-            var orders = await ordersTask.ConfigureAwait(false);
-            var users = await usersTask.ConfigureAwait(false);
-            var businessSupport = await businessSupportTask.ConfigureAwait(false);
-            var communicationOps = await communicationOpsTask.ConfigureAwait(false);
-            var siteSettings = await siteSettingsTask.ConfigureAwait(false);
 
             var vm = new AdminDashboardVm
             {
@@ -131,10 +115,10 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 Crm = MapCrmSummary(crmSummary),
                 BusinessSupport = MapBusinessSupportSummary(businessSupport),
                 CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings),
-                PaymentCount = paymentsTask is null ? null : (await paymentsTask.ConfigureAwait(false)).Total,
-                WarehouseCount = warehousesTask is null ? null : (await warehousesTask.ConfigureAwait(false)).Total,
-                SupplierCount = suppliersTask is null ? null : (await suppliersTask.ConfigureAwait(false)).Total,
-                PurchaseOrderCount = purchaseOrdersTask is null ? null : (await purchaseOrdersTask.ConfigureAwait(false)).Total
+                PaymentCount = paymentCount,
+                WarehouseCount = warehouseCount,
+                SupplierCount = supplierCount,
+                PurchaseOrderCount = purchaseOrderCount
             };
 
             return View(vm);
@@ -170,18 +154,14 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var selectedBusinessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             businessOptions = await _referenceData.GetBusinessOptionsAsync(selectedBusinessId, ct).ConfigureAwait(false);
 
-            var communicationOpsTask = _getBusinessCommunicationOpsSummary.HandleAsync(ct);
-            var siteSettingsTask = _siteSettingCache.GetAsync(ct);
-
-            await Task.WhenAll(communicationOpsTask, siteSettingsTask).ConfigureAwait(false);
+            var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
 
             return new AdminDashboardVm
             {
                 SelectedBusinessId = selectedBusinessId,
                 SelectedBusinessLabel = businessOptions.FirstOrDefault(x => x.Selected)?.Text ?? string.Empty,
-                CommunicationOps = MapCommunicationOpsSummary(
-                    await communicationOpsTask.ConfigureAwait(false),
-                    await siteSettingsTask.ConfigureAwait(false))
+                CommunicationOps = MapCommunicationOpsSummary(communicationOps, siteSettings)
             };
         }
 

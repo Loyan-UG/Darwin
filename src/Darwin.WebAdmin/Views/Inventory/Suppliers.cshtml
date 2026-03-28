@@ -39,7 +39,13 @@
                     <td>@item.Email</td>
                     <td>@item.Phone</td>
                     <td>@item.PurchaseOrderCount</td>
-                    <td class="text-end"><a asp-action="EditSupplier" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                    <td class="text-end">
+                        <a asp-action="PurchaseOrders"
+                           asp-route-businessId="@Model.BusinessId"
+                           asp-route-q="@item.Name"
+                           class="btn btn-sm btn-outline-primary">Purchase Orders</a>
+                        <a asp-action="EditSupplier" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    </td>
                 </tr>
             }
         }

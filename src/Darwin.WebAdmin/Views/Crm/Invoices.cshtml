@@ -93,6 +93,38 @@
                         <td>@item.DueDateUtc.ToString("yyyy-MM-dd")</td>
                         <td class="text-end">
                             <a asp-action="EditInvoice" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Open</a>
+                            @if (item.CustomerId.HasValue)
+                            {
+                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="btn btn-sm btn-outline-primary">Customer</a>
+                            }
+                            @if (item.OrderId.HasValue)
+                            {
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" class="btn btn-sm btn-outline-info">Order</a>
+                            }
+                            @if (item.PaymentId.HasValue && item.OrderId.HasValue)
+                            {
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-dark">Payment</a>
+                            }
+                            @if (item.Status == Darwin.Domain.Enums.InvoiceStatus.Draft)
+                            {
+                                <form asp-action="TransitionInvoiceStatus" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@item.Id" />
+                                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                    <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Open" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Post</button>
+                                </form>
+                            }
+                            @if (item.Status != Darwin.Domain.Enums.InvoiceStatus.Paid && item.BalanceMinor <= 0)
+                            {
+                                <form asp-action="TransitionInvoiceStatus" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@item.Id" />
+                                    <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                    <input type="hidden" name="TargetStatus" value="@Darwin.Domain.Enums.InvoiceStatus.Paid" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Mark Paid</button>
+                                </form>
+                            }
                         </td>
                     </tr>
                 }

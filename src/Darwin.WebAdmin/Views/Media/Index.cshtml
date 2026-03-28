@@ -59,6 +59,20 @@
                             <div class="fw-semibold text-truncate">@(!string.IsNullOrWhiteSpace(item.Title) ? item.Title : item.OriginalFileName)</div>
                             <div class="small text-muted text-truncate">@item.OriginalFileName</div>
                         </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @if (string.IsNullOrWhiteSpace(item.Alt))
+                            {
+                                <span class="badge text-bg-warning">Missing Alt</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Role) && item.Role.Contains("EditorAsset"))
+                            {
+                                <span class="badge text-bg-info">Editor Asset</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Library Asset</span>
+                            }
+                        </div>
                         <div class="small">
                             <div><span class="text-muted">Alt:</span> @(string.IsNullOrWhiteSpace(item.Alt) ? "Not set" : item.Alt)</div>
                             <div><span class="text-muted">Role:</span> @(string.IsNullOrWhiteSpace(item.Role) ? "General" : item.Role)</div>
@@ -71,6 +85,15 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white d-flex gap-2 justify-content-end">
+                        <a href="@item.Url" target="_blank" rel="noreferrer" class="btn btn-sm btn-outline-dark">
+                            <i class="fa fa-up-right-from-square"></i> Open
+                        </a>
+                        @if (string.IsNullOrWhiteSpace(item.Alt))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning">
+                                <i class="fa fa-font"></i> Set Alt
+                            </a>
+                        }
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
                             <i class="fa fa-pen"></i> Edit
                         </a>
