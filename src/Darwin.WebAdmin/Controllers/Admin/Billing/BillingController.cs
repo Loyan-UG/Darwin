@@ -18,12 +18,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
     {
         private readonly GetPaymentsPageHandler _getPaymentsPage;
         private readonly GetPaymentOpsSummaryHandler _getPaymentOpsSummary;
+        private readonly GetBillingPlansAdminPageHandler _getBillingPlansAdminPage;
+        private readonly GetBillingPlanOpsSummaryHandler _getBillingPlanOpsSummary;
+        private readonly GetBillingPlanForEditHandler _getBillingPlanForEdit;
         private readonly GetBillingWebhookSubscriptionsPageHandler _getBillingWebhookSubscriptionsPage;
         private readonly GetBillingWebhookDeliveriesPageHandler _getBillingWebhookDeliveriesPage;
         private readonly GetBillingWebhookOpsSummaryHandler _getBillingWebhookOpsSummary;
         private readonly GetPaymentForEditHandler _getPaymentForEdit;
         private readonly GetRefundsPageHandler _getRefundsPage;
         private readonly GetRefundOpsSummaryHandler _getRefundOpsSummary;
+        private readonly CreateBillingPlanHandler _createBillingPlan;
+        private readonly UpdateBillingPlanHandler _updateBillingPlan;
         private readonly CreatePaymentHandler _createPayment;
         private readonly UpdatePaymentHandler _updatePayment;
         private readonly GetFinancialAccountsPageHandler _getAccountsPage;
@@ -44,12 +49,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public BillingController(
             GetPaymentsPageHandler getPaymentsPage,
             GetPaymentOpsSummaryHandler getPaymentOpsSummary,
+            GetBillingPlansAdminPageHandler getBillingPlansAdminPage,
+            GetBillingPlanOpsSummaryHandler getBillingPlanOpsSummary,
+            GetBillingPlanForEditHandler getBillingPlanForEdit,
             GetBillingWebhookSubscriptionsPageHandler getBillingWebhookSubscriptionsPage,
             GetBillingWebhookDeliveriesPageHandler getBillingWebhookDeliveriesPage,
             GetBillingWebhookOpsSummaryHandler getBillingWebhookOpsSummary,
             GetPaymentForEditHandler getPaymentForEdit,
             GetRefundsPageHandler getRefundsPage,
             GetRefundOpsSummaryHandler getRefundOpsSummary,
+            CreateBillingPlanHandler createBillingPlan,
+            UpdateBillingPlanHandler updateBillingPlan,
             CreatePaymentHandler createPayment,
             UpdatePaymentHandler updatePayment,
             GetFinancialAccountsPageHandler getAccountsPage,
@@ -69,12 +79,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         {
             _getPaymentsPage = getPaymentsPage;
             _getPaymentOpsSummary = getPaymentOpsSummary;
+            _getBillingPlansAdminPage = getBillingPlansAdminPage;
+            _getBillingPlanOpsSummary = getBillingPlanOpsSummary;
+            _getBillingPlanForEdit = getBillingPlanForEdit;
             _getBillingWebhookSubscriptionsPage = getBillingWebhookSubscriptionsPage;
             _getBillingWebhookDeliveriesPage = getBillingWebhookDeliveriesPage;
             _getBillingWebhookOpsSummary = getBillingWebhookOpsSummary;
             _getPaymentForEdit = getPaymentForEdit;
             _getRefundsPage = getRefundsPage;
             _getRefundOpsSummary = getRefundOpsSummary;
+            _createBillingPlan = createBillingPlan;
+            _updateBillingPlan = updateBillingPlan;
             _createPayment = createPayment;
             _updatePayment = updatePayment;
             _getAccountsPage = getAccountsPage;
@@ -95,6 +110,164 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
 
         [HttpGet]
         public IActionResult Index() => RedirectToAction(nameof(Payments));
+
+        [HttpGet]
+        public async Task<IActionResult> Plans(int page = 1, int pageSize = 20, string? q = null, BillingPlanQueueFilter queue = BillingPlanQueueFilter.All, CancellationToken ct = default)
+        {
+            var result = await _getBillingPlansAdminPage.HandleAsync(page, pageSize, q, queue, ct).ConfigureAwait(false);
+
+            var vm = new BillingPlansListVm
+            {
+                Query = q ?? string.Empty,
+                QueueFilter = queue,
+                Summary = await BuildBillingPlanOpsSummaryVmAsync(ct).ConfigureAwait(false),
+                Playbooks = BuildBillingPlanPlaybooks(),
+                Page = page,
+                PageSize = pageSize,
+                Total = result.Total,
+                Items = result.Items.Select(x => new BillingPlanListItemVm
+                {
+                    Id = x.Id,
+                    Code = x.Code,
+                    Name = x.Name,
+                    Description = x.Description,
+                    PriceMinor = x.PriceMinor,
+                    Currency = x.Currency,
+                    Interval = x.Interval,
+                    IntervalCount = x.IntervalCount,
+                    TrialDays = x.TrialDays,
+                    IsActive = x.IsActive,
+                    HasFeatures = x.HasFeatures,
+                    ActiveSubscriptionCount = x.ActiveSubscriptionCount,
+                    ModifiedAtUtc = x.ModifiedAtUtc,
+                    RowVersion = x.RowVersion
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public IActionResult CreatePlan()
+        {
+            var vm = new BillingPlanEditVm();
+            PopulateBillingPlanOptions(vm);
+            return RenderBillingPlanEditor(vm, isCreate: true);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreatePlan(BillingPlanEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                PopulateBillingPlanOptions(vm);
+                return RenderBillingPlanEditor(vm, isCreate: true);
+            }
+
+            var dto = new BillingPlanCreateDto
+            {
+                Code = vm.Code,
+                Name = vm.Name,
+                Description = vm.Description,
+                PriceMinor = vm.PriceMinor,
+                Currency = vm.Currency,
+                Interval = vm.Interval,
+                IntervalCount = vm.IntervalCount,
+                TrialDays = vm.TrialDays,
+                IsActive = vm.IsActive,
+                FeaturesJson = vm.FeaturesJson
+            };
+
+            try
+            {
+                var id = await _createBillingPlan.HandleAsync(dto, ct).ConfigureAwait(false);
+                TempData["Success"] = "Billing plan created.";
+                return RedirectOrHtmx(nameof(EditPlan), new { id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                PopulateBillingPlanOptions(vm);
+                return RenderBillingPlanEditor(vm, isCreate: true);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditPlan(Guid id, CancellationToken ct = default)
+        {
+            var dto = await _getBillingPlanForEdit.HandleAsync(id, ct).ConfigureAwait(false);
+            if (dto is null)
+            {
+                TempData["Error"] = "Billing plan not found.";
+                return RedirectToAction(nameof(Plans));
+            }
+
+            var vm = new BillingPlanEditVm
+            {
+                Id = dto.Id,
+                RowVersion = dto.RowVersion,
+                Code = dto.Code,
+                Name = dto.Name,
+                Description = dto.Description,
+                PriceMinor = dto.PriceMinor,
+                Currency = dto.Currency,
+                Interval = dto.Interval,
+                IntervalCount = dto.IntervalCount,
+                TrialDays = dto.TrialDays,
+                IsActive = dto.IsActive,
+                FeaturesJson = dto.FeaturesJson
+            };
+            PopulateBillingPlanOptions(vm);
+            vm.ActiveSubscriptionCount = (await _getBillingPlansAdminPage.HandleAsync(1, 1, dto.Code, BillingPlanQueueFilter.All, ct).ConfigureAwait(false))
+                .Items.FirstOrDefault(x => x.Id == id)?.ActiveSubscriptionCount ?? 0;
+            return RenderBillingPlanEditor(vm, isCreate: false);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditPlan(BillingPlanEditVm vm, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid)
+            {
+                PopulateBillingPlanOptions(vm);
+                return RenderBillingPlanEditor(vm, isCreate: false);
+            }
+
+            var dto = new BillingPlanEditDto
+            {
+                Id = vm.Id,
+                RowVersion = vm.RowVersion,
+                Code = vm.Code,
+                Name = vm.Name,
+                Description = vm.Description,
+                PriceMinor = vm.PriceMinor,
+                Currency = vm.Currency,
+                Interval = vm.Interval,
+                IntervalCount = vm.IntervalCount,
+                TrialDays = vm.TrialDays,
+                IsActive = vm.IsActive,
+                FeaturesJson = vm.FeaturesJson
+            };
+
+            try
+            {
+                await _updateBillingPlan.HandleAsync(dto, ct).ConfigureAwait(false);
+                TempData["Success"] = "Billing plan updated.";
+                return RedirectToAction(nameof(EditPlan), new { id = vm.Id });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["Error"] = "Concurrency conflict. Reload the billing plan and try again.";
+                return RedirectToAction(nameof(EditPlan), new { id = vm.Id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                PopulateBillingPlanOptions(vm);
+                return RenderBillingPlanEditor(vm, isCreate: false);
+            }
+        }
 
         [HttpGet]
         public async Task<IActionResult> Payments(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, PaymentQueueFilter? queue = null, CancellationToken ct = default)
@@ -285,6 +458,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
+        private async Task<BillingPlanOpsSummaryVm> BuildBillingPlanOpsSummaryVmAsync(CancellationToken ct)
+        {
+            var summary = await _getBillingPlanOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            return new BillingPlanOpsSummaryVm
+            {
+                TotalCount = summary.TotalCount,
+                ActiveCount = summary.ActiveCount,
+                InactiveCount = summary.InactiveCount,
+                TrialCount = summary.TrialCount,
+                MissingFeaturesCount = summary.MissingFeaturesCount,
+                InUseCount = summary.InUseCount
+            };
+        }
+
         private async Task<TaxOperationsVm> BuildTaxOperationsVmAsync(CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
@@ -390,6 +577,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     ScopeNote = "Use this subset when refund status or Stripe handling needs explicit finance support review.",
                     OperatorAction = "Start from the refund row, then move into the linked payment workbench or order refund flow to correct support notes and retry paths manually.",
                     SettingsDependency = "Webhook/callback audit depth is still near-term, so operator review remains the source of truth for failed refund follow-up."
+                }
+            };
+        }
+
+        private static List<ProviderPlaybookVm> BuildBillingPlanPlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Active plans in live use",
+                    ScopeNote = "Plan edits affect future subscription handoff and current support expectations for businesses already on those plans.",
+                    OperatorAction = "Review active-subscription count before changing price, trial, or availability so support knows whether a plan change is safe or rollout-sensitive.",
+                    SettingsDependency = "Business management website and Stripe readiness should already be configured before operators rely on plan handoff."
+                },
+                new()
+                {
+                    Title = "Trial and missing-feature plans",
+                    ScopeNote = "Trial-heavy or feature-empty plans usually indicate packaging debt rather than just pricing setup.",
+                    OperatorAction = "Normalize trial duration and enrich feature metadata before using the plan as a business-facing offer in onboarding or upgrade workflows.",
+                    SettingsDependency = "No extra provider secret is required, but external billing handoff depends on business-management website readiness."
                 }
             };
         }
@@ -652,6 +860,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
                 QueueFilter = queue,
+                Summary = businessId.HasValue
+                    ? await BuildFinancialAccountOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
+                    : new FinancialAccountOpsSummaryVm(),
+                Playbooks = BuildFinancialAccountPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -793,6 +1005,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
+                Summary = businessId.HasValue
+                    ? await BuildExpenseOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
+                    : new ExpenseOpsSummaryVm(),
+                Playbooks = BuildExpensePlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -942,6 +1158,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
                 QueueFilter = queue,
+                Summary = businessId.HasValue
+                    ? await BuildJournalEntryOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
+                    : new JournalEntryOpsSummaryVm(),
+                Playbooks = BuildJournalEntryPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -1166,6 +1386,123 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
 
             return isCreate ? View("CreateJournalEntry", vm) : View("EditJournalEntry", vm);
+        }
+
+        private async Task<FinancialAccountOpsSummaryVm> BuildFinancialAccountOpsSummaryVmAsync(Guid businessId, CancellationToken ct)
+        {
+            var summary = await _getAccountsPage.GetSummaryAsync(businessId, ct).ConfigureAwait(false);
+            return new FinancialAccountOpsSummaryVm
+            {
+                TotalCount = summary.TotalCount,
+                AssetCount = summary.AssetCount,
+                RevenueCount = summary.RevenueCount,
+                ExpenseCount = summary.ExpenseCount,
+                MissingCodeCount = summary.MissingCodeCount
+            };
+        }
+
+        private async Task<JournalEntryOpsSummaryVm> BuildJournalEntryOpsSummaryVmAsync(Guid businessId, CancellationToken ct)
+        {
+            var summary = await _getJournalEntriesPage.GetSummaryAsync(businessId, ct).ConfigureAwait(false);
+            return new JournalEntryOpsSummaryVm
+            {
+                TotalCount = summary.TotalCount,
+                RecentCount = summary.RecentCount,
+                MultiLineCount = summary.MultiLineCount
+            };
+        }
+
+        private async Task<ExpenseOpsSummaryVm> BuildExpenseOpsSummaryVmAsync(Guid businessId, CancellationToken ct)
+        {
+            var summary = await _getExpensesPage.GetSummaryAsync(businessId, ct).ConfigureAwait(false);
+            return new ExpenseOpsSummaryVm
+            {
+                TotalCount = summary.TotalCount,
+                SupplierLinkedCount = summary.SupplierLinkedCount,
+                RecentCount = summary.RecentCount,
+                HighValueCount = summary.HighValueCount
+            };
+        }
+
+        private static List<ProviderPlaybookVm> BuildFinancialAccountPlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Assets without clean coding",
+                    ScopeNote = "Asset accounts become a support liability when operators cannot tell which ledger bucket is actually canonical.",
+                    OperatorAction = "Normalize code and name before payment, inventory, or manual journal flows depend on the account.",
+                    SettingsDependency = "Keep invoice/VAT settings aligned so downstream exports remain understandable."
+                },
+                new()
+                {
+                    Title = "Revenue and expense mapping review",
+                    ScopeNote = "Operational finance support depends on clear separation between incoming revenue and outgoing expenses.",
+                    OperatorAction = "Confirm revenue and expense accounts exist with stable codes before scaling manual posting or export workflows.",
+                    SettingsDependency = "No extra provider setting; this is business-scoped accounting hygiene."
+                }
+            };
+        }
+
+        private static List<ProviderPlaybookVm> BuildJournalEntryPlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Recent journal review",
+                    ScopeNote = "Recent entries help finance support correlate operational incidents with accounting impact.",
+                    OperatorAction = "Review recent entries first when reconciling payment, refund, or invoice anomalies.",
+                    SettingsDependency = "Use alongside current payment/refund queues and VAT policy visibility."
+                },
+                new()
+                {
+                    Title = "Multi-line journal review",
+                    ScopeNote = "Multi-line entries usually indicate more complex accounting events and deserve a manual pass.",
+                    OperatorAction = "Open the entry, review coding and memo quality, and confirm the split is audit-friendly.",
+                    SettingsDependency = "No extra provider setting; this is a finance-control surface."
+                }
+            };
+        }
+
+        private static List<ProviderPlaybookVm> BuildExpensePlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Recent expense review",
+                    ScopeNote = "Recent expenses are the fastest path for spotting supplier or operating-cost anomalies.",
+                    OperatorAction = "Review the latest rows first when reconciling supplier disputes, payment issues, or unexpected cost spikes.",
+                    SettingsDependency = "No extra provider setting; this is a business-scoped finance review surface."
+                },
+                new()
+                {
+                    Title = "High-value expense review",
+                    ScopeNote = "Higher-value expenses deserve a manual pass before they quietly distort margin or cash reporting.",
+                    OperatorAction = "Open the expense, confirm amount/category accuracy, and use the supplier deep-link when external vendor follow-up is needed.",
+                    SettingsDependency = "Pairs well with supplier administration and journal-entry review."
+                }
+            };
+        }
+
+        private static void PopulateBillingPlanOptions(BillingPlanEditVm vm)
+        {
+            vm.IntervalItems = Enum.GetValues<BillingInterval>()
+                .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(x.ToString(), x.ToString(), x == vm.Interval))
+                .ToList();
+        }
+
+        private IActionResult RenderBillingPlanEditor(BillingPlanEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Billing/_BillingPlanEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreatePlan", vm) : View("EditPlan", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

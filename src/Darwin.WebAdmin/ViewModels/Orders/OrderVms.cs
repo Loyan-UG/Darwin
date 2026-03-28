@@ -1,5 +1,6 @@
 using Darwin.Application.Orders.DTOs;
 using Darwin.Domain.Enums;
+using Darwin.WebAdmin.ViewModels.CRM;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
@@ -39,6 +40,10 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public Guid Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public string Currency { get; set; } = "EUR";
+        public bool PricesIncludeTax { get; set; }
+        public long SubtotalNetMinor { get; set; }
+        public long TaxTotalMinor { get; set; }
+        public long DiscountTotalMinor { get; set; }
         public long GrandTotalGrossMinor { get; set; }
         public Guid? UserId { get; set; }
         public Guid? ShippingMethodId { get; set; }
@@ -46,6 +51,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string? ShippingCarrier { get; set; }
         public string? ShippingService { get; set; }
         public long ShippingTotalMinor { get; set; }
+        public TaxPolicySnapshotVm TaxPolicy { get; set; } = new();
         public OrderStatus Status { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? SelectedWarehouseId { get; set; }
@@ -319,7 +325,11 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public PaymentStatus? PaymentStatus { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
+        public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
+        public string? CustomerVatId { get; set; }
         public string Currency { get; set; } = "EUR";
+        public long TotalNetMinor { get; set; }
+        public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long SettledAmountMinor { get; set; }

@@ -352,12 +352,17 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<TransitionInvoiceStatusHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
             services.AddScoped<GetPaymentOpsSummaryHandler>();
+            services.AddScoped<GetBillingPlansAdminPageHandler>();
+            services.AddScoped<GetBillingPlanOpsSummaryHandler>();
+            services.AddScoped<GetBillingPlanForEditHandler>();
             services.AddScoped<GetBillingWebhookSubscriptionsPageHandler>();
             services.AddScoped<GetBillingWebhookDeliveriesPageHandler>();
             services.AddScoped<GetBillingWebhookOpsSummaryHandler>();
             services.AddScoped<GetPaymentForEditHandler>();
             services.AddScoped<GetRefundsPageHandler>();
             services.AddScoped<GetRefundOpsSummaryHandler>();
+            services.AddScoped<CreateBillingPlanHandler>();
+            services.AddScoped<UpdateBillingPlanHandler>();
             services.AddScoped<CreatePaymentHandler>();
             services.AddScoped<UpdatePaymentHandler>();
             services.AddScoped<GetFinancialAccountsPageHandler>();

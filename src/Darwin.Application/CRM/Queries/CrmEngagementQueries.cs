@@ -93,7 +93,7 @@ namespace Darwin.Application.CRM.Queries
 
         public GetCustomerSegmentsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
 
-        public async Task<(List<CustomerSegmentListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query = null, CancellationToken ct = default)
+        public async Task<(List<CustomerSegmentListItemDto> Items, int Total)> HandleAsync(int page, int pageSize, string? query = null, CustomerSegmentQueueFilter filter = CustomerSegmentQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -104,6 +104,14 @@ namespace Darwin.Application.CRM.Queries
                 var term = query.Trim();
                 baseQuery = baseQuery.Where(x => x.Name.Contains(term) || (x.Description != null && x.Description.Contains(term)));
             }
+
+            baseQuery = filter switch
+            {
+                CustomerSegmentQueueFilter.Empty => baseQuery.Where(x => x.Memberships.Count == 0),
+                CustomerSegmentQueueFilter.InUse => baseQuery.Where(x => x.Memberships.Count > 0),
+                CustomerSegmentQueueFilter.MissingDescription => baseQuery.Where(x => x.Description == null || x.Description == string.Empty),
+                _ => baseQuery
+            };
 
             var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
             var items = await baseQuery
@@ -116,6 +124,7 @@ namespace Darwin.Application.CRM.Queries
                     Name = x.Name,
                     Description = x.Description,
                     MemberCount = x.Memberships.Count,
+                    HasDescription = x.Description != null && x.Description != string.Empty,
                     CreatedAtUtc = x.CreatedAtUtc,
                     RowVersion = x.RowVersion
                 })
@@ -123,6 +132,19 @@ namespace Darwin.Application.CRM.Queries
                 .ConfigureAwait(false);
 
             return (items, total);
+        }
+
+        public async Task<CustomerSegmentOpsSummaryDto> GetSummaryAsync(CancellationToken ct = default)
+        {
+            var baseQuery = _db.Set<CustomerSegment>().AsNoTracking();
+
+            return new CustomerSegmentOpsSummaryDto
+            {
+                TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
+                EmptyCount = await baseQuery.CountAsync(x => x.Memberships.Count == 0, ct).ConfigureAwait(false),
+                InUseCount = await baseQuery.CountAsync(x => x.Memberships.Count > 0, ct).ConfigureAwait(false),
+                MissingDescriptionCount = await baseQuery.CountAsync(x => x.Description == null || x.Description == string.Empty, ct).ConfigureAwait(false)
+            };
         }
     }
 

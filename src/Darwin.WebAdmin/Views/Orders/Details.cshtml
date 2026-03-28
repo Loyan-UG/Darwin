@@ -91,6 +91,55 @@
     </div>
 </div>
 
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Tax &amp; Price Snapshot</span>
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="text-muted small">Price Mode</div>
+                        <div class="fw-semibold mt-1">@(Model.PricesIncludeTax ? "VAT Inclusive" : "VAT Exclusive")</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Subtotal Net</div>
+                        <div class="fw-semibold mt-1">@Model.Currency @((Model.SubtotalNetMinor / 100.0M).ToString("0.00"))</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Tax Total</div>
+                        <div class="fw-semibold mt-1">@Model.Currency @((Model.TaxTotalMinor / 100.0M).ToString("0.00"))</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">Discounts</div>
+                        <div class="fw-semibold mt-1">@Model.Currency @((Model.DiscountTotalMinor / 100.0M).ToString("0.00"))</div>
+                    </div>
+                </div>
+                <div class="small text-muted mt-3">
+                    Gross totals remain the operational source of truth, while this snapshot exposes the net/tax split currently persisted on the order.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Current Tax Policy</div>
+            <div class="card-body">
+                <div class="small text-muted">VAT Enabled</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.VatEnabled ? "Yes" : "No")</div>
+                <div class="small text-muted">Default VAT</div>
+                <div class="fw-semibold mb-2">@Model.TaxPolicy.DefaultVatRatePercent.ToString("0.##")%</div>
+                <div class="small text-muted">Reverse Charge</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.AllowReverseCharge ? "Allowed" : "Disabled")</div>
+                <div class="small text-muted">Issuer</div>
+                <div class="fw-semibold">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="order-operation-shell" class="mb-3"></div>
 
 <div class="card mt-3">

@@ -343,11 +343,30 @@ namespace Darwin.WebAdmin.ViewModels.CRM
     public sealed class CustomerSegmentsListVm
     {
         public CrmSummaryVm Summary { get; set; } = new();
+        public CustomerSegmentOpsSummaryVm SegmentSummary { get; set; } = new();
+        public List<CrmPlaybookVm> Playbooks { get; set; } = new();
         public List<CustomerSegmentListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public CustomerSegmentQueueFilter Filter { get; set; } = CustomerSegmentQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class CustomerSegmentOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int EmptyCount { get; set; }
+        public int InUseCount { get; set; }
+        public int MissingDescriptionCount { get; set; }
+    }
+
+    public sealed class CrmPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     public sealed class CustomerSegmentListItemVm
@@ -356,6 +375,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int MemberCount { get; set; }
+        public bool HasDescription { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

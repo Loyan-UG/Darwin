@@ -8,10 +8,10 @@ namespace Darwin.Application.Inventory.Queries
     /// <summary>
     /// Returns paged inventory ledger (transactions) for a specific variant (or whole store if variantId is null).
     /// </summary>
-    public sealed class GetInventoryLedgerHandler
-    {
-        private readonly IAppDbContext _db;
-        public GetInventoryLedgerHandler(IAppDbContext db) => _db = db;
+public sealed class GetInventoryLedgerHandler
+{
+    private readonly IAppDbContext _db;
+    public GetInventoryLedgerHandler(IAppDbContext db) => _db = db;
 
         public async Task<(List<InventoryTransactionRowDto> Items, int Total)> HandleAsync(
             Guid? variantId, int page, int pageSize, Guid? warehouseId = null, InventoryLedgerQueueFilter filter = InventoryLedgerQueueFilter.All, CancellationToken ct = default)
@@ -57,5 +57,36 @@ namespace Darwin.Application.Inventory.Queries
 
             return (items, total);
         }
+
+        public async Task<InventoryLedgerOpsSummaryDto> GetSummaryAsync(Guid? variantId, Guid? warehouseId = null, CancellationToken ct = default)
+        {
+            var q = _db.Set<InventoryTransaction>().AsNoTracking();
+
+            if (variantId.HasValue)
+            {
+                q = q.Where(x => x.ProductVariantId == variantId.Value);
+            }
+
+            if (warehouseId.HasValue)
+            {
+                q = q.Where(x => x.WarehouseId == warehouseId.Value);
+            }
+
+            return new InventoryLedgerOpsSummaryDto
+            {
+                TotalCount = await q.CountAsync(ct).ConfigureAwait(false),
+                InboundCount = await q.CountAsync(x => x.QuantityDelta > 0, ct).ConfigureAwait(false),
+                OutboundCount = await q.CountAsync(x => x.QuantityDelta < 0, ct).ConfigureAwait(false),
+                ReservationCount = await q.CountAsync(x => x.Reason.Contains("Reserve") || x.Reason.Contains("Reservation"), ct).ConfigureAwait(false)
+            };
+        }
+    }
+
+    public sealed class InventoryLedgerOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int InboundCount { get; set; }
+        public int OutboundCount { get; set; }
+        public int ReservationCount { get; set; }
     }
 }

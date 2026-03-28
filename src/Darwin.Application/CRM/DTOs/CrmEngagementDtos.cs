@@ -70,8 +70,25 @@ namespace Darwin.Application.CRM.DTOs
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public int MemberCount { get; set; }
+        public bool HasDescription { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public enum CustomerSegmentQueueFilter
+    {
+        All = 0,
+        Empty = 1,
+        InUse = 2,
+        MissingDescription = 3
+    }
+
+    public sealed class CustomerSegmentOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int EmptyCount { get; set; }
+        public int InUseCount { get; set; }
+        public int MissingDescriptionCount { get; set; }
     }
 
     /// <summary>

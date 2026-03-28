@@ -350,6 +350,16 @@ Status terms used below:
 - `Planned / Near-term`: add language settings and fallback policy
 - `Planned / Near-term`: translate core admin flows after initial operational completion
 - `Planned / Near-term`: localize templates and communication content
+- `Completed foundation`: order details and order invoice tabs in WebAdmin now surface persisted tax snapshots, price mode, and customer VAT profile context so finance support can review net/tax/gross from order-bound workflows instead of only CRM invoice screens
+- `Completed foundation`: business locations now expose queue-style admin triage for primary, missing-address, and missing-coordinate states, with operational playbooks so location readiness can be reviewed before shipping, storefront, and mobile go-live
+- `Completed foundation`: billing financial-accounts and journal-entry workspaces now expose operational summaries and review playbooks, which closes another action-light gap in WebAdmin finance support
+- `Completed foundation`: billing expenses now expose summary signals and review playbooks, so cost follow-up is no longer limited to a plain list/editor workflow
+- `Completed foundation`: business subscription handoff now exposes plan-level readiness, current-plan detection, and action-oriented external billing-website handoff signals so admins can distinguish ready versus blocked upgrade/support paths from the subscription workspace itself
+- `Completed foundation`: billing-plan administration now exists in WebAdmin with queue filters, operational summaries, playbooks, and full create/edit forms, which closes a real control-panel gap in subscription catalog management
+- `Completed foundation`: CRM customer segments now expose queue filters, operational summaries, and hygiene playbooks, so empty or under-documented segmentation no longer hides inside a plain list screen
+- `Completed foundation`: inventory-ledger review now includes summary cards and troubleshooting playbooks, so inbound, outbound, and reservation-heavy stock history can be triaged without relying on a raw table alone
+- `Completed foundation`: inventory purchase-order administration now includes queue summaries, playbooks, line-count visibility, and clearer status signals so replenishment review no longer depends on a plain list/editor flow
+- `Completed foundation`: inventory stock-transfer administration now includes queue summaries, playbooks, line-count visibility, and clearer status badges so warehouse-move troubleshooting is possible before opening each transfer individually
 
 ## 8. Decision Log
 

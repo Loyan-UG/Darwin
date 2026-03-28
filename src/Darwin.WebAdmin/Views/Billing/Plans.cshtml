@@ -1,0 +1,147 @@
+@model Darwin.WebAdmin.ViewModels.Billing.BillingPlansListVm
+@{
+    ViewData["Title"] = "Billing Plans";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-layer-group me-2"></i>Billing Plans</h1>
+        <p class="text-muted mb-0">Manage the plan catalog that powers business subscription handoff and support triage.</p>
+    </div>
+    <a asp-action="CreatePlan" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Create Plan
+    </a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Active</div><div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Inactive</div><div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Trial</div><div class="fs-4 fw-semibold">@Model.Summary.TrialCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">Missing Features</div><div class="fs-4 fw-semibold">@Model.Summary.MissingFeaturesCount</div></div></div>
+    <div class="col-md-2"><div class="border rounded p-3 h-100"><div class="text-muted small">In Use</div><div class="fs-4 fw-semibold">@Model.Summary.InUseCount</div></div></div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Billing Plan Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search by code, name, or description" />
+    </div>
+    <div class="col-md-3">
+        <select name="queue" class="form-select">
+            <option value="All" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.All)">All plans</option>
+            <option value="Active" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Active)">Active</option>
+            <option value="Inactive" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Inactive)">Inactive</option>
+            <option value="Trial" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.Trial)">Trial</option>
+            <option value="MissingFeatures" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.MissingFeatures)">Missing features</option>
+            <option value="InUse" selected="@(Model.QueueFilter == Darwin.Application.Billing.DTOs.BillingPlanQueueFilter.InUse)">In use</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <input type="number" min="1" name="pageSize" value="@Model.PageSize" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        <a asp-action="Plans" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Plans" asp-route-queue="Inactive" class="btn btn-sm btn-outline-secondary">Inactive</a>
+    <a asp-action="Plans" asp-route-queue="Trial" class="btn btn-sm btn-outline-info">Trial</a>
+    <a asp-action="Plans" asp-route-queue="MissingFeatures" class="btn btn-sm btn-outline-warning">Missing Features</a>
+    <a asp-action="Plans" asp-route-queue="InUse" class="btn btn-sm btn-outline-primary">In Use</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Plan</th>
+                <th>Price</th>
+                <th>Interval</th>
+                <th>Trial</th>
+                <th>Usage</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="8" class="text-center text-muted py-4">No billing plans found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@item.Name</div>
+                        <div class="small text-muted">@item.Code</div>
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <div class="small text-muted mt-1">@item.Description</div>
+                        }
+                    </td>
+                    <td>@item.Currency @((item.PriceMinor / 100M).ToString("0.00"))</td>
+                    <td>Every @item.IntervalCount @item.Interval</td>
+                    <td>@(item.TrialDays.HasValue ? $"{item.TrialDays} days" : "-")</td>
+                    <td>
+                        <span class="badge @(item.ActiveSubscriptionCount > 0 ? "text-bg-primary" : "text-bg-secondary")">@item.ActiveSubscriptionCount active</span>
+                    </td>
+                    <td>
+                        <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">@(item.IsActive ? "Active" : "Inactive")</span>
+                        @if (!item.HasFeatures)
+                        {
+                            <div><span class="badge text-bg-warning mt-1">Missing features</span></div>
+                        }
+                    </td>
+                    <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td class="text-end">
+                        <a asp-action="EditPlan" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Billing"
+       asp-action="Plans"
+       asp-route-q="@Model.Query"
+       asp-route-queue="@Model.QueueFilter">
+</pager>

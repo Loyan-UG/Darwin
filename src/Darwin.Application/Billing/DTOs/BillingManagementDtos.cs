@@ -157,6 +157,15 @@ namespace Darwin.Application.Billing.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class FinancialAccountOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int AssetCount { get; set; }
+        public int RevenueCount { get; set; }
+        public int ExpenseCount { get; set; }
+        public int MissingCodeCount { get; set; }
+    }
+
     public class FinancialAccountCreateDto
     {
         public Guid BusinessId { get; set; }
@@ -181,6 +190,14 @@ namespace Darwin.Application.Billing.DTOs
         public long AmountMinor { get; set; }
         public DateTime ExpenseDateUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class ExpenseOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int SupplierLinkedCount { get; set; }
+        public int RecentCount { get; set; }
+        public int HighValueCount { get; set; }
     }
 
     public class ExpenseCreateDto
@@ -218,6 +235,13 @@ namespace Darwin.Application.Billing.DTOs
         public long TotalDebitMinor { get; set; }
         public long TotalCreditMinor { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class JournalEntryOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int RecentCount { get; set; }
+        public int MultiLineCount { get; set; }
     }
 
     public class JournalEntryCreateDto

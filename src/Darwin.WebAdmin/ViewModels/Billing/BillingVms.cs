@@ -22,6 +22,18 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int Total { get; set; }
     }
 
+    public sealed class BillingPlansListVm
+    {
+        public string Query { get; set; } = string.Empty;
+        public BillingPlanQueueFilter QueueFilter { get; set; } = BillingPlanQueueFilter.All;
+        public BillingPlanOpsSummaryVm Summary { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
+        public List<BillingPlanListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
     public sealed class BillingWebhooksListVm
     {
         public string Query { get; set; } = string.Empty;
@@ -90,6 +102,34 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int FailedDeliveryCount { get; set; }
         public int SucceededDeliveryCount { get; set; }
         public int RetryPendingCount { get; set; }
+    }
+
+    public sealed class BillingPlanOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int TrialCount { get; set; }
+        public int MissingFeaturesCount { get; set; }
+        public int InUseCount { get; set; }
+    }
+
+    public sealed class BillingPlanListItemVm
+    {
+        public Guid Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public long PriceMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public BillingInterval Interval { get; set; } = BillingInterval.Month;
+        public int IntervalCount { get; set; }
+        public int? TrialDays { get; set; }
+        public bool IsActive { get; set; }
+        public bool HasFeatures { get; set; }
+        public int ActiveSubscriptionCount { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
     public sealed class BillingWebhookSubscriptionListItemVm
@@ -238,6 +278,47 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public List<SelectListItem> UserOptions { get; set; } = new();
     }
 
+    public sealed class BillingPlanEditVm
+    {
+        public Guid Id { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+        [Required]
+        [StringLength(128)]
+        public string Code { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(256)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(4000)]
+        public string? Description { get; set; }
+
+        [Range(0, long.MaxValue)]
+        public long PriceMinor { get; set; }
+
+        [Required]
+        [StringLength(3, MinimumLength = 3)]
+        public string Currency { get; set; } = "EUR";
+
+        public BillingInterval Interval { get; set; } = BillingInterval.Month;
+
+        [Range(1, 3650)]
+        public int IntervalCount { get; set; } = 1;
+
+        [Range(0, 3650)]
+        public int? TrialDays { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        [Required]
+        [StringLength(4000)]
+        public string FeaturesJson { get; set; } = "{}";
+
+        public int ActiveSubscriptionCount { get; set; }
+        public IEnumerable<SelectListItem> IntervalItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
     public sealed class PaymentRefundHistoryItemVm
     {
         public Guid Id { get; set; }
@@ -261,6 +342,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
         public AccountType? QueueFilter { get; set; }
+        public FinancialAccountOpsSummaryVm Summary { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<FinancialAccountListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -275,6 +358,15 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public AccountType Type { get; set; }
         public string? Code { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class FinancialAccountOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int AssetCount { get; set; }
+        public int RevenueCount { get; set; }
+        public int ExpenseCount { get; set; }
+        public int MissingCodeCount { get; set; }
     }
 
     public sealed class FinancialAccountEditVm
@@ -301,6 +393,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
     {
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
+        public ExpenseOpsSummaryVm Summary { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<ExpenseListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -317,6 +411,14 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public long AmountMinor { get; set; }
         public DateTime ExpenseDateUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class ExpenseOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int SupplierLinkedCount { get; set; }
+        public int RecentCount { get; set; }
+        public int HighValueCount { get; set; }
     }
 
     public sealed class ExpenseEditVm
@@ -350,11 +452,20 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
         public JournalEntryQueueFilter? QueueFilter { get; set; }
+        public JournalEntryOpsSummaryVm Summary { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<JournalEntryListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
+    }
+
+    public sealed class JournalEntryOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int RecentCount { get; set; }
+        public int MultiLineCount { get; set; }
     }
 
     public sealed class JournalEntryListItemVm

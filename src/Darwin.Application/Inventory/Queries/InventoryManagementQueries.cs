@@ -333,6 +333,21 @@ namespace Darwin.Application.Inventory.Queries
 
             return (items, total);
         }
+
+        public async Task<StockTransferOpsSummaryDto> GetSummaryAsync(Guid warehouseId, CancellationToken ct = default)
+        {
+            var transfersQuery = _db.Set<StockTransfer>()
+                .AsNoTracking()
+                .Where(x => x.FromWarehouseId == warehouseId || x.ToWarehouseId == warehouseId);
+
+            return new StockTransferOpsSummaryDto
+            {
+                TotalCount = await transfersQuery.CountAsync(ct).ConfigureAwait(false),
+                DraftCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.Draft, ct).ConfigureAwait(false),
+                InTransitCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.InTransit, ct).ConfigureAwait(false),
+                CompletedCount = await transfersQuery.CountAsync(x => x.Status == Domain.Enums.TransferStatus.Completed, ct).ConfigureAwait(false)
+            };
+        }
     }
 
     public sealed class GetStockTransferForEditHandler
@@ -429,6 +444,21 @@ namespace Darwin.Application.Inventory.Queries
                 .ConfigureAwait(false);
 
             return (items, total);
+        }
+
+        public async Task<PurchaseOrderOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var ordersQuery = _db.Set<PurchaseOrder>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            return new PurchaseOrderOpsSummaryDto
+            {
+                TotalCount = await ordersQuery.CountAsync(ct).ConfigureAwait(false),
+                DraftCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Draft, ct).ConfigureAwait(false),
+                IssuedCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Issued, ct).ConfigureAwait(false),
+                ReceivedCount = await ordersQuery.CountAsync(x => x.Status == Domain.Enums.PurchaseOrderStatus.Received, ct).ConfigureAwait(false)
+            };
         }
     }
 

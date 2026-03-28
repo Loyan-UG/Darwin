@@ -438,3 +438,51 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: DHL readiness cards now surface the configured timing thresholds alongside carrier credentials and shipper identity so operators can interpret queue counts correctly
 - `Completed foundation`: order-level shipment review now mirrors those same support signals, which keeps queue triage and order troubleshooting aligned
 - `Completed foundation`: shipping-method administration now includes operational summary cards, playbooks, and queue subsets for missing rates, DHL-specific review, global coverage, and multi-rate methods, so carrier setup can be triaged from configuration screens rather than only from shipment failures
+
+## 19. Tax-Aware Order Review Progress
+
+- `Completed foundation`: order details now expose price mode, subtotal net, tax total, discounts, gross total, and the current site tax-policy snapshot in WebAdmin
+- `Completed foundation`: order invoice tabs now carry customer tax profile and VAT ID context alongside net/tax/gross breakdowns, which keeps order-bound finance review aligned with the richer CRM invoice workspace
+
+## 20. Business Location Ops Progress
+
+- `Completed foundation`: business-location administration now includes queue-style filters for primary, missing-address, and missing-coordinate states instead of only a flat location list
+- `Completed foundation`: location rows now surface readiness badges for incomplete address or coordinate data, which makes storefront, shipping, and map-related follow-up easier from the same admin workspace
+- `Completed foundation`: location operations now include summary cards and playbooks so operators can triage business-location readiness before go-live rather than only editing records one by one
+
+## 21. Billing Workspace Completion Progress
+
+- `Completed foundation`: financial-account administration now includes summary cards for asset, revenue, expense, and missing-code states so account hygiene can be reviewed before finance automation expands
+- `Completed foundation`: financial-account rows now call out missing account codes directly and link more naturally into journal-entry review from the same workspace
+- `Completed foundation`: journal-entry administration now includes operational summary cards and review playbooks for recent and multi-line entries, which makes finance-control triage easier from WebAdmin instead of only from the editor screen
+- `Completed foundation`: expense administration now includes summary cards for supplier-linked, recent, and higher-value costs plus review playbooks, which brings it closer to the operational depth of the other billing workspaces
+
+## 22. Business Subscription Handoff Progress
+
+- `Completed foundation`: the business subscription workspace now includes handoff-readiness summary cards for total, ready, blocked, and current-plan counts
+- `Completed foundation`: each available billing plan now clearly indicates whether it matches the current subscription, whether external billing handoff is possible, and why a plan is blocked when prerequisites are not satisfied
+- `Completed foundation`: operators can now jump directly from a ready plan to the configured external billing-management website, while missing-configuration and missing-prerequisite states are surfaced explicitly instead of remaining implicit in checkout-validation text
+
+## 23. Billing Plan Admin Progress
+
+- `Completed foundation`: billing plans now have a dedicated WebAdmin workspace with queue filters for active, inactive, trial, missing-feature, and in-use plans
+- `Completed foundation`: the billing-plan workspace now includes operational summary cards and playbooks so plan-catalog hygiene can be reviewed before subscription handoff or business support changes are made
+- `Completed foundation`: operators can now create and edit billing plans directly from WebAdmin, including pricing cadence, trial duration, activation state, and phase-1 features metadata
+
+## 24. CRM Segment Ops Progress
+
+- `Completed foundation`: CRM segment administration now includes queue filters for empty, in-use, and missing-description segments instead of relying on a plain searchable list
+- `Completed foundation`: the segment workspace now exposes operational summary cards and playbooks so segmentation hygiene can be reviewed before campaigns, support filters, and reporting rely on stale taxonomy
+- `Completed foundation`: segment rows now visibly call out empty segments and missing operator descriptions, which makes CRM cleanup work easier without leaving the list screen
+
+## 25. Inventory Ledger Ops Progress
+
+- `Completed foundation`: inventory-ledger review now includes summary cards for total, inbound, outbound, and reservation-heavy activity instead of only a paged transaction table
+- `Completed foundation`: the ledger workspace now includes troubleshooting playbooks so stock investigators can interpret inbound corrections and outbound/reservation spikes without leaving the screen
+
+## 26. Inventory Replenishment and Transfer Ops Progress
+
+- `Completed foundation`: purchase-order administration now includes operational summary cards for total, draft, issued, and received orders instead of relying on a plain searchable list
+- `Completed foundation`: the purchase-order workspace now includes replenishment playbooks and clearer status badges plus line-count visibility, which makes supplier-order triage easier before opening each record
+- `Completed foundation`: stock-transfer administration now includes operational summary cards for total, draft, in-transit, and completed transfers instead of only a flat list
+- `Completed foundation`: the stock-transfer workspace now includes transfer playbooks, clearer status badges, and line-count visibility so warehouse-move troubleshooting can happen directly from the queue view

@@ -55,6 +55,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         public InventoryLedgerQueueFilter Filter { get; set; } = InventoryLedgerQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public InventoryLedgerOpsSummaryVm Summary { get; set; } = new();
+        public List<InventoryOpsPlaybookVm> Playbooks { get; set; } = new();
 
         /// <summary>Current page items.</summary>
         public List<InventoryLedgerItemVm> Items { get; set; } = new();
@@ -70,6 +72,21 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
 
         /// <summary>Drop-down items for page size selection.</summary>
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+    }
+
+    public sealed class InventoryLedgerOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int InboundCount { get; set; }
+        public int OutboundCount { get; set; }
+        public int ReservationCount { get; set; }
+    }
+
+    public sealed class InventoryOpsPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -372,6 +389,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public string Query { get; set; } = string.Empty;
         public StockTransferQueueFilter Filter { get; set; } = StockTransferQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public StockTransferOpsSummaryVm Summary { get; set; } = new();
+        public List<InventoryOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> WarehouseOptions { get; set; } = new();
         public List<StockTransferListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -388,6 +407,14 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public int LineCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class StockTransferOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int DraftCount { get; set; }
+        public int InTransitCount { get; set; }
+        public int CompletedCount { get; set; }
     }
 
     public sealed class StockTransferLineVm
@@ -424,6 +451,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public string Query { get; set; } = string.Empty;
         public PurchaseOrderQueueFilter Filter { get; set; } = PurchaseOrderQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public PurchaseOrderOpsSummaryVm Summary { get; set; } = new();
+        public List<InventoryOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<PurchaseOrderListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -441,6 +470,14 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public DateTime OrderedAtUtc { get; set; }
         public int LineCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class PurchaseOrderOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int DraftCount { get; set; }
+        public int IssuedCount { get; set; }
+        public int ReceivedCount { get; set; }
     }
 
     public sealed class PurchaseOrderLineVm

@@ -24,13 +24,76 @@
     <a asp-action="StockTransfers" asp-route-businessId="@ViewBag.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Total</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-secondary-subtle">
+            <div class="card-body">
+                <div class="text-muted small">Draft</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-warning-subtle">
+            <div class="card-body">
+                <div class="text-muted small">In Transit</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.InTransitCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-success-subtle">
+            <div class="card-body">
+                <div class="text-muted small">Completed</div>
+                <div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Playbooks.Count > 0)
+{
+    <div class="card mb-4">
+        <div class="card-header">Stock Transfer Ops Playbooks</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead>
+                <tr>
+                    <th>Playbook</th>
+                    <th>When It Applies</th>
+                    <th>Operator Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.Title</td>
+                        <td>@playbook.ScopeNote</td>
+                        <td>@playbook.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
-        <thead><tr><th>From</th><th>To</th><th>Status</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
+        <thead><tr><th>From</th><th>To</th><th>Status</th><th>Lines</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="5" class="text-center text-muted">No stock transfers found.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted">No stock transfers found.</td></tr>
         }
         else
         {
@@ -39,7 +102,21 @@
                 <tr>
                     <td>@item.FromWarehouseName</td>
                     <td>@item.ToWarehouseName</td>
-                    <td>@item.Status</td>
+                    <td>
+                        @if (string.Equals(item.Status, "InTransit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="badge text-bg-warning">In Transit</span>
+                        }
+                        else if (string.Equals(item.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="badge text-bg-success">Completed</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">@item.Status</span>
+                        }
+                    </td>
+                    <td>@item.LineCount</td>
                     <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="text-end"><a asp-action="EditStockTransfer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
                 </tr>

@@ -16,6 +16,66 @@
     <a asp-action="CreateFinancialAccount" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Account</a>
 </div>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Total</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Assets</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.AssetCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Revenue</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.RevenueCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Expenses</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ExpenseCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Missing Code</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingCodeCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Financial Account Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm @(Model.QueueFilter is null ? "btn-dark" : "btn-outline-dark")">All</a>
     <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Asset" class="btn btn-sm @(Model.QueueFilter == AccountType.Asset ? "btn-info" : "btn-outline-info")">Assets</a>
@@ -40,6 +100,10 @@
                     <td>@item.Name</td>
                     <td>@item.Type</td>
                     <td class="text-end">
+                        @if (string.IsNullOrWhiteSpace(item.Code))
+                        {
+                            <span class="badge text-bg-warning me-1">Code missing</span>
+                        }
                         <a asp-action="EditFinancialAccount" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
                         <a asp-action="JournalEntries"
                            asp-route-businessId="@Model.BusinessId"

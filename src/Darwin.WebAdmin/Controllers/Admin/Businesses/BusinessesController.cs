@@ -805,7 +805,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
         [HttpGet]
         [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
-        public async Task<IActionResult> Locations(Guid businessId, int page = 1, int pageSize = 20, string? query = null, CancellationToken ct = default)
+        public async Task<IActionResult> Locations(Guid businessId, int page = 1, int pageSize = 20, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)
         {
             var business = await LoadBusinessContextAsync(businessId, ct);
             if (business is null)
@@ -814,7 +814,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectToAction(nameof(Index));
             }
 
-            var (items, total) = await _getBusinessLocationsPage.HandleAsync(businessId, page, pageSize, query, ct);
+            var (items, total) = await _getBusinessLocationsPage.HandleAsync(businessId, page, pageSize, query, filter, ct);
+            var summary = await _getBusinessLocationsPage.GetSummaryAsync(businessId, ct);
 
             var vm = new BusinessLocationsListVm
             {
@@ -823,6 +824,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildBusinessLocationFilterItems(filter),
+                Summary = new BusinessLocationOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    PrimaryCount = summary.PrimaryCount,
+                    MissingAddressCount = summary.MissingAddressCount,
+                    MissingCoordinatesCount = summary.MissingCoordinatesCount
+                },
+                Playbooks = BuildBusinessLocationPlaybooks(),
                 Items = items.Select(x => new BusinessLocationListItemVm
                 {
                     Id = x.Id,
@@ -832,6 +843,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Region = x.Region,
                     CountryCode = x.CountryCode,
                     IsPrimary = x.IsPrimary,
+                    HasAddress = x.HasAddress,
+                    HasCoordinates = x.HasCoordinates,
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
                 }).ToList()
@@ -1894,6 +1907,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             var subscription = await BuildBusinessSubscriptionSnapshotAsync(business.Id, ct);
             var settings = await _siteSettingCache.GetAsync(ct);
+            var managementWebsiteUrl = string.IsNullOrWhiteSpace(settings.BusinessManagementWebsiteUrl)
+                ? null
+                : settings.BusinessManagementWebsiteUrl.Trim();
+            var managementWebsiteConfigured = !string.IsNullOrWhiteSpace(managementWebsiteUrl);
             var plans = await _getBillingPlans.HandleAsync(activeOnly: true, ct);
             var recentInvoices = await _getBusinessSubscriptionInvoicesPage.HandleAsync(
                 business.Id,
@@ -1908,6 +1925,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             foreach (var x in plans.Items)
             {
                 var validation = await _createSubscriptionCheckoutIntent.ValidateAsync(business.Id, x.Id, ct);
+                var isCurrentPlan = subscription.HasSubscription
+                    && !string.IsNullOrWhiteSpace(subscription.PlanCode)
+                    && string.Equals(subscription.PlanCode, x.Code, StringComparison.OrdinalIgnoreCase);
+                var canOpenManagementWebsite = managementWebsiteConfigured && validation.Succeeded;
+
                 planVms.Add(new BusinessBillingPlanVm
                 {
                     Id = x.Id,
@@ -1921,7 +1943,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     TrialDays = x.TrialDays,
                     IsActive = x.IsActive,
                     CheckoutReady = validation.Succeeded,
-                    CheckoutReadinessLabel = validation.Succeeded ? "Checkout-ready" : (validation.Error ?? "Not ready")
+                    CheckoutReadinessLabel = validation.Succeeded ? "Checkout-ready" : (validation.Error ?? "Not ready"),
+                    IsCurrentPlan = isCurrentPlan,
+                    CanOpenManagementWebsite = canOpenManagementWebsite,
+                    ManagementWebsiteUrl = canOpenManagementWebsite ? managementWebsiteUrl : null,
+                    HandoffLabel = isCurrentPlan
+                        ? "Current plan"
+                        : canOpenManagementWebsite
+                            ? "Open external billing website"
+                            : managementWebsiteConfigured
+                                ? "Resolve plan prerequisites first"
+                                : "Configure management website first"
                 });
             }
 
@@ -1929,12 +1961,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             {
                 Business = business,
                 Subscription = subscription,
-                ManagementWebsiteConfigured = !string.IsNullOrWhiteSpace(settings.BusinessManagementWebsiteUrl),
-                ManagementWebsiteUrl = settings.BusinessManagementWebsiteUrl,
+                ManagementWebsiteConfigured = managementWebsiteConfigured,
+                ManagementWebsiteUrl = managementWebsiteUrl,
+                HandoffSummary = new BusinessSubscriptionHandoffSummaryVm
+                {
+                    TotalPlans = planVms.Count,
+                    ReadyPlanCount = planVms.Count(x => x.CanOpenManagementWebsite),
+                    BlockedPlanCount = planVms.Count(x => !x.CanOpenManagementWebsite),
+                    CurrentPlanCount = planVms.Count(x => x.IsCurrentPlan)
+                },
                 Plans = planVms,
                 InvoiceSummary = MapBusinessSubscriptionInvoiceOpsSummaryVm(invoiceSummary),
                 RecentInvoices = recentInvoices.Items.Select(MapBusinessSubscriptionInvoiceListItemVm).ToList(),
-                Playbooks = BuildSubscriptionPlaybooks(subscription, !string.IsNullOrWhiteSpace(settings.BusinessManagementWebsiteUrl))
+                Playbooks = BuildSubscriptionPlaybooks(subscription, managementWebsiteConfigured)
             };
         }
 
@@ -2086,6 +2125,39 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem("Stripe", BusinessSubscriptionInvoiceQueueFilter.Stripe.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Stripe);
             yield return new SelectListItem("Overdue", BusinessSubscriptionInvoiceQueueFilter.Overdue.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Overdue);
             yield return new SelectListItem("PDF Missing", BusinessSubscriptionInvoiceQueueFilter.PdfMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.PdfMissing);
+        }
+
+        private static IEnumerable<SelectListItem> BuildBusinessLocationFilterItems(BusinessLocationQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All locations", BusinessLocationQueueFilter.All.ToString(), selectedFilter == BusinessLocationQueueFilter.All);
+            yield return new SelectListItem("Primary", BusinessLocationQueueFilter.Primary.ToString(), selectedFilter == BusinessLocationQueueFilter.Primary);
+            yield return new SelectListItem("Missing address", BusinessLocationQueueFilter.MissingAddress.ToString(), selectedFilter == BusinessLocationQueueFilter.MissingAddress);
+            yield return new SelectListItem("Missing coordinates", BusinessLocationQueueFilter.MissingCoordinates.ToString(), selectedFilter == BusinessLocationQueueFilter.MissingCoordinates);
+        }
+
+        private static List<BusinessLocationPlaybookVm> BuildBusinessLocationPlaybooks()
+        {
+            return new List<BusinessLocationPlaybookVm>
+            {
+                new()
+                {
+                    QueueLabel = "Primary location",
+                    WhyItMatters = "Business-facing operational flows usually assume one clear primary location for default fulfillment and storefront context.",
+                    OperatorAction = "Review whether the current primary location still represents the live business entry point before onboarding or go-live approval."
+                },
+                new()
+                {
+                    QueueLabel = "Missing address",
+                    WhyItMatters = "Incomplete address data weakens shipping, invoicing, and public business visibility across admin and mobile workflows.",
+                    OperatorAction = "Open the location and complete street, city, and country before relying on the location for live operations."
+                },
+                new()
+                {
+                    QueueLabel = "Missing coordinates",
+                    WhyItMatters = "Geo-dependent discovery, mapping, and future nearby-business experiences depend on a stored coordinate.",
+                    OperatorAction = "Open the location and add coordinates when the business expects map-aware or proximity-aware experiences."
+                }
+            };
         }
 
         private static string BuildStaffAccessBadgePayload(BusinessMemberDetailDto member, BusinessContextVm business, DateTime issuedAtUtc, DateTime expiresAtUtc)

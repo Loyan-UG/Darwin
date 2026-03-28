@@ -22,11 +22,53 @@
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by name, city or postal code" />
     </div>
+    <div class="col-md-3">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+    </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
         <a asp-action="Locations" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Reset</a>
     </div>
 </form>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">Total</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">Primary</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PrimaryCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">Missing Address</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingAddressCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small text-uppercase">Missing Coordinates</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingCoordinatesCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Location Operations Playbooks</div>
+    <div class="card-body">
+        <ul class="mb-0">
+            @foreach (var playbook in Model.Playbooks)
+            {
+                <li><strong>@playbook.QueueLabel:</strong> @playbook.OperatorAction <span class="text-muted">@playbook.WhyItMatters</span></li>
+            }
+        </ul>
+    </div>
+</div>
 
 <div class="table-responsive">
     <table class="table table-sm table-hover align-middle">
@@ -61,6 +103,14 @@
                         }
                     </td>
                     <td class="text-end">
+                        @if (!item.HasAddress)
+                        {
+                            <span class="badge text-bg-warning me-1">Address missing</span>
+                        }
+                        @if (!item.HasCoordinates)
+                        {
+                            <span class="badge text-bg-secondary me-1">Coordinates missing</span>
+                        }
                         <a asp-action="EditLocation" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
                             <i class="fa-solid fa-pen"></i> Edit
                         </a>
@@ -89,7 +139,8 @@
        asp-controller="Businesses"
        asp-action="Locations"
        asp-route-businessId="@Model.Business.Id"
-       asp-route-query="@Model.Query">
+       asp-route-query="@Model.Query"
+       asp-route-filter="@Model.Filter">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

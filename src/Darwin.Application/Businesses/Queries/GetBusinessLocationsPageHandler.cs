@@ -19,7 +19,7 @@ namespace Darwin.Application.Businesses.Queries
         public GetBusinessLocationsPageHandler(IAppDbContext db) => _db = db;
 
         public async Task<(List<BusinessLocationListItemDto> Items, int Total)> HandleAsync(
-            Guid businessId, int page, int pageSize, string? query = null, CancellationToken ct = default)
+            Guid businessId, int page, int pageSize, string? query = null, BusinessLocationQueueFilter filter = BusinessLocationQueueFilter.All, CancellationToken ct = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -27,6 +27,17 @@ namespace Darwin.Application.Businesses.Queries
             var baseQuery = _db.Set<BusinessLocation>()
                 .AsNoTracking()
                 .Where(x => x.BusinessId == businessId);
+
+            baseQuery = filter switch
+            {
+                BusinessLocationQueueFilter.Primary => baseQuery.Where(x => x.IsPrimary),
+                BusinessLocationQueueFilter.MissingAddress => baseQuery.Where(x =>
+                    string.IsNullOrWhiteSpace(x.AddressLine1) ||
+                    string.IsNullOrWhiteSpace(x.City) ||
+                    string.IsNullOrWhiteSpace(x.CountryCode)),
+                BusinessLocationQueueFilter.MissingCoordinates => baseQuery.Where(x => x.Coordinate == null),
+                _ => baseQuery
+            };
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -53,12 +64,36 @@ namespace Darwin.Application.Businesses.Queries
                     Region = x.Region,
                     CountryCode = x.CountryCode,
                     IsPrimary = x.IsPrimary,
+                    HasAddress =
+                        !string.IsNullOrWhiteSpace(x.AddressLine1) &&
+                        !string.IsNullOrWhiteSpace(x.City) &&
+                        !string.IsNullOrWhiteSpace(x.CountryCode),
+                    HasCoordinates = x.Coordinate != null,
                     ModifiedAtUtc = x.ModifiedAtUtc,
                     RowVersion = x.RowVersion
                 })
                 .ToListAsync(ct);
 
             return (items, total);
+        }
+
+        public async Task<BusinessLocationOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var baseQuery = _db.Set<BusinessLocation>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            return new BusinessLocationOpsSummaryDto
+            {
+                TotalCount = await baseQuery.CountAsync(ct).ConfigureAwait(false),
+                PrimaryCount = await baseQuery.CountAsync(x => x.IsPrimary, ct).ConfigureAwait(false),
+                MissingAddressCount = await baseQuery.CountAsync(
+                    x => string.IsNullOrWhiteSpace(x.AddressLine1) ||
+                         string.IsNullOrWhiteSpace(x.City) ||
+                         string.IsNullOrWhiteSpace(x.CountryCode),
+                    ct).ConfigureAwait(false),
+                MissingCoordinatesCount = await baseQuery.CountAsync(x => x.Coordinate == null, ct).ConfigureAwait(false)
+            };
         }
     }
 }

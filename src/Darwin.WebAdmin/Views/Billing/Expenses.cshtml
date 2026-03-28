@@ -15,6 +15,60 @@
     <a asp-action="CreateExpense" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Expense</a>
 </div>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Total</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Supplier Linked</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.SupplierLinkedCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Recent (30d)</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.RecentCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">High Value</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.HighValueCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Expense Review Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th class="text-end">Actions</th></tr></thead>

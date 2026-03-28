@@ -6,6 +6,7 @@ using Darwin.Application.Orders.DTOs;
 using Darwin.Application.Orders.Queries;
 using Darwin.Domain.Enums;
 using Darwin.WebAdmin.Services.Settings;
+using Darwin.WebAdmin.ViewModels.CRM;
 using Darwin.WebAdmin.ViewModels.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -182,6 +183,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             };
         }
 
+        private static TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
+        {
+            return new TaxPolicySnapshotVm
+            {
+                VatEnabled = dto.VatEnabled,
+                DefaultVatRatePercent = dto.DefaultVatRatePercent,
+                PricesIncludeVat = dto.PricesIncludeVat,
+                AllowReverseCharge = dto.AllowReverseCharge,
+                IssuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName),
+                InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
+                InvoiceIssuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId)
+            };
+        }
+
         private async Task<ShipmentOpsSummaryVm> BuildShipmentOpsSummaryVmAsync(int attentionDelayHours, int trackingGraceHours, CancellationToken ct)
         {
             var summary = await _getShipmentOpsSummary.HandleAsync(attentionDelayHours, trackingGraceHours, ct).ConfigureAwait(false);
@@ -252,6 +267,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             var dto = await _getOrderForView.HandleAsync(id, ct).ConfigureAwait(false);
             var warehouses = await _getWarehouseLookup.HandleAsync(ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
@@ -275,12 +291,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 UserId = dto.UserId,
                 Status = dto.Status,
                 Currency = dto.Currency,
+                PricesIncludeTax = dto.PricesIncludeTax,
+                SubtotalNetMinor = dto.SubtotalNetMinor,
+                TaxTotalMinor = dto.TaxTotalMinor,
+                DiscountTotalMinor = dto.DiscountTotalMinor,
                 GrandTotalGrossMinor = dto.GrandTotalGrossMinor,
                 ShippingMethodId = dto.ShippingMethodId,
                 ShippingMethodName = dto.ShippingMethodName,
                 ShippingCarrier = dto.ShippingCarrier,
                 ShippingService = dto.ShippingService,
                 ShippingTotalMinor = dto.ShippingTotalMinor,
+                TaxPolicy = MapTaxPolicy(settings),
                 RowVersion = dto.RowVersion,
                 SelectedWarehouseId = selectedWarehouseId,
                 WarehouseOptions = warehouses
@@ -442,7 +463,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     PaymentStatus = x.PaymentStatus,
                     CustomerId = x.CustomerId,
                     CustomerDisplayName = x.CustomerDisplayName,
+                    CustomerTaxProfileType = x.CustomerTaxProfileType,
+                    CustomerVatId = x.CustomerVatId,
                     Currency = x.Currency,
+                    TotalNetMinor = x.TotalNetMinor,
+                    TotalTaxMinor = x.TotalTaxMinor,
                     TotalGrossMinor = x.TotalGrossMinor,
                     RefundedAmountMinor = x.RefundedAmountMinor,
                     SettledAmountMinor = x.SettledAmountMinor,

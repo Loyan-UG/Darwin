@@ -303,6 +303,14 @@ namespace Darwin.Application.Inventory.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class StockTransferOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int DraftCount { get; set; }
+        public int InTransitCount { get; set; }
+        public int CompletedCount { get; set; }
+    }
+
     /// <summary>
     /// Stock transfer create payload.
     /// </summary>
@@ -348,6 +356,14 @@ namespace Darwin.Application.Inventory.DTOs
         public DateTime OrderedAtUtc { get; set; }
         public int LineCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class PurchaseOrderOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int DraftCount { get; set; }
+        public int IssuedCount { get; set; }
+        public int ReceivedCount { get; set; }
     }
 
     /// <summary>

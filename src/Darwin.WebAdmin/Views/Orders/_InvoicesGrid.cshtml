@@ -21,6 +21,7 @@
                 <tr>
                     <th>Invoice</th>
                     <th>Customer</th>
+                    <th>Tax Profile</th>
                     <th>Payment</th>
                     <th class="text-end">Total</th>
                     <th>Status</th>
@@ -31,7 +32,7 @@
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="7" class="text-center text-muted">No invoices.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">No invoices.</td></tr>
                 }
                 else
                 {
@@ -49,6 +50,24 @@
                                 else if (!string.IsNullOrWhiteSpace(item.CustomerDisplayName))
                                 {
                                     @item.CustomerDisplayName
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.CustomerTaxProfileType.HasValue)
+                                {
+                                    <span class="badge @(item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@item.CustomerTaxProfileType</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.CustomerVatId))
+                                    {
+                                        <div class="small text-muted">@item.CustomerVatId</div>
+                                    }
+                                    else if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business)
+                                    {
+                                        <div class="small text-danger">VAT ID missing</div>
+                                    }
                                 }
                                 else
                                 {
@@ -74,7 +93,9 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <div>@item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="small text-muted">Net: @item.Currency @((item.TotalNetMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="small text-muted">Tax: @item.Currency @((item.TotalTaxMinor / 100.0M).ToString("0.00"))</div>
+                                <div class="fw-semibold">Gross: @item.Currency @((item.TotalGrossMinor / 100.0M).ToString("0.00"))</div>
                                 @if (item.RefundedAmountMinor > 0)
                                 {
                                     <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100.0M).ToString("0.00"))</div>

@@ -151,10 +151,19 @@ public sealed class BusinessSubscriptionWorkspaceVm
     public BusinessSubscriptionSnapshotVm Subscription { get; set; } = new();
     public bool ManagementWebsiteConfigured { get; set; }
     public string? ManagementWebsiteUrl { get; set; }
+    public BusinessSubscriptionHandoffSummaryVm HandoffSummary { get; set; } = new();
     public List<BusinessBillingPlanVm> Plans { get; set; } = new();
     public BusinessSubscriptionInvoiceOpsSummaryVm InvoiceSummary { get; set; } = new();
     public List<BusinessSubscriptionInvoiceListItemVm> RecentInvoices { get; set; } = new();
     public List<BusinessSubscriptionPlaybookVm> Playbooks { get; set; } = new();
+}
+
+public sealed class BusinessSubscriptionHandoffSummaryVm
+{
+    public int TotalPlans { get; set; }
+    public int ReadyPlanCount { get; set; }
+    public int BlockedPlanCount { get; set; }
+    public int CurrentPlanCount { get; set; }
 }
 
     public sealed class BusinessBillingPlanVm
@@ -171,6 +180,10 @@ public sealed class BusinessSubscriptionWorkspaceVm
         public bool IsActive { get; set; }
         public bool CheckoutReady { get; set; }
         public string CheckoutReadinessLabel { get; set; } = string.Empty;
+        public bool IsCurrentPlan { get; set; }
+        public bool CanOpenManagementWebsite { get; set; }
+        public string? ManagementWebsiteUrl { get; set; }
+        public string HandoffLabel { get; set; } = string.Empty;
     }
 
 public sealed class BusinessSubscriptionPlaybookVm
@@ -285,6 +298,8 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public string? Region { get; set; }
         public string? CountryCode { get; set; }
         public bool IsPrimary { get; set; }
+        public bool HasAddress { get; set; }
+        public bool HasCoordinates { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -299,7 +314,26 @@ public sealed class BusinessSubscriptionInvoicesListVm
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public BusinessLocationQueueFilter Filter { get; set; } = BusinessLocationQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+        public BusinessLocationOpsSummaryVm Summary { get; set; } = new();
+        public List<BusinessLocationPlaybookVm> Playbooks { get; set; } = new();
         public List<BusinessLocationListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class BusinessLocationOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int PrimaryCount { get; set; }
+        public int MissingAddressCount { get; set; }
+        public int MissingCoordinatesCount { get; set; }
+    }
+
+    public sealed class BusinessLocationPlaybookVm
+    {
+        public string QueueLabel { get; set; } = string.Empty;
+        public string WhyItMatters { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     /// <summary>

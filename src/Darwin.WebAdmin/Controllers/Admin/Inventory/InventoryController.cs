@@ -739,9 +739,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             var items = new List<StockTransferListItemVm>();
             var total = 0;
+            var summary = new StockTransferOpsSummaryVm();
             if (warehouseId.HasValue)
             {
                 var result = await _getStockTransfersPage.HandleAsync(warehouseId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
+                var summaryDto = await _getStockTransfersPage.GetSummaryAsync(warehouseId.Value, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new StockTransferListItemVm
                 {
                     Id = x.Id,
@@ -753,6 +755,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
+                summary = new StockTransferOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    DraftCount = summaryDto.DraftCount,
+                    InTransitCount = summaryDto.InTransitCount,
+                    CompletedCount = summaryDto.CompletedCount
+                };
             }
 
             var vm = new StockTransfersListVm
@@ -761,6 +770,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Query = q ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildStockTransferFilterItems(filter),
+                Summary = summary,
+                Playbooks = BuildStockTransferPlaybooks(),
                 WarehouseOptions = await _referenceData.GetWarehouseOptionsAsync(warehouseId, businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -903,9 +914,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<PurchaseOrderListItemVm>();
             var total = 0;
+            var summary = new PurchaseOrderOpsSummaryVm();
             if (businessId.HasValue)
             {
                 var result = await _getPurchaseOrdersPage.HandleAsync(businessId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
+                var summaryDto = await _getPurchaseOrdersPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new PurchaseOrderListItemVm
                 {
                     Id = x.Id,
@@ -918,6 +931,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
+                summary = new PurchaseOrderOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    DraftCount = summaryDto.DraftCount,
+                    IssuedCount = summaryDto.IssuedCount,
+                    ReceivedCount = summaryDto.ReceivedCount
+                };
             }
 
             var vm = new PurchaseOrdersListVm
@@ -926,6 +946,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Query = q ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildPurchaseOrderFilterItems(filter),
+                Summary = summary,
+                Playbooks = BuildPurchaseOrderPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -1080,12 +1102,21 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         public async Task<IActionResult> VariantLedger(Guid variantId, Guid? warehouseId = null, int page = 1, int pageSize = 20, InventoryLedgerQueueFilter filter = InventoryLedgerQueueFilter.All, CancellationToken ct = default)
         {
             var dto = await _getLedger.HandleAsync(variantId, page, pageSize, warehouseId, filter, ct).ConfigureAwait(false);
+            var summary = await _getLedger.GetSummaryAsync(variantId, warehouseId, ct).ConfigureAwait(false);
             var vm = new InventoryLedgerListVm
             {
                 VariantId = variantId,
                 WarehouseId = warehouseId,
                 Filter = filter,
                 FilterItems = BuildInventoryLedgerFilterItems(filter),
+                Summary = new InventoryLedgerOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    InboundCount = summary.InboundCount,
+                    OutboundCount = summary.OutboundCount,
+                    ReservationCount = summary.ReservationCount
+                },
+                Playbooks = BuildInventoryLedgerPlaybooks(),
                 Items = dto.Items.Select(x => new InventoryLedgerItemVm
                 {
                     WarehouseId = x.WarehouseId,
@@ -1110,6 +1141,63 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             yield return new SelectListItem("Inbound", InventoryLedgerQueueFilter.Inbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Inbound);
             yield return new SelectListItem("Outbound", InventoryLedgerQueueFilter.Outbound.ToString(), selectedFilter == InventoryLedgerQueueFilter.Outbound);
             yield return new SelectListItem("Reservations", InventoryLedgerQueueFilter.Reservations.ToString(), selectedFilter == InventoryLedgerQueueFilter.Reservations);
+        }
+
+        private static List<InventoryOpsPlaybookVm> BuildInventoryLedgerPlaybooks()
+        {
+            return new List<InventoryOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Inbound review",
+                    ScopeNote = "Inbound rows usually represent receipts, returns, or positive stock corrections that affect future availability.",
+                    OperatorAction = "Review reference ids and reason labels before assuming the increase is final, especially after supplier receipts or return handling."
+                },
+                new()
+                {
+                    Title = "Outbound and reservation review",
+                    ScopeNote = "Outbound and reservation-heavy ledger history often explains low-stock alerts and order allocation pressure.",
+                    OperatorAction = "Compare reservation spikes with order and stock-level workflows before manually adjusting inventory so troubleshooting stays traceable."
+                }
+            };
+        }
+
+        private static List<InventoryOpsPlaybookVm> BuildStockTransferPlaybooks()
+        {
+            return new List<InventoryOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Draft transfer review",
+                    ScopeNote = "Draft transfers usually represent internal stock moves that still need warehouse confirmation before goods leave the source location.",
+                    OperatorAction = "Check warehouse ownership, line counts, and destination readiness before moving draft transfers into active handoff."
+                },
+                new()
+                {
+                    Title = "In-transit follow-up",
+                    ScopeNote = "In-transit transfers affect availability at both ends and are the first place to review when warehouse counts look inconsistent.",
+                    OperatorAction = "Compare transfer age with receiving activity and reconcile any warehouse-level stock mismatch before manual adjustments."
+                }
+            };
+        }
+
+        private static List<InventoryOpsPlaybookVm> BuildPurchaseOrderPlaybooks()
+        {
+            return new List<InventoryOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Draft order cleanup",
+                    ScopeNote = "Draft purchase orders often indicate supplier planning work that is not yet committed and can create confusion during replenishment reviews.",
+                    OperatorAction = "Review old draft orders first, confirm supplier intent, and either issue or tidy them up before opening new replenishment cycles."
+                },
+                new()
+                {
+                    Title = "Issued and received follow-up",
+                    ScopeNote = "Issued orders should move toward receipt, while received orders should align with inbound stock and supplier accounting.",
+                    OperatorAction = "Prioritize issued orders that have been open too long, then verify received orders against stock receipts and supplier records."
+                }
+            };
         }
 
         private async Task PopulateStockLevelOptionsAsync(StockLevelEditVm vm, Guid? businessId, CancellationToken ct)

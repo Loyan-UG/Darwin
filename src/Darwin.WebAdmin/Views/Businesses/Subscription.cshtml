@@ -66,6 +66,41 @@
 </div>
 
 <div class="card shadow-sm mb-3">
+    <div class="card-header">Billing Handoff Readiness</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Plans</div>
+                    <div class="fw-semibold mt-1">@Model.HandoffSummary.TotalPlans</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Ready</div>
+                    <div class="fw-semibold mt-1">@Model.HandoffSummary.ReadyPlanCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Blocked</div>
+                    <div class="fw-semibold mt-1">@Model.HandoffSummary.BlockedPlanCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Current Match</div>
+                    <div class="fw-semibold mt-1">@Model.HandoffSummary.CurrentPlanCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="small text-muted mt-3">
+            Ready plans can be handed off through the external billing website. Blocked plans still need prerequisite or configuration cleanup.
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
     <div class="card-header">Current Subscription</div>
     <div class="card-body">
         @if (Model.Subscription.HasSubscription)
@@ -189,13 +224,14 @@
                         <th>Interval</th>
                         <th>Trial</th>
                         <th>Checkout Readiness</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (Model.Plans.Count == 0)
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No active billing plans found.</td>
+                            <td colspan="6" class="text-center text-muted py-4">No active billing plans found.</td>
                         </tr>
                     }
                     else
@@ -206,6 +242,10 @@
                                 <td>
                                     <div class="fw-semibold">@plan.Name</div>
                                     <div class="small text-muted">@plan.Code</div>
+                                    @if (plan.IsCurrentPlan)
+                                    {
+                                        <div><span class="badge bg-primary mt-1">Current plan</span></div>
+                                    }
                                     @if (!string.IsNullOrWhiteSpace(plan.Description))
                                     {
                                         <div class="small text-muted mt-1">@plan.Description</div>
@@ -222,6 +262,25 @@
                                     else
                                     {
                                         <span class="badge bg-warning text-dark">@plan.CheckoutReadinessLabel</span>
+                                    }
+                                    <div class="small text-muted mt-1">@plan.HandoffLabel</div>
+                                </td>
+                                <td class="text-end">
+                                    @if (plan.CanOpenManagementWebsite)
+                                    {
+                                        <a href="@plan.ManagementWebsiteUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+                                            Open Billing Website
+                                        </a>
+                                    }
+                                    else if (!Model.ManagementWebsiteConfigured)
+                                    {
+                                        <a asp-controller="SiteSettings" asp-action="Index" asp-fragment="site-settings-business-app-links" class="btn btn-sm btn-outline-warning">
+                                            Configure Website
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Resolve prerequisites</span>
                                     }
                                 </td>
                             </tr>

@@ -417,7 +417,11 @@ namespace Darwin.Application.Orders.DTOs
         public PaymentStatus? PaymentStatus { get; set; }
         public Guid? CustomerId { get; set; }
         public string CustomerDisplayName { get; set; } = string.Empty;
+        public CustomerTaxProfileType? CustomerTaxProfileType { get; set; }
+        public string? CustomerVatId { get; set; }
         public string Currency { get; set; } = "EUR";
+        public long TotalNetMinor { get; set; }
+        public long TotalTaxMinor { get; set; }
         public long TotalGrossMinor { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long SettledAmountMinor { get; set; }

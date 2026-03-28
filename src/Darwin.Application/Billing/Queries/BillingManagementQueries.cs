@@ -619,6 +619,22 @@ namespace Darwin.Application.Billing.Queries
 
             return (items, total);
         }
+
+        public async Task<FinancialAccountOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var accountsQuery = _db.Set<FinancialAccount>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            return new FinancialAccountOpsSummaryDto
+            {
+                TotalCount = await accountsQuery.CountAsync(ct).ConfigureAwait(false),
+                AssetCount = await accountsQuery.CountAsync(x => x.Type == AccountType.Asset, ct).ConfigureAwait(false),
+                RevenueCount = await accountsQuery.CountAsync(x => x.Type == AccountType.Revenue, ct).ConfigureAwait(false),
+                ExpenseCount = await accountsQuery.CountAsync(x => x.Type == AccountType.Expense, ct).ConfigureAwait(false),
+                MissingCodeCount = await accountsQuery.CountAsync(x => string.IsNullOrWhiteSpace(x.Code), ct).ConfigureAwait(false)
+            };
+        }
     }
 
     public sealed class GetFinancialAccountForEditHandler
@@ -694,6 +710,24 @@ namespace Darwin.Application.Billing.Queries
                 .ConfigureAwait(false);
 
             return (items, total);
+        }
+
+        public async Task<ExpenseOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var expensesQuery = _db.Set<Expense>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            var recentCutoffUtc = DateTime.UtcNow.AddDays(-30);
+            const long highValueThresholdMinor = 100_00L;
+
+            return new ExpenseOpsSummaryDto
+            {
+                TotalCount = await expensesQuery.CountAsync(ct).ConfigureAwait(false),
+                SupplierLinkedCount = await expensesQuery.CountAsync(x => x.SupplierId != null, ct).ConfigureAwait(false),
+                RecentCount = await expensesQuery.CountAsync(x => x.ExpenseDateUtc >= recentCutoffUtc, ct).ConfigureAwait(false),
+                HighValueCount = await expensesQuery.CountAsync(x => x.AmountMinor >= highValueThresholdMinor, ct).ConfigureAwait(false)
+            };
         }
     }
 
@@ -787,6 +821,22 @@ namespace Darwin.Application.Billing.Queries
                 .ConfigureAwait(false);
 
             return (items, total);
+        }
+
+        public async Task<JournalEntryOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var journalEntriesQuery = _db.Set<JournalEntry>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            var recentCutoffUtc = DateTime.UtcNow.AddDays(-7);
+
+            return new JournalEntryOpsSummaryDto
+            {
+                TotalCount = await journalEntriesQuery.CountAsync(ct).ConfigureAwait(false),
+                RecentCount = await journalEntriesQuery.CountAsync(x => x.EntryDateUtc >= recentCutoffUtc, ct).ConfigureAwait(false),
+                MultiLineCount = await journalEntriesQuery.CountAsync(x => x.Lines.Count > 2, ct).ConfigureAwait(false)
+            };
         }
     }
 

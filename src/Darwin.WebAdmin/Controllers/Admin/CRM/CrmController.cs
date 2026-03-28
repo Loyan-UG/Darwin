@@ -859,23 +859,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public async Task<IActionResult> Segments(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Segments(int page = 1, int pageSize = 20, string? q = null, CustomerSegmentQueueFilter filter = CustomerSegmentQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getCustomerSegmentsPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
+            var (items, total) = await _getCustomerSegmentsPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
+            var segmentSummary = await _getCustomerSegmentsPage.GetSummaryAsync(ct).ConfigureAwait(false);
             var vm = new CustomerSegmentsListVm
             {
                 Summary = MapSummary(summary),
+                SegmentSummary = new CustomerSegmentOpsSummaryVm
+                {
+                    TotalCount = segmentSummary.TotalCount,
+                    EmptyCount = segmentSummary.EmptyCount,
+                    InUseCount = segmentSummary.InUseCount,
+                    MissingDescriptionCount = segmentSummary.MissingDescriptionCount
+                },
+                Playbooks = BuildSegmentPlaybooks(),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildSegmentFilterItems(filter),
                 Items = items.Select(x => new CustomerSegmentListItemVm
                 {
                     Id = x.Id,
                     Name = x.Name,
                     Description = x.Description,
                     MemberCount = x.MemberCount,
+                    HasDescription = x.HasDescription,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -1343,6 +1355,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             yield return new SelectListItem("Open", OpportunityQueueFilter.Open.ToString(), selectedFilter == OpportunityQueueFilter.Open);
             yield return new SelectListItem("Closing soon", OpportunityQueueFilter.ClosingSoon.ToString(), selectedFilter == OpportunityQueueFilter.ClosingSoon);
             yield return new SelectListItem("High value", OpportunityQueueFilter.HighValue.ToString(), selectedFilter == OpportunityQueueFilter.HighValue);
+        }
+
+        private static IEnumerable<SelectListItem> BuildSegmentFilterItems(CustomerSegmentQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All segments", CustomerSegmentQueueFilter.All.ToString(), selectedFilter == CustomerSegmentQueueFilter.All);
+            yield return new SelectListItem("Empty", CustomerSegmentQueueFilter.Empty.ToString(), selectedFilter == CustomerSegmentQueueFilter.Empty);
+            yield return new SelectListItem("In use", CustomerSegmentQueueFilter.InUse.ToString(), selectedFilter == CustomerSegmentQueueFilter.InUse);
+            yield return new SelectListItem("Missing description", CustomerSegmentQueueFilter.MissingDescription.ToString(), selectedFilter == CustomerSegmentQueueFilter.MissingDescription);
+        }
+
+        private static List<CrmPlaybookVm> BuildSegmentPlaybooks()
+        {
+            return new List<CrmPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Empty segments",
+                    ScopeNote = "Segments without members usually indicate unfinished segmentation logic or stale CRM taxonomy.",
+                    OperatorAction = "Review whether the segment should be assigned to customers, renamed, or retired before marketing and support rely on it."
+                },
+                new()
+                {
+                    Title = "Segments missing description",
+                    ScopeNote = "Missing operator context makes segmentation review and campaign targeting harder across CRM workflows.",
+                    OperatorAction = "Add a concise description so support, marketing, and admin operators understand why the segment exists and when to use it."
+                }
+            };
         }
 
         private IActionResult RenderCustomerEditor(CustomerEditVm vm, string actionName)

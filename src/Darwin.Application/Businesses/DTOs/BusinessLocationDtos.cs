@@ -3,6 +3,14 @@ using System;
 
 namespace Darwin.Application.Businesses.DTOs
 {
+    public enum BusinessLocationQueueFilter
+    {
+        All = 0,
+        Primary = 1,
+        MissingAddress = 2,
+        MissingCoordinates = 3
+    }
+
     /// <summary>
     /// DTO for creating a business location.
     /// </summary>
@@ -64,7 +72,17 @@ namespace Darwin.Application.Businesses.DTOs
         public string? Region { get; set; }
         public string? CountryCode { get; set; }
         public bool IsPrimary { get; set; }
+        public bool HasAddress { get; set; }
+        public bool HasCoordinates { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class BusinessLocationOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int PrimaryCount { get; set; }
+        public int MissingAddressCount { get; set; }
+        public int MissingCoordinatesCount { get; set; }
     }
 }

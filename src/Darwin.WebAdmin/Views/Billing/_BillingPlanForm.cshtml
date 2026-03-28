@@ -1,0 +1,82 @@
+@model Darwin.WebAdmin.ViewModels.Billing.BillingPlanEditVm
+@{
+    var isCreate = (ViewData["IsCreate"] as bool?) ?? false;
+}
+
+<form method="post" asp-action="@(isCreate ? "CreatePlan" : "EditPlan")" class="card shadow-sm">
+    <div class="card-body">
+        @Html.AntiForgeryToken()
+        @if (!isCreate)
+        {
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+        }
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Code" class="form-label"></label>
+                <input asp-for="Code" class="form-control" />
+                <span asp-validation-for="Code" class="text-danger small"></span>
+            </div>
+            <div class="col-md-5">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Currency" class="form-label"></label>
+                <input asp-for="Currency" class="form-control text-uppercase" />
+                <span asp-validation-for="Currency" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" rows="3" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="PriceMinor" class="form-label"></label>
+                <input asp-for="PriceMinor" class="form-control" />
+                <span asp-validation-for="PriceMinor" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Interval" class="form-label"></label>
+                <select asp-for="Interval" asp-items="Model.IntervalItems" class="form-select"></select>
+                <span asp-validation-for="Interval" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="IntervalCount" class="form-label"></label>
+                <input asp-for="IntervalCount" class="form-control" />
+                <span asp-validation-for="IntervalCount" class="text-danger small"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="TrialDays" class="form-label"></label>
+                <input asp-for="TrialDays" class="form-control" />
+                <span asp-validation-for="TrialDays" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="FeaturesJson" class="form-label"></label>
+                <textarea asp-for="FeaturesJson" rows="6" class="form-control font-monospace"></textarea>
+                <div class="form-text">Store phase-1 plan capabilities as JSON metadata. Avoid secrets here.</div>
+                <span asp-validation-for="FeaturesJson" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> @(isCreate ? "Create Plan" : "Save Changes")
+        </button>
+        <a asp-action="Plans" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>

@@ -116,6 +116,8 @@ namespace Darwin.Application.Orders.Queries
                     PaymentId = x.PaymentId,
                     CustomerId = x.CustomerId,
                     Currency = x.Currency,
+                    TotalNetMinor = x.TotalNetMinor,
+                    TotalTaxMinor = x.TotalTaxMinor,
                     TotalGrossMinor = x.TotalGrossMinor,
                     Status = x.Status,
                     IssuedAtUtc = x.CreatedAtUtc,
@@ -192,6 +194,8 @@ namespace Darwin.Application.Orders.Queries
                 if (item.CustomerId.HasValue && customerMap.TryGetValue(item.CustomerId.Value, out var customer))
                 {
                     item.CustomerDisplayName = Darwin.Application.Billing.Queries.BillingPaymentDisplayFormatter.BuildCustomerDisplayName(customer, users);
+                    item.CustomerTaxProfileType = customer.TaxProfileType;
+                    item.CustomerVatId = customer.VatId;
                 }
             }
 
