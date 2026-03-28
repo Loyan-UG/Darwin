@@ -203,6 +203,10 @@ namespace Darwin.WebAdmin.ViewModels.Orders
 
         public bool IsDhl { get; set; }
         public bool NeedsCarrierReview { get; set; }
+        public bool AwaitingHandoff { get; set; }
+        public bool TrackingOverdue { get; set; }
+        public int AttentionDelayHours { get; set; }
+        public int TrackingGraceHours { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -414,6 +418,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public bool AccountNumberConfigured { get; set; }
         public bool ShipperIdentityConfigured { get; set; }
         public string EnvironmentLabel { get; set; } = string.Empty;
+        public int ShipmentAttentionDelayHours { get; set; }
+        public int ShipmentTrackingGraceHours { get; set; }
     }
 
     public sealed class ShipmentOpsSummaryVm
@@ -424,6 +430,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int ReturnedCount { get; set; }
         public int DhlCount { get; set; }
         public int MissingServiceCount { get; set; }
+        public int AwaitingHandoffCount { get; set; }
+        public int TrackingOverdueCount { get; set; }
     }
 
     public sealed class ShipmentPlaybookVm

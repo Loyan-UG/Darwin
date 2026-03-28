@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Darwin.Application.Billing;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -144,15 +145,17 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool CancelAtPeriodEnd { get; set; }
     }
 
-    public sealed class BusinessSubscriptionWorkspaceVm
-    {
-        public BusinessContextVm Business { get; set; } = new();
-        public BusinessSubscriptionSnapshotVm Subscription { get; set; } = new();
-        public bool ManagementWebsiteConfigured { get; set; }
-        public string? ManagementWebsiteUrl { get; set; }
-        public List<BusinessBillingPlanVm> Plans { get; set; } = new();
-        public List<BusinessSubscriptionPlaybookVm> Playbooks { get; set; } = new();
-    }
+public sealed class BusinessSubscriptionWorkspaceVm
+{
+    public BusinessContextVm Business { get; set; } = new();
+    public BusinessSubscriptionSnapshotVm Subscription { get; set; } = new();
+    public bool ManagementWebsiteConfigured { get; set; }
+    public string? ManagementWebsiteUrl { get; set; }
+    public List<BusinessBillingPlanVm> Plans { get; set; } = new();
+    public BusinessSubscriptionInvoiceOpsSummaryVm InvoiceSummary { get; set; } = new();
+    public List<BusinessSubscriptionInvoiceListItemVm> RecentInvoices { get; set; } = new();
+    public List<BusinessSubscriptionPlaybookVm> Playbooks { get; set; } = new();
+}
 
     public sealed class BusinessBillingPlanVm
     {
@@ -170,12 +173,59 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string CheckoutReadinessLabel { get; set; } = string.Empty;
     }
 
-    public sealed class BusinessSubscriptionPlaybookVm
-    {
-        public string QueueLabel { get; set; } = string.Empty;
-        public string WhyItMatters { get; set; } = string.Empty;
-        public string OperatorAction { get; set; } = string.Empty;
-    }
+public sealed class BusinessSubscriptionPlaybookVm
+{
+    public string QueueLabel { get; set; } = string.Empty;
+    public string WhyItMatters { get; set; } = string.Empty;
+    public string OperatorAction { get; set; } = string.Empty;
+}
+
+public sealed class BusinessSubscriptionInvoiceOpsSummaryVm
+{
+    public int TotalCount { get; set; }
+    public int OpenCount { get; set; }
+    public int PaidCount { get; set; }
+    public int DraftCount { get; set; }
+    public int UncollectibleCount { get; set; }
+    public int HostedLinkMissingCount { get; set; }
+    public int StripeCount { get; set; }
+}
+
+public sealed class BusinessSubscriptionInvoiceListItemVm
+{
+    public Guid Id { get; set; }
+    public Guid BusinessId { get; set; }
+    public Guid BusinessSubscriptionId { get; set; }
+    public string Provider { get; set; } = string.Empty;
+    public string? ProviderInvoiceId { get; set; }
+    public SubscriptionInvoiceStatus Status { get; set; }
+    public long TotalMinor { get; set; }
+    public string Currency { get; set; } = "EUR";
+    public DateTime IssuedAtUtc { get; set; }
+    public DateTime? DueAtUtc { get; set; }
+    public DateTime? PaidAtUtc { get; set; }
+    public string? HostedInvoiceUrl { get; set; }
+    public string? PdfUrl { get; set; }
+    public string? FailureReason { get; set; }
+    public string? PlanName { get; set; }
+    public string? PlanCode { get; set; }
+    public bool HasHostedInvoiceUrl { get; set; }
+    public bool HasPdfUrl { get; set; }
+    public bool IsStripe { get; set; }
+}
+
+public sealed class BusinessSubscriptionInvoicesListVm
+{
+    public BusinessContextVm Business { get; set; } = new();
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int Total { get; set; }
+    public string Query { get; set; } = string.Empty;
+    public BusinessSubscriptionInvoiceQueueFilter Filter { get; set; } = BusinessSubscriptionInvoiceQueueFilter.All;
+    public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+    public BusinessSubscriptionInvoiceOpsSummaryVm Summary { get; set; } = new();
+    public List<BusinessSubscriptionInvoiceListItemVm> Items { get; set; } = new();
+}
 
     /// <summary>
     /// Summarizes whether business-scoped communication preferences can be executed

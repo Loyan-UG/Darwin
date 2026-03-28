@@ -15,6 +15,8 @@
         <a asp-action="ShipmentsQueue" asp-route-filter="Returned" class="btn btn-outline-dark btn-sm">Returned</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="Dhl" class="btn btn-outline-primary btn-sm">DHL</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="MissingService" class="btn btn-outline-warning btn-sm">Missing Service</a>
+        <a asp-action="ShipmentsQueue" asp-route-filter="AwaitingHandoff" class="btn btn-outline-danger btn-sm">Awaiting Handoff</a>
+        <a asp-action="ShipmentsQueue" asp-route-filter="TrackingOverdue" class="btn btn-outline-danger btn-sm">Tracking Overdue</a>
     </div>
 </div>
 
@@ -53,6 +55,20 @@
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">Missing Service</div>
             <div class="fs-4 fw-semibold">@Model.Summary.MissingServiceCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Awaiting Handoff</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.AwaitingHandoffCount</div>
+            <div class="small text-muted mt-1">Threshold: @Model.Dhl.ShipmentAttentionDelayHours h</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Tracking Overdue</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TrackingOverdueCount</div>
+            <div class="small text-muted mt-1">Grace: @Model.Dhl.ShipmentTrackingGraceHours h</div>
         </div>
     </div>
 </div>
@@ -94,10 +110,22 @@
                     <div class="fw-semibold mt-1">@Model.Dhl.EnvironmentLabel</div>
                 </div>
             </div>
-            <div class="col-md-1">
+            <div class="col-md-2">
                 <div class="border rounded p-3 h-100">
                     <div class="text-muted small">Shipper Identity</div>
                     <div class="fw-semibold mt-1">@(Model.Dhl.ShipperIdentityConfigured ? "Ready" : "Missing")</div>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Handoff Delay</div>
+                    <div class="fw-semibold mt-1">@Model.Dhl.ShipmentAttentionDelayHours h</div>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Tracking Grace</div>
+                    <div class="fw-semibold mt-1">@Model.Dhl.ShipmentTrackingGraceHours h</div>
                 </div>
             </div>
         </div>
@@ -187,6 +215,10 @@
                         {
                             <div><span class="badge text-bg-warning mt-1">Needs carrier review</span></div>
                         }
+                        @if (item.TrackingOverdue)
+                        {
+                            <div><span class="badge text-bg-danger mt-1">Tracking overdue</span></div>
+                        }
                     </td>
                     <td>@item.TotalWeight</td>
                     <td>
@@ -196,6 +228,10 @@
                         @if (item.IsDhl)
                         {
                             <div><span class="badge text-bg-info mt-1">DHL</span></div>
+                        }
+                        @if (item.AwaitingHandoff)
+                        {
+                            <div><span class="badge text-bg-danger mt-1">Awaiting handoff</span></div>
                         }
                     </td>
                     <td>
@@ -210,6 +246,14 @@
                         else
                         {
                             <span class="text-muted">Not yet handed over</span>
+                            @if (item.AwaitingHandoff)
+                            {
+                                <div class="small text-danger mt-1">Older than @item.AttentionDelayHours h threshold</div>
+                            }
+                        }
+                        @if (item.TrackingOverdue)
+                        {
+                            <div class="small text-danger mt-1">Missing tracking beyond @item.TrackingGraceHours h grace</div>
                         }
                     </td>
                     <td class="text-end">

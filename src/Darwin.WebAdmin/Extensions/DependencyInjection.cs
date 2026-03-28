@@ -156,6 +156,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetPageForEditHandler>();
             services.AddScoped<SoftDeletePageHandler>();
             services.AddScoped<GetMediaAssetsPageHandler>();
+            services.AddScoped<GetMediaAssetOpsSummaryHandler>();
             services.AddScoped<GetMediaAssetForEditHandler>();
             services.AddScoped<CreateMediaAssetHandler>();
             services.AddScoped<UpdateMediaAssetHandler>();
@@ -210,6 +211,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<CreateShippingMethodHandler>();
             services.AddScoped<UpdateShippingMethodHandler>();
             services.AddScoped<GetShippingMethodsPageHandler>();
+            services.AddScoped<GetShippingMethodOpsSummaryHandler>();
             services.AddScoped<GetShippingMethodForEditHandler>();
 
             // Lookups and cultures
@@ -283,6 +285,8 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetFinancialAccountLookupHandler>();
             services.AddScoped<GetPaymentLookupHandler>();
             services.AddScoped<GetBusinessSubscriptionStatusHandler>();
+            services.AddScoped<GetBusinessSubscriptionInvoicesPageHandler>();
+            services.AddScoped<GetBusinessSubscriptionInvoiceOpsSummaryHandler>();
             services.AddScoped<GetLoyaltyProgramsPageHandler>();
             services.AddScoped<GetLoyaltyProgramForEditHandler>();
             services.AddScoped<CreateLoyaltyProgramHandler>();
@@ -348,7 +352,12 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<TransitionInvoiceStatusHandler>();
             services.AddScoped<GetPaymentsPageHandler>();
             services.AddScoped<GetPaymentOpsSummaryHandler>();
+            services.AddScoped<GetBillingWebhookSubscriptionsPageHandler>();
+            services.AddScoped<GetBillingWebhookDeliveriesPageHandler>();
+            services.AddScoped<GetBillingWebhookOpsSummaryHandler>();
             services.AddScoped<GetPaymentForEditHandler>();
+            services.AddScoped<GetRefundsPageHandler>();
+            services.AddScoped<GetRefundOpsSummaryHandler>();
             services.AddScoped<CreatePaymentHandler>();
             services.AddScoped<UpdatePaymentHandler>();
             services.AddScoped<GetFinancialAccountsPageHandler>();

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Darwin.Application.Identity.DTOs;
 
 namespace Darwin.WebAdmin.ViewModels.Identity
 {
@@ -15,7 +16,11 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public UserQueueFilter Filter { get; set; } = UserQueueFilter.All;
+        public UserOpsSummaryVm Summary { get; set; } = new();
+        public List<UserSupportPlaybookVm> Playbooks { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
     }
 
 
@@ -35,6 +40,7 @@ namespace Darwin.WebAdmin.ViewModels.Identity
 
         /// <summary>Family name.</summary>
         public string? LastName { get; set; }
+        public string? PhoneE164 { get; set; }
 
         /// <summary>Whether the account is active (enabled).</summary>
         public bool IsActive { get; set; }
@@ -42,8 +48,30 @@ namespace Darwin.WebAdmin.ViewModels.Identity
         /// <summary>Whether this user is system-protected and cannot be deleted.</summary>
         public bool IsSystem { get; set; }
 
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
+        public int MobileDeviceCount { get; set; }
+        public bool IsLockedOut => LockoutEndUtc.HasValue && LockoutEndUtc.Value > DateTime.UtcNow;
+
         /// <summary>Concurrency token to detect conflicting updates.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class UserOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int UnconfirmedCount { get; set; }
+        public int LockedCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int MobileLinkedCount { get; set; }
+    }
+
+    public sealed class UserSupportPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
+        public string FollowUp { get; set; } = string.Empty;
     }
 
     /// <summary>

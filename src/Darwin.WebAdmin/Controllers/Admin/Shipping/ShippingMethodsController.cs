@@ -19,17 +19,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Shipping;
 public sealed class ShippingMethodsController : AdminBaseController
 {
     private readonly GetShippingMethodsPageHandler _getPage;
+    private readonly GetShippingMethodOpsSummaryHandler _getSummary;
     private readonly GetShippingMethodForEditHandler _getForEdit;
     private readonly CreateShippingMethodHandler _create;
     private readonly UpdateShippingMethodHandler _update;
 
     public ShippingMethodsController(
         GetShippingMethodsPageHandler getPage,
+        GetShippingMethodOpsSummaryHandler getSummary,
         GetShippingMethodForEditHandler getForEdit,
         CreateShippingMethodHandler create,
         UpdateShippingMethodHandler update)
     {
         _getPage = getPage;
+        _getSummary = getSummary;
         _getForEdit = getForEdit;
         _create = create;
         _update = update;
@@ -44,6 +47,7 @@ public sealed class ShippingMethodsController : AdminBaseController
         CancellationToken ct = default)
     {
         var (items, total) = await _getPage.HandleAsync(page, pageSize, query, filter, ct);
+        var summary = await _getSummary.HandleAsync(ct);
         var vm = new ShippingMethodsListVm
         {
             Page = page,
@@ -51,6 +55,17 @@ public sealed class ShippingMethodsController : AdminBaseController
             Total = total,
             Query = query ?? string.Empty,
             Filter = filter,
+            Summary = new ShippingMethodOpsSummaryVm
+            {
+                TotalCount = summary.TotalCount,
+                ActiveCount = summary.ActiveCount,
+                InactiveCount = summary.InactiveCount,
+                MissingRatesCount = summary.MissingRatesCount,
+                DhlCount = summary.DhlCount,
+                GlobalCoverageCount = summary.GlobalCoverageCount,
+                MultiRateCount = summary.MultiRateCount
+            },
+            Playbooks = BuildPlaybooks(),
             FilterItems = BuildFilterItems(filter),
             PageSizeItems = BuildPageSizeItems(pageSize),
             Items = items.Select(x => new ShippingMethodListItemVm
@@ -64,6 +79,9 @@ public sealed class ShippingMethodsController : AdminBaseController
                 Currency = x.Currency,
                 IsActive = x.IsActive,
                 RatesCount = x.RatesCount,
+                IsDhl = x.IsDhl,
+                HasGlobalCoverage = x.HasGlobalCoverage,
+                HasMultipleRates = x.HasMultipleRates,
                 ModifiedAtUtc = x.ModifiedAtUtc
             }).ToList()
         };
@@ -249,6 +267,33 @@ public sealed class ShippingMethodsController : AdminBaseController
         yield return new SelectListItem("Inactive", ShippingMethodQueueFilter.Inactive.ToString(), selected == ShippingMethodQueueFilter.Inactive);
         yield return new SelectListItem("Missing rates", ShippingMethodQueueFilter.MissingRates.ToString(), selected == ShippingMethodQueueFilter.MissingRates);
         yield return new SelectListItem("DHL", ShippingMethodQueueFilter.Dhl.ToString(), selected == ShippingMethodQueueFilter.Dhl);
+        yield return new SelectListItem("Global coverage", ShippingMethodQueueFilter.GlobalCoverage.ToString(), selected == ShippingMethodQueueFilter.GlobalCoverage);
+        yield return new SelectListItem("Multi-rate", ShippingMethodQueueFilter.MultiRate.ToString(), selected == ShippingMethodQueueFilter.MultiRate);
+    }
+
+    private static List<ShippingMethodPlaybookVm> BuildPlaybooks()
+    {
+        return new List<ShippingMethodPlaybookVm>
+        {
+            new()
+            {
+                Title = "Missing rates",
+                ScopeNote = "Methods without at least one rate are not storefront-ready.",
+                OperatorAction = "Open the method, add at least one pricing tier, and verify the intended currency and carrier metadata."
+            },
+            new()
+            {
+                Title = "Global coverage",
+                ScopeNote = "Blank country scope means the method applies broadly and deserves extra carrier review.",
+                OperatorAction = "Confirm whether the method is intentionally global or whether country scoping still needs to be narrowed."
+            },
+            new()
+            {
+                Title = "DHL methods",
+                ScopeNote = "Use this subset when carrier setup or service mapping is being validated.",
+                OperatorAction = "Review service names, rates, and whether the method should stay active for production routing."
+            }
+        };
     }
 
     private static IEnumerable<SelectListItem> BuildPageSizeItems(int selected)

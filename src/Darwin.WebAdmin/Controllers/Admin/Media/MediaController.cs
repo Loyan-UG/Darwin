@@ -33,6 +33,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
 
         private readonly IWebHostEnvironment _env;
         private readonly GetMediaAssetsPageHandler _getPage;
+        private readonly GetMediaAssetOpsSummaryHandler _getSummary;
         private readonly GetMediaAssetForEditHandler _getForEdit;
         private readonly CreateMediaAssetHandler _create;
         private readonly UpdateMediaAssetHandler _update;
@@ -44,6 +45,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         public MediaController(
             IWebHostEnvironment env,
             GetMediaAssetsPageHandler getPage,
+            GetMediaAssetOpsSummaryHandler getSummary,
             GetMediaAssetForEditHandler getForEdit,
             CreateMediaAssetHandler create,
             UpdateMediaAssetHandler update,
@@ -51,6 +53,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         {
             _env = env;
             _getPage = getPage;
+            _getSummary = getSummary;
             _getForEdit = getForEdit;
             _create = create;
             _update = update;
@@ -64,6 +67,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         public async Task<IActionResult> Index(int page = 1, int pageSize = 24, string? query = null, MediaAssetQueueFilter filter = MediaAssetQueueFilter.All, CancellationToken ct = default)
         {
             var (items, total) = await _getPage.HandleAsync(page, pageSize, query, filter, ct).ConfigureAwait(false);
+            var summary = await _getSummary.HandleAsync(ct).ConfigureAwait(false);
             var vm = new MediaAssetsListVm
             {
                 Page = page,
@@ -71,6 +75,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 Total = total,
                 Query = query ?? string.Empty,
                 Filter = filter,
+                Summary = new MediaAssetOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    MissingAltCount = summary.MissingAltCount,
+                    MissingTitleCount = summary.MissingTitleCount,
+                    EditorAssetCount = summary.EditorAssetCount,
+                    LibraryAssetCount = summary.LibraryAssetCount
+                },
+                Playbooks = BuildPlaybooks(),
                 FilterItems = BuildFilterItems(filter),
                 Items = items.Select(x => new MediaAssetListItemVm
                 {
@@ -97,6 +110,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Missing alt", MediaAssetQueueFilter.MissingAlt.ToString(), selectedFilter == MediaAssetQueueFilter.MissingAlt);
             yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Editor assets", MediaAssetQueueFilter.EditorAssets.ToString(), selectedFilter == MediaAssetQueueFilter.EditorAssets);
             yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Library assets", MediaAssetQueueFilter.LibraryAssets.ToString(), selectedFilter == MediaAssetQueueFilter.LibraryAssets);
+            yield return new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("Missing title", MediaAssetQueueFilter.MissingTitle.ToString(), selectedFilter == MediaAssetQueueFilter.MissingTitle);
+        }
+
+        private static List<MediaAssetPlaybookVm> BuildPlaybooks()
+        {
+            return new List<MediaAssetPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Missing alt",
+                    ScopeNote = "Use this queue for accessibility and SEO hygiene.",
+                    OperatorAction = "Open the asset and add meaningful alt text before the asset is relied on in storefront or CMS content."
+                },
+                new()
+                {
+                    Title = "Missing title",
+                    ScopeNote = "Useful for internal library discoverability and editor hygiene.",
+                    OperatorAction = "Add a short descriptive title so admins can find and reuse the asset without depending on the raw filename."
+                },
+                new()
+                {
+                    Title = "Editor assets vs library assets",
+                    ScopeNote = "Keep one-off editor uploads separate from reusable library media.",
+                    OperatorAction = "Review editor assets before reusing them broadly; keep long-lived reusable files categorized as library assets."
+                }
+            };
         }
 
         /// <summary>

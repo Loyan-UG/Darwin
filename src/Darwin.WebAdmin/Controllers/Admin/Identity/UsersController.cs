@@ -8,6 +8,7 @@ using Darwin.Application.Identity.Queries;
 using Darwin.Shared.Results;
 using Darwin.WebAdmin.ViewModels.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Darwin.WebAdmin.Controllers.Admin.Identity
 {
@@ -20,6 +21,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         // User handlers
         private readonly RegisterUserHandler _registerUser;
         private readonly GetUsersPageHandler _getUsersPage;
+        private readonly GetUserOpsSummaryHandler _getUserOpsSummary;
         private readonly GetUserWithAddressesForEditHandler _getUserWithAddresses;
         private readonly UpdateUserHandler _updateUser;
         private readonly ChangeUserEmailHandler _changeUserEmail;
@@ -48,6 +50,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         public UsersController(
             RegisterUserHandler registerUser,
             GetUsersPageHandler getUsersPage,
+            GetUserOpsSummaryHandler getUserOpsSummary,
             GetUserWithAddressesForEditHandler getUserWithAddresses,
             UpdateUserHandler updateUser,
             ChangeUserEmailHandler changeUserEmail,
@@ -67,6 +70,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         {
             _registerUser = registerUser;
             _getUsersPage = getUsersPage;
+            _getUserOpsSummary = getUserOpsSummary;
             _getUserWithAddresses = getUserWithAddresses;
             _updateUser = updateUser;
             _changeUserEmail = changeUserEmail;
@@ -90,10 +94,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// Handler signature follows the Roles pattern: (page, pageSize, q, ct).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, CancellationToken ct = default)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, UserQueueFilter filter = UserQueueFilter.All, CancellationToken ct = default)
         {
             // Handler returns application-level items/total; mapping to list VM mirrors RolesController pattern.
-            var (items, total) = await _getUsersPage.HandleAsync(page, pageSize, q, ct);
+            var (items, total) = await _getUsersPage.HandleAsync(page, pageSize, q, filter, ct);
+            var summary = await _getUserOpsSummary.HandleAsync(ct);
 
             var vm = new UsersListVm
             {
@@ -101,26 +106,78 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 PageSize = pageSize,
                 Total = total,
                 Query = q ?? string.Empty,
+                Filter = filter,
+                Summary = new UserOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    UnconfirmedCount = summary.UnconfirmedCount,
+                    LockedCount = summary.LockedCount,
+                    InactiveCount = summary.InactiveCount,
+                    MobileLinkedCount = summary.MobileLinkedCount
+                },
+                Playbooks = BuildUserSupportPlaybooks(),
                 Items = items.Select(x => new UserListItemVm
                 {
                     Id = x.Id,
                     Email = x.Email,
                     FirstName = x.FirstName,
                     LastName = x.LastName,
+                    PhoneE164 = x.PhoneE164,
                     IsActive = x.IsActive,
                     IsSystem = x.IsSystem,
+                    EmailConfirmed = x.EmailConfirmed,
+                    LockoutEndUtc = x.LockoutEndUtc,
+                    MobileDeviceCount = x.MobileDeviceCount,
                     RowVersion = x.RowVersion
                 }).ToList(),
+                FilterItems = BuildUserFilterItems(filter),
                 PageSizeItems =
                 [
-                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("10",  "10",  pageSize == 10),
-                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("20",  "20",  pageSize == 20),
-                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("50",  "50",  pageSize == 50),
-                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem("100", "100", pageSize == 100),
+                    new SelectListItem("10",  "10",  pageSize == 10),
+                    new SelectListItem("20",  "20",  pageSize == 20),
+                    new SelectListItem("50",  "50",  pageSize == 50),
+                    new SelectListItem("100", "100", pageSize == 100),
                 ]
             };
 
             return View(vm);
+        }
+
+        private static IEnumerable<SelectListItem> BuildUserFilterItems(UserQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All users", UserQueueFilter.All.ToString(), selectedFilter == UserQueueFilter.All);
+            yield return new SelectListItem("Unconfirmed", UserQueueFilter.Unconfirmed.ToString(), selectedFilter == UserQueueFilter.Unconfirmed);
+            yield return new SelectListItem("Locked", UserQueueFilter.Locked.ToString(), selectedFilter == UserQueueFilter.Locked);
+            yield return new SelectListItem("Inactive", UserQueueFilter.Inactive.ToString(), selectedFilter == UserQueueFilter.Inactive);
+            yield return new SelectListItem("Mobile-linked", UserQueueFilter.MobileLinked.ToString(), selectedFilter == UserQueueFilter.MobileLinked);
+        }
+
+        private static List<UserSupportPlaybookVm> BuildUserSupportPlaybooks()
+        {
+            return new List<UserSupportPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Unconfirmed accounts",
+                    ScopeNote = "Use this queue for activation support and onboarding follow-up.",
+                    OperatorAction = "Open the user, then send activation email or confirm the email directly only where policy allows.",
+                    FollowUp = "If repeated email failures happen, continue in Business Communications and Email Audits."
+                },
+                new()
+                {
+                    Title = "Locked accounts",
+                    ScopeNote = "Treat lockouts as support/security events, not casual cleanup.",
+                    OperatorAction = "Open the user, validate the support context, then unlock only when the issue is resolved.",
+                    FollowUp = "If the lockout was triggered by security concerns, rotate password or review recent auth flows."
+                },
+                new()
+                {
+                    Title = "Mobile-linked accounts",
+                    ScopeNote = "These users are important for device and push-related support.",
+                    OperatorAction = "Use the user profile together with Mobile Operations when stale devices, missing push tokens, or notification issues are reported.",
+                    FollowUp = "Cross-check device fleet health before assuming the user profile itself is wrong."
+                }
+            };
         }
 
         /// <summary>

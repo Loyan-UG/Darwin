@@ -27,7 +27,9 @@ namespace Darwin.Application.Orders.DTOs
         MissingTracking = 3,
         Returned = 4,
         Dhl = 5,
-        MissingService = 6
+        MissingService = 6,
+        AwaitingHandoff = 7,
+        TrackingOverdue = 8
     }
 
     public enum RefundQueueFilter
@@ -338,6 +340,10 @@ namespace Darwin.Application.Orders.DTOs
 
         public bool IsDhl { get; set; }
         public bool NeedsCarrierReview { get; set; }
+        public bool AwaitingHandoff { get; set; }
+        public bool TrackingOverdue { get; set; }
+        public int AttentionDelayHours { get; set; }
+        public int TrackingGraceHours { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -351,6 +357,8 @@ namespace Darwin.Application.Orders.DTOs
         public int ReturnedCount { get; set; }
         public int DhlCount { get; set; }
         public int MissingServiceCount { get; set; }
+        public int AwaitingHandoffCount { get; set; }
+        public int TrackingOverdueCount { get; set; }
     }
 
     /// <summary>

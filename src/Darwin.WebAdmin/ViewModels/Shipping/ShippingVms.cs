@@ -16,6 +16,9 @@ public sealed class ShippingMethodListItemVm
     public string? Currency { get; set; }
     public bool IsActive { get; set; }
     public int RatesCount { get; set; }
+    public bool IsDhl { get; set; }
+    public bool HasGlobalCoverage { get; set; }
+    public bool HasMultipleRates { get; set; }
     public DateTime? ModifiedAtUtc { get; set; }
 }
 
@@ -26,9 +29,29 @@ public sealed class ShippingMethodsListVm
     public int Total { get; set; }
     public string Query { get; set; } = string.Empty;
     public ShippingMethodQueueFilter Filter { get; set; }
+    public ShippingMethodOpsSummaryVm Summary { get; set; } = new();
+    public List<ShippingMethodPlaybookVm> Playbooks { get; set; } = new();
     public List<ShippingMethodListItemVm> Items { get; set; } = new();
     public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+}
+
+public sealed class ShippingMethodOpsSummaryVm
+{
+    public int TotalCount { get; set; }
+    public int ActiveCount { get; set; }
+    public int InactiveCount { get; set; }
+    public int MissingRatesCount { get; set; }
+    public int DhlCount { get; set; }
+    public int GlobalCoverageCount { get; set; }
+    public int MultiRateCount { get; set; }
+}
+
+public sealed class ShippingMethodPlaybookVm
+{
+    public string Title { get; set; } = string.Empty;
+    public string ScopeNote { get; set; } = string.Empty;
+    public string OperatorAction { get; set; } = string.Empty;
 }
 
 public sealed class ShippingRateEditVm

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Notifications;
@@ -71,8 +72,19 @@ namespace Darwin.Application.Businesses.Commands
 
             var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(invitation.Token);
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
-            var subject = ApplySubjectPrefix(siteSettings?.TransactionalEmailSubjectPrefix, $"Invitation to join {business.Name} on Darwin");
-            var body =
+            var subject = ApplySubjectPrefix(
+                siteSettings?.TransactionalEmailSubjectPrefix,
+                TransactionalEmailTemplateRenderer.Render(
+                    siteSettings?.BusinessInvitationEmailSubjectTemplate,
+                    $"Invitation to join {business.Name} on Darwin",
+                    new Dictionary<string, string?>
+                    {
+                        ["business_name"] = business.Name,
+                        ["role"] = invitation.Role.ToString(),
+                        ["invitation_action"] = "reissued"
+                    }));
+            var body = TransactionalEmailTemplateRenderer.Render(
+                siteSettings?.BusinessInvitationEmailBodyTemplate,
                 $"<p>Hello,</p>" +
                 $"<p>Your invitation to join <strong>{business.Name}</strong> on Darwin as <strong>{invitation.Role}</strong> has been reissued.</p>" +
                 (string.IsNullOrWhiteSpace(acceptanceLink)
@@ -80,7 +92,20 @@ namespace Darwin.Application.Businesses.Commands
                     : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>") +
                 $"<p>Your new invitation token is:</p>" +
                 $"<p><code>{invitation.Token}</code></p>" +
-                $"<p>This invitation expires at <strong>{invitation.ExpiresAtUtc:u}</strong>.</p>";
+                $"<p>This invitation expires at <strong>{invitation.ExpiresAtUtc:u}</strong>.</p>",
+                new Dictionary<string, string?>
+                {
+                    ["business_name"] = business.Name,
+                    ["role"] = invitation.Role.ToString(),
+                    ["token"] = invitation.Token,
+                    ["expires_at_utc"] = invitation.ExpiresAtUtc.ToString("u"),
+                    ["acceptance_link"] = acceptanceLink,
+                    ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
+                        ? string.Empty
+                        : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>",
+                    ["invitation_action"] = "reissued",
+                    ["invitation_intro_html"] = $"Your invitation to join <strong>{business.Name}</strong> on Darwin as <strong>{invitation.Role}</strong> has been reissued."
+                });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? invitation.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(invitation.Email, recipient, body);
 

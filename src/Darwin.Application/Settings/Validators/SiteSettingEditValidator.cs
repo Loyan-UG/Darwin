@@ -176,6 +176,16 @@ namespace Darwin.Application.Settings.Validators
                 .When(x => !string.IsNullOrWhiteSpace(x.DhlShipperCountry))
                 .WithMessage("DhlShipperCountry must be a 2-letter uppercase country code.");
 
+            RuleFor(x => x.ShipmentAttentionDelayHours)
+                .GreaterThanOrEqualTo(1)
+                .LessThanOrEqualTo(720)
+                .WithMessage("ShipmentAttentionDelayHours must be between 1 and 720.");
+
+            RuleFor(x => x.ShipmentTrackingGraceHours)
+                .GreaterThanOrEqualTo(1)
+                .LessThanOrEqualTo(720)
+                .WithMessage("ShipmentTrackingGraceHours must be between 1 and 720.");
+
 
 
             // -------- Soft delete / data retention --------
@@ -354,6 +364,30 @@ namespace Darwin.Application.Settings.Validators
                 .EmailAddress()
                 .MaximumLength(256)
                 .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestInboxEmail));
+
+            RuleFor(x => x.BusinessInvitationEmailSubjectTemplate)
+                .MaximumLength(300)
+                .When(x => !string.IsNullOrWhiteSpace(x.BusinessInvitationEmailSubjectTemplate));
+
+            RuleFor(x => x.BusinessInvitationEmailBodyTemplate)
+                .MaximumLength(8000)
+                .When(x => !string.IsNullOrWhiteSpace(x.BusinessInvitationEmailBodyTemplate));
+
+            RuleFor(x => x.AccountActivationEmailSubjectTemplate)
+                .MaximumLength(300)
+                .When(x => !string.IsNullOrWhiteSpace(x.AccountActivationEmailSubjectTemplate));
+
+            RuleFor(x => x.AccountActivationEmailBodyTemplate)
+                .MaximumLength(8000)
+                .When(x => !string.IsNullOrWhiteSpace(x.AccountActivationEmailBodyTemplate));
+
+            RuleFor(x => x.PasswordResetEmailSubjectTemplate)
+                .MaximumLength(300)
+                .When(x => !string.IsNullOrWhiteSpace(x.PasswordResetEmailSubjectTemplate));
+
+            RuleFor(x => x.PasswordResetEmailBodyTemplate)
+                .MaximumLength(8000)
+                .When(x => !string.IsNullOrWhiteSpace(x.PasswordResetEmailBodyTemplate));
         }
 
         private static bool IsCulture(string culture)

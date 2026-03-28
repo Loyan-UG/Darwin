@@ -14,6 +14,14 @@ namespace Darwin.Application.Billing.DTOs
         FailedStripe = 8
     }
 
+    public enum BillingRefundQueueFilter : short
+    {
+        Pending = 1,
+        Completed = 2,
+        Failed = 3,
+        Stripe = 4
+    }
+
     public enum JournalEntryQueueFilter : short
     {
         Recent = 1,
@@ -63,6 +71,36 @@ namespace Darwin.Application.Billing.DTOs
         public int FailedStripeCount { get; set; }
     }
 
+    public sealed class BillingRefundListItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid OrderId { get; set; }
+        public string? OrderNumber { get; set; }
+        public Guid PaymentId { get; set; }
+        public string PaymentProvider { get; set; } = string.Empty;
+        public string? PaymentProviderReference { get; set; }
+        public PaymentStatus PaymentStatus { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CustomerEmail { get; set; }
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+        public RefundStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+        public bool IsStripe { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class RefundOpsSummaryDto
+    {
+        public int PendingCount { get; set; }
+        public int CompletedCount { get; set; }
+        public int FailedCount { get; set; }
+        public int StripeCount { get; set; }
+    }
+
     public class PaymentCreateDto
     {
         public Guid BusinessId { get; set; }
@@ -81,6 +119,9 @@ namespace Darwin.Application.Billing.DTOs
     public sealed class PaymentEditDto : PaymentCreateDto
     {
         public Guid Id { get; set; }
+        public string? FailureReason { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public bool IsStripe { get; set; }
         public string? OrderNumber { get; set; }
         public InvoiceStatus? InvoiceStatus { get; set; }
         public DateTime? InvoiceDueAtUtc { get; set; }
@@ -91,7 +132,19 @@ namespace Darwin.Application.Billing.DTOs
         public string? UserEmail { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long NetCapturedAmountMinor { get; set; }
+        public List<PaymentRefundHistoryItemDto> Refunds { get; set; } = new();
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class PaymentRefundHistoryItemDto
+    {
+        public Guid Id { get; set; }
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+        public RefundStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
     }
 
     public sealed class FinancialAccountListItemDto

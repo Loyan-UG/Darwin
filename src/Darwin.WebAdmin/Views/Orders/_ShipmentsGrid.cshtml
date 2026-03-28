@@ -13,6 +13,8 @@
     <div class="d-flex gap-2 flex-wrap mb-3">
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">Pending/Packed</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Shipped" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Shipped ? "btn-primary" : "btn-outline-primary")">Shipped/Delivered</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="AwaitingHandoff" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.AwaitingHandoff ? "btn-danger" : "btn-outline-danger")">Awaiting Handoff</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="TrackingOverdue" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.TrackingOverdue ? "btn-danger" : "btn-outline-danger")">Tracking Overdue</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
     </div>
     <div class="table-responsive">
@@ -35,9 +37,27 @@
                     foreach (var s in Model.Items)
                     {
                         <tr>
-                            <td>@s.Carrier</td>
-                            <td>@s.TrackingNumber</td>
-                            <td>@s.Status</td>
+                            <td>
+                                @s.Carrier
+                                @if (s.IsDhl)
+                                {
+                                    <div><span class="badge text-bg-info mt-1">DHL</span></div>
+                                }
+                            </td>
+                            <td>
+                                @(string.IsNullOrWhiteSpace(s.TrackingNumber) ? "-" : s.TrackingNumber)
+                                @if (s.TrackingOverdue)
+                                {
+                                    <div><span class="badge text-bg-danger mt-1">Tracking overdue</span></div>
+                                }
+                            </td>
+                            <td>
+                                @s.Status
+                                @if (s.AwaitingHandoff)
+                                {
+                                    <div><span class="badge text-bg-danger mt-1">Awaiting handoff</span></div>
+                                }
+                            </td>
                             <td>@s.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                         </tr>
                     }

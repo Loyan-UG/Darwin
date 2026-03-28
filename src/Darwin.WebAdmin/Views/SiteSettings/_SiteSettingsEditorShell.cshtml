@@ -391,6 +391,18 @@
                     <input asp-for="DhlShipperCountry" class="form-control" />
                     <span asp-validation-for="DhlShipperCountry" class="text-danger"></span>
                 </div>
+                <div class="col-md-3">
+                    <label asp-for="ShipmentAttentionDelayHours" class="form-label"></label>
+                    <input asp-for="ShipmentAttentionDelayHours" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="ShipmentAttentionDelayHours" class="text-danger"></span>
+                    <div class="form-text">After this many hours, pending or packed shipments should be treated as awaiting carrier handoff.</div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ShipmentTrackingGraceHours" class="form-label"></label>
+                    <input asp-for="ShipmentTrackingGraceHours" class="form-control" type="number" min="1" />
+                    <span asp-validation-for="ShipmentTrackingGraceHours" class="text-danger"></span>
+                    <div class="form-text">After this many hours, shipped DHL records without tracking appear as overdue in support queues.</div>
+                </div>
             </div>
         </div>
     </div>
@@ -688,6 +700,50 @@
                     <input asp-for="CommunicationTestInboxEmail" class="form-control" placeholder="qa-inbox@example.com" />
                     <span asp-validation-for="CommunicationTestInboxEmail" class="text-danger"></span>
                     <div class="form-text">When set, phase-1 transactional emails are rerouted here and include the original recipient in the body.</div>
+                </div>
+            </div>
+            <div class="alert alert-light border mt-3 mb-3 small">
+                Supported placeholders:
+                <code>{business_name}</code>,
+                <code>{role}</code>,
+                <code>{token}</code>,
+                <code>{expires_at_utc}</code>,
+                <code>{acceptance_link}</code>,
+                <code>{acceptance_link_html}</code>,
+                <code>{invitation_action}</code>,
+                <code>{invitation_intro_html}</code>,
+                <code>{email}</code>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="BusinessInvitationEmailSubjectTemplate" class="form-label"></label>
+                    <input asp-for="BusinessInvitationEmailSubjectTemplate" class="form-control" placeholder="Invitation to join {business_name} on Darwin" />
+                    <span asp-validation-for="BusinessInvitationEmailSubjectTemplate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="AccountActivationEmailSubjectTemplate" class="form-label"></label>
+                    <input asp-for="AccountActivationEmailSubjectTemplate" class="form-control" placeholder="Confirm your Darwin account email" />
+                    <span asp-validation-for="AccountActivationEmailSubjectTemplate" class="text-danger"></span>
+                </div>
+                <div class="col-md-12">
+                    <label asp-for="BusinessInvitationEmailBodyTemplate" class="form-label"></label>
+                    <textarea asp-for="BusinessInvitationEmailBodyTemplate" class="form-control" rows="6"></textarea>
+                    <span asp-validation-for="BusinessInvitationEmailBodyTemplate" class="text-danger"></span>
+                </div>
+                <div class="col-md-12">
+                    <label asp-for="AccountActivationEmailBodyTemplate" class="form-label"></label>
+                    <textarea asp-for="AccountActivationEmailBodyTemplate" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="AccountActivationEmailBodyTemplate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PasswordResetEmailSubjectTemplate" class="form-label"></label>
+                    <input asp-for="PasswordResetEmailSubjectTemplate" class="form-control" placeholder="Reset your Darwin account password" />
+                    <span asp-validation-for="PasswordResetEmailSubjectTemplate" class="text-danger"></span>
+                </div>
+                <div class="col-md-12">
+                    <label asp-for="PasswordResetEmailBodyTemplate" class="form-label"></label>
+                    <textarea asp-for="PasswordResetEmailBodyTemplate" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="PasswordResetEmailBodyTemplate" class="text-danger"></span>
                 </div>
             </div>
         </div>

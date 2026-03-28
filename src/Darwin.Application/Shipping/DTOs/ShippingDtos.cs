@@ -47,6 +47,9 @@ namespace Darwin.Application.Shipping.DTOs
         public string? Currency { get; set; }
         public bool IsActive { get; set; }
         public int RatesCount { get; set; }
+        public bool IsDhl { get; set; }
+        public bool HasGlobalCoverage { get; set; }
+        public bool HasMultipleRates { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
     }
 
@@ -56,7 +59,20 @@ namespace Darwin.Application.Shipping.DTOs
         Active = 1,
         Inactive = 2,
         MissingRates = 3,
-        Dhl = 4
+        Dhl = 4,
+        GlobalCoverage = 5,
+        MultiRate = 6
+    }
+
+    public sealed class ShippingMethodOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int MissingRatesCount { get; set; }
+        public int DhlCount { get; set; }
+        public int GlobalCoverageCount { get; set; }
+        public int MultiRateCount { get; set; }
     }
 
     public sealed class RateShipmentInputDto

@@ -20,6 +20,9 @@
         <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
             <i class="fa-solid fa-money-bill-wave"></i> Payments
         </a>
+        <a asp-action="SubscriptionInvoices" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-file-invoice-dollar"></i> Subscription Invoices
+        </a>
     </div>
 </div>
 
@@ -116,6 +119,53 @@
 </div>
 
 <div class="card shadow-sm mb-3">
+    <div class="card-header">Subscription Invoice Signals</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Total</div>
+                    <div class="fw-semibold mt-1">@Model.InvoiceSummary.TotalCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Open</div>
+                    <div class="fw-semibold mt-1">@Model.InvoiceSummary.OpenCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Paid</div>
+                    <div class="fw-semibold mt-1">@Model.InvoiceSummary.PaidCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Draft</div>
+                    <div class="fw-semibold mt-1">@Model.InvoiceSummary.DraftCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Uncollectible</div>
+                    <div class="fw-semibold mt-1">@Model.InvoiceSummary.UncollectibleCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small text-uppercase">Hosted Link Missing</div>
+                    <div class="fw-semibold mt-1">@Model.InvoiceSummary.HostedLinkMissingCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="small text-muted mt-3">
+            These provider invoice signals help finance support distinguish open Stripe billing work from historical subscription snapshots.
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
     <div class="card-header">Available Billing Plans</div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -172,6 +222,87 @@
 </div>
 
 <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Recent Subscription Invoices</span>
+        <a asp-action="SubscriptionInvoices" asp-route-businessId="@Model.Business.Id" class="btn btn-sm btn-outline-secondary">
+            Open Invoice Queue
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Provider</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                        <th>Timeline</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.RecentInvoices.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No subscription invoices found for this business.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var invoice in Model.RecentInvoices)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@invoice.Provider</div>
+                                <div class="small text-muted">@invoice.ProviderInvoiceId</div>
+                                @if (invoice.IsStripe)
+                                {
+                                    <div><span class="badge bg-info text-dark mt-1">Stripe</span></div>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(invoice.PlanName) ? "-" : invoice.PlanName)</div>
+                                <div class="small text-muted">@invoice.PlanCode</div>
+                            </td>
+                            <td>
+                                <span class="badge @(invoice.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Paid ? "bg-success" : invoice.Status == Darwin.Domain.Enums.SubscriptionInvoiceStatus.Uncollectible ? "bg-danger" : "bg-secondary")">
+                                    @invoice.Status
+                                </span>
+                                @if (!string.IsNullOrWhiteSpace(invoice.FailureReason))
+                                {
+                                    <div class="small text-danger mt-1">@invoice.FailureReason</div>
+                                }
+                            </td>
+                            <td>@invoice.Currency @((invoice.TotalMinor / 100M).ToString("0.00"))</td>
+                            <td>
+                                <div>Issued: @invoice.IssuedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                                <div class="small text-muted">Due: @(invoice.DueAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                                <div class="small text-muted">Paid: @(invoice.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    @if (invoice.HasHostedInvoiceUrl)
+                                    {
+                                        <a href="@invoice.HostedInvoiceUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">Hosted</a>
+                                    }
+                                    @if (invoice.HasPdfUrl)
+                                    {
+                                        <a href="@invoice.PdfUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">PDF</a>
+                                    }
+                                    <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" asp-route-q="@invoice.ProviderInvoiceId" class="btn btn-outline-secondary">Payments</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-3">
     <div class="card-header">Subscription Operations Playbooks</div>
     <div class="card-body p-0">
         <div class="table-responsive">

@@ -58,12 +58,29 @@
     <div class="col-md-4">
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
+                <div class="small text-uppercase text-muted fw-semibold">Lifecycle</div>
+                <div class="fs-5">@Model.Status</div>
+                <div class="small text-muted mt-1">Created @Model.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                @if (Model.PaidAtUtc.HasValue)
+                {
+                    <div class="small">Paid @Model.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                }
+                @if (Model.IsStripe)
+                {
+                    <div><span class="badge text-bg-info mt-2">Stripe</span></div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 bg-light h-100">
+            <div class="card-body py-3">
                 <div class="small text-uppercase text-muted fw-semibold">Recorded Amount</div>
                 <div class="fs-5">@Model.Currency @((Model.AmountMinor / 100M).ToString("0.00"))</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-2">
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
                 <div class="small text-uppercase text-muted fw-semibold">Refunded</div>
@@ -73,7 +90,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-2">
         <div class="card border-0 bg-light h-100">
             <div class="card-body py-3">
                 <div class="small text-uppercase text-muted fw-semibold">Net Collected</div>
@@ -82,6 +99,96 @@
         </div>
     </div>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(Model.FailureReason))
+{
+    <div class="alert alert-danger mb-3">
+        <div class="fw-semibold">Recorded Failure Reason</div>
+        <div class="small">@Model.FailureReason</div>
+    </div>
+}
+
+@if (Model.SupportPlaybooks.Count > 0)
+{
+    <div class="card mb-3">
+        <div class="card-header">Payment Support Playbooks</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Queue</th>
+                            <th>Scope</th>
+                            <th>Operator Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.SupportPlaybooks)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.Title</td>
+                            <td>@item.ScopeNote</td>
+                            <td>@item.OperatorAction</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.Refunds.Count > 0)
+{
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Refund Timeline</span>
+            @if (Model.OrderId.HasValue)
+            {
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">Open Order Refunds</a>
+            }
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Created</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var refund in Model.Refunds)
+                    {
+                        <tr>
+                            <td>
+                                <div>@refund.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                                @if (refund.CompletedAtUtc.HasValue)
+                                {
+                                    <div class="small text-muted">Completed @refund.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                }
+                            </td>
+                            <td>@refund.Reason</td>
+                            <td>@refund.Status</td>
+                            <td class="text-end">@refund.Currency @((refund.AmountMinor / 100M).ToString("0.00"))</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.OrderId.HasValue)
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@Model.OrderId.Value" asp-route-paymentId="@Model.Id" class="btn btn-sm btn-outline-danger">Add Refund For This Payment</a>
+        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="refunds" class="btn btn-sm btn-outline-secondary">Open Order Refunds</a>
+    </div>
+}
 
 <div class="row g-3">
     <div class="col-md-4">

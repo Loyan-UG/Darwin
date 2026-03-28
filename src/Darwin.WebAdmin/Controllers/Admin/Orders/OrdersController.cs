@@ -107,7 +107,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> ShipmentsQueue(int page = 1, int pageSize = 20, string? query = null, ShipmentQueueFilter filter = ShipmentQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getShipmentsPage.HandleAsync(page, pageSize, query, filter, ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var (items, total) = await _getShipmentsPage.HandleAsync(
+                page,
+                pageSize,
+                query,
+                filter,
+                settings.ShipmentAttentionDelayHours,
+                settings.ShipmentTrackingGraceHours,
+                ct).ConfigureAwait(false);
             var vm = new ShipmentsQueueVm
             {
                 Page = page,
@@ -115,8 +123,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 Total = total,
                 Query = query ?? string.Empty,
                 Filter = filter,
-                Dhl = await BuildDhlOperationsVmAsync(ct).ConfigureAwait(false),
-                Summary = await BuildShipmentOpsSummaryVmAsync(ct).ConfigureAwait(false),
+                Dhl = BuildDhlOperationsVm(settings),
+                Summary = await BuildShipmentOpsSummaryVmAsync(settings.ShipmentAttentionDelayHours, settings.ShipmentTrackingGraceHours, ct).ConfigureAwait(false),
                 Playbooks = BuildShipmentPlaybooks(),
                 FilterItems = BuildShipmentFilterItems(filter),
                 PageSizeItems = BuildPageSizeItems(pageSize),
@@ -133,6 +141,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ShippedAtUtc = x.ShippedAtUtc,
                     DeliveredAtUtc = x.DeliveredAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
+                    IsDhl = x.IsDhl,
+                    NeedsCarrierReview = x.NeedsCarrierReview,
+                    AwaitingHandoff = x.AwaitingHandoff,
+                    TrackingOverdue = x.TrackingOverdue,
+                    AttentionDelayHours = x.AttentionDelayHours,
+                    TrackingGraceHours = x.TrackingGraceHours,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -143,6 +157,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         private async Task<DhlOperationsVm> BuildDhlOperationsVmAsync(CancellationToken ct)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            return BuildDhlOperationsVm(settings);
+        }
+
+        private static DhlOperationsVm BuildDhlOperationsVm(Darwin.Application.Settings.DTOs.SiteSettingDto settings)
+        {
             return new DhlOperationsVm
             {
                 Enabled = settings.DhlEnabled,
@@ -150,6 +169,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 ApiCredentialsConfigured = !string.IsNullOrWhiteSpace(settings.DhlApiKey) && !string.IsNullOrWhiteSpace(settings.DhlApiSecret),
                 AccountNumberConfigured = !string.IsNullOrWhiteSpace(settings.DhlAccountNumber),
                 EnvironmentLabel = string.IsNullOrWhiteSpace(settings.DhlEnvironment) ? "Not set" : settings.DhlEnvironment,
+                ShipmentAttentionDelayHours = settings.ShipmentAttentionDelayHours,
+                ShipmentTrackingGraceHours = settings.ShipmentTrackingGraceHours,
                 ShipperIdentityConfigured =
                     !string.IsNullOrWhiteSpace(settings.DhlShipperName) &&
                     !string.IsNullOrWhiteSpace(settings.DhlShipperEmail) &&
@@ -161,9 +182,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             };
         }
 
-        private async Task<ShipmentOpsSummaryVm> BuildShipmentOpsSummaryVmAsync(CancellationToken ct)
+        private async Task<ShipmentOpsSummaryVm> BuildShipmentOpsSummaryVmAsync(int attentionDelayHours, int trackingGraceHours, CancellationToken ct)
         {
-            var summary = await _getShipmentOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            var summary = await _getShipmentOpsSummary.HandleAsync(attentionDelayHours, trackingGraceHours, ct).ConfigureAwait(false);
             return new ShipmentOpsSummaryVm
             {
                 PendingCount = summary.PendingCount,
@@ -171,7 +192,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 MissingTrackingCount = summary.MissingTrackingCount,
                 ReturnedCount = summary.ReturnedCount,
                 DhlCount = summary.DhlCount,
-                MissingServiceCount = summary.MissingServiceCount
+                MissingServiceCount = summary.MissingServiceCount,
+                AwaitingHandoffCount = summary.AwaitingHandoffCount,
+                TrackingOverdueCount = summary.TrackingOverdueCount
             };
         }
 
@@ -185,6 +208,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ScopeNote = "Use this queue to push open fulfillment items toward handoff.",
                     OperatorAction = "Open the order, confirm shipment composition, and add or correct shipment data before carrier handoff.",
                     SettingsDependency = "DHL shipper identity and account setup should be green before the queue is treated as ready for live carrier operations."
+                },
+                new()
+                {
+                    Title = "Awaiting handoff",
+                    ScopeNote = "These shipments have stayed pending or packed longer than the configured attention threshold.",
+                    OperatorAction = "Review warehouse and carrier prep, then either add the shipment handoff data or escalate the operational blockage.",
+                    SettingsDependency = "Controlled by the Shipment Attention Delay setting in Shipping settings."
+                },
+                new()
+                {
+                    Title = "Tracking overdue",
+                    ScopeNote = "These DHL rows passed the tracking grace window without a carrier reference.",
+                    OperatorAction = "Confirm the carrier actually accepted the parcel and update the tracking number or escalate to carrier support.",
+                    SettingsDependency = "Controlled by the Shipment Tracking Grace setting in Shipping settings."
                 },
                 new()
                 {
@@ -314,7 +351,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> Shipments(Guid orderId, int page = 1, int pageSize = 10, ShipmentQueueFilter filter = ShipmentQueueFilter.All, CancellationToken ct = default)
         {
-            var (items, total) = await _getOrderShipmentsPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var (items, total) = await _getOrderShipmentsPage.HandleAsync(
+                orderId,
+                page,
+                pageSize,
+                filter,
+                settings.ShipmentAttentionDelayHours,
+                settings.ShipmentTrackingGraceHours,
+                ct).ConfigureAwait(false);
             var vm = new OrderShipmentsPageVm
             {
                 OrderId = orderId,
@@ -536,7 +581,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         }
 
         [HttpGet]
-        public async Task<IActionResult> AddRefund(Guid orderId, CancellationToken ct = default)
+        public async Task<IActionResult> AddRefund(Guid orderId, Guid? paymentId = null, CancellationToken ct = default)
         {
             var dto = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             if (dto is null)
@@ -549,10 +594,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             {
                 OrderId = dto.Id,
                 Currency = dto.Currency,
+                PaymentId = paymentId ?? Guid.Empty,
                 PaymentOptions = dto.Payments.Select(x => new SelectListItem
                 {
                     Value = x.Id.ToString(),
-                    Text = $"{x.Provider} | {x.Currency} {(x.AmountMinor / 100.0M):0.00} | {x.Status}"
+                    Text = $"{x.Provider} | {x.Currency} {(x.AmountMinor / 100.0M):0.00} | {x.Status}",
+                    Selected = paymentId.HasValue && paymentId.Value == x.Id
                 }).ToList()
             };
 
@@ -708,6 +755,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem("Returned", ShipmentQueueFilter.Returned.ToString(), selectedFilter == ShipmentQueueFilter.Returned);
             yield return new SelectListItem("DHL", ShipmentQueueFilter.Dhl.ToString(), selectedFilter == ShipmentQueueFilter.Dhl);
             yield return new SelectListItem("Missing service", ShipmentQueueFilter.MissingService.ToString(), selectedFilter == ShipmentQueueFilter.MissingService);
+            yield return new SelectListItem("Awaiting handoff", ShipmentQueueFilter.AwaitingHandoff.ToString(), selectedFilter == ShipmentQueueFilter.AwaitingHandoff);
+            yield return new SelectListItem("Tracking overdue", ShipmentQueueFilter.TrackingOverdue.ToString(), selectedFilter == ShipmentQueueFilter.TrackingOverdue);
         }
 
         private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)

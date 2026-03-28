@@ -93,6 +93,8 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.DhlShipperPostalCode).HasMaxLength(32);
             builder.Property(x => x.DhlShipperCity).HasMaxLength(120);
             builder.Property(x => x.DhlShipperCountry).HasMaxLength(2);
+            builder.Property(x => x.ShipmentAttentionDelayHours).IsRequired();
+            builder.Property(x => x.ShipmentTrackingGraceHours).IsRequired();
 
             // --- Email (SMTP) ---
             builder.Property(x => x.SmtpEnabled).IsRequired();
@@ -117,6 +119,12 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.AdminAlertSmsRecipientsCsv).HasMaxLength(1000);
             builder.Property(x => x.TransactionalEmailSubjectPrefix).HasMaxLength(120);
             builder.Property(x => x.CommunicationTestInboxEmail).HasMaxLength(256);
+            builder.Property(x => x.BusinessInvitationEmailSubjectTemplate).HasMaxLength(300);
+            builder.Property(x => x.BusinessInvitationEmailBodyTemplate).HasMaxLength(8000);
+            builder.Property(x => x.AccountActivationEmailSubjectTemplate).HasMaxLength(300);
+            builder.Property(x => x.AccountActivationEmailBodyTemplate).HasMaxLength(8000);
+            builder.Property(x => x.PasswordResetEmailSubjectTemplate).HasMaxLength(300);
+            builder.Property(x => x.PasswordResetEmailBodyTemplate).HasMaxLength(8000);
 
             // Helpful lookups
             builder.HasIndex(x => x.ContactEmail);

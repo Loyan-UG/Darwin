@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -91,9 +92,26 @@ namespace Darwin.Application.Identity.Commands
 
             // NOTE: For production, switch this to a templating engine and a branded reset URL.
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
-            var subject = ApplySubjectPrefix(siteSettings?.TransactionalEmailSubjectPrefix, "Reset your Darwin account password");
-            var body = $"Use the following token to reset your password: <b>{token}</b><br/>" +
-                       $"This token expires at {expires:u}.";
+            var subject = ApplySubjectPrefix(
+                siteSettings?.TransactionalEmailSubjectPrefix,
+                TransactionalEmailTemplateRenderer.Render(
+                    siteSettings?.PasswordResetEmailSubjectTemplate,
+                    "Reset your Darwin account password",
+                    new Dictionary<string, string?>
+                    {
+                        ["email"] = user.Email,
+                        ["expires_at_utc"] = expires.ToString("u")
+                    }));
+            var body = TransactionalEmailTemplateRenderer.Render(
+                siteSettings?.PasswordResetEmailBodyTemplate,
+                $"Use the following token to reset your password: <b>{token}</b><br/>" +
+                $"This token expires at {expires:u}.",
+                new Dictionary<string, string?>
+                {
+                    ["email"] = user.Email,
+                    ["token"] = token,
+                    ["expires_at_utc"] = expires.ToString("u")
+                });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(user.Email, recipient, body);
 

@@ -132,6 +132,8 @@ namespace Darwin.WebAdmin.Services.Settings
                 DhlShipperPostalCode = s.DhlShipperPostalCode,
                 DhlShipperCity = s.DhlShipperCity,
                 DhlShipperCountry = s.DhlShipperCountry,
+                ShipmentAttentionDelayHours = s.ShipmentAttentionDelayHours,
+                ShipmentTrackingGraceHours = s.ShipmentTrackingGraceHours,
 
                 // Soft delete / data retention
                 SoftDeleteCleanupEnabled = s.SoftDeleteCleanupEnabled,
@@ -193,6 +195,12 @@ namespace Darwin.WebAdmin.Services.Settings
                 AdminAlertSmsRecipientsCsv = s.AdminAlertSmsRecipientsCsv,
                 TransactionalEmailSubjectPrefix = s.TransactionalEmailSubjectPrefix,
                 CommunicationTestInboxEmail = s.CommunicationTestInboxEmail,
+                BusinessInvitationEmailSubjectTemplate = s.BusinessInvitationEmailSubjectTemplate,
+                BusinessInvitationEmailBodyTemplate = s.BusinessInvitationEmailBodyTemplate,
+                AccountActivationEmailSubjectTemplate = s.AccountActivationEmailSubjectTemplate,
+                AccountActivationEmailBodyTemplate = s.AccountActivationEmailBodyTemplate,
+                PasswordResetEmailSubjectTemplate = s.PasswordResetEmailSubjectTemplate,
+                PasswordResetEmailBodyTemplate = s.PasswordResetEmailBodyTemplate,
 
                 // Routing
                 HomeSlug = string.IsNullOrWhiteSpace(s.HomeSlug) ? "home" : s.HomeSlug

@@ -5,14 +5,85 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Users</h2>
-    <a asp-controller="Users" asp-action="Create" class="btn btn-primary">
-        <i class="fa fa-plus"></i> Create
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-controller="Users" asp-action="Index" asp-route-filter="Unconfirmed" class="btn btn-outline-warning btn-sm">Unconfirmed</a>
+        <a asp-controller="Users" asp-action="Index" asp-route-filter="Locked" class="btn btn-outline-danger btn-sm">Locked</a>
+        <a asp-controller="Users" asp-action="Index" asp-route-filter="Inactive" class="btn btn-outline-secondary btn-sm">Inactive</a>
+        <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-outline-info btn-sm">Mobile-linked</a>
+        <a asp-controller="Users" asp-action="Create" class="btn btn-primary">
+            <i class="fa fa-plus"></i> Create
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Total</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Unconfirmed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.UnconfirmedCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Locked</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.LockedCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Inactive</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Mobile-linked</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MobileLinkedCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Identity Support Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                        <th>Follow-up</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                        <td>@item.FollowUp</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <form method="get" class="row g-2 mb-3">
     <div class="col-auto">
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search by email/name">
+    </div>
+    <div class="col-auto">
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     </div>
     <div class="col-auto">
         <select name="pageSize" class="form-select">
@@ -34,6 +105,7 @@
             <tr>
                 <th>Email</th>
                 <th>Name</th>
+                <th>Lifecycle</th>
                 <th class="text-center">Active</th>
                 <th class="text-end" style="width:410px">Actions</th>
             </tr>
@@ -44,6 +116,21 @@
                 <tr>
                     <td>@u.Email</td>
                     <td>@($"{u.FirstName} {u.LastName}".Trim())</td>
+                    <td>
+                        @if (!u.EmailConfirmed)
+                        {
+                            <div><span class="badge text-bg-warning">Unconfirmed</span></div>
+                        }
+                        @if (u.IsLockedOut)
+                        {
+                            <div><span class="badge text-bg-danger">Locked</span></div>
+                            <div class="small text-muted">@u.LockoutEndUtc?.ToString("yyyy-MM-dd HH:mm")</div>
+                        }
+                        @if (u.MobileDeviceCount > 0)
+                        {
+                            <div><span class="badge text-bg-info">Mobile @u.MobileDeviceCount</span></div>
+                        }
+                    </td>
                     <td class="text-center">
                         @if (u.IsActive)
                         {
@@ -83,6 +170,38 @@
                             <i class="fa fa-users-cog"></i> Roles
                         </a>
 
+                        @if (!u.EmailConfirmed)
+                        {
+                            <form asp-controller="Users" asp-action="SendActivationEmail" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                    <i class="fa fa-paper-plane"></i> Activation
+                                </button>
+                            </form>
+                        }
+
+                        @if (u.IsLockedOut)
+                        {
+                            <form asp-controller="Users" asp-action="Unlock" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    <i class="fa fa-unlock"></i> Unlock
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-controller="Users" asp-action="Lock" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa fa-lock"></i> Lock
+                                </button>
+                            </form>
+                        }
+
                         @if (!u.IsSystem)
                         {
                             <button type="button"
@@ -108,7 +227,8 @@
        total="Model.Total"
        asp-controller="Users"
        asp-action="Index"
-       asp-route-q="@Model.Query">
+       asp-route-q="@Model.Query"
+       asp-route-filter="@Model.Filter">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

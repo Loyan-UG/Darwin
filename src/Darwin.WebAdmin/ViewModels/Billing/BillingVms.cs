@@ -12,9 +12,37 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public PaymentQueueFilter? QueueFilter { get; set; }
         public StripeOperationsVm Stripe { get; set; } = new();
         public PaymentOpsSummaryVm Summary { get; set; } = new();
+        public BillingWebhookOpsSummaryVm Webhooks { get; set; } = new();
         public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<PaymentListItemVm> Items { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class BillingWebhooksListVm
+    {
+        public string Query { get; set; } = string.Empty;
+        public BillingWebhookDeliveryQueueFilter QueueFilter { get; set; } = BillingWebhookDeliveryQueueFilter.All;
+        public BillingWebhookOpsSummaryVm Summary { get; set; } = new();
+        public List<BillingWebhookSubscriptionListItemVm> Subscriptions { get; set; } = new();
+        public List<BillingWebhookDeliveryListItemVm> Deliveries { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class RefundsListVm
+    {
+        public Guid? BusinessId { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public BillingRefundQueueFilter? QueueFilter { get; set; }
+        public RefundOpsSummaryVm Summary { get; set; } = new();
+        public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
+        public List<SelectListItem> BusinessOptions { get; set; } = new();
+        public List<BillingRefundListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
@@ -40,6 +68,47 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int StripeCount { get; set; }
         public int MissingProviderRefCount { get; set; }
         public int FailedStripeCount { get; set; }
+    }
+
+    public sealed class BillingWebhookOpsSummaryVm
+    {
+        public int ActiveSubscriptionCount { get; set; }
+        public int PendingDeliveryCount { get; set; }
+        public int FailedDeliveryCount { get; set; }
+        public int SucceededDeliveryCount { get; set; }
+        public int RetryPendingCount { get; set; }
+    }
+
+    public sealed class BillingWebhookSubscriptionListItemVm
+    {
+        public Guid Id { get; set; }
+        public string EventType { get; set; } = string.Empty;
+        public string CallbackUrl { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+    }
+
+    public sealed class BillingWebhookDeliveryListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid SubscriptionId { get; set; }
+        public string EventType { get; set; } = string.Empty;
+        public string CallbackUrl { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public int RetryCount { get; set; }
+        public int? ResponseCode { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? LastAttemptAtUtc { get; set; }
+        public string? IdempotencyKey { get; set; }
+        public bool IsActiveSubscription { get; set; }
+    }
+
+    public sealed class RefundOpsSummaryVm
+    {
+        public int PendingCount { get; set; }
+        public int CompletedCount { get; set; }
+        public int FailedCount { get; set; }
+        public int StripeCount { get; set; }
     }
 
     public sealed class ProviderPlaybookVm
@@ -80,10 +149,35 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class BillingRefundListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid OrderId { get; set; }
+        public string? OrderNumber { get; set; }
+        public Guid PaymentId { get; set; }
+        public string PaymentProvider { get; set; } = string.Empty;
+        public string? PaymentProviderReference { get; set; }
+        public PaymentStatus PaymentStatus { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerDisplayName { get; set; } = string.Empty;
+        public string? CustomerEmail { get; set; }
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+        public RefundStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+        public bool IsStripe { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
     public sealed class PaymentEditVm
     {
         public Guid Id { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+        public DateTime CreatedAtUtc { get; set; }
+        public bool IsStripe { get; set; }
+        public string? FailureReason { get; set; }
 
         [Required]
         public Guid BusinessId { get; set; }
@@ -124,9 +218,29 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime? PaidAtUtc { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long NetCapturedAmountMinor { get; set; }
+        public List<PaymentRefundHistoryItemVm> Refunds { get; set; } = new();
+        public List<PaymentSupportPlaybookVm> SupportPlaybooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SelectListItem> CustomerOptions { get; set; } = new();
         public List<SelectListItem> UserOptions { get; set; } = new();
+    }
+
+    public sealed class PaymentRefundHistoryItemVm
+    {
+        public Guid Id { get; set; }
+        public long AmountMinor { get; set; }
+        public string Currency { get; set; } = "EUR";
+        public string Reason { get; set; } = string.Empty;
+        public RefundStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+    }
+
+    public sealed class PaymentSupportPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     public sealed class FinancialAccountsListVm

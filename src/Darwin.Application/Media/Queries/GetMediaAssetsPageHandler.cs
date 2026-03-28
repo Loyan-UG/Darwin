@@ -39,6 +39,7 @@ namespace Darwin.Application.CMS.Media.Queries
                 MediaAssetQueueFilter.MissingAlt => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Alt)),
                 MediaAssetQueueFilter.EditorAssets => baseQuery.Where(m => m.Role != null && m.Role.Contains("EditorAsset")),
                 MediaAssetQueueFilter.LibraryAssets => baseQuery.Where(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset")),
+                MediaAssetQueueFilter.MissingTitle => baseQuery.Where(m => string.IsNullOrWhiteSpace(m.Title)),
                 _ => baseQuery
             };
 
@@ -63,6 +64,26 @@ namespace Darwin.Application.CMS.Media.Queries
                 }).ToListAsync(ct);
 
             return (items, total);
+        }
+    }
+
+    public sealed class GetMediaAssetOpsSummaryHandler
+    {
+        private readonly IAppDbContext _db;
+        public GetMediaAssetOpsSummaryHandler(IAppDbContext db) => _db = db;
+
+        public async Task<MediaAssetOpsSummaryDto> HandleAsync(CancellationToken ct = default)
+        {
+            var media = _db.Set<MediaAsset>().AsNoTracking().Where(m => !m.IsDeleted);
+
+            return new MediaAssetOpsSummaryDto
+            {
+                TotalCount = await media.CountAsync(ct).ConfigureAwait(false),
+                MissingAltCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Alt), ct).ConfigureAwait(false),
+                MissingTitleCount = await media.CountAsync(m => string.IsNullOrWhiteSpace(m.Title), ct).ConfigureAwait(false),
+                EditorAssetCount = await media.CountAsync(m => m.Role != null && m.Role.Contains("EditorAsset"), ct).ConfigureAwait(false),
+                LibraryAssetCount = await media.CountAsync(m => m.Role == null || m.Role == string.Empty || m.Role.Contains("LibraryAsset"), ct).ConfigureAwait(false)
+            };
         }
     }
 }

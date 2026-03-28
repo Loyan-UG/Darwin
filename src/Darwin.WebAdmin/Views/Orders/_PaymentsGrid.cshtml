@@ -68,6 +68,17 @@
                             <td>@(p.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? p.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"))</td>
                             <td class="text-end">
                                 <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Open</a>
+                                <a asp-controller="Orders"
+                                   asp-action="AddRefund"
+                                   asp-route-orderId="@Model.OrderId"
+                                   asp-route-paymentId="@p.Id"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = p.Id })"
+                                   hx-target="#order-operation-shell"
+                                   hx-swap="innerHTML"
+                                   hx-push-url="false">
+                                    Refund
+                                </a>
                             </td>
                         </tr>
                     }

@@ -95,6 +95,48 @@ public sealed class EmailConfirmationHandlersTests
         persistedToken.UsedAtUtc.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task RequestEmailConfirmation_Should_UseConfiguredTemplates_WhenPresent()
+    {
+        await using var db = EmailConfirmationTestDbContext.Create();
+        var user = CreateUser("confirm-template@darwin.de");
+        user.EmailConfirmed = false;
+
+        db.Set<User>().Add(user);
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Darwin",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "ops@darwin.de",
+            HomeSlug = "home",
+            TransactionalEmailSubjectPrefix = "[Stage]",
+            AccountActivationEmailSubjectTemplate = "Activate {email}",
+            AccountActivationEmailBodyTemplate = "<p>{email}</p><p>{token}</p><p>{expires_at_utc}</p>"
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var email = new FakeEmailSender();
+        var utcNow = new DateTime(2030, 1, 1, 8, 0, 0, DateTimeKind.Utc);
+        var handler = new RequestEmailConfirmationHandler(
+            db,
+            email,
+            new FakeClock(utcNow),
+            new RequestEmailConfirmationValidator(),
+            NullLogger<RequestEmailConfirmationHandler>.Instance);
+
+        var result = await handler.HandleAsync(
+            new RequestEmailConfirmationDto { Email = user.Email },
+            TestContext.Current.CancellationToken);
+
+        result.Succeeded.Should().BeTrue();
+        email.SentMessages.Should().HaveCount(1);
+        email.SentMessages[0].Subject.Should().Be("[Stage] Activate confirm-template@darwin.de");
+        email.SentMessages[0].Body.Should().Contain("confirm-template@darwin.de");
+        email.SentMessages[0].Body.Should().Contain("2030-01-02 08:00:00Z");
+    }
+
     private static User CreateUser(string email)
     {
         return new User(email, "hashed-password", "security-stamp")

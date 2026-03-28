@@ -155,6 +155,10 @@ namespace Darwin.Domain.Entities.Settings
         public string? DhlShipperCity { get; set; }
         /// <summary>Default shipper country code used on labels.</summary>
         public string? DhlShipperCountry { get; set; }
+        /// <summary>Number of hours a pending/packed shipment may remain without handoff before it should appear in the attention queue.</summary>
+        public int ShipmentAttentionDelayHours { get; set; } = 24;
+        /// <summary>Number of hours after shipment creation before missing tracking should be treated as overdue in support queues.</summary>
+        public int ShipmentTrackingGraceHours { get; set; } = 12;
 
 
 
@@ -305,6 +309,24 @@ namespace Darwin.Domain.Entities.Settings
 
         /// <summary>Optional override inbox used to reroute transactional emails for testing or staged go-live verification.</summary>
         public string? CommunicationTestInboxEmail { get; set; }
+
+        /// <summary>Optional subject template for business invitations. Supports placeholders such as {business_name}, {role}, and {invitation_action}.</summary>
+        public string? BusinessInvitationEmailSubjectTemplate { get; set; }
+
+        /// <summary>Optional HTML body template for business invitations. Supports placeholders such as {business_name}, {role}, {token}, {expires_at_utc}, and {acceptance_link_html}.</summary>
+        public string? BusinessInvitationEmailBodyTemplate { get; set; }
+
+        /// <summary>Optional subject template for account activation emails. Supports placeholders such as {email} and {expires_at_utc}.</summary>
+        public string? AccountActivationEmailSubjectTemplate { get; set; }
+
+        /// <summary>Optional HTML body template for account activation emails. Supports placeholders such as {email}, {token}, and {expires_at_utc}.</summary>
+        public string? AccountActivationEmailBodyTemplate { get; set; }
+
+        /// <summary>Optional subject template for password-reset emails. Supports placeholders such as {email} and {expires_at_utc}.</summary>
+        public string? PasswordResetEmailSubjectTemplate { get; set; }
+
+        /// <summary>Optional HTML body template for password-reset emails. Supports placeholders such as {email}, {token}, and {expires_at_utc}.</summary>
+        public string? PasswordResetEmailBodyTemplate { get; set; }
 
     }
 }

@@ -337,6 +337,7 @@
                 <div class="d-flex gap-2 mt-3 flex-wrap">
                     <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-secondary">Open Payments</a>
                     <a asp-action="Subscription" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-secondary">Open Subscription</a>
+                    <a asp-action="SubscriptionInvoices" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-secondary">Subscription Invoices</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary">Business App Handoffs</a>
                 </div>
             </div>

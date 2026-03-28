@@ -13,6 +13,78 @@
     </a>
 </div>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Total</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Active</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Inactive</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.InactiveCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Missing Rates</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MissingRatesCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">DHL Methods</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.DhlCount</div>
+        </div>
+    </div>
+    <div class="col-md-1">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Global</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.GlobalCoverageCount</div>
+        </div>
+    </div>
+    <div class="col-md-1">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Multi-rate</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.MultiRateCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Phase-1 Shipping Method Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <form method="get" class="row g-2 mb-3">
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by name, carrier, service, or countries" />
@@ -35,6 +107,8 @@
     <a asp-action="Index" asp-route-filter="MissingRates" class="btn btn-sm btn-outline-warning">Missing Rates</a>
     <a asp-action="Index" asp-route-filter="Dhl" class="btn btn-sm btn-outline-secondary">DHL</a>
     <a asp-action="Index" asp-route-filter="Inactive" class="btn btn-sm btn-outline-secondary">Inactive</a>
+    <a asp-action="Index" asp-route-filter="GlobalCoverage" class="btn btn-sm btn-outline-info">Global Coverage</a>
+    <a asp-action="Index" asp-route-filter="MultiRate" class="btn btn-sm btn-outline-primary">Multi-rate</a>
 </div>
 
 <div class="table-responsive">
@@ -70,11 +144,23 @@
                     <td>@(string.IsNullOrWhiteSpace(item.Currency) ? "-" : item.Currency)</td>
                     <td>
                         <span class="badge @(item.RatesCount > 0 ? "text-bg-success" : "text-bg-warning")">@item.RatesCount</span>
+                        @if (item.HasMultipleRates)
+                        {
+                            <div><span class="badge text-bg-info mt-1">Multi-rate</span></div>
+                        }
                     </td>
                     <td>
                         <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">
                             @(item.IsActive ? "Active" : "Inactive")
                         </span>
+                        @if (item.IsDhl)
+                        {
+                            <div><span class="badge text-bg-primary mt-1">DHL</span></div>
+                        }
+                        @if (item.HasGlobalCoverage)
+                        {
+                            <div><span class="badge text-bg-info mt-1">Global coverage</span></div>
+                        }
                     </td>
                     <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                     <td class="text-end">

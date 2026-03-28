@@ -47,6 +47,50 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Webhook Lifecycle Visibility</span>
+        <a asp-action="Webhooks" class="btn btn-sm btn-outline-secondary">Open Webhook Queue</a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Active Subscriptions</div>
+                    <div class="fw-semibold mt-1">@Model.Webhooks.ActiveSubscriptionCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Pending</div>
+                    <div class="fw-semibold mt-1">@Model.Webhooks.PendingDeliveryCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Failed</div>
+                    <div class="fw-semibold mt-1">@Model.Webhooks.FailedDeliveryCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Succeeded</div>
+                    <div class="fw-semibold mt-1">@Model.Webhooks.SucceededDeliveryCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Retry Pending</div>
+                    <div class="fw-semibold mt-1">@Model.Webhooks.RetryPendingCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="small text-muted mt-3">
+            This queue gives callback visibility for phase-1 payment operations. It is intentionally read-oriented and does not claim automated resend or reconciliation completion.
+        </div>
+    </div>
+</div>
+
 <div class="row g-3 mb-3">
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
@@ -145,9 +189,17 @@
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
         <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Reset</a>
     </form>
-    <a asp-action="CreatePayment" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">
-        <i class="fa fa-plus"></i> Record Payment
-    </a>
+    <div class="d-flex gap-2">
+        <a asp-action="Webhooks" class="btn btn-outline-secondary">
+            <i class="fa fa-broadcast-tower"></i> Webhook Queue
+        </a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-danger">
+            <i class="fa fa-rotate-left"></i> Refund Queue
+        </a>
+        <a asp-action="CreatePayment" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">
+            <i class="fa fa-plus"></i> Record Payment
+        </a>
+    </div>
 </div>
 
 <div class="table-responsive">
@@ -261,6 +313,10 @@
                     </td>
                     <td class="text-end">
                         <a asp-action="EditPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        @if (item.OrderId.HasValue)
+                        {
+                            <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@item.OrderId.Value" asp-route-paymentId="@item.Id" class="btn btn-sm btn-outline-danger">Refund</a>
+                        }
                         @if (item.InvoiceId.HasValue)
                         {
                             <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.InvoiceId.Value" class="btn btn-sm btn-outline-primary">Invoice</a>

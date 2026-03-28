@@ -34,8 +34,26 @@ namespace Darwin.WebAdmin.ViewModels.CMS
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
         public MediaAssetQueueFilter Filter { get; set; } = MediaAssetQueueFilter.All;
+        public MediaAssetOpsSummaryVm Summary { get; set; } = new();
+        public List<MediaAssetPlaybookVm> Playbooks { get; set; } = new();
         public List<MediaAssetListItemVm> Items { get; set; } = new();
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class MediaAssetOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int MissingAltCount { get; set; }
+        public int MissingTitleCount { get; set; }
+        public int EditorAssetCount { get; set; }
+        public int LibraryAssetCount { get; set; }
+    }
+
+    public sealed class MediaAssetPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     /// <summary>

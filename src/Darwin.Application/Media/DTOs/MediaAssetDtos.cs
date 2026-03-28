@@ -7,7 +7,8 @@ namespace Darwin.Application.CMS.Media.DTOs
         All = 0,
         MissingAlt = 1,
         EditorAssets = 2,
-        LibraryAssets = 3
+        LibraryAssets = 3,
+        MissingTitle = 4
     }
 
     /// <summary>
@@ -55,6 +56,15 @@ namespace Darwin.Application.CMS.Media.DTOs
         public string? Role { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class MediaAssetOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int MissingAltCount { get; set; }
+        public int MissingTitleCount { get; set; }
+        public int EditorAssetCount { get; set; }
+        public int LibraryAssetCount { get; set; }
     }
 
     /// <summary>

@@ -293,7 +293,10 @@ namespace Darwin.Application.Billing.Queries
                     Status = x.Status,
                     Provider = x.Provider,
                     ProviderTransactionRef = x.ProviderTransactionRef,
-                    PaidAtUtc = x.PaidAtUtc
+                    PaidAtUtc = x.PaidAtUtc,
+                    FailureReason = x.FailureReason,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    IsStripe = x.Provider == "Stripe"
                 })
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
@@ -341,6 +344,22 @@ namespace Darwin.Application.Billing.Queries
                     .SumAsync(x => (long?)x.AmountMinor, ct)
                     .ConfigureAwait(false) ?? 0L);
             dto.NetCapturedAmountMinor = BillingReconciliationCalculator.CalculateNetCollectedAmount(dto.AmountMinor, dto.RefundedAmountMinor);
+            dto.Refunds = await _db.Set<Refund>()
+                .AsNoTracking()
+                .Where(x => x.PaymentId == dto.Id)
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .Select(x => new PaymentRefundHistoryItemDto
+                {
+                    Id = x.Id,
+                    AmountMinor = x.AmountMinor,
+                    Currency = x.Currency,
+                    Reason = x.Reason,
+                    Status = x.Status,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
 
             User? paymentUser = null;
             if (dto.UserId.HasValue)
@@ -383,6 +402,165 @@ namespace Darwin.Application.Billing.Queries
             }
 
             return dto;
+        }
+    }
+
+    public sealed class GetRefundsPageHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetRefundsPageHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public async Task<(List<BillingRefundListItemDto> Items, int Total)> HandleAsync(
+            Guid businessId,
+            int page,
+            int pageSize,
+            string? query = null,
+            BillingRefundQueueFilter? filter = null,
+            CancellationToken ct = default)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var refundsQuery =
+                from refund in _db.Set<Refund>().AsNoTracking()
+                join payment in _db.Set<Payment>().AsNoTracking() on refund.PaymentId equals payment.Id
+                where payment.BusinessId == businessId
+                select new { Refund = refund, Payment = payment };
+
+            if (filter.HasValue)
+            {
+                refundsQuery = filter.Value switch
+                {
+                    BillingRefundQueueFilter.Pending => refundsQuery.Where(x => x.Refund.Status == RefundStatus.Pending),
+                    BillingRefundQueueFilter.Completed => refundsQuery.Where(x => x.Refund.Status == RefundStatus.Completed),
+                    BillingRefundQueueFilter.Failed => refundsQuery.Where(x => x.Refund.Status == RefundStatus.Failed),
+                    BillingRefundQueueFilter.Stripe => refundsQuery.Where(x => x.Payment.Provider == "Stripe"),
+                    _ => refundsQuery
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                refundsQuery = refundsQuery.Where(x =>
+                    x.Refund.Reason.Contains(term) ||
+                    x.Payment.Provider.Contains(term) ||
+                    (x.Payment.ProviderTransactionRef != null && x.Payment.ProviderTransactionRef.Contains(term)) ||
+                    _db.Set<Order>().Any(o => o.Id == x.Refund.OrderId && o.OrderNumber.Contains(term)) ||
+                    (x.Payment.CustomerId.HasValue && _db.Set<Customer>().Any(c =>
+                        c.Id == x.Payment.CustomerId.Value &&
+                        (c.FirstName.Contains(term) ||
+                         c.LastName.Contains(term) ||
+                         c.Email.Contains(term) ||
+                         (c.CompanyName != null && c.CompanyName.Contains(term)))))
+                );
+            }
+
+            var total = await refundsQuery.CountAsync(ct).ConfigureAwait(false);
+            var items = await refundsQuery
+                .OrderByDescending(x => x.Refund.CreatedAtUtc)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new BillingRefundListItemDto
+                {
+                    Id = x.Refund.Id,
+                    OrderId = x.Refund.OrderId ?? Guid.Empty,
+                    PaymentId = x.Refund.PaymentId,
+                    PaymentProvider = x.Payment.Provider,
+                    PaymentProviderReference = x.Payment.ProviderTransactionRef,
+                    PaymentStatus = x.Payment.Status,
+                    CustomerId = x.Payment.CustomerId,
+                    AmountMinor = x.Refund.AmountMinor,
+                    Currency = x.Refund.Currency,
+                    Reason = x.Refund.Reason,
+                    Status = x.Refund.Status,
+                    CreatedAtUtc = x.Refund.CreatedAtUtc,
+                    CompletedAtUtc = x.Refund.CompletedAtUtc,
+                    IsStripe = x.Payment.Provider == "Stripe",
+                    RowVersion = x.Refund.RowVersion
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            await EnrichRefundsAsync(items, ct).ConfigureAwait(false);
+            return (items, total);
+        }
+
+        private async Task EnrichRefundsAsync(List<BillingRefundListItemDto> items, CancellationToken ct)
+        {
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            var orderIds = items.Select(x => x.OrderId).Where(x => x != Guid.Empty).Distinct().ToList();
+            var customerIds = items.Where(x => x.CustomerId.HasValue).Select(x => x.CustomerId!.Value).Distinct().ToList();
+
+            var orders = orderIds.Count == 0
+                ? new Dictionary<Guid, string>()
+                : await _db.Set<Order>()
+                    .AsNoTracking()
+                    .Where(x => orderIds.Contains(x.Id))
+                    .ToDictionaryAsync(x => x.Id, x => x.OrderNumber, ct)
+                    .ConfigureAwait(false);
+
+            var customers = customerIds.Count == 0
+                ? new List<Customer>()
+                : await _db.Set<Customer>()
+                    .AsNoTracking()
+                    .Where(x => customerIds.Contains(x.Id))
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
+
+            var userIds = customers.Where(x => x.UserId.HasValue).Select(x => x.UserId!.Value).Distinct().ToList();
+            var users = userIds.Count == 0
+                ? new Dictionary<Guid, User>()
+                : await _db.Set<User>()
+                    .AsNoTracking()
+                    .Where(x => userIds.Contains(x.Id))
+                    .ToDictionaryAsync(x => x.Id, ct)
+                    .ConfigureAwait(false);
+
+            var customerMap = customers.ToDictionary(x => x.Id);
+
+            foreach (var item in items)
+            {
+                if (item.OrderId != Guid.Empty && orders.TryGetValue(item.OrderId, out var orderNumber))
+                {
+                    item.OrderNumber = orderNumber;
+                }
+
+                if (item.CustomerId.HasValue && customerMap.TryGetValue(item.CustomerId.Value, out var customer))
+                {
+                    item.CustomerDisplayName = BillingPaymentDisplayFormatter.BuildCustomerDisplayName(customer, users);
+                    item.CustomerEmail = BillingPaymentDisplayFormatter.ResolveCustomerEmail(customer, users);
+                }
+            }
+        }
+    }
+
+    public sealed class GetRefundOpsSummaryHandler
+    {
+        private readonly IAppDbContext _db;
+
+        public GetRefundOpsSummaryHandler(IAppDbContext db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+        public async Task<RefundOpsSummaryDto> HandleAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var refundsQuery =
+                from refund in _db.Set<Refund>().AsNoTracking()
+                join payment in _db.Set<Payment>().AsNoTracking() on refund.PaymentId equals payment.Id
+                where payment.BusinessId == businessId
+                select new { Refund = refund, Payment = payment };
+
+            return new RefundOpsSummaryDto
+            {
+                PendingCount = await refundsQuery.CountAsync(x => x.Refund.Status == RefundStatus.Pending, ct).ConfigureAwait(false),
+                CompletedCount = await refundsQuery.CountAsync(x => x.Refund.Status == RefundStatus.Completed, ct).ConfigureAwait(false),
+                FailedCount = await refundsQuery.CountAsync(x => x.Refund.Status == RefundStatus.Failed, ct).ConfigureAwait(false),
+                StripeCount = await refundsQuery.CountAsync(x => x.Payment.Provider == "Stripe", ct).ConfigureAwait(false)
+            };
         }
     }
 

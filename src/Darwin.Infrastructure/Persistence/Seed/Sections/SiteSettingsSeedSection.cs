@@ -98,6 +98,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 DhlShipperPostalCode = "10115",
                 DhlShipperCity = "Berlin",
                 DhlShipperCountry = "DE",
+                ShipmentAttentionDelayHours = 24,
+                ShipmentTrackingGraceHours = 12,
 
                 // Soft delete / data retention
                 SoftDeleteCleanupEnabled = true,
@@ -145,6 +147,12 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 AdminAlertSmsRecipientsCsv = "+4915112345678",
                 TransactionalEmailSubjectPrefix = "[Darwin]",
                 CommunicationTestInboxEmail = null,
+                BusinessInvitationEmailSubjectTemplate = "Invitation to join {business_name} on Darwin",
+                BusinessInvitationEmailBodyTemplate = "<p>Hello,</p><p>{invitation_intro_html}</p>{acceptance_link_html}<p>Your invitation token is:</p><p><code>{token}</code></p><p>This invitation expires at <strong>{expires_at_utc}</strong>.</p><p>Use this token in the Darwin business onboarding flow or contact your administrator if you need assistance.</p>",
+                AccountActivationEmailSubjectTemplate = "Confirm your Darwin account email",
+                AccountActivationEmailBodyTemplate = "<p>Hello,</p><p>Use the following token to confirm the Darwin account email for <strong>{email}</strong>:</p><p><code>{token}</code></p><p>This token expires at <strong>{expires_at_utc}</strong>.</p>",
+                PasswordResetEmailSubjectTemplate = "Reset your Darwin account password",
+                PasswordResetEmailBodyTemplate = "<p>Hello,</p><p>Use the following token to reset the Darwin account password for <strong>{email}</strong>:</p><p><code>{token}</code></p><p>This token expires at <strong>{expires_at_utc}</strong>.</p>",
 
                 // SMS (disabled by default)
                 SmsEnabled = false,

@@ -21,10 +21,18 @@ public sealed class GetShipmentsPageHandler
         int pageSize,
         string? query = null,
         ShipmentQueueFilter filter = ShipmentQueueFilter.All,
+        int attentionDelayHours = 24,
+        int trackingGraceHours = 12,
         CancellationToken ct = default)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
+        if (attentionDelayHours < 1) attentionDelayHours = 24;
+        if (trackingGraceHours < 1) trackingGraceHours = 12;
+
+        var nowUtc = DateTime.UtcNow;
+        var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
+        var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
 
         var shipments = _db.Set<Shipment>().AsNoTracking();
 
@@ -38,6 +46,14 @@ public sealed class GetShipmentsPageHandler
             ShipmentQueueFilter.Returned => shipments.Where(s => s.Status == Domain.Enums.ShipmentStatus.Returned),
             ShipmentQueueFilter.Dhl => shipments.Where(s => s.Carrier == "DHL"),
             ShipmentQueueFilter.MissingService => shipments.Where(s => s.Service == null || s.Service == string.Empty),
+            ShipmentQueueFilter.AwaitingHandoff => shipments.Where(s =>
+                (s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed) &&
+                s.CreatedAtUtc <= handoffThresholdUtc),
+            ShipmentQueueFilter.TrackingOverdue => shipments.Where(s =>
+                s.Carrier == "DHL" &&
+                (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
+                ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc)),
             _ => shipments
         };
 
@@ -74,6 +90,16 @@ public sealed class GetShipmentsPageHandler
                 DeliveredAtUtc = s.DeliveredAtUtc,
                 CreatedAtUtc = s.CreatedAtUtc,
                 IsDhl = s.Carrier == "DHL",
+                AwaitingHandoff =
+                    (s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed) &&
+                    s.CreatedAtUtc <= handoffThresholdUtc,
+                TrackingOverdue =
+                    s.Carrier == "DHL" &&
+                    (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                    (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
+                    ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc),
+                AttentionDelayHours = attentionDelayHours,
+                TrackingGraceHours = trackingGraceHours,
                 NeedsCarrierReview =
                     s.Carrier == "DHL" &&
                     ((s.Service == null || s.Service == string.Empty) ||
@@ -93,8 +119,17 @@ public sealed class GetShipmentOpsSummaryHandler
 
     public GetShipmentOpsSummaryHandler(IAppDbContext db) => _db = db;
 
-    public async Task<ShipmentOpsSummaryDto> HandleAsync(CancellationToken ct = default)
+    public async Task<ShipmentOpsSummaryDto> HandleAsync(
+        int attentionDelayHours = 24,
+        int trackingGraceHours = 12,
+        CancellationToken ct = default)
     {
+        if (attentionDelayHours < 1) attentionDelayHours = 24;
+        if (trackingGraceHours < 1) trackingGraceHours = 12;
+
+        var nowUtc = DateTime.UtcNow;
+        var handoffThresholdUtc = nowUtc.AddHours(-attentionDelayHours);
+        var trackingThresholdUtc = nowUtc.AddHours(-trackingGraceHours);
         var shipments = _db.Set<Shipment>().AsNoTracking();
 
         return new ShipmentOpsSummaryDto
@@ -111,7 +146,17 @@ public sealed class GetShipmentOpsSummaryHandler
                 ct).ConfigureAwait(false),
             ReturnedCount = await shipments.CountAsync(s => s.Status == Domain.Enums.ShipmentStatus.Returned, ct).ConfigureAwait(false),
             DhlCount = await shipments.CountAsync(s => s.Carrier == "DHL", ct).ConfigureAwait(false),
-            MissingServiceCount = await shipments.CountAsync(s => s.Service == null || s.Service == string.Empty, ct).ConfigureAwait(false)
+            MissingServiceCount = await shipments.CountAsync(s => s.Service == null || s.Service == string.Empty, ct).ConfigureAwait(false),
+            AwaitingHandoffCount = await shipments.CountAsync(
+                s => (s.Status == Domain.Enums.ShipmentStatus.Pending || s.Status == Domain.Enums.ShipmentStatus.Packed) &&
+                     s.CreatedAtUtc <= handoffThresholdUtc,
+                ct).ConfigureAwait(false),
+            TrackingOverdueCount = await shipments.CountAsync(
+                s => s.Carrier == "DHL" &&
+                     (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                     (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
+                     ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc),
+                ct).ConfigureAwait(false)
         };
     }
 }

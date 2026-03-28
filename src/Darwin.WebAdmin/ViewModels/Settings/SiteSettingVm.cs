@@ -166,6 +166,12 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "DHL Shipper Country")]
         public string? DhlShipperCountry { get; set; }
 
+        [Display(Name = "Shipment Attention Delay (Hours)")]
+        public int ShipmentAttentionDelayHours { get; set; } = 24;
+
+        [Display(Name = "Tracking Grace (Hours)")]
+        public int ShipmentTrackingGraceHours { get; set; } = 12;
+
         // ---------- Soft delete / retention ----------
         [Display(Name = "Soft Delete Cleanup Enabled")]
         public bool SoftDeleteCleanupEnabled { get; set; } = true;
@@ -307,5 +313,23 @@ namespace Darwin.WebAdmin.ViewModels.Settings
 
         [Display(Name = "Communication Test Inbox")]
         public string? CommunicationTestInboxEmail { get; set; }
+
+        [Display(Name = "Business Invitation Subject Template")]
+        public string? BusinessInvitationEmailSubjectTemplate { get; set; }
+
+        [Display(Name = "Business Invitation Body Template")]
+        public string? BusinessInvitationEmailBodyTemplate { get; set; }
+
+        [Display(Name = "Account Activation Subject Template")]
+        public string? AccountActivationEmailSubjectTemplate { get; set; }
+
+        [Display(Name = "Account Activation Body Template")]
+        public string? AccountActivationEmailBodyTemplate { get; set; }
+
+        [Display(Name = "Password Reset Subject Template")]
+        public string? PasswordResetEmailSubjectTemplate { get; set; }
+
+        [Display(Name = "Password Reset Body Template")]
+        public string? PasswordResetEmailBodyTemplate { get; set; }
     }
 }

@@ -1,0 +1,200 @@
+@using Darwin.Application.Billing.DTOs
+@model Darwin.WebAdmin.ViewModels.Billing.BillingWebhooksListVm
+@{
+    ViewData["Title"] = "Webhook Deliveries";
+}
+
+<h1 class="mb-3">Webhook Deliveries</h1>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Active Subscriptions</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ActiveSubscriptionCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Pending</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PendingDeliveryCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedDeliveryCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Succeeded</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.SucceededDeliveryCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Retry Pending</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.RetryPendingCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Queue Scope</div>
+            <div class="fw-semibold mt-1">Global</div>
+            <div class="small text-muted mt-2">Phase-1 callbacks are platform scoped.</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Webhook Support Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                        <th>Settings Dependency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                        <td>@item.SettingsDependency</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Active Webhook Subscriptions</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Event Type</th>
+                        <th>Callback URL</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Subscriptions.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-muted">No webhook subscriptions found.</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Subscriptions)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.EventType</td>
+                            <td><code>@item.CallbackUrl</code></td>
+                            <td>
+                                <span class="badge @(item.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(item.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="Webhooks" method="get" class="d-flex gap-2">
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search event type, callback, status, or idempotency key">
+        <select name="queue" class="form-select">
+            <option value="@BillingWebhookDeliveryQueueFilter.All" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.All)">All deliveries</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.Pending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Pending)">Pending</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.Failed" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Failed)">Failed</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.Succeeded" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Succeeded)">Succeeded</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.RetryPending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.RetryPending)">Retry Pending</option>
+        </select>
+        <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
+        <a asp-action="Webhooks" class="btn btn-outline-secondary">Reset</a>
+    </form>
+    <div class="d-flex gap-2">
+        <a asp-action="Payments" class="btn btn-outline-secondary">
+            <i class="fa fa-money-bill-wave"></i> Payments
+        </a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-outline-secondary">
+            <i class="fa fa-sliders"></i> Payment Settings
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Event Type</th>
+                <th>Callback</th>
+                <th>Status</th>
+                <th>Attempts</th>
+                <th>Timeline</th>
+                <th>Correlation</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Deliveries.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted">No webhook deliveries found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Deliveries)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@item.EventType</div>
+                        @if (!item.IsActiveSubscription)
+                        {
+                            <div><span class="badge text-bg-secondary mt-1">Inactive subscription</span></div>
+                        }
+                    </td>
+                    <td><code>@item.CallbackUrl</code></td>
+                    <td>
+                        <span class="badge @(item.Status == "Succeeded" ? "bg-success" : item.Status == "Failed" ? "bg-danger" : "bg-warning text-dark")">@item.Status</span>
+                        @if (item.ResponseCode.HasValue)
+                        {
+                            <div class="small text-muted mt-1">HTTP @item.ResponseCode</div>
+                        }
+                    </td>
+                    <td>
+                        <div>@item.RetryCount</div>
+                        @if (item.RetryCount > 0)
+                        {
+                            <div class="small text-warning">Retry path used</div>
+                        }
+                    </td>
+                    <td>
+                        <div class="small text-muted">Created @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div>Last attempt @(item.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                    </td>
+                    <td>
+                        <div class="small text-muted">Subscription @item.SubscriptionId</div>
+                        <div class="small text-muted">@item.IdempotencyKey</div>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Webhooks" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter"></pager>

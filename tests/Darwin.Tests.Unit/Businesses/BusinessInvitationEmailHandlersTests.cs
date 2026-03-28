@@ -66,6 +66,57 @@ public sealed class BusinessInvitationEmailHandlersTests
     }
 
     [Fact]
+    public async Task CreateBusinessInvitation_Should_UseConfiguredTemplates_WhenPresent()
+    {
+        await using var db = BusinessInvitationEmailTestDbContext.Create();
+        var businessId = Guid.NewGuid();
+
+        db.Set<Business>().Add(new Business
+        {
+            Id = businessId,
+            Name = "Studio Mitte",
+            DefaultCulture = "de-DE",
+            DefaultCurrency = "EUR",
+            IsActive = true
+        });
+        db.Set<SiteSetting>().Add(new SiteSetting
+        {
+            Id = Guid.NewGuid(),
+            Title = "Darwin",
+            DefaultCulture = "de-DE",
+            SupportedCulturesCsv = "de-DE,en-US",
+            ContactEmail = "ops@darwin.de",
+            HomeSlug = "home",
+            BusinessInvitationEmailSubjectTemplate = "Join {business_name} as {role}",
+            BusinessInvitationEmailBodyTemplate = "<p>{invitation_action}</p><p>{invitation_intro_html}</p><p>{token}</p>",
+            TransactionalEmailSubjectPrefix = "[Ops]"
+        });
+
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var emailSender = new CapturingEmailSender();
+        var handler = new CreateBusinessInvitationHandler(
+            db,
+            emailSender,
+            new FixedClock(new DateTime(2030, 2, 1, 8, 0, 0, DateTimeKind.Utc)),
+            new FixedCurrentUserService(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")),
+            new NullBusinessInvitationLinkBuilder(),
+            new BusinessInvitationCreateDtoValidator());
+
+        await handler.HandleAsync(new BusinessInvitationCreateDto
+        {
+            BusinessId = businessId,
+            Email = "owner@mitte.de",
+            Role = BusinessMemberRole.Owner,
+            ExpiresInDays = 7
+        }, TestContext.Current.CancellationToken);
+
+        emailSender.LastSubject.Should().Be("[Ops] Join Studio Mitte as Owner");
+        emailSender.LastBody.Should().Contain("invited");
+        emailSender.LastBody.Should().Contain("Studio Mitte");
+    }
+
+    [Fact]
     public async Task ResendBusinessInvitation_Should_KeepManualToken_WhenMagicLinkMissing()
     {
         await using var db = BusinessInvitationEmailTestDbContext.Create();
@@ -119,6 +170,7 @@ public sealed class BusinessInvitationEmailHandlersTests
 
     private sealed class CapturingEmailSender : IEmailSender
     {
+        public string LastSubject { get; private set; } = string.Empty;
         public string LastBody { get; private set; } = string.Empty;
         public EmailDispatchContext? LastContext { get; private set; }
 
@@ -129,6 +181,7 @@ public sealed class BusinessInvitationEmailHandlersTests
             CancellationToken ct = default,
             EmailDispatchContext? context = null)
         {
+            LastSubject = subject;
             LastBody = htmlBody;
             LastContext = context;
             return Task.CompletedTask;

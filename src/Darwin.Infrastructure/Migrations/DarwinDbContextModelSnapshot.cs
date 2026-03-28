@@ -6443,6 +6443,14 @@ namespace Darwin.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccountActivationEmailBodyTemplate")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AccountActivationEmailSubjectTemplate")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("AccountDeletionUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -6454,6 +6462,14 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<string>("AdminAlertSmsRecipientsCsv")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("BusinessInvitationEmailBodyTemplate")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessInvitationEmailSubjectTemplate")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("BusinessManagementWebsiteUrl")
                         .HasMaxLength(500)
@@ -6659,6 +6675,14 @@ namespace Darwin.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<string>("PasswordResetEmailBodyTemplate")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordResetEmailSubjectTemplate")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("PrivacyPolicyUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -6676,6 +6700,12 @@ namespace Darwin.Infrastructure.Migrations
                     b.Property<string>("SeoTitleTemplate")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("ShipmentAttentionDelayHours")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShipmentTrackingGraceHours")
+                        .HasColumnType("int");
 
                     b.Property<string>("SmsApiKey")
                         .HasMaxLength(256)

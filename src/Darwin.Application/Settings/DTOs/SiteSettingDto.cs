@@ -146,6 +146,8 @@ namespace Darwin.Application.Settings.DTOs
         public string? DhlShipperPostalCode { get; set; }
         public string? DhlShipperCity { get; set; }
         public string? DhlShipperCountry { get; set; }
+        public int ShipmentAttentionDelayHours { get; set; } = 24;
+        public int ShipmentTrackingGraceHours { get; set; } = 12;
 
 
 
@@ -210,5 +212,11 @@ namespace Darwin.Application.Settings.DTOs
         public string? AdminAlertSmsRecipientsCsv { get; set; }
         public string? TransactionalEmailSubjectPrefix { get; set; }
         public string? CommunicationTestInboxEmail { get; set; }
+        public string? BusinessInvitationEmailSubjectTemplate { get; set; }
+        public string? BusinessInvitationEmailBodyTemplate { get; set; }
+        public string? AccountActivationEmailSubjectTemplate { get; set; }
+        public string? AccountActivationEmailBodyTemplate { get; set; }
+        public string? PasswordResetEmailSubjectTemplate { get; set; }
+        public string? PasswordResetEmailBodyTemplate { get; set; }
     }
 }

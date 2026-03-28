@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -99,8 +100,19 @@ namespace Darwin.Application.Businesses.Commands
 
             var acceptanceLink = _businessInvitationLinkBuilder.BuildAcceptanceLink(token);
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
-            var subject = ApplySubjectPrefix(siteSettings?.TransactionalEmailSubjectPrefix, $"Invitation to join {business.Name} on Darwin");
-            var body =
+            var subject = ApplySubjectPrefix(
+                siteSettings?.TransactionalEmailSubjectPrefix,
+                TransactionalEmailTemplateRenderer.Render(
+                    siteSettings?.BusinessInvitationEmailSubjectTemplate,
+                    $"Invitation to join {business.Name} on Darwin",
+                    new Dictionary<string, string?>
+                    {
+                        ["business_name"] = business.Name,
+                        ["role"] = dto.Role.ToString(),
+                        ["invitation_action"] = "invited"
+                    }));
+            var body = TransactionalEmailTemplateRenderer.Render(
+                siteSettings?.BusinessInvitationEmailBodyTemplate,
                 $"<p>Hello,</p>" +
                 $"<p>You have been invited to join <strong>{business.Name}</strong> on Darwin as <strong>{dto.Role}</strong>.</p>" +
                 (string.IsNullOrWhiteSpace(acceptanceLink)
@@ -109,7 +121,20 @@ namespace Darwin.Application.Businesses.Commands
                 $"<p>Your invitation token is:</p>" +
                 $"<p><code>{token}</code></p>" +
                 $"<p>This invitation expires at <strong>{expiresAtUtc:u}</strong>.</p>" +
-                $"<p>Use this token in the Darwin business onboarding flow or contact your administrator if you need assistance.</p>";
+                $"<p>Use this token in the Darwin business onboarding flow or contact your administrator if you need assistance.</p>",
+                new Dictionary<string, string?>
+                {
+                    ["business_name"] = business.Name,
+                    ["role"] = dto.Role.ToString(),
+                    ["token"] = token,
+                    ["expires_at_utc"] = expiresAtUtc.ToString("u"),
+                    ["acceptance_link"] = acceptanceLink,
+                    ["acceptance_link_html"] = string.IsNullOrWhiteSpace(acceptanceLink)
+                        ? string.Empty
+                        : $"<p><a href=\"{acceptanceLink}\">Open your invitation</a></p>",
+                    ["invitation_action"] = "invited",
+                    ["invitation_intro_html"] = $"You have been invited to join <strong>{business.Name}</strong> on Darwin as <strong>{dto.Role}</strong>."
+                });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? entity.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(entity.Email, recipient, body);
 

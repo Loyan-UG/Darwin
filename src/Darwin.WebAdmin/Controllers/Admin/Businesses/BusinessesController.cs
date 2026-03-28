@@ -39,6 +39,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetBusinessForEditHandler _getBusinessForEdit;
         private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
         private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatus;
+        private readonly GetBusinessSubscriptionInvoicesPageHandler _getBusinessSubscriptionInvoicesPage;
+        private readonly GetBusinessSubscriptionInvoiceOpsSummaryHandler _getBusinessSubscriptionInvoiceOpsSummary;
         private readonly GetBillingPlansHandler _getBillingPlans;
         private readonly SetCancelAtPeriodEndHandler _setCancelAtPeriodEnd;
         private readonly CreateSubscriptionCheckoutIntentHandler _createSubscriptionCheckoutIntent;
@@ -77,6 +79,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             GetBusinessForEditHandler getBusinessForEdit,
             GetBusinessSupportSummaryHandler getBusinessSupportSummary,
             GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatus,
+            GetBusinessSubscriptionInvoicesPageHandler getBusinessSubscriptionInvoicesPage,
+            GetBusinessSubscriptionInvoiceOpsSummaryHandler getBusinessSubscriptionInvoiceOpsSummary,
             GetBillingPlansHandler getBillingPlans,
             SetCancelAtPeriodEndHandler setCancelAtPeriodEnd,
             CreateSubscriptionCheckoutIntentHandler createSubscriptionCheckoutIntent,
@@ -114,6 +118,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _getBusinessForEdit = getBusinessForEdit;
             _getBusinessSupportSummary = getBusinessSupportSummary;
             _getBusinessSubscriptionStatus = getBusinessSubscriptionStatus;
+            _getBusinessSubscriptionInvoicesPage = getBusinessSubscriptionInvoicesPage;
+            _getBusinessSubscriptionInvoiceOpsSummary = getBusinessSubscriptionInvoiceOpsSummary;
             _getBillingPlans = getBillingPlans;
             _setCancelAtPeriodEnd = setCancelAtPeriodEnd;
             _createSubscriptionCheckoutIntent = createSubscriptionCheckoutIntent;
@@ -433,6 +439,48 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var vm = await BuildBusinessSubscriptionWorkspaceAsync(business, ct);
+            return View(vm);
+        }
+
+        [HttpGet]
+        [PermissionAuthorize(PermissionKeys.FullAdminAccess)]
+        public async Task<IActionResult> SubscriptionInvoices(
+            Guid businessId,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            BusinessSubscriptionInvoiceQueueFilter filter = BusinessSubscriptionInvoiceQueueFilter.All,
+            CancellationToken ct = default)
+        {
+            var business = await LoadBusinessContextAsync(businessId, ct);
+            if (business is null)
+            {
+                TempData["Error"] = "Business not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await _getBusinessSubscriptionInvoicesPage.HandleAsync(
+                businessId,
+                page,
+                pageSize,
+                query,
+                filter,
+                ct).ConfigureAwait(false);
+            var summary = await _getBusinessSubscriptionInvoiceOpsSummary.HandleAsync(businessId, ct).ConfigureAwait(false);
+
+            var vm = new BusinessSubscriptionInvoicesListVm
+            {
+                Business = business,
+                Page = page,
+                PageSize = pageSize,
+                Total = result.Total,
+                Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildBusinessSubscriptionInvoiceFilterItems(filter),
+                Summary = MapBusinessSubscriptionInvoiceOpsSummaryVm(summary),
+                Items = result.Items.Select(MapBusinessSubscriptionInvoiceListItemVm).ToList()
+            };
+
             return View(vm);
         }
 
@@ -1847,6 +1895,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var subscription = await BuildBusinessSubscriptionSnapshotAsync(business.Id, ct);
             var settings = await _siteSettingCache.GetAsync(ct);
             var plans = await _getBillingPlans.HandleAsync(activeOnly: true, ct);
+            var recentInvoices = await _getBusinessSubscriptionInvoicesPage.HandleAsync(
+                business.Id,
+                page: 1,
+                pageSize: 5,
+                query: null,
+                filter: BusinessSubscriptionInvoiceQueueFilter.All,
+                ct).ConfigureAwait(false);
+            var invoiceSummary = await _getBusinessSubscriptionInvoiceOpsSummary.HandleAsync(business.Id, ct).ConfigureAwait(false);
             var planVms = new List<BusinessBillingPlanVm>();
 
             foreach (var x in plans.Items)
@@ -1876,6 +1932,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ManagementWebsiteConfigured = !string.IsNullOrWhiteSpace(settings.BusinessManagementWebsiteUrl),
                 ManagementWebsiteUrl = settings.BusinessManagementWebsiteUrl,
                 Plans = planVms,
+                InvoiceSummary = MapBusinessSubscriptionInvoiceOpsSummaryVm(invoiceSummary),
+                RecentInvoices = recentInvoices.Items.Select(MapBusinessSubscriptionInvoiceListItemVm).ToList(),
                 Playbooks = BuildSubscriptionPlaybooks(subscription, !string.IsNullOrWhiteSpace(settings.BusinessManagementWebsiteUrl))
             };
         }
@@ -1939,6 +1997,46 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return "Review the related workflow and communication readiness before manual intervention.";
         }
 
+        private static BusinessSubscriptionInvoiceOpsSummaryVm MapBusinessSubscriptionInvoiceOpsSummaryVm(BusinessSubscriptionInvoiceOpsSummaryDto dto)
+        {
+            return new BusinessSubscriptionInvoiceOpsSummaryVm
+            {
+                TotalCount = dto.TotalCount,
+                OpenCount = dto.OpenCount,
+                PaidCount = dto.PaidCount,
+                DraftCount = dto.DraftCount,
+                UncollectibleCount = dto.UncollectibleCount,
+                HostedLinkMissingCount = dto.HostedLinkMissingCount,
+                StripeCount = dto.StripeCount
+            };
+        }
+
+        private static BusinessSubscriptionInvoiceListItemVm MapBusinessSubscriptionInvoiceListItemVm(BusinessSubscriptionInvoiceListItemDto dto)
+        {
+            return new BusinessSubscriptionInvoiceListItemVm
+            {
+                Id = dto.Id,
+                BusinessId = dto.BusinessId,
+                BusinessSubscriptionId = dto.BusinessSubscriptionId,
+                Provider = dto.Provider,
+                ProviderInvoiceId = dto.ProviderInvoiceId,
+                Status = dto.Status,
+                TotalMinor = dto.TotalMinor,
+                Currency = dto.Currency,
+                IssuedAtUtc = dto.IssuedAtUtc,
+                DueAtUtc = dto.DueAtUtc,
+                PaidAtUtc = dto.PaidAtUtc,
+                HostedInvoiceUrl = dto.HostedInvoiceUrl,
+                PdfUrl = dto.PdfUrl,
+                FailureReason = dto.FailureReason,
+                PlanName = dto.PlanName,
+                PlanCode = dto.PlanCode,
+                HasHostedInvoiceUrl = dto.HasHostedInvoiceUrl,
+                HasPdfUrl = dto.HasPdfUrl,
+                IsStripe = dto.IsStripe
+            };
+        }
+
         private static List<BusinessSubscriptionPlaybookVm> BuildSubscriptionPlaybooks(BusinessSubscriptionSnapshotVm subscription, bool managementWebsiteConfigured)
         {
             var items = new List<BusinessSubscriptionPlaybookVm>
@@ -1972,6 +2070,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return items;
+        }
+
+        private static IEnumerable<SelectListItem> BuildBusinessSubscriptionInvoiceFilterItems(BusinessSubscriptionInvoiceQueueFilter selectedFilter)
+        {
+            yield return new SelectListItem("All invoices", BusinessSubscriptionInvoiceQueueFilter.All.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.All);
+            yield return new SelectListItem("Open", BusinessSubscriptionInvoiceQueueFilter.Open.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Open);
+            yield return new SelectListItem("Paid", BusinessSubscriptionInvoiceQueueFilter.Paid.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Paid);
+            yield return new SelectListItem("Draft", BusinessSubscriptionInvoiceQueueFilter.Draft.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Draft);
+            yield return new SelectListItem("Uncollectible", BusinessSubscriptionInvoiceQueueFilter.Uncollectible.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Uncollectible);
+            yield return new SelectListItem("Hosted Link Missing", BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.HostedLinkMissing);
+            yield return new SelectListItem("Stripe", BusinessSubscriptionInvoiceQueueFilter.Stripe.ToString(), selectedFilter == BusinessSubscriptionInvoiceQueueFilter.Stripe);
         }
 
         private static string BuildStaffAccessBadgePayload(BusinessMemberDetailDto member, BusinessContextVm business, DateTime issuedAtUtc, DateTime expiresAtUtc)

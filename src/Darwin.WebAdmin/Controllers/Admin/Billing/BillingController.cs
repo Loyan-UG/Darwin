@@ -18,7 +18,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
     {
         private readonly GetPaymentsPageHandler _getPaymentsPage;
         private readonly GetPaymentOpsSummaryHandler _getPaymentOpsSummary;
+        private readonly GetBillingWebhookSubscriptionsPageHandler _getBillingWebhookSubscriptionsPage;
+        private readonly GetBillingWebhookDeliveriesPageHandler _getBillingWebhookDeliveriesPage;
+        private readonly GetBillingWebhookOpsSummaryHandler _getBillingWebhookOpsSummary;
         private readonly GetPaymentForEditHandler _getPaymentForEdit;
+        private readonly GetRefundsPageHandler _getRefundsPage;
+        private readonly GetRefundOpsSummaryHandler _getRefundOpsSummary;
         private readonly CreatePaymentHandler _createPayment;
         private readonly UpdatePaymentHandler _updatePayment;
         private readonly GetFinancialAccountsPageHandler _getAccountsPage;
@@ -39,7 +44,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         public BillingController(
             GetPaymentsPageHandler getPaymentsPage,
             GetPaymentOpsSummaryHandler getPaymentOpsSummary,
+            GetBillingWebhookSubscriptionsPageHandler getBillingWebhookSubscriptionsPage,
+            GetBillingWebhookDeliveriesPageHandler getBillingWebhookDeliveriesPage,
+            GetBillingWebhookOpsSummaryHandler getBillingWebhookOpsSummary,
             GetPaymentForEditHandler getPaymentForEdit,
+            GetRefundsPageHandler getRefundsPage,
+            GetRefundOpsSummaryHandler getRefundOpsSummary,
             CreatePaymentHandler createPayment,
             UpdatePaymentHandler updatePayment,
             GetFinancialAccountsPageHandler getAccountsPage,
@@ -59,7 +69,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         {
             _getPaymentsPage = getPaymentsPage;
             _getPaymentOpsSummary = getPaymentOpsSummary;
+            _getBillingWebhookSubscriptionsPage = getBillingWebhookSubscriptionsPage;
+            _getBillingWebhookDeliveriesPage = getBillingWebhookDeliveriesPage;
+            _getBillingWebhookOpsSummary = getBillingWebhookOpsSummary;
             _getPaymentForEdit = getPaymentForEdit;
+            _getRefundsPage = getRefundsPage;
+            _getRefundOpsSummary = getRefundOpsSummary;
             _createPayment = createPayment;
             _updatePayment = updatePayment;
             _getAccountsPage = getAccountsPage;
@@ -129,10 +144,106 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Query = q ?? string.Empty,
                 QueueFilter = queue,
                 Stripe = await BuildStripeOperationsVmAsync(ct).ConfigureAwait(false),
+                Webhooks = await BuildBillingWebhookOpsSummaryVmAsync(ct).ConfigureAwait(false),
                 Summary = businessId.HasValue
                     ? await BuildPaymentOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
                     : new PaymentOpsSummaryVm(),
                 Playbooks = BuildPaymentPlaybooks(),
+                BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Items = items
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Webhooks(int page = 1, int pageSize = 20, string? q = null, BillingWebhookDeliveryQueueFilter queue = BillingWebhookDeliveryQueueFilter.All, CancellationToken ct = default)
+        {
+            var subscriptions = await _getBillingWebhookSubscriptionsPage.HandleAsync(1, 10, q, ct).ConfigureAwait(false);
+            var deliveries = await _getBillingWebhookDeliveriesPage.HandleAsync(page, pageSize, q, queue, ct).ConfigureAwait(false);
+
+            var vm = new BillingWebhooksListVm
+            {
+                Query = q ?? string.Empty,
+                QueueFilter = queue,
+                Summary = await BuildBillingWebhookOpsSummaryVmAsync(ct).ConfigureAwait(false),
+                Subscriptions = subscriptions.Items.Select(x => new BillingWebhookSubscriptionListItemVm
+                {
+                    Id = x.Id,
+                    EventType = x.EventType,
+                    CallbackUrl = x.CallbackUrl,
+                    IsActive = x.IsActive,
+                    CreatedAtUtc = x.CreatedAtUtc
+                }).ToList(),
+                Deliveries = deliveries.Items.Select(x => new BillingWebhookDeliveryListItemVm
+                {
+                    Id = x.Id,
+                    SubscriptionId = x.SubscriptionId,
+                    EventType = x.EventType,
+                    CallbackUrl = x.CallbackUrl,
+                    Status = x.Status,
+                    RetryCount = x.RetryCount,
+                    ResponseCode = x.ResponseCode,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    LastAttemptAtUtc = x.LastAttemptAtUtc,
+                    IdempotencyKey = x.IdempotencyKey,
+                    IsActiveSubscription = x.IsActiveSubscription
+                }).ToList(),
+                Playbooks = BuildWebhookPlaybooks(),
+                Page = page,
+                PageSize = pageSize,
+                Total = deliveries.Total
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Refunds(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, BillingRefundQueueFilter? queue = null, CancellationToken ct = default)
+        {
+            businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
+
+            var items = new List<BillingRefundListItemVm>();
+            var total = 0;
+            if (businessId.HasValue)
+            {
+                var result = await _getRefundsPage.HandleAsync(businessId.Value, page, pageSize, q, queue, ct).ConfigureAwait(false);
+                items = result.Items.Select(x => new BillingRefundListItemVm
+                {
+                    Id = x.Id,
+                    OrderId = x.OrderId,
+                    OrderNumber = x.OrderNumber,
+                    PaymentId = x.PaymentId,
+                    PaymentProvider = x.PaymentProvider,
+                    PaymentProviderReference = x.PaymentProviderReference,
+                    PaymentStatus = x.PaymentStatus,
+                    CustomerId = x.CustomerId,
+                    CustomerDisplayName = x.CustomerDisplayName,
+                    CustomerEmail = x.CustomerEmail,
+                    AmountMinor = x.AmountMinor,
+                    Currency = x.Currency,
+                    Reason = x.Reason,
+                    Status = x.Status,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc,
+                    IsStripe = x.IsStripe,
+                    RowVersion = x.RowVersion
+                }).ToList();
+                total = result.Total;
+            }
+
+            var vm = new RefundsListVm
+            {
+                BusinessId = businessId,
+                Query = q ?? string.Empty,
+                QueueFilter = queue,
+                Summary = businessId.HasValue
+                    ? await BuildRefundOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
+                    : new RefundOpsSummaryVm(),
+                Playbooks = BuildRefundPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -173,6 +284,31 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
+        private async Task<RefundOpsSummaryVm> BuildRefundOpsSummaryVmAsync(Guid businessId, CancellationToken ct)
+        {
+            var summary = await _getRefundOpsSummary.HandleAsync(businessId, ct).ConfigureAwait(false);
+            return new RefundOpsSummaryVm
+            {
+                PendingCount = summary.PendingCount,
+                CompletedCount = summary.CompletedCount,
+                FailedCount = summary.FailedCount,
+                StripeCount = summary.StripeCount
+            };
+        }
+
+        private async Task<BillingWebhookOpsSummaryVm> BuildBillingWebhookOpsSummaryVmAsync(CancellationToken ct)
+        {
+            var summary = await _getBillingWebhookOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            return new BillingWebhookOpsSummaryVm
+            {
+                ActiveSubscriptionCount = summary.ActiveSubscriptionCount,
+                PendingDeliveryCount = summary.PendingDeliveryCount,
+                FailedDeliveryCount = summary.FailedDeliveryCount,
+                SucceededDeliveryCount = summary.SucceededDeliveryCount,
+                RetryPendingCount = summary.RetryPendingCount
+            };
+        }
+
         private static List<ProviderPlaybookVm> BuildPaymentPlaybooks()
         {
             return new List<ProviderPlaybookVm>
@@ -208,6 +344,62 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             };
         }
 
+        private static List<ProviderPlaybookVm> BuildRefundPlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Pending refunds",
+                    ScopeNote = "Use this queue for refunds that have been requested but are not yet operationally settled.",
+                    OperatorAction = "Open the linked order and payment, confirm the provider-side outcome, and only leave the refund pending when support expects a later completion signal.",
+                    SettingsDependency = "Stripe webhook and provider references should be trusted before using pending state as anything more than a manual support marker."
+                },
+                new()
+                {
+                    Title = "Completed refunds",
+                    ScopeNote = "These rows represent already-recorded customer giveback and should stay aligned with payment and invoice context.",
+                    OperatorAction = "Review linked payment, invoice, and order settlement together when customers ask about refunded value or net collected totals.",
+                    SettingsDependency = "Stripe readiness and provider reference hygiene should already be green before these rows are treated as reconciliation evidence."
+                },
+                new()
+                {
+                    Title = "Failed or provider-sensitive refunds",
+                    ScopeNote = "Use this subset when refund status or Stripe handling needs explicit finance support review.",
+                    OperatorAction = "Start from the refund row, then move into the linked payment workbench or order refund flow to correct support notes and retry paths manually.",
+                    SettingsDependency = "Webhook/callback audit depth is still near-term, so operator review remains the source of truth for failed refund follow-up."
+                }
+            };
+        }
+
+        private static List<ProviderPlaybookVm> BuildWebhookPlaybooks()
+        {
+            return new List<ProviderPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Pending deliveries",
+                    ScopeNote = "Treat pending webhook rows as lifecycle visibility, not proof that payment automation has completed.",
+                    OperatorAction = "Review event type, callback target, and attempt timeline before assuming Stripe-side updates have reached the platform.",
+                    SettingsDependency = "Stripe webhook secret and payment settings should be configured before pending rows are used as operational evidence."
+                },
+                new()
+                {
+                    Title = "Failed deliveries",
+                    ScopeNote = "Use this queue when provider callback correlation is weak or callback endpoints are unhealthy.",
+                    OperatorAction = "Review callback URL, response code, retry count, and the linked payment/provider reference, then escalate through settings or infrastructure rather than editing finance records blindly.",
+                    SettingsDependency = "Webhook endpoint registration and Stripe secret must be correct before failed deliveries are treated as application bugs."
+                },
+                new()
+                {
+                    Title = "Retry-pending deliveries",
+                    ScopeNote = "These rows show callbacks that have already had at least one failed/manual retry path.",
+                    OperatorAction = "Use them to prioritize reconciliation review and confirm whether payment/refund state must be corrected manually in WebAdmin.",
+                    SettingsDependency = "Phase-1 still has no automated resend daemon, so operator review remains the source of truth."
+                }
+            };
+        }
+
         [HttpGet]
         public async Task<IActionResult> CreatePayment(Guid? businessId = null, CancellationToken ct = default)
         {
@@ -215,8 +407,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             var vm = new PaymentEditVm
             {
                 BusinessId = businessId ?? Guid.Empty,
+                CreatedAtUtc = DateTime.UtcNow,
                 Currency = "EUR",
-                Status = PaymentStatus.Pending
+                Status = PaymentStatus.Pending,
+                SupportPlaybooks = BuildPaymentSupportPlaybooks(new PaymentEditDto
+                {
+                    CreatedAtUtc = DateTime.UtcNow,
+                    Currency = "EUR",
+                    Status = PaymentStatus.Pending
+                })
             };
 
             await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -276,6 +475,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 Id = dto.Id,
                 RowVersion = dto.RowVersion,
+                CreatedAtUtc = dto.CreatedAtUtc,
+                IsStripe = dto.IsStripe,
+                FailureReason = dto.FailureReason,
                 BusinessId = dto.BusinessId,
                 OrderId = dto.OrderId,
                 OrderNumber = dto.OrderNumber,
@@ -296,7 +498,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 ProviderTransactionRef = dto.ProviderTransactionRef,
                 PaidAtUtc = dto.PaidAtUtc,
                 RefundedAmountMinor = dto.RefundedAmountMinor,
-                NetCapturedAmountMinor = dto.NetCapturedAmountMinor
+                NetCapturedAmountMinor = dto.NetCapturedAmountMinor,
+                Refunds = dto.Refunds.Select(x => new PaymentRefundHistoryItemVm
+                {
+                    Id = x.Id,
+                    AmountMinor = x.AmountMinor,
+                    Currency = x.Currency,
+                    Reason = x.Reason,
+                    Status = x.Status,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc
+                }).ToList(),
+                SupportPlaybooks = BuildPaymentSupportPlaybooks(dto)
             };
 
             await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
@@ -347,6 +560,49 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 await PopulatePaymentOptionsAsync(vm, ct).ConfigureAwait(false);
                 return RenderPaymentEditor(vm, isCreate: false);
             }
+        }
+
+        private static List<PaymentSupportPlaybookVm> BuildPaymentSupportPlaybooks(PaymentEditDto dto)
+        {
+            var items = new List<PaymentSupportPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Provider correlation",
+                    ScopeNote = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef)
+                        ? "This payment does not have a provider reference yet."
+                        : "This payment already has a provider reference and should stay aligned with provider evidence.",
+                    OperatorAction = string.IsNullOrWhiteSpace(dto.ProviderTransactionRef)
+                        ? "Verify the real provider-side reference before treating this record as reconciled. If support confirms an offline/manual payment, keep the row documented clearly."
+                        : "Use the provider reference when matching support tickets, refunds, or invoice disputes. Avoid overwriting it unless the current value is clearly wrong."
+                },
+                new()
+                {
+                    Title = "Failure and refund review",
+                    ScopeNote = !string.IsNullOrWhiteSpace(dto.FailureReason)
+                        ? "This payment carries a recorded failure reason and needs operator review before assuming recovery."
+                        : dto.Refunds.Count > 0
+                            ? "This payment already has refund activity and should be reviewed together with order/invoice context."
+                            : "Use this payment as the source of truth for payment, refund, and invoice coordination.",
+                    OperatorAction = !string.IsNullOrWhiteSpace(dto.FailureReason)
+                        ? "Review the linked order, invoice, and customer before changing status. Keep the failure note unless support has verified a corrected outcome."
+                        : dto.Refunds.Count > 0
+                            ? "Review the refund timeline below and keep payment status, refund status, and invoice settlement aligned."
+                            : "If a refund or settlement issue appears later, start from this workspace and then follow the linked order or invoice."
+                }
+            };
+
+            if (dto.IsStripe)
+            {
+                items.Add(new PaymentSupportPlaybookVm
+                {
+                    Title = "Stripe-first support path",
+                    ScopeNote = "Stripe is the only phase-1 payment provider expected to be production-ready.",
+                    OperatorAction = "Check Stripe readiness from the payments queue, then validate provider reference, failure reason, and linked order/invoice before changing local status."
+                });
+            }
+
+            return items;
         }
 
         [HttpGet]

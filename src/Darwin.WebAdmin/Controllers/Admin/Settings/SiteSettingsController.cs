@@ -162,6 +162,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             DhlShipperPostalCode = dto.DhlShipperPostalCode,
             DhlShipperCity = dto.DhlShipperCity,
             DhlShipperCountry = dto.DhlShipperCountry,
+            ShipmentAttentionDelayHours = dto.ShipmentAttentionDelayHours,
+            ShipmentTrackingGraceHours = dto.ShipmentTrackingGraceHours,
 
             // Retention
             SoftDeleteCleanupEnabled = dto.SoftDeleteCleanupEnabled,
@@ -225,7 +227,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             AdminAlertEmailsCsv = dto.AdminAlertEmailsCsv,
             AdminAlertSmsRecipientsCsv = dto.AdminAlertSmsRecipientsCsv,
             TransactionalEmailSubjectPrefix = dto.TransactionalEmailSubjectPrefix,
-            CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail
+            CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail,
+            BusinessInvitationEmailSubjectTemplate = dto.BusinessInvitationEmailSubjectTemplate,
+            BusinessInvitationEmailBodyTemplate = dto.BusinessInvitationEmailBodyTemplate,
+            AccountActivationEmailSubjectTemplate = dto.AccountActivationEmailSubjectTemplate,
+            AccountActivationEmailBodyTemplate = dto.AccountActivationEmailBodyTemplate,
+            PasswordResetEmailSubjectTemplate = dto.PasswordResetEmailSubjectTemplate,
+            PasswordResetEmailBodyTemplate = dto.PasswordResetEmailBodyTemplate
         };
 
         /// <summary>
@@ -292,6 +300,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             DhlShipperPostalCode = vm.DhlShipperPostalCode,
             DhlShipperCity = vm.DhlShipperCity,
             DhlShipperCountry = vm.DhlShipperCountry,
+            ShipmentAttentionDelayHours = vm.ShipmentAttentionDelayHours,
+            ShipmentTrackingGraceHours = vm.ShipmentTrackingGraceHours,
 
             // Retention
             SoftDeleteCleanupEnabled = vm.SoftDeleteCleanupEnabled,
@@ -355,7 +365,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             AdminAlertEmailsCsv = vm.AdminAlertEmailsCsv,
             AdminAlertSmsRecipientsCsv = vm.AdminAlertSmsRecipientsCsv,
             TransactionalEmailSubjectPrefix = vm.TransactionalEmailSubjectPrefix,
-            CommunicationTestInboxEmail = vm.CommunicationTestInboxEmail
+            CommunicationTestInboxEmail = vm.CommunicationTestInboxEmail,
+            BusinessInvitationEmailSubjectTemplate = vm.BusinessInvitationEmailSubjectTemplate,
+            BusinessInvitationEmailBodyTemplate = vm.BusinessInvitationEmailBodyTemplate,
+            AccountActivationEmailSubjectTemplate = vm.AccountActivationEmailSubjectTemplate,
+            AccountActivationEmailBodyTemplate = vm.AccountActivationEmailBodyTemplate,
+            PasswordResetEmailSubjectTemplate = vm.PasswordResetEmailSubjectTemplate,
+            PasswordResetEmailBodyTemplate = vm.PasswordResetEmailBodyTemplate
         };
     }
 }

@@ -98,7 +98,7 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var products = await _getProductsPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct).ConfigureAwait(false);
             var pages = await _getPagesPage.HandleAsync(page: 1, pageSize: 1, culture: "de-DE", ct: ct).ConfigureAwait(false);
             var orders = await _getOrdersPage.HandleAsync(page: 1, pageSize: 1, ct: ct).ConfigureAwait(false);
-            var users = await _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, ct).ConfigureAwait(false);
+            var users = await _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, filter: Darwin.Application.Identity.DTOs.UserQueueFilter.All, ct: ct).ConfigureAwait(false);
             var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
             var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
             var mobileDeviceOps = await _getMobileDeviceOpsSummary.HandleAsync(ct).ConfigureAwait(false);

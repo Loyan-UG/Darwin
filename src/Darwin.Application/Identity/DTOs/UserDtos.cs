@@ -2,6 +2,15 @@
 
 namespace Darwin.Application.Identity.DTOs
 {
+    public enum UserQueueFilter : short
+    {
+        All = 0,
+        Unconfirmed = 1,
+        Locked = 2,
+        Inactive = 3,
+        MobileLinked = 4
+    }
+
     /// <summary>Light user projection for Admin grids and API.</summary>
     public sealed class UserListItemDto
     {
@@ -12,7 +21,19 @@ namespace Darwin.Application.Identity.DTOs
         public string? PhoneE164 { get; set; }
         public bool IsActive { get; set; }
         public bool IsSystem { get; set; }
+        public bool EmailConfirmed { get; set; }
+        public DateTime? LockoutEndUtc { get; set; }
+        public int MobileDeviceCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class UserOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int UnconfirmedCount { get; set; }
+        public int LockedCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int MobileLinkedCount { get; set; }
     }
 
     /// <summary>Create user input model.</summary>

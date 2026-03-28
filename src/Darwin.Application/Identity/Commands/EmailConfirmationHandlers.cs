@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -82,9 +83,26 @@ namespace Darwin.Application.Identity.Commands
             await _db.SaveChangesAsync(ct);
 
             var siteSettings = await _db.Set<SiteSetting>().AsNoTracking().FirstOrDefaultAsync(ct);
-            var subject = ApplySubjectPrefix(siteSettings?.TransactionalEmailSubjectPrefix, "Confirm your Darwin account email");
-            var body = $"Use the following token to confirm your email address: <b>{tokenValue}</b><br/>" +
-                       $"This token expires at {expiresAtUtc:u}.";
+            var subject = ApplySubjectPrefix(
+                siteSettings?.TransactionalEmailSubjectPrefix,
+                TransactionalEmailTemplateRenderer.Render(
+                    siteSettings?.AccountActivationEmailSubjectTemplate,
+                    "Confirm your Darwin account email",
+                    new Dictionary<string, string?>
+                    {
+                        ["email"] = user.Email,
+                        ["expires_at_utc"] = expiresAtUtc.ToString("u")
+                    }));
+            var body = TransactionalEmailTemplateRenderer.Render(
+                siteSettings?.AccountActivationEmailBodyTemplate,
+                $"Use the following token to confirm your email address: <b>{tokenValue}</b><br/>" +
+                $"This token expires at {expiresAtUtc:u}.",
+                new Dictionary<string, string?>
+                {
+                    ["email"] = user.Email,
+                    ["token"] = tokenValue,
+                    ["expires_at_utc"] = expiresAtUtc.ToString("u")
+                });
             var recipient = string.IsNullOrWhiteSpace(siteSettings?.CommunicationTestInboxEmail) ? user.Email : siteSettings.CommunicationTestInboxEmail!;
             body = ApplyRecipientOverrideNotice(user.Email, recipient, body);
 

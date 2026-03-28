@@ -92,6 +92,8 @@ namespace Darwin.Application.Settings.Queries
                 DhlShipperPostalCode = s.DhlShipperPostalCode,
                 DhlShipperCity = s.DhlShipperCity,
                 DhlShipperCountry = s.DhlShipperCountry,
+                ShipmentAttentionDelayHours = s.ShipmentAttentionDelayHours,
+                ShipmentTrackingGraceHours = s.ShipmentTrackingGraceHours,
 
 
                 // Soft delete
@@ -154,7 +156,13 @@ namespace Darwin.Application.Settings.Queries
                 AdminAlertEmailsCsv = s.AdminAlertEmailsCsv,
                 AdminAlertSmsRecipientsCsv = s.AdminAlertSmsRecipientsCsv,
                 TransactionalEmailSubjectPrefix = s.TransactionalEmailSubjectPrefix,
-                CommunicationTestInboxEmail = s.CommunicationTestInboxEmail
+                CommunicationTestInboxEmail = s.CommunicationTestInboxEmail,
+                BusinessInvitationEmailSubjectTemplate = s.BusinessInvitationEmailSubjectTemplate,
+                BusinessInvitationEmailBodyTemplate = s.BusinessInvitationEmailBodyTemplate,
+                AccountActivationEmailSubjectTemplate = s.AccountActivationEmailSubjectTemplate,
+                AccountActivationEmailBodyTemplate = s.AccountActivationEmailBodyTemplate,
+                PasswordResetEmailSubjectTemplate = s.PasswordResetEmailSubjectTemplate,
+                PasswordResetEmailBodyTemplate = s.PasswordResetEmailBodyTemplate
             };
         }
     }

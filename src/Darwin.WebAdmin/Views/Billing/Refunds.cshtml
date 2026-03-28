@@ -1,0 +1,183 @@
+@using Darwin.Application.Billing.DTOs
+@model Darwin.WebAdmin.ViewModels.Billing.RefundsListVm
+@{
+    ViewData["Title"] = "Refunds";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1">Refund Queue</h1>
+        <p class="text-muted mb-0">Cross-order refund review for finance support and Stripe-first post-payment follow-up.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Pending" class="btn btn-outline-warning btn-sm">Pending</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Completed" class="btn btn-outline-success btn-sm">Completed</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Failed" class="btn btn-outline-danger btn-sm">Failed</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Stripe" class="btn btn-outline-primary btn-sm">Stripe</a>
+        <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary btn-sm">Back to Payments</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Pending</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Completed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.CompletedCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Stripe-linked</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.StripeCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Phase-1 Refund Support Playbooks</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue</th>
+                        <th>Scope</th>
+                        <th>Operator Action</th>
+                        <th>Settings Dependency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Title</td>
+                        <td>@item.ScopeNote</td>
+                        <td>@item.OperatorAction</td>
+                        <td>@item.SettingsDependency</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form asp-action="Refunds" method="get" class="d-flex gap-2">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search refunds" />
+        <select name="queue" class="form-select">
+            <option value="">All queues</option>
+            <option value="@BillingRefundQueueFilter.Pending" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Pending)">Pending</option>
+            <option value="@BillingRefundQueueFilter.Completed" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Completed)">Completed</option>
+            <option value="@BillingRefundQueueFilter.Failed" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Failed)">Failed</option>
+            <option value="@BillingRefundQueueFilter.Stripe" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Stripe)">Stripe</option>
+        </select>
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Reset</a>
+    </form>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Open Payments</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Order</th>
+                <th>Payment</th>
+                <th>Customer</th>
+                <th>Reason</th>
+                <th>Timeline</th>
+                <th class="text-end">Amount</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="text-center text-muted">No refunds found.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="text-decoration-none fw-semibold">
+                            @(string.IsNullOrWhiteSpace(item.OrderNumber) ? item.OrderId.ToString() : item.OrderNumber)
+                        </a>
+                    </td>
+                    <td>
+                        <div>@item.PaymentProvider</div>
+                        @if (!string.IsNullOrWhiteSpace(item.PaymentProviderReference))
+                        {
+                            <div class="small text-muted">@item.PaymentProviderReference</div>
+                        }
+                        <div class="small">@item.PaymentStatus</div>
+                        @if (item.IsStripe)
+                        {
+                            <div><span class="badge text-bg-info mt-1">Stripe</span></div>
+                        }
+                    </td>
+                    <td>
+                        @if (item.CustomerId.HasValue)
+                        {
+                            <div>
+                                <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none">
+                                    @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
+                                </a>
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.CustomerDisplayName))
+                        {
+                            <div>@item.CustomerDisplayName</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.CustomerEmail))
+                        {
+                            <div class="small text-muted">@item.CustomerEmail</div>
+                        }
+                    </td>
+                    <td>
+                        <div>@item.Reason</div>
+                        <div class="small text-muted">@item.Status</div>
+                    </td>
+                    <td>
+                        <div class="small text-muted">Created @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                        @if (item.CompletedAtUtc.HasValue)
+                        {
+                            <div>Completed @item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                        }
+                    </td>
+                    <td class="text-end">@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
+                    <td class="text-end">
+                        <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-secondary">Payment</a>
+                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-primary">Order</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="Billing"
+       asp-action="Refunds"
+       asp-route-businessId="@Model.BusinessId"
+       asp-route-q="@Model.Query"
+       asp-route-queue="@Model.QueueFilter">
+</pager>

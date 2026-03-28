@@ -101,6 +101,8 @@ namespace Darwin.Application.Settings.Commands
             s.DhlShipperPostalCode = dto.DhlShipperPostalCode;
             s.DhlShipperCity = dto.DhlShipperCity;
             s.DhlShipperCountry = dto.DhlShipperCountry;
+            s.ShipmentAttentionDelayHours = dto.ShipmentAttentionDelayHours;
+            s.ShipmentTrackingGraceHours = dto.ShipmentTrackingGraceHours;
 
 
             // -------- Soft delete / data retention --------
@@ -167,6 +169,12 @@ namespace Darwin.Application.Settings.Commands
             s.AdminAlertSmsRecipientsCsv = dto.AdminAlertSmsRecipientsCsv;
             s.TransactionalEmailSubjectPrefix = dto.TransactionalEmailSubjectPrefix;
             s.CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail;
+            s.BusinessInvitationEmailSubjectTemplate = dto.BusinessInvitationEmailSubjectTemplate;
+            s.BusinessInvitationEmailBodyTemplate = dto.BusinessInvitationEmailBodyTemplate;
+            s.AccountActivationEmailSubjectTemplate = dto.AccountActivationEmailSubjectTemplate;
+            s.AccountActivationEmailBodyTemplate = dto.AccountActivationEmailBodyTemplate;
+            s.PasswordResetEmailSubjectTemplate = dto.PasswordResetEmailSubjectTemplate;
+            s.PasswordResetEmailBodyTemplate = dto.PasswordResetEmailBodyTemplate;
 
             await _db.SaveChangesAsync(ct);
         }
