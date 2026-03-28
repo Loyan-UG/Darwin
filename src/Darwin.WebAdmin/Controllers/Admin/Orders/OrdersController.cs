@@ -18,6 +18,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
     public sealed class OrdersController : AdminBaseController
     {
         private readonly GetOrdersPageHandler _getOrdersPage;
+        private readonly GetShipmentsPageHandler _getShipmentsPage;
         private readonly GetOrderForViewHandler _getOrderForView;
         private readonly GetOrderPaymentsPageHandler _getOrderPaymentsPage;
         private readonly GetOrderShipmentsPageHandler _getOrderShipmentsPage;
@@ -34,6 +35,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
         public OrdersController(
             GetOrdersPageHandler getOrdersPage,
+            GetShipmentsPageHandler getShipmentsPage,
             GetOrderForViewHandler getOrderForView,
             GetOrderPaymentsPageHandler getOrderPaymentsPage,
             GetOrderShipmentsPageHandler getOrderShipmentsPage,
@@ -49,6 +51,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             UpdateOrderStatusHandler updateOrderStatus)
         {
             _getOrdersPage = getOrdersPage;
+            _getShipmentsPage = getShipmentsPage;
             _getOrderForView = getOrderForView;
             _getOrderPaymentsPage = getOrderPaymentsPage;
             _getOrderShipmentsPage = getOrderShipmentsPage;
@@ -88,6 +91,39 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ShipmentCount = o.ShipmentCount,
                     CreatedAtUtc = o.CreatedAtUtc,
                     RowVersion = o.RowVersion
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ShipmentsQueue(int page = 1, int pageSize = 20, string? query = null, ShipmentQueueFilter filter = ShipmentQueueFilter.All, CancellationToken ct = default)
+        {
+            var (items, total) = await _getShipmentsPage.HandleAsync(page, pageSize, query, filter, ct).ConfigureAwait(false);
+            var vm = new ShipmentsQueueVm
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = query ?? string.Empty,
+                Filter = filter,
+                FilterItems = BuildShipmentFilterItems(filter),
+                PageSizeItems = BuildPageSizeItems(pageSize),
+                Items = items.Select(x => new ShipmentListItemVm
+                {
+                    Id = x.Id,
+                    OrderId = x.OrderId,
+                    OrderNumber = x.OrderNumber,
+                    Carrier = x.Carrier,
+                    Service = x.Service,
+                    TrackingNumber = x.TrackingNumber,
+                    TotalWeight = x.TotalWeight,
+                    Status = x.Status,
+                    ShippedAtUtc = x.ShippedAtUtc,
+                    DeliveredAtUtc = x.DeliveredAtUtc,
+                    CreatedAtUtc = x.CreatedAtUtc,
+                    RowVersion = x.RowVersion
                 }).ToList()
             };
 
@@ -211,11 +247,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 {
                     Id = x.Id,
                     OrderId = x.OrderId,
+                    OrderNumber = x.OrderNumber,
                     Carrier = x.Carrier,
                     Service = x.Service,
                     TrackingNumber = x.TrackingNumber,
                     TotalWeight = x.TotalWeight,
                     Status = x.Status,
+                    ShippedAtUtc = x.ShippedAtUtc,
+                    DeliveredAtUtc = x.DeliveredAtUtc,
                     CreatedAtUtc = x.CreatedAtUtc,
                     RowVersion = x.RowVersion
                 }).ToList()
@@ -597,6 +636,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem("All invoices", InvoiceQueueFilter.All.ToString(), selectedFilter == InvoiceQueueFilter.All);
             yield return new SelectListItem("Outstanding", InvoiceQueueFilter.Outstanding.ToString(), selectedFilter == InvoiceQueueFilter.Outstanding);
             yield return new SelectListItem("Paid", InvoiceQueueFilter.Paid.ToString(), selectedFilter == InvoiceQueueFilter.Paid);
+        }
+
+        private static IEnumerable<SelectListItem> BuildPageSizeItems(int selectedPageSize)
+        {
+            var sizes = new[] { 10, 20, 50, 100 };
+            return sizes.Select(x => new SelectListItem(x.ToString(), x.ToString(), x == selectedPageSize)).ToList();
         }
 
         private static OrderHeaderVm CreateHeader(OrderDetailDto dto)

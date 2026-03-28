@@ -308,6 +308,9 @@ namespace Darwin.Application.Orders.DTOs
         /// <summary>Owning order identifier.</summary>
         public Guid OrderId { get; set; }
 
+        /// <summary>Human-friendly order number for queue views.</summary>
+        public string OrderNumber { get; set; } = string.Empty;
+
         /// <summary>Carrier code/name (e.g., "DHL").</summary>
         public string Carrier { get; set; } = string.Empty;
 
@@ -322,6 +325,9 @@ namespace Darwin.Application.Orders.DTOs
 
         /// <summary>Current shipment lifecycle state.</summary>
         public Darwin.Domain.Enums.ShipmentStatus Status { get; set; }
+
+        public DateTime? ShippedAtUtc { get; set; }
+        public DateTime? DeliveredAtUtc { get; set; }
 
         /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
         public DateTime CreatedAtUtc { get; set; }

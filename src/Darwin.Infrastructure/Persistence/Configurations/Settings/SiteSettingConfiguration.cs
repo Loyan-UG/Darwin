@@ -70,6 +70,11 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             // --- Mobile app bootstrap (single source of truth for WebApi "bootstrap") ---
             builder.Property(x => x.MobileQrTokenRefreshSeconds).IsRequired();
             builder.Property(x => x.MobileMaxOutboxItems).IsRequired();
+            builder.Property(x => x.BusinessManagementWebsiteUrl).HasMaxLength(500);
+            builder.Property(x => x.ImpressumUrl).HasMaxLength(500);
+            builder.Property(x => x.PrivacyPolicyUrl).HasMaxLength(500);
+            builder.Property(x => x.BusinessTermsUrl).HasMaxLength(500);
+            builder.Property(x => x.AccountDeletionUrl).HasMaxLength(500);
 
             // --- Email (SMTP) ---
             builder.Property(x => x.SmtpEnabled).IsRequired();

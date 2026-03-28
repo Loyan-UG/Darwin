@@ -21,6 +21,7 @@ using Darwin.Application.CRM.Queries;
 using Darwin.Application.Common.Queries;
 using Darwin.Application.Common.Html;
 using Darwin.Application.Extensions;
+using Darwin.Application.Billing;
 using Darwin.Application.Billing.Commands;
 using Darwin.Application.Billing.Queries;
 using Darwin.Application.Businesses.Commands;
@@ -88,6 +89,10 @@ namespace Darwin.WebAdmin.Extensions
             // required by AccountController constructor
             services.AddScoped<GetSecurityStampHandler>();
             services.AddScoped<AdminReferenceDataService>();
+            services.AddScoped<GetMobileDeviceOpsSummaryHandler>();
+            services.AddScoped<GetMobileDevicesPageHandler>();
+            services.AddScoped<ClearUserDevicePushTokenHandler>();
+            services.AddScoped<DeactivateUserDeviceHandler>();
 
             // Password hashing (Argon2id) + Security stamp service + WebAuthn: RP provider + Fido2 adapter + TOTP service
             // cookie auth, Argon2, stamps, WebAuthn service, etc. :contentReference[oaicite:2]{index=2}
@@ -257,6 +262,7 @@ namespace Darwin.WebAdmin.Extensions
 
             // Orders – queries
             services.AddScoped<GetOrdersPageHandler>();
+            services.AddScoped<GetShipmentsPageHandler>();
             services.AddScoped<GetOrderForViewHandler>();
             services.AddScoped<GetOrderPaymentsPageHandler>();
             services.AddScoped<GetOrderShipmentsPageHandler>();
@@ -271,6 +277,7 @@ namespace Darwin.WebAdmin.Extensions
             services.AddScoped<GetSupplierLookupHandler>();
             services.AddScoped<GetFinancialAccountLookupHandler>();
             services.AddScoped<GetPaymentLookupHandler>();
+            services.AddScoped<GetBusinessSubscriptionStatusHandler>();
             services.AddScoped<GetLoyaltyProgramsPageHandler>();
             services.AddScoped<GetLoyaltyProgramForEditHandler>();
             services.AddScoped<CreateLoyaltyProgramHandler>();

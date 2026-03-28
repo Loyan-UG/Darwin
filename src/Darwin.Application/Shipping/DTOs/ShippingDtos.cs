@@ -39,10 +39,24 @@ namespace Darwin.Application.Shipping.DTOs
     public sealed class ShippingMethodListItemDto
     {
         public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Carrier { get; set; } = string.Empty;
+        public string Service { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
+        public string? CountriesCsv { get; set; }
+        public string? Currency { get; set; }
         public bool IsActive { get; set; }
         public int RatesCount { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
+    }
+
+    public enum ShippingMethodQueueFilter
+    {
+        All = 0,
+        Active = 1,
+        Inactive = 2,
+        MissingRates = 3,
+        Dhl = 4
     }
 
     public sealed class RateShipmentInputDto

@@ -100,6 +100,31 @@ namespace Darwin.Application.Settings.DTOs
         /// </summary>
         public int MobileMaxOutboxItems { get; set; }
 
+        /// <summary>
+        /// External website URL where business users manage subscription and billing outside the mobile apps.
+        /// </summary>
+        public string? BusinessManagementWebsiteUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the impressum page used by mobile apps.
+        /// </summary>
+        public string? ImpressumUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the privacy policy page used by mobile apps.
+        /// </summary>
+        public string? PrivacyPolicyUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the business terms page used by mobile apps.
+        /// </summary>
+        public string? BusinessTermsUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the account-deletion handoff page used by mobile apps.
+        /// </summary>
+        public string? AccountDeletionUrl { get; set; }
+
 
 
         // -------- Soft delete / data retention --------

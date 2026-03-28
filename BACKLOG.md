@@ -57,7 +57,10 @@ Status terms used below:
 - `Completed foundation`: WebAdmin now has a dedicated `Mobile Operations` workspace for JWT/mobile bootstrap settings, onboarding/support dependency counts, and transport-readiness visibility that affect the mobile apps directly
 - `Completed`: WebAdmin loyalty operations now support admin-side account provisioning for member-support cases where a consumer has not self-enrolled yet
 - `Completed`: WebAdmin loyalty operations now expose a dedicated redemption troubleshooting workspace with pending/completed/cancelled filters and direct confirm actions for pending redemptions
-- `Planned / Near-term`: add deeper mobile diagnostics beyond bootstrap snapshot, especially release/version visibility and richer scanner/session failure analytics if they become part of the support scope
+- `Completed`: Mobile Operations now includes real device-fleet diagnostics, app-version visibility, and device-level filters for stale installs, missing push tokens, notification-disabled devices, and business-member devices
+- `Completed`: Mobile Operations now also supports lightweight device remediation through admin-side push-token clearing and device deactivation
+- `Completed`: admin dashboard discoverability for loyalty/mobile is now in place through a compact snapshot with direct entry points into loyalty accounts, pending redemptions, scan sessions, and mobile device diagnostics
+- `Planned / Near-term`: extend mobile diagnostics beyond the current device/version snapshot only if support scope demands push-delivery telemetry, richer scanner/session failure analytics, or per-device remediation workflows
 
 ### Business and tenant onboarding
 
@@ -75,6 +78,7 @@ Status terms used below:
 - `In Progress`: seed and apply initial defaults during onboarding (locale, time zone, branding basics, payment/shipping defaults, communication defaults where applicable)
 - `Completed`: business onboarding now includes a dedicated setup workspace in WebAdmin for grouped profile/defaults editing, onboarding shortcuts, and visibility into phase-1 global settings dependencies
 - `Completed`: the business setup workspace now also shows inline previews for members needing support action and open invitations, reducing page-hopping during onboarding troubleshooting
+- `Completed foundation`: the business setup workspace now also shows a business subscription snapshot and the key business-app legal/billing handoff dependencies, so support/admin can audit mobile-facing account state without leaving WebAdmin
 - `Completed foundation`: delegated business-support access now exists in WebAdmin through a dedicated permission/role path for member support and invitation operations without exposing approval, lifecycle, or owner-management actions
 - `Completed foundation`: identity/admin screens now surface the delegated business-support role and permission more clearly, so assigning support access no longer depends on tribal knowledge
 - `Completed foundation`: the WebAdmin dashboard now exposes a business-support queue with onboarding/support counts, and the business member/invitation lists now support actionable queue filters for pending activation, locked users, and open invitations
@@ -114,6 +118,8 @@ Status terms used below:
 - `Planned / Near-term`: replace generic shipping assumptions with DHL-specific implementation
 - `Planned / Near-term`: support DHL label creation, tracking visibility, and delivery lifecycle handling
 - `Planned / Near-term`: surface DHL shipment visibility and operator support actions in WebAdmin
+- `Completed foundation`: WebAdmin now exposes a dedicated shipping-method module with list/create/edit, queue filters, and editable rate tiers, so phase-1 shipping configuration no longer lives only in application code
+- `Completed foundation`: WebAdmin now also exposes a cross-order shipment queue for pending/shipped operational follow-up, so shipment review is no longer trapped inside individual order-detail pages
 
 ### Settings foundation
 
@@ -190,6 +196,7 @@ Status terms used below:
 
 - `In Progress`: basic site settings UI exists
 - `Completed foundation`: site settings UI now exposes grouped controls for security/JWT, mobile bootstrap, and soft-delete retention in addition to existing localization, SEO, and communications fields
+- `Completed foundation`: site settings now also manage business-app legal/billing handoff URLs, and mobile operations surfaces whether those URLs are actually configured
 - `Planned / Near-term`: restructure settings into categories such as General, Business Profile, Localization, Branding, Payments, Shipping, Communications, Users & Roles, Security, Integrations, Tax & Invoicing, and Advanced
 - `In Progress`: business setup workspace now separates business-owned defaults from global phase-1 settings, but true tenant/business settings storage still needs domain and UI expansion
 - `Completed foundation`: business-level branding, localization defaults, time zone, and phase-1 communication defaults now persist on the `Business` aggregate and are editable from the setup workspace

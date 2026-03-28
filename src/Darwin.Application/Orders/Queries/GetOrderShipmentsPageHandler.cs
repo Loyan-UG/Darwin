@@ -42,11 +42,17 @@ namespace Darwin.Application.Orders.Queries
                 {
                     Id = s.Id,
                     OrderId = s.OrderId,
+                    OrderNumber = _db.Set<Order>()
+                        .Where(o => o.Id == s.OrderId)
+                        .Select(o => o.OrderNumber)
+                        .FirstOrDefault() ?? string.Empty,
                     Carrier = s.Carrier,
                     Service = s.Service,
                     TrackingNumber = s.TrackingNumber,
                     TotalWeight = s.TotalWeight ?? 0,
                     Status = s.Status,
+                    ShippedAtUtc = s.ShippedAtUtc,
+                    DeliveredAtUtc = s.DeliveredAtUtc,
                     CreatedAtUtc = s.CreatedAtUtc,
                     RowVersion = s.RowVersion
                 })

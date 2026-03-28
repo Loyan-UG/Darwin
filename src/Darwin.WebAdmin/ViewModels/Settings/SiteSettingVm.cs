@@ -95,6 +95,21 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "Max Outbox Items")]
         public int MobileMaxOutboxItems { get; set; }
 
+        [Display(Name = "Business Management Website")]
+        public string? BusinessManagementWebsiteUrl { get; set; }
+
+        [Display(Name = "Impressum URL")]
+        public string? ImpressumUrl { get; set; }
+
+        [Display(Name = "Privacy Policy URL")]
+        public string? PrivacyPolicyUrl { get; set; }
+
+        [Display(Name = "Business Terms URL")]
+        public string? BusinessTermsUrl { get; set; }
+
+        [Display(Name = "Account Deletion URL")]
+        public string? AccountDeletionUrl { get; set; }
+
         // ---------- Soft delete / retention ----------
         [Display(Name = "Soft Delete Cleanup Enabled")]
         public bool SoftDeleteCleanupEnabled { get; set; } = true;

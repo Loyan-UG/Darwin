@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
+using Darwin.Application.Billing;
 using Darwin.Application.Common.DTOs;
 using Darwin.Application.Identity.Commands;
 using Darwin.Application.Identity.DTOs;
@@ -34,6 +35,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetBusinessesPageHandler _getBusinessesPage;
         private readonly GetBusinessForEditHandler _getBusinessForEdit;
         private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
+        private readonly GetBusinessSubscriptionStatusHandler _getBusinessSubscriptionStatus;
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
         private readonly CreateBusinessHandler _createBusiness;
         private readonly UpdateBusinessHandler _updateBusiness;
@@ -68,6 +70,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             GetBusinessesPageHandler getBusinessesPage,
             GetBusinessForEditHandler getBusinessForEdit,
             GetBusinessSupportSummaryHandler getBusinessSupportSummary,
+            GetBusinessSubscriptionStatusHandler getBusinessSubscriptionStatus,
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
             CreateBusinessHandler createBusiness,
             UpdateBusinessHandler updateBusiness,
@@ -101,6 +104,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _getBusinessesPage = getBusinessesPage;
             _getBusinessForEdit = getBusinessForEdit;
             _getBusinessSupportSummary = getBusinessSupportSummary;
+            _getBusinessSubscriptionStatus = getBusinessSubscriptionStatus;
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
             _createBusiness = createBusiness;
             _updateBusiness = updateBusiness;
@@ -580,6 +584,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Category = vm.Category,
                 DefaultCurrency = vm.DefaultCurrency,
                 DefaultCulture = vm.DefaultCulture,
+                DefaultTimeZoneId = vm.DefaultTimeZoneId,
                 BrandDisplayName = vm.BrandDisplayName,
                 BrandLogoUrl = vm.BrandLogoUrl,
                 BrandPrimaryColorHex = vm.BrandPrimaryColorHex,
@@ -587,6 +592,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 SupportEmail = vm.SupportEmail,
                 CommunicationSenderName = vm.CommunicationSenderName,
                 CommunicationReplyToEmail = vm.CommunicationReplyToEmail,
+                CustomerEmailNotificationsEnabled = vm.CustomerEmailNotificationsEnabled,
+                CustomerMarketingEmailsEnabled = vm.CustomerMarketingEmailsEnabled,
+                OperationalAlertEmailsEnabled = vm.OperationalAlertEmailsEnabled,
                 IsActive = vm.IsActive
             };
 
@@ -1456,6 +1464,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             vm.OwnerUserOptions = await _referenceData.GetUserOptionsAsync(vm.OwnerUserId, includeEmpty: true, ct);
             vm.CommunicationReadiness = await BuildBusinessCommunicationReadinessAsync(ct);
+            vm.Subscription = await BuildBusinessSubscriptionSnapshotAsync(vm.Id, ct);
         }
 
         private async Task PopulateMemberFormOptionsAsync(BusinessMemberEditVm vm, bool includeUserSelection, CancellationToken ct)
@@ -1697,6 +1706,38 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 InvitationCount = dto.InvitationCount,
                 HasContactEmailConfigured = dto.HasContactEmailConfigured,
                 HasLegalNameConfigured = dto.HasLegalNameConfigured
+            };
+        }
+
+        private async Task<BusinessSubscriptionSnapshotVm> BuildBusinessSubscriptionSnapshotAsync(Guid businessId, CancellationToken ct)
+        {
+            if (businessId == Guid.Empty)
+            {
+                return new BusinessSubscriptionSnapshotVm();
+            }
+
+            var result = await _getBusinessSubscriptionStatus.HandleAsync(businessId, ct).ConfigureAwait(false);
+            if (!result.Succeeded || result.Value is null)
+            {
+                return new BusinessSubscriptionSnapshotVm
+                {
+                    HasSubscription = false,
+                    Status = "Unavailable"
+                };
+            }
+
+            return new BusinessSubscriptionSnapshotVm
+            {
+                HasSubscription = result.Value.HasSubscription,
+                Status = result.Value.Status,
+                Provider = result.Value.Provider,
+                PlanName = result.Value.PlanName,
+                Currency = result.Value.Currency,
+                UnitPriceMinor = result.Value.UnitPriceMinor,
+                StartedAtUtc = result.Value.StartedAtUtc,
+                CurrentPeriodEndUtc = result.Value.CurrentPeriodEndUtc,
+                TrialEndsAtUtc = result.Value.TrialEndsAtUtc,
+                CancelAtPeriodEnd = result.Value.CancelAtPeriodEnd
             };
         }
 

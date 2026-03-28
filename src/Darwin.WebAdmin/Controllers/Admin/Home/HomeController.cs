@@ -6,6 +6,7 @@ using Darwin.Application.CRM.DTOs;
 using Darwin.Application.CRM.Queries;
 using Darwin.Application.Identity.Queries;
 using Darwin.Application.Inventory.Queries;
+using Darwin.Application.Loyalty.Queries;
 using Darwin.Application.Orders.Queries;
 using Darwin.WebAdmin.Services.Admin;
 using Darwin.WebAdmin.Services.Settings;
@@ -13,6 +14,7 @@ using Darwin.WebAdmin.ViewModels.Admin;
 using Darwin.WebAdmin.ViewModels.CRM;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using Darwin.Domain.Enums;
 
 namespace Darwin.WebAdmin.Controllers.Admin
 {
@@ -33,6 +35,10 @@ namespace Darwin.WebAdmin.Controllers.Admin
         private readonly GetPurchaseOrdersPageHandler _getPurchaseOrdersPage;
         private readonly GetBusinessSupportSummaryHandler _getBusinessSupportSummary;
         private readonly GetBusinessCommunicationOpsSummaryHandler _getBusinessCommunicationOpsSummary;
+        private readonly GetLoyaltyAccountsPageHandler _getLoyaltyAccountsPage;
+        private readonly GetLoyaltyRedemptionsPageHandler _getLoyaltyRedemptionsPage;
+        private readonly GetRecentLoyaltyScanSessionsPageHandler _getLoyaltyScanSessionsPage;
+        private readonly GetMobileDeviceOpsSummaryHandler _getMobileDeviceOpsSummary;
         private readonly AdminReferenceDataService _referenceData;
         private readonly ISiteSettingCache _siteSettingCache;
 
@@ -51,6 +57,10 @@ namespace Darwin.WebAdmin.Controllers.Admin
             GetPurchaseOrdersPageHandler getPurchaseOrdersPage,
             GetBusinessSupportSummaryHandler getBusinessSupportSummary,
             GetBusinessCommunicationOpsSummaryHandler getBusinessCommunicationOpsSummary,
+            GetLoyaltyAccountsPageHandler getLoyaltyAccountsPage,
+            GetLoyaltyRedemptionsPageHandler getLoyaltyRedemptionsPage,
+            GetRecentLoyaltyScanSessionsPageHandler getLoyaltyScanSessionsPage,
+            GetMobileDeviceOpsSummaryHandler getMobileDeviceOpsSummary,
             AdminReferenceDataService referenceData,
             ISiteSettingCache siteSettingCache)
         {
@@ -65,6 +75,10 @@ namespace Darwin.WebAdmin.Controllers.Admin
             _getPurchaseOrdersPage = getPurchaseOrdersPage ?? throw new ArgumentNullException(nameof(getPurchaseOrdersPage));
             _getBusinessSupportSummary = getBusinessSupportSummary ?? throw new ArgumentNullException(nameof(getBusinessSupportSummary));
             _getBusinessCommunicationOpsSummary = getBusinessCommunicationOpsSummary ?? throw new ArgumentNullException(nameof(getBusinessCommunicationOpsSummary));
+            _getLoyaltyAccountsPage = getLoyaltyAccountsPage ?? throw new ArgumentNullException(nameof(getLoyaltyAccountsPage));
+            _getLoyaltyRedemptionsPage = getLoyaltyRedemptionsPage ?? throw new ArgumentNullException(nameof(getLoyaltyRedemptionsPage));
+            _getLoyaltyScanSessionsPage = getLoyaltyScanSessionsPage ?? throw new ArgumentNullException(nameof(getLoyaltyScanSessionsPage));
+            _getMobileDeviceOpsSummary = getMobileDeviceOpsSummary ?? throw new ArgumentNullException(nameof(getMobileDeviceOpsSummary));
             _referenceData = referenceData ?? throw new ArgumentNullException(nameof(referenceData));
             _siteSettingCache = siteSettingCache ?? throw new ArgumentNullException(nameof(siteSettingCache));
         }
@@ -87,12 +101,16 @@ namespace Darwin.WebAdmin.Controllers.Admin
             var users = await _getUsersPage.HandleAsync(page: 1, pageSize: 1, emailFilter: null, ct).ConfigureAwait(false);
             var businessSupport = await _getBusinessSupportSummary.HandleAsync(selectedBusinessId, ct).ConfigureAwait(false);
             var communicationOps = await _getBusinessCommunicationOpsSummary.HandleAsync(ct).ConfigureAwait(false);
+            var mobileDeviceOps = await _getMobileDeviceOpsSummary.HandleAsync(ct).ConfigureAwait(false);
             var siteSettings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
 
             int? paymentCount = null;
             int? warehouseCount = null;
             int? supplierCount = null;
             int? purchaseOrderCount = null;
+            int? loyaltyAccountCount = null;
+            int? pendingRedemptionCount = null;
+            int? scanSessionCount = null;
 
             if (selectedBusinessId.HasValue)
             {
@@ -100,6 +118,9 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 warehouseCount = (await _getWarehousesPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.WarehouseQueueFilter.All, ct).ConfigureAwait(false)).Total;
                 supplierCount = (await _getSuppliersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.SupplierQueueFilter.All, ct).ConfigureAwait(false)).Total;
                 purchaseOrderCount = (await _getPurchaseOrdersPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, filter: Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.All, ct).ConfigureAwait(false)).Total;
+                loyaltyAccountCount = (await _getLoyaltyAccountsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, status: null, ct).ConfigureAwait(false)).Total;
+                pendingRedemptionCount = (await _getLoyaltyRedemptionsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, status: LoyaltyRedemptionStatus.Pending, ct).ConfigureAwait(false)).Total;
+                scanSessionCount = (await _getLoyaltyScanSessionsPage.HandleAsync(selectedBusinessId.Value, page: 1, pageSize: 1, query: null, mode: null, status: null, ct).ConfigureAwait(false)).Total;
             }
 
             var vm = new AdminDashboardVm
@@ -118,7 +139,13 @@ namespace Darwin.WebAdmin.Controllers.Admin
                 PaymentCount = paymentCount,
                 WarehouseCount = warehouseCount,
                 SupplierCount = supplierCount,
-                PurchaseOrderCount = purchaseOrderCount
+                PurchaseOrderCount = purchaseOrderCount,
+                LoyaltyAccountCount = loyaltyAccountCount,
+                PendingRedemptionCount = pendingRedemptionCount,
+                ScanSessionCount = scanSessionCount,
+                MobileActiveDeviceCount = mobileDeviceOps.TotalActiveDevices,
+                MobileStaleDeviceCount = mobileDeviceOps.StaleDevicesCount,
+                MobileMissingPushTokenCount = mobileDeviceOps.DevicesMissingPushTokenCount
             };
 
             return View(vm);

@@ -75,6 +75,11 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 // offline/outbox safety limits.
                 MobileQrTokenRefreshSeconds = 60,
                 MobileMaxOutboxItems = 100,
+                BusinessManagementWebsiteUrl = "https://www.loyan.de",
+                ImpressumUrl = "https://www.loyan.de/impressum",
+                PrivacyPolicyUrl = "https://www.loyan.de/datenschutz",
+                BusinessTermsUrl = "https://www.loyan.de/agb-business",
+                AccountDeletionUrl = "https://www.loyan.de/account-deletion",
 
                 // Soft delete / data retention
                 SoftDeleteCleanupEnabled = true,

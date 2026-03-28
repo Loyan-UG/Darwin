@@ -77,6 +77,36 @@ namespace Darwin.Application.Settings.Validators
                 .LessThanOrEqualTo(10000)
                 .WithMessage("MobileMaxOutboxItems must be between 1 and 10000.");
 
+            RuleFor(x => x.BusinessManagementWebsiteUrl)
+                .MaximumLength(500)
+                .Must(BeHttpsAbsoluteUrl)
+                .When(x => !string.IsNullOrWhiteSpace(x.BusinessManagementWebsiteUrl))
+                .WithMessage("BusinessManagementWebsiteUrl must be an absolute HTTPS URL.");
+
+            RuleFor(x => x.ImpressumUrl)
+                .MaximumLength(500)
+                .Must(BeHttpsAbsoluteUrl)
+                .When(x => !string.IsNullOrWhiteSpace(x.ImpressumUrl))
+                .WithMessage("ImpressumUrl must be an absolute HTTPS URL.");
+
+            RuleFor(x => x.PrivacyPolicyUrl)
+                .MaximumLength(500)
+                .Must(BeHttpsAbsoluteUrl)
+                .When(x => !string.IsNullOrWhiteSpace(x.PrivacyPolicyUrl))
+                .WithMessage("PrivacyPolicyUrl must be an absolute HTTPS URL.");
+
+            RuleFor(x => x.BusinessTermsUrl)
+                .MaximumLength(500)
+                .Must(BeHttpsAbsoluteUrl)
+                .When(x => !string.IsNullOrWhiteSpace(x.BusinessTermsUrl))
+                .WithMessage("BusinessTermsUrl must be an absolute HTTPS URL.");
+
+            RuleFor(x => x.AccountDeletionUrl)
+                .MaximumLength(500)
+                .Must(BeHttpsAbsoluteUrl)
+                .When(x => !string.IsNullOrWhiteSpace(x.AccountDeletionUrl))
+                .WithMessage("AccountDeletionUrl must be an absolute HTTPS URL.");
+
 
 
             // -------- Soft delete / data retention --------
@@ -260,6 +290,12 @@ namespace Darwin.Application.Settings.Validators
             var parts = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (parts.Length == 0) return false;
             return parts.All(IsCulture);
+        }
+
+        private static bool BeHttpsAbsoluteUrl(string? value)
+        {
+            return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+                   string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

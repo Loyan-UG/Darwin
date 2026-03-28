@@ -69,6 +69,36 @@ namespace Darwin.WebAdmin.ViewModels.Admin
         public int? PurchaseOrderCount { get; set; }
 
         /// <summary>
+        /// Gets or sets the loyalty-account count for the selected business context.
+        /// </summary>
+        public int? LoyaltyAccountCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the pending-redemption count for the selected business context.
+        /// </summary>
+        public int? PendingRedemptionCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the recent scan-session count for the selected business context.
+        /// </summary>
+        public int? ScanSessionCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the total active mobile-device count.
+        /// </summary>
+        public int MobileActiveDeviceCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the stale mobile-device count.
+        /// </summary>
+        public int MobileStaleDeviceCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the count of devices missing push tokens.
+        /// </summary>
+        public int MobileMissingPushTokenCount { get; set; }
+
+        /// <summary>
         /// Gets or sets business-support queue metrics used by onboarding and support operators.
         /// </summary>
         public BusinessSupportSummaryVm BusinessSupport { get; set; } = new();

@@ -281,6 +281,64 @@
         </div>
 
         <div class="card mb-4">
+            <div class="card-header">Business Subscription Snapshot</div>
+            <div class="card-body">
+                @if (Model.Subscription.HasSubscription)
+                {
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 h-100">
+                                <div class="text-muted small text-uppercase">Plan</div>
+                                <div class="fw-semibold mt-1">@Model.Subscription.PlanName</div>
+                                <div class="small text-muted mt-2">@Model.Subscription.Provider</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 h-100">
+                                <div class="text-muted small text-uppercase">Status</div>
+                                <div class="fw-semibold mt-1">@Model.Subscription.Status</div>
+                                <div class="small text-muted mt-2">
+                                    @if (Model.Subscription.CancelAtPeriodEnd)
+                                    {
+                                        <span>Cancels at period end</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Renews normally</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 h-100">
+                                <div class="text-muted small text-uppercase">Amount</div>
+                                <div class="fw-semibold mt-1">@Model.Subscription.Currency @((Model.Subscription.UnitPriceMinor / 100M).ToString("0.00"))</div>
+                                <div class="small text-muted mt-2">Current period end: @(Model.Subscription.CurrentPeriodEndUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-3">
+                        Started: @(Model.Subscription.StartedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                        @if (Model.Subscription.TrialEndsAtUtc.HasValue)
+                        {
+                            <span> | Trial ends: @Model.Subscription.TrialEndsAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary mb-0">
+                        No active subscription snapshot is available for this business yet.
+                    </div>
+                }
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-secondary">Open Payments</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary">Business App Handoffs</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
             <div class="card-header">Operational Setup Actions</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">

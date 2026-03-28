@@ -1,3 +1,6 @@
+using Darwin.Domain.Enums;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
 namespace Darwin.WebAdmin.ViewModels.Mobile
 {
     public sealed class MobileOperationsVm
@@ -9,6 +12,11 @@ namespace Darwin.WebAdmin.ViewModels.Mobile
         public int JwtRefreshTokenDays { get; set; }
         public int MobileQrTokenRefreshSeconds { get; set; }
         public int MobileMaxOutboxItems { get; set; }
+        public bool BusinessManagementWebsiteConfigured { get; set; }
+        public bool ImpressumConfigured { get; set; }
+        public bool PrivacyPolicyConfigured { get; set; }
+        public bool BusinessTermsConfigured { get; set; }
+        public bool AccountDeletionConfigured { get; set; }
         public string DefaultCulture { get; set; } = string.Empty;
         public string? TimeZone { get; set; }
         public int AttentionBusinessCount { get; set; }
@@ -21,5 +29,48 @@ namespace Darwin.WebAdmin.ViewModels.Mobile
         public bool SmsTransportConfigured { get; set; }
         public bool WhatsAppTransportConfigured { get; set; }
         public bool AdminAlertRoutingConfigured { get; set; }
+        public int TotalActiveDevices { get; set; }
+        public int BusinessMemberDevicesCount { get; set; }
+        public int StaleDevicesCount { get; set; }
+        public int DevicesMissingPushTokenCount { get; set; }
+        public int NotificationsDisabledCount { get; set; }
+        public int AndroidDevicesCount { get; set; }
+        public int IosDevicesCount { get; set; }
+        public List<MobileAppVersionSnapshotVm> RecentVersions { get; set; } = new();
+        public string Query { get; set; } = string.Empty;
+        public MobilePlatform? PlatformFilter { get; set; }
+        public string StateFilter { get; set; } = string.Empty;
+        public List<SelectListItem> PlatformItems { get; set; } = new();
+        public List<SelectListItem> StateItems { get; set; } = new();
+        public List<MobileDeviceOpsListItemVm> Devices { get; set; } = new();
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public int Total { get; set; }
+    }
+
+    public sealed class MobileAppVersionSnapshotVm
+    {
+        public MobilePlatform Platform { get; set; }
+        public string AppVersion { get; set; } = string.Empty;
+        public int DeviceCount { get; set; }
+        public DateTime? LastSeenAtUtc { get; set; }
+    }
+
+    public sealed class MobileDeviceOpsListItemVm
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public string UserEmail { get; set; } = string.Empty;
+        public string UserDisplayName { get; set; } = string.Empty;
+        public string DeviceId { get; set; } = string.Empty;
+        public MobilePlatform Platform { get; set; }
+        public string? AppVersion { get; set; }
+        public string? DeviceModel { get; set; }
+        public bool NotificationsEnabled { get; set; }
+        public bool HasPushToken { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime? LastSeenAtUtc { get; set; }
+        public int BusinessMembershipCount { get; set; }
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 }

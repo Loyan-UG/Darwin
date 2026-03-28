@@ -139,6 +139,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             // Mobile bootstrap
             MobileQrTokenRefreshSeconds = dto.MobileQrTokenRefreshSeconds,
             MobileMaxOutboxItems = dto.MobileMaxOutboxItems,
+            BusinessManagementWebsiteUrl = dto.BusinessManagementWebsiteUrl,
+            ImpressumUrl = dto.ImpressumUrl,
+            PrivacyPolicyUrl = dto.PrivacyPolicyUrl,
+            BusinessTermsUrl = dto.BusinessTermsUrl,
+            AccountDeletionUrl = dto.AccountDeletionUrl,
 
             // Retention
             SoftDeleteCleanupEnabled = dto.SoftDeleteCleanupEnabled,
@@ -244,6 +249,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             // Mobile bootstrap
             MobileQrTokenRefreshSeconds = vm.MobileQrTokenRefreshSeconds,
             MobileMaxOutboxItems = vm.MobileMaxOutboxItems,
+            BusinessManagementWebsiteUrl = vm.BusinessManagementWebsiteUrl,
+            ImpressumUrl = vm.ImpressumUrl,
+            PrivacyPolicyUrl = vm.PrivacyPolicyUrl,
+            BusinessTermsUrl = vm.BusinessTermsUrl,
+            AccountDeletionUrl = vm.AccountDeletionUrl,
 
             // Retention
             SoftDeleteCleanupEnabled = vm.SoftDeleteCleanupEnabled,

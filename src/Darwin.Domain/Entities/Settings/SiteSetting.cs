@@ -90,6 +90,31 @@ namespace Darwin.Domain.Entities.Settings
         /// </summary>
         public int MobileMaxOutboxItems { get; set; } = 200;
 
+        /// <summary>
+        /// Absolute HTTPS website URL where business users manage subscription, billing, and plan changes outside the mobile app.
+        /// </summary>
+        public string? BusinessManagementWebsiteUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the impressum page used by business-facing apps.
+        /// </summary>
+        public string? ImpressumUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the privacy policy page used by business-facing apps.
+        /// </summary>
+        public string? PrivacyPolicyUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the business terms page used by business-facing apps.
+        /// </summary>
+        public string? BusinessTermsUrl { get; set; }
+
+        /// <summary>
+        /// Absolute HTTPS URL of the external account-deletion handoff page used by business-facing apps.
+        /// </summary>
+        public string? AccountDeletionUrl { get; set; }
+
 
 
 

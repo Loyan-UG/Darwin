@@ -1,0 +1,175 @@
+@model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodEditVm
+
+<input type="hidden" asp-for="Id" />
+<input type="hidden" asp-for="RowVersion" />
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="card mb-4">
+    <div class="card-header">Method Details</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Carrier" class="form-label"></label>
+                <input asp-for="Carrier" class="form-control" />
+                <span asp-validation-for="Carrier" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Service" class="form-label"></label>
+                <input asp-for="Service" class="form-control" />
+                <span asp-validation-for="Service" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="CountriesCsv" class="form-label">Countries CSV</label>
+                <input asp-for="CountriesCsv" class="form-control" placeholder="DE,AT,CH" />
+                <div class="form-text">Leave empty to make the method generally available.</div>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Currency" class="form-label"></label>
+                <input asp-for="Currency" class="form-control" placeholder="EUR" maxlength="3" />
+            </div>
+            <div class="col-md-3 d-flex align-items-center">
+                <div class="form-check mt-4">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Rate Tiers</span>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.darwinAdmin.addShippingRateRow()">
+            <i class="fa-solid fa-plus"></i> Add Rate
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle" id="shipping-rates-table">
+                <thead>
+                    <tr>
+                        <th>Max Mass</th>
+                        <th>Max Subtotal Net</th>
+                        <th>Price Minor</th>
+                        <th style="width:80px">Sort</th>
+                        <th style="width:80px"></th>
+                    </tr>
+                </thead>
+                <tbody id="shipping-rate-rows">
+                @for (var i = 0; i < Model.Rates.Count; i++)
+                {
+                    <tr data-rate-row>
+                        <td>
+                            <input type="hidden" name="Rates[@i].Id" value="@(Model.Rates[i].Id?.ToString() ?? string.Empty)" />
+                            <input type="number" class="form-control form-control-sm" name="Rates[@i].MaxShipmentMass" value="@(Model.Rates[i].MaxShipmentMass?.ToString() ?? string.Empty)" min="0" />
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" name="Rates[@i].MaxSubtotalNetMinor" value="@(Model.Rates[i].MaxSubtotalNetMinor?.ToString() ?? string.Empty)" min="0" />
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" name="Rates[@i].PriceMinor" value="@Model.Rates[i].PriceMinor" min="0" />
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" name="Rates[@i].SortOrder" value="@Model.Rates[i].SortOrder" min="0" />
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.darwinAdmin.removeShippingRateRow(this)">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="form-text">
+            Rate tiers are evaluated by shipment mass and subtotal thresholds. Phase 1 keeps this as a simple admin-managed matrix without provider-specific live quoting.
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</div>
+
+<template id="shipping-rate-row-template">
+    <tr data-rate-row>
+        <td>
+            <input type="hidden" name="Rates[__index__].Id" value="" />
+            <input type="number" class="form-control form-control-sm" name="Rates[__index__].MaxShipmentMass" min="0" />
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="Rates[__index__].MaxSubtotalNetMinor" min="0" />
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="Rates[__index__].PriceMinor" min="0" value="0" />
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="Rates[__index__].SortOrder" min="0" value="0" />
+        </td>
+        <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.darwinAdmin.removeShippingRateRow(this)">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+<script>
+    (function () {
+        window.darwinAdmin = window.darwinAdmin || {};
+
+        function renumberShippingRateRows() {
+            const rows = document.querySelectorAll('#shipping-rate-rows [data-rate-row]');
+            rows.forEach(function (row, index) {
+                row.querySelectorAll('input').forEach(function (input) {
+                    const currentName = input.getAttribute('name');
+                    if (!currentName) return;
+                    input.setAttribute('name', currentName.replace(/Rates\[\d+\]/, 'Rates[' + index + ']'));
+                    if (currentName.endsWith('.SortOrder')) {
+                        input.value = index;
+                    }
+                });
+            });
+        }
+
+        window.darwinAdmin.addShippingRateRow = function () {
+            const template = document.getElementById('shipping-rate-row-template');
+            const tbody = document.getElementById('shipping-rate-rows');
+            if (!template || !tbody) return;
+
+            const index = tbody.querySelectorAll('[data-rate-row]').length;
+            const html = template.innerHTML.replaceAll('__index__', index.toString());
+            tbody.insertAdjacentHTML('beforeend', html);
+            renumberShippingRateRows();
+        };
+
+        window.darwinAdmin.removeShippingRateRow = function (button) {
+            const row = button.closest('[data-rate-row]');
+            const tbody = document.getElementById('shipping-rate-rows');
+            if (!row || !tbody) return;
+
+            row.remove();
+            if (!tbody.querySelector('[data-rate-row]')) {
+                window.darwinAdmin.addShippingRateRow();
+            } else {
+                renumberShippingRateRows();
+            }
+        };
+
+        window.darwinAdmin.initShippingMethodForm = function () {
+            renumberShippingRateRows();
+        };
+
+        window.darwinAdmin.initShippingMethodForm();
+    })();
+</script>

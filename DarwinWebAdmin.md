@@ -59,17 +59,17 @@ This is especially important because early operational usage is expected to star
 | Area | Status | Notes |
 | --- | --- | --- |
 | Catalog/CMS | In Progress | Core CRUD and HTMX patterns exist; operator completeness still needs audit. |
-| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, onboarding checklist visibility, actionable next-step shortcuts, delegated support access, and business mobile soft-gate policy now exist; tenant/customer provisioning and richer onboarding-state orchestration remain near-term. |
+| Business / Tenant Onboarding | In Progress | Business CRUD, owner assignment, member management, location management, invitation management, approval/suspension/reactivation, onboarding checklist visibility, actionable next-step shortcuts, delegated support access, business subscription snapshot visibility, and business mobile soft-gate policy now exist; tenant/customer provisioning and richer onboarding-state orchestration remain near-term. |
 | Orders/Billing | In Progress | Order detail, payments, refunds, invoices, and reconciliation visibility exist, and both the orders list and the detail tabs now have queue-style operational filters for open, payment-issue, fulfillment, refund, and invoice follow-up work; the orders list now exposes quick payment/shipment/invoice actions, the billing payments queue now exposes direct invoice/order/customer follow-up actions, expense rows expose supplier follow-up, financial-account rows deep-link into journal-entry follow-up, and financial accounts / journal entries now expose lightweight account-type and recent-or-complex queue filters, while Stripe-specific lifecycle support is still pending. |
 | CRM | In Progress | Customers, leads, opportunities, interactions, segments, and invoice workflows exist; customer, lead, opportunity, and invoice queues now expose quick follow-up actions like linked-user review, interaction/segment deep-links, lead conversion, customer/order/payment deep-links, prefilled opportunity creation, and common invoice status transitions; deeper reporting and support depth still need improvement. |
-| Loyalty | In Progress | WebAdmin now covers loyalty programs, reward tiers, member accounts, admin-side account provisioning, manual point adjustments, account suspend/activate, redemption troubleshooting/confirmation, business campaigns, and recent scan-session diagnostics; the main near-term gap is deeper mobile diagnostics rather than basic loyalty operations. |
+| Loyalty | In Progress | WebAdmin now covers loyalty programs, reward tiers, member accounts, admin-side account provisioning, manual point adjustments, account suspend/activate, redemption troubleshooting/confirmation, business campaigns, and recent scan-session diagnostics; the admin dashboard now also surfaces loyalty counts and direct follow-up links, so the main near-term gap is deeper mobile diagnostics rather than basic loyalty operations. |
 | Inventory/Procurement | In Progress | Warehouses, suppliers, stock, transfers, purchase orders, and ledger views exist, and warehouse, supplier, purchase-order, stock-level, stock-transfer, and ledger screens now have queue-style operational filters or direct troubleshooting links for setup, replenishment, and stock-attention work; supplier rows now deep-link into purchase-order follow-up, warehouse rows deep-link into scoped stock-level review, and manual stock adjustment, reservation, reservation-release, and return-receipt flows are now exposed from stock levels, while richer exception and structured receiving workflows still need work. |
 | Identity/Admin Support | In Progress | Users, roles, permissions, and core admin identity flows exist; invite/activation/support actions need completion. |
 | Media | In Progress | Media library exists and now supports content-ops queue filters plus direct file-open and missing-alt follow-up actions; deeper reference tracking and purge workflows are still later work. |
-| Settings | In Progress | Global site settings exist and business onboarding now has a dedicated setup workspace, but full tenant-aware settings architecture still needs domain and UI expansion. |
-| Mobile Operations | In Progress | WebAdmin now includes a dedicated mobile-operations snapshot for JWT/mobile bootstrap, onboarding/support dependency counts, and communication readiness that affect the mobile apps; deeper release/version/device diagnostics are still near-term work if support scope requires them. |
+| Settings | In Progress | Global site settings exist and business onboarding now has a dedicated setup workspace; business-app legal/billing handoff URLs are now manageable from site settings, but full tenant-aware settings architecture still needs domain and UI expansion. |
+| Mobile Operations | In Progress | WebAdmin now includes a dedicated mobile-operations workspace for JWT/mobile bootstrap, onboarding/support dependency counts, communication readiness, device-fleet diagnostics, app-version visibility, device-level filtering for stale installs, missing push tokens, notification-disabled devices, and business-member devices, plus lightweight remediation actions like push-token clearing and device deactivation; the admin dashboard now also surfaces mobile-device health as a first-class entry point, so future work is mainly deeper telemetry or richer remediation rather than basic visibility. |
 | Communication Management | Planned / Near-term | Must become first-class for email templates, delivery logs, resend/retry, and admin visibility. |
-| Shipping Operations | Partial | Generic order shipment visibility exists; DHL-first operational workspace is still near-term work. |
+| Shipping Operations | In Progress | Generic order shipment visibility exists, and WebAdmin now exposes both shipping-method configuration with queue filters/editable rate tiers and a cross-order shipment queue for packing/hand-off follow-up; DHL-first shipment/tracking/exception workflows are still near-term work. |
 
 ## 6. HTMX Conventions
 
@@ -124,6 +124,7 @@ Target workflow:
 - `Completed`: a dedicated business setup workspace now groups profile, localization/defaults, onboarding shortcuts, and phase-1 settings dependencies instead of forcing operators to infer setup from scattered screens
 - `Completed`: the setup workspace now also surfaces inline previews of members needing activation/lockout support and open invitations, so operators can troubleshoot onboarding from one place
 - `Completed foundation`: business setup now persists business-level branding, localization defaults, time zone, and phase-1 communication toggles/defaults instead of treating all setup as a thin wrapper around global settings
+- `Completed foundation`: the setup workspace now also shows the current business subscription snapshot so support/admin can confirm plan/provider/renewal context without leaving WebAdmin
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
 - `Decision made`: phase-1 owner onboarding supports both assigning an existing platform user and invitation-first owner creation
 - `Completed foundation`: invitation issue/resend emails can now carry both the manual token and a configurable magic-link path
@@ -202,6 +203,7 @@ Settings UI must be:
 - `Completed foundation`: business setup now has its own grouped workspace, persists business-level branding/localization/time-zone/communication defaults, and makes the remaining global phase-1 dependencies explicit
 - `Completed foundation`: the business setup workspace now also shows communication readiness against global SMTP/SMS/WhatsApp/admin-alert routing, which gives operators immediate visibility into whether saved business preferences can actually be delivered
 - `Completed foundation`: the admin dashboard now also exposes a communication-operations snapshot, making global transport readiness and business-level sender/support-email gaps visible before full Communication Core template/log UIs are built
+- `Completed foundation`: site settings now also surface business-app legal and billing handoff URLs such as management website, impressum, privacy, business terms, and account deletion, and mobile operations shows whether those handoffs are configured
 - `Planned / Near-term`: settings IA must be restructured before settings sprawl becomes technical debt
 
 ## 10. Payment Operations UI
@@ -236,8 +238,8 @@ WebAdmin must provide shipping visibility and operator support.
 
 ### Current state
 
-- `Partial`: shipments are visible through order-related flows
-- `Planned / Near-term`: dedicated shipping operations UI still needs to be strengthened
+- `Completed foundation`: shipments are visible through order-related flows, shipping methods now have a dedicated WebAdmin module with list/create/edit, queue filters, and editable rate tiers, and operators now also have a cross-order shipment queue for packing and hand-off review
+- `Planned / Near-term`: dedicated DHL-first shipment operations, tracking, and exception handling still need to be strengthened
 
 ### Required near-term capabilities
 
@@ -281,7 +283,7 @@ Loyalty and mobile support are now part of the operational scope of WebAdmin, no
 
 ### Remaining near-term loyalty/mobile gaps
 
-- deeper mobile diagnostics beyond bootstrap/support readiness, such as app release/version visibility or device-level operational signals if support requirements justify them
+- deeper mobile remediation or telemetry only if support requirements justify it, such as push-delivery diagnostics, per-device remediation actions, or richer scanner/session failure correlation
 
 ### Current mobile-operations coverage
 
@@ -291,9 +293,15 @@ The dedicated `Mobile Operations` workspace currently provides:
 - QR refresh and mobile outbox bootstrap settings
 - onboarding/support dependency counts that affect business-mobile usage
 - transport-readiness visibility for email/SMS/WhatsApp/admin alerts
+- device-fleet snapshot across active installs
+- app-version visibility by platform
+- pageable device list with filters for stale installs, missing push tokens, notifications-disabled devices, and business-member devices
+- lightweight remediation actions for support: clear push token and deactivate device
 - direct links into support queue, site settings, and scan-session review
 
-This is intentionally an operational snapshot, not yet a full mobile observability suite.
+The admin dashboard now also exposes a compact loyalty/mobile snapshot so operators can jump directly into loyalty accounts, pending redemptions, scan sessions, and device diagnostics from the landing page instead of relying only on sidebar navigation.
+
+This is intentionally an operational workspace, not yet a full mobile observability and remediation suite.
 
 ## 13. Communication Management UI
 

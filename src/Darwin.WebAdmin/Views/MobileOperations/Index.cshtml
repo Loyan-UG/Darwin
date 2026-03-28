@@ -34,6 +34,27 @@
     </div>
     <div class="col-xl-6">
         <div class="card h-100">
+            <div class="card-header">Business App External Handoffs</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Subscription Website</div><div class="fs-6 fw-semibold">@(Model.BusinessManagementWebsiteConfigured ? "Ready" : "Missing")</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Account Deletion</div><div class="fs-6 fw-semibold">@(Model.AccountDeletionConfigured ? "Ready" : "Missing")</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">Impressum</div><div class="fs-6 fw-semibold">@(Model.ImpressumConfigured ? "Ready" : "Missing")</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">Privacy</div><div class="fs-6 fw-semibold">@(Model.PrivacyPolicyConfigured ? "Ready" : "Missing")</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3"><div class="text-muted small">Business Terms</div><div class="fs-6 fw-semibold">@(Model.BusinessTermsConfigured ? "Ready" : "Missing")</div></div></div>
+                </div>
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary">Open Business App Settings</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-mobile" class="btn btn-sm btn-outline-secondary">Open Mobile Bootstrap</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-6">
+        <div class="card h-100">
             <div class="card-header">Mobile Onboarding Dependencies</div>
             <div class="card-body">
                 <div class="mb-2">Businesses Needing Attention: <strong>@Model.AttentionBusinessCount</strong></div>
@@ -42,6 +63,50 @@
                 <div class="mb-2">Pending Activation Members: <strong>@Model.PendingActivationMemberCount</strong></div>
                 <div class="mb-2">Locked Members: <strong>@Model.LockedMemberCount</strong></div>
                 <div>Businesses Requiring Email Setup: <strong>@Model.BusinessesRequiringEmailSetupCount</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card h-100">
+            <div class="card-header">Device Fleet Snapshot</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Active Devices</div><div class="fs-5">@Model.TotalActiveDevices</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Business Member Devices</div><div class="fs-5">@Model.BusinessMemberDevicesCount</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Stale Devices</div><div class="fs-5">@Model.StaleDevicesCount</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Missing Push Token</div><div class="fs-5">@Model.DevicesMissingPushTokenCount</div></div></div>
+                    <div class="col-md-6"><div class="border rounded p-3"><div class="text-muted small">Notifications Disabled</div><div class="fs-5">@Model.NotificationsDisabledCount</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Android</div><div class="fs-5">@Model.AndroidDevicesCount</div></div></div>
+                    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">iOS</div><div class="fs-5">@Model.IosDevicesCount</div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card h-100">
+            <div class="card-header">Recent App Versions</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Platform</th><th>Version</th><th>Devices</th><th>Last Seen</th></tr></thead>
+                    <tbody>
+                    @if (Model.RecentVersions.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-3">No device version data reported yet.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.RecentVersions)
+                        {
+                            <tr>
+                                <td>@item.Platform</td>
+                                <td>@item.AppVersion</td>
+                                <td>@item.DeviceCount</td>
+                                <td>@(item.LastSeenAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -61,3 +126,90 @@
         </div>
     </div>
 </div>
+
+<div class="card mt-4">
+    <div class="card-header">Recent Mobile Devices</div>
+    <div class="card-body border-bottom">
+        <form asp-action="Index" method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search user, device, or version" />
+            </div>
+            <div class="col-md-3">
+                <select name="platform" asp-items="Model.PlatformItems" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <select name="state" asp-items="Model.StateItems" class="form-select"></select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-secondary">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle mb-0">
+            <thead><tr><th>User</th><th>Platform</th><th>Version</th><th>Device</th><th>Push</th><th>Membership</th><th>Last Seen</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            @if (Model.Devices.Count == 0)
+            {
+                <tr><td colspan="8" class="text-center text-muted py-3">No devices match the current filters.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Devices)
+                {
+                    <tr>
+                        <td>
+                            <div>@item.UserDisplayName</div>
+                            <div class="small text-muted">@item.UserEmail</div>
+                        </td>
+                        <td>@item.Platform</td>
+                        <td>
+                            <div>@(item.AppVersion ?? "-")</div>
+                            <div class="small text-muted">@(item.DeviceModel ?? "Unknown device")</div>
+                        </td>
+                        <td><code>@item.DeviceId</code></td>
+                        <td>
+                            <div>@(item.HasPushToken ? "Token present" : "Missing token")</div>
+                            <div class="small text-muted">@(item.NotificationsEnabled ? "Notifications on" : "Notifications off")</div>
+                        </td>
+                        <td>@(item.BusinessMembershipCount > 0 ? $"{item.BusinessMembershipCount} business memberships" : "Consumer only")</td>
+                        <td>@(item.LastSeenAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</td>
+                        <td class="text-end">
+                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-primary">User</a>
+                            @if (item.HasPushToken)
+                            {
+                                <form asp-action="ClearPushToken" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="platform" value="@Model.PlatformFilter" />
+                                    <input type="hidden" name="state" value="@Model.StateFilter" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">Clear Push</button>
+                                </form>
+                            }
+                            @if (item.IsActive)
+                            {
+                                <form asp-action="DeactivateDevice" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                    <input type="hidden" name="q" value="@Model.Query" />
+                                    <input type="hidden" name="platform" value="@Model.PlatformFilter" />
+                                    <input type="hidden" name="state" value="@Model.StateFilter" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="MobileOperations" asp-action="Index" asp-route-q="@Model.Query" asp-route-platform="@Model.PlatformFilter" asp-route-state="@Model.StateFilter"></pager>

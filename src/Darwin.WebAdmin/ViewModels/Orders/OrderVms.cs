@@ -178,6 +178,8 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         /// <summary>Owning order identifier.</summary>
         public Guid OrderId { get; set; }
 
+        public string OrderNumber { get; set; } = string.Empty;
+
         /// <summary>Carrier code/name (e.g., "DHL").</summary>
         public string Carrier { get; set; } = string.Empty;
 
@@ -192,6 +194,9 @@ namespace Darwin.WebAdmin.ViewModels.Orders
 
         /// <summary>Current shipment lifecycle state.</summary>
         public Darwin.Domain.Enums.ShipmentStatus Status { get; set; }
+
+        public DateTime? ShippedAtUtc { get; set; }
+        public DateTime? DeliveredAtUtc { get; set; }
 
         /// <summary>Creation timestamp (UTC) for sorting in UI.</summary>
         public DateTime CreatedAtUtc { get; set; }
@@ -381,6 +386,18 @@ namespace Darwin.WebAdmin.ViewModels.Orders
 
         /// <summary>Prebuilt page-size options for a dropdown.</summary>
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+    }
+
+    public sealed class ShipmentsQueueVm
+    {
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public ShipmentQueueFilter Filter { get; set; } = ShipmentQueueFilter.All;
+        public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> PageSizeItems { get; set; } = new List<SelectListItem>();
+        public List<ShipmentListItemVm> Items { get; set; } = new();
     }
 
     

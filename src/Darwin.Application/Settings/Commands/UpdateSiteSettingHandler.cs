@@ -78,6 +78,11 @@ namespace Darwin.Application.Settings.Commands
             // Mobile bootstrap
             s.MobileQrTokenRefreshSeconds = dto.MobileQrTokenRefreshSeconds;
             s.MobileMaxOutboxItems = dto.MobileMaxOutboxItems;
+            s.BusinessManagementWebsiteUrl = dto.BusinessManagementWebsiteUrl;
+            s.ImpressumUrl = dto.ImpressumUrl;
+            s.PrivacyPolicyUrl = dto.PrivacyPolicyUrl;
+            s.BusinessTermsUrl = dto.BusinessTermsUrl;
+            s.AccountDeletionUrl = dto.AccountDeletionUrl;
 
 
             // -------- Soft delete / data retention --------

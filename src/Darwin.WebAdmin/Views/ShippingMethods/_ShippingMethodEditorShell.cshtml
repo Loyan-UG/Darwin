@@ -1,0 +1,23 @@
+@model Darwin.WebAdmin.ViewModels.Shipping.ShippingMethodEditVm
+@{
+    var isCreate = (bool?)ViewData["IsCreate"] ?? false;
+}
+
+<div id="shipping-method-editor-shell">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-1">@(isCreate ? "Create Shipping Method" : "Edit Shipping Method")</h1>
+            <p class="text-muted mb-0">Use this screen to manage carrier/service combinations and the rate tiers used by checkout and order shipping snapshots.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+
+    <form asp-action="@(isCreate ? "Create" : "Edit")"
+          method="post"
+          hx-post="@Url.Action(isCreate ? "Create" : "Edit", "ShippingMethods")"
+          hx-target="#shipping-method-editor-shell"
+          hx-swap="outerHTML">
+        @Html.AntiForgeryToken()
+        <partial name="_ShippingMethodForm" model="Model" />
+    </form>
+</div>

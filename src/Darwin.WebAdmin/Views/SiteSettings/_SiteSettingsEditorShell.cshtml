@@ -25,6 +25,7 @@
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-localization">Localization</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-security">Security</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-mobile">Mobile</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#site-settings-business-app">Business App</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-retention">Operational</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-measurement">Units</a>
             <a class="btn btn-sm btn-outline-secondary" href="#site-settings-seo">SEO</a>
@@ -229,6 +230,44 @@
                     <field-help title="Max outbox items" content="Upper bound for offline/mobile outbox buffering before the client must flush or block." placement="right"></field-help>
                     <input asp-for="MobileMaxOutboxItems" class="form-control" type="number" min="0" />
                     <span asp-validation-for="MobileMaxOutboxItems" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="site-settings-business-app" class="card mb-4">
+        <div class="card-header">Business App Legal and Billing Handoffs</div>
+        <div class="card-body">
+            <div class="alert alert-secondary mb-3">
+                These URLs are used by business-facing mobile flows that hand operators off to external legal or billing pages rather than executing those actions inside the app.
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="BusinessManagementWebsiteUrl" class="form-label"></label>
+                    <input asp-for="BusinessManagementWebsiteUrl" class="form-control" placeholder="https://www.loyan.de" />
+                    <span asp-validation-for="BusinessManagementWebsiteUrl" class="text-danger"></span>
+                    <div class="form-text">Used by the business app subscription screen for plan/billing handoff.</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="AccountDeletionUrl" class="form-label"></label>
+                    <input asp-for="AccountDeletionUrl" class="form-control" placeholder="https://www.loyan.de/account-deletion" />
+                    <span asp-validation-for="AccountDeletionUrl" class="text-danger"></span>
+                    <div class="form-text">Used by the business app deletion handoff flow.</div>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ImpressumUrl" class="form-label"></label>
+                    <input asp-for="ImpressumUrl" class="form-control" placeholder="https://www.loyan.de/impressum" />
+                    <span asp-validation-for="ImpressumUrl" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PrivacyPolicyUrl" class="form-label"></label>
+                    <input asp-for="PrivacyPolicyUrl" class="form-control" placeholder="https://www.loyan.de/datenschutz" />
+                    <span asp-validation-for="PrivacyPolicyUrl" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="BusinessTermsUrl" class="form-label"></label>
+                    <input asp-for="BusinessTermsUrl" class="form-control" placeholder="https://www.loyan.de/agb-business" />
+                    <span asp-validation-for="BusinessTermsUrl" class="text-danger"></span>
                 </div>
             </div>
         </div>

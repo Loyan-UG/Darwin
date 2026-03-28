@@ -121,8 +121,23 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool HasContactEmailConfigured { get; set; }
         public bool HasLegalNameConfigured { get; set; }
         public BusinessCommunicationReadinessVm CommunicationReadiness { get; set; } = new();
+        public BusinessSubscriptionSnapshotVm Subscription { get; set; } = new();
         public IEnumerable<SelectListItem> OwnerUserOptions { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> CategoryOptions { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class BusinessSubscriptionSnapshotVm
+    {
+        public bool HasSubscription { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string PlanName { get; set; } = string.Empty;
+        public string Currency { get; set; } = "EUR";
+        public long UnitPriceMinor { get; set; }
+        public DateTime? StartedAtUtc { get; set; }
+        public DateTime? CurrentPeriodEndUtc { get; set; }
+        public DateTime? TrialEndsAtUtc { get; set; }
+        public bool CancelAtPeriodEnd { get; set; }
     }
 
     /// <summary>

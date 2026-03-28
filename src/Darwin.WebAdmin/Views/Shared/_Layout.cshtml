@@ -102,6 +102,15 @@
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Orders" asp-action="Index">
                         <i class="fa-solid fa-receipt me-2"></i> Orders
                     </active-nav>
+                    <active-nav class="list-group-item list-group-item-action" asp-controller="Orders" asp-action="ShipmentsQueue">
+                        <i class="fa-solid fa-truck me-2"></i> Shipments
+                    </active-nav>
+                    @if (canManageIdentity)
+                    {
+                        <active-nav class="list-group-item list-group-item-action" asp-controller="ShippingMethods" asp-action="Index">
+                            <i class="fa-solid fa-truck-fast me-2"></i> Shipping Methods
+                        </active-nav>
+                    }
 
                     <div class="px-3 pt-4 pb-2 text-uppercase small text-muted">CRM</div>
                     <active-nav class="list-group-item list-group-item-action" asp-controller="Crm" asp-action="Index">
