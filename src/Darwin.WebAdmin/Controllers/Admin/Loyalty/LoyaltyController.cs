@@ -123,7 +123,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 };
             }
 
-            return View(new LoyaltyProgramsListVm
+            return RenderProgramsWorkspace(new LoyaltyProgramsListVm
             {
                 BusinessId = businessId,
                 Filter = filter,
@@ -275,7 +275,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
 
             var result = await _getRewardTiersPage.HandleAsync(loyaltyProgramId, page, pageSize, filter, ct).ConfigureAwait(false);
             var summaryDto = await _getRewardTiersPage.GetSummaryAsync(loyaltyProgramId, ct).ConfigureAwait(false);
-            return View(new LoyaltyRewardTiersListVm
+            return RenderRewardTiersWorkspace(new LoyaltyRewardTiersListVm
             {
                 LoyaltyProgramId = loyaltyProgramId,
                 ProgramName = program.Name,
@@ -549,7 +549,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 }
             }
 
-            return View(new LoyaltyCampaignsListVm
+            return RenderCampaignsWorkspace(new LoyaltyCampaignsListVm
             {
                 BusinessId = businessId,
                 Filter = filter,
@@ -711,7 +711,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 ? (isActive ? "Loyalty campaign activated." : "Loyalty campaign deactivated.")
                 : result.Error;
 
-            return RedirectToAction(nameof(Campaigns), new { businessId });
+            return RedirectOrHtmx(nameof(Campaigns), new { businessId });
         }
 
         [HttpGet]
@@ -734,7 +734,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 total = result.Total;
             }
 
-            return View(new LoyaltyScanSessionsListVm
+            return RenderScanSessionsWorkspace(new LoyaltyScanSessionsListVm
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
@@ -1114,6 +1114,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             return isCreate ? View("CreateProgram", vm) : View("EditProgram", vm);
         }
 
+        private IActionResult RenderProgramsWorkspace(LoyaltyProgramsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/Programs.cshtml", vm);
+            }
+
+            return View("Programs", vm);
+        }
+
         private IActionResult RenderAccountCreateEditor(CreateLoyaltyAccountVm vm)
         {
             if (IsHtmxRequest())
@@ -1144,6 +1154,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             return View("Accounts", vm);
         }
 
+        private IActionResult RenderCampaignsWorkspace(LoyaltyCampaignsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/Campaigns.cshtml", vm);
+            }
+
+            return View("Campaigns", vm);
+        }
+
+        private IActionResult RenderScanSessionsWorkspace(LoyaltyScanSessionsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/ScanSessions.cshtml", vm);
+            }
+
+            return View("ScanSessions", vm);
+        }
+
         private IActionResult RenderRedemptionsWorkspace(LoyaltyRedemptionsListVm vm)
         {
             if (IsHtmxRequest())
@@ -1162,6 +1192,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }
 
             return View("AccountDetails", vm);
+        }
+
+        private IActionResult RenderRewardTiersWorkspace(LoyaltyRewardTiersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/RewardTiers.cshtml", vm);
+            }
+
+            return View("RewardTiers", vm);
         }
 
         private IActionResult RenderRewardTierEditor(LoyaltyRewardTierEditVm vm, bool isCreate)

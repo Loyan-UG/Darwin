@@ -3,13 +3,14 @@
     ViewData["Title"] = "Loyalty Campaigns";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h1 class="mb-1">Loyalty Campaigns</h1>
-        <div class="text-muted">Business mobile campaign management and activation control.</div>
+<div id="loyalty-campaigns-workspace-shell">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-1">Loyalty Campaigns</h1>
+            <div class="text-muted">Business mobile campaign management and activation control.</div>
+        </div>
+        <a asp-action="CreateCampaign" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Campaign</a>
     </div>
-    <a asp-action="CreateCampaign" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Campaign</a>
-</div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
@@ -42,21 +43,54 @@
     </div>
 }
 
-<form asp-action="Campaigns" method="get" class="d-flex gap-2 mb-3">
-    <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-    <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-    <button class="btn btn-outline-secondary" type="submit">Filter</button>
-    <a asp-action="Campaigns" class="btn btn-outline-secondary">Reset</a>
-</form>
+    <form asp-action="Campaigns"
+          method="get"
+          class="d-flex gap-2 mb-3"
+          hx-get="@Url.Action("Campaigns", "Loyalty")"
+          hx-target="#loyalty-campaigns-workspace-shell"
+          hx-swap="outerHTML">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <a asp-action="Campaigns"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Campaigns", "Loyalty")"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
+    </form>
 
-<div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Active" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Active ? "btn-success" : "btn-outline-success")">Active</a>
-    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Scheduled" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Scheduled ? "btn-info" : "btn-outline-info")">Scheduled</a>
-    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Draft" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Draft ? "btn-secondary" : "btn-outline-secondary")">Draft</a>
-    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Expired" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Expired ? "btn-warning" : "btn-outline-warning")">Expired</a>
-    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="PushEnabled" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.PushEnabled ? "btn-primary" : "btn-outline-primary")">Push Enabled</a>
-    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
-</div>
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Active"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Active ? "btn-success" : "btn-outline-success")"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId, filter = "Active" })"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">Active</a>
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Scheduled"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Scheduled ? "btn-info" : "btn-outline-info")"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId, filter = "Scheduled" })"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">Scheduled</a>
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Draft"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Draft ? "btn-secondary" : "btn-outline-secondary")"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId, filter = "Draft" })"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">Draft</a>
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Expired"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Expired ? "btn-warning" : "btn-outline-warning")"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId, filter = "Expired" })"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">Expired</a>
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="PushEnabled"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.PushEnabled ? "btn-primary" : "btn-outline-primary")"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId, filter = "PushEnabled" })"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">Push Enabled</a>
+        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">Clear Queue Filters</a>
+    </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
@@ -89,7 +123,12 @@
                     </td>
                     <td class="text-end">
                         <a asp-action="EditCampaign" asp-route-id="@item.Id" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary">Edit</a>
-                        <form asp-action="SetCampaignActivation" method="post" class="d-inline">
+                        <form asp-action="SetCampaignActivation"
+                              method="post"
+                              class="d-inline"
+                              hx-post="@Url.Action("SetCampaignActivation", "Loyalty")"
+                              hx-target="#loyalty-campaigns-workspace-shell"
+                              hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.Id" />
                             <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -108,3 +147,4 @@
 </div>
 
 <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Campaigns" asp-route-businessId="@Model.BusinessId"></pager>
+</div>

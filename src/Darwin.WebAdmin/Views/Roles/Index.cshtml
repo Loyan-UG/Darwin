@@ -6,137 +6,160 @@
     ViewData["Title"] = "Roles";
 }
 
-<h1 class="mb-3"><i class="fa fa-user-shield"></i> Roles</h1>
+<div id="roles-workspace-shell">
+    <h1 class="mb-3"><i class="fa fa-user-shield"></i> Roles</h1>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
-    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">System</div><div class="fs-4 fw-semibold">@Model.Summary.SystemCount</div></div></div></div>
-    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Custom</div><div class="fs-4 fw-semibold">@Model.Summary.CustomCount</div></div></div></div>
-    <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Delegated support</div><div class="fs-4 fw-semibold">@Model.Summary.DelegatedSupportCount</div></div></div></div>
-</div>
-
-<div class="card mb-3 border-info-subtle">
-    <div class="card-body">
-        <h2 class="h6 mb-2">Role Ops Playbook</h2>
-        <ul class="mb-0">
-            <li>Use `System` to review protected roles before permission refactors.</li>
-            <li>Use `Delegated Support` when assigning business-support operators.</li>
-            <li>Use `Custom` to clean up obsolete roles before go-live audit.</li>
-        </ul>
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">System</div><div class="fs-4 fw-semibold">@Model.Summary.SystemCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Custom</div><div class="fs-4 fw-semibold">@Model.Summary.CustomCount</div></div></div></div>
+        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Delegated support</div><div class="fs-4 fw-semibold">@Model.Summary.DelegatedSupportCount</div></div></div></div>
     </div>
-</div>
 
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label" for="q">Search</label>
-                <field-help title="Search" content="Searches in display name and description." placement="right"></field-help>
-                <input type="text" id="q" name="q" value="@Model.Query" class="form-control" />
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="pageSize">Page size</label>
-                <select id="pageSize" name="pageSize" class="form-select" asp-items="Model.PageSizeItems"></select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label" for="filter">Queue</label>
-                <select id="filter" name="filter" class="form-select" asp-items="Model.FilterItems"></select>
-            </div>
-            <div class="col-md-3 d-flex justify-content-end gap-2">
-                <button type="submit" class="btn btn-outline-secondary">
-                    <i class="fa fa-search"></i> Search
-                </button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="fa fa-plus"></i> New Role
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Display Name</th>
-                        <th>Description</th>
-                        <th style="width:120px;">System</th>
-                        <th class="text-end" style="width:290px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Items.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="4" class="text-center text-muted p-4">No roles found.</td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var r in Model.Items)
-                        {
-                            <tr>
-                                <td>@r.DisplayName</td>
-                                <td>@(string.IsNullOrWhiteSpace(r.Description) ? "-" : r.Description)</td>
-                                <td>
-                                    @if (r.IsSystem)
-                                    {
-                                        <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">No</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    @if (string.Equals(r.Key, "business-support-admins", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        <span class="badge bg-info text-dark me-2">Delegated support</span>
-                                    }
-                                    <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary me-1">
-                                        <i class="fa fa-pen"></i> Edit
-                                    </a>
-
-                                    <a asp-controller="Roles" asp-action="Permissions" asp-route-id="@r.Id"
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="fa fa-shield-alt"></i> Permissions
-                                    </a>
-
-                                    @* Delete is disabled for system roles *@
-                                    @if (!r.IsSystem)
-                                    {
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#confirmDeleteModal"
-                                                data-action="@Url.Action("Delete", "Roles")"
-                                                data-id="@r.Id"
-                                                data-name="@r.DisplayName"
-                                                data-rowversion="@Convert.ToBase64String(r.RowVersion)">
-                                            <i class="fa fa-trash"></i> Delete
-                                        </button>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
+    <div class="card mb-3 border-info-subtle">
+        <div class="card-body">
+            <h2 class="h6 mb-2">Role Ops Playbook</h2>
+            <ul class="mb-0">
+                <li>Use `System` to review protected roles before permission refactors.</li>
+                <li>Use `Delegated Support` when assigning business-support operators.</li>
+                <li>Use `Custom` to clean up obsolete roles before go-live audit.</li>
+            </ul>
         </div>
     </div>
-</div>
 
-<pager page="Model.Page"
-       page-size="Model.PageSize"
-       total="Model.Total"
-       asp-controller="Roles"
-       asp-action="Index"
-       asp-route-q="@Model.Query"
-       asp-route-filter="@Model.Filter">
-</pager>
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get"
+                  class="row g-2 align-items-end"
+                  hx-get="@Url.Action("Index", "Roles")"
+                  hx-target="#roles-workspace-shell"
+                  hx-swap="outerHTML">
+                <div class="col-md-4">
+                    <label class="form-label" for="q">Search</label>
+                    <field-help title="Search" content="Searches in display name and description." placement="right"></field-help>
+                    <input type="text" id="q" name="q" value="@Model.Query" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="pageSize">Page size</label>
+                    <select id="pageSize" name="pageSize" class="form-select" asp-items="Model.PageSizeItems"></select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="filter">Queue</label>
+                    <select id="filter" name="filter" class="form-select" asp-items="Model.FilterItems"></select>
+                </div>
+                <div class="col-md-3 d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="fa fa-search"></i> Search
+                    </button>
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Roles")"
+                       hx-target="#roles-workspace-shell"
+                       hx-swap="outerHTML">Reset</a>
+                    <a asp-action="Create"
+                       class="btn btn-primary"
+                       hx-get="@Url.Action("Create", "Roles")"
+                       hx-target="#roles-workspace-shell"
+                       hx-swap="outerHTML">
+                        <i class="fa fa-plus"></i> New Role
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Display Name</th>
+                            <th>Description</th>
+                            <th style="width:120px;">System</th>
+                            <th class="text-end" style="width:290px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted p-4">No roles found.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var r in Model.Items)
+                            {
+                                <tr>
+                                    <td>@r.DisplayName</td>
+                                    <td>@(string.IsNullOrWhiteSpace(r.Description) ? "-" : r.Description)</td>
+                                    <td>
+                                        @if (r.IsSystem)
+                                        {
+                                            <span class="badge bg-secondary"><i class="fa fa-lock"></i> System</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (string.Equals(r.Key, "business-support-admins", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge bg-info text-dark me-2">Delegated support</span>
+                                        }
+                                        <a asp-action="Edit"
+                                           asp-route-id="@r.Id"
+                                           class="btn btn-sm btn-outline-primary me-1"
+                                           hx-get="@Url.Action("Edit", "Roles", new { id = r.Id })"
+                                           hx-target="#roles-workspace-shell"
+                                           hx-swap="outerHTML">
+                                            <i class="fa fa-pen"></i> Edit
+                                        </a>
+
+                                        <a asp-controller="Roles"
+                                           asp-action="Permissions"
+                                           asp-route-id="@r.Id"
+                                           class="btn btn-sm btn-outline-primary"
+                                           hx-get="@Url.Action("Permissions", "Roles", new { id = r.Id })"
+                                           hx-target="#roles-workspace-shell"
+                                           hx-swap="outerHTML">
+                                            <i class="fa fa-shield-alt"></i> Permissions
+                                        </a>
+
+                                        @if (!r.IsSystem)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#confirmDeleteModal"
+                                                    data-action="@Url.Action("Delete", "Roles")"
+                                                    data-id="@r.Id"
+                                                    data-name="@r.DisplayName"
+                                                    data-rowversion="@Convert.ToBase64String(r.RowVersion)">
+                                                <i class="fa fa-trash"></i> Delete
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <pager page="Model.Page"
+           page-size="Model.PageSize"
+           total="Model.Total"
+           asp-controller="Roles"
+           asp-action="Index"
+           asp-route-q="@Model.Query"
+           asp-route-filter="@Model.Filter">
+    </pager>
+</div>
 
 @* shared confirmation modal (already exists in project) *@
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

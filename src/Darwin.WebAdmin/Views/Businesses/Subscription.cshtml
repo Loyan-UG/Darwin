@@ -21,7 +21,12 @@
         <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
             <i class="fa-solid fa-money-bill-wave"></i> Payments
         </a>
-        <a asp-action="SubscriptionInvoices" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
+        <a asp-action="SubscriptionInvoices"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-subscription-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-file-invoice-dollar"></i> Subscription Invoices
         </a>
     </div>
@@ -215,6 +220,44 @@
         <div class="small text-muted mt-3">
             These provider invoice signals help finance support distinguish open Stripe billing work from historical subscription snapshots.
         </div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open"
+               class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Open })"
+               hx-target="#business-subscription-workspace-shell"
+               hx-swap="outerHTML">
+                Review Open Invoices
+            </a>
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue"
+               class="btn btn-sm btn-outline-danger"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Overdue })"
+               hx-target="#business-subscription-workspace-shell"
+               hx-swap="outerHTML">
+                Review Overdue
+            </a>
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing"
+               class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.PdfMissing })"
+               hx-target="#business-subscription-workspace-shell"
+               hx-swap="outerHTML">
+                Review PDF Missing
+            </a>
+            <a asp-action="SubscriptionInvoices"
+               asp-route-businessId="@Model.Business.Id"
+               asp-route-filter="@Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible"
+               class="btn btn-sm btn-outline-danger"
+               hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id, filter = Darwin.Application.Billing.BusinessSubscriptionInvoiceQueueFilter.Uncollectible })"
+               hx-target="#business-subscription-workspace-shell"
+               hx-swap="outerHTML">
+                Review Uncollectible
+            </a>
+        </div>
     </div>
 </div>
 
@@ -301,7 +344,12 @@
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Recent Subscription Invoices</span>
-        <a asp-action="SubscriptionInvoices" asp-route-businessId="@Model.Business.Id" class="btn btn-sm btn-outline-secondary">
+        <a asp-action="SubscriptionInvoices"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("SubscriptionInvoices", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-subscription-workspace-shell"
+           hx-swap="outerHTML">
             Open Invoice Queue
         </a>
     </div>

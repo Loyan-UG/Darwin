@@ -45,7 +45,13 @@
             <a asp-controller="Users" asp-action="ChangePassword" asp-route-id="@Model.Id" asp-route-email="@Model.Email" class="btn btn-outline-secondary">
                 <i class="fa fa-key"></i> Change Password
             </a>
-            <a asp-controller="Users" asp-action="Roles" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+            <a asp-controller="Users"
+               asp-action="Roles"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-primary"
+               hx-get="@Url.Action("Roles", "Users", new { id = Model.Id })"
+               hx-target="#user-edit-editor-shell"
+               hx-swap="outerHTML">
                 <i class="fa fa-users-cog"></i> Manage Roles
             </a>
             @if (!Model.EmailConfirmed)

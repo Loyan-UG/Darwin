@@ -144,7 +144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderPlansWorkspace(vm);
         }
 
         [HttpGet]
@@ -1492,6 +1492,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             vm.IntervalItems = Enum.GetValues<BillingInterval>()
                 .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(x.ToString(), x.ToString(), x == vm.Interval))
                 .ToList();
+        }
+
+        private IActionResult RenderPlansWorkspace(BillingPlansListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/Plans.cshtml", vm);
+            }
+
+            return View("Plans", vm);
         }
 
         private IActionResult RenderBillingPlanEditor(BillingPlanEditVm vm, bool isCreate)

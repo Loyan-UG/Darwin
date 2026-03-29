@@ -21,6 +21,11 @@
         <input type="hidden" asp-for="RowVersion" />
         <input type="hidden" asp-for="UserEmail" />
         <input type="hidden" asp-for="UserDisplay" />
+        <input type="hidden" asp-for="ReturnToIndex" />
+        <input type="hidden" asp-for="Query" />
+        <input type="hidden" asp-for="Filter" />
+        <input type="hidden" asp-for="Page" />
+        <input type="hidden" asp-for="PageSize" />
 
         <div class="col-12">
             <div class="card">
@@ -62,9 +67,27 @@
                     }
                 </div>
                 <div class="card-footer text-end">
-                    <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-outline-secondary">
-                        <i class="fa fa-arrow-left"></i> Back
-                    </a>
+                    @if (Model.ReturnToIndex)
+                    {
+                        <a asp-controller="Users"
+                           asp-action="Index"
+                           asp-route-q="@Model.Query"
+                           asp-route-filter="@Model.Filter"
+                           asp-route-page="@Model.Page"
+                           asp-route-pageSize="@Model.PageSize"
+                           class="btn btn-outline-secondary"
+                           hx-get="@Url.Action("Index", "Users", new { q = Model.Query, filter = Model.Filter, page = Model.Page, pageSize = Model.PageSize })"
+                           hx-target="#user-roles-editor-shell"
+                           hx-swap="outerHTML">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-outline-secondary">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </a>
+                    }
                     <button type="submit" class="btn btn-primary">
                         <i class="fa fa-check"></i> Save
                     </button>

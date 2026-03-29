@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Darwin.Application.Identity.DTOs;
 
 namespace Darwin.WebAdmin.ViewModels.Identity
 {
@@ -21,6 +22,12 @@ namespace Darwin.WebAdmin.ViewModels.Identity
 
         /// <summary>All selectable roles to render as checklist.</summary>
         public List<RoleItemVm> AllRoles { get; set; } = new();
+
+        public bool ReturnToIndex { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public UserQueueFilter Filter { get; set; } = UserQueueFilter.All;
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
     }
 
 

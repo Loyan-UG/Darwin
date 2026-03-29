@@ -53,7 +53,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded || result.Value == null)
             {
                 TempData["Error"] = result.Error ?? "Failed to load permissions.";
-                return View(new PermissionsListVm());
+                return RenderIndexWorkspace(new PermissionsListVm());
             }
 
             var pageData = result.Value;
@@ -99,7 +99,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     new SelectListItem("100", "100", pageSize == 100),
                 }
             };
-            return View(vm);
+            return RenderIndexWorkspace(vm);
         }
 
         private static IEnumerable<PermissionListItemVm> ApplyPermissionFilter(IEnumerable<PermissionListItemVm> items, PermissionQueueFilter filter)
@@ -256,6 +256,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             return View("Create", vm);
+        }
+
+        private IActionResult RenderIndexWorkspace(PermissionsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Permissions/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
         }
 
         private IActionResult RenderEditEditor(PermissionEditVm vm)

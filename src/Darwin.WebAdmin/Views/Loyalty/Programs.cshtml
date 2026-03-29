@@ -3,20 +3,30 @@
     ViewData["Title"] = "Loyalty Programs";
 }
 
-<h1 class="mb-3">Loyalty Programs</h1>
+<div id="loyalty-programs-workspace-shell">
+    <h1 class="mb-3">Loyalty Programs</h1>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Programs" method="get" class="d-flex gap-2">
-        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-        <button class="btn btn-outline-secondary" type="submit">Filter</button>
-        <a asp-action="Programs" class="btn btn-outline-secondary">Reset</a>
-    </form>
-    <div class="d-flex gap-2">
-        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Campaigns</a>
-        <a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Scan Sessions</a>
-        <a asp-action="CreateProgram" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Program</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <form asp-action="Programs"
+              method="get"
+              class="d-flex gap-2"
+              hx-get="@Url.Action("Programs", "Loyalty")"
+              hx-target="#loyalty-programs-workspace-shell"
+              hx-swap="outerHTML">
+            <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+            <a asp-action="Programs"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Programs", "Loyalty")"
+               hx-target="#loyalty-programs-workspace-shell"
+               hx-swap="outerHTML">Reset</a>
+        </form>
+        <div class="d-flex gap-2">
+            <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Campaigns</a>
+            <a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Scan Sessions</a>
+            <a asp-action="CreateProgram" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Program</a>
+        </div>
     </div>
-</div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
@@ -48,20 +58,49 @@
     </div>
 }
 
-<form asp-action="Programs" method="get" class="d-flex gap-2 mb-3">
-    <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-    <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-    <button class="btn btn-outline-secondary" type="submit">Filter</button>
-    <a asp-action="Programs" class="btn btn-outline-secondary">Reset</a>
-</form>
+    <form asp-action="Programs"
+          method="get"
+          class="d-flex gap-2 mb-3"
+          hx-get="@Url.Action("Programs", "Loyalty")"
+          hx-target="#loyalty-programs-workspace-shell"
+          hx-swap="outerHTML">
+        <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <a asp-action="Programs"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Programs", "Loyalty")"
+           hx-target="#loyalty-programs-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
+    </form>
 
-<div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="Active" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.Active ? "btn-success" : "btn-outline-success")">Active</a>
-    <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="Inactive" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.Inactive ? "btn-secondary" : "btn-outline-secondary")">Inactive</a>
-    <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="PerCurrencyUnit" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.PerCurrencyUnit ? "btn-info" : "btn-outline-info")">Spend-based</a>
-    <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="MissingRules" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.MissingRules ? "btn-warning" : "btn-outline-warning")">Missing Rules</a>
-    <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
-</div>
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="Active"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.Active ? "btn-success" : "btn-outline-success")"
+           hx-get="@Url.Action("Programs", "Loyalty", new { businessId = Model.BusinessId, filter = "Active" })"
+           hx-target="#loyalty-programs-workspace-shell"
+           hx-swap="outerHTML">Active</a>
+        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="Inactive"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.Inactive ? "btn-secondary" : "btn-outline-secondary")"
+           hx-get="@Url.Action("Programs", "Loyalty", new { businessId = Model.BusinessId, filter = "Inactive" })"
+           hx-target="#loyalty-programs-workspace-shell"
+           hx-swap="outerHTML">Inactive</a>
+        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="PerCurrencyUnit"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.PerCurrencyUnit ? "btn-info" : "btn-outline-info")"
+           hx-get="@Url.Action("Programs", "Loyalty", new { businessId = Model.BusinessId, filter = "PerCurrencyUnit" })"
+           hx-target="#loyalty-programs-workspace-shell"
+           hx-swap="outerHTML">Spend-based</a>
+        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" asp-route-filter="MissingRules"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyProgramQueueFilter.MissingRules ? "btn-warning" : "btn-outline-warning")"
+           hx-get="@Url.Action("Programs", "Loyalty", new { businessId = Model.BusinessId, filter = "MissingRules" })"
+           hx-target="#loyalty-programs-workspace-shell"
+           hx-swap="outerHTML">Missing Rules</a>
+        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Programs", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-programs-workspace-shell"
+           hx-swap="outerHTML">Clear Queue Filters</a>
+    </div>
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
         <thead><tr><th>Name</th><th>Accrual</th><th>Status</th><th>Updated</th><th class="text-end">Actions</th></tr></thead>
@@ -103,4 +142,5 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Programs" asp-route-businessId="@Model.BusinessId"></pager>
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Programs" asp-route-businessId="@Model.BusinessId"></pager>
+</div>

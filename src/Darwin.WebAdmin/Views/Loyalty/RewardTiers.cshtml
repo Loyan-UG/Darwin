@@ -3,16 +3,17 @@
     ViewData["Title"] = "Loyalty Reward Tiers";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h1 class="mb-1">Reward Tiers</h1>
-        <div class="text-muted">@Model.ProgramName</div>
+<div id="loyalty-reward-tiers-workspace-shell">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-1">Reward Tiers</h1>
+            <div class="text-muted">@Model.ProgramName</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="EditProgram" asp-route-id="@Model.LoyaltyProgramId" class="btn btn-outline-secondary">Program</a>
+            <a asp-action="CreateRewardTier" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" class="btn btn-primary">New Reward Tier</a>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <a asp-action="EditProgram" asp-route-id="@Model.LoyaltyProgramId" class="btn btn-outline-secondary">Program</a>
-        <a asp-action="CreateRewardTier" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" class="btn btn-primary">New Reward Tier</a>
-    </div>
-</div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
@@ -44,20 +45,50 @@
     </div>
 }
 
-<form asp-action="RewardTiers" method="get" class="d-flex gap-2 mb-3">
-    <input type="hidden" name="loyaltyProgramId" value="@Model.LoyaltyProgramId" />
-    <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
-    <button class="btn btn-outline-secondary" type="submit">Filter</button>
-    <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" class="btn btn-outline-secondary">Reset</a>
-</form>
+    <form asp-action="RewardTiers"
+          method="get"
+          class="d-flex gap-2 mb-3"
+          hx-get="@Url.Action("RewardTiers", "Loyalty")"
+          hx-target="#loyalty-reward-tiers-workspace-shell"
+          hx-swap="outerHTML">
+        <input type="hidden" name="loyaltyProgramId" value="@Model.LoyaltyProgramId" />
+        <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
+        <button class="btn btn-outline-secondary" type="submit">Filter</button>
+        <a asp-action="RewardTiers"
+           asp-route-loyaltyProgramId="@Model.LoyaltyProgramId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = Model.LoyaltyProgramId })"
+           hx-target="#loyalty-reward-tiers-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
+    </form>
 
-<div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="SelfRedemption" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.SelfRedemption ? "btn-success" : "btn-outline-success")">Self Redemption</a>
-    <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="MissingDescription" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.MissingDescription ? "btn-warning" : "btn-outline-warning")">Missing Description</a>
-    <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="DiscountRewards" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.DiscountRewards ? "btn-info" : "btn-outline-info")">Discount Rewards</a>
-    <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="FreeItem" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.FreeItem ? "btn-primary" : "btn-outline-primary")">Free Item</a>
-    <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
-</div>
+    <div class="d-flex gap-2 flex-wrap mb-3">
+        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="SelfRedemption"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.SelfRedemption ? "btn-success" : "btn-outline-success")"
+           hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = Model.LoyaltyProgramId, filter = "SelfRedemption" })"
+           hx-target="#loyalty-reward-tiers-workspace-shell"
+           hx-swap="outerHTML">Self Redemption</a>
+        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="MissingDescription"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.MissingDescription ? "btn-warning" : "btn-outline-warning")"
+           hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = Model.LoyaltyProgramId, filter = "MissingDescription" })"
+           hx-target="#loyalty-reward-tiers-workspace-shell"
+           hx-swap="outerHTML">Missing Description</a>
+        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="DiscountRewards"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.DiscountRewards ? "btn-info" : "btn-outline-info")"
+           hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = Model.LoyaltyProgramId, filter = "DiscountRewards" })"
+           hx-target="#loyalty-reward-tiers-workspace-shell"
+           hx-swap="outerHTML">Discount Rewards</a>
+        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" asp-route-filter="FreeItem"
+           class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.DTOs.LoyaltyRewardTierQueueFilter.FreeItem ? "btn-primary" : "btn-outline-primary")"
+           hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = Model.LoyaltyProgramId, filter = "FreeItem" })"
+           hx-target="#loyalty-reward-tiers-workspace-shell"
+           hx-swap="outerHTML">Free Item</a>
+        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = Model.LoyaltyProgramId })"
+           hx-target="#loyalty-reward-tiers-workspace-shell"
+           hx-swap="outerHTML">Clear Queue Filters</a>
+    </div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
@@ -105,4 +136,5 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId"></pager>
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId"></pager>
+</div>

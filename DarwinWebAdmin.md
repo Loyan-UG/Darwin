@@ -102,6 +102,13 @@ HTMX is the default pattern for server-driven interaction.
 - swapped fragments must reinitialize Bootstrap affordances
 - do not scatter one-off client-side refresh code when the layout can coordinate it centrally
 
+### Standard interaction pattern
+
+- queue/list screens should render as a `workspace shell`
+- create/edit/assignment flows should render as an `editor shell`
+- GET entry points should be HTMX-aware, not only POST validation rerenders
+- successful POSTs should prefer `RedirectOrHtmx`-style return paths so operators stay inside the current workflow whenever possible
+
 ## 7. Business Onboarding Workflows
 
 Business onboarding is a near-term operational requirement and should be documented as a real workflow, not only entity CRUD.
@@ -129,6 +136,9 @@ Target workflow:
 - `Completed foundation`: the same subscription workspace now also surfaces provider invoice history with queue-style triage for open/paid/draft/uncollectible cases, hosted/PDF visibility, and direct payment follow-up links so finance support is not trapped in Stripe or external billing pages
 - `Completed foundation`: the same subscription invoice workspace now also supports `Overdue` and `PDF Missing` triage plus a direct refund-queue handoff, so subscription billing support can separate collection follow-up from provider-document gaps inside WebAdmin
 - `Completed foundation`: the business subscription workspace and its invoice queue now also support HTMX-driven load, filtering, and cancel-at-period-end update paths, so subscription support no longer falls back to older full-page refresh behavior
+- `Completed foundation`: the same subscription invoice queue now also supports HTMX-driven quick triage subsets for open, overdue, PDF-missing, Stripe, and uncollectible invoice cases, so monthly billing support can jump directly into the right subset without rebuilding filters manually
+- `Completed foundation`: the main business-subscription workspace now also exposes direct triage handoff actions for open, overdue, PDF-missing, and uncollectible invoice queues, so monthly billing support can jump from summary signals into the right follow-up queue immediately
+- `Completed foundation`: navigation between the main business-subscription workspace and the subscription-invoice queue now also stays inside the HTMX workflow, so billing triage can move between summary and invoice-detail queues without dropping back to older full-page navigation
 - `Completed foundation`: subscription-plan handoff links are now business-aware and plan-aware, so admins can start or upgrade a business against a specific monthly plan from WebAdmin instead of only opening a generic external billing website
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
 - `Decision made`: phase-1 owner onboarding supports both assigning an existing platform user and invitation-first owner creation
@@ -165,9 +175,15 @@ WebAdmin should support or coordinate:
 - `In Progress`: invite issuance/reissue/revoke now exists for business onboarding
 - `Completed`: WebAdmin now supports admin-triggered password reset email, lock/unlock, email-confirm override, and activation-email resend from the user edit workflow
 - `Completed`: the same activation/reset/lock/unlock support actions are now available directly inside the business-member workspace, which removes a major operator detour during onboarding troubleshooting
+- `Completed foundation`: the users queue now also supports in-place activation, lock, and unlock actions from list rows, so common identity-support triage no longer has to leave the HTMX workspace to complete routine account-state changes
+- `Completed foundation`: user-role assignment now also supports HTMX-aware entry and return paths from both the users queue and the user editor, so access-governance changes can stay inside the newer server-rendered workflow instead of detouring through separate full-page navigation
 - `Completed foundation`: the same business-member workspace now also exposes staff access badge preview/refresh, so support can mirror the rotating QR badge used in `Darwin.Mobile.Business`
 - `Completed foundation`: selective delegation is now enforced in both controller authorization and view affordances, so support operators can work with invitations and member support without inheriting approval, archive, location, or owner-management powers
 - `Completed foundation`: user create/edit, change-email, change-password, role-assignment, role create/edit, and permission create/edit flows now all render through HTMX-aware shell helpers on initial load as well as validation rerender, so the access-management workspace stays aligned with the newer server-rendered + HTMX admin interaction model
+- `Completed foundation`: the users list workspace now also supports HTMX-aware search, filter, page-size changes, and lifecycle subset navigation, so identity triage no longer falls back to older full-page list refreshes
+- `Completed foundation`: the roles and permissions list workspaces now also support HTMX-aware search, filter, and page-size changes, so access-governance triage stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
+- `Completed foundation`: the roles and permissions queues now also open create/edit and permission-maintenance flows through HTMX-aware entry paths, and their back navigation stays inside the same server-rendered workflow instead of bouncing through older full-page routes
+- `Completed foundation`: role-permission assignment now also has an HTMX-safe editor shell, so permission-binding updates no longer depend only on the older encoded full-page editor
 - `Completed`: the business-member edit flow now supports a controlled `FullAdmin` override for the "last active owner" rule, with mandatory reason capture, explicit danger-state UI, and persisted audit records
 - `Completed`: owner-override audit history is now visible inside the business workspace, so sensitive ownership exceptions are reviewable without querying the database directly
 - `Completed foundation`: the platform now has public confirm-email token endpoints, so admin activation support is no longer only a placeholder
@@ -472,6 +488,7 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: billing plans now have a dedicated WebAdmin workspace with queue filters for active, inactive, trial, missing-feature, and in-use plans
 - `Completed foundation`: the billing-plan workspace now includes operational summary cards and playbooks so plan-catalog hygiene can be reviewed before subscription handoff or business support changes are made
 - `Completed foundation`: operators can now create and edit billing plans directly from WebAdmin, including pricing cadence, trial duration, activation state, and phase-1 features metadata
+- `Completed foundation`: the billing-plan workspace now also behaves as an HTMX-aware queue, so subscription-catalog search, filter, and queue triage stay inside the newer server-rendered workflow instead of falling back to older full-page list refreshes
 
 ## 24. CRM Segment Ops Progress
 
@@ -512,3 +529,5 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: loyalty point-adjustment now supports the standard HTMX shell pattern so support-led balance remediation stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
 - `Completed foundation`: loyalty account-details now support HTMX-aware suspend, activate, and pending-redemption confirmation actions so the main support workspace no longer drops back to older full-page post/redirect behavior
 - `Completed foundation`: loyalty account and redemption list workspaces now support HTMX-aware filtering and subset navigation so queue triage stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
+- `Completed foundation`: loyalty campaign and scan-session list workspaces now support HTMX-aware filtering, queue subset navigation, and in-place campaign activation, so mobile loyalty rollout/support stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
+- `Completed foundation`: loyalty program and reward-tier list workspaces now support HTMX-aware filtering and queue navigation, so program-setup and reward-catalog triage stay aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model

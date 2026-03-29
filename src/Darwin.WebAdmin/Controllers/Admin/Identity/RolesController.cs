@@ -103,7 +103,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     new SelectListItem("100", "100", pageSize == 100),
                 }
             };
-            return View(vm);
+            return RenderIndexWorkspace(vm);
         }
 
         /// <summary>
@@ -272,6 +272,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             return View("Create", vm);
         }
 
+        private IActionResult RenderIndexWorkspace(RolesListItemVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Roles/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
+        }
+
         private IActionResult RenderEditEditor(RoleEditVm vm)
         {
             if (IsHtmxRequest())
@@ -306,32 +316,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Permissions(Guid id, CancellationToken ct = default)
         {
-            var result = await _getRolePerms.HandleAsync(id, ct);
-            if (!result.Succeeded || result.Value is null)
+            var vm = await BuildRolePermissionsVmAsync(id, null, null, ct);
+            if (vm is null)
             {
-                TempData["Error"] = result.Error ?? "Failed to load role permissions.";
+                TempData["Error"] = "Failed to load role permissions.";
                 return RedirectToAction(nameof(Index));
             }
 
-            var dto = result.Value; // DTO shape from Application
-            var vm = new RolePermissionsEditVm
-            {
-                RoleId = dto.RoleId,
-                RoleDisplayName = dto.RoleDisplayName,
-                RowVersion = dto.RowVersion,
-                AllPermissions = dto.AllPermissions.Select(p => new PermissionItemVm
-                {
-                    Id = p.Id,
-                    Key = p.Key,
-                    DisplayName = p.DisplayName,
-                    Description = p.Description,
-                    IsSystem = p.IsSystem,
-                    RowVersion = p.RowVersion
-                }).ToList(),
-                SelectedPermissionIds = dto.PermissionIds.ToList()
-            };
-
-            return View(vm);
+            return RenderPermissionsEditor(vm);
         }
 
         /// <summary>
@@ -342,7 +334,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         public async Task<IActionResult> Permissions(RolePermissionsEditVm vm, CancellationToken ct = default)
         {
             if (!ModelState.IsValid)
-                return View(vm);
+            {
+                var invalidVm = await BuildRolePermissionsVmAsync(vm.RoleId, vm.SelectedPermissionIds, vm.RowVersion, ct);
+                return invalidVm is null ? RedirectToAction(nameof(Index)) : RenderPermissionsEditor(invalidVm);
+            }
 
             var dto = new RolePermissionsUpdateDto
             {
@@ -355,11 +350,53 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded)
             {
                 TempData["Error"] = result.Error ?? "Failed to update role permissions.";
-                return View(vm);
+                var failedVm = await BuildRolePermissionsVmAsync(vm.RoleId, vm.SelectedPermissionIds, vm.RowVersion, ct);
+                return failedVm is null ? RedirectToAction(nameof(Index)) : RenderPermissionsEditor(failedVm);
             }
 
             TempData["Success"] = "Permissions updated.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Permissions), new { id = vm.RoleId });
+        }
+
+        private IActionResult RenderPermissionsEditor(RolePermissionsEditVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Roles/_RolePermissionsEditorShell.cshtml", vm);
+            }
+
+            return View("Permissions", vm);
+        }
+
+        private async Task<RolePermissionsEditVm?> BuildRolePermissionsVmAsync(
+            Guid roleId,
+            IEnumerable<Guid>? selectedPermissionIds,
+            byte[]? rowVersion,
+            CancellationToken ct)
+        {
+            var result = await _getRolePerms.HandleAsync(roleId, ct);
+            if (!result.Succeeded || result.Value is null)
+            {
+                return null;
+            }
+
+            var dto = result.Value;
+            return new RolePermissionsEditVm
+            {
+                RoleId = dto.RoleId,
+                RoleDisplayName = dto.RoleDisplayName,
+                RowVersion = rowVersion ?? dto.RowVersion,
+                AllPermissions = dto.AllPermissions.Select(p => new PermissionItemVm
+                {
+                    Id = p.Id,
+                    Key = p.Key,
+                    DisplayName = p.DisplayName,
+                    Description = p.Description,
+                    IsSystem = p.IsSystem,
+                    RowVersion = p.RowVersion
+                }).ToList(),
+                SelectedPermissionIds = selectedPermissionIds?.ToList() ?? dto.PermissionIds.ToList()
+            };
         }
     }
 }

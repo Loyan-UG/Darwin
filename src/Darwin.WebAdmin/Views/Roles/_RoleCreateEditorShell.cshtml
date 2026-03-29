@@ -43,7 +43,11 @@
         </div>
 
         <div class="text-end">
-            <a asp-action="Index" class="btn btn-outline-secondary"><i class="fa fa-arrow-left"></i> Back</a>
+            <a asp-action="Index"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Roles")"
+               hx-target="#role-editor-shell"
+               hx-swap="outerHTML"><i class="fa fa-arrow-left"></i> Back</a>
             <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
         </div>
     </form>

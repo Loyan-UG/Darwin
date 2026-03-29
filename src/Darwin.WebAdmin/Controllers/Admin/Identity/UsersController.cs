@@ -96,51 +96,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? q = null, UserQueueFilter filter = UserQueueFilter.All, CancellationToken ct = default)
         {
-            // Handler returns application-level items/total; mapping to list VM mirrors RolesController pattern.
-            var (items, total) = await _getUsersPage.HandleAsync(page, pageSize, q, filter, ct);
-            var summary = await _getUserOpsSummary.HandleAsync(ct);
-
-            var vm = new UsersListVm
-            {
-                Page = page,
-                PageSize = pageSize,
-                Total = total,
-                Query = q ?? string.Empty,
-                Filter = filter,
-                Summary = new UserOpsSummaryVm
-                {
-                    TotalCount = summary.TotalCount,
-                    UnconfirmedCount = summary.UnconfirmedCount,
-                    LockedCount = summary.LockedCount,
-                    InactiveCount = summary.InactiveCount,
-                    MobileLinkedCount = summary.MobileLinkedCount
-                },
-                Playbooks = BuildUserSupportPlaybooks(),
-                Items = items.Select(x => new UserListItemVm
-                {
-                    Id = x.Id,
-                    Email = x.Email,
-                    FirstName = x.FirstName,
-                    LastName = x.LastName,
-                    PhoneE164 = x.PhoneE164,
-                    IsActive = x.IsActive,
-                    IsSystem = x.IsSystem,
-                    EmailConfirmed = x.EmailConfirmed,
-                    LockoutEndUtc = x.LockoutEndUtc,
-                    MobileDeviceCount = x.MobileDeviceCount,
-                    RowVersion = x.RowVersion
-                }).ToList(),
-                FilterItems = BuildUserFilterItems(filter),
-                PageSizeItems =
-                [
-                    new SelectListItem("10",  "10",  pageSize == 10),
-                    new SelectListItem("20",  "20",  pageSize == 20),
-                    new SelectListItem("50",  "50",  pageSize == 50),
-                    new SelectListItem("100", "100", pageSize == 100),
-                ]
-            };
-
-            return View(vm);
+            var vm = await BuildUsersListVmAsync(page, pageSize, q, filter, ct);
+            return RenderIndexWorkspace(vm);
         }
 
         private static IEnumerable<SelectListItem> BuildUserFilterItems(UserQueueFilter selectedFilter)
@@ -365,13 +322,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendActivationEmail([FromForm] Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> SendActivationEmail([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
             var userResult = await _getUserWithAddresses.HandleAsync(id, ct);
             if (!userResult.Succeeded || userResult.Value is null)
             {
                 TempData["Error"] = userResult.Error ?? "User not found.";
-                return RedirectOrHtmx(nameof(Edit), new { id });
+                return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
             }
 
             var result = await _requestEmailConfirmation.HandleAsync(
@@ -382,7 +339,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 ? "Activation email sent."
                 : (result.Error ?? "Failed to send activation email.");
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
 
         /// <summary>
@@ -415,14 +372,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Lock([FromForm] Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> Lock([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
             var result = await _lockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? "Account locked."
                 : (result.Error ?? "Failed to lock account.");
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
 
         /// <summary>
@@ -430,14 +387,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Unlock([FromForm] Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> Unlock([FromForm] Guid id, [FromForm] bool returnToIndex = false, [FromForm] string? q = null, [FromForm] UserQueueFilter filter = UserQueueFilter.All, [FromForm] int page = 1, [FromForm] int pageSize = 20, CancellationToken ct = default)
         {
             var result = await _unlockUser.HandleAsync(new UserAdminActionDto { Id = id }, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? "Account unlocked."
                 : (result.Error ?? "Failed to unlock account.");
 
-            return RedirectOrHtmx(nameof(Edit), new { id });
+            return RedirectToUsersWorkspaceOrEdit(id, returnToIndex, q, filter, page, pageSize);
         }
 
 
@@ -690,7 +647,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// Shows all roles and the selection for the specified user.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Roles(Guid id, CancellationToken ct = default)
+        public async Task<IActionResult> Roles(Guid id, bool returnToIndex = false, string? q = null, UserQueueFilter filter = UserQueueFilter.All, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var vm = await BuildUserRolesVmAsync(id, ct);
             if (vm is null)
@@ -698,6 +655,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 TempData["Error"] = "Failed to load user roles.";
                 return RedirectToAction(nameof(Index));
             }
+
+            vm.ReturnToIndex = returnToIndex;
+            vm.Query = q ?? string.Empty;
+            vm.Filter = filter;
+            vm.Page = page;
+            vm.PageSize = pageSize;
 
             return await RenderRolesEditorAsync(vm, ct);
         }
@@ -727,7 +690,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             TempData["Success"] = "User roles updated.";
-            return RedirectOrHtmx(nameof(Edit), new { id = vm.UserId });
+            return await RedirectToUserRolesReturnTargetAsync(vm, ct);
         }
 
         private IActionResult RenderCreateEditor(UserCreateVm vm)
@@ -738,6 +701,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             return View("Create", vm);
+        }
+
+        private IActionResult RenderIndexWorkspace(UsersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Users/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
         }
 
         private IActionResult RenderChangeEmailEditor(UserChangeEmailVm vm)
@@ -783,6 +756,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
 
             hydrated.SelectedRoleIds = vm.SelectedRoleIds?.ToList() ?? new List<Guid>();
             hydrated.RowVersion = vm.RowVersion ?? hydrated.RowVersion;
+            hydrated.ReturnToIndex = vm.ReturnToIndex;
+            hydrated.Query = vm.Query;
+            hydrated.Filter = vm.Filter;
+            hydrated.Page = vm.Page;
+            hydrated.PageSize = vm.PageSize;
 
             if (IsHtmxRequest())
             {
@@ -790,6 +768,32 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             }
 
             return View("Roles", hydrated);
+        }
+
+        private async Task<IActionResult> RedirectToUserRolesReturnTargetAsync(UserRolesEditVm vm, CancellationToken ct)
+        {
+            if (vm.ReturnToIndex)
+            {
+                if (IsHtmxRequest())
+                {
+                    var workspace = await BuildUsersListVmAsync(vm.Page, vm.PageSize, vm.Query, vm.Filter, ct);
+                    return RenderIndexWorkspace(workspace);
+                }
+
+                return RedirectToAction(nameof(Index), new { page = vm.Page, pageSize = vm.PageSize, q = vm.Query, filter = vm.Filter });
+            }
+
+            return RedirectOrHtmx(nameof(Edit), new { id = vm.UserId });
+        }
+
+        private IActionResult RedirectToUsersWorkspaceOrEdit(Guid id, bool returnToIndex, string? q, UserQueueFilter filter, int page, int pageSize)
+        {
+            if (returnToIndex)
+            {
+                return RedirectOrHtmx(nameof(Index), new { page, pageSize, q, filter });
+            }
+
+            return RedirectOrHtmx(nameof(Edit), new { id });
         }
 
         private async Task<UserRolesEditVm?> BuildUserRolesVmAsync(Guid userId, CancellationToken ct)
@@ -816,6 +820,52 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     RowVersion = x.RowVersion
                 }).ToList(),
                 SelectedRoleIds = dto.RoleIds.ToList()
+            };
+        }
+
+        private async Task<UsersListVm> BuildUsersListVmAsync(int page, int pageSize, string? q, UserQueueFilter filter, CancellationToken ct)
+        {
+            var (items, total) = await _getUsersPage.HandleAsync(page, pageSize, q, filter, ct);
+            var summary = await _getUserOpsSummary.HandleAsync(ct);
+
+            return new UsersListVm
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = q ?? string.Empty,
+                Filter = filter,
+                Summary = new UserOpsSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    UnconfirmedCount = summary.UnconfirmedCount,
+                    LockedCount = summary.LockedCount,
+                    InactiveCount = summary.InactiveCount,
+                    MobileLinkedCount = summary.MobileLinkedCount
+                },
+                Playbooks = BuildUserSupportPlaybooks(),
+                Items = items.Select(x => new UserListItemVm
+                {
+                    Id = x.Id,
+                    Email = x.Email,
+                    FirstName = x.FirstName,
+                    LastName = x.LastName,
+                    PhoneE164 = x.PhoneE164,
+                    IsActive = x.IsActive,
+                    IsSystem = x.IsSystem,
+                    EmailConfirmed = x.EmailConfirmed,
+                    LockoutEndUtc = x.LockoutEndUtc,
+                    MobileDeviceCount = x.MobileDeviceCount,
+                    RowVersion = x.RowVersion
+                }).ToList(),
+                FilterItems = BuildUserFilterItems(filter),
+                PageSizeItems =
+                [
+                    new SelectListItem("10",  "10",  pageSize == 10),
+                    new SelectListItem("20",  "20",  pageSize == 20),
+                    new SelectListItem("50",  "50",  pageSize == 50),
+                    new SelectListItem("100", "100", pageSize == 100),
+                ]
             };
         }
 
