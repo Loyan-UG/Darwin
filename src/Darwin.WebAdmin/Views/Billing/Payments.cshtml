@@ -4,12 +4,19 @@
     ViewData["Title"] = "Payments";
 }
 
+<div id="billing-payments-workspace-shell">
 <h1 class="mb-3">Payments</h1>
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Stripe Phase-1 Readiness</span>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-sm btn-outline-secondary">Open Payment Settings</a>
+        <a asp-controller="SiteSettings"
+           asp-action="Edit"
+           asp-fragment="site-settings-payments"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+           hx-target="#billing-payments-workspace-shell"
+           hx-swap="outerHTML">Open Payment Settings</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
@@ -50,7 +57,13 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Tax & Invoicing Readiness</span>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
+        <a asp-controller="SiteSettings"
+           asp-action="Edit"
+           asp-fragment="site-settings-tax"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+           hx-target="#billing-payments-workspace-shell"
+           hx-swap="outerHTML">Open Tax Settings</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
@@ -222,7 +235,12 @@
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Payments" method="get" class="d-flex gap-2">
+    <form asp-action="Payments"
+          method="get"
+          class="d-flex gap-2"
+          hx-get="@Url.Action("Payments", "Billing")"
+          hx-target="#billing-payments-workspace-shell"
+          hx-swap="outerHTML">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search payments">
         <select name="queue" class="form-select">
@@ -237,16 +255,35 @@
             <option value="@PaymentQueueFilter.FailedStripe" selected="@(Model.QueueFilter == PaymentQueueFilter.FailedStripe)">Failed Stripe</option>
         </select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
-        <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Payments"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })"
+           hx-target="#billing-payments-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </form>
     <div class="d-flex gap-2">
-        <a asp-action="Webhooks" class="btn btn-outline-secondary">
+        <a asp-action="Webhooks"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Webhooks", "Billing")"
+           hx-target="#billing-payments-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa fa-broadcast-tower"></i> Webhook Queue
         </a>
-        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-danger">
+        <a asp-action="Refunds"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-outline-danger"
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })"
+           hx-target="#billing-payments-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa fa-rotate-left"></i> Refund Queue
         </a>
-        <a asp-action="CreatePayment" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">
+        <a asp-action="CreatePayment"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-primary"
+           hx-get="@Url.Action("CreatePayment", "Billing", new { businessId = Model.BusinessId })"
+           hx-target="#billing-payments-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa fa-plus"></i> Record Payment
         </a>
     </div>
@@ -362,7 +399,12 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="EditPayment" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="EditPayment"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditPayment", "Billing", new { id = item.Id })"
+                           hx-target="#billing-payments-workspace-shell"
+                           hx-swap="outerHTML">Edit</a>
                         @if (item.OrderId.HasValue)
                         {
                             <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@item.OrderId.Value" asp-route-paymentId="@item.Id" class="btn btn-sm btn-outline-danger">Refund</a>
@@ -388,14 +430,23 @@
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-warning">Pending</a>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Failed" class="btn btn-sm btn-outline-danger">Failed</a>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Refunded" class="btn btn-sm btn-outline-secondary">Refunded</a>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Unlinked" class="btn btn-sm btn-outline-dark">Unlinked</a>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.ProviderLinked" class="btn btn-sm btn-outline-info">Provider-linked</a>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Stripe" class="btn btn-sm btn-outline-primary">Stripe</a>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.MissingProviderRef" class="btn btn-sm btn-outline-warning">Missing Provider Ref</a>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.FailedStripe" class="btn btn-sm btn-outline-danger">Failed Stripe</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Pending" class="btn btn-sm btn-outline-warning"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Pending })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Pending</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Failed" class="btn btn-sm btn-outline-danger"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Failed })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Failed</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Refunded" class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Refunded })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Refunded</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Unlinked" class="btn btn-sm btn-outline-dark"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Unlinked })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Unlinked</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.ProviderLinked" class="btn btn-sm btn-outline-info"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.ProviderLinked })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Provider-linked</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.Stripe" class="btn btn-sm btn-outline-primary"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.Stripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Stripe</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.MissingProviderRef" class="btn btn-sm btn-outline-warning"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.MissingProviderRef })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Missing Provider Ref</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.FailedStripe" class="btn btn-sm btn-outline-danger"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.FailedStripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Failed Stripe</a>
 </div>
 
 <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter"></pager>
+</div>

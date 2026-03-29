@@ -4,6 +4,7 @@
     ViewData["Title"] = "Webhook Deliveries";
 }
 
+<div id="billing-webhooks-workspace-shell">
 <h1 class="mb-3">Webhook Deliveries</h1>
 
 <div class="row g-3 mb-3">
@@ -116,7 +117,12 @@
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Webhooks" method="get" class="d-flex gap-2">
+    <form asp-action="Webhooks"
+          method="get"
+          class="d-flex gap-2"
+          hx-get="@Url.Action("Webhooks", "Billing")"
+          hx-target="#billing-webhooks-workspace-shell"
+          hx-swap="outerHTML">
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search event type, callback, status, or idempotency key">
         <select name="queue" class="form-select">
             <option value="@BillingWebhookDeliveryQueueFilter.All" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.All)">All deliveries</option>
@@ -126,16 +132,62 @@
             <option value="@BillingWebhookDeliveryQueueFilter.RetryPending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.RetryPending)">Retry Pending</option>
         </select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
-        <a asp-action="Webhooks" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Webhooks"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Webhooks", "Billing")"
+           hx-target="#billing-webhooks-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </form>
     <div class="d-flex gap-2">
-        <a asp-action="Payments" class="btn btn-outline-secondary">
+        <a asp-action="Payments"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Payments", "Billing")"
+           hx-target="#billing-webhooks-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa fa-money-bill-wave"></i> Payments
         </a>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-outline-secondary">
+        <a asp-controller="SiteSettings"
+           asp-action="Edit"
+           asp-fragment="site-settings-payments"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+           hx-target="#billing-webhooks-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa fa-sliders"></i> Payment Settings
         </a>
     </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="Webhooks"
+       class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.All ? "btn-dark" : "btn-outline-dark")"
+       hx-get="@Url.Action("Webhooks", "Billing")"
+       hx-target="#billing-webhooks-workspace-shell"
+       hx-swap="outerHTML">All</a>
+    <a asp-action="Webhooks"
+       asp-route-queue="@BillingWebhookDeliveryQueueFilter.Pending"
+       class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.Pending })"
+       hx-target="#billing-webhooks-workspace-shell"
+       hx-swap="outerHTML">Pending</a>
+    <a asp-action="Webhooks"
+       asp-route-queue="@BillingWebhookDeliveryQueueFilter.Failed"
+       class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Failed ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.Failed })"
+       hx-target="#billing-webhooks-workspace-shell"
+       hx-swap="outerHTML">Failed</a>
+    <a asp-action="Webhooks"
+       asp-route-queue="@BillingWebhookDeliveryQueueFilter.Succeeded"
+       class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Succeeded ? "btn-success" : "btn-outline-success")"
+       hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.Succeeded })"
+       hx-target="#billing-webhooks-workspace-shell"
+       hx-swap="outerHTML">Succeeded</a>
+    <a asp-action="Webhooks"
+       asp-route-queue="@BillingWebhookDeliveryQueueFilter.RetryPending"
+       class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.RetryPending ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.RetryPending })"
+       hx-target="#billing-webhooks-workspace-shell"
+       hx-swap="outerHTML">Retry Pending</a>
 </div>
 
 <div class="table-responsive">
@@ -198,3 +250,4 @@
 </div>
 
 <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Webhooks" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter"></pager>
+</div>

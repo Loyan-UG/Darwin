@@ -32,7 +32,12 @@
 
         <div class="col-12">
             <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Create</button>
-            <a asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            <a asp-controller="Users"
+               asp-action="Index"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Users")"
+               hx-target="#user-create-editor-shell"
+               hx-swap="outerHTML">Cancel</a>
         </div>
     </form>
 </div>

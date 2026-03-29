@@ -4,7 +4,9 @@
     ViewData["Title"] = isCreate ? "Create Reward Tier" : "Edit Reward Tier";
 }
 
+<div id="loyalty-reward-tier-editor-shell">
 <h1 class="mb-1">@(isCreate ? "Create Reward Tier" : "Edit Reward Tier")</h1>
 <div class="text-muted mb-3">@Model.ProgramName</div>
 
 <partial name="_RewardTierForm" model="Model" />
+</div>

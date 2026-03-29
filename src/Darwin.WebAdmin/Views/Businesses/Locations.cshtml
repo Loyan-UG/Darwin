@@ -3,21 +3,41 @@
     ViewData["Title"] = "Business Locations";
 }
 
+<div id="business-locations-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-location-dot me-2"></i>Locations</h1>
         <p class="text-muted mb-0">@Model.Business.Name</p>
     </div>
     <div class="d-flex gap-2">
-        <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Back to business</a>
-        <a asp-action="Invitations" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Invitations</a>
-        <a asp-action="CreateLocation" asp-route-businessId="@Model.Business.Id" class="btn btn-primary">
+        <a asp-action="Edit"
+           asp-route-id="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
+           hx-target="#business-locations-workspace-shell"
+           hx-swap="outerHTML">Back to business</a>
+        <a asp-action="Invitations"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-locations-workspace-shell"
+           hx-swap="outerHTML">Invitations</a>
+        <a asp-action="CreateLocation"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-primary"
+           hx-get="@Url.Action("CreateLocation", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-locations-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-plus"></i> Add location
         </a>
     </div>
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get"
+      class="row g-2 mb-3"
+      hx-get="@Url.Action("Locations", "Businesses")"
+      hx-target="#business-locations-workspace-shell"
+      hx-swap="outerHTML">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by name, city or postal code" />
@@ -27,7 +47,12 @@
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-        <a asp-action="Locations" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Locations"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-locations-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </div>
 </form>
 
@@ -111,7 +136,12 @@
                         {
                             <span class="badge text-bg-secondary me-1">Coordinates missing</span>
                         }
-                        <a asp-action="EditLocation" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                        <a asp-action="EditLocation"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("EditLocation", "Businesses", new { id = item.Id })"
+                           hx-target="#business-locations-workspace-shell"
+                           hx-swap="outerHTML">
                             <i class="fa-solid fa-pen"></i> Edit
                         </a>
                         <button type="button"
@@ -144,3 +174,4 @@
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
+</div>

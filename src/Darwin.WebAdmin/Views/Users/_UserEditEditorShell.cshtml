@@ -39,10 +39,24 @@
             }
 
             <div class="d-flex flex-wrap gap-2">
-            <a asp-controller="Users" asp-action="ChangeEmail" asp-route-id="@Model.Id" asp-route-currentEmail="@Model.Email" class="btn btn-outline-secondary">
+            <a asp-controller="Users"
+               asp-action="ChangeEmail"
+               asp-route-id="@Model.Id"
+               asp-route-currentEmail="@Model.Email"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("ChangeEmail", "Users", new { id = Model.Id, currentEmail = Model.Email })"
+               hx-target="#user-edit-editor-shell"
+               hx-swap="outerHTML">
                 <i class="fa fa-envelope"></i> Change Email
             </a>
-            <a asp-controller="Users" asp-action="ChangePassword" asp-route-id="@Model.Id" asp-route-email="@Model.Email" class="btn btn-outline-secondary">
+            <a asp-controller="Users"
+               asp-action="ChangePassword"
+               asp-route-id="@Model.Id"
+               asp-route-email="@Model.Email"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("ChangePassword", "Users", new { id = Model.Id, email = Model.Email })"
+               hx-target="#user-edit-editor-shell"
+               hx-swap="outerHTML">
                 <i class="fa fa-key"></i> Change Password
             </a>
             <a asp-controller="Users"
@@ -156,7 +170,12 @@
 
         <div class="col-12">
             <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Save</button>
-            <a asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+            <a asp-controller="Users"
+               asp-action="Index"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Users")"
+               hx-target="#user-edit-editor-shell"
+               hx-swap="outerHTML">Back</a>
         </div>
     </form>
 

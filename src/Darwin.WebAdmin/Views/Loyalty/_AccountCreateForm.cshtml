@@ -2,7 +2,12 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-        <form asp-action="CreateAccount" method="post" class="row g-3">
+        <form asp-action="CreateAccount"
+              method="post"
+              class="row g-3"
+              hx-post="@Url.Action("CreateAccount", "Loyalty")"
+              hx-target="#loyalty-account-create-editor-shell"
+              hx-swap="outerHTML">
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -26,7 +31,12 @@
 
             <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Create Account</button>
-                <a asp-action="Accounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Cancel</a>
+                <a asp-action="Accounts"
+                   asp-route-businessId="@Model.BusinessId"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Accounts", "Loyalty", new { businessId = Model.BusinessId })"
+                   hx-target="#loyalty-account-create-editor-shell"
+                   hx-swap="outerHTML">Cancel</a>
             </div>
         </form>
     </div>

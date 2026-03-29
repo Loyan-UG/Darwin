@@ -330,7 +330,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Items = items
             };
 
-            return View(vm);
+            return RenderPaymentsWorkspace(vm);
         }
 
         [HttpGet]
@@ -372,7 +372,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Total = deliveries.Total
             };
 
-            return View(vm);
+            return RenderWebhooksWorkspace(vm);
         }
 
         [HttpGet]
@@ -425,7 +425,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Items = items
             };
 
-            return View(vm);
+            return RenderRefundsWorkspace(vm);
         }
 
         private async Task<StripeOperationsVm> BuildStripeOperationsVmAsync(CancellationToken ct)
@@ -1502,6 +1502,36 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
 
             return View("Plans", vm);
+        }
+
+        private IActionResult RenderPaymentsWorkspace(PaymentsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/Payments.cshtml", vm);
+            }
+
+            return View("Payments", vm);
+        }
+
+        private IActionResult RenderWebhooksWorkspace(BillingWebhooksListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/Webhooks.cshtml", vm);
+            }
+
+            return View("Webhooks", vm);
+        }
+
+        private IActionResult RenderRefundsWorkspace(RefundsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/Refunds.cshtml", vm);
+            }
+
+            return View("Refunds", vm);
         }
 
         private IActionResult RenderBillingPlanEditor(BillingPlanEditVm vm, bool isCreate)

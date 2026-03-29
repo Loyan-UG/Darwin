@@ -10,8 +10,10 @@
             <div class="text-muted">@Model.ProgramName</div>
         </div>
         <div class="d-flex gap-2">
-            <a asp-action="EditProgram" asp-route-id="@Model.LoyaltyProgramId" class="btn btn-outline-secondary">Program</a>
-            <a asp-action="CreateRewardTier" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" class="btn btn-primary">New Reward Tier</a>
+            <a asp-action="EditProgram" asp-route-id="@Model.LoyaltyProgramId" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("EditProgram", "Loyalty", new { id = Model.LoyaltyProgramId })" hx-target="#loyalty-reward-tiers-workspace-shell" hx-swap="outerHTML">Program</a>
+            <a asp-action="CreateRewardTier" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" class="btn btn-primary"
+               hx-get="@Url.Action("CreateRewardTier", "Loyalty", new { loyaltyProgramId = Model.LoyaltyProgramId })" hx-target="#loyalty-reward-tiers-workspace-shell" hx-swap="outerHTML">New Reward Tier</a>
         </div>
     </div>
 
@@ -120,7 +122,8 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="EditRewardTier" asp-route-id="@item.Id" asp-route-loyaltyProgramId="@item.LoyaltyProgramId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="EditRewardTier" asp-route-id="@item.Id" asp-route-loyaltyProgramId="@item.LoyaltyProgramId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditRewardTier", "Loyalty", new { id = item.Id, loyaltyProgramId = item.LoyaltyProgramId })" hx-target="#loyalty-reward-tiers-workspace-shell" hx-swap="outerHTML">Edit</a>
                         <form asp-action="DeleteRewardTier" method="post" class="d-inline">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.Id" />

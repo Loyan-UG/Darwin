@@ -21,7 +21,12 @@
         <partial name="_PaymentForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+            <a asp-action="Payments"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })"
+               hx-target="#billing-payment-editor-shell"
+               hx-swap="outerHTML">Back</a>
         </div>
     </form>
 </div>

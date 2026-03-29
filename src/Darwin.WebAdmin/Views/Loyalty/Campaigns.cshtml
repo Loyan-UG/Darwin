@@ -9,7 +9,12 @@
             <h1 class="mb-1">Loyalty Campaigns</h1>
             <div class="text-muted">Business mobile campaign management and activation control.</div>
         </div>
-        <a asp-action="CreateCampaign" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Campaign</a>
+        <a asp-action="CreateCampaign"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-primary"
+           hx-get="@Url.Action("CreateCampaign", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-campaigns-workspace-shell"
+           hx-swap="outerHTML">New Campaign</a>
     </div>
 
 <div class="row g-3 mb-4">
@@ -122,7 +127,13 @@
                         <div class="small text-muted">to @(item.EndsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                     </td>
                     <td class="text-end">
-                        <a asp-action="EditCampaign" asp-route-id="@item.Id" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="EditCampaign"
+                           asp-route-id="@item.Id"
+                           asp-route-businessId="@item.BusinessId"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditCampaign", "Loyalty", new { id = item.Id, businessId = item.BusinessId })"
+                           hx-target="#loyalty-campaigns-workspace-shell"
+                           hx-swap="outerHTML">Edit</a>
                         <form asp-action="SetCampaignActivation"
                               method="post"
                               class="d-inline"

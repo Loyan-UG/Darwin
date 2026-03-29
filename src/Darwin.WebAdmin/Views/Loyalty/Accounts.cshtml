@@ -32,11 +32,36 @@
     </form>
 
     <div class="d-flex gap-2 flex-wrap mb-3">
-        <a asp-action="CreateAccount" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-primary">Create Account</a>
-        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Programs</a>
-        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Campaigns</a>
-        <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Redemptions</a>
-        <a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Scan Sessions</a>
+        <a asp-action="CreateAccount"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-primary"
+           hx-get="@Url.Action("CreateAccount", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-accounts-workspace-shell"
+           hx-swap="outerHTML">Create Account</a>
+        <a asp-action="Programs"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Programs", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-accounts-workspace-shell"
+           hx-swap="outerHTML">Programs</a>
+        <a asp-action="Campaigns"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-accounts-workspace-shell"
+           hx-swap="outerHTML">Campaigns</a>
+        <a asp-action="Redemptions"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Redemptions", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-accounts-workspace-shell"
+           hx-swap="outerHTML">Redemptions</a>
+        <a asp-action="ScanSessions"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("ScanSessions", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-accounts-workspace-shell"
+           hx-swap="outerHTML">Scan Sessions</a>
     </div>
 
     <div class="d-flex gap-2 flex-wrap mb-3">
@@ -84,8 +109,18 @@
                         <td>@item.LifetimePoints</td>
                         <td>@(item.LastAccrualAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                         <td class="text-end">
-                            <a asp-action="AccountDetails" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Details</a>
-                            <a asp-action="AdjustPoints" asp-route-loyaltyAccountId="@item.Id" class="btn btn-sm btn-outline-secondary">Adjust</a>
+                            <a asp-action="AccountDetails"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-outline-primary"
+                               hx-get="@Url.Action("AccountDetails", "Loyalty", new { id = item.Id })"
+                               hx-target="#loyalty-accounts-workspace-shell"
+                               hx-swap="outerHTML">Details</a>
+                            <a asp-action="AdjustPoints"
+                               asp-route-loyaltyAccountId="@item.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("AdjustPoints", "Loyalty", new { loyaltyAccountId = item.Id })"
+                               hx-target="#loyalty-accounts-workspace-shell"
+                               hx-swap="outerHTML">Adjust</a>
                         </td>
                     </tr>
                 }

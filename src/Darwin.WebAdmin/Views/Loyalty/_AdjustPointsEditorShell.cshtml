@@ -3,14 +3,20 @@
     ViewData["Title"] = "Adjust Loyalty Points";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h1 class="mb-1">Adjust Loyalty Points</h1>
-        <div class="text-muted">@Model.AccountLabel</div>
+<div id="loyalty-adjust-points-editor-shell">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-1">Adjust Loyalty Points</h1>
+            <div class="text-muted">@Model.AccountLabel</div>
+        </div>
     </div>
-</div>
 
-<form asp-action="AdjustPoints" method="post" class="row g-3">
+<form asp-action="AdjustPoints"
+      method="post"
+      class="row g-3"
+      hx-post="@Url.Action("AdjustPoints", "Loyalty")"
+      hx-target="#loyalty-adjust-points-editor-shell"
+      hx-swap="outerHTML">
     @Html.AntiForgeryToken()
     <input asp-for="LoyaltyAccountId" type="hidden" />
     <input asp-for="BusinessId" type="hidden" />
@@ -33,6 +39,12 @@
     </div>
     <div class="col-12 d-flex gap-2">
         <button type="submit" class="btn btn-primary">Apply</button>
-        <a asp-action="AccountDetails" asp-route-id="@Model.LoyaltyAccountId" class="btn btn-outline-secondary">Back</a>
+        <a asp-action="AccountDetails"
+           asp-route-id="@Model.LoyaltyAccountId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("AccountDetails", "Loyalty", new { id = Model.LoyaltyAccountId })"
+           hx-target="#loyalty-adjust-points-editor-shell"
+           hx-swap="outerHTML">Back</a>
     </div>
 </form>
+</div>

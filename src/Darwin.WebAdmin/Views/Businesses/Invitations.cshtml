@@ -5,25 +5,50 @@
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
+<div id="business-invitations-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-envelope me-2"></i>Business Invitations</h1>
         <p class="text-muted mb-0">@Model.Business.Name</p>
     </div>
     <div class="d-flex gap-2">
-        <a asp-action="Members" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Members</a>
+        <a asp-action="Members"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-invitations-workspace-shell"
+           hx-swap="outerHTML">Members</a>
         @if (isFullAdmin)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Back to business</a>
-            <a asp-action="Setup" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Setup</a>
+            <a asp-action="Edit"
+               asp-route-id="@Model.Business.Id"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
+               hx-target="#business-invitations-workspace-shell"
+               hx-swap="outerHTML">Back to business</a>
+            <a asp-action="Setup"
+               asp-route-id="@Model.Business.Id"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
+               hx-target="#business-invitations-workspace-shell"
+               hx-swap="outerHTML">Setup</a>
         }
-        <a asp-action="CreateInvitation" asp-route-businessId="@Model.Business.Id" class="btn btn-primary">
+        <a asp-action="CreateInvitation"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-primary"
+           hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-invitations-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-plus"></i> Invite user
         </a>
     </div>
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get"
+      class="row g-2 mb-3"
+      hx-get="@Url.Action("Invitations", "Businesses")"
+      hx-target="#business-invitations-workspace-shell"
+      hx-swap="outerHTML">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by email, role or status" />
@@ -33,7 +58,12 @@
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-        <a asp-action="Invitations" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Invitations"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-invitations-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </div>
 </form>
 
@@ -89,7 +119,12 @@
                     <td class="text-end">
                         @if (item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Pending || item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Expired)
                         {
-                            <form asp-action="ResendInvitation" method="post" class="d-inline">
+                            <form asp-action="ResendInvitation"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@Url.Action("ResendInvitation", "Businesses")"
+                                  hx-target="#business-invitations-workspace-shell"
+                                  hx-swap="outerHTML">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -100,7 +135,12 @@
                         }
                         @if (item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Pending || item.Status == Darwin.Domain.Enums.BusinessInvitationStatus.Expired)
                         {
-                            <form asp-action="RevokeInvitation" method="post" class="d-inline">
+                            <form asp-action="RevokeInvitation"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@Url.Action("RevokeInvitation", "Businesses")"
+                                  hx-target="#business-invitations-workspace-shell"
+                                  hx-swap="outerHTML">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -126,3 +166,4 @@
        asp-route-query="@Model.Query"
        asp-route-filter="@Model.Filter">
 </pager>
+</div>

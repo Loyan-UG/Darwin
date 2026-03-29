@@ -5,19 +5,45 @@
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
+<div id="business-members-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-user-group me-2"></i>Business Members</h1>
         <p class="text-muted mb-0">@Model.Business.Name</p>
     </div>
     <div class="d-flex gap-2">
-        <a asp-action="Invitations" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Invitations</a>
+        <a asp-action="Invitations"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-members-workspace-shell"
+           hx-swap="outerHTML">Invitations</a>
         @if (isFullAdmin)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Back to business</a>
-            <a asp-action="Setup" asp-route-id="@Model.Business.Id" class="btn btn-outline-secondary">Setup</a>
-            <a asp-action="OwnerOverrideAudits" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Owner override audit</a>
-            <a asp-action="CreateMember" asp-route-businessId="@Model.Business.Id" class="btn btn-primary">
+            <a asp-action="Edit"
+               asp-route-id="@Model.Business.Id"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Edit", "Businesses", new { id = Model.Business.Id })"
+               hx-target="#business-members-workspace-shell"
+               hx-swap="outerHTML">Back to business</a>
+            <a asp-action="Setup"
+               asp-route-id="@Model.Business.Id"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Business.Id })"
+               hx-target="#business-members-workspace-shell"
+               hx-swap="outerHTML">Setup</a>
+            <a asp-action="OwnerOverrideAudits"
+               asp-route-businessId="@Model.Business.Id"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("OwnerOverrideAudits", "Businesses", new { businessId = Model.Business.Id })"
+               hx-target="#business-members-workspace-shell"
+               hx-swap="outerHTML">Owner override audit</a>
+            <a asp-action="CreateMember"
+               asp-route-businessId="@Model.Business.Id"
+               class="btn btn-primary"
+               hx-get="@Url.Action("CreateMember", "Businesses", new { businessId = Model.Business.Id })"
+               hx-target="#business-members-workspace-shell"
+               hx-swap="outerHTML">
                 <i class="fa-solid fa-plus"></i> Assign member
             </a>
         }
@@ -38,7 +64,11 @@
     </div>
 }
 
-<form method="get" class="row g-2 mb-3">
+<form method="get"
+      class="row g-2 mb-3"
+      hx-get="@Url.Action("Members", "Businesses")"
+      hx-target="#business-members-workspace-shell"
+      hx-swap="outerHTML">
     <input type="hidden" name="businessId" value="@Model.Business.Id" />
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by user name, email or role" />
@@ -48,7 +78,12 @@
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-        <a asp-action="Members" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Members"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-members-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </div>
 </form>
 
@@ -104,15 +139,31 @@
                     </td>
                     <td class="text-end">
                         <div class="d-flex flex-wrap justify-content-end gap-2">
-                            <a asp-action="StaffAccessBadge" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <a asp-action="StaffAccessBadge"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("StaffAccessBadge", "Businesses", new { id = item.Id })"
+                               hx-target="#business-members-workspace-shell"
+                               hx-swap="outerHTML">
                                 <i class="fa-solid fa-qrcode"></i> Badge
                             </a>
                             @if (isFullAdmin)
                             {
-                                <a asp-action="EditMember" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <a asp-action="EditMember"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@Url.Action("EditMember", "Businesses", new { id = item.Id })"
+                                   hx-target="#business-members-workspace-shell"
+                                   hx-swap="outerHTML">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </a>
-                                <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-secondary">
+                                <a asp-controller="Users"
+                                   asp-action="Edit"
+                                   asp-route-id="@item.UserId"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "Users", new { id = item.UserId })"
+                                   hx-target="#business-members-workspace-shell"
+                                   hx-swap="outerHTML">
                                     <i class="fa-solid fa-user"></i> Open User
                                 </a>
                                 <button type="button"
@@ -131,7 +182,12 @@
                         <div class="d-flex flex-wrap justify-content-end gap-2 mt-2">
                             @if (!item.EmailConfirmed)
                             {
-                                <form asp-action="SendMemberActivationEmail" method="post" class="d-inline">
+                                <form asp-action="SendMemberActivationEmail"
+                                      method="post"
+                                      class="d-inline"
+                                      hx-post="@Url.Action("SendMemberActivationEmail", "Businesses")"
+                                      hx-target="#business-members-workspace-shell"
+                                      hx-swap="outerHTML">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -139,7 +195,12 @@
                                         <i class="fa-solid fa-paper-plane"></i> Send activation
                                     </button>
                                 </form>
-                                <form asp-action="ConfirmMemberEmail" method="post" class="d-inline">
+                                <form asp-action="ConfirmMemberEmail"
+                                      method="post"
+                                      class="d-inline"
+                                      hx-post="@Url.Action("ConfirmMemberEmail", "Businesses")"
+                                      hx-target="#business-members-workspace-shell"
+                                      hx-swap="outerHTML">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -148,7 +209,12 @@
                                     </button>
                                 </form>
                             }
-                            <form asp-action="SendMemberPasswordReset" method="post" class="d-inline">
+                            <form asp-action="SendMemberPasswordReset"
+                                  method="post"
+                                  class="d-inline"
+                                  hx-post="@Url.Action("SendMemberPasswordReset", "Businesses")"
+                                  hx-target="#business-members-workspace-shell"
+                                  hx-swap="outerHTML">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@item.Id" />
                                 <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -158,7 +224,12 @@
                             </form>
                             @if (item.LockoutEndUtc.HasValue && item.LockoutEndUtc.Value > DateTime.UtcNow)
                             {
-                                <form asp-action="UnlockMemberUser" method="post" class="d-inline">
+                                <form asp-action="UnlockMemberUser"
+                                      method="post"
+                                      class="d-inline"
+                                      hx-post="@Url.Action("UnlockMemberUser", "Businesses")"
+                                      hx-target="#business-members-workspace-shell"
+                                      hx-swap="outerHTML">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -169,7 +240,12 @@
                             }
                             else
                             {
-                                <form asp-action="LockMemberUser" method="post" class="d-inline">
+                                <form asp-action="LockMemberUser"
+                                      method="post"
+                                      class="d-inline"
+                                      hx-post="@Url.Action("LockMemberUser", "Businesses")"
+                                      hx-target="#business-members-workspace-shell"
+                                      hx-swap="outerHTML">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@item.Id" />
                                     <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -198,3 +274,4 @@
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
+</div>

@@ -9,7 +9,12 @@
             <h1 class="mb-1">@(isCreate ? "Create Business Location" : "Edit Business Location")</h1>
             <p class="text-muted mb-0">@Model.Business.Name</p>
         </div>
-        <a asp-action="Locations" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back to locations</a>
+        <a asp-action="Locations"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.BusinessId })"
+           hx-target="#business-location-editor-shell"
+           hx-swap="outerHTML">Back to locations</a>
     </div>
 
     <form asp-action="@(isCreate ? "CreateLocation" : "EditLocation")"

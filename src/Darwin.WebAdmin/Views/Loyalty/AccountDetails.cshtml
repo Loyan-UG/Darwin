@@ -10,8 +10,18 @@
             <div class="text-muted">@Model.UserDisplayName (@Model.UserEmail)</div>
         </div>
         <div class="d-flex gap-2">
-            <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Redemptions</a>
-            <a asp-action="AdjustPoints" asp-route-loyaltyAccountId="@Model.Id" class="btn btn-outline-primary">Adjust Points</a>
+            <a asp-action="Redemptions"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Redemptions", "Loyalty", new { businessId = Model.BusinessId })"
+               hx-target="#loyalty-account-workspace-shell"
+               hx-swap="outerHTML">Redemptions</a>
+            <a asp-action="AdjustPoints"
+               asp-route-loyaltyAccountId="@Model.Id"
+               class="btn btn-outline-primary"
+               hx-get="@Url.Action("AdjustPoints", "Loyalty", new { loyaltyAccountId = Model.Id })"
+               hx-target="#loyalty-account-workspace-shell"
+               hx-swap="outerHTML">Adjust Points</a>
             @if (Model.Status == Darwin.Domain.Enums.LoyaltyAccountStatus.Active)
             {
                 <form asp-action="SuspendAccount"
@@ -40,7 +50,12 @@
                     <button type="submit" class="btn btn-outline-success">Activate</button>
                 </form>
             }
-            <a asp-action="Accounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+            <a asp-action="Accounts"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Accounts", "Loyalty", new { businessId = Model.BusinessId })"
+               hx-target="#loyalty-account-workspace-shell"
+               hx-swap="outerHTML">Back</a>
         </div>
     </div>
 

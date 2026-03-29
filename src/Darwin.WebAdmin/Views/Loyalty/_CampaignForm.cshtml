@@ -1,6 +1,11 @@
 @model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignEditVm
 
-<form asp-action="@(ViewData["IsCreate"] as bool? == true ? "CreateCampaign" : "EditCampaign")" method="post" class="row g-3">
+<form asp-action="@(ViewData["IsCreate"] as bool? == true ? "CreateCampaign" : "EditCampaign")"
+      method="post"
+      class="row g-3"
+      hx-post="@Url.Action(ViewData["IsCreate"] as bool? == true ? "CreateCampaign" : "EditCampaign", "Loyalty")"
+      hx-target="#loyalty-campaign-editor-shell"
+      hx-swap="outerHTML">
     @Html.AntiForgeryToken()
     @if (ViewData["IsCreate"] as bool? != true)
     {
@@ -65,6 +70,11 @@
     </div>
     <div class="col-12 d-flex gap-2">
         <button type="submit" class="btn btn-primary">@(ViewData["IsCreate"] as bool? == true ? "Create" : "Save")</button>
-        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+        <a asp-action="Campaigns"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId })"
+           hx-target="#loyalty-campaign-editor-shell"
+           hx-swap="outerHTML">Back</a>
     </div>
 </form>

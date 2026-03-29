@@ -15,7 +15,12 @@
                hx-get="@Url.Action("Index", "Users", new { filter = "Inactive" })" hx-target="#users-workspace-shell" hx-swap="outerHTML">Inactive</a>
             <a asp-controller="Users" asp-action="Index" asp-route-filter="MobileLinked" class="btn btn-outline-info btn-sm"
                hx-get="@Url.Action("Index", "Users", new { filter = "MobileLinked" })" hx-target="#users-workspace-shell" hx-swap="outerHTML">Mobile-linked</a>
-            <a asp-controller="Users" asp-action="Create" class="btn btn-primary">
+            <a asp-controller="Users"
+               asp-action="Create"
+               class="btn btn-primary"
+               hx-get="@Url.Action("Create", "Users")"
+               hx-target="#users-workspace-shell"
+               hx-swap="outerHTML">
                 <i class="fa fa-plus"></i> Create
             </a>
         </div>
@@ -156,7 +161,13 @@
                             }
                         </td>
                         <td class="text-end">
-                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">
+                            <a asp-controller="Users"
+                               asp-action="Edit"
+                               asp-route-id="@u.Id"
+                               class="btn btn-sm btn-outline-primary"
+                               hx-get="@Url.Action("Edit", "Users", new { id = u.Id })"
+                               hx-target="#users-workspace-shell"
+                               hx-swap="outerHTML">
                                 <i class="fa fa-pen"></i> Edit
                             </a>
 
@@ -165,7 +176,10 @@
                                asp-action="ChangeEmail"
                                asp-route-id="@u.Id"
                                asp-route-currentEmail="@u.Email"
-                               class="btn btn-sm btn-outline-secondary">
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("ChangeEmail", "Users", new { id = u.Id, currentEmail = u.Email })"
+                               hx-target="#users-workspace-shell"
+                               hx-swap="outerHTML">
                                 <i class="fa fa-envelope"></i> Email
                             </a>
 
@@ -174,7 +188,10 @@
                                asp-action="ChangePassword"
                                asp-route-id="@u.Id"
                                asp-route-email="@u.Email"
-                               class="btn btn-sm btn-outline-secondary">
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("ChangePassword", "Users", new { id = u.Id, email = u.Email })"
+                               hx-target="#users-workspace-shell"
+                               hx-swap="outerHTML">
                                 <i class="fa fa-key"></i> Password
                             </a>
 

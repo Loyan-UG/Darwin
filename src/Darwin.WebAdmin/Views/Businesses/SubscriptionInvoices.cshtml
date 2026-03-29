@@ -19,13 +19,22 @@
            hx-swap="outerHTML">
             <i class="fa-solid fa-credit-card"></i> Subscription
         </a>
-        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
+        <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id })"
+           hx-target="#business-subscription-invoices-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-money-bill-wave"></i> Payments
         </a>
-        <a asp-controller="Billing" asp-action="Refunds" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-danger">
+        <a asp-controller="Billing" asp-action="Refunds" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-danger"
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.Business.Id })"
+           hx-target="#business-subscription-invoices-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-rotate-left"></i> Refund Queue
         </a>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-outline-secondary">
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+           hx-target="#business-subscription-invoices-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-sliders"></i> Payment Settings
         </a>
     </div>
@@ -226,7 +235,10 @@
                             {
                                 <a href="@item.PdfUrl" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">PDF</a>
                             }
-                            <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" asp-route-q="@item.ProviderInvoiceId" class="btn btn-outline-secondary">Payments</a>
+                            <a asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.Business.Id" asp-route-q="@item.ProviderInvoiceId" class="btn btn-outline-secondary"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.Business.Id, q = item.ProviderInvoiceId })"
+                               hx-target="#business-subscription-invoices-workspace-shell"
+                               hx-swap="outerHTML">Payments</a>
                         </div>
                     </td>
                 </tr>

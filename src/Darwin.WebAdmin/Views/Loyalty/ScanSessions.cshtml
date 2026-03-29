@@ -10,8 +10,10 @@
             <div class="text-muted">Recent QR, accrual, and redemption flow diagnostics for business mobile operations.</div>
         </div>
         <div class="d-flex gap-2">
-            <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Redemptions</a>
-            <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-outline-secondary">Mobile Ops</a>
+            <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Redemptions", "Loyalty", new { businessId = Model.BusinessId })" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">Redemptions</a>
+            <a asp-controller="MobileOperations" asp-action="Index" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "MobileOperations")" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML">Mobile Ops</a>
         </div>
     </div>
 

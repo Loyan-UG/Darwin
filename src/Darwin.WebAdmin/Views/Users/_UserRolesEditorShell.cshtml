@@ -84,7 +84,13 @@
                     }
                     else
                     {
-                        <a asp-controller="Users" asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-outline-secondary">
+                        <a asp-controller="Users"
+                           asp-action="Edit"
+                           asp-route-id="@Model.UserId"
+                           class="btn btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "Users", new { id = Model.UserId })"
+                           hx-target="#user-roles-editor-shell"
+                           hx-swap="outerHTML">
                             <i class="fa fa-arrow-left"></i> Back
                         </a>
                     }

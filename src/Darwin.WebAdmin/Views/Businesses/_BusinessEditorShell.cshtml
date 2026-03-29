@@ -13,19 +13,44 @@
         @if (!isCreate)
         {
             <div class="d-flex gap-2">
-                <a asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="Members"
+                   asp-route-businessId="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-user-group"></i> Members
                 </a>
-                <a asp-action="Subscription" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="Subscription"
+                   asp-route-businessId="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-credit-card"></i> Subscription
                 </a>
-                <a asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="Setup"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-sliders"></i> Setup
                 </a>
-                <a asp-action="Locations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="Locations"
+                   asp-route-businessId="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-location-dot"></i> Locations
                 </a>
-                <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="Invitations"
+                   asp-route-businessId="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-envelope"></i> Invitations
                 </a>
             </div>
@@ -182,13 +207,23 @@
             <div class="d-flex flex-wrap gap-2 mt-3">
                 @if (Model.ActiveOwnerCount == 0)
                 {
-                    <a asp-action="CreateMember" asp-route-businessId="@Model.Id" class="btn btn-outline-primary">
+                    <a asp-action="CreateMember"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-outline-primary"
+                       hx-get="@Url.Action("CreateMember", "Businesses", new { businessId = Model.Id })"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML">
                         <i class="fa-solid fa-user-plus"></i> Assign Owner
                     </a>
                 }
                 @if (Model.PrimaryLocationCount == 0)
                 {
-                    <a asp-action="CreateLocation" asp-route-businessId="@Model.Id" class="btn btn-outline-primary">
+                    <a asp-action="CreateLocation"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-outline-primary"
+                       hx-get="@Url.Action("CreateLocation", "Businesses", new { businessId = Model.Id })"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML">
                         <i class="fa-solid fa-location-dot"></i> Add Primary Location
                     </a>
                 }
@@ -198,18 +233,38 @@
                         <i class="fa-solid fa-pen-to-square"></i> Complete Business Profile
                     </a>
                 }
-                <a asp-action="CreateInvitation" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="CreateInvitation"
+                   asp-route-businessId="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("CreateInvitation", "Businesses", new { businessId = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-envelope"></i> Invite User
                 </a>
-                <a asp-action="Subscription" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="Subscription"
+                   asp-route-businessId="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Subscription", "Businesses", new { businessId = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-credit-card"></i> Review Subscription
                 </a>
-                <a asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                <a asp-action="Setup"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
+                   hx-target="#business-editor-shell"
+                   hx-swap="outerHTML">
                     <i class="fa-solid fa-sliders"></i> Open Setup Workspace
                 </a>
                 @if (Model.InvitationCount > 0)
                 {
-                    <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">
+                    <a asp-action="Invitations"
+                       asp-route-businessId="@Model.Id"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                       hx-target="#business-editor-shell"
+                       hx-swap="outerHTML">
                         <i class="fa-solid fa-list-check"></i> Review Invitations
                     </a>
                 }

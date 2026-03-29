@@ -22,9 +22,12 @@
                hx-swap="outerHTML">Reset</a>
         </form>
         <div class="d-flex gap-2">
-            <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Campaigns</a>
-            <a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Scan Sessions</a>
-            <a asp-action="CreateProgram" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Program</a>
+            <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Campaigns", "Loyalty", new { businessId = Model.BusinessId })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">Campaigns</a>
+            <a asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("ScanSessions", "Loyalty", new { businessId = Model.BusinessId })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">Scan Sessions</a>
+            <a asp-action="CreateProgram" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
+               hx-get="@Url.Action("CreateProgram", "Loyalty", new { businessId = Model.BusinessId })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">New Program</a>
         </div>
     </div>
 
@@ -125,8 +128,10 @@
                     </td>
                     <td>@(item.ModifiedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                     <td class="text-end">
-                        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@item.Id" class="btn btn-sm btn-outline-primary">Rewards</a>
-                        <a asp-action="EditProgram" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="RewardTiers" asp-route-loyaltyProgramId="@item.Id" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = item.Id })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">Rewards</a>
+                        <a asp-action="EditProgram" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditProgram", "Loyalty", new { id = item.Id })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">Edit</a>
                         <form asp-action="DeleteProgram" method="post" class="d-inline">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.Id" />

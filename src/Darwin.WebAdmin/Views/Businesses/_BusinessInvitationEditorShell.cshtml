@@ -6,7 +6,12 @@
             <h1 class="mb-1">Create Business Invitation</h1>
             <p class="text-muted mb-0">@Model.Business.Name</p>
         </div>
-        <a asp-action="Invitations" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back to invitations</a>
+        <a asp-action="Invitations"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
+           hx-target="#business-invitation-editor-shell"
+           hx-swap="outerHTML">Back to invitations</a>
     </div>
 
     <form asp-action="CreateInvitation"

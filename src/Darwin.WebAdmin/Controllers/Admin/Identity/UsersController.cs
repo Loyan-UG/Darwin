@@ -416,7 +416,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 Id = id,
                 Email = email ?? string.Empty
             };
-            return View(vm);
+            return RenderChangePasswordEditor(vm);
         }
 
         /// <summary>

@@ -4,17 +4,23 @@
     ViewData["Title"] = "Refunds";
 }
 
+<div id="billing-refunds-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1">Refund Queue</h1>
         <p class="text-muted mb-0">Cross-order refund review for finance support and Stripe-first post-payment follow-up.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Pending" class="btn btn-outline-warning btn-sm">Pending</a>
-        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Completed" class="btn btn-outline-success btn-sm">Completed</a>
-        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Failed" class="btn btn-outline-danger btn-sm">Failed</a>
-        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Stripe" class="btn btn-outline-primary btn-sm">Stripe</a>
-        <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary btn-sm">Back to Payments</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Pending" class="btn btn-outline-warning btn-sm"
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Pending })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Pending</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Completed" class="btn btn-outline-success btn-sm"
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Completed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Completed</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Failed" class="btn btn-outline-danger btn-sm"
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Failed })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Failed</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" asp-route-queue="@BillingRefundQueueFilter.Stripe" class="btn btn-outline-primary btn-sm"
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.Stripe })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Stripe</a>
+        <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary btn-sm"
+           hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Back to Payments</a>
     </div>
 </div>
 
@@ -75,7 +81,10 @@
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Refunds" method="get" class="d-flex gap-2">
+    <form asp-action="Refunds" method="get" class="d-flex gap-2"
+          hx-get="@Url.Action("Refunds", "Billing")"
+          hx-target="#billing-refunds-workspace-shell"
+          hx-swap="outerHTML">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search refunds" />
         <select name="queue" class="form-select">
@@ -86,9 +95,11 @@
             <option value="@BillingRefundQueueFilter.Stripe" selected="@(Model.QueueFilter == BillingRefundQueueFilter.Stripe)">Stripe</option>
         </select>
         <button class="btn btn-outline-secondary" type="submit">Filter</button>
-        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Refunds" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Reset</a>
     </form>
-    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Open Payments</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId })" hx-target="#billing-refunds-workspace-shell" hx-swap="outerHTML">Open Payments</a>
 </div>
 
 <div class="table-responsive">
@@ -181,3 +192,4 @@
        asp-route-q="@Model.Query"
        asp-route-queue="@Model.QueueFilter">
 </pager>
+</div>
