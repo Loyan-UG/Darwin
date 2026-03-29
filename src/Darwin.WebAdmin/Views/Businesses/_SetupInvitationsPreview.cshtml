@@ -3,13 +3,23 @@
 @if (Model.OpenCount == 0)
 {
     <div class="text-success">No pending or expired invitations require attention right now.</div>
-    <a asp-action="Invitations" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary mt-3">Open Invitations</a>
+    <a asp-action="Invitations"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary mt-3"
+       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
+       hx-target="#business-setup-shell"
+       hx-swap="outerHTML">Open Invitations</a>
 }
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="fw-semibold">@Model.OpenCount open invitation(s)</div>
-        <a asp-action="Invitations" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Open Invitations</a>
+        <a asp-action="Invitations"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
+           hx-target="#business-setup-shell"
+           hx-swap="outerHTML">Open Invitations</a>
     </div>
 
     <div class="table-responsive">

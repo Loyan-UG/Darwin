@@ -177,6 +177,8 @@
            asp-controller="Billing"
            asp-action="Plans"
            asp-route-q="@Model.Query"
-           asp-route-queue="@Model.QueueFilter">
+           asp-route-queue="@Model.QueueFilter"
+           hx-target="#billing-plans-workspace-shell"
+           hx-swap="outerHTML">
     </pager>
 </div>

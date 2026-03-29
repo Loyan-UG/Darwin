@@ -67,7 +67,10 @@
                             data-action="@Url.Action("Delete", "Roles")"
                             data-id="@Model.Id"
                             data-rowversion="@Convert.ToBase64String(Model.RowVersion)"
-                            data-name="@Model.DisplayName">
+                            data-name="@Model.DisplayName"
+                            data-hx-target="#role-editor-shell"
+                            data-hx-swap="outerHTML"
+                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                         <i class="fa fa-trash"></i> Delete
                     </button>
                 }

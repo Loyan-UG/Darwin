@@ -3,17 +3,33 @@
     ViewData["Title"] = "Business Communication Profile";
 }
 
+<div id="business-communication-profile-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-envelope-open me-2"></i>@Model.Name</h1>
         <p class="text-muted mb-0">Business-level communication readiness, current policy flags, and phase-1 operational implications.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Index" class="btn btn-outline-secondary">Back to Communications</a>
-        <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Email Audits</a>
-        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-primary">Open Setup</a>
-        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Members</a>
-        <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Invitations</a>
+        <a asp-action="Index" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "BusinessCommunications")"
+           hx-target="#business-communication-profile-shell"
+           hx-swap="outerHTML">Back to Communications</a>
+        <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+           hx-target="#business-communication-profile-shell"
+           hx-swap="outerHTML">Email Audits</a>
+        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-primary"
+           hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
+           hx-target="#business-communication-profile-shell"
+           hx-swap="outerHTML">Open Setup</a>
+        <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+           hx-target="#business-communication-profile-shell"
+           hx-swap="outerHTML">Members</a>
+        <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+           hx-target="#business-communication-profile-shell"
+           hx-swap="outerHTML">Invitations</a>
     </div>
 </div>
 
@@ -97,10 +113,22 @@
                     <span class="badge @(Model.AdminAlertRoutingConfigured ? "text-bg-success" : "text-bg-warning")">Admin Alerts @(Model.AdminAlertRoutingConfigured ? "Ready" : "Missing")</span>
                 </div>
                 <div class="mt-3">
-                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary">SMTP</a>
-                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary">SMS</a>
-                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary">WhatsApp</a>
-                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary">Admin Alerts</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">SMTP</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">SMS</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">WhatsApp</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">Admin Alerts</a>
                 </div>
             </div>
         </div>
@@ -122,7 +150,10 @@
                     Current invitation, activation, and password-reset flows apply this prefix and reroute to the test inbox when configured.
                 </div>
                 <div class="mt-3">
-                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary">Open Communication Policy</a>
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">Open Communication Policy</a>
                 </div>
             </div>
         </div>
@@ -185,7 +216,10 @@
                 @if (Model.OpenInvitationCount > 0)
                 {
                     <div class="mt-3">
-                        <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary">
+                        <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, flowKey = "BusinessInvitation" })"
+                           hx-target="#business-communication-profile-shell"
+                           hx-swap="outerHTML">
                             View Invitation Email Audits
                         </a>
                     </div>
@@ -207,9 +241,18 @@
                 }
                 </ul>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">Open Setup</a>
-                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary">Open Member Support</a>
-                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary">Open Invitations</a>
+                    <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary"
+                       hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">Open Setup</a>
+                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, filter = "Attention" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">Open Member Support</a>
+                    <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, filter = "Open" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">Open Invitations</a>
                 </div>
             </div>
         </div>
@@ -262,9 +305,78 @@
                     </table>
                 </div>
                 <div class="mt-3">
-                    <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary">Open Business Email Audits</a>
+                    <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML">Open Business Email Audits</a>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Template Inventory Snapshot</div>
+            <div class="card-body">
+                <div class="small text-muted mb-3">
+                    This is the current template truth for phase-1 communication flows. It shows what is hard-coded today and what operators can really influence.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Flow</th>
+                                <th>Template Surface</th>
+                                <th>Operator Control</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model.TemplateInventory)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.FlowName</td>
+                                <td>@item.TemplateSurface</td>
+                                <td>@item.OperatorControl</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Resend / Retry Policy Snapshot</div>
+            <div class="card-body">
+                <div class="small text-muted mb-3">
+                    Failed rows are triage signals, not generic replay buttons. This matrix shows the safe entry point for each communication flow.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Flow</th>
+                                <th>Safe Action</th>
+                                <th>Retry Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model.ResendPolicies)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.FlowName</td>
+                                <td>@item.CurrentSafeAction</td>
+                                <td>@item.GenericRetryStatus</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </div>

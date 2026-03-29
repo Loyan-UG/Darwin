@@ -3,13 +3,23 @@
 @if (Model.AttentionCount == 0)
 {
     <div class="text-success">No members currently need activation or lockout support.</div>
-    <a asp-action="Members" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary mt-3">Open Members</a>
+    <a asp-action="Members"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary mt-3"
+       hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+       hx-target="#business-setup-shell"
+       hx-swap="outerHTML">Open Members</a>
 }
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="fw-semibold">@Model.AttentionCount member(s) need support action</div>
-        <a asp-action="Members" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Open Members</a>
+        <a asp-action="Members"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.BusinessId })"
+           hx-target="#business-setup-shell"
+           hx-swap="outerHTML">Open Members</a>
     </div>
 
     <div class="table-responsive">

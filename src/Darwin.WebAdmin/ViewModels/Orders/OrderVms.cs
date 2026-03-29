@@ -211,6 +211,11 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public bool NeedsCarrierReview { get; set; }
         public bool AwaitingHandoff { get; set; }
         public bool TrackingOverdue { get; set; }
+        public int OpenAgeHours { get; set; }
+        public int? InTransitAgeHours { get; set; }
+        public DateTime? LastCarrierEventAtUtc { get; set; }
+        public string TrackingState { get; set; } = string.Empty;
+        public string ExceptionNote { get; set; } = string.Empty;
         public int AttentionDelayHours { get; set; }
         public int TrackingGraceHours { get; set; }
 
@@ -442,6 +447,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int MissingServiceCount { get; set; }
         public int AwaitingHandoffCount { get; set; }
         public int TrackingOverdueCount { get; set; }
+        public int CarrierReviewCount { get; set; }
     }
 
     public sealed class ShipmentPlaybookVm

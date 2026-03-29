@@ -3,15 +3,32 @@
     ViewData["Title"] = "Business Support Queue";
 }
 
+<div id="business-support-queue-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-life-ring me-2"></i>Business Support Queue</h1>
         <p class="text-muted mb-0">Unified onboarding, activation, invitation, and failed-email triage surface for support operators.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Index" asp-route-attentionOnly="true" class="btn btn-outline-secondary">Businesses</a>
-        <a asp-controller="BusinessCommunications" asp-action="Index" class="btn btn-outline-secondary">Communications</a>
-        <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" class="btn btn-outline-danger">Failed Emails</a>
+        <a asp-action="Index"
+           asp-route-attentionOnly="true"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+           hx-target="#business-support-queue-workspace-shell"
+           hx-swap="outerHTML">Businesses</a>
+        <a asp-controller="BusinessCommunications"
+           asp-action="Index"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "BusinessCommunications")"
+           hx-target="#business-support-queue-workspace-shell"
+           hx-swap="outerHTML">Communications</a>
+        <a asp-controller="BusinessCommunications"
+           asp-action="EmailAudits"
+           asp-route-status="Failed"
+           class="btn btn-outline-danger"
+           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed" })"
+           hx-target="#business-support-queue-workspace-shell"
+           hx-swap="outerHTML">Failed Emails</a>
     </div>
 </div>
 
@@ -24,4 +41,5 @@
     <div class="col-xl-5">
         <partial name="~/Views/Businesses/_SupportQueueFailedEmails.cshtml" model="Model.FailedEmails" />
     </div>
+</div>
 </div>

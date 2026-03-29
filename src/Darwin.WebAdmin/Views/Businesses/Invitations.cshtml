@@ -164,6 +164,8 @@
        asp-action="Invitations"
        asp-route-businessId="@Model.Business.Id"
        asp-route-query="@Model.Query"
-       asp-route-filter="@Model.Filter">
+       asp-route-filter="@Model.Filter"
+       hx-target="#business-invitations-workspace-shell"
+       hx-swap="outerHTML">
 </pager>
 </div>

@@ -4,19 +4,35 @@
     var isLocked = Model.LockoutEndUtc.HasValue && Model.LockoutEndUtc.Value > DateTime.UtcNow;
 }
 
+<div id="business-staff-access-badge-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1">Staff Access Badge</h1>
         <p class="text-muted mb-0">@Model.Business.Name · @Model.UserDisplayName</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="EditMember" asp-route-id="@Model.MembershipId" class="btn btn-outline-secondary">
+        <a asp-action="EditMember"
+           asp-route-id="@Model.MembershipId"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("EditMember", "Businesses", new { id = Model.MembershipId })"
+           hx-target="#business-staff-access-badge-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-user-pen"></i> Edit Member
         </a>
-        <a asp-action="Members" asp-route-businessId="@Model.Business.Id" class="btn btn-outline-secondary">
+        <a asp-action="Members"
+           asp-route-businessId="@Model.Business.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Business.Id })"
+           hx-target="#business-staff-access-badge-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-arrow-left"></i> Back to Members
         </a>
-        <a asp-action="StaffAccessBadge" asp-route-id="@Model.MembershipId" class="btn btn-primary">
+        <a asp-action="StaffAccessBadge"
+           asp-route-id="@Model.MembershipId"
+           class="btn btn-primary"
+           hx-get="@Url.Action("StaffAccessBadge", "Businesses", new { id = Model.MembershipId })"
+           hx-target="#business-staff-access-badge-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-rotate"></i> Refresh Badge
         </a>
     </div>
@@ -24,6 +40,7 @@
 
 <div class="alert alert-info">
     This QR mirrors the phase-1 staff badge behavior in <code>Darwin.Mobile.Business</code>. It is a short-lived support preview only; server-side authorization remains the source of truth.
+</div>
 </div>
 
 <div class="row g-3 mb-3">

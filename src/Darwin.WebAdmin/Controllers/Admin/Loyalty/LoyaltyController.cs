@@ -98,7 +98,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         }
 
         [HttpGet]
-        public IActionResult Index() => RedirectToAction(nameof(Programs));
+        public IActionResult Index() => RedirectOrHtmx(nameof(Programs), new { });
 
         [HttpGet]
         public async Task<IActionResult> Programs(Guid? businessId = null, int page = 1, int pageSize = 20, LoyaltyProgramQueueFilter filter = LoyaltyProgramQueueFilter.All, CancellationToken ct = default)
@@ -196,7 +196,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (dto is null)
             {
                 TempData["Error"] = "Loyalty program not found.";
-                return RedirectToAction(nameof(Programs));
+                return RedirectOrHtmx(nameof(Programs), new { });
             }
 
             var vm = new LoyaltyProgramEditVm
@@ -260,7 +260,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Loyalty program deleted." : result.Error;
-            return RedirectToAction(nameof(Programs), new { businessId });
+            return RedirectOrHtmx(nameof(Programs), new { businessId });
         }
 
         [HttpGet]
@@ -270,7 +270,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (program is null)
             {
                 TempData["Error"] = "Loyalty program not found.";
-                return RedirectToAction(nameof(Programs));
+                return RedirectOrHtmx(nameof(Programs), new { });
             }
 
             var result = await _getRewardTiersPage.HandleAsync(loyaltyProgramId, page, pageSize, filter, ct).ConfigureAwait(false);
@@ -316,7 +316,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (program is null)
             {
                 TempData["Error"] = "Loyalty program not found.";
-                return RedirectToAction(nameof(Programs));
+                return RedirectOrHtmx(nameof(Programs), new { });
             }
 
             return RenderRewardTierEditor(new LoyaltyRewardTierEditVm
@@ -365,14 +365,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (program is null)
             {
                 TempData["Error"] = "Loyalty program not found.";
-                return RedirectToAction(nameof(Programs));
+                return RedirectOrHtmx(nameof(Programs), new { });
             }
 
             var tier = await _getRewardTierForEdit.HandleAsync(id, ct).ConfigureAwait(false);
             if (tier is null)
             {
                 TempData["Error"] = "Reward tier not found.";
-                return RedirectToAction(nameof(RewardTiers), new { loyaltyProgramId });
+                return RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId });
             }
 
             return RenderRewardTierEditor(new LoyaltyRewardTierEditVm
@@ -434,7 +434,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Reward tier deleted." : result.Error;
-            return RedirectToAction(nameof(RewardTiers), new { loyaltyProgramId });
+            return RedirectOrHtmx(nameof(RewardTiers), new { loyaltyProgramId });
         }
 
         [HttpGet]
@@ -630,7 +630,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (campaign is null)
             {
                 TempData["Error"] = "Loyalty campaign not found.";
-                return RedirectToAction(nameof(Campaigns), new { businessId });
+                return RedirectOrHtmx(nameof(Campaigns), new { businessId });
             }
 
             var vm = new LoyaltyCampaignEditVm
@@ -819,7 +819,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (account is null)
             {
                 TempData["Error"] = "Loyalty account not found.";
-                return RedirectToAction(nameof(Accounts));
+                return RedirectOrHtmx(nameof(Accounts), new { });
             }
 
             var transactions = await _getTransactions.HandleAsync(id, 50, ct).ConfigureAwait(false);
@@ -869,7 +869,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (account is null)
             {
                 TempData["Error"] = "Loyalty account not found.";
-                return RedirectToAction(nameof(Accounts));
+                return RedirectOrHtmx(nameof(Accounts), new { });
             }
 
             return RenderAdjustPointsEditor(new AdjustLoyaltyPointsVm

@@ -46,6 +46,7 @@
                             </td>
                             <td>
                                 @(string.IsNullOrWhiteSpace(s.TrackingNumber) ? "-" : s.TrackingNumber)
+                                <div class="small text-muted mt-1">@s.TrackingState</div>
                                 @if (s.TrackingOverdue)
                                 {
                                     <div><span class="badge text-bg-danger mt-1">Tracking overdue</span></div>
@@ -57,8 +58,22 @@
                                 {
                                     <div><span class="badge text-bg-danger mt-1">Awaiting handoff</span></div>
                                 }
+                                @if (s.NeedsCarrierReview)
+                                {
+                                    <div><span class="badge text-bg-warning mt-1">Carrier review</span></div>
+                                }
                             </td>
-                            <td>@s.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>
+                                <div>@s.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</div>
+                                @if (s.LastCarrierEventAtUtc.HasValue)
+                                {
+                                    <div class="small text-muted mt-1">Last event @s.LastCarrierEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(s.ExceptionNote))
+                                {
+                                    <div class="small text-danger mt-1">@s.ExceptionNote</div>
+                                }
+                            </td>
                         </tr>
                     }
                 }

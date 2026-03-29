@@ -93,6 +93,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int StripeCount { get; set; }
         public int MissingProviderRefCount { get; set; }
         public int FailedStripeCount { get; set; }
+        public int NeedsReconciliationCount { get; set; }
     }
 
     public sealed class BillingWebhookOpsSummaryVm
@@ -162,6 +163,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int CompletedCount { get; set; }
         public int FailedCount { get; set; }
         public int StripeCount { get; set; }
+        public int NeedsSupportCount { get; set; }
     }
 
     public sealed class ProviderPlaybookVm
@@ -197,7 +199,11 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime CreatedAtUtc { get; set; }
         public long RefundedAmountMinor { get; set; }
         public long NetCapturedAmountMinor { get; set; }
+        public DateTime? LastFinancialEventAtUtc { get; set; }
+        public int OpenAgeHours { get; set; }
+        public string ProviderReferenceState { get; set; } = string.Empty;
         public bool IsStripe { get; set; }
+        public bool NeedsReconciliation { get; set; }
         public bool NeedsSupportAttention { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -220,7 +226,11 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public RefundStatus Status { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
+        public DateTime? LastRefundEventAtUtc { get; set; }
+        public int OpenAgeHours { get; set; }
+        public string ProviderReferenceState { get; set; } = string.Empty;
         public bool IsStripe { get; set; }
+        public bool NeedsSupportAttention { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 

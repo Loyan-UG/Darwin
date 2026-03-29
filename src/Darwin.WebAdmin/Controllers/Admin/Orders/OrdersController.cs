@@ -146,13 +146,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     NeedsCarrierReview = x.NeedsCarrierReview,
                     AwaitingHandoff = x.AwaitingHandoff,
                     TrackingOverdue = x.TrackingOverdue,
+                    OpenAgeHours = x.OpenAgeHours,
+                    InTransitAgeHours = x.InTransitAgeHours,
+                    LastCarrierEventAtUtc = x.LastCarrierEventAtUtc,
+                    TrackingState = x.TrackingState,
+                    ExceptionNote = x.ExceptionNote,
                     AttentionDelayHours = x.AttentionDelayHours,
                     TrackingGraceHours = x.TrackingGraceHours,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderShipmentsQueueWorkspace(vm);
         }
 
         private async Task<DhlOperationsVm> BuildDhlOperationsVmAsync(CancellationToken ct)
@@ -209,7 +214,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 DhlCount = summary.DhlCount,
                 MissingServiceCount = summary.MissingServiceCount,
                 AwaitingHandoffCount = summary.AwaitingHandoffCount,
-                TrackingOverdueCount = summary.TrackingOverdueCount
+                TrackingOverdueCount = summary.TrackingOverdueCount,
+                CarrierReviewCount = summary.CarrierReviewCount
             };
         }
 
@@ -251,6 +257,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ScopeNote = "Use this when DHL shipments exist but service metadata or tracking discipline is weak.",
                     OperatorAction = "Open the linked order, confirm the intended DHL service, and normalize shipment data before handoff or support escalation.",
                     SettingsDependency = "DHL environment, account number, and shipper identity should be configured before these rows are treated as ready for production handoff."
+                },
+                new()
+                {
+                    Title = "Carrier review queue",
+                    ScopeNote = "Use this subset for DHL rows with missing service data, missing tracking after shipment, or explicit returned status that needs carrier-facing follow-up.",
+                    OperatorAction = "Start from the shipment row, confirm service and tracking timeline, then move into the order workflow only after the carrier-facing facts are clear.",
+                    SettingsDependency = "DHL environment, account number, shipper identity, and shipment thresholds should be configured before treating this queue as a trustworthy carrier-exception surface."
                 },
                 new()
                 {
@@ -404,6 +417,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     CreatedAtUtc = x.CreatedAtUtc,
                     IsDhl = x.IsDhl,
                     NeedsCarrierReview = x.NeedsCarrierReview,
+                    AwaitingHandoff = x.AwaitingHandoff,
+                    TrackingOverdue = x.TrackingOverdue,
+                    OpenAgeHours = x.OpenAgeHours,
+                    InTransitAgeHours = x.InTransitAgeHours,
+                    LastCarrierEventAtUtc = x.LastCarrierEventAtUtc,
+                    TrackingState = x.TrackingState,
+                    ExceptionNote = x.ExceptionNote,
+                    AttentionDelayHours = x.AttentionDelayHours,
+                    TrackingGraceHours = x.TrackingGraceHours,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -782,6 +804,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem("Missing service", ShipmentQueueFilter.MissingService.ToString(), selectedFilter == ShipmentQueueFilter.MissingService);
             yield return new SelectListItem("Awaiting handoff", ShipmentQueueFilter.AwaitingHandoff.ToString(), selectedFilter == ShipmentQueueFilter.AwaitingHandoff);
             yield return new SelectListItem("Tracking overdue", ShipmentQueueFilter.TrackingOverdue.ToString(), selectedFilter == ShipmentQueueFilter.TrackingOverdue);
+            yield return new SelectListItem("Carrier review", ShipmentQueueFilter.CarrierReview.ToString(), selectedFilter == ShipmentQueueFilter.CarrierReview);
         }
 
         private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)
@@ -853,6 +876,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
 
             return View("CreateInvoice", vm);
+        }
+
+        private IActionResult RenderShipmentsQueueWorkspace(ShipmentsQueueVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/ShipmentsQueue.cshtml", vm);
+            }
+
+            return View("ShipmentsQueue", vm);
         }
 
         private IActionResult RedirectOrHtmxDetails(Guid orderId)

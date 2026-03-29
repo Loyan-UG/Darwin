@@ -157,7 +157,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (dto is null)
             {
                 TempData["Warning"] = "Role not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new RoleEditVm
@@ -259,7 +259,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 TempData["Error"] = "Failed to delete role.";
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         private IActionResult RenderCreateEditor(RoleCreateVm vm)
@@ -320,7 +320,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (vm is null)
             {
                 TempData["Error"] = "Failed to load role permissions.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             return RenderPermissionsEditor(vm);
@@ -336,7 +336,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!ModelState.IsValid)
             {
                 var invalidVm = await BuildRolePermissionsVmAsync(vm.RoleId, vm.SelectedPermissionIds, vm.RowVersion, ct);
-                return invalidVm is null ? RedirectToAction(nameof(Index)) : RenderPermissionsEditor(invalidVm);
+                return invalidVm is null ? RedirectOrHtmx(nameof(Index), new { }) : RenderPermissionsEditor(invalidVm);
             }
 
             var dto = new RolePermissionsUpdateDto
@@ -351,7 +351,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             {
                 TempData["Error"] = result.Error ?? "Failed to update role permissions.";
                 var failedVm = await BuildRolePermissionsVmAsync(vm.RoleId, vm.SelectedPermissionIds, vm.RowVersion, ct);
-                return failedVm is null ? RedirectToAction(nameof(Index)) : RenderPermissionsEditor(failedVm);
+                return failedVm is null ? RedirectOrHtmx(nameof(Index), new { }) : RenderPermissionsEditor(failedVm);
             }
 
             TempData["Success"] = "Permissions updated.";

@@ -29,5 +29,10 @@
     <button type="submit" class="btn btn-primary">
         <i class="fa-solid fa-paper-plane"></i> Send invitation
     </button>
-    <a asp-action="Invitations" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Cancel</a>
+    <a asp-action="Invitations"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-outline-secondary"
+       hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.BusinessId })"
+       hx-target="#business-invitation-editor-shell"
+       hx-swap="outerHTML">Cancel</a>
 </div>

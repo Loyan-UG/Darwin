@@ -11,7 +11,12 @@
                     hx-swap="outerHTML">
                 Refresh
             </button>
-            <a asp-action="Index" asp-route-attentionOnly="true" class="btn btn-sm btn-outline-secondary">Full Queue</a>
+            <a asp-action="Index"
+               asp-route-attentionOnly="true"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+               hx-target="#business-support-queue-workspace-shell"
+               hx-swap="outerHTML">Full Queue</a>
         </div>
     </div>
     <div class="card-body">
@@ -68,9 +73,26 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <a asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Setup</a>
-                                <a asp-action="Members" asp-route-businessId="@item.Id" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary">Members</a>
-                                <a asp-action="Invitations" asp-route-businessId="@item.Id" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary">Invites</a>
+                                <a asp-action="Setup"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML">Setup</a>
+                                <a asp-action="Members"
+                                   asp-route-businessId="@item.Id"
+                                   asp-route-filter="Attention"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id, filter = "Attention" })"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML">Members</a>
+                                <a asp-action="Invitations"
+                                   asp-route-businessId="@item.Id"
+                                   asp-route-filter="Open"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id, filter = "Open" })"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML">Invites</a>
                             </td>
                         </tr>
                     }

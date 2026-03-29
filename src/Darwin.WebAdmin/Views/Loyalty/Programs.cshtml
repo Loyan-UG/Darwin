@@ -132,7 +132,12 @@
                            hx-get="@Url.Action("RewardTiers", "Loyalty", new { loyaltyProgramId = item.Id })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">Rewards</a>
                         <a asp-action="EditProgram" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditProgram", "Loyalty", new { id = item.Id })" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML">Edit</a>
-                        <form asp-action="DeleteProgram" method="post" class="d-inline">
+                        <form asp-action="DeleteProgram"
+                              method="post"
+                              class="d-inline"
+                              hx-post="@Url.Action("DeleteProgram", "Loyalty")"
+                              hx-target="#loyalty-programs-workspace-shell"
+                              hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.Id" />
                             <input type="hidden" name="businessId" value="@item.BusinessId" />
@@ -147,5 +152,5 @@
     </table>
 </div>
 
-    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Programs" asp-route-businessId="@Model.BusinessId"></pager>
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="Programs" asp-route-businessId="@Model.BusinessId" hx-target="#loyalty-programs-workspace-shell" hx-swap="outerHTML"></pager>
 </div>

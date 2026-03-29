@@ -36,7 +36,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public BusinessCommunicationOpsSummaryPanelVm Summary { get; set; } = new();
         public List<BusinessCommunicationSetupListItemVm> Items { get; set; } = new();
         public List<BuiltInCommunicationFlowVm> BuiltInFlows { get; set; } = new();
+        public List<CommunicationTemplateInventoryVm> TemplateInventory { get; set; } = new();
         public List<CommunicationCapabilityCoverageVm> CapabilityCoverage { get; set; } = new();
+        public List<CommunicationResendPolicyVm> ResendPolicies { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
@@ -90,6 +92,25 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string NextStep { get; set; } = string.Empty;
     }
 
+    public sealed class CommunicationTemplateInventoryVm
+    {
+        public string FlowName { get; set; } = string.Empty;
+        public string TemplateSurface { get; set; } = string.Empty;
+        public string SubjectSource { get; set; } = string.Empty;
+        public string BodySource { get; set; } = string.Empty;
+        public string OperatorControl { get; set; } = string.Empty;
+        public string NextStep { get; set; } = string.Empty;
+    }
+
+    public sealed class CommunicationResendPolicyVm
+    {
+        public string FlowName { get; set; } = string.Empty;
+        public string CurrentSafeAction { get; set; } = string.Empty;
+        public string GenericRetryStatus { get; set; } = string.Empty;
+        public string OperatorEntryPoint { get; set; } = string.Empty;
+        public string EscalationRule { get; set; } = string.Empty;
+    }
+
     public sealed class EmailDispatchAuditListItemVm
     {
         public Guid Id { get; set; }
@@ -115,11 +136,25 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Status { get; set; } = string.Empty;
         public string FlowKey { get; set; } = string.Empty;
         public Guid? BusinessId { get; set; }
+        public EmailDispatchAuditSummaryVm Summary { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> Items { get; set; } = new();
         public List<CommunicationFlowPlaybookVm> Playbooks { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> StatusItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> FlowItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
+    public sealed class EmailDispatchAuditSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int FailedCount { get; set; }
+        public int SentCount { get; set; }
+        public int PendingCount { get; set; }
+        public int Recent24HourCount { get; set; }
+        public int FailedInvitationCount { get; set; }
+        public int FailedActivationCount { get; set; }
+        public int FailedPasswordResetCount { get; set; }
+        public int FailedAdminTestCount { get; set; }
     }
 
     public sealed class CommunicationFlowPlaybookVm
@@ -161,6 +196,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string? TransactionalSubjectPrefix { get; set; }
         public string? TestInboxEmail { get; set; }
         public List<string> ActiveFlowNames { get; set; } = new();
+        public List<CommunicationTemplateInventoryVm> TemplateInventory { get; set; } = new();
+        public List<CommunicationResendPolicyVm> ResendPolicies { get; set; } = new();
         public List<string> ReadinessIssues { get; set; } = new();
         public List<string> RecommendedActions { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();

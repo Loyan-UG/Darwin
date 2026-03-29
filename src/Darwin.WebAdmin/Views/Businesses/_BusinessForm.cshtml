@@ -85,13 +85,36 @@
     </button>
     @if (isCreate)
     {
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        <a asp-action="Index"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Businesses")"
+           hx-target="#business-editor-shell"
+           hx-swap="outerHTML">Cancel</a>
     }
     else
     {
-        <a asp-action="Index" class="btn btn-outline-secondary">Back to list</a>
-        <a asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Manage members</a>
-        <a asp-action="Locations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Manage locations</a>
-        <a asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary">Manage invitations</a>
+        <a asp-action="Index"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Businesses")"
+           hx-target="#business-editor-shell"
+           hx-swap="outerHTML">Back to list</a>
+        <a asp-action="Members"
+           asp-route-businessId="@Model.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+           hx-target="#business-editor-shell"
+           hx-swap="outerHTML">Manage members</a>
+        <a asp-action="Locations"
+           asp-route-businessId="@Model.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Locations", "Businesses", new { businessId = Model.Id })"
+           hx-target="#business-editor-shell"
+           hx-swap="outerHTML">Manage locations</a>
+        <a asp-action="Invitations"
+           asp-route-businessId="@Model.Id"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+           hx-target="#business-editor-shell"
+           hx-swap="outerHTML">Manage invitations</a>
     }
 </div>

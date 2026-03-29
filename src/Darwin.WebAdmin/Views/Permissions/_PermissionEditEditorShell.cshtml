@@ -61,7 +61,10 @@
                                 data-action="@Url.Action("Delete", "Permissions")"
                                 data-id="@Model.Id"
                                 data-rowversion="@Convert.ToBase64String(Model.RowVersion)"
-                                data-name="@Model.Key">
+                                data-name="@Model.Key"
+                                data-hx-target="#permission-editor-shell"
+                                data-hx-swap="outerHTML"
+                                data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                             <i class="fa fa-trash"></i> Delete
                         </button>
                     }

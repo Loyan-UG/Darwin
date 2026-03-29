@@ -54,6 +54,12 @@ public sealed class GetShipmentsPageHandler
                 (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                 (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
                 ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc)),
+            ShipmentQueueFilter.CarrierReview => shipments.Where(s =>
+                s.Carrier == "DHL" &&
+                ((s.Service == null || s.Service == string.Empty) ||
+                 s.Status == Domain.Enums.ShipmentStatus.Returned ||
+                 ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                  (s.TrackingNumber == null || s.TrackingNumber == string.Empty)))),
             _ => shipments
         };
 
@@ -98,18 +104,93 @@ public sealed class GetShipmentsPageHandler
                     (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                     (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
                     ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc),
+                LastCarrierEventAtUtc = s.DeliveredAtUtc ?? s.ShippedAtUtc ?? s.CreatedAtUtc,
                 AttentionDelayHours = attentionDelayHours,
                 TrackingGraceHours = trackingGraceHours,
                 NeedsCarrierReview =
                     s.Carrier == "DHL" &&
                     ((s.Service == null || s.Service == string.Empty) ||
+                     s.Status == Domain.Enums.ShipmentStatus.Returned ||
                      ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                       (s.TrackingNumber == null || s.TrackingNumber == string.Empty))),
                 RowVersion = s.RowVersion
             })
             .ToListAsync(ct);
 
+        foreach (var item in items)
+        {
+            item.OpenAgeHours = Math.Max(0, (int)Math.Floor((nowUtc - item.CreatedAtUtc).TotalHours));
+            if (item.ShippedAtUtc.HasValue && !item.DeliveredAtUtc.HasValue)
+            {
+                item.InTransitAgeHours = Math.Max(0, (int)Math.Floor((nowUtc - item.ShippedAtUtc.Value).TotalHours));
+            }
+
+            item.TrackingState = ResolveTrackingState(item);
+            item.ExceptionNote = ResolveExceptionNote(item);
+        }
+
         return (items, total);
+    }
+
+    private static string ResolveTrackingState(ShipmentListItemDto item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.TrackingNumber))
+        {
+            return item.Status switch
+            {
+                Domain.Enums.ShipmentStatus.Delivered => "Tracking linked and delivered",
+                Domain.Enums.ShipmentStatus.Shipped => "Tracking linked and in transit",
+                _ => "Tracking linked before handoff completion"
+            };
+        }
+
+        if (item.Status == Domain.Enums.ShipmentStatus.Returned)
+        {
+            return "Return recorded without active tracking handoff";
+        }
+
+        if (item.TrackingOverdue)
+        {
+            return "Tracking overdue beyond grace window";
+        }
+
+        if (item.Status == Domain.Enums.ShipmentStatus.Shipped || item.Status == Domain.Enums.ShipmentStatus.Delivered)
+        {
+            return "Carrier handoff recorded without tracking";
+        }
+
+        return "No carrier tracking linked yet";
+    }
+
+    private static string ResolveExceptionNote(ShipmentListItemDto item)
+    {
+        if (item.Status == Domain.Enums.ShipmentStatus.Returned)
+        {
+            return "Returned shipment requires carrier or support follow-up.";
+        }
+
+        if (string.IsNullOrWhiteSpace(item.Service))
+        {
+            return "Carrier service is missing.";
+        }
+
+        if (item.TrackingOverdue)
+        {
+            return $"Tracking missing beyond {item.TrackingGraceHours} h grace.";
+        }
+
+        if (item.AwaitingHandoff)
+        {
+            return $"Still open after {item.AttentionDelayHours} h attention threshold.";
+        }
+
+        if ((item.Status == Domain.Enums.ShipmentStatus.Shipped || item.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+            string.IsNullOrWhiteSpace(item.TrackingNumber))
+        {
+            return "Shipment is marked handed off but no tracking number is present.";
+        }
+
+        return string.Empty;
     }
 }
 
@@ -156,6 +237,13 @@ public sealed class GetShipmentOpsSummaryHandler
                      (s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                      (s.TrackingNumber == null || s.TrackingNumber == string.Empty) &&
                      ((s.ShippedAtUtc ?? s.CreatedAtUtc) <= trackingThresholdUtc),
+                ct).ConfigureAwait(false),
+            CarrierReviewCount = await shipments.CountAsync(
+                s => s.Carrier == "DHL" &&
+                     ((s.Service == null || s.Service == string.Empty) ||
+                      s.Status == Domain.Enums.ShipmentStatus.Returned ||
+                      ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
+                       (s.TrackingNumber == null || s.TrackingNumber == string.Empty))),
                 ct).ConfigureAwait(false)
         };
     }

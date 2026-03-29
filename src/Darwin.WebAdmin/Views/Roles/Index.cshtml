@@ -137,7 +137,10 @@
                                                     data-action="@Url.Action("Delete", "Roles")"
                                                     data-id="@r.Id"
                                                     data-name="@r.DisplayName"
-                                                    data-rowversion="@Convert.ToBase64String(r.RowVersion)">
+                                                    data-rowversion="@Convert.ToBase64String(r.RowVersion)"
+                                                    data-hx-target="#roles-workspace-shell"
+                                                    data-hx-swap="outerHTML"
+                                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                                 <i class="fa fa-trash"></i> Delete
                                             </button>
                                         }
@@ -157,7 +160,9 @@
            asp-controller="Roles"
            asp-action="Index"
            asp-route-q="@Model.Query"
-           asp-route-filter="@Model.Filter">
+           asp-route-filter="@Model.Filter"
+           hx-target="#roles-workspace-shell"
+           hx-swap="outerHTML">
     </pager>
 </div>
 

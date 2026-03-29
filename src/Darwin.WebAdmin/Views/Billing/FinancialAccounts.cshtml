@@ -4,16 +4,26 @@
     ViewData["Title"] = "Financial Accounts";
 }
 
+<div id="billing-financial-accounts-workspace-shell">
 <h1 class="mb-3">Financial Accounts</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="FinancialAccounts" method="get" class="d-flex gap-2">
+    <form asp-action="FinancialAccounts" method="get" class="d-flex gap-2"
+          hx-get="@Url.Action("FinancialAccounts", "Billing")"
+          hx-target="#billing-financial-accounts-workspace-shell"
+          hx-swap="outerHTML">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search accounts">
         <button class="btn btn-outline-secondary" type="submit">Filter</button>
-        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+           hx-target="#billing-financial-accounts-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </form>
-    <a asp-action="CreateFinancialAccount" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Account</a>
+    <a asp-action="CreateFinancialAccount" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
+       hx-get="@Url.Action("CreateFinancialAccount", "Billing", new { businessId = Model.BusinessId })"
+       hx-target="#billing-financial-accounts-workspace-shell"
+       hx-swap="outerHTML">New Account</a>
 </div>
 
 <div class="row g-3 mb-3">
@@ -77,10 +87,22 @@
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm @(Model.QueueFilter is null ? "btn-dark" : "btn-outline-dark")">All</a>
-    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Asset" class="btn btn-sm @(Model.QueueFilter == AccountType.Asset ? "btn-info" : "btn-outline-info")">Assets</a>
-    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Revenue" class="btn btn-sm @(Model.QueueFilter == AccountType.Revenue ? "btn-success" : "btn-outline-success")">Revenue</a>
-    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Expense" class="btn btn-sm @(Model.QueueFilter == AccountType.Expense ? "btn-warning" : "btn-outline-warning")">Expenses</a>
+    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" class="btn btn-sm @(Model.QueueFilter is null ? "btn-dark" : "btn-outline-dark")"
+       hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId })"
+       hx-target="#billing-financial-accounts-workspace-shell"
+       hx-swap="outerHTML">All</a>
+    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Asset" class="btn btn-sm @(Model.QueueFilter == AccountType.Asset ? "btn-info" : "btn-outline-info")"
+       hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId, queue = AccountType.Asset })"
+       hx-target="#billing-financial-accounts-workspace-shell"
+       hx-swap="outerHTML">Assets</a>
+    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Revenue" class="btn btn-sm @(Model.QueueFilter == AccountType.Revenue ? "btn-success" : "btn-outline-success")"
+       hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId, queue = AccountType.Revenue })"
+       hx-target="#billing-financial-accounts-workspace-shell"
+       hx-swap="outerHTML">Revenue</a>
+    <a asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-queue="@AccountType.Expense" class="btn btn-sm @(Model.QueueFilter == AccountType.Expense ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("FinancialAccounts", "Billing", new { businessId = Model.BusinessId, queue = AccountType.Expense })"
+       hx-target="#billing-financial-accounts-workspace-shell"
+       hx-swap="outerHTML">Expenses</a>
 </div>
 
 <div class="table-responsive">
@@ -104,11 +126,17 @@
                         {
                             <span class="badge text-bg-warning me-1">Code missing</span>
                         }
-                        <a asp-action="EditFinancialAccount" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="EditFinancialAccount" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditFinancialAccount", "Billing", new { id = item.Id })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML">Edit</a>
                         <a asp-action="JournalEntries"
                            asp-route-businessId="@Model.BusinessId"
                            asp-route-q="@(string.IsNullOrWhiteSpace(item.Code) ? item.Name : item.Code)"
-                           class="btn btn-sm btn-outline-info">Entries</a>
+                           class="btn btn-sm btn-outline-info"
+                           hx-get="@Url.Action("JournalEntries", "Billing", new { businessId = Model.BusinessId, q = string.IsNullOrWhiteSpace(item.Code) ? item.Name : item.Code })"
+                           hx-target="#billing-financial-accounts-workspace-shell"
+                           hx-swap="outerHTML">Entries</a>
                     </td>
                 </tr>
             }
@@ -118,3 +146,4 @@
 </div>
 
 <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="FinancialAccounts" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter"></pager>
+</div>

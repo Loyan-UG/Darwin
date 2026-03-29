@@ -3,20 +3,39 @@
     ViewData["Title"] = "Business Communications";
 }
 
+<div id="business-communications-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-envelope-circle-check me-2"></i>Business Communications</h1>
         <p class="text-muted mb-0">Operational visibility for phase-1 communication readiness before full template and delivery-log tooling exists.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="EmailAudits" class="btn btn-outline-secondary">Email Audits</a>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary">SMTP</a>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary">SMS</a>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary">WhatsApp</a>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary">Admin Alerts</a>
+        <a asp-action="EmailAudits" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML">Email Audits</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML">SMTP</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML">SMS</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML">WhatsApp</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML">Admin Alerts</a>
         @if (Model.Transport.CanSendTestEmail)
         {
-            <form asp-action="SendTestEmail" method="post" class="d-inline">
+            <form asp-action="SendTestEmail" method="post" class="d-inline"
+                  hx-post="@Url.Action("SendTestEmail", "BusinessCommunications")"
+                  hx-target="#business-communications-workspace-shell"
+                  hx-swap="outerHTML">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-outline-primary">Send Test Email</button>
             </form>
@@ -159,6 +178,42 @@
 </div>
 
 <div class="card mb-4">
+    <div class="card-header">Template Inventory and Operator Control</div>
+    <div class="card-body">
+        <div class="alert alert-secondary">
+            This inventory shows what is actually configurable today. It does not pretend a reusable template engine exists where only hard-coded transactional composition exists.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Flow</th>
+                        <th>Template Surface</th>
+                        <th>Subject Source</th>
+                        <th>Body Source</th>
+                        <th>Operator Control</th>
+                        <th>Next Step</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.TemplateInventory)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.FlowName</td>
+                        <td>@item.TemplateSurface</td>
+                        <td>@item.SubjectSource</td>
+                        <td>@item.BodySource</td>
+                        <td>@item.OperatorControl</td>
+                        <td>@item.NextStep</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
     <div class="card-header">Capability Coverage and Retry Visibility</div>
     <div class="card-body">
         <div class="alert alert-secondary">
@@ -182,6 +237,40 @@
                         <td>@item.CurrentState</td>
                         <td>@item.OperatorVisibility</td>
                         <td>@item.NextStep</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Resend and Retry Policy Matrix</div>
+    <div class="card-body">
+        <div class="alert alert-secondary">
+            Operators should use only the safe entry points listed here. Failed audit rows are for triage visibility; they are not a generic replay button.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Flow</th>
+                        <th>Current Safe Action</th>
+                        <th>Generic Retry Status</th>
+                        <th>Operator Entry Point</th>
+                        <th>Escalation Rule</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.ResendPolicies)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.FlowName</td>
+                        <td>@item.CurrentSafeAction</td>
+                        <td>@item.GenericRetryStatus</td>
+                        <td>@item.OperatorEntryPoint</td>
+                        <td>@item.EscalationRule</td>
                     </tr>
                 }
                 </tbody>
@@ -257,12 +346,18 @@
             </table>
         </div>
         <div class="mt-3">
-            <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary">Open Full Email Audit Log</a>
+            <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
+               hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+               hx-target="#business-communications-workspace-shell"
+               hx-swap="outerHTML">Open Full Email Audit Log</a>
         </div>
     </div>
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3"
+      hx-get="@Url.Action("Index", "BusinessCommunications")"
+      hx-target="#business-communications-workspace-shell"
+      hx-swap="outerHTML">
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business, legal name, support email, or sender" />
     </div>
@@ -285,7 +380,10 @@
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Index" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "BusinessCommunications")"
+           hx-target="#business-communications-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </div>
 </form>
 
@@ -357,13 +455,22 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="Details" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-dark">
+                        <a asp-action="Details" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-dark"
+                           hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.Id })"
+                           hx-target="#business-communications-workspace-shell"
+                           hx-swap="outerHTML">
                             <i class="fa-solid fa-circle-info"></i> Inspect
                         </a>
-                        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                        <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
+                           hx-target="#business-communications-workspace-shell"
+                           hx-swap="outerHTML">
                             <i class="fa-solid fa-sliders"></i> Open Setup
                         </a>
-                        <a asp-controller="Businesses" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                        <a asp-controller="Businesses" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
+                           hx-target="#business-communications-workspace-shell"
+                           hx-swap="outerHTML">
                             <i class="fa-solid fa-pen"></i> Edit
                         </a>
                     </td>
@@ -381,5 +488,8 @@
        asp-action="Index"
        asp-route-query="@Model.Query"
        asp-route-setupOnly="@Model.SetupOnly"
-       asp-route-filter="@Model.Filter">
+       asp-route-filter="@Model.Filter"
+       hx-target="#business-communications-workspace-shell"
+       hx-swap="outerHTML">
 </pager>
+</div>

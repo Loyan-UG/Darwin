@@ -124,7 +124,12 @@
                     <td class="text-end">
                         <a asp-action="EditRewardTier" asp-route-id="@item.Id" asp-route-loyaltyProgramId="@item.LoyaltyProgramId" class="btn btn-sm btn-outline-secondary"
                            hx-get="@Url.Action("EditRewardTier", "Loyalty", new { id = item.Id, loyaltyProgramId = item.LoyaltyProgramId })" hx-target="#loyalty-reward-tiers-workspace-shell" hx-swap="outerHTML">Edit</a>
-                        <form asp-action="DeleteRewardTier" method="post" class="d-inline">
+                        <form asp-action="DeleteRewardTier"
+                              method="post"
+                              class="d-inline"
+                              hx-post="@Url.Action("DeleteRewardTier", "Loyalty")"
+                              hx-target="#loyalty-reward-tiers-workspace-shell"
+                              hx-swap="outerHTML">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="id" value="@item.Id" />
                             <input type="hidden" name="loyaltyProgramId" value="@item.LoyaltyProgramId" />
@@ -139,5 +144,5 @@
     </table>
 </div>
 
-    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId"></pager>
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="RewardTiers" asp-route-loyaltyProgramId="@Model.LoyaltyProgramId" hx-target="#loyalty-reward-tiers-workspace-shell" hx-swap="outerHTML"></pager>
 </div>

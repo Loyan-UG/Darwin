@@ -5,18 +5,27 @@
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
+<div id="businesses-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="mb-0"><i class="fa-solid fa-building me-2"></i>Businesses</h1>
         <p class="text-muted mb-0">Create and maintain merchant tenants, owner assignments, and operational readiness.</p>
     </div>
     <div class="d-flex gap-2">
-        <a asp-action="SupportQueue" class="btn btn-outline-secondary">
+        <a asp-action="SupportQueue"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("SupportQueue", "Businesses")"
+           hx-target="#businesses-workspace-shell"
+           hx-swap="outerHTML">
             <i class="fa-solid fa-life-ring"></i> Support Queue
         </a>
         @if (isFullAdmin)
         {
-            <a asp-action="Create" class="btn btn-primary">
+            <a asp-action="Create"
+               class="btn btn-primary"
+               hx-get="@Url.Action("Create", "Businesses")"
+               hx-target="#businesses-workspace-shell"
+               hx-swap="outerHTML">
                 <i class="fa-solid fa-plus"></i> Create Business
             </a>
         }
@@ -24,21 +33,44 @@
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a asp-action="Index" asp-route-attentionOnly="true" class="btn btn-sm @(Model.AttentionOnly ? "btn-warning" : "btn-outline-warning")">
+    <a asp-action="Index"
+       asp-route-attentionOnly="true"
+       class="btn btn-sm @(Model.AttentionOnly ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("Index", "Businesses", new { attentionOnly = true })"
+       hx-target="#businesses-workspace-shell"
+       hx-swap="outerHTML">
         <i class="fa-solid fa-triangle-exclamation"></i> Needs Attention
     </a>
-    <a asp-action="Index" asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval" class="btn btn-sm @(Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval ? "btn-warning" : "btn-outline-warning")">
+    <a asp-action="Index"
+       asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval"
+       class="btn btn-sm @(Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.PendingApproval })"
+       hx-target="#businesses-workspace-shell"
+       hx-swap="outerHTML">
         <i class="fa-solid fa-hourglass-half"></i> Pending Approval
     </a>
-    <a asp-action="Index" asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.Suspended" class="btn btn-sm @(Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended ? "btn-danger" : "btn-outline-danger")">
+    <a asp-action="Index"
+       asp-route-operationalStatus="@Darwin.Domain.Enums.BusinessOperationalStatus.Suspended"
+       class="btn btn-sm @(Model.OperationalStatus == Darwin.Domain.Enums.BusinessOperationalStatus.Suspended ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@Url.Action("Index", "Businesses", new { operationalStatus = Darwin.Domain.Enums.BusinessOperationalStatus.Suspended })"
+       hx-target="#businesses-workspace-shell"
+       hx-swap="outerHTML">
         <i class="fa-solid fa-ban"></i> Suspended
     </a>
-    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+    <a asp-action="Index"
+       class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("Index", "Businesses")"
+       hx-target="#businesses-workspace-shell"
+       hx-swap="outerHTML">
         <i class="fa-solid fa-rotate-left"></i> Clear Queue Filters
     </a>
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get"
+      class="row g-2 mb-3"
+      hx-get="@Url.Action("Index", "Businesses")"
+      hx-target="#businesses-workspace-shell"
+      hx-swap="outerHTML">
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by business or legal name" />
     </div>
@@ -61,7 +93,11 @@
     </div>
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Index"
+           class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Businesses")"
+           hx-target="#businesses-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </div>
 </form>
 
@@ -165,24 +201,54 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="Members" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                        <a asp-action="Members"
+                           asp-route-businessId="@item.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Members", "Businesses", new { businessId = item.Id })"
+                           hx-target="#businesses-workspace-shell"
+                           hx-swap="outerHTML">
                             <i class="fa-solid fa-user-group"></i> Members
                         </a>
-                        <a asp-action="Subscription" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                        <a asp-action="Subscription"
+                           asp-route-businessId="@item.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Subscription", "Businesses", new { businessId = item.Id })"
+                           hx-target="#businesses-workspace-shell"
+                           hx-swap="outerHTML">
                             <i class="fa-solid fa-credit-card"></i> Subscription
                         </a>
-                        <a asp-action="Invitations" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                        <a asp-action="Invitations"
+                           asp-route-businessId="@item.Id"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.Id })"
+                           hx-target="#businesses-workspace-shell"
+                           hx-swap="outerHTML">
                             <i class="fa-solid fa-envelope"></i> Invitations
                         </a>
                         @if (isFullAdmin)
                         {
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                            <a asp-action="Edit"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-outline-primary"
+                               hx-get="@Url.Action("Edit", "Businesses", new { id = item.Id })"
+                               hx-target="#businesses-workspace-shell"
+                               hx-swap="outerHTML">
                                 <i class="fa-solid fa-pen"></i> Edit
                             </a>
-                            <a asp-action="Setup" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <a asp-action="Setup"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Setup", "Businesses", new { id = item.Id })"
+                               hx-target="#businesses-workspace-shell"
+                               hx-swap="outerHTML">
                                 <i class="fa-solid fa-sliders"></i> Setup
                             </a>
-                            <a asp-action="Locations" asp-route-businessId="@item.Id" class="btn btn-sm btn-outline-secondary">
+                            <a asp-action="Locations"
+                               asp-route-businessId="@item.Id"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Locations", "Businesses", new { businessId = item.Id })"
+                               hx-target="#businesses-workspace-shell"
+                               hx-swap="outerHTML">
                                 <i class="fa-solid fa-location-dot"></i> Locations
                             </a>
                             <button type="button"
@@ -192,7 +258,10 @@
                                     data-action="@Url.Action("Delete", "Businesses")"
                                     data-id="@item.Id"
                                     data-name="@item.Name"
-                                    data-rowversion="@Convert.ToBase64String(item.RowVersion)">
+                                    data-rowversion="@Convert.ToBase64String(item.RowVersion)"
+                                    data-hx-target="#businesses-workspace-shell"
+                                    data-hx-swap="outerHTML"
+                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                 <i class="fa-solid fa-box-archive"></i> Archive
                             </button>
                         }
@@ -211,7 +280,10 @@
        asp-action="Index"
        asp-route-query="@Model.Query"
        asp-route-operationalStatus="@Model.OperationalStatus"
-       asp-route-attentionOnly="@Model.AttentionOnly">
+       asp-route-attentionOnly="@Model.AttentionOnly"
+       hx-target="#businesses-workspace-shell"
+       hx-swap="outerHTML">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
+</div>

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -56,6 +56,15 @@ namespace Darwin.WebAdmin.TagHelpers
         [HtmlAttributeName("window")]
         public int Window { get; set; } = 5;
 
+        [HtmlAttributeName("hx-target")]
+        public string? HxTarget { get; set; }
+
+        [HtmlAttributeName("hx-swap")]
+        public string? HxSwap { get; set; }
+
+        [HtmlAttributeName("hx-push-url")]
+        public string? HxPushUrl { get; set; }
+
         /// <summary>Global page-size candidates.</summary>
         private static readonly int[] DefaultPageSizes = { 10, 20, 50, 100 };
 
@@ -90,6 +99,12 @@ namespace Darwin.WebAdmin.TagHelpers
             foreach (var kv in routeValuesInput)
                 baseRoute[kv.Key] = kv.Value;
 
+            var action = (baseRoute["action"] ?? "Index")!.ToString()!;
+            var htmxEnabled = !string.IsNullOrWhiteSpace(HxTarget);
+            var hxSwap = string.IsNullOrWhiteSpace(HxSwap) ? "outerHTML" : HxSwap!;
+            var hxPushUrl = string.IsNullOrWhiteSpace(HxPushUrl) ? "true" : HxPushUrl!;
+            var pageSizeSelectId = $"pager-pageSize-select-{context.UniqueId.Replace(':', '_')}";
+
             string BuildUrl(int targetPage, int? targetPageSize = null)
             {
                 var rv = new Dictionary<string, object?>(baseRoute, StringComparer.OrdinalIgnoreCase)
@@ -97,7 +112,14 @@ namespace Darwin.WebAdmin.TagHelpers
                     ["page"] = targetPage,
                     ["pageSize"] = targetPageSize ?? pageSize
                 };
-                var action = (baseRoute["action"] ?? "Index")!.ToString()!;
+                return url.Action(action, rv) ?? "#";
+            }
+
+            string BuildWorkspaceUrl()
+            {
+                var rv = new Dictionary<string, object?>(baseRoute, StringComparer.OrdinalIgnoreCase);
+                rv.Remove("page");
+                rv.Remove("pageSize");
                 return url.Action(action, rv) ?? "#";
             }
 
@@ -109,7 +131,15 @@ namespace Darwin.WebAdmin.TagHelpers
             var sb = new StringBuilder();
 
             // === Page-size selector (left) ===
-            sb.AppendLine("<form method=\"get\" class=\"d-inline-block\">");
+            sb.Append("<form method=\"get\" class=\"d-inline-block\"");
+            if (htmxEnabled)
+            {
+                sb.Append($" hx-get=\"{BuildWorkspaceUrl()}\"");
+                sb.Append($" hx-target=\"{HxTarget}\"");
+                sb.Append($" hx-swap=\"{hxSwap}\"");
+                sb.Append($" hx-push-url=\"{hxPushUrl}\"");
+            }
+            sb.AppendLine(">");
 
             // Preserve existing asp-route-* as hidden inputs
             foreach (var kv in routeValuesInput)
@@ -124,7 +154,7 @@ namespace Darwin.WebAdmin.TagHelpers
 
             sb.AppendLine("  <div class=\"input-group input-group-sm\" style=\"width: 220px;\">");
             sb.AppendLine("    <span class=\"input-group-text\">Page size</span>");
-            sb.AppendLine("    <select name=\"pageSize\" class=\"form-select\" id=\"pager-pageSize-select\">");
+            sb.AppendLine($"    <select name=\"pageSize\" class=\"form-select\" id=\"{pageSizeSelectId}\">");
 
             // (This loop was where the exception pointed; now nothing here can be null.)
             foreach (var size in DefaultPageSizes)
@@ -140,14 +170,14 @@ namespace Darwin.WebAdmin.TagHelpers
             // Auto-submit on size change + reset page=1
             sb.AppendLine("<script>");
             sb.AppendLine("  (function(){");
-            sb.AppendLine("    const sel = document.getElementById('pager-pageSize-select');");
+            sb.AppendLine($"    const sel = document.getElementById('{pageSizeSelectId}');");
             sb.AppendLine("    if(!sel) return;");
             sb.AppendLine("    sel.addEventListener('change', function(){");
             sb.AppendLine("      const form = sel.closest('form');");
             sb.AppendLine("      if(!form) return;");
             sb.AppendLine("      const pageInput = form.querySelector('input[name=\"page\"]');");
             sb.AppendLine("      if(pageInput) pageInput.value = '1';");
-            sb.AppendLine("      form.submit();");
+            sb.AppendLine("      if (form.requestSubmit) form.requestSubmit(); else form.submit();");
             sb.AppendLine("    });");
             sb.AppendLine("  })();");
             sb.AppendLine("</script>");
@@ -165,13 +195,21 @@ namespace Darwin.WebAdmin.TagHelpers
                 var href = disabled ? "#" : BuildUrl(target);
                 var ariaAttr = string.IsNullOrEmpty(aria) ? "" : $" aria-label=\"{aria}\"";
                 sb.Append($"    <li class=\"{liClass}\">");
-                sb.Append($"<a class=\"page-link\" href=\"{href}\"{ariaAttr}>{label}</a>");
+                sb.Append($"<a class=\"page-link\" href=\"{href}\"{ariaAttr}");
+                if (!disabled && htmxEnabled)
+                {
+                    sb.Append($" hx-get=\"{href}\"");
+                    sb.Append($" hx-target=\"{HxTarget}\"");
+                    sb.Append($" hx-swap=\"{hxSwap}\"");
+                    sb.Append($" hx-push-url=\"{hxPushUrl}\"");
+                }
+                sb.Append($">{label}</a>");
                 sb.AppendLine("</li>");
             }
 
             // First / Prev
-            PageItem("« First", 1, page == 1, aria: "First");
-            PageItem("‹ Prev", Math.Max(1, page - 1), page == 1, aria: "Previous");
+            PageItem("Â« First", 1, page == 1, aria: "First");
+            PageItem("â€¹ Prev", Math.Max(1, page - 1), page == 1, aria: "Previous");
 
             // Numeric window
             var half = Math.Max(0, (Window - 1) / 2);
@@ -184,8 +222,8 @@ namespace Darwin.WebAdmin.TagHelpers
 
             // Next / Last
             var totalPagesSafe = Math.Max(1, (int)((Total + pageSize - 1) / pageSize));
-            PageItem("Next ›", Math.Min(totalPagesSafe, page + 1), page == totalPagesSafe, aria: "Next");
-            PageItem("Last »", totalPagesSafe, page == totalPagesSafe, aria: "Last");
+            PageItem("Next â€º", Math.Min(totalPagesSafe, page + 1), page == totalPagesSafe, aria: "Next");
+            PageItem("Last Â»", totalPagesSafe, page == totalPagesSafe, aria: "Last");
 
             sb.AppendLine("  </ul>");
             sb.AppendLine("</nav>");
@@ -194,3 +232,4 @@ namespace Darwin.WebAdmin.TagHelpers
         }
     }
 }
+

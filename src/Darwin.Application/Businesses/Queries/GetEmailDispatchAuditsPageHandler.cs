@@ -99,5 +99,29 @@ namespace Darwin.Application.Businesses.Queries
 
             return (items, total);
         }
+
+        public async Task<EmailDispatchAuditSummaryDto> GetSummaryAsync(Guid? businessId = null, CancellationToken ct = default)
+        {
+            var audits = _db.Set<EmailDispatchAudit>().AsNoTracking();
+            if (businessId.HasValue)
+            {
+                audits = audits.Where(x => x.BusinessId == businessId.Value);
+            }
+
+            var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
+
+            return new EmailDispatchAuditSummaryDto
+            {
+                TotalCount = await audits.CountAsync(ct).ConfigureAwait(false),
+                FailedCount = await audits.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
+                SentCount = await audits.CountAsync(x => x.Status == "Sent", ct).ConfigureAwait(false),
+                PendingCount = await audits.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
+                Recent24HourCount = await audits.CountAsync(x => x.AttemptedAtUtc >= recentThresholdUtc, ct).ConfigureAwait(false),
+                FailedInvitationCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "BusinessInvitation", ct).ConfigureAwait(false),
+                FailedActivationCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "AccountActivation", ct).ConfigureAwait(false),
+                FailedPasswordResetCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "PasswordReset", ct).ConfigureAwait(false),
+                FailedAdminTestCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "AdminCommunicationTest", ct).ConfigureAwait(false)
+            };
+        }
     }
 }

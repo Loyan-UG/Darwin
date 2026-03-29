@@ -3,13 +3,17 @@
     ViewData["Title"] = "Email Delivery Audits";
 }
 
+<div id="business-communication-audits-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1"><i class="fa-solid fa-envelope-open-text me-2"></i>Email Delivery Audits</h1>
         <p class="text-muted mb-0">Recent SMTP-based transactional delivery attempts and failures.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Index" class="btn btn-outline-secondary">Back to Communications</a>
+        <a asp-action="Index" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "BusinessCommunications")"
+           hx-target="#business-communication-audits-workspace-shell"
+           hx-swap="outerHTML">Back to Communications</a>
     </div>
 </div>
 
@@ -30,7 +34,10 @@
                                asp-route-status="Failed"
                                asp-route-flowKey="@playbook.FlowKey"
                                asp-route-businessId="@Model.BusinessId"
-                               class="btn btn-sm btn-outline-secondary">Open Failed</a>
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = playbook.FlowKey, businessId = Model.BusinessId })"
+                               hx-target="#business-communication-audits-workspace-shell"
+                               hx-swap="outerHTML">Open Failed</a>
                         </div>
                         <div class="small text-muted mb-2">@playbook.ScopeNote</div>
                         <div class="small"><strong>Allowed action:</strong> @playbook.AllowedAction</div>
@@ -46,25 +53,105 @@
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-businessId="@Model.BusinessId"
-       class="btn btn-sm btn-outline-danger">Failed Only</a>
+       class="btn btn-sm btn-outline-danger"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Failed Only</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="BusinessInvitation"
        asp-route-businessId="@Model.BusinessId"
-       class="btn btn-sm btn-outline-secondary">Failed Invitations</a>
+       class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Failed Invitations</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="AccountActivation"
        asp-route-businessId="@Model.BusinessId"
-       class="btn btn-sm btn-outline-secondary">Failed Activations</a>
+       class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Failed Activations</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="PasswordReset"
        asp-route-businessId="@Model.BusinessId"
-       class="btn btn-sm btn-outline-secondary">Failed Password Resets</a>
+       class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Failed Password Resets</a>
+    <a asp-action="EmailAudits"
+       asp-route-flowKey="AdminCommunicationTest"
+       asp-route-status="Failed"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AdminCommunicationTest", status = "Failed", businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Failed Admin Tests</a>
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Total</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Sent</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.SentCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Pending</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PendingCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Last 24 h</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.Recent24HourCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed Invitations</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedInvitationCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed Activations</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedActivationCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed Password Resets</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedPasswordResetCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed Admin Tests</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedAdminTestCount</div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3"
+      hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+      hx-target="#business-communication-audits-workspace-shell"
+      hx-swap="outerHTML">
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by recipient, subject, provider, flow, or business" />
     </div>
@@ -88,7 +175,10 @@
     }
     <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-        <a asp-action="EmailAudits" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="EmailAudits" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+           hx-target="#business-communication-audits-workspace-shell"
+           hx-swap="outerHTML">Reset</a>
     </div>
 </form>
 
@@ -123,7 +213,10 @@
                     <td>
                         @if (item.BusinessId.HasValue)
                         {
-                            <a asp-action="Details" asp-route-businessId="@item.BusinessId">@(!string.IsNullOrWhiteSpace(item.BusinessName) ? item.BusinessName : item.BusinessId.ToString())</a>
+                            <a asp-action="Details" asp-route-businessId="@item.BusinessId"
+                               hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                               hx-target="#business-communication-audits-workspace-shell"
+                               hx-swap="outerHTML">@(!string.IsNullOrWhiteSpace(item.BusinessName) ? item.BusinessName : item.BusinessId.ToString())</a>
                         }
                         else
                         {
@@ -161,8 +254,41 @@
                         }
                         @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                         {
-                            <div class="mt-2">
-                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary">Open Invitations</a>
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Open Invitations</a>
+                                <a asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Inspect Business</a>
+                            </div>
+                        }
+                        else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-controller="Users" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "Users", new { q = item.RecipientEmail })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Open Users</a>
+                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Communication Policy</a>
+                            </div>
+                        }
+                        else if (string.Equals(item.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <a asp-action="Index" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "BusinessCommunications")"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Communication Workspace</a>
+                                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Policy Settings</a>
                             </div>
                         }
                     </td>
@@ -181,5 +307,8 @@
        asp-route-query="@Model.Query"
        asp-route-status="@Model.Status"
        asp-route-flowKey="@Model.FlowKey"
-       asp-route-businessId="@Model.BusinessId">
+       asp-route-businessId="@Model.BusinessId"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">
 </pager>
+</div>

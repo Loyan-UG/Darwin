@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -204,7 +204,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderBusinessesWorkspace(vm);
         }
 
         [HttpGet]
@@ -260,7 +260,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderSupportQueueWorkspace(vm);
         }
 
         [HttpGet]
@@ -404,7 +404,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (dto is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = MapBusinessEditVm(dto);
@@ -420,7 +420,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (dto is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = MapBusinessEditVm(dto);
@@ -436,7 +436,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = await BuildBusinessSubscriptionWorkspaceAsync(business, ct);
@@ -457,7 +457,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var result = await _getBusinessSubscriptionInvoicesPage.HandleAsync(
@@ -734,7 +734,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             TempData[result.Succeeded ? "Success" : "Error"] =
                 result.Succeeded ? "Business archived." : (result.Error ?? "Failed to archive business.");
 
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -812,7 +812,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var (items, total) = await _getBusinessLocationsPage.HandleAsync(businessId, page, pageSize, query, filter, ct);
@@ -851,7 +851,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderLocationsWorkspace(vm);
         }
 
         [HttpGet]
@@ -862,7 +862,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             return RenderLocationEditor(new BusinessLocationEditVm
@@ -920,14 +920,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (dto is null)
             {
                 TempData["Error"] = "Business location not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var business = await LoadBusinessContextAsync(dto.BusinessId, ct);
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new BusinessLocationEditVm
@@ -1013,7 +1013,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             TempData[result.Succeeded ? "Success" : "Error"] =
                 result.Succeeded ? "Business location archived." : (result.Error ?? "Failed to archive location.");
 
-            return RedirectToAction(nameof(Locations), new { businessId });
+            return RedirectOrHtmx(nameof(Locations), new { businessId });
         }
 
         [HttpGet]
@@ -1030,7 +1030,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var (items, total) = await _getBusinessMembersPage.HandleAsync(businessId, page, pageSize, query, filter, ct);
@@ -1060,7 +1060,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderMembersWorkspace(vm);
         }
 
         [HttpGet]
@@ -1077,7 +1077,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var (items, total) = await _getBusinessInvitationsPage.HandleAsync(businessId, page, pageSize, query, filter, ct);
@@ -1107,7 +1107,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderInvitationsWorkspace(vm);
         }
 
         [HttpGet]
@@ -1118,7 +1118,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var (items, total) = await _getBusinessOwnerOverrideAuditsPage.HandleAsync(businessId, page, pageSize, query, ct);
@@ -1145,7 +1145,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderOwnerOverrideAuditsWorkspace(vm);
         }
 
         [HttpGet]
@@ -1156,7 +1156,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new BusinessInvitationCreateVm
@@ -1222,7 +1222,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(Invitations), new { businessId });
+            return RedirectOrHtmx(nameof(Invitations), new { businessId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1243,7 +1243,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(Invitations), new { businessId });
+            return RedirectOrHtmx(nameof(Invitations), new { businessId });
         }
 
         [HttpGet]
@@ -1254,7 +1254,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new BusinessMemberEditVm
@@ -1309,14 +1309,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (dto is null)
             {
                 TempData["Error"] = "Business member not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var business = await LoadBusinessContextAsync(dto.BusinessId, ct);
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new BusinessMemberEditVm
@@ -1347,14 +1347,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (dto is null)
             {
                 TempData["Error"] = "Business member not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var business = await LoadBusinessContextAsync(dto.BusinessId, ct);
             if (business is null)
             {
                 TempData["Error"] = "Business not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var issuedAtUtc = DateTime.UtcNow;
@@ -1378,7 +1378,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 BadgeImageDataUrl = BuildQrCodeDataUrl(payload)
             };
 
-            return View(vm);
+            return RenderStaffAccessBadgeWorkspace(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1443,7 +1443,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(Members), new { businessId });
+            return RedirectOrHtmx(nameof(Members), new { businessId });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1467,7 +1467,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }, ct);
 
                 TempData["Success"] = "Business member removed under controlled owner override.";
-                return RedirectToAction(nameof(Members), new { businessId });
+                return RedirectOrHtmx(nameof(Members), new { businessId });
             }
             catch (Exception ex)
             {
@@ -1806,11 +1806,81 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return View("SubscriptionInvoices", vm);
         }
 
+        private IActionResult RenderBusinessesWorkspace(BusinessesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("Index", vm);
+            }
+
+            return View("Index", vm);
+        }
+
+        private IActionResult RenderSupportQueueWorkspace(BusinessSupportQueueVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("SupportQueue", vm);
+            }
+
+            return View("SupportQueue", vm);
+        }
+
+        private IActionResult RenderLocationsWorkspace(BusinessLocationsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("Locations", vm);
+            }
+
+            return View("Locations", vm);
+        }
+
+        private IActionResult RenderMembersWorkspace(BusinessMembersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("Members", vm);
+            }
+
+            return View("Members", vm);
+        }
+
+        private IActionResult RenderInvitationsWorkspace(BusinessInvitationsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("Invitations", vm);
+            }
+
+            return View("Invitations", vm);
+        }
+
+        private IActionResult RenderOwnerOverrideAuditsWorkspace(BusinessOwnerOverrideAuditsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("OwnerOverrideAudits", vm);
+            }
+
+            return View("OwnerOverrideAudits", vm);
+        }
+
+        private IActionResult RenderStaffAccessBadgeWorkspace(BusinessStaffAccessBadgeVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("StaffAccessBadge", vm);
+            }
+
+            return View("StaffAccessBadge", vm);
+        }
+
         private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId)
         {
             return returnToEdit
                 ? RedirectOrHtmx(nameof(EditMember), new { id = membershipId })
-                : RedirectToAction(nameof(Members), new { businessId });
+                : RedirectOrHtmx(nameof(Members), new { businessId });
         }
 
         private static IEnumerable<SelectListItem> BuildBusinessStatusItems(BusinessOperationalStatus? selectedStatus)

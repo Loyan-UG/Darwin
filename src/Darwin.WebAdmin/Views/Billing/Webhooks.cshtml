@@ -249,5 +249,5 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Webhooks" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Webhooks" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter" hx-target="#billing-webhooks-workspace-shell" hx-swap="outerHTML"></pager>
 </div>

@@ -185,7 +185,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded || result.Value is null)
             {
                 TempData["Error"] = result.Error ?? "User not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             // Map user -> edit VM
@@ -472,7 +472,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             var dto = new UserDeleteDto { Id = id, RowVersion = rowVersion ?? Array.Empty<byte>() };
             var result = await _softDeleteUser.HandleAsync(dto, ct);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "User deleted." : (result.Error ?? "Failed to delete user.");
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
 
@@ -653,7 +653,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (vm is null)
             {
                 TempData["Error"] = "Failed to load user roles.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             vm.ReturnToIndex = returnToIndex;
@@ -751,7 +751,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (hydrated is null)
             {
                 TempData["Error"] = "Failed to load user roles.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             hydrated.SelectedRoleIds = vm.SelectedRoleIds?.ToList() ?? new List<Guid>();
@@ -780,7 +780,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                     return RenderIndexWorkspace(workspace);
                 }
 
-                return RedirectToAction(nameof(Index), new { page = vm.Page, pageSize = vm.PageSize, q = vm.Query, filter = vm.Filter });
+                return RedirectOrHtmx(nameof(Index), new { page = vm.Page, pageSize = vm.PageSize, q = vm.Query, filter = vm.Filter });
             }
 
             return RedirectOrHtmx(nameof(Edit), new { id = vm.UserId });

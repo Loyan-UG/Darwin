@@ -122,5 +122,5 @@
         </table>
     </div>
 
-    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-mode="@Model.ModeFilter" asp-route-status="@Model.StatusFilter"></pager>
+    <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Loyalty" asp-action="ScanSessions" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-mode="@Model.ModeFilter" asp-route-status="@Model.StatusFilter" hx-target="#loyalty-scan-sessions-workspace-shell" hx-swap="outerHTML"></pager>
 </div>

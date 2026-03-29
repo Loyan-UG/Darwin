@@ -104,7 +104,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     BusinessesRequiringEmailSetupCount = summary.BusinessesRequiringEmailSetupCount
                 },
                 BuiltInFlows = BuildBuiltInFlows(),
+                TemplateInventory = BuildTemplateInventory(),
                 CapabilityCoverage = BuildCapabilityCoverage(),
+                ResendPolicies = BuildResendPolicies(),
                 RecentEmailAudits = emailAudits.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
@@ -136,7 +138,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderCommunicationsWorkspace(vm);
         }
 
         [HttpGet]
@@ -146,7 +148,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (profile is null)
             {
                 TempData["Error"] = "Business communication profile not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
@@ -198,6 +200,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TransactionalSubjectPrefix = settings.TransactionalEmailSubjectPrefix,
                 TestInboxEmail = settings.CommunicationTestInboxEmail,
                 ActiveFlowNames = BuildActiveFlowNames(profile),
+                TemplateInventory = BuildTemplateInventory(),
+                ResendPolicies = BuildResendPolicies(),
                 ReadinessIssues = BuildReadinessIssues(profile, emailTransportConfigured, adminAlertRoutingConfigured),
                 RecommendedActions = BuildRecommendedActions(profile, emailTransportConfigured, adminAlertRoutingConfigured),
                 RecentEmailAudits = recentAudits.Select(x => new EmailDispatchAuditListItemVm
@@ -217,7 +221,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderCommunicationProfileWorkspace(vm);
         }
 
         [HttpGet]
@@ -231,6 +235,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             CancellationToken ct = default)
         {
             var (items, total) = await _getEmailDispatchAuditsPage.HandleAsync(page, pageSize, query, status, flowKey, businessId, ct).ConfigureAwait(false);
+            var summary = await _getEmailDispatchAuditsPage.GetSummaryAsync(businessId, ct).ConfigureAwait(false);
 
             var vm = new EmailDispatchAuditsListVm
             {
@@ -241,6 +246,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Status = status ?? string.Empty,
                 FlowKey = flowKey ?? string.Empty,
                 BusinessId = businessId,
+                Summary = new EmailDispatchAuditSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    FailedCount = summary.FailedCount,
+                    SentCount = summary.SentCount,
+                    PendingCount = summary.PendingCount,
+                    Recent24HourCount = summary.Recent24HourCount,
+                    FailedInvitationCount = summary.FailedInvitationCount,
+                    FailedActivationCount = summary.FailedActivationCount,
+                    FailedPasswordResetCount = summary.FailedPasswordResetCount,
+                    FailedAdminTestCount = summary.FailedAdminTestCount
+                },
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 StatusItems = BuildAuditStatusItems(status),
                 FlowItems = BuildAuditFlowItems(flowKey),
@@ -262,7 +279,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderEmailAuditsWorkspace(vm);
         }
 
         [HttpPost]
@@ -278,13 +295,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (!emailTransportConfigured)
             {
                 TempData["Error"] = "SMTP transport is not ready. Complete email settings before sending a communication test email.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             if (string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail))
             {
                 TempData["Error"] = "Communication test inbox is not configured. Add it in site settings before sending a test email.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var prefix = string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix)
@@ -314,13 +331,59 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ConfigureAwait(false);
 
             TempData["Success"] = $"Communication test email sent to {settings.CommunicationTestInboxEmail}.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         private static IEnumerable<SelectListItem> BuildPageSizeItems(int selectedPageSize)
         {
             var sizes = new[] { 10, 20, 50, 100 };
             return sizes.Select(x => new SelectListItem(x.ToString(), x.ToString(), x == selectedPageSize)).ToList();
+        }
+
+        private IActionResult RenderCommunicationsWorkspace(BusinessCommunicationOpsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/BusinessCommunications/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
+        }
+
+        private IActionResult RenderCommunicationProfileWorkspace(BusinessCommunicationProfileVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/BusinessCommunications/Details.cshtml", vm);
+            }
+
+            return View("Details", vm);
+        }
+
+        private IActionResult RenderEmailAuditsWorkspace(EmailDispatchAuditsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/BusinessCommunications/EmailAudits.cshtml", vm);
+            }
+
+            return View("EmailAudits", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", System.StringComparison.OrdinalIgnoreCase);
         }
 
         private static IEnumerable<SelectListItem> BuildFilterItems(BusinessCommunicationSetupFilter selectedFilter)
@@ -450,6 +513,105 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CurrentState = "Email, SMS, and WhatsApp test recipients are now configurable in site settings",
                     OperatorVisibility = "Workspace shows whether each channel has a safe test target before go-live validation",
                     NextStep = "Add provider-backed test-send actions only after channel-specific delivery handling is in place"
+                }
+            };
+        }
+
+        private static List<CommunicationTemplateInventoryVm> BuildTemplateInventory()
+        {
+            return new List<CommunicationTemplateInventoryVm>
+            {
+                new()
+                {
+                    FlowName = "Business Invitation",
+                    TemplateSurface = "Hard-coded transactional composition",
+                    SubjectSource = "Transactional subject prefix + fixed invitation subject",
+                    BodySource = "Inline HTML generated in the invitation handler",
+                    OperatorControl = "No body editor. Operators can only resend or revoke the invitation from business support surfaces.",
+                    NextStep = "Promote to Communication Core template catalog with preview and delivery logging."
+                },
+                new()
+                {
+                    FlowName = "Account Activation",
+                    TemplateSurface = "Hard-coded transactional composition",
+                    SubjectSource = "Transactional subject prefix + fixed activation subject",
+                    BodySource = "Inline HTML generated in the confirmation handler",
+                    OperatorControl = "No template editing. Operators can trigger activation support but not rewrite the message.",
+                    NextStep = "Move into reusable template + confirmation analytics flow."
+                },
+                new()
+                {
+                    FlowName = "Password Reset",
+                    TemplateSurface = "Hard-coded transactional composition",
+                    SubjectSource = "Transactional subject prefix + fixed password-reset subject",
+                    BodySource = "Inline HTML generated in the password-reset handler",
+                    OperatorControl = "No template editing. Operators can reissue support actions only after identity validation.",
+                    NextStep = "Move into Communication Core template inventory with controlled support resend."
+                },
+                new()
+                {
+                    FlowName = "Admin Communication Test",
+                    TemplateSurface = "Operator-only diagnostic email",
+                    SubjectSource = "Transactional subject prefix + fixed diagnostic subject",
+                    BodySource = "Inline HTML generated in WebAdmin for the configured test inbox only",
+                    OperatorControl = "Operators can send the test email when SMTP and the test inbox are configured.",
+                    NextStep = "Fold into multi-channel diagnostic templates once Communication Core test sends exist."
+                },
+                new()
+                {
+                    FlowName = "Admin Alerts",
+                    TemplateSurface = "Configuration visibility only",
+                    SubjectSource = "Not centralized",
+                    BodySource = "Not centralized",
+                    OperatorControl = "No template catalog yet; only routing readiness and policy visibility are exposed.",
+                    NextStep = "Create alert template + routing inventory before adding delivery actions."
+                }
+            };
+        }
+
+        private static List<CommunicationResendPolicyVm> BuildResendPolicies()
+        {
+            return new List<CommunicationResendPolicyVm>
+            {
+                new()
+                {
+                    FlowName = "Business Invitation",
+                    CurrentSafeAction = "Use invitation resend/revoke from the business invitation workspace after SMTP readiness is green.",
+                    GenericRetryStatus = "No generic retry queue. Flow-specific resend exists.",
+                    OperatorEntryPoint = "Business setup, invitations list, and email-audit handoff.",
+                    EscalationRule = "If repeated resends fail after transport is ready, escalate as Communication Core/platform debt instead of repeating sends."
+                },
+                new()
+                {
+                    FlowName = "Account Activation",
+                    CurrentSafeAction = "Prefer self-service resend; use admin activation support only where current policy allows.",
+                    GenericRetryStatus = "No generic retry queue and no blind resend from email audits.",
+                    OperatorEntryPoint = "Users queue, business members queue, and email-audit handoff.",
+                    EscalationRule = "Do not bypass confirmation policy. Persistent failures after a validated resend are auth/communication troubleshooting."
+                },
+                new()
+                {
+                    FlowName = "Password Reset",
+                    CurrentSafeAction = "Reissue reset only after identity validation and transport checks.",
+                    GenericRetryStatus = "No generic retry queue and no automatic replay from failed audit rows.",
+                    OperatorEntryPoint = "Users queue and business member support actions.",
+                    EscalationRule = "Avoid repeated resets without verification. Persistent failures escalate as support/security or transport issues."
+                },
+                new()
+                {
+                    FlowName = "Admin Communication Test",
+                    CurrentSafeAction = "Rerun the diagnostic only to the configured test inbox after fixing SMTP or policy settings.",
+                    GenericRetryStatus = "No retry queue; manual rerun only.",
+                    OperatorEntryPoint = "Business Communications workspace.",
+                    EscalationRule = "Never switch the diagnostic to live recipients. Keep tests scoped to the configured test target."
+                },
+                new()
+                {
+                    FlowName = "Admin Alerts / SMS / WhatsApp",
+                    CurrentSafeAction = "Visibility and readiness only. No shared resend workflow exists yet.",
+                    GenericRetryStatus = "Not implemented.",
+                    OperatorEntryPoint = "Site settings and Business Communications readiness workspace.",
+                    EscalationRule = "Treat repeated alert-channel gaps as later-phase Communication Core work, not as manual resend tasks."
                 }
             };
         }

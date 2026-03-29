@@ -203,6 +203,12 @@
             <div class="fs-4 fw-semibold">@Model.Summary.FailedStripeCount</div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Needs Reconciliation</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.NeedsReconciliationCount</div>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -253,6 +259,7 @@
             <option value="@PaymentQueueFilter.Stripe" selected="@(Model.QueueFilter == PaymentQueueFilter.Stripe)">Stripe</option>
             <option value="@PaymentQueueFilter.MissingProviderRef" selected="@(Model.QueueFilter == PaymentQueueFilter.MissingProviderRef)">Missing Provider Ref</option>
             <option value="@PaymentQueueFilter.FailedStripe" selected="@(Model.QueueFilter == PaymentQueueFilter.FailedStripe)">Failed Stripe</option>
+            <option value="@PaymentQueueFilter.NeedsReconciliation" selected="@(Model.QueueFilter == PaymentQueueFilter.NeedsReconciliation)">Needs Reconciliation</option>
         </select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
         <a asp-action="Payments"
@@ -305,14 +312,19 @@
                     <td>
                         <div class="fw-semibold">@item.Provider</div>
                         <div class="small text-muted">@item.ProviderTransactionRef</div>
+                        <div class="small text-muted">@item.ProviderReferenceState</div>
                         <span class="badge text-bg-light mt-1">@item.Status</span>
                         @if (item.IsStripe)
                         {
                             <div><span class="badge text-bg-info mt-1">Stripe</span></div>
                         }
+                        @if (item.NeedsReconciliation)
+                        {
+                            <div><span class="badge text-bg-warning mt-1">Reconciliation</span></div>
+                        }
                         @if (item.NeedsSupportAttention)
                         {
-                            <div><span class="badge text-bg-warning mt-1">Needs support</span></div>
+                            <div><span class="badge text-bg-secondary mt-1">Needs support</span></div>
                         }
                     </td>
                     <td>
@@ -350,6 +362,7 @@
                         @if (item.RefundedAmountMinor > 0)
                         {
                             <div class="small text-warning">Refunded: @item.Currency @((item.RefundedAmountMinor / 100M).ToString("0.00"))</div>
+                            <div class="small text-muted">@(item.NetCapturedAmountMinor == 0 ? "Fully refunded" : "Partially refunded")</div>
                         }
                         <div class="small text-muted">Net: @item.Currency @((item.NetCapturedAmountMinor / 100M).ToString("0.00"))</div>
                     </td>
@@ -385,6 +398,7 @@
                     </td>
                     <td>
                         <div class="small text-muted">Created @item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div class="small text-muted">Opened @item.OpenAgeHours h</div>
                         @if (item.PaidAtUtc.HasValue)
                         {
                             <div>Paid @item.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
@@ -392,6 +406,10 @@
                         else
                         {
                             <div class="text-muted">Not paid yet</div>
+                        }
+                        @if (item.LastFinancialEventAtUtc.HasValue)
+                        {
+                            <div class="small text-muted">Last event @item.LastFinancialEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                         }
                         @if (!string.IsNullOrWhiteSpace(item.FailureReason))
                         {
@@ -446,7 +464,9 @@
        hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.MissingProviderRef })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Missing Provider Ref</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.FailedStripe" class="btn btn-sm btn-outline-danger"
        hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.FailedStripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Failed Stripe</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Needs Reconciliation</a>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML"></pager>
 </div>

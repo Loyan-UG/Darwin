@@ -118,7 +118,10 @@
                                                 data-action="@Url.Action("Delete", "Permissions")"
                                                 data-id="@p.Id"
                                                 data-name="@p.DisplayName"
-                                                data-rowversion="@Convert.ToBase64String(p.RowVersion)">
+                                                data-rowversion="@Convert.ToBase64String(p.RowVersion)"
+                                                data-hx-target="#permissions-workspace-shell"
+                                                data-hx-swap="outerHTML"
+                                                data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                             <i class="fa fa-trash"></i> Delete
                                         </button>
                                     }
@@ -138,7 +141,9 @@
            asp-controller="Permissions"
            asp-action="Index"
            asp-route-q="@Model.Query"
-           asp-route-filter="@Model.Filter">
+           asp-route-filter="@Model.Filter"
+           hx-target="#permissions-workspace-shell"
+           hx-swap="outerHTML">
     </pager>
 </div>
 

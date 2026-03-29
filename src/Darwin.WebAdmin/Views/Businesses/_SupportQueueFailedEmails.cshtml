@@ -11,7 +11,13 @@
                     hx-swap="outerHTML">
                 Refresh
             </button>
-            <a asp-controller="BusinessCommunications" asp-action="EmailAudits" asp-route-status="Failed" class="btn btn-sm btn-outline-secondary">Full Audit Log</a>
+            <a asp-controller="BusinessCommunications"
+               asp-action="EmailAudits"
+               asp-route-status="Failed"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed" })"
+               hx-target="#business-support-queue-workspace-shell"
+               hx-swap="outerHTML">Full Audit Log</a>
         </div>
     </div>
     <div class="card-body">
@@ -32,7 +38,13 @@
                             </div>
                             @if (item.BusinessId.HasValue)
                             {
-                                <a asp-controller="BusinessCommunications" asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary">Business</a>
+                                <a asp-controller="BusinessCommunications"
+                                   asp-action="Details"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML">Business</a>
                             }
                         </div>
                         <div class="small mt-2">@item.RecipientEmail</div>
@@ -48,14 +60,29 @@
                                asp-route-status="Failed"
                                asp-route-flowKey="@item.FlowKey"
                                asp-route-businessId="@item.BusinessId"
-                               class="btn btn-sm btn-outline-secondary">Open Similar Failures</a>
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.FlowKey, businessId = item.BusinessId })"
+                               hx-target="#business-support-queue-workspace-shell"
+                               hx-swap="outerHTML">Open Similar Failures</a>
                             @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                             {
-                                <a asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-filter="Open" class="btn btn-sm btn-outline-primary">Open Invitations</a>
+                                <a asp-action="Invitations"
+                                   asp-route-businessId="@item.BusinessId"
+                                   asp-route-filter="Open"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, filter = "Open" })"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML">Open Invitations</a>
                             }
                             else if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase))
                             {
-                                <a asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-filter="PendingActivation" class="btn btn-sm btn-outline-primary">Open Members</a>
+                                <a asp-action="Members"
+                                   asp-route-businessId="@item.BusinessId"
+                                   asp-route-filter="PendingActivation"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, filter = "PendingActivation" })"
+                                   hx-target="#business-support-queue-workspace-shell"
+                                   hx-swap="outerHTML">Open Members</a>
                             }
                         </div>
                     </div>

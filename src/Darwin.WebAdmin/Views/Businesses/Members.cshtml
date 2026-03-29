@@ -174,7 +174,10 @@
                                         data-id="@item.Id"
                                         data-name="@item.UserDisplayName"
                                         data-rowversion="@Convert.ToBase64String(item.RowVersion)"
-                                        data-userid="@Model.Business.Id">
+                                        data-userid="@Model.Business.Id"
+                                        data-hx-target="#business-members-workspace-shell"
+                                        data-hx-swap="outerHTML"
+                                        data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                     <i class="fa-solid fa-user-minus"></i> Remove
                                 </button>
                             }
@@ -270,7 +273,9 @@
        asp-action="Members"
        asp-route-businessId="@Model.Business.Id"
        asp-route-query="@Model.Query"
-       asp-route-filter="@Model.Filter">
+       asp-route-filter="@Model.Filter"
+       hx-target="#business-members-workspace-shell"
+       hx-swap="outerHTML">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />

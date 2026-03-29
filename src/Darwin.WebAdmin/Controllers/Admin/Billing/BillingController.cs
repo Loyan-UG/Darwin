@@ -109,7 +109,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
         }
 
         [HttpGet]
-        public IActionResult Index() => RedirectToAction(nameof(Payments));
+        public IActionResult Index() => RedirectOrHtmx(nameof(Payments), new { });
 
         [HttpGet]
         public async Task<IActionResult> Plans(int page = 1, int pageSize = 20, string? q = null, BillingPlanQueueFilter queue = BillingPlanQueueFilter.All, CancellationToken ct = default)
@@ -200,7 +200,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (dto is null)
             {
                 TempData["Error"] = "Billing plan not found.";
-                return RedirectToAction(nameof(Plans));
+                return RedirectOrHtmx(nameof(Plans), new { });
             }
 
             var vm = new BillingPlanEditVm
@@ -254,12 +254,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 await _updateBillingPlan.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Billing plan updated.";
-                return RedirectToAction(nameof(EditPlan), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditPlan), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the billing plan and try again.";
-                return RedirectToAction(nameof(EditPlan), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditPlan), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -304,7 +304,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     CreatedAtUtc = x.CreatedAtUtc,
                     RefundedAmountMinor = x.RefundedAmountMinor,
                     NetCapturedAmountMinor = x.NetCapturedAmountMinor,
+                    LastFinancialEventAtUtc = x.LastFinancialEventAtUtc,
+                    OpenAgeHours = x.OpenAgeHours,
+                    ProviderReferenceState = x.ProviderReferenceState,
                     IsStripe = x.IsStripe,
+                    NeedsReconciliation = x.NeedsReconciliation,
                     NeedsSupportAttention = x.NeedsSupportAttention,
                     RowVersion = x.RowVersion
                 }).ToList();
@@ -403,7 +407,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     Status = x.Status,
                     CreatedAtUtc = x.CreatedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
+                    LastRefundEventAtUtc = x.LastRefundEventAtUtc,
+                    OpenAgeHours = x.OpenAgeHours,
+                    ProviderReferenceState = x.ProviderReferenceState,
                     IsStripe = x.IsStripe,
+                    NeedsSupportAttention = x.NeedsSupportAttention,
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
@@ -454,7 +462,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 ProviderLinkedCount = summary.ProviderLinkedCount,
                 StripeCount = summary.StripeCount,
                 MissingProviderRefCount = summary.MissingProviderRefCount,
-                FailedStripeCount = summary.FailedStripeCount
+                FailedStripeCount = summary.FailedStripeCount,
+                NeedsReconciliationCount = summary.NeedsReconciliationCount
             };
         }
 
@@ -501,7 +510,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 PendingCount = summary.PendingCount,
                 CompletedCount = summary.CompletedCount,
                 FailedCount = summary.FailedCount,
-                StripeCount = summary.StripeCount
+                StripeCount = summary.StripeCount,
+                NeedsSupportCount = summary.NeedsSupportCount
             };
         }
 
@@ -545,6 +555,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 },
                 new()
                 {
+                    Title = "Reconciliation-needed rows",
+                    ScopeNote = "Use this subset for pending, failed, refunded, or Stripe-reference-light rows that still need operator confirmation before finance treats them as settled.",
+                    OperatorAction = "Start from the payment row, verify provider reference, refund totals, and linked order or invoice context, then document the final state in the payment editor or linked support queue.",
+                    SettingsDependency = "Stripe secret key, webhook secret, and merchant identity should already be configured before operators rely on these rows as trustworthy reconciliation evidence."
+                },
+                new()
+                {
+                    Title = "Provider-history review",
+                    ScopeNote = "Use the new provider reference state and last financial event signal to spot rows whose provider trail is stale or incomplete.",
+                    OperatorAction = "Check the provider reference state, last event timestamp, and linked refund activity before deciding whether a row is settled, stale, or missing follow-up.",
+                    SettingsDependency = "Stripe webhook secret and provider credentials should be in place before operators treat these timeline signals as trustworthy settlement history."
+                },
+                new()
+                {
                     Title = "Unlinked or provider-linked rows",
                     ScopeNote = "These rows usually represent reconciliation or data-hygiene work.",
                     OperatorAction = "Link order/invoice context where known, or keep the row documented as a standalone support payment until Stripe-specific reconciliation matures.",
@@ -577,6 +601,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     ScopeNote = "Use this subset when refund status or Stripe handling needs explicit finance support review.",
                     OperatorAction = "Start from the refund row, then move into the linked payment workbench or order refund flow to correct support notes and retry paths manually.",
                     SettingsDependency = "Webhook/callback audit depth is still near-term, so operator review remains the source of truth for failed refund follow-up."
+                },
+                new()
+                {
+                    Title = "Refund provider-history review",
+                    ScopeNote = "Use the provider-reference state and last refund event to distinguish stale support markers from actual provider-side movement.",
+                    OperatorAction = "Check the provider reference state, open-age window, and linked payment before concluding whether the refund is still in flight, failed, or simply missing provider correlation.",
+                    SettingsDependency = "Stripe webhook secret and provider reference hygiene should be green before these timeline signals are treated as reliable evidence."
                 }
             };
         }
@@ -698,7 +729,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (dto is null)
             {
                 TempData["Error"] = "Payment not found.";
-                return RedirectToAction(nameof(Payments));
+                return RedirectOrHtmx(nameof(Payments), new { });
             }
 
             var vm = new PaymentEditVm
@@ -782,7 +813,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the payment and try again.";
-                return RedirectToAction(nameof(EditPayment), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditPayment), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -870,7 +901,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Total = total,
                 Items = items
             };
-            return View(vm);
+            return RenderFinancialAccountsWorkspace(vm);
         }
 
         [HttpGet]
@@ -924,7 +955,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (dto is null)
             {
                 TempData["Error"] = "Financial account not found.";
-                return RedirectToAction(nameof(FinancialAccounts));
+                return RedirectOrHtmx(nameof(FinancialAccounts), new { });
             }
 
             var vm = new FinancialAccountEditVm
@@ -964,12 +995,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 await _updateAccount.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Financial account updated.";
-                return RedirectToAction(nameof(EditFinancialAccount), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditFinancialAccount), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the financial account and try again.";
-                return RedirectToAction(nameof(EditFinancialAccount), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditFinancialAccount), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -1015,7 +1046,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Total = total,
                 Items = items
             };
-            return View(vm);
+            return RenderExpensesWorkspace(vm);
         }
 
         [HttpGet]
@@ -1072,7 +1103,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (dto is null)
             {
                 TempData["Error"] = "Expense not found.";
-                return RedirectToAction(nameof(Expenses));
+                return RedirectOrHtmx(nameof(Expenses), new { });
             }
 
             var vm = new ExpenseEditVm
@@ -1116,12 +1147,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 await _updateExpense.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Expense updated.";
-                return RedirectToAction(nameof(EditExpense), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditExpense), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the expense and try again.";
-                return RedirectToAction(nameof(EditExpense), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditExpense), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -1168,7 +1199,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 Total = total,
                 Items = items
             };
-            return View(vm);
+            return RenderJournalEntriesWorkspace(vm);
         }
 
         [HttpGet]
@@ -1237,7 +1268,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             if (dto is null)
             {
                 TempData["Error"] = "Journal entry not found.";
-                return RedirectToAction(nameof(JournalEntries));
+                return RedirectOrHtmx(nameof(JournalEntries), new { });
             }
 
             var vm = new JournalEntryEditVm
@@ -1293,12 +1324,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             {
                 await _updateJournalEntry.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Journal entry updated.";
-                return RedirectToAction(nameof(EditJournalEntry), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditJournalEntry), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the journal entry and try again.";
-                return RedirectToAction(nameof(EditJournalEntry), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditJournalEntry), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -1532,6 +1563,36 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
             }
 
             return View("Refunds", vm);
+        }
+
+        private IActionResult RenderFinancialAccountsWorkspace(FinancialAccountsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/FinancialAccounts.cshtml", vm);
+            }
+
+            return View("FinancialAccounts", vm);
+        }
+
+        private IActionResult RenderExpensesWorkspace(ExpensesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/Expenses.cshtml", vm);
+            }
+
+            return View("Expenses", vm);
+        }
+
+        private IActionResult RenderJournalEntriesWorkspace(JournalEntriesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Billing/JournalEntries.cshtml", vm);
+            }
+
+            return View("JournalEntries", vm);
         }
 
         private IActionResult RenderBillingPlanEditor(BillingPlanEditVm vm, bool isCreate)

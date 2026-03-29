@@ -174,7 +174,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
             if (!result.Succeeded || result.Value is null)
             {
                 TempData["Warning"] = result.Error ?? "Permission not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var dto = result.Value;
@@ -245,7 +245,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 TempData["Error"] = "Failed to delete permission.";
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         private IActionResult RenderCreateEditor(PermissionCreateVm vm)
