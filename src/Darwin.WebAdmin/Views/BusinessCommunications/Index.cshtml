@@ -192,6 +192,7 @@
                         <th>Subject Source</th>
                         <th>Body Source</th>
                         <th>Operator Control</th>
+                        <th>Actions</th>
                         <th>Next Step</th>
                     </tr>
                 </thead>
@@ -204,6 +205,48 @@
                         <td>@item.SubjectSource</td>
                         <td>@item.BodySource</td>
                         <td>@item.OperatorControl</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (!string.IsNullOrWhiteSpace(item.AuditFlowKey))
+                                {
+                                    <a asp-action="EmailAudits"
+                                       asp-route-status="Failed"
+                                       asp-route-flowKey="@item.AuditFlowKey"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">Failed Audits</a>
+                                }
+                                @if (item.OperatorActionTarget == "Invitations")
+                                {
+                                    <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                                else if (item.OperatorActionTarget == "Users")
+                                {
+                                    <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("Index", "Users")"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                                else if (item.OperatorActionTarget == "EmailAudits")
+                                {
+                                    <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                                else if (item.OperatorActionTarget == "AdminAlerts")
+                                {
+                                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                            </div>
+                        </td>
                         <td>@item.NextStep</td>
                     </tr>
                 }
@@ -259,6 +302,7 @@
                         <th>Current Safe Action</th>
                         <th>Generic Retry Status</th>
                         <th>Operator Entry Point</th>
+                        <th>Actions</th>
                         <th>Escalation Rule</th>
                     </tr>
                 </thead>
@@ -270,6 +314,48 @@
                         <td>@item.CurrentSafeAction</td>
                         <td>@item.GenericRetryStatus</td>
                         <td>@item.OperatorEntryPoint</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (!string.IsNullOrWhiteSpace(item.AuditFlowKey))
+                                {
+                                    <a asp-action="EmailAudits"
+                                       asp-route-status="Failed"
+                                       asp-route-flowKey="@item.AuditFlowKey"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">Failed Audits</a>
+                                }
+                                @if (item.OperatorActionTarget == "Invitations")
+                                {
+                                    <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                                else if (item.OperatorActionTarget == "Users")
+                                {
+                                    <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("Index", "Users")"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                                else if (item.OperatorActionTarget == "EmailAudits")
+                                {
+                                    <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                                else if (item.OperatorActionTarget == "AdminAlerts")
+                                {
+                                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                            </div>
+                        </td>
                         <td>@item.EscalationRule</td>
                     </tr>
                 }

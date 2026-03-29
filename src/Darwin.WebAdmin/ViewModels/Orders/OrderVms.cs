@@ -52,6 +52,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public string? ShippingService { get; set; }
         public long ShippingTotalMinor { get; set; }
         public TaxPolicySnapshotVm TaxPolicy { get; set; } = new();
+        public ReturnSupportBaselineVm ReturnSupport { get; set; } = new();
         public OrderStatus Status { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
         public Guid? SelectedWarehouseId { get; set; }
@@ -168,6 +169,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
     public sealed class OrderShipmentsPageVm
     {
         public Guid OrderId { get; set; }
+        public Guid? DefaultRefundPaymentId { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
@@ -275,12 +277,23 @@ namespace Darwin.WebAdmin.ViewModels.Orders
     public sealed class OrderRefundsPageVm
     {
         public Guid OrderId { get; set; }
+        public int ReturnedShipmentCount { get; set; }
+        public Guid? DefaultRefundPaymentId { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
         public RefundQueueFilter Filter { get; set; } = RefundQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
         public List<RefundListItemVm> Items { get; set; } = new();
+    }
+
+    public sealed class ReturnSupportBaselineVm
+    {
+        public int ReturnedShipmentCount { get; set; }
+        public int ReturnedWithoutTrackingCount { get; set; }
+        public int CarrierReviewShipmentCount { get; set; }
+        public bool HasRefundablePayment { get; set; }
+        public Guid? DefaultRefundPaymentId { get; set; }
     }
 
     public sealed class RefundListItemVm

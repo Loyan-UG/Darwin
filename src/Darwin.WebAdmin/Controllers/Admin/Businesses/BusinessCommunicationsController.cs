@@ -528,6 +528,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SubjectSource = "Transactional subject prefix + fixed invitation subject",
                     BodySource = "Inline HTML generated in the invitation handler",
                     OperatorControl = "No body editor. Operators can only resend or revoke the invitation from business support surfaces.",
+                    AuditFlowKey = "BusinessInvitation",
+                    OperatorActionLabel = "Open Invitations",
+                    OperatorActionTarget = "Invitations",
                     NextStep = "Promote to Communication Core template catalog with preview and delivery logging."
                 },
                 new()
@@ -537,6 +540,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SubjectSource = "Transactional subject prefix + fixed activation subject",
                     BodySource = "Inline HTML generated in the confirmation handler",
                     OperatorControl = "No template editing. Operators can trigger activation support but not rewrite the message.",
+                    AuditFlowKey = "AccountActivation",
+                    OperatorActionLabel = "Open Users",
+                    OperatorActionTarget = "Users",
                     NextStep = "Move into reusable template + confirmation analytics flow."
                 },
                 new()
@@ -546,6 +552,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SubjectSource = "Transactional subject prefix + fixed password-reset subject",
                     BodySource = "Inline HTML generated in the password-reset handler",
                     OperatorControl = "No template editing. Operators can reissue support actions only after identity validation.",
+                    AuditFlowKey = "PasswordReset",
+                    OperatorActionLabel = "Open Users",
+                    OperatorActionTarget = "Users",
                     NextStep = "Move into Communication Core template inventory with controlled support resend."
                 },
                 new()
@@ -555,6 +564,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SubjectSource = "Transactional subject prefix + fixed diagnostic subject",
                     BodySource = "Inline HTML generated in WebAdmin for the configured test inbox only",
                     OperatorControl = "Operators can send the test email when SMTP and the test inbox are configured.",
+                    AuditFlowKey = "AdminCommunicationTest",
+                    OperatorActionLabel = "Open Audit Log",
+                    OperatorActionTarget = "EmailAudits",
                     NextStep = "Fold into multi-channel diagnostic templates once Communication Core test sends exist."
                 },
                 new()
@@ -564,6 +576,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SubjectSource = "Not centralized",
                     BodySource = "Not centralized",
                     OperatorControl = "No template catalog yet; only routing readiness and policy visibility are exposed.",
+                    AuditFlowKey = string.Empty,
+                    OperatorActionLabel = "Open Alert Settings",
+                    OperatorActionTarget = "AdminAlerts",
                     NextStep = "Create alert template + routing inventory before adding delivery actions."
                 }
             };
@@ -579,6 +594,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CurrentSafeAction = "Use invitation resend/revoke from the business invitation workspace after SMTP readiness is green.",
                     GenericRetryStatus = "No generic retry queue. Flow-specific resend exists.",
                     OperatorEntryPoint = "Business setup, invitations list, and email-audit handoff.",
+                    AuditFlowKey = "BusinessInvitation",
+                    OperatorActionLabel = "Open Invitations",
+                    OperatorActionTarget = "Invitations",
                     EscalationRule = "If repeated resends fail after transport is ready, escalate as Communication Core/platform debt instead of repeating sends."
                 },
                 new()
@@ -587,6 +605,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CurrentSafeAction = "Prefer self-service resend; use admin activation support only where current policy allows.",
                     GenericRetryStatus = "No generic retry queue and no blind resend from email audits.",
                     OperatorEntryPoint = "Users queue, business members queue, and email-audit handoff.",
+                    AuditFlowKey = "AccountActivation",
+                    OperatorActionLabel = "Open Users",
+                    OperatorActionTarget = "Users",
                     EscalationRule = "Do not bypass confirmation policy. Persistent failures after a validated resend are auth/communication troubleshooting."
                 },
                 new()
@@ -595,6 +616,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CurrentSafeAction = "Reissue reset only after identity validation and transport checks.",
                     GenericRetryStatus = "No generic retry queue and no automatic replay from failed audit rows.",
                     OperatorEntryPoint = "Users queue and business member support actions.",
+                    AuditFlowKey = "PasswordReset",
+                    OperatorActionLabel = "Open Users",
+                    OperatorActionTarget = "Users",
                     EscalationRule = "Avoid repeated resets without verification. Persistent failures escalate as support/security or transport issues."
                 },
                 new()
@@ -603,6 +627,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CurrentSafeAction = "Rerun the diagnostic only to the configured test inbox after fixing SMTP or policy settings.",
                     GenericRetryStatus = "No retry queue; manual rerun only.",
                     OperatorEntryPoint = "Business Communications workspace.",
+                    AuditFlowKey = "AdminCommunicationTest",
+                    OperatorActionLabel = "Open Audit Log",
+                    OperatorActionTarget = "EmailAudits",
                     EscalationRule = "Never switch the diagnostic to live recipients. Keep tests scoped to the configured test target."
                 },
                 new()
@@ -611,6 +638,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CurrentSafeAction = "Visibility and readiness only. No shared resend workflow exists yet.",
                     GenericRetryStatus = "Not implemented.",
                     OperatorEntryPoint = "Site settings and Business Communications readiness workspace.",
+                    AuditFlowKey = string.Empty,
+                    OperatorActionLabel = "Open Alert Settings",
+                    OperatorActionTarget = "AdminAlerts",
                     EscalationRule = "Treat repeated alert-channel gaps as later-phase Communication Core work, not as manual resend tasks."
                 }
             };

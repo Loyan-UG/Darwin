@@ -99,6 +99,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string SubjectSource { get; set; } = string.Empty;
         public string BodySource { get; set; } = string.Empty;
         public string OperatorControl { get; set; } = string.Empty;
+        public string AuditFlowKey { get; set; } = string.Empty;
+        public string OperatorActionLabel { get; set; } = string.Empty;
+        public string OperatorActionTarget { get; set; } = string.Empty;
         public string NextStep { get; set; } = string.Empty;
     }
 
@@ -108,6 +111,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string CurrentSafeAction { get; set; } = string.Empty;
         public string GenericRetryStatus { get; set; } = string.Empty;
         public string OperatorEntryPoint { get; set; } = string.Empty;
+        public string AuditFlowKey { get; set; } = string.Empty;
+        public string OperatorActionLabel { get; set; } = string.Empty;
+        public string OperatorActionTarget { get; set; } = string.Empty;
         public string EscalationRule { get; set; } = string.Empty;
     }
 

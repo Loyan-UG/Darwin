@@ -13,6 +13,8 @@
     <div class="d-flex gap-2 flex-wrap mb-3">
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Pending" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Pending ? "btn-warning" : "btn-outline-warning")">Pending/Packed</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Shipped" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Shipped ? "btn-primary" : "btn-outline-primary")">Shipped/Delivered</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Returned" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Returned ? "btn-dark" : "btn-outline-dark")">Returned</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="CarrierReview" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">Carrier Review</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="AwaitingHandoff" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.AwaitingHandoff ? "btn-danger" : "btn-outline-danger")">Awaiting Handoff</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="TrackingOverdue" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.TrackingOverdue ? "btn-danger" : "btn-outline-danger")">Tracking Overdue</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
@@ -25,12 +27,13 @@
                     <th>Tracking</th>
                     <th>Status</th>
                     <th>Created (UTC)</th>
+                    <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Items.Count == 0)
                 {
-                    <tr><td colspan="4" class="text-center text-muted">No shipments.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted">No shipments.</td></tr>
                 }
                 else
                 {
@@ -54,6 +57,10 @@
                             </td>
                             <td>
                                 @s.Status
+                                @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned)
+                                {
+                                    <div><span class="badge text-bg-dark mt-1">Returned parcel</span></div>
+                                }
                                 @if (s.AwaitingHandoff)
                                 {
                                     <div><span class="badge text-bg-danger mt-1">Awaiting handoff</span></div>
@@ -72,6 +79,26 @@
                                 @if (!string.IsNullOrWhiteSpace(s.ExceptionNote))
                                 {
                                     <div class="small text-danger mt-1">@s.ExceptionNote</div>
+                                }
+                                @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned)
+                                {
+                                    <div class="small text-muted mt-1">Use refund + restock follow-up from this order.</div>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned && Model.DefaultRefundPaymentId.HasValue)
+                                {
+                                    <a asp-controller="Orders"
+                                       asp-action="AddRefund"
+                                       asp-route-orderId="@Model.OrderId"
+                                       asp-route-paymentId="@Model.DefaultRefundPaymentId"
+                                       class="btn btn-sm btn-outline-danger"
+                                       hx-get="@Url.Action("AddRefund", "Orders", new { orderId = Model.OrderId, paymentId = Model.DefaultRefundPaymentId })"
+                                       hx-target="#order-operation-shell"
+                                       hx-swap="innerHTML"
+                                       hx-push-url="false">
+                                        Start Refund
+                                    </a>
                                 }
                             </td>
                         </tr>

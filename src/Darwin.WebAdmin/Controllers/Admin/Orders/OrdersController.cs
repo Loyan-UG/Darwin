@@ -315,6 +315,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 ShippingService = dto.ShippingService,
                 ShippingTotalMinor = dto.ShippingTotalMinor,
                 TaxPolicy = MapTaxPolicy(settings),
+                ReturnSupport = BuildReturnSupportBaseline(dto),
                 RowVersion = dto.RowVersion,
                 SelectedWarehouseId = selectedWarehouseId,
                 WarehouseOptions = warehouses
@@ -386,6 +387,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         public async Task<IActionResult> Shipments(Guid orderId, int page = 1, int pageSize = 10, ShipmentQueueFilter filter = ShipmentQueueFilter.All, CancellationToken ct = default)
         {
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var order = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             var (items, total) = await _getOrderShipmentsPage.HandleAsync(
                 orderId,
                 page,
@@ -397,6 +399,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             var vm = new OrderShipmentsPageVm
             {
                 OrderId = orderId,
+                DefaultRefundPaymentId = ResolveDefaultRefundPaymentId(order),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -436,10 +439,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         [HttpGet]
         public async Task<IActionResult> Refunds(Guid orderId, int page = 1, int pageSize = 10, RefundQueueFilter filter = RefundQueueFilter.All, CancellationToken ct = default)
         {
+            var order = await _getOrderForView.HandleAsync(orderId, ct).ConfigureAwait(false);
             var (items, total) = await _getOrderRefundsPage.HandleAsync(orderId, page, pageSize, filter, ct).ConfigureAwait(false);
             var vm = new OrderRefundsPageVm
             {
                 OrderId = orderId,
+                ReturnedShipmentCount = order?.Shipments.Count(x => x.Status == ShipmentStatus.Returned) ?? 0,
+                DefaultRefundPaymentId = ResolveDefaultRefundPaymentId(order),
                 Page = page,
                 PageSize = pageSize,
                 Total = total,
@@ -825,6 +831,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
         {
             var sizes = new[] { 10, 20, 50, 100 };
             return sizes.Select(x => new SelectListItem(x.ToString(), x.ToString(), x == selectedPageSize)).ToList();
+        }
+
+        private static ReturnSupportBaselineVm BuildReturnSupportBaseline(OrderDetailDto dto)
+        {
+            return new ReturnSupportBaselineVm
+            {
+                ReturnedShipmentCount = dto.Shipments.Count(x => x.Status == ShipmentStatus.Returned),
+                ReturnedWithoutTrackingCount = dto.Shipments.Count(x => x.Status == ShipmentStatus.Returned && string.IsNullOrWhiteSpace(x.TrackingNumber)),
+                CarrierReviewShipmentCount = dto.Shipments.Count(x =>
+                    x.Status == ShipmentStatus.Returned ||
+                    ((x.Status == ShipmentStatus.Shipped || x.Status == ShipmentStatus.Delivered) && string.IsNullOrWhiteSpace(x.TrackingNumber)) ||
+                    string.IsNullOrWhiteSpace(x.Service)),
+                HasRefundablePayment = ResolveDefaultRefundPaymentId(dto).HasValue,
+                DefaultRefundPaymentId = ResolveDefaultRefundPaymentId(dto)
+            };
+        }
+
+        private static Guid? ResolveDefaultRefundPaymentId(OrderDetailDto? dto)
+        {
+            return dto?.Payments
+                .Where(x =>
+                    x.Status == PaymentStatus.Captured ||
+                    x.Status == PaymentStatus.Completed ||
+                    x.Status == PaymentStatus.Refunded)
+                .OrderByDescending(x => x.CapturedAtUtc ?? DateTime.MinValue)
+                .Select(x => (Guid?)x.Id)
+                .FirstOrDefault();
         }
 
         private static OrderHeaderVm CreateHeader(OrderDetailDto dto)

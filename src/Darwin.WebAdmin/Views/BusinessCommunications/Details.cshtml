@@ -330,6 +330,7 @@
                                 <th>Flow</th>
                                 <th>Template Surface</th>
                                 <th>Operator Control</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -339,6 +340,49 @@
                                 <td class="fw-semibold">@item.FlowName</td>
                                 <td>@item.TemplateSurface</td>
                                 <td>@item.OperatorControl</td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @if (!string.IsNullOrWhiteSpace(item.AuditFlowKey))
+                                        {
+                                            <a asp-action="EmailAudits"
+                                               asp-route-businessId="@Model.Id"
+                                               asp-route-status="Failed"
+                                               asp-route-flowKey="@item.AuditFlowKey"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = item.AuditFlowKey })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">Failed Audits</a>
+                                        }
+                                        @if (item.OperatorActionTarget == "Invitations")
+                                        {
+                                            <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                        else if (item.OperatorActionTarget == "Users")
+                                        {
+                                            <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                        else if (item.OperatorActionTarget == "EmailAudits")
+                                        {
+                                            <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                        else if (item.OperatorActionTarget == "AdminAlerts")
+                                        {
+                                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                    </div>
+                                </td>
                             </tr>
                         }
                         </tbody>
@@ -361,6 +405,7 @@
                                 <th>Flow</th>
                                 <th>Safe Action</th>
                                 <th>Retry Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -370,6 +415,49 @@
                                 <td class="fw-semibold">@item.FlowName</td>
                                 <td>@item.CurrentSafeAction</td>
                                 <td>@item.GenericRetryStatus</td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @if (!string.IsNullOrWhiteSpace(item.AuditFlowKey))
+                                        {
+                                            <a asp-action="EmailAudits"
+                                               asp-route-businessId="@Model.Id"
+                                               asp-route-status="Failed"
+                                               asp-route-flowKey="@item.AuditFlowKey"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = item.AuditFlowKey })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">Failed Audits</a>
+                                        }
+                                        @if (item.OperatorActionTarget == "Invitations")
+                                        {
+                                            <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                        else if (item.OperatorActionTarget == "Users")
+                                        {
+                                            <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                        else if (item.OperatorActionTarget == "EmailAudits")
+                                        {
+                                            <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                        else if (item.OperatorActionTarget == "AdminAlerts")
+                                        {
+                                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
+                                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                    </div>
+                                </td>
                             </tr>
                         }
                         </tbody>
