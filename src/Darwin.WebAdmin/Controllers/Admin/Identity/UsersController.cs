@@ -184,7 +184,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         /// Renders the create form. Locale/Currency/Timezone are rendered by SettingSelectTagHelper.
         /// </summary>
         [HttpGet]
-        public IActionResult Create() => View(new UserCreateVm());
+        public IActionResult Create() => RenderCreateEditor(new UserCreateVm());
 
         /// <summary>
         /// Creates a new user. On success, redirects to Edit so that addresses can be managed.
@@ -251,10 +251,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 // NOTE: IsSystem is intentionally NOT part of UserEditVm per model.
             };
 
-            // Always provide a non-null addresses section
-            ViewBag.AddressesSection = await BuildAddressesSectionVmAsync(u.Id, ct);
-
-            return View(vm);
+            return await RenderEditEditorAsync(vm, ct);
         }
 
         /// <summary>
@@ -312,7 +309,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 CurrentEmail = currentEmail ?? string.Empty,
                 NewEmail = string.Empty
             };
-            return View(vm);
+            return RenderChangeEmailEditor(vm);
         }
 
         /// <summary>
@@ -702,7 +699,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(vm);
+            return await RenderRolesEditorAsync(vm, ct);
         }
 
         /// <summary>

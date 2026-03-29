@@ -3,32 +3,4 @@
     ViewData["Title"] = "Adjust Loyalty Points";
 }
 
-<h1 class="mb-1">Adjust Loyalty Points</h1>
-<div class="text-muted mb-3">@Model.AccountLabel</div>
-
-<form asp-action="AdjustPoints" method="post" class="row g-3">
-    @Html.AntiForgeryToken()
-    <input asp-for="LoyaltyAccountId" type="hidden" />
-    <input asp-for="BusinessId" type="hidden" />
-    <input asp-for="UserId" type="hidden" />
-    <input asp-for="AccountLabel" type="hidden" />
-    <input asp-for="RowVersion" type="hidden" />
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="col-md-3">
-        <label asp-for="PointsDelta" class="form-label"></label>
-        <input asp-for="PointsDelta" class="form-control" />
-        <div class="form-text">Positive adds points. Negative deducts points.</div>
-    </div>
-    <div class="col-md-5">
-        <label asp-for="Reason" class="form-label"></label>
-        <input asp-for="Reason" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Reference" class="form-label"></label>
-        <input asp-for="Reference" class="form-control" />
-    </div>
-    <div class="col-12 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Apply</button>
-        <a asp-action="AccountDetails" asp-route-id="@Model.LoyaltyAccountId" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+<partial name="_AdjustPointsEditorShell" model="Model" />

@@ -113,7 +113,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         public IActionResult Create()
         {
             // Default model is empty; business defaults are handled in the Application layer.
-            return View(new RoleCreateVm());
+            return RenderCreateEditor(new RoleCreateVm());
         }
 
         /// <summary>
@@ -169,7 +169,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 Description = dto.Description,
                 IsSystem = dto.IsSystem
             };
-            return View(vm);
+            return RenderEditEditor(vm);
         }
 
         private static IEnumerable<RoleListItemVm> ApplyRoleFilter(IEnumerable<RoleListItemVm> items, RoleQueueFilter filter)

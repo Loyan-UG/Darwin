@@ -4,6 +4,24 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Loyalty.DTOs
 {
+    public enum LoyaltyProgramQueueFilter
+    {
+        All = 0,
+        Active = 1,
+        Inactive = 2,
+        PerCurrencyUnit = 3,
+        MissingRules = 4
+    }
+
+    public sealed class LoyaltyProgramOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int PerCurrencyUnitCount { get; set; }
+        public int MissingRulesCount { get; set; }
+    }
+
     /// <summary>
     /// DTO used to create a loyalty program for a business.
     /// </summary>

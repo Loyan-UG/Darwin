@@ -3,6 +3,24 @@ using Darwin.Domain.Enums;
 
 namespace Darwin.Application.Loyalty.DTOs
 {
+    public enum LoyaltyRewardTierQueueFilter
+    {
+        All = 0,
+        SelfRedemption = 1,
+        MissingDescription = 2,
+        DiscountRewards = 3,
+        FreeItem = 4
+    }
+
+    public sealed class LoyaltyRewardTierOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int SelfRedemptionCount { get; set; }
+        public int MissingDescriptionCount { get; set; }
+        public int DiscountRewardCount { get; set; }
+        public int FreeItemCount { get; set; }
+    }
+
     /// <summary>
     /// DTO used to create a reward tier for a loyalty program.
     /// </summary>

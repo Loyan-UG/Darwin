@@ -108,9 +108,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
 
             var items = new List<WarehouseListItemVm>();
             var total = 0;
+            var summary = new WarehouseOpsSummaryVm();
             if (businessId.HasValue)
             {
                 var result = await _getWarehousesPage.HandleAsync(businessId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
+                var summaryDto = await _getWarehousesPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new WarehouseListItemVm
                 {
                     Id = x.Id,
@@ -123,6 +125,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
+                summary = new WarehouseOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    DefaultCount = summaryDto.DefaultCount,
+                    NoStockLevelsCount = summaryDto.NoStockLevelsCount
+                };
             }
 
             var vm = new WarehousesListVm
@@ -131,6 +139,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Query = q ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildWarehouseFilterItems(filter),
+                Summary = summary,
+                Playbooks = BuildWarehousePlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -252,9 +262,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = new List<SupplierListItemVm>();
             var total = 0;
+            var summary = new SupplierOpsSummaryVm();
             if (businessId.HasValue)
             {
                 var result = await _getSuppliersPage.HandleAsync(businessId.Value, page, pageSize, q, filter, ct).ConfigureAwait(false);
+                var summaryDto = await _getSuppliersPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                 items = result.Items.Select(x => new SupplierListItemVm
                 {
                     Id = x.Id,
@@ -267,6 +279,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                     RowVersion = x.RowVersion
                 }).ToList();
                 total = result.Total;
+                summary = new SupplierOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    MissingAddressCount = summaryDto.MissingAddressCount,
+                    HasPurchaseOrdersCount = summaryDto.HasPurchaseOrdersCount
+                };
             }
 
             var vm = new SuppliersListVm
@@ -275,6 +293,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Query = q ?? string.Empty,
                 Filter = filter,
                 FilterItems = BuildSupplierFilterItems(filter),
+                Summary = summary,
+                Playbooks = BuildSupplierPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -448,7 +468,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 return RedirectToAction(nameof(StockLevels), new { businessId });
             }
 
-            return View(vm);
+            return RenderAdjustStockEditor(vm);
         }
 
         [HttpPost]
@@ -458,7 +478,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderAdjustStockEditor(vm);
             }
 
             try
@@ -473,13 +493,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Stock adjusted.";
-                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderAdjustStockEditor(vm);
             }
         }
 
@@ -493,7 +513,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 return RedirectToAction(nameof(StockLevels), new { businessId });
             }
 
-            return View(vm);
+            return RenderReserveStockEditor(vm);
         }
 
         [HttpPost]
@@ -503,7 +523,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderReserveStockEditor(vm);
             }
 
             try
@@ -518,13 +538,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Stock reserved.";
-                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderReserveStockEditor(vm);
             }
         }
 
@@ -538,7 +558,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 return RedirectToAction(nameof(StockLevels), new { businessId });
             }
 
-            return View(vm);
+            return RenderReleaseReservationEditor(vm);
         }
 
         [HttpPost]
@@ -548,7 +568,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderReleaseReservationEditor(vm);
             }
 
             try
@@ -563,13 +583,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Reservation released.";
-                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.Reserved });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderReleaseReservationEditor(vm);
             }
         }
 
@@ -583,7 +603,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 return RedirectToAction(nameof(StockLevels), new { businessId });
             }
 
-            return View(vm);
+            return RenderReturnReceiptEditor(vm);
         }
 
         [HttpPost]
@@ -593,7 +613,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderReturnReceiptEditor(vm);
             }
 
             try
@@ -608,13 +628,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Return receipt processed.";
-                return RedirectToAction(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId = vm.BusinessId, warehouseId = vm.WarehouseId, filter = StockLevelQueueFilter.All });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateInventoryStockActionOptionsAsync(vm, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderReturnReceiptEditor(vm);
             }
         }
 
@@ -625,7 +645,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             warehouseId = await _referenceData.ResolveWarehouseIdAsync(warehouseId, businessId, ct).ConfigureAwait(false);
             var vm = new StockLevelEditVm { WarehouseId = warehouseId ?? Guid.Empty };
             await PopulateStockLevelOptionsAsync(vm, businessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderStockLevelEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -635,7 +655,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockLevelEditor(vm, isCreate: true);
             }
 
             var dto = new StockLevelCreateDto
@@ -653,13 +673,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 var id = await _createStockLevel.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Stock level created.";
-                return RedirectToAction(nameof(EditStockLevel), new { id });
+                return RedirectOrHtmx(nameof(EditStockLevel), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockLevelEditor(vm, isCreate: true);
             }
         }
 
@@ -686,7 +706,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 InTransitQuantity = dto.InTransitQuantity
             };
             await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderStockLevelEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -696,7 +716,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (!ModelState.IsValid)
             {
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockLevelEditor(vm, isCreate: false);
             }
 
             var dto = new StockLevelEditDto
@@ -727,7 +747,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await PopulateStockLevelOptionsAsync(vm, null, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderStockLevelEditor(vm, isCreate: false);
             }
         }
 
@@ -1200,6 +1220,44 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             };
         }
 
+        private static List<InventoryOpsPlaybookVm> BuildWarehousePlaybooks()
+        {
+            return new List<InventoryOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Default warehouse review",
+                    ScopeNote = "Default warehouses act as the most common fallback for stock and transfer workflows and deserve extra review before operations scale.",
+                    OperatorAction = "Confirm the default location still matches the business's active fulfillment path before onboarding more stock or staff."
+                },
+                new()
+                {
+                    Title = "Empty warehouse cleanup",
+                    ScopeNote = "Warehouses without stock levels are often setup leftovers or incomplete go-live steps that can confuse replenishment workflows.",
+                    OperatorAction = "Review empty warehouses and either seed stock levels, repurpose the location, or archive the operational intent through naming and notes."
+                }
+            };
+        }
+
+        private static List<InventoryOpsPlaybookVm> BuildSupplierPlaybooks()
+        {
+            return new List<InventoryOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Supplier contact hygiene",
+                    ScopeNote = "Suppliers missing address data create friction for billing, returns, and manual procurement follow-up.",
+                    OperatorAction = "Prioritize missing-address suppliers before adding more purchase orders so procurement and finance have enough fallback context."
+                },
+                new()
+                {
+                    Title = "Active supplier review",
+                    ScopeNote = "Suppliers with purchase-order history are the first place to review when replenishment or receipt issues need business context.",
+                    OperatorAction = "Use purchase-order-linked suppliers as the primary queue for follow-up on delivery delays, cost mismatches, or receipt reconciliation."
+                }
+            };
+        }
+
         private async Task PopulateStockLevelOptionsAsync(StockLevelEditVm vm, Guid? businessId, CancellationToken ct)
         {
             var resolvedBusinessId = businessId ?? await _referenceData.ResolveBusinessIdAsync(null, ct).ConfigureAwait(false);
@@ -1386,6 +1444,57 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             }
 
             return isCreate ? View("CreateWarehouse", vm) : View("EditWarehouse", vm);
+        }
+
+        private IActionResult RenderStockLevelEditor(StockLevelEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Inventory/_StockLevelEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateStockLevel", vm) : View("EditStockLevel", vm);
+        }
+
+        private IActionResult RenderAdjustStockEditor(InventoryAdjustActionVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/_AdjustStockEditorShell.cshtml", vm);
+            }
+
+            return View("AdjustStock", vm);
+        }
+
+        private IActionResult RenderReserveStockEditor(InventoryReserveActionVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/_ReserveStockEditorShell.cshtml", vm);
+            }
+
+            return View("ReserveStock", vm);
+        }
+
+        private IActionResult RenderReleaseReservationEditor(InventoryReleaseReservationActionVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/_ReleaseReservationEditorShell.cshtml", vm);
+            }
+
+            return View("ReleaseReservation", vm);
+        }
+
+        private IActionResult RenderReturnReceiptEditor(InventoryReturnReceiptActionVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/_ReturnReceiptEditorShell.cshtml", vm);
+            }
+
+            return View("ReturnReceipt", vm);
         }
 
         private IActionResult RenderSupplierEditor(SupplierEditVm vm, bool isCreate)

@@ -4,6 +4,7 @@
     ViewData["Title"] = "Subscription Invoices";
 }
 
+<div id="business-subscription-invoices-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1">Subscription Invoices</h1>
@@ -90,7 +91,12 @@
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="SubscriptionInvoices" method="get" class="d-flex gap-2">
+    <form asp-action="SubscriptionInvoices"
+          method="get"
+          hx-get="@Url.Action("SubscriptionInvoices", "Businesses")"
+          hx-target="#business-subscription-invoices-workspace-shell"
+          hx-swap="outerHTML"
+          class="d-flex gap-2">
         <input type="hidden" name="businessId" value="@Model.Business.Id" />
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search provider invoice, plan, or failure reason">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
@@ -174,4 +180,5 @@
         }
         </tbody>
     </table>
+</div>
 </div>

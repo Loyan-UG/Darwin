@@ -173,6 +173,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public string Query { get; set; } = string.Empty;
         public WarehouseQueueFilter Filter { get; set; } = WarehouseQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public WarehouseOpsSummaryVm Summary { get; set; } = new();
+        public List<InventoryOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<WarehouseListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -190,6 +192,13 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public bool IsDefault { get; set; }
         public int StockLevelCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class WarehouseOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int DefaultCount { get; set; }
+        public int NoStockLevelsCount { get; set; }
     }
 
     public sealed class WarehouseEditVm
@@ -220,6 +229,8 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public string Query { get; set; } = string.Empty;
         public SupplierQueueFilter Filter { get; set; } = SupplierQueueFilter.All;
         public IEnumerable<SelectListItem> FilterItems { get; set; } = new List<SelectListItem>();
+        public SupplierOpsSummaryVm Summary { get; set; } = new();
+        public List<InventoryOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<SupplierListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -237,6 +248,13 @@ namespace Darwin.WebAdmin.ViewModels.Inventory
         public string? Address { get; set; }
         public int PurchaseOrderCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class SupplierOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int MissingAddressCount { get; set; }
+        public int HasPurchaseOrdersCount { get; set; }
     }
 
     public sealed class SupplierEditVm

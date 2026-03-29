@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Loyalty.Queries
@@ -26,6 +27,7 @@ namespace Darwin.Application.Loyalty.Queries
             int page = 1,
             int pageSize = 20,
             Guid? businessId = null,
+            LoyaltyProgramQueueFilter filter = LoyaltyProgramQueueFilter.All,
             CancellationToken ct = default)
         {
             page = Math.Max(1, page);
@@ -37,6 +39,15 @@ namespace Darwin.Application.Loyalty.Queries
 
             if (businessId.HasValue)
                 query = query.Where(x => x.BusinessId == businessId.Value);
+
+            query = filter switch
+            {
+                LoyaltyProgramQueueFilter.Active => query.Where(x => x.IsActive),
+                LoyaltyProgramQueueFilter.Inactive => query.Where(x => !x.IsActive),
+                LoyaltyProgramQueueFilter.PerCurrencyUnit => query.Where(x => x.AccrualMode == LoyaltyAccrualMode.PerCurrencyUnit),
+                LoyaltyProgramQueueFilter.MissingRules => query.Where(x => x.RulesJson == null || x.RulesJson == string.Empty),
+                _ => query
+            };
 
             int total = await query.CountAsync(ct);
 
@@ -57,6 +68,25 @@ namespace Darwin.Application.Loyalty.Queries
                 .ToListAsync(ct);
 
             return (items, total);
+        }
+
+        public async Task<LoyaltyProgramOpsSummaryDto> GetSummaryAsync(Guid? businessId = null, CancellationToken ct = default)
+        {
+            var query = _db.Set<LoyaltyProgram>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+            if (businessId.HasValue)
+                query = query.Where(x => x.BusinessId == businessId.Value);
+
+            return new LoyaltyProgramOpsSummaryDto
+            {
+                TotalCount = await query.CountAsync(ct).ConfigureAwait(false),
+                ActiveCount = await query.CountAsync(x => x.IsActive, ct).ConfigureAwait(false),
+                InactiveCount = await query.CountAsync(x => !x.IsActive, ct).ConfigureAwait(false),
+                PerCurrencyUnitCount = await query.CountAsync(x => x.AccrualMode == LoyaltyAccrualMode.PerCurrencyUnit, ct).ConfigureAwait(false),
+                MissingRulesCount = await query.CountAsync(x => x.RulesJson == null || x.RulesJson == string.Empty, ct).ConfigureAwait(false)
+            };
         }
     }
 }

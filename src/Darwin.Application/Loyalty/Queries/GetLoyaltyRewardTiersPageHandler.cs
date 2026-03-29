@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Loyalty.DTOs;
 using Darwin.Domain.Entities.Loyalty;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Darwin.Application.Loyalty.Queries
@@ -26,6 +27,7 @@ namespace Darwin.Application.Loyalty.Queries
             Guid loyaltyProgramId,
             int page = 1,
             int pageSize = 50,
+            LoyaltyRewardTierQueueFilter filter = LoyaltyRewardTierQueueFilter.All,
             CancellationToken ct = default)
         {
             page = Math.Max(1, page);
@@ -34,6 +36,15 @@ namespace Darwin.Application.Loyalty.Queries
             var query = _db.Set<LoyaltyRewardTier>()
                 .AsNoTracking()
                 .Where(x => x.LoyaltyProgramId == loyaltyProgramId && !x.IsDeleted);
+
+            query = filter switch
+            {
+                LoyaltyRewardTierQueueFilter.SelfRedemption => query.Where(x => x.AllowSelfRedemption),
+                LoyaltyRewardTierQueueFilter.MissingDescription => query.Where(x => x.Description == null || x.Description == string.Empty),
+                LoyaltyRewardTierQueueFilter.DiscountRewards => query.Where(x => x.RewardType == LoyaltyRewardType.PercentDiscount || x.RewardType == LoyaltyRewardType.AmountDiscount),
+                LoyaltyRewardTierQueueFilter.FreeItem => query.Where(x => x.RewardType == LoyaltyRewardType.FreeItem),
+                _ => query
+            };
 
             int total = await query.CountAsync(ct);
 
@@ -56,6 +67,22 @@ namespace Darwin.Application.Loyalty.Queries
                 .ToListAsync(ct);
 
             return (items, total);
+        }
+
+        public async Task<LoyaltyRewardTierOpsSummaryDto> GetSummaryAsync(Guid loyaltyProgramId, CancellationToken ct = default)
+        {
+            var query = _db.Set<LoyaltyRewardTier>()
+                .AsNoTracking()
+                .Where(x => x.LoyaltyProgramId == loyaltyProgramId && !x.IsDeleted);
+
+            return new LoyaltyRewardTierOpsSummaryDto
+            {
+                TotalCount = await query.CountAsync(ct).ConfigureAwait(false),
+                SelfRedemptionCount = await query.CountAsync(x => x.AllowSelfRedemption, ct).ConfigureAwait(false),
+                MissingDescriptionCount = await query.CountAsync(x => x.Description == null || x.Description == string.Empty, ct).ConfigureAwait(false),
+                DiscountRewardCount = await query.CountAsync(x => x.RewardType == LoyaltyRewardType.PercentDiscount || x.RewardType == LoyaltyRewardType.AmountDiscount, ct).ConfigureAwait(false),
+                FreeItemCount = await query.CountAsync(x => x.RewardType == LoyaltyRewardType.FreeItem, ct).ConfigureAwait(false)
+            };
         }
     }
 }

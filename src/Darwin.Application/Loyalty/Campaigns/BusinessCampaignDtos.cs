@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 namespace Darwin.Application.Loyalty.Campaigns
 {
+    public enum LoyaltyCampaignQueueFilter
+    {
+        All = 0,
+        Active = 1,
+        Scheduled = 2,
+        Draft = 3,
+        Expired = 4,
+        PushEnabled = 5
+    }
+
     public sealed class BusinessCampaignItemDto
     {
         public Guid Id { get; init; }
@@ -22,6 +32,16 @@ namespace Darwin.Application.Loyalty.Campaigns
         public List<PromotionEligibilityRuleDto> EligibilityRules { get; init; } = new();
         public string PayloadJson { get; init; } = "{}";
         public byte[] RowVersion { get; init; } = Array.Empty<byte>();
+    }
+
+    public sealed class BusinessCampaignOpsSummaryDto
+    {
+        public int TotalCount { get; init; }
+        public int ActiveCount { get; init; }
+        public int ScheduledCount { get; init; }
+        public int DraftCount { get; init; }
+        public int ExpiredCount { get; init; }
+        public int PushEnabledCount { get; init; }
     }
 
 

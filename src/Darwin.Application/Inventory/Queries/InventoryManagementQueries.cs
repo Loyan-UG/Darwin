@@ -81,6 +81,20 @@ namespace Darwin.Application.Inventory.Queries
 
             return (items, total);
         }
+
+        public async Task<WarehouseOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var warehousesQuery = _db.Set<Warehouse>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            return new WarehouseOpsSummaryDto
+            {
+                TotalCount = await warehousesQuery.CountAsync(ct).ConfigureAwait(false),
+                DefaultCount = await warehousesQuery.CountAsync(x => x.IsDefault, ct).ConfigureAwait(false),
+                NoStockLevelsCount = await warehousesQuery.CountAsync(x => !x.StockLevels.Any(), ct).ConfigureAwait(false)
+            };
+        }
     }
 
     public sealed class GetWarehouseForEditHandler
@@ -158,6 +172,20 @@ namespace Darwin.Application.Inventory.Queries
                 .ConfigureAwait(false);
 
             return (items, total);
+        }
+
+        public async Task<SupplierOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            var suppliersQuery = _db.Set<Supplier>()
+                .AsNoTracking()
+                .Where(x => x.BusinessId == businessId);
+
+            return new SupplierOpsSummaryDto
+            {
+                TotalCount = await suppliersQuery.CountAsync(ct).ConfigureAwait(false),
+                MissingAddressCount = await suppliersQuery.CountAsync(x => x.Address == null || x.Address == string.Empty, ct).ConfigureAwait(false),
+                HasPurchaseOrdersCount = await suppliersQuery.CountAsync(x => x.PurchaseOrders.Any(), ct).ConfigureAwait(false)
+            };
         }
     }
 

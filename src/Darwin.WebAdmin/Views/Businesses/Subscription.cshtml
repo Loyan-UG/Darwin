@@ -5,6 +5,7 @@
     var isFullAdmin = await Perms.HasAsync("FullAdminAccess");
 }
 
+<div id="business-subscription-workspace-shell">
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h1 class="mb-1">Business Subscription</h1>
@@ -128,7 +129,12 @@
 
             @if (isFullAdmin)
             {
-                <form asp-action="SetSubscriptionCancelAtPeriodEnd" method="post" class="d-flex gap-2 flex-wrap mt-3">
+                <form asp-action="SetSubscriptionCancelAtPeriodEnd"
+                      method="post"
+                      hx-post="@Url.Action("SetSubscriptionCancelAtPeriodEnd", "Businesses")"
+                      hx-target="#business-subscription-workspace-shell"
+                      hx-swap="outerHTML"
+                      class="d-flex gap-2 flex-wrap mt-3">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="businessId" value="@Model.Business.Id" />
                     <input type="hidden" name="subscriptionId" value="@Model.Subscription.SubscriptionId" />
@@ -269,7 +275,7 @@
                                     @if (plan.CanOpenManagementWebsite)
                                     {
                                         <a href="@plan.ManagementWebsiteUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
-                                            Open Billing Website
+                                            @plan.HandoffActionLabel
                                         </a>
                                     }
                                     else if (!Model.ManagementWebsiteConfigured)
@@ -406,4 +412,5 @@
             </table>
         </div>
     </div>
+</div>
 </div>

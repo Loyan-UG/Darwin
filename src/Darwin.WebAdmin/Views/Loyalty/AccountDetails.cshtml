@@ -3,118 +3,135 @@
     ViewData["Title"] = "Loyalty Account Details";
 }
 
-<div class="d-flex justify-content-between align-items-start mb-3">
-    <div>
-        <h1 class="mb-1">Loyalty Account</h1>
-        <div class="text-muted">@Model.UserDisplayName (@Model.UserEmail)</div>
-    </div>
-    <div class="d-flex gap-2">
-        <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Redemptions</a>
-        <a asp-action="AdjustPoints" asp-route-loyaltyAccountId="@Model.Id" class="btn btn-outline-primary">Adjust Points</a>
-        @if (Model.Status == Darwin.Domain.Enums.LoyaltyAccountStatus.Active)
-        {
-            <form asp-action="SuspendAccount" method="post" class="d-inline">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.Id" />
-                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-                <button type="submit" class="btn btn-outline-warning">Suspend</button>
-            </form>
-        }
-        else
-        {
-            <form asp-action="ActivateAccount" method="post" class="d-inline">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.Id" />
-                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
-                <button type="submit" class="btn btn-outline-success">Activate</button>
-            </form>
-        }
-        <a asp-action="Accounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
-    </div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Status</div><div class="fs-5">@Model.Status</div></div></div>
-    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Points</div><div class="fs-5">@Model.PointsBalance</div></div></div>
-    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Lifetime</div><div class="fs-5">@Model.LifetimePoints</div></div></div>
-    <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Last Accrual</div><div class="fs-6">@(Model.LastAccrualAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div></div></div>
-</div>
-
-<div class="row g-3">
-    <div class="col-xl-6">
-        <div class="card">
-            <div class="card-header">Recent Transactions</div>
-            <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>When</th><th>Delta</th><th>Reward</th><th>Note</th></tr></thead>
-                    <tbody>
-                    @if (Model.Transactions.Count == 0)
-                    {
-                        <tr><td colspan="4" class="text-center text-muted py-3">No transactions found.</td></tr>
-                    }
-                    else
-                    {
-                        foreach (var item in Model.Transactions)
-                        {
-                            <tr>
-                                <td>@item.OccurredAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td>@item.PointsDelta</td>
-                                <td>@(item.RewardTierId?.ToString() ?? "-")</td>
-                                <td>@item.Note</td>
-                            </tr>
-                        }
-                    }
-                    </tbody>
-                </table>
-            </div>
+<div id="loyalty-account-workspace-shell">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="mb-1">Loyalty Account</h1>
+            <div class="text-muted">@Model.UserDisplayName (@Model.UserEmail)</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Redemptions" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Redemptions</a>
+            <a asp-action="AdjustPoints" asp-route-loyaltyAccountId="@Model.Id" class="btn btn-outline-primary">Adjust Points</a>
+            @if (Model.Status == Darwin.Domain.Enums.LoyaltyAccountStatus.Active)
+            {
+                <form asp-action="SuspendAccount"
+                      method="post"
+                      class="d-inline"
+                      hx-post="@Url.Action("SuspendAccount", "Loyalty")"
+                      hx-target="#loyalty-account-workspace-shell"
+                      hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <button type="submit" class="btn btn-outline-warning">Suspend</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="ActivateAccount"
+                      method="post"
+                      class="d-inline"
+                      hx-post="@Url.Action("ActivateAccount", "Loyalty")"
+                      hx-target="#loyalty-account-workspace-shell"
+                      hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(Model.RowVersion)" />
+                    <button type="submit" class="btn btn-outline-success">Activate</button>
+                </form>
+            }
+            <a asp-action="Accounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>
-    <div class="col-xl-6">
-        <div class="card">
-            <div class="card-header">Recent Redemptions</div>
-            <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>When</th><th>Reward</th><th>Status</th><th>Points</th><th>Scan</th><th>Note</th><th class="text-end">Action</th></tr></thead>
-                    <tbody>
-                    @if (Model.Redemptions.Count == 0)
-                    {
-                        <tr><td colspan="7" class="text-center text-muted py-3">No redemptions found.</td></tr>
-                    }
-                    else
-                    {
-                        foreach (var item in Model.Redemptions)
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Status</div><div class="fs-5">@Model.Status</div></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Points</div><div class="fs-5">@Model.PointsBalance</div></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Lifetime</div><div class="fs-5">@Model.LifetimePoints</div></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="text-muted small">Last Accrual</div><div class="fs-6">@(Model.LastAccrualAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div></div></div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">Recent Transactions</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>When</th><th>Delta</th><th>Reward</th><th>Note</th></tr></thead>
+                        <tbody>
+                        @if (Model.Transactions.Count == 0)
                         {
-                            <tr>
-                                <td>@item.RedeemedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td>
-                                    <div>@item.RewardLabel</div>
-                                    <div class="small text-muted">@item.RewardTierId</div>
-                                </td>
-                                <td>@item.Status</td>
-                                <td>@item.PointsSpent</td>
-                                <td>
-                                    <div>@(item.ScanStatus?.ToString() ?? "-")</div>
-                                    <div class="small text-muted">@(!string.IsNullOrWhiteSpace(item.ScanOutcome) ? item.ScanOutcome : "-")</div>
-                                </td>
-                                <td class="small text-muted">@(string.IsNullOrWhiteSpace(item.Note) ? item.ScanFailureReason ?? "-" : item.Note)</td>
-                                <td class="text-end">
-                                    @if (item.Status == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending)
-                                    {
-                                        <form asp-action="ConfirmRedemption" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="redemptionId" value="@item.Id" />
-                                            <input type="hidden" name="businessId" value="@Model.BusinessId" />
-                                            <input type="hidden" name="loyaltyAccountId" value="@Model.Id" />
-                                            <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
-                                            <button type="submit" class="btn btn-sm btn-outline-success">Confirm</button>
-                                        </form>
-                                    }
-                                </td>
-                            </tr>
+                            <tr><td colspan="4" class="text-center text-muted py-3">No transactions found.</td></tr>
                         }
-                    }
-                    </tbody>
-                </table>
+                        else
+                        {
+                            foreach (var item in Model.Transactions)
+                            {
+                                <tr>
+                                    <td>@item.OccurredAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@item.PointsDelta</td>
+                                    <td>@(item.RewardTierId?.ToString() ?? "-")</td>
+                                    <td>@item.Note</td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">Recent Redemptions</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>When</th><th>Reward</th><th>Status</th><th>Points</th><th>Scan</th><th>Note</th><th class="text-end">Action</th></tr></thead>
+                        <tbody>
+                        @if (Model.Redemptions.Count == 0)
+                        {
+                            <tr><td colspan="7" class="text-center text-muted py-3">No redemptions found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Redemptions)
+                            {
+                                <tr>
+                                    <td>@item.RedeemedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <div>@item.RewardLabel</div>
+                                        <div class="small text-muted">@item.RewardTierId</div>
+                                    </td>
+                                    <td>@item.Status</td>
+                                    <td>@item.PointsSpent</td>
+                                    <td>
+                                        <div>@(item.ScanStatus?.ToString() ?? "-")</div>
+                                        <div class="small text-muted">@(!string.IsNullOrWhiteSpace(item.ScanOutcome) ? item.ScanOutcome : "-")</div>
+                                    </td>
+                                    <td class="small text-muted">@(string.IsNullOrWhiteSpace(item.Note) ? item.ScanFailureReason ?? "-" : item.Note)</td>
+                                    <td class="text-end">
+                                        @if (item.Status == Darwin.Domain.Enums.LoyaltyRedemptionStatus.Pending)
+                                        {
+                                            <form asp-action="ConfirmRedemption"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  hx-post="@Url.Action("ConfirmRedemption", "Loyalty")"
+                                                  hx-target="#loyalty-account-workspace-shell"
+                                                  hx-swap="outerHTML">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="redemptionId" value="@item.Id" />
+                                                <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                                <input type="hidden" name="loyaltyAccountId" value="@Model.Id" />
+                                                <input type="hidden" name="rowVersion" value="@Convert.ToBase64String(item.RowVersion)" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success">Confirm</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

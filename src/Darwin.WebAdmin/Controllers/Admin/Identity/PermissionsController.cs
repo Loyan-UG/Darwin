@@ -133,7 +133,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
         [HttpGet]
         public IActionResult Create()
         {
-            return View(new PermissionCreateVm());
+            return RenderCreateEditor(new PermissionCreateVm());
         }
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Identity
                 IsSystem = dto.IsSystem
             };
 
-            return View(vm);
+            return RenderEditEditor(vm);
         }
 
         /// <summary>

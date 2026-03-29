@@ -11,11 +11,52 @@
     <a asp-action="CreateCampaign" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Campaign</a>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-success-subtle"><div class="card-body"><div class="text-muted small">Active</div><div class="fs-4 fw-semibold">@Model.Summary.ActiveCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-info-subtle"><div class="card-body"><div class="text-muted small">Scheduled</div><div class="fs-4 fw-semibold">@Model.Summary.ScheduledCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-secondary-subtle"><div class="card-body"><div class="text-muted small">Draft</div><div class="fs-4 fw-semibold">@Model.Summary.DraftCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-warning-subtle"><div class="card-body"><div class="text-muted small">Expired</div><div class="fs-4 fw-semibold">@Model.Summary.ExpiredCount</div></div></div></div>
+    <div class="col-md-2"><div class="card h-100 border-primary-subtle"><div class="card-body"><div class="text-muted small">Push Enabled</div><div class="fs-4 fw-semibold">@Model.Summary.PushEnabledCount</div></div></div></div>
+</div>
+
+@if (Model.Playbooks.Count > 0)
+{
+    <div class="card mb-4">
+        <div class="card-header">Campaign Playbooks</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead><tr><th>Playbook</th><th>When It Applies</th><th>Operator Action</th></tr></thead>
+                <tbody>
+                @foreach (var playbook in Model.Playbooks)
+                {
+                    <tr>
+                        <td class="fw-semibold">@playbook.Title</td>
+                        <td>@playbook.ScopeNote</td>
+                        <td>@playbook.OperatorAction</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
 <form asp-action="Campaigns" method="get" class="d-flex gap-2 mb-3">
     <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
+    <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     <button class="btn btn-outline-secondary" type="submit">Filter</button>
     <a asp-action="Campaigns" class="btn btn-outline-secondary">Reset</a>
 </form>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Active" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Active ? "btn-success" : "btn-outline-success")">Active</a>
+    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Scheduled" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Scheduled ? "btn-info" : "btn-outline-info")">Scheduled</a>
+    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Draft" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Draft ? "btn-secondary" : "btn-outline-secondary")">Draft</a>
+    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="Expired" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.Expired ? "btn-warning" : "btn-outline-warning")">Expired</a>
+    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" asp-route-filter="PushEnabled" class="btn btn-sm @(Model.Filter == Darwin.Application.Loyalty.Campaigns.LoyaltyCampaignQueueFilter.PushEnabled ? "btn-primary" : "btn-outline-primary")">Push Enabled</a>
+    <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+</div>
 
 <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
@@ -32,8 +73,16 @@
                 <tr>
                     <td>@item.Name</td>
                     <td>@item.Title</td>
-                    <td>@item.CampaignState</td>
-                    <td>@(item.Channels == 3 ? "In-app + Push" : "In-app only")</td>
+                    <td>
+                        <span class="badge @(item.CampaignState == "Active" ? "text-bg-success" : item.CampaignState == "Scheduled" ? "text-bg-info" : item.CampaignState == "Expired" ? "text-bg-warning" : "text-bg-secondary")">@item.CampaignState</span>
+                    </td>
+                    <td>
+                        @(item.Channels == 3 ? "In-app + Push" : "In-app only")
+                        @if (item.Channels == 3)
+                        {
+                            <div><span class="badge text-bg-primary mt-1">Push Enabled</span></div>
+                        }
+                    </td>
                     <td>
                         <div>@(item.StartsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
                         <div class="small text-muted">to @(item.EndsAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>

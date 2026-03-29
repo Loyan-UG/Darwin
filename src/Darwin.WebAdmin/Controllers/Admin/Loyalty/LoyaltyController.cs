@@ -101,21 +101,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         public IActionResult Index() => RedirectToAction(nameof(Programs));
 
         [HttpGet]
-        public async Task<IActionResult> Programs(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Programs(Guid? businessId = null, int page = 1, int pageSize = 20, LoyaltyProgramQueueFilter filter = LoyaltyProgramQueueFilter.All, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = Array.Empty<LoyaltyProgramListItemDto>();
             var total = 0;
+            var summary = new LoyaltyProgramOpsSummaryVm();
             if (businessId.HasValue)
             {
-                var result = await _getProgramsPage.HandleAsync(page, pageSize, businessId.Value, ct).ConfigureAwait(false);
+                var result = await _getProgramsPage.HandleAsync(page, pageSize, businessId.Value, filter, ct).ConfigureAwait(false);
+                var summaryDto = await _getProgramsPage.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                 items = result.Items.ToArray();
                 total = result.Total;
+                summary = new LoyaltyProgramOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    ActiveCount = summaryDto.ActiveCount,
+                    InactiveCount = summaryDto.InactiveCount,
+                    PerCurrencyUnitCount = summaryDto.PerCurrencyUnitCount,
+                    MissingRulesCount = summaryDto.MissingRulesCount
+                };
             }
 
             return View(new LoyaltyProgramsListVm
             {
                 BusinessId = businessId,
+                Filter = filter,
+                FilterItems = BuildProgramFilterItems(filter),
+                Summary = summary,
+                Playbooks = BuildProgramPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -139,7 +153,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new LoyaltyProgramEditVm { BusinessId = businessId ?? Guid.Empty, IsActive = true };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderProgramEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -149,7 +163,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderProgramEditor(vm, isCreate: true);
             }
 
             try
@@ -165,13 +179,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Loyalty program created.";
-                return RedirectToAction(nameof(EditProgram), new { id });
+                return RedirectOrHtmx(nameof(EditProgram), new { id });
             }
             catch (ValidationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderProgramEditor(vm, isCreate: true);
             }
         }
 
@@ -197,7 +211,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = dto.RowVersion
             };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderProgramEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -207,7 +221,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderProgramEditor(vm, isCreate: false);
             }
 
             try
@@ -225,13 +239,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Loyalty program updated.";
-                return RedirectToAction(nameof(EditProgram), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditProgram), new { id = vm.Id });
             }
             catch (ValidationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderProgramEditor(vm, isCreate: false);
             }
         }
 
@@ -250,7 +264,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
         }
 
         [HttpGet]
-        public async Task<IActionResult> RewardTiers(Guid loyaltyProgramId, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> RewardTiers(Guid loyaltyProgramId, int page = 1, int pageSize = 20, LoyaltyRewardTierQueueFilter filter = LoyaltyRewardTierQueueFilter.All, CancellationToken ct = default)
         {
             var program = await _getProgramForEdit.HandleAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             if (program is null)
@@ -259,12 +273,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RedirectToAction(nameof(Programs));
             }
 
-            var result = await _getRewardTiersPage.HandleAsync(loyaltyProgramId, page, pageSize, ct).ConfigureAwait(false);
+            var result = await _getRewardTiersPage.HandleAsync(loyaltyProgramId, page, pageSize, filter, ct).ConfigureAwait(false);
+            var summaryDto = await _getRewardTiersPage.GetSummaryAsync(loyaltyProgramId, ct).ConfigureAwait(false);
             return View(new LoyaltyRewardTiersListVm
             {
                 LoyaltyProgramId = loyaltyProgramId,
                 ProgramName = program.Name,
                 BusinessId = program.BusinessId,
+                Filter = filter,
+                FilterItems = BuildRewardTierFilterItems(filter),
+                Summary = new LoyaltyRewardTierOpsSummaryVm
+                {
+                    TotalCount = summaryDto.TotalCount,
+                    SelfRedemptionCount = summaryDto.SelfRedemptionCount,
+                    MissingDescriptionCount = summaryDto.MissingDescriptionCount,
+                    DiscountRewardCount = summaryDto.DiscountRewardCount,
+                    FreeItemCount = summaryDto.FreeItemCount
+                },
+                Playbooks = BuildRewardTierPlaybooks(),
                 Page = page,
                 PageSize = pageSize,
                 Total = result.Total,
@@ -293,13 +319,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RedirectToAction(nameof(Programs));
             }
 
-            return View(new LoyaltyRewardTierEditVm
+            return RenderRewardTierEditor(new LoyaltyRewardTierEditVm
             {
                 LoyaltyProgramId = program.Id,
                 ProgramName = program.Name,
                 BusinessId = program.BusinessId,
                 AllowSelfRedemption = false
-            });
+            }, isCreate: true);
         }
 
         [HttpPost]
@@ -320,7 +346,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Reward tier created.";
-                return RedirectToAction(nameof(EditRewardTier), new { id, loyaltyProgramId = vm.LoyaltyProgramId });
+                return RedirectOrHtmx(nameof(EditRewardTier), new { id, loyaltyProgramId = vm.LoyaltyProgramId });
             }
             catch (ValidationException ex)
             {
@@ -328,7 +354,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 vm.ProgramName = program?.Name ?? vm.ProgramName;
                 vm.BusinessId = program?.BusinessId ?? vm.BusinessId;
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(vm);
+                return RenderRewardTierEditor(vm, isCreate: true);
             }
         }
 
@@ -349,7 +375,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RedirectToAction(nameof(RewardTiers), new { loyaltyProgramId });
             }
 
-            return View(new LoyaltyRewardTierEditVm
+            return RenderRewardTierEditor(new LoyaltyRewardTierEditVm
             {
                 Id = tier.Id,
                 LoyaltyProgramId = tier.LoyaltyProgramId,
@@ -362,7 +388,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 AllowSelfRedemption = tier.AllowSelfRedemption,
                 MetadataJson = tier.MetadataJson,
                 RowVersion = tier.RowVersion
-            });
+            }, isCreate: false);
         }
 
         [HttpPost]
@@ -385,7 +411,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Reward tier updated.";
-                return RedirectToAction(nameof(EditRewardTier), new { id = vm.Id, loyaltyProgramId = vm.LoyaltyProgramId });
+                return RedirectOrHtmx(nameof(EditRewardTier), new { id = vm.Id, loyaltyProgramId = vm.LoyaltyProgramId });
             }
             catch (ValidationException ex)
             {
@@ -393,7 +419,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 vm.ProgramName = program?.Name ?? vm.ProgramName;
                 vm.BusinessId = program?.BusinessId ?? vm.BusinessId;
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(vm);
+                return RenderRewardTierEditor(vm, isCreate: false);
             }
         }
 
@@ -424,7 +450,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 total = result.Total;
             }
 
-            return View(new LoyaltyAccountsListVm
+            return RenderAccountsWorkspace(new LoyaltyAccountsListVm
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
@@ -460,7 +486,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false);
             vm.UserOptions = await _referenceData.GetUserOptionsAsync(null, includeEmpty: false, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderAccountCreateEditor(vm);
         }
 
         [HttpPost]
@@ -471,7 +497,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderAccountCreateEditor(vm);
             }
 
             var result = await _createAccountByAdmin.HandleAsync(new CreateLoyaltyAccountByAdminDto
@@ -485,36 +511,51 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 ModelState.AddModelError(string.Empty, result.Error ?? "Unable to create loyalty account.");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
                 vm.UserOptions = await _referenceData.GetUserOptionsAsync(vm.UserId == Guid.Empty ? null : vm.UserId, includeEmpty: false, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderAccountCreateEditor(vm);
             }
 
             TempData["Success"] = "Loyalty account created.";
-            return RedirectToAction(nameof(AccountDetails), new { id = result.Value.Id });
+            return RedirectOrHtmx(nameof(AccountDetails), new { id = result.Value.Id });
         }
 
         [HttpGet]
-        public async Task<IActionResult> Campaigns(Guid? businessId = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<IActionResult> Campaigns(Guid? businessId = null, int page = 1, int pageSize = 20, LoyaltyCampaignQueueFilter filter = LoyaltyCampaignQueueFilter.All, CancellationToken ct = default)
         {
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var items = Array.Empty<BusinessCampaignItemDto>();
             var total = 0;
+            var summary = new LoyaltyCampaignOpsSummaryVm();
             if (businessId.HasValue)
             {
-                var result = await _getCampaigns.HandleAsync(businessId.Value, page, pageSize, ct).ConfigureAwait(false);
+                var result = await _getCampaigns.HandleAsync(businessId.Value, page, pageSize, filter, ct).ConfigureAwait(false);
                 if (!result.Succeeded || result.Value is null)
                 {
                     TempData["Error"] = result.Error ?? "Unable to load loyalty campaigns.";
                 }
                 else
                 {
+                    var summaryDto = await _getCampaigns.GetSummaryAsync(businessId.Value, ct).ConfigureAwait(false);
                     items = result.Value.Items.ToArray();
                     total = result.Value.Total;
+                    summary = new LoyaltyCampaignOpsSummaryVm
+                    {
+                        TotalCount = summaryDto.TotalCount,
+                        ActiveCount = summaryDto.ActiveCount,
+                        ScheduledCount = summaryDto.ScheduledCount,
+                        DraftCount = summaryDto.DraftCount,
+                        ExpiredCount = summaryDto.ExpiredCount,
+                        PushEnabledCount = summaryDto.PushEnabledCount
+                    };
                 }
             }
 
             return View(new LoyaltyCampaignsListVm
             {
                 BusinessId = businessId,
+                Filter = filter,
+                FilterItems = BuildCampaignFilterItems(filter),
+                Summary = summary,
+                Playbooks = BuildCampaignPlaybooks(),
                 BusinessOptions = await _referenceData.GetBusinessOptionsAsync(businessId, ct).ConfigureAwait(false),
                 Page = page,
                 PageSize = pageSize,
@@ -541,7 +582,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             businessId = await _referenceData.ResolveBusinessIdAsync(businessId, ct).ConfigureAwait(false);
             var vm = new LoyaltyCampaignEditVm { BusinessId = businessId ?? Guid.Empty };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderCampaignEditor(vm, isCreate: true);
         }
 
         [HttpPost]
@@ -551,7 +592,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCampaignEditor(vm, isCreate: true);
             }
 
             var result = await _createCampaign.HandleAsync(new CreateBusinessCampaignDto
@@ -574,17 +615,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 ModelState.AddModelError(string.Empty, result.Error ?? "Unable to create loyalty campaign.");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCampaignEditor(vm, isCreate: true);
             }
 
             TempData["Success"] = "Loyalty campaign created.";
-            return RedirectToAction(nameof(Campaigns), new { businessId = vm.BusinessId });
+            return RedirectOrHtmx(nameof(EditCampaign), new { id = result.Value, businessId = vm.BusinessId });
         }
 
         [HttpGet]
         public async Task<IActionResult> EditCampaign(Guid id, Guid businessId, CancellationToken ct = default)
         {
-            var result = await _getCampaigns.HandleAsync(businessId, 1, 200, ct).ConfigureAwait(false);
+            var result = await _getCampaigns.HandleAsync(businessId, 1, 200, LoyaltyCampaignQueueFilter.All, ct).ConfigureAwait(false);
             var campaign = result.Succeeded ? result.Value?.Items.FirstOrDefault(x => x.Id == id) : null;
             if (campaign is null)
             {
@@ -612,7 +653,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 RowVersion = campaign.RowVersion
             };
             vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderCampaignEditor(vm, isCreate: false);
         }
 
         [HttpPost]
@@ -622,7 +663,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             if (!ModelState.IsValid)
             {
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCampaignEditor(vm, isCreate: false);
             }
 
             var result = await _updateCampaign.HandleAsync(new UpdateBusinessCampaignDto
@@ -647,11 +688,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             {
                 ModelState.AddModelError(string.Empty, result.Error ?? "Unable to update loyalty campaign.");
                 vm.BusinessOptions = await _referenceData.GetBusinessOptionsAsync(vm.BusinessId, ct).ConfigureAwait(false);
-                return View(vm);
+                return RenderCampaignEditor(vm, isCreate: false);
             }
 
             TempData["Success"] = "Loyalty campaign updated.";
-            return RedirectToAction(nameof(EditCampaign), new { id = vm.Id, businessId = vm.BusinessId });
+            return RedirectOrHtmx(nameof(EditCampaign), new { id = vm.Id, businessId = vm.BusinessId });
         }
 
         [HttpPost]
@@ -741,7 +782,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 total = result.Total;
             }
 
-            return View(new LoyaltyRedemptionsListVm
+            return RenderRedemptionsWorkspace(new LoyaltyRedemptionsListVm
             {
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
@@ -784,7 +825,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             var transactions = await _getTransactions.HandleAsync(id, 50, ct).ConfigureAwait(false);
             var redemptions = await _getRedemptions.HandleAsync(id, 50, ct).ConfigureAwait(false);
 
-            return View(new LoyaltyAccountDetailsVm
+            return RenderAccountDetailsWorkspace(new LoyaltyAccountDetailsVm
             {
                 Id = account.Id,
                 BusinessId = account.BusinessId,
@@ -831,7 +872,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 return RedirectToAction(nameof(Accounts));
             }
 
-            return View(new AdjustLoyaltyPointsVm
+            return RenderAdjustPointsEditor(new AdjustLoyaltyPointsVm
             {
                 LoyaltyAccountId = account.Id,
                 BusinessId = account.BusinessId,
@@ -859,14 +900,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Loyalty points adjusted.";
-                return RedirectToAction(nameof(AccountDetails), new { id = vm.LoyaltyAccountId });
+                return RedirectOrHtmx(nameof(AccountDetails), new { id = vm.LoyaltyAccountId });
             }
             catch (ValidationException ex)
             {
                 var account = await _getAccountForAdmin.HandleAsync(vm.LoyaltyAccountId, ct).ConfigureAwait(false);
                 vm.AccountLabel = account is null ? vm.AccountLabel : $"{account.UserDisplayName} ({account.UserEmail})";
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(vm);
+                return RenderAdjustPointsEditor(vm);
             }
         }
 
@@ -881,7 +922,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Loyalty account suspended." : result.Error;
-            return RedirectToAction(nameof(AccountDetails), new { id });
+            return RedirectOrHtmx(nameof(AccountDetails), new { id });
         }
 
         [HttpPost]
@@ -895,7 +936,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
             }, ct).ConfigureAwait(false);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Loyalty account activated." : result.Error;
-            return RedirectToAction(nameof(AccountDetails), new { id });
+            return RedirectOrHtmx(nameof(AccountDetails), new { id });
         }
 
         [HttpPost]
@@ -913,7 +954,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 ? "Redemption confirmed."
                 : result.Error;
 
-            return RedirectToAction(nameof(AccountDetails), new { id = loyaltyAccountId });
+            return RedirectOrHtmx(nameof(AccountDetails), new { id = loyaltyAccountId });
         }
 
         private static List<SelectListItem> BuildStatusItems(LoyaltyAccountStatus? selected)
@@ -927,6 +968,100 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
 
             return items;
+        }
+
+        private static List<SelectListItem> BuildProgramFilterItems(LoyaltyProgramQueueFilter selected)
+        {
+            return new List<SelectListItem>
+            {
+                new("All programs", LoyaltyProgramQueueFilter.All.ToString(), selected == LoyaltyProgramQueueFilter.All),
+                new("Active", LoyaltyProgramQueueFilter.Active.ToString(), selected == LoyaltyProgramQueueFilter.Active),
+                new("Inactive", LoyaltyProgramQueueFilter.Inactive.ToString(), selected == LoyaltyProgramQueueFilter.Inactive),
+                new("Spend-based accrual", LoyaltyProgramQueueFilter.PerCurrencyUnit.ToString(), selected == LoyaltyProgramQueueFilter.PerCurrencyUnit),
+                new("Missing rules", LoyaltyProgramQueueFilter.MissingRules.ToString(), selected == LoyaltyProgramQueueFilter.MissingRules)
+            };
+        }
+
+        private static List<SelectListItem> BuildRewardTierFilterItems(LoyaltyRewardTierQueueFilter selected)
+        {
+            return new List<SelectListItem>
+            {
+                new("All reward tiers", LoyaltyRewardTierQueueFilter.All.ToString(), selected == LoyaltyRewardTierQueueFilter.All),
+                new("Self redemption", LoyaltyRewardTierQueueFilter.SelfRedemption.ToString(), selected == LoyaltyRewardTierQueueFilter.SelfRedemption),
+                new("Missing description", LoyaltyRewardTierQueueFilter.MissingDescription.ToString(), selected == LoyaltyRewardTierQueueFilter.MissingDescription),
+                new("Discount rewards", LoyaltyRewardTierQueueFilter.DiscountRewards.ToString(), selected == LoyaltyRewardTierQueueFilter.DiscountRewards),
+                new("Free item", LoyaltyRewardTierQueueFilter.FreeItem.ToString(), selected == LoyaltyRewardTierQueueFilter.FreeItem)
+            };
+        }
+
+        private static List<SelectListItem> BuildCampaignFilterItems(LoyaltyCampaignQueueFilter selected)
+        {
+            return new List<SelectListItem>
+            {
+                new("All campaigns", LoyaltyCampaignQueueFilter.All.ToString(), selected == LoyaltyCampaignQueueFilter.All),
+                new("Active", LoyaltyCampaignQueueFilter.Active.ToString(), selected == LoyaltyCampaignQueueFilter.Active),
+                new("Scheduled", LoyaltyCampaignQueueFilter.Scheduled.ToString(), selected == LoyaltyCampaignQueueFilter.Scheduled),
+                new("Draft", LoyaltyCampaignQueueFilter.Draft.ToString(), selected == LoyaltyCampaignQueueFilter.Draft),
+                new("Expired", LoyaltyCampaignQueueFilter.Expired.ToString(), selected == LoyaltyCampaignQueueFilter.Expired),
+                new("Push enabled", LoyaltyCampaignQueueFilter.PushEnabled.ToString(), selected == LoyaltyCampaignQueueFilter.PushEnabled)
+            };
+        }
+
+        private static List<LoyaltyOpsPlaybookVm> BuildProgramPlaybooks()
+        {
+            return new List<LoyaltyOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Program readiness",
+                    ScopeNote = "Inactive programs and rule-light programs are the first place to review when accrual or redemption expectations drift between mobile, staff, and admin support.",
+                    OperatorAction = "Keep one clear active program path per business, and review inactive or missing-rule programs before go-live support escalates."
+                },
+                new()
+                {
+                    Title = "Spend-based accrual review",
+                    ScopeNote = "Spend-based programs tie loyalty balances more tightly to orders, refunds, and financial support workflows.",
+                    OperatorAction = "Validate spend-based accrual settings before investigating balance mismatches so loyalty and payment support stay aligned."
+                }
+            };
+        }
+
+        private static List<LoyaltyOpsPlaybookVm> BuildRewardTierPlaybooks()
+        {
+            return new List<LoyaltyOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Self-redemption review",
+                    ScopeNote = "Self-redeemable tiers affect customer-facing behavior without staff mediation and should be reviewed before promotions or reward support cases.",
+                    OperatorAction = "Prioritize self-redemption tiers when investigating unexpected redemption flow or scanner support issues."
+                },
+                new()
+                {
+                    Title = "Reward catalog hygiene",
+                    ScopeNote = "Missing descriptions or mixed discount/free-item tiers make campaign copy and support guidance harder to interpret consistently.",
+                    OperatorAction = "Fill in descriptions and verify reward type intent before operators, campaigns, or storefront messaging rely on the catalog."
+                }
+            };
+        }
+
+        private static List<LoyaltyOpsPlaybookVm> BuildCampaignPlaybooks()
+        {
+            return new List<LoyaltyOpsPlaybookVm>
+            {
+                new()
+                {
+                    Title = "Activation and window review",
+                    ScopeNote = "Scheduled and expired campaigns are the first place to inspect when support sees stale mobile banners or campaigns that never went live.",
+                    OperatorAction = "Review activation state and the UTC campaign window together before escalating a campaign timing issue."
+                },
+                new()
+                {
+                    Title = "Push-enabled campaign hygiene",
+                    ScopeNote = "Push-enabled campaigns increase delivery expectations across mobile operations and communications support.",
+                    OperatorAction = "Prioritize push-enabled campaigns when checking rollout readiness so content, transport, and device diagnostics stay aligned."
+                }
+            };
         }
 
         private static List<SelectListItem> BuildModeItems(LoyaltyScanMode? selected)
@@ -966,6 +1101,105 @@ namespace Darwin.WebAdmin.Controllers.Admin.Loyalty
                 .Select(x => new SelectListItem(x.ToString(), x.ToString(), selected == x)));
 
             return items;
+        }
+
+        private IActionResult RenderProgramEditor(LoyaltyProgramEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Loyalty/_ProgramEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateProgram", vm) : View("EditProgram", vm);
+        }
+
+        private IActionResult RenderAccountCreateEditor(CreateLoyaltyAccountVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/_AccountCreateEditorShell.cshtml", vm);
+            }
+
+            return View("CreateAccount", vm);
+        }
+
+        private IActionResult RenderAdjustPointsEditor(AdjustLoyaltyPointsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/_AdjustPointsEditorShell.cshtml", vm);
+            }
+
+            return View("AdjustPoints", vm);
+        }
+
+        private IActionResult RenderAccountsWorkspace(LoyaltyAccountsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/Accounts.cshtml", vm);
+            }
+
+            return View("Accounts", vm);
+        }
+
+        private IActionResult RenderRedemptionsWorkspace(LoyaltyRedemptionsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/Redemptions.cshtml", vm);
+            }
+
+            return View("Redemptions", vm);
+        }
+
+        private IActionResult RenderAccountDetailsWorkspace(LoyaltyAccountDetailsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Loyalty/AccountDetails.cshtml", vm);
+            }
+
+            return View("AccountDetails", vm);
+        }
+
+        private IActionResult RenderRewardTierEditor(LoyaltyRewardTierEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Loyalty/_RewardTierEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateRewardTier", vm) : View("EditRewardTier", vm);
+        }
+
+        private IActionResult RenderCampaignEditor(LoyaltyCampaignEditVm vm, bool isCreate)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["IsCreate"] = isCreate;
+                return PartialView("~/Views/Loyalty/_CampaignEditorShell.cshtml", vm);
+            }
+
+            return isCreate ? View("CreateCampaign", vm) : View("EditCampaign", vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

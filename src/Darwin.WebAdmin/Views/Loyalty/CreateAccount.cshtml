@@ -3,39 +3,7 @@
     ViewData["Title"] = "Create Loyalty Account";
 }
 
-<h1 class="mb-3">Create Loyalty Account</h1>
-
-<div class="card shadow-sm">
-    <div class="card-body">
-        <form asp-action="CreateAccount" method="post" class="row g-3">
-            @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <div class="col-md-6">
-                <label asp-for="BusinessId" class="form-label">Business</label>
-                <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-                <span asp-validation-for="BusinessId" class="text-danger"></span>
-            </div>
-
-            <div class="col-md-6">
-                <label asp-for="UserId" class="form-label">Member</label>
-                <select asp-for="UserId" asp-items="Model.UserOptions" class="form-select"></select>
-                <span asp-validation-for="UserId" class="text-danger"></span>
-            </div>
-
-            <div class="col-12">
-                <div class="alert alert-info mb-0">
-                    Use this flow when a member has not self-enrolled yet but support needs a loyalty account provisioned for the selected business.
-                </div>
-            </div>
-
-            <div class="col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Create Account</button>
-                <a asp-action="Accounts" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Cancel</a>
-            </div>
-        </form>
-    </div>
-</div>
+<partial name="_AccountCreateEditorShell" model="Model" />
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

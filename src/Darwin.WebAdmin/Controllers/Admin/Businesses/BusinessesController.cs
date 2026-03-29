@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -328,7 +329,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 IsActive = false
             };
             await PopulateBusinessFormOptionsAsync(vm, ct);
-            return View(vm);
+            return RenderBusinessEditor(vm, isCreate: true);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -408,7 +409,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             var vm = MapBusinessEditVm(dto);
             await PopulateBusinessFormOptionsAsync(vm, ct);
-            return View(vm);
+            return RenderBusinessEditor(vm, isCreate: false);
         }
 
         [HttpGet]
@@ -424,7 +425,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             var vm = MapBusinessEditVm(dto);
             await PopulateBusinessFormOptionsAsync(vm, ct);
-            return View(vm);
+            return RenderBusinessSetupEditor(vm);
         }
 
         [HttpGet]
@@ -439,7 +440,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var vm = await BuildBusinessSubscriptionWorkspaceAsync(business, ct);
-            return View(vm);
+            return RenderSubscriptionWorkspace(vm);
         }
 
         [HttpGet]
@@ -481,7 +482,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Items = result.Items.Select(MapBusinessSubscriptionInvoiceListItemVm).ToList()
             };
 
-            return View(vm);
+            return RenderSubscriptionInvoicesWorkspace(vm);
         }
 
         [HttpPost]
@@ -509,7 +510,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ? (cancelAtPeriodEnd ? "Subscription will cancel at period end." : "Subscription renewal restored.")
                 : (result.Error ?? "Failed to update subscription cancellation policy.");
 
-            return RedirectToAction(nameof(Subscription), new { businessId });
+            return RedirectOrHtmx(nameof(Subscription), new { businessId });
         }
 
         [HttpGet]
@@ -864,12 +865,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(new BusinessLocationEditVm
+            return RenderLocationEditor(new BusinessLocationEditVm
             {
                 BusinessId = businessId,
                 CountryCode = "DE",
                 Business = business
-            });
+            }, isCreate: true);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -950,7 +951,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Business = business
             };
 
-            return View(vm);
+            return RenderLocationEditor(vm, isCreate: false);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1166,7 +1167,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ExpiresInDays = 7
             };
             PopulateInvitationFormOptions(vm);
-            return View(vm);
+            return RenderInvitationEditor(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1264,7 +1265,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Business = business
             };
             await PopulateMemberFormOptionsAsync(vm, includeUserSelection: true, ct);
-            return View(vm);
+            return RenderMemberEditor(vm, isCreate: true);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -1335,7 +1336,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Business = business
             };
             await PopulateMemberFormOptionsAsync(vm, includeUserSelection: false, ct);
-            return View(vm);
+            return RenderMemberEditor(vm, isCreate: false);
         }
 
         [HttpGet]
@@ -1735,23 +1736,43 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private IActionResult RenderBusinessEditor(BusinessEditVm vm, bool isCreate)
         {
             ViewData["IsCreate"] = isCreate;
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Businesses/_BusinessEditorShell.cshtml", vm);
+            }
+
             return isCreate ? View("Create", vm) : View("Edit", vm);
         }
 
         private IActionResult RenderLocationEditor(BusinessLocationEditVm vm, bool isCreate)
         {
             ViewData["IsCreate"] = isCreate;
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Businesses/_BusinessLocationEditorShell.cshtml", vm);
+            }
+
             return isCreate ? View("CreateLocation", vm) : View("EditLocation", vm);
         }
 
         private IActionResult RenderMemberEditor(BusinessMemberEditVm vm, bool isCreate)
         {
             ViewData["IsCreate"] = isCreate;
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Businesses/_BusinessMemberEditorShell.cshtml", vm);
+            }
+
             return isCreate ? View("CreateMember", vm) : View("EditMember", vm);
         }
 
         private IActionResult RenderInvitationEditor(BusinessInvitationCreateVm vm)
         {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Businesses/_BusinessInvitationEditorShell.cshtml", vm);
+            }
+
             return View("CreateInvitation", vm);
         }
 
@@ -1763,6 +1784,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return View("Setup", vm);
+        }
+
+        private IActionResult RenderSubscriptionWorkspace(BusinessSubscriptionWorkspaceVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("Subscription", vm);
+            }
+
+            return View("Subscription", vm);
+        }
+
+        private IActionResult RenderSubscriptionInvoicesWorkspace(BusinessSubscriptionInvoicesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("SubscriptionInvoices", vm);
+            }
+
+            return View("SubscriptionInvoices", vm);
         }
 
         private IActionResult RedirectMemberSupport(bool returnToEdit, Guid membershipId, Guid businessId)
@@ -1911,6 +1952,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 ? null
                 : settings.BusinessManagementWebsiteUrl.Trim();
             var managementWebsiteConfigured = !string.IsNullOrWhiteSpace(managementWebsiteUrl);
+            var workspaceManagementWebsiteUrl = BuildSubscriptionManagementWebsiteUrl(managementWebsiteUrl, business.Id, planCode: null);
             var plans = await _getBillingPlans.HandleAsync(activeOnly: true, ct);
             var recentInvoices = await _getBusinessSubscriptionInvoicesPage.HandleAsync(
                 business.Id,
@@ -1929,6 +1971,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     && !string.IsNullOrWhiteSpace(subscription.PlanCode)
                     && string.Equals(subscription.PlanCode, x.Code, StringComparison.OrdinalIgnoreCase);
                 var canOpenManagementWebsite = managementWebsiteConfigured && validation.Succeeded;
+                var planManagementWebsiteUrl = BuildSubscriptionManagementWebsiteUrl(managementWebsiteUrl, business.Id, x.Code);
 
                 planVms.Add(new BusinessBillingPlanVm
                 {
@@ -1946,7 +1989,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CheckoutReadinessLabel = validation.Succeeded ? "Checkout-ready" : (validation.Error ?? "Not ready"),
                     IsCurrentPlan = isCurrentPlan,
                     CanOpenManagementWebsite = canOpenManagementWebsite,
-                    ManagementWebsiteUrl = canOpenManagementWebsite ? managementWebsiteUrl : null,
+                    ManagementWebsiteUrl = canOpenManagementWebsite ? planManagementWebsiteUrl : null,
+                    HandoffActionLabel = isCurrentPlan
+                        ? "Manage Current Plan"
+                        : subscription.HasSubscription ? "Upgrade To This Plan" : "Start With This Plan",
                     HandoffLabel = isCurrentPlan
                         ? "Current plan"
                         : canOpenManagementWebsite
@@ -1962,7 +2008,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Business = business,
                 Subscription = subscription,
                 ManagementWebsiteConfigured = managementWebsiteConfigured,
-                ManagementWebsiteUrl = managementWebsiteUrl,
+                ManagementWebsiteUrl = workspaceManagementWebsiteUrl,
                 HandoffSummary = new BusinessSubscriptionHandoffSummaryVm
                 {
                     TotalPlans = planVms.Count,
@@ -1990,6 +2036,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Longitude = vm.Longitude.Value,
                 AltitudeMeters = vm.AltitudeMeters
             };
+        }
+
+        private static string? BuildSubscriptionManagementWebsiteUrl(string? baseUrl, Guid businessId, string? planCode)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return null;
+            }
+
+            var separator = baseUrl.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+            var url = $"{baseUrl}{separator}businessId={WebUtility.UrlEncode(businessId.ToString())}";
+
+            if (!string.IsNullOrWhiteSpace(planCode))
+            {
+                url = $"{url}&planCode={WebUtility.UrlEncode(planCode)}";
+            }
+
+            return url;
         }
 
         private static IEnumerable<SelectListItem> BuildPageSizeItems(int selectedPageSize)

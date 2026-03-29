@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Darwin.Application.Loyalty.DTOs;
 using Darwin.Application.Loyalty.Campaigns;
 using Darwin.Domain.Enums;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,6 +10,10 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
     public sealed class LoyaltyProgramsListVm
     {
         public Guid? BusinessId { get; set; }
+        public LoyaltyProgramQueueFilter Filter { get; set; } = LoyaltyProgramQueueFilter.All;
+        public List<SelectListItem> FilterItems { get; set; } = new();
+        public LoyaltyProgramOpsSummaryVm Summary { get; set; } = new();
+        public List<LoyaltyOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<LoyaltyProgramListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
@@ -25,6 +30,15 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public bool IsActive { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class LoyaltyProgramOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int InactiveCount { get; set; }
+        public int PerCurrencyUnitCount { get; set; }
+        public int MissingRulesCount { get; set; }
     }
 
     public sealed class LoyaltyProgramEditVm
@@ -54,10 +68,23 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
         public Guid LoyaltyProgramId { get; set; }
         public string ProgramName { get; set; } = string.Empty;
         public Guid BusinessId { get; set; }
+        public LoyaltyRewardTierQueueFilter Filter { get; set; } = LoyaltyRewardTierQueueFilter.All;
+        public List<SelectListItem> FilterItems { get; set; } = new();
+        public LoyaltyRewardTierOpsSummaryVm Summary { get; set; } = new();
+        public List<LoyaltyOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<LoyaltyRewardTierListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
+    }
+
+    public sealed class LoyaltyRewardTierOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int SelfRedemptionCount { get; set; }
+        public int MissingDescriptionCount { get; set; }
+        public int DiscountRewardCount { get; set; }
+        public int FreeItemCount { get; set; }
     }
 
     public sealed class LoyaltyRewardTierListItemVm
@@ -119,11 +146,32 @@ namespace Darwin.WebAdmin.ViewModels.Loyalty
     public sealed class LoyaltyCampaignsListVm
     {
         public Guid? BusinessId { get; set; }
+        public LoyaltyCampaignQueueFilter Filter { get; set; } = LoyaltyCampaignQueueFilter.All;
+        public List<SelectListItem> FilterItems { get; set; } = new();
+        public LoyaltyCampaignOpsSummaryVm Summary { get; set; } = new();
+        public List<LoyaltyOpsPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();
         public List<LoyaltyCampaignListItemVm> Items { get; set; } = new();
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public int Total { get; set; }
+    }
+
+    public sealed class LoyaltyCampaignOpsSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int ScheduledCount { get; set; }
+        public int DraftCount { get; set; }
+        public int ExpiredCount { get; set; }
+        public int PushEnabledCount { get; set; }
+    }
+
+    public sealed class LoyaltyOpsPlaybookVm
+    {
+        public string Title { get; set; } = string.Empty;
+        public string ScopeNote { get; set; } = string.Empty;
+        public string OperatorAction { get; set; } = string.Empty;
     }
 
     public sealed class LoyaltyCampaignListItemVm

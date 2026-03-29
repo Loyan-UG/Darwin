@@ -1,0 +1,26 @@
+@model Darwin.WebAdmin.ViewModels.Inventory.StockLevelEditVm
+@{
+    var isCreate = ViewData["IsCreate"] as bool? == true;
+    ViewData["Title"] = isCreate ? "Create Stock Level" : "Edit Stock Level";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="mb-1">@(isCreate ? "Create Stock Level" : "Edit Stock Level")</h1>
+        <div class="text-muted">Maintain warehouse stock baselines before adjustment, reservation, and replenishment workflows depend on them.</div>
+    </div>
+</div>
+
+<form asp-action="@(isCreate ? "CreateStockLevel" : "EditStockLevel")" method="post">
+    @Html.AntiForgeryToken()
+    @if (!isCreate)
+    {
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="RowVersion" />
+    }
+    <partial name="_StockLevelForm" model="Model" />
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@(isCreate ? "Create" : "Save")</button>
+        <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>

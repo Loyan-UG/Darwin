@@ -183,6 +183,7 @@ public sealed class BusinessSubscriptionHandoffSummaryVm
         public bool IsCurrentPlan { get; set; }
         public bool CanOpenManagementWebsite { get; set; }
         public string? ManagementWebsiteUrl { get; set; }
+        public string HandoffActionLabel { get; set; } = string.Empty;
         public string HandoffLabel { get; set; } = string.Empty;
     }
 

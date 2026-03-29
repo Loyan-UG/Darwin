@@ -1,0 +1,29 @@
+@model Darwin.WebAdmin.ViewModels.CRM.CustomerSegmentEditVm
+@{
+    var actionName = ViewData["FormAction"] as string ?? "EditSegment";
+    var isCreate = string.Equals(actionName, "CreateSegment", StringComparison.Ordinal);
+}
+
+<form asp-action="@actionName" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    @if (!isCreate)
+    {
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="RowVersion" />
+    }
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@(isCreate ? "Create" : "Save")</button>
+        <a asp-action="Segments" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>

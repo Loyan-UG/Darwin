@@ -179,6 +179,13 @@ namespace Darwin.Application.Inventory.DTOs
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
 
+    public sealed class WarehouseOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int DefaultCount { get; set; }
+        public int NoStockLevelsCount { get; set; }
+    }
+
     /// <summary>
     /// Warehouse create payload.
     /// </summary>
@@ -213,6 +220,13 @@ namespace Darwin.Application.Inventory.DTOs
         public string? Address { get; set; }
         public int PurchaseOrderCount { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    }
+
+    public sealed class SupplierOpsSummaryDto
+    {
+        public int TotalCount { get; set; }
+        public int MissingAddressCount { get; set; }
+        public int HasPurchaseOrdersCount { get; set; }
     }
 
     /// <summary>

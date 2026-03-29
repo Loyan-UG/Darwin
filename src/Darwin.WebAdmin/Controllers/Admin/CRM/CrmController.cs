@@ -925,7 +925,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         }
 
         [HttpGet]
-        public IActionResult CreateSegment() => View(new CustomerSegmentEditVm());
+        public IActionResult CreateSegment() => RenderSegmentEditor(new CustomerSegmentEditVm(), nameof(CreateSegment));
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -933,7 +933,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             if (!ModelState.IsValid)
             {
-                return View(vm);
+                return RenderSegmentEditor(vm, nameof(CreateSegment));
             }
 
             try
@@ -945,12 +945,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Segment created.";
-                return RedirectToAction(nameof(EditSegment), new { id });
+                return RedirectOrHtmx(nameof(EditSegment), new { id });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(vm);
+                return RenderSegmentEditor(vm, nameof(CreateSegment));
             }
         }
 
@@ -964,13 +964,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 return RedirectToAction(nameof(Segments));
             }
 
-            return View(new CustomerSegmentEditVm
+            return RenderSegmentEditor(new CustomerSegmentEditVm
             {
                 Id = dto.Id,
                 RowVersion = dto.RowVersion,
                 Name = dto.Name,
                 Description = dto.Description
-            });
+            }, nameof(EditSegment));
         }
 
         [HttpPost]
@@ -979,7 +979,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         {
             if (!ModelState.IsValid)
             {
-                return View(vm);
+                return RenderSegmentEditor(vm, nameof(EditSegment));
             }
 
             try
@@ -993,7 +993,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Segment updated.";
-                return RedirectToAction(nameof(EditSegment), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditSegment), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -1003,7 +1003,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(vm);
+                return RenderSegmentEditor(vm, nameof(EditSegment));
             }
         }
 
@@ -1425,6 +1425,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
 
             return actionName == nameof(CreateOpportunity) ? View("CreateOpportunity", vm) : View("EditOpportunity", vm);
+        }
+
+        private IActionResult RenderSegmentEditor(CustomerSegmentEditVm vm, string actionName)
+        {
+            if (IsHtmxRequest())
+            {
+                ViewData["FormAction"] = actionName;
+                return PartialView("~/Views/Crm/_SegmentEditorShell.cshtml", vm);
+            }
+
+            return actionName == nameof(CreateSegment) ? View("CreateSegment", vm) : View("EditSegment", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

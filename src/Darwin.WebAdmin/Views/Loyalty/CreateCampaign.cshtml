@@ -1,63 +1,7 @@
 @model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyCampaignEditVm
 @{
+    ViewData["IsCreate"] = true;
     ViewData["Title"] = "Create Loyalty Campaign";
 }
 
-<h1 class="mb-3">Create Loyalty Campaign</h1>
-
-<form asp-action="CreateCampaign" method="post" class="row g-3">
-    @Html.AntiForgeryToken()
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="col-md-4">
-        <label asp-for="BusinessId" class="form-label"></label>
-        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Title" class="form-label"></label>
-        <input asp-for="Title" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Subtitle" class="form-label"></label>
-        <input asp-for="Subtitle" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="MediaUrl" class="form-label"></label>
-        <input asp-for="MediaUrl" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="LandingUrl" class="form-label"></label>
-        <input asp-for="LandingUrl" class="form-control" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="Channels" class="form-label"></label>
-        <select asp-for="Channels" asp-items="Model.ChannelItems" class="form-select"></select>
-    </div>
-    <div class="col-md-3">
-        <label asp-for="StartsAtUtc" class="form-label"></label>
-        <input asp-for="StartsAtUtc" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
-    </div>
-    <div class="col-md-3">
-        <label asp-for="EndsAtUtc" class="form-label"></label>
-        <input asp-for="EndsAtUtc" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" class="form-control" />
-    </div>
-    <div class="col-12">
-        <label asp-for="Body" class="form-label"></label>
-        <textarea asp-for="Body" class="form-control" rows="4"></textarea>
-    </div>
-    <div class="col-12">
-        <label asp-for="TargetingJson" class="form-label"></label>
-        <textarea asp-for="TargetingJson" class="form-control" rows="4"></textarea>
-    </div>
-    <div class="col-12">
-        <label asp-for="PayloadJson" class="form-label"></label>
-        <textarea asp-for="PayloadJson" class="form-control" rows="4"></textarea>
-    </div>
-    <div class="col-12 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Create</button>
-        <a asp-action="Campaigns" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+<partial name="_CampaignEditorShell" model="Model" />

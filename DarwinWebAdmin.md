@@ -128,6 +128,8 @@ Target workflow:
 - `Completed foundation`: WebAdmin now also has a dedicated business-subscription workspace with current plan state, active-plan readiness, external management-website handoff visibility, and FullAdmin cancel-at-period-end control
 - `Completed foundation`: the same subscription workspace now also surfaces provider invoice history with queue-style triage for open/paid/draft/uncollectible cases, hosted/PDF visibility, and direct payment follow-up links so finance support is not trapped in Stripe or external billing pages
 - `Completed foundation`: the same subscription invoice workspace now also supports `Overdue` and `PDF Missing` triage plus a direct refund-queue handoff, so subscription billing support can separate collection follow-up from provider-document gaps inside WebAdmin
+- `Completed foundation`: the business subscription workspace and its invoice queue now also support HTMX-driven load, filtering, and cancel-at-period-end update paths, so subscription support no longer falls back to older full-page refresh behavior
+- `Completed foundation`: subscription-plan handoff links are now business-aware and plan-aware, so admins can start or upgrade a business against a specific monthly plan from WebAdmin instead of only opening a generic external billing website
 - `Completed`: invitation acceptance is now available in `Darwin.Mobile.Business` as the current phase-1 business-user onboarding path
 - `Decision made`: phase-1 owner onboarding supports both assigning an existing platform user and invitation-first owner creation
 - `Completed foundation`: invitation issue/resend emails can now carry both the manual token and a configurable magic-link path
@@ -142,6 +144,7 @@ Target workflow:
 - `Completed foundation`: the dashboard communication-operations card and business-support queue card are now HTMX-refreshable partials, so operators can refresh live summaries without reloading the full admin dashboard
 - `Completed foundation`: WebAdmin now also includes a dedicated `Business Support Queue` workspace that combines attention businesses with recent failed invitation/activation/password-reset emails, reducing page-hopping during onboarding and support triage
 - `Completed foundation`: that support queue is now broken into HTMX-refreshable summary, attention-business, and failed-email fragments, so operators can refresh live triage data without a full page reload
+- `Completed foundation`: business create/edit, location create/edit, member create/edit, and invitation-create flows now all render through HTMX-aware shell helpers on initial load and validation rerender, so the core onboarding workspace stays aligned with the newer server-rendered + HTMX admin interaction model
 - `Planned / Near-term`: explicit onboarding state machine, richer setup workspace UX, and tenant/customer provisioning still need completion
 
 ## 8. Authentication-Related Admin Support
@@ -164,6 +167,7 @@ WebAdmin should support or coordinate:
 - `Completed`: the same activation/reset/lock/unlock support actions are now available directly inside the business-member workspace, which removes a major operator detour during onboarding troubleshooting
 - `Completed foundation`: the same business-member workspace now also exposes staff access badge preview/refresh, so support can mirror the rotating QR badge used in `Darwin.Mobile.Business`
 - `Completed foundation`: selective delegation is now enforced in both controller authorization and view affordances, so support operators can work with invitations and member support without inheriting approval, archive, location, or owner-management powers
+- `Completed foundation`: user create/edit, change-email, change-password, role-assignment, role create/edit, and permission create/edit flows now all render through HTMX-aware shell helpers on initial load as well as validation rerender, so the access-management workspace stays aligned with the newer server-rendered + HTMX admin interaction model
 - `Completed`: the business-member edit flow now supports a controlled `FullAdmin` override for the "last active owner" rule, with mandatory reason capture, explicit danger-state UI, and persisted audit records
 - `Completed`: owner-override audit history is now visible inside the business workspace, so sensitive ownership exceptions are reviewable without querying the database directly
 - `Completed foundation`: the platform now has public confirm-email token endpoints, so admin activation support is no longer only a placeholder
@@ -474,11 +478,14 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: CRM segment administration now includes queue filters for empty, in-use, and missing-description segments instead of relying on a plain searchable list
 - `Completed foundation`: the segment workspace now exposes operational summary cards and playbooks so segmentation hygiene can be reviewed before campaigns, support filters, and reporting rely on stale taxonomy
 - `Completed foundation`: segment rows now visibly call out empty segments and missing operator descriptions, which makes CRM cleanup work easier without leaving the list screen
+- `Completed foundation`: CRM segment create/edit flows now support the standard HTMX shell pattern so segmentation hygiene stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
 
 ## 25. Inventory Ledger Ops Progress
 
 - `Completed foundation`: inventory-ledger review now includes summary cards for total, inbound, outbound, and reservation-heavy activity instead of only a paged transaction table
 - `Completed foundation`: the ledger workspace now includes troubleshooting playbooks so stock investigators can interpret inbound corrections and outbound/reservation spikes without leaving the screen
+- `Completed foundation`: inventory stock-level create/edit flows now support the standard HTMX shell pattern so baseline stock maintenance no longer depends on the older full-page editor model
+- `Completed foundation`: inventory stock action flows for adjust, reserve, release, and return receipt now support the standard HTMX shell pattern so day-to-day stock remediation stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
 
 ## 26. Inventory Replenishment and Transfer Ops Progress
 
@@ -486,3 +493,22 @@ These are non-functional requirements for WebAdmin, not optional nice-to-haves.
 - `Completed foundation`: the purchase-order workspace now includes replenishment playbooks and clearer status badges plus line-count visibility, which makes supplier-order triage easier before opening each record
 - `Completed foundation`: stock-transfer administration now includes operational summary cards for total, draft, in-transit, and completed transfers instead of only a flat list
 - `Completed foundation`: the stock-transfer workspace now includes transfer playbooks, clearer status badges, and line-count visibility so warehouse-move troubleshooting can happen directly from the queue view
+
+## 27. Inventory Warehouse and Supplier Ops Progress
+
+- `Completed foundation`: warehouse administration now includes operational summary cards for total, default, and empty locations instead of only a searchable list
+- `Completed foundation`: the warehouse workspace now includes readiness playbooks and visible empty-location/default badges, which makes fulfillment setup and cleanup easier before stock operations scale
+- `Completed foundation`: supplier administration now includes operational summary cards for total, missing-address, and purchase-order-linked vendors instead of only a searchable list
+- `Completed foundation`: the supplier workspace now includes procurement playbooks, explicit missing-address badges, and active-procurement signals so vendor hygiene can be reviewed before purchase-order and finance follow-up
+
+## 28. Loyalty Workspace Modernization Progress
+
+- `Completed foundation`: loyalty-program administration now includes queue filters for active, inactive, spend-based, and missing-rules programs plus operational summary cards and playbooks
+- `Completed foundation`: loyalty reward-tier administration now includes queue filters for self-redemption, missing-description, discount, and free-item tiers plus operational summary cards and playbooks
+- `Completed foundation`: loyalty program and reward-tier create/edit flows now support the standard HTMX shell pattern, which starts migrating older loyalty screens onto the newer Darwin WebAdmin server-rendered + HTMX interaction model
+- `Completed foundation`: loyalty campaign administration now includes queue filters for active, scheduled, draft, expired, and push-enabled campaigns plus operational summary cards and playbooks
+- `Completed foundation`: loyalty campaign create/edit flows now support the standard HTMX shell pattern so older campaign screens align with the newer Darwin WebAdmin server-rendered + HTMX interaction model
+- `Completed foundation`: admin-side loyalty-account provisioning now supports the standard HTMX shell pattern so support-led account creation stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
+- `Completed foundation`: loyalty point-adjustment now supports the standard HTMX shell pattern so support-led balance remediation stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model
+- `Completed foundation`: loyalty account-details now support HTMX-aware suspend, activate, and pending-redemption confirmation actions so the main support workspace no longer drops back to older full-page post/redirect behavior
+- `Completed foundation`: loyalty account and redemption list workspaces now support HTMX-aware filtering and subset navigation so queue triage stays aligned with the newer Darwin WebAdmin server-rendered + HTMX interaction model

@@ -1,39 +1,6 @@
 @model Darwin.WebAdmin.ViewModels.Loyalty.LoyaltyProgramEditVm
 @{
-    ViewData["Title"] = "Create Loyalty Program";
+    ViewData["IsCreate"] = true;
 }
 
-<h1 class="mb-3">Create Loyalty Program</h1>
-
-<form asp-action="CreateProgram" method="post" class="row g-3">
-    @Html.AntiForgeryToken()
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="col-md-4">
-        <label asp-for="BusinessId" class="form-label"></label>
-        <select asp-for="BusinessId" asp-items="Model.BusinessOptions" class="form-select"></select>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-    </div>
-    <div class="col-md-4">
-        <label asp-for="AccrualMode" class="form-label"></label>
-        <select asp-for="AccrualMode" asp-items="Html.GetEnumSelectList<Darwin.Domain.Enums.LoyaltyAccrualMode>()" class="form-select"></select>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="PointsPerCurrencyUnit" class="form-label"></label>
-        <input asp-for="PointsPerCurrencyUnit" class="form-control" />
-    </div>
-    <div class="col-12">
-        <label asp-for="RulesJson" class="form-label"></label>
-        <textarea asp-for="RulesJson" class="form-control" rows="6"></textarea>
-    </div>
-    <div class="col-12 form-check ms-2">
-        <input asp-for="IsActive" class="form-check-input" />
-        <label asp-for="IsActive" class="form-check-label"></label>
-    </div>
-    <div class="col-12 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Create</button>
-        <a asp-action="Programs" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
-    </div>
-</form>
+<partial name="_ProgramEditorShell" model="Model" />

@@ -25,7 +25,7 @@ namespace Darwin.Application.Loyalty.Campaigns
 
         public GetBusinessCampaignsHandler(IAppDbContext db) => _db = db;
 
-        public async Task<Result<GetBusinessCampaignsResultDto>> HandleAsync(Guid businessId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<Result<GetBusinessCampaignsResultDto>> HandleAsync(Guid businessId, int page, int pageSize, LoyaltyCampaignQueueFilter filter = LoyaltyCampaignQueueFilter.All, CancellationToken ct = default)
         {
             if (businessId == Guid.Empty)
             {
@@ -39,8 +39,9 @@ namespace Darwin.Application.Loyalty.Campaigns
                 .AsNoTracking()
                 .Where(c => !c.IsDeleted && c.BusinessId == businessId);
 
-            var total = await query.CountAsync(ct).ConfigureAwait(false);
             var nowUtc = DateTime.UtcNow;
+            query = ApplyFilter(query, filter, nowUtc);
+            var total = await query.CountAsync(ct).ConfigureAwait(false);
 
             var items = await query
                 .OrderByDescending(c => c.CreatedAtUtc)
@@ -74,6 +75,49 @@ namespace Darwin.Application.Loyalty.Campaigns
                 Items = items,
                 Total = total
             });
+        }
+
+        public async Task<BusinessCampaignOpsSummaryDto> GetSummaryAsync(Guid businessId, CancellationToken ct = default)
+        {
+            if (businessId == Guid.Empty)
+            {
+                return new BusinessCampaignOpsSummaryDto();
+            }
+
+            var nowUtc = DateTime.UtcNow;
+            var query = _db.Set<Campaign>()
+                .AsNoTracking()
+                .Where(c => !c.IsDeleted && c.BusinessId == businessId);
+
+            var totalCount = await query.CountAsync(ct).ConfigureAwait(false);
+            var activeCount = await query.CountAsync(c => c.IsActive && (!c.StartsAtUtc.HasValue || c.StartsAtUtc <= nowUtc) && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc), ct).ConfigureAwait(false);
+            var scheduledCount = await query.CountAsync(c => c.IsActive && c.StartsAtUtc.HasValue && c.StartsAtUtc > nowUtc && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc), ct).ConfigureAwait(false);
+            var draftCount = await query.CountAsync(c => !c.IsActive && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc), ct).ConfigureAwait(false);
+            var expiredCount = await query.CountAsync(c => c.EndsAtUtc.HasValue && c.EndsAtUtc < nowUtc, ct).ConfigureAwait(false);
+            var pushEnabledCount = await query.CountAsync(c => (((short)c.Channels) & 2) == 2, ct).ConfigureAwait(false);
+
+            return new BusinessCampaignOpsSummaryDto
+            {
+                TotalCount = totalCount,
+                ActiveCount = activeCount,
+                ScheduledCount = scheduledCount,
+                DraftCount = draftCount,
+                ExpiredCount = expiredCount,
+                PushEnabledCount = pushEnabledCount
+            };
+        }
+
+        private static IQueryable<Campaign> ApplyFilter(IQueryable<Campaign> query, LoyaltyCampaignQueueFilter filter, DateTime nowUtc)
+        {
+            return filter switch
+            {
+                LoyaltyCampaignQueueFilter.Active => query.Where(c => c.IsActive && (!c.StartsAtUtc.HasValue || c.StartsAtUtc <= nowUtc) && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc)),
+                LoyaltyCampaignQueueFilter.Scheduled => query.Where(c => c.IsActive && c.StartsAtUtc.HasValue && c.StartsAtUtc > nowUtc && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc)),
+                LoyaltyCampaignQueueFilter.Draft => query.Where(c => !c.IsActive && (!c.EndsAtUtc.HasValue || c.EndsAtUtc >= nowUtc)),
+                LoyaltyCampaignQueueFilter.Expired => query.Where(c => c.EndsAtUtc.HasValue && c.EndsAtUtc < nowUtc),
+                LoyaltyCampaignQueueFilter.PushEnabled => query.Where(c => (((short)c.Channels) & 2) == 2),
+                _ => query
+            };
         }
 
         private static string ResolveCampaignState(bool isActive, DateTime? startsAtUtc, DateTime? endsAtUtc, DateTime nowUtc)
