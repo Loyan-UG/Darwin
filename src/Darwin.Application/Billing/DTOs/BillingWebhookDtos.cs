@@ -9,7 +9,9 @@ public enum BillingWebhookDeliveryQueueFilter
     Pending = 1,
     Failed = 2,
     Succeeded = 3,
-    RetryPending = 4
+    RetryPending = 4,
+    PaymentExceptions = 5,
+    DisputeSignals = 6
 }
 
 public sealed class BillingWebhookSubscriptionListItemDto
@@ -43,6 +45,8 @@ public sealed class BillingWebhookOpsSummaryDto
     public int FailedDeliveryCount { get; init; }
     public int SucceededDeliveryCount { get; init; }
     public int RetryPendingCount { get; init; }
+    public int PaymentExceptionCount { get; init; }
+    public int DisputeSignalCount { get; init; }
 }
 
 public sealed class GetBillingWebhookSubscriptionsPageDto

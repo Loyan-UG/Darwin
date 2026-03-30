@@ -40,6 +40,18 @@
     </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Payment Exceptions</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PaymentExceptionCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Dispute Signals</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.DisputeSignalCount</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="border rounded p-3 h-100">
             <div class="text-muted small">Queue Scope</div>
             <div class="fw-semibold mt-1">Global</div>
             <div class="small text-muted mt-2">Phase-1 callbacks are platform scoped.</div>
@@ -130,6 +142,8 @@
             <option value="@BillingWebhookDeliveryQueueFilter.Failed" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Failed)">Failed</option>
             <option value="@BillingWebhookDeliveryQueueFilter.Succeeded" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.Succeeded)">Succeeded</option>
             <option value="@BillingWebhookDeliveryQueueFilter.RetryPending" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.RetryPending)">Retry Pending</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.PaymentExceptions)">Payment Exceptions</option>
+            <option value="@BillingWebhookDeliveryQueueFilter.DisputeSignals" selected="@(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.DisputeSignals)">Dispute Signals</option>
         </select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
         <a asp-action="Webhooks"
@@ -188,6 +202,18 @@
        hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.RetryPending })"
        hx-target="#billing-webhooks-workspace-shell"
        hx-swap="outerHTML">Retry Pending</a>
+    <a asp-action="Webhooks"
+       asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+       class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.PaymentExceptions ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+       hx-target="#billing-webhooks-workspace-shell"
+       hx-swap="outerHTML">Payment Exceptions</a>
+    <a asp-action="Webhooks"
+       asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
+       class="btn btn-sm @(Model.QueueFilter == BillingWebhookDeliveryQueueFilter.DisputeSignals ? "btn-dark" : "btn-outline-dark")"
+       hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+       hx-target="#billing-webhooks-workspace-shell"
+       hx-swap="outerHTML">Dispute Signals</a>
 </div>
 
 <div class="table-responsive">
@@ -222,6 +248,17 @@
                     <td><code>@item.CallbackUrl</code></td>
                     <td>
                         <span class="badge @(item.Status == "Succeeded" ? "bg-success" : item.Status == "Failed" ? "bg-danger" : "bg-warning text-dark")">@item.Status</span>
+                        @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div><span class="badge text-bg-dark mt-1">Dispute signal</span></div>
+                        }
+                        else if ((item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
+                                  item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase) ||
+                                  item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase)) &&
+                                 (item.Status != "Succeeded" || item.RetryCount > 0))
+                        {
+                            <div><span class="badge text-bg-warning mt-1">Payment exception</span></div>
+                        }
                         @if (item.ResponseCode.HasValue)
                         {
                             <div class="small text-muted mt-1">HTTP @item.ResponseCode</div>
@@ -241,6 +278,16 @@
                     <td>
                         <div class="small text-muted">Subscription @item.SubscriptionId</div>
                         <div class="small text-muted">@item.IdempotencyKey</div>
+                        @if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) || item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="small text-danger mt-1">Manual finance escalation only; no dedicated dispute workflow exists yet.</div>
+                        }
+                        else if (item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
+                                 item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase) ||
+                                 item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="small text-muted mt-1">Treat as payment-callback evidence, then confirm the linked payment/refund queue.</div>
+                        }
                     </td>
                 </tr>
             }

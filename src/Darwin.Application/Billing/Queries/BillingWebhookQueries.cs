@@ -91,14 +91,7 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
                              IsActiveSubscription = subscription.IsActive
                          };
 
-        deliveries = filter switch
-        {
-            BillingWebhookDeliveryQueueFilter.Pending => deliveries.Where(x => x.Status == "Pending"),
-            BillingWebhookDeliveryQueueFilter.Failed => deliveries.Where(x => x.Status == "Failed"),
-            BillingWebhookDeliveryQueueFilter.Succeeded => deliveries.Where(x => x.Status == "Succeeded"),
-            BillingWebhookDeliveryQueueFilter.RetryPending => deliveries.Where(x => x.Status != "Succeeded" && x.RetryCount > 0),
-            _ => deliveries
-        };
+        deliveries = ApplyQueueFilter(deliveries, filter);
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -124,6 +117,27 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
             Total = total
         };
     }
+
+    private static IQueryable<BillingWebhookDeliveryListItemDto> ApplyQueueFilter(
+        IQueryable<BillingWebhookDeliveryListItemDto> deliveries,
+        BillingWebhookDeliveryQueueFilter filter)
+    {
+        deliveries = filter switch
+        {
+            BillingWebhookDeliveryQueueFilter.Pending => deliveries.Where(x => x.Status == "Pending"),
+            BillingWebhookDeliveryQueueFilter.Failed => deliveries.Where(x => x.Status == "Failed"),
+            BillingWebhookDeliveryQueueFilter.Succeeded => deliveries.Where(x => x.Status == "Succeeded"),
+            BillingWebhookDeliveryQueueFilter.RetryPending => deliveries.Where(x => x.Status != "Succeeded" && x.RetryCount > 0),
+            BillingWebhookDeliveryQueueFilter.PaymentExceptions => deliveries.Where(x =>
+                (x.EventType.Contains("payment_intent") || x.EventType.Contains("charge") || x.EventType.Contains("refund")) &&
+                (x.Status != "Succeeded" || x.RetryCount > 0)),
+            BillingWebhookDeliveryQueueFilter.DisputeSignals => deliveries.Where(x =>
+                x.EventType.Contains("dispute") || x.EventType.Contains("charge.dispute")),
+            _ => deliveries
+        };
+
+        return deliveries;
+    }
 }
 
 public sealed class GetBillingWebhookOpsSummaryHandler
@@ -136,6 +150,16 @@ public sealed class GetBillingWebhookOpsSummaryHandler
     {
         var subscriptions = _db.Set<WebhookSubscription>().AsNoTracking().Where(x => !x.IsDeleted);
         var deliveries = _db.Set<WebhookDelivery>().AsNoTracking().Where(x => !x.IsDeleted);
+        var deliveryEvents = from delivery in _db.Set<WebhookDelivery>().AsNoTracking()
+                             join subscription in _db.Set<WebhookSubscription>().AsNoTracking()
+                                 on delivery.SubscriptionId equals subscription.Id
+                             where !delivery.IsDeleted && !subscription.IsDeleted
+                             select new
+                             {
+                                 delivery.Status,
+                                 delivery.RetryCount,
+                                 subscription.EventType
+                             };
 
         return new BillingWebhookOpsSummaryDto
         {
@@ -143,7 +167,12 @@ public sealed class GetBillingWebhookOpsSummaryHandler
             PendingDeliveryCount = await deliveries.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
             FailedDeliveryCount = await deliveries.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
             SucceededDeliveryCount = await deliveries.CountAsync(x => x.Status == "Succeeded", ct).ConfigureAwait(false),
-            RetryPendingCount = await deliveries.CountAsync(x => x.Status != "Succeeded" && x.RetryCount > 0, ct).ConfigureAwait(false)
+            RetryPendingCount = await deliveries.CountAsync(x => x.Status != "Succeeded" && x.RetryCount > 0, ct).ConfigureAwait(false),
+            PaymentExceptionCount = await deliveryEvents.CountAsync(x =>
+                (EF.Functions.Like(x.EventType, "%payment_intent%") || EF.Functions.Like(x.EventType, "%charge%") || EF.Functions.Like(x.EventType, "%refund%")) &&
+                (x.Status != "Succeeded" || x.RetryCount > 0), ct).ConfigureAwait(false),
+            DisputeSignalCount = await deliveryEvents.CountAsync(x =>
+                EF.Functions.Like(x.EventType, "%dispute%") || EF.Functions.Like(x.EventType, "%charge.dispute%"), ct).ConfigureAwait(false)
         };
     }
 }

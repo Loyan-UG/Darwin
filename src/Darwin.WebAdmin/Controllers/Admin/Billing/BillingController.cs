@@ -524,7 +524,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 PendingDeliveryCount = summary.PendingDeliveryCount,
                 FailedDeliveryCount = summary.FailedDeliveryCount,
                 SucceededDeliveryCount = summary.SucceededDeliveryCount,
-                RetryPendingCount = summary.RetryPendingCount
+                RetryPendingCount = summary.RetryPendingCount,
+                PaymentExceptionCount = summary.PaymentExceptionCount,
+                DisputeSignalCount = summary.DisputeSignalCount
             };
         }
 
@@ -657,6 +659,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     ScopeNote = "These rows show callbacks that have already had at least one failed/manual retry path.",
                     OperatorAction = "Use them to prioritize reconciliation review and confirm whether payment/refund state must be corrected manually in WebAdmin.",
                     SettingsDependency = "Phase-1 still has no automated resend daemon, so operator review remains the source of truth."
+                },
+                new()
+                {
+                    Title = "Payment exceptions",
+                    ScopeNote = "Use this subset for payment_intent, charge, and refund callbacks whose status is still failed, pending, or retry-heavy.",
+                    OperatorAction = "Start from the callback row, verify the event type and retry trail, then move into the payment or refund queue before treating the finance record as settled.",
+                    SettingsDependency = "Stripe secret key and webhook secret must be configured before these rows are used as trustworthy provider exception evidence."
+                },
+                new()
+                {
+                    Title = "Dispute signals",
+                    ScopeNote = "This is a phase-1 callback-only proxy for charge dispute or chargeback-like events. It is not a complete dispute workflow.",
+                    OperatorAction = "Use the callback row to identify the affected provider signal, then move into payment/refund follow-up and document manual escalation because no dedicated dispute aggregate exists yet.",
+                    SettingsDependency = "Webhook registration and payment settings must be healthy before operators interpret dispute-like events as application issues."
                 }
             };
         }

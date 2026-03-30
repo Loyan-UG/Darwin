@@ -103,6 +103,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int FailedDeliveryCount { get; set; }
         public int SucceededDeliveryCount { get; set; }
         public int RetryPendingCount { get; set; }
+        public int PaymentExceptionCount { get; set; }
+        public int DisputeSignalCount { get; set; }
     }
 
     public sealed class BillingPlanOpsSummaryVm
