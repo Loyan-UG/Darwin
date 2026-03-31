@@ -154,7 +154,7 @@ Status terms used below:
 - `Planned / Near-term`: implement minimum viable Communication Core with email as the first operational channel
 - `Planned / Near-term`: support signup email, account activation email, invitation email, forgot-password email, reset-password email, and important account notifications
 - `In Progress`: business invitation emails now exist via SMTP-backed operational email sending, but still use simple transactional composition rather than a full Communication Core template/logging model
-- `In Progress`: phase-1 Communication Core admin support now includes template visibility, delivery history context, severity/backlog triage, and controlled retry for failed or pending invitation, activation, and password-reset rows; deeper outbox/provider abstraction and richer delivery-log modeling remain near-term
+- `In Progress`: phase-1 Communication Core admin support now includes template visibility, delivery history context, severity/backlog triage, controlled retry for failed or pending invitation, activation, and password-reset rows, and policy-aware retry state (`ready`, `cooldown`, `rate-limited`, blocked reason, recent-chain volume) so operators can distinguish safe replay from noisy resend behavior; deeper outbox/provider abstraction and richer delivery-log modeling remain near-term
 
 ### Payment integration
 
@@ -243,6 +243,8 @@ Status terms used below:
 - `Completed foundation`: the email-audit queue now also supports controlled generic retry for failed or pending invitation, activation, and password-reset flows after safe live-target resolution, so operators can recover common transactional email failures without pretending a blind replay engine exists
 - `Completed foundation`: the communication workspace, business profile, and email-audit queue now also expose prior-attempt counts, repeated-failure chains, and last-success context for the same flow/recipient/business path, so delivery triage can distinguish isolated failures from recurring operational debt before a fuller outbox/delivery-history model exists
 - `Completed foundation`: the email-audit queue now also exposes `repeated failures` and `prior success context` as first-class subset filters and summary cards, so operators can work recurring delivery debt as a queue instead of only inferring it from per-row context
+- `Completed foundation`: the email-audit queue now also exposes first-class `Retry Ready` and `Retry Blocked` policy states, cooldown/rate-limit reasons, retry-available timing, and 24-hour chain attempt counts, so support staff can replay safe live flows without creating duplicate-email storms or guessing when a retry is appropriate
+- `Completed foundation`: the same email-audit queue now also exposes `Heavy Chains` triage plus chain span and chain-status-mix context for the same flow/recipient/business path, so operators can distinguish a single failure from recurring instability before a fuller outbox and provider-event model exists
 - `Completed foundation`: the dedicated `Business Support Queue` now links business attention signals with recent failed invitation/activation/password-reset emails, so support operators can triage cross-workflow issues from one place before full automation exists
 - `Completed foundation`: the same support queue now refreshes summary, attention businesses, and failed-email signals independently via HTMX fragments, making operational triage faster under active support load
 

@@ -99,11 +99,51 @@
        asp-route-businessLinkedFailuresOnly="false"
        asp-route-repeatedFailuresOnly="false"
        asp-route-priorSuccessOnly="true"
+       asp-route-retryReadyOnly="false"
+       asp-route-retryBlockedOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = true, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = true, retryReadyOnly = false, retryBlockedOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Prior Success Context</a>
+    <a asp-action="EmailAudits"
+       asp-route-stalePendingOnly="false"
+       asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
+       asp-route-retryReadyOnly="true"
+       asp-route-retryBlockedOnly="false"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-success"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = true, retryBlockedOnly = false, businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Retry Ready</a>
+    <a asp-action="EmailAudits"
+       asp-route-stalePendingOnly="false"
+       asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
+       asp-route-retryReadyOnly="false"
+       asp-route-retryBlockedOnly="true"
+       asp-route-highChainVolumeOnly="false"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-warning"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = true, highChainVolumeOnly = false, businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Retry Blocked</a>
+    <a asp-action="EmailAudits"
+       asp-route-stalePendingOnly="false"
+       asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
+       asp-route-retryReadyOnly="false"
+       asp-route-retryBlockedOnly="false"
+       asp-route-highChainVolumeOnly="true"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-dark"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = true, businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Heavy Chains</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="BusinessInvitation"
@@ -251,6 +291,24 @@
             <div class="fs-4 fw-semibold">@Model.Summary.RepeatedFailureCount</div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Retry Ready</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.RetryReadyCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Retry Blocked</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.RetryBlockedCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Heavy Chains</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.HighChainVolumeCount</div>
+        </div>
+    </div>
 </div>
 
 <form method="get" class="row g-2 mb-3"
@@ -288,6 +346,24 @@
         <div class="form-check mt-2">
             <input class="form-check-input" type="checkbox" name="priorSuccessOnly" value="true" checked="@Model.PriorSuccessOnly" id="priorSuccessOnly" />
             <label class="form-check-label" for="priorSuccessOnly">Prior success context only</label>
+        </div>
+    </div>
+    <div class="col-md-auto">
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="retryReadyOnly" value="true" checked="@Model.RetryReadyOnly" id="retryReadyOnly" />
+            <label class="form-check-label" for="retryReadyOnly">Retry ready only</label>
+        </div>
+    </div>
+    <div class="col-md-auto">
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="retryBlockedOnly" value="true" checked="@Model.RetryBlockedOnly" id="retryBlockedOnly" />
+            <label class="form-check-label" for="retryBlockedOnly">Retry blocked only</label>
+        </div>
+    </div>
+    <div class="col-md-auto">
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="highChainVolumeOnly" value="true" checked="@Model.HighChainVolumeOnly" id="highChainVolumeOnly" />
+            <label class="form-check-label" for="highChainVolumeOnly">Heavy chains only</label>
         </div>
     </div>
     <div class="col-auto">
@@ -409,9 +485,42 @@
                         {
                             <div class="small text-muted">Prior failures: @item.PriorFailureCount</div>
                         }
+                        @if (item.RecentAttemptCount24h > 0)
+                        {
+                            <div class="small text-muted">Recent chain attempts (24 h): @item.RecentAttemptCount24h</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.ChainStatusMix))
+                        {
+                            <div class="small text-muted">Chain profile: @item.ChainStatusMix</div>
+                        }
+                        @if (item.ChainSpanHours.HasValue)
+                        {
+                            <div class="small text-muted">Chain span: @item.ChainSpanHours.Value h</div>
+                        }
                         @if (item.LastSuccessfulAttemptAtUtc.HasValue)
                         {
                             <div class="small text-muted">Last success @item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.RetryPolicyState))
+                        {
+                            <div class="small mt-1">
+                                @if (string.Equals(item.RetryPolicyState, "Ready", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-success">Retry ready</span>
+                                }
+                                else if (string.Equals(item.RetryPolicyState, "Cooldown", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-warning">Retry cooldown</span>
+                                }
+                                else if (string.Equals(item.RetryPolicyState, "RateLimited", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-danger">Retry rate-limited</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">@item.RetryPolicyState</span>
+                                }
+                            </div>
                         }
                     </td>
                     <td>
@@ -427,6 +536,14 @@
                         else
                         {
                             <div class="small text-muted mt-1">Attempt recorded</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.RetryBlockedReason))
+                        {
+                            <div class="small text-warning mt-1">@item.RetryBlockedReason</div>
+                        }
+                        @if (item.RetryAvailableAtUtc.HasValue)
+                        {
+                            <div class="small text-muted">Retry available @item.RetryAvailableAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC</div>
                         }
                         @if (item.CanRetryNow)
                         {
@@ -446,6 +563,9 @@
                                     <input type="hidden" name="businessLinkedFailuresOnly" value="@Model.BusinessLinkedFailuresOnly" />
                                     <input type="hidden" name="repeatedFailuresOnly" value="@Model.RepeatedFailuresOnly" />
                                     <input type="hidden" name="priorSuccessOnly" value="@Model.PriorSuccessOnly" />
+                                    <input type="hidden" name="retryReadyOnly" value="@Model.RetryReadyOnly" />
+                                    <input type="hidden" name="retryBlockedOnly" value="@Model.RetryBlockedOnly" />
+                                    <input type="hidden" name="highChainVolumeOnly" value="@Model.HighChainVolumeOnly" />
                                     @if (Model.BusinessId.HasValue)
                                     {
                                         <input type="hidden" name="businessId" value="@Model.BusinessId" />
@@ -534,6 +654,9 @@
        asp-route-businessLinkedFailuresOnly="@Model.BusinessLinkedFailuresOnly"
        asp-route-repeatedFailuresOnly="@Model.RepeatedFailuresOnly"
        asp-route-priorSuccessOnly="@Model.PriorSuccessOnly"
+       asp-route-retryReadyOnly="@Model.RetryReadyOnly"
+       asp-route-retryBlockedOnly="@Model.RetryBlockedOnly"
+       asp-route-highChainVolumeOnly="@Model.HighChainVolumeOnly"
        asp-route-businessId="@Model.BusinessId"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">

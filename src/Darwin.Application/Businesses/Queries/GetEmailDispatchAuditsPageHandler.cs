@@ -16,6 +16,9 @@ namespace Darwin.Application.Businesses.Queries
     /// </summary>
     public sealed class GetEmailDispatchAuditsPageHandler
     {
+        private static readonly TimeSpan RetryCooldown = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan RetryChainWindow = TimeSpan.FromHours(24);
+        private const int MaxRetryAttemptsPerWindow = 3;
         private readonly IAppDbContext _db;
 
         public GetEmailDispatchAuditsPageHandler(IAppDbContext db)
@@ -33,6 +36,9 @@ namespace Darwin.Application.Businesses.Queries
             bool businessLinkedFailuresOnly = false,
             bool repeatedFailuresOnly = false,
             bool priorSuccessOnly = false,
+            bool retryReadyOnly = false,
+            bool retryBlockedOnly = false,
+            bool highChainVolumeOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
@@ -136,12 +142,29 @@ namespace Darwin.Application.Businesses.Queries
                 item.NeedsOperatorFollowUp =
                     string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) ||
                     (string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) && item.AttemptedAtUtc <= stalePendingThresholdUtc);
-                item.CanRetryNow =
-                    (string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase)) &&
-                    (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+                var recentAttemptCount24h = priorRows.Count(x => x.AttemptedAtUtc >= nowUtc.Subtract(RetryChainWindow)) + 1;
+                var chainRows = priorRows
+                    .Where(x => x.AttemptedAtUtc >= nowUtc.Subtract(RetryChainWindow))
+                    .ToList();
+                item.RecentAttemptCount24h = recentAttemptCount24h;
+                item.ChainStartedAtUtc = chainRows.Count > 0 ? chainRows.Min(x => x.AttemptedAtUtc) : item.AttemptedAtUtc;
+                item.ChainLastAttemptAtUtc = item.AttemptedAtUtc;
+                item.ChainSpanHours = item.ChainStartedAtUtc.HasValue
+                    ? (int)Math.Max(0, Math.Ceiling((item.AttemptedAtUtc - item.ChainStartedAtUtc.Value).TotalHours))
+                    : null;
+                var hasSent = chainRows.Any(x => string.Equals(x.Status, "Sent", StringComparison.OrdinalIgnoreCase)) ||
+                              string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase);
+                var hasFailed = chainRows.Any(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase)) ||
+                                string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase);
+                var hasPending = chainRows.Any(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase)) ||
+                                 string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase);
+                item.ChainStatusMix =
+                    hasSent && hasFailed ? "Mixed success/failure" :
+                    hasFailed && hasPending ? "Open failure chain" :
+                    hasFailed ? "Failure-only chain" :
+                    hasPending ? "Pending-only chain" :
+                    hasSent ? "Success-only chain" :
+                    "Single attempt";
                 item.PriorAttemptCount = priorRows.Count;
                 item.PriorFailureCount = priorRows.Count(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase));
                 item.LastSuccessfulAttemptAtUtc = priorRows
@@ -155,6 +178,8 @@ namespace Darwin.Application.Businesses.Queries
                     string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) ? "Watch" :
                     item.CompletionLatencySeconds.HasValue && item.CompletionLatencySeconds.Value > slowDeliveryThresholdSeconds ? "Slow" :
                     "Normal";
+
+                ApplyRetryPolicy(item, nowUtc);
             }
 
             var filteredItems = baseItems.AsEnumerable();
@@ -167,6 +192,24 @@ namespace Darwin.Application.Businesses.Queries
             if (priorSuccessOnly)
             {
                 filteredItems = filteredItems.Where(x => x.LastSuccessfulAttemptAtUtc.HasValue);
+            }
+
+            if (retryReadyOnly)
+            {
+                filteredItems = filteredItems.Where(x => x.CanRetryNow);
+            }
+
+            if (retryBlockedOnly)
+            {
+                filteredItems = filteredItems.Where(x =>
+                    !x.CanRetryNow &&
+                    (string.Equals(x.RetryPolicyState, "Cooldown", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(x.RetryPolicyState, "RateLimited", StringComparison.OrdinalIgnoreCase)));
+            }
+
+            if (highChainVolumeOnly)
+            {
+                filteredItems = filteredItems.Where(x => x.RecentAttemptCount24h >= 3);
             }
 
             var total = filteredItems.Count();
@@ -196,6 +239,7 @@ namespace Darwin.Application.Businesses.Queries
                     x.Status,
                     x.FlowKey,
                     x.BusinessId,
+                    x.RecipientEmail,
                     x.AttemptedAtUtc,
                     x.CompletedAtUtc
                 })
@@ -229,8 +273,73 @@ namespace Darwin.Application.Businesses.Queries
                 RepeatedFailureCount = summaryRows
                     .Where(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase))
                     .GroupBy(x => new { x.FlowKey, x.BusinessId })
-                    .Count(g => g.Count() > 1 && !string.IsNullOrWhiteSpace(g.Key.FlowKey))
+                    .Count(g => g.Count() > 1 && !string.IsNullOrWhiteSpace(g.Key.FlowKey)),
+                RetryReadyCount = summaryRows.Count(x =>
+                    IsSupportedRetryFlow(x.FlowKey) &&
+                    CanRetryStatus(x.Status) &&
+                    x.AttemptedAtUtc <= DateTime.UtcNow.Subtract(RetryCooldown)),
+                RetryBlockedCount = summaryRows.Count(x =>
+                    IsSupportedRetryFlow(x.FlowKey) &&
+                    CanRetryStatus(x.Status) &&
+                    x.AttemptedAtUtc > DateTime.UtcNow.Subtract(RetryCooldown)),
+                HighChainVolumeCount = summaryRows
+                    .Where(x => !string.IsNullOrWhiteSpace(x.FlowKey) && x.AttemptedAtUtc >= recentThresholdUtc)
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId, x.RecipientEmail })
+                    .Count(g => g.Count() >= 3)
             };
+        }
+
+        private static void ApplyRetryPolicy(EmailDispatchAuditListItemDto item, DateTime nowUtc)
+        {
+            if (!IsSupportedRetryFlow(item.FlowKey))
+            {
+                item.CanRetryNow = false;
+                item.RetryPolicyState = "Unsupported";
+                item.RetryBlockedReason = "This flow still requires manual operator follow-up.";
+                return;
+            }
+
+            if (!CanRetryStatus(item.Status))
+            {
+                item.CanRetryNow = false;
+                item.RetryPolicyState = "Closed";
+                item.RetryBlockedReason = "Only failed or pending delivery rows can be retried.";
+                return;
+            }
+
+            if (item.RecentAttemptCount24h >= MaxRetryAttemptsPerWindow)
+            {
+                item.CanRetryNow = false;
+                item.RetryPolicyState = "RateLimited";
+                item.RetryBlockedReason = $"Retry limit reached: {item.RecentAttemptCount24h} attempts in the last 24 hours.";
+                return;
+            }
+
+            var retryAvailableAtUtc = item.AttemptedAtUtc.Add(RetryCooldown);
+            if (retryAvailableAtUtc > nowUtc)
+            {
+                item.CanRetryNow = false;
+                item.RetryPolicyState = "Cooldown";
+                item.RetryAvailableAtUtc = retryAvailableAtUtc;
+                item.RetryBlockedReason = $"Retry cooldown active until {retryAvailableAtUtc:yyyy-MM-dd HH:mm} UTC.";
+                return;
+            }
+
+            item.CanRetryNow = true;
+            item.RetryPolicyState = "Ready";
+        }
+
+        private static bool IsSupportedRetryFlow(string? flowKey)
+        {
+            return string.Equals(flowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(flowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(flowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool CanRetryStatus(string? status)
+        {
+            return string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

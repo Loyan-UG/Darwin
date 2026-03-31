@@ -70,6 +70,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessLinkedFailuresOnly: false,
                     repeatedFailuresOnly: false,
                     priorSuccessOnly: false,
+                    retryReadyOnly: false,
+                    retryBlockedOnly: false,
+                    highChainVolumeOnly: false,
                     businessId: null,
                     ct: ct)
                 .ConfigureAwait(false);
@@ -143,6 +146,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
                     Severity = x.Severity,
                     CanRetryNow = x.CanRetryNow,
+                    RetryPolicyState = x.RetryPolicyState,
+                    RetryBlockedReason = x.RetryBlockedReason,
+                    RetryAvailableAtUtc = x.RetryAvailableAtUtc,
+                    RecentAttemptCount24h = x.RecentAttemptCount24h,
+                    ChainStartedAtUtc = x.ChainStartedAtUtc,
+                    ChainLastAttemptAtUtc = x.ChainLastAttemptAtUtc,
+                    ChainSpanHours = x.ChainSpanHours,
+                    ChainStatusMix = x.ChainStatusMix,
                     PriorAttemptCount = x.PriorAttemptCount,
                     PriorFailureCount = x.PriorFailureCount,
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
@@ -189,6 +200,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessLinkedFailuresOnly: false,
                     repeatedFailuresOnly: false,
                     priorSuccessOnly: false,
+                    retryReadyOnly: false,
+                    retryBlockedOnly: false,
+                    highChainVolumeOnly: false,
                     businessId: businessId,
                     ct: ct)
                 .ConfigureAwait(false);
@@ -260,6 +274,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
                     Severity = x.Severity,
                     CanRetryNow = x.CanRetryNow,
+                    RetryPolicyState = x.RetryPolicyState,
+                    RetryBlockedReason = x.RetryBlockedReason,
+                    RetryAvailableAtUtc = x.RetryAvailableAtUtc,
+                    RecentAttemptCount24h = x.RecentAttemptCount24h,
+                    ChainStartedAtUtc = x.ChainStartedAtUtc,
+                    ChainLastAttemptAtUtc = x.ChainLastAttemptAtUtc,
+                    ChainSpanHours = x.ChainSpanHours,
+                    ChainStatusMix = x.ChainStatusMix,
                     PriorAttemptCount = x.PriorAttemptCount,
                     PriorFailureCount = x.PriorFailureCount,
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
@@ -281,6 +303,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             bool businessLinkedFailuresOnly = false,
             bool repeatedFailuresOnly = false,
             bool priorSuccessOnly = false,
+            bool retryReadyOnly = false,
+            bool retryBlockedOnly = false,
+            bool highChainVolumeOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
@@ -295,6 +320,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessLinkedFailuresOnly: businessLinkedFailuresOnly,
                     repeatedFailuresOnly: repeatedFailuresOnly,
                     priorSuccessOnly: priorSuccessOnly,
+                    retryReadyOnly: retryReadyOnly,
+                    retryBlockedOnly: retryBlockedOnly,
+                    highChainVolumeOnly: highChainVolumeOnly,
                     businessId: businessId,
                     ct: ct)
                 .ConfigureAwait(false);
@@ -312,6 +340,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 BusinessLinkedFailuresOnly = businessLinkedFailuresOnly,
                 RepeatedFailuresOnly = repeatedFailuresOnly,
                 PriorSuccessOnly = priorSuccessOnly,
+                RetryReadyOnly = retryReadyOnly,
+                RetryBlockedOnly = retryBlockedOnly,
+                HighChainVolumeOnly = highChainVolumeOnly,
                 BusinessId = businessId,
                 CanSendTestEmail = await CanSendTestEmailAsync(ct).ConfigureAwait(false),
                 Summary = new EmailDispatchAuditSummaryVm
@@ -331,7 +362,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     SlowCompletedCount = summary.SlowCompletedCount,
                     RetriedFlowCount = summary.RetriedFlowCount,
                     PriorSuccessContextCount = summary.PriorSuccessContextCount,
-                    RepeatedFailureCount = summary.RepeatedFailureCount
+                    RepeatedFailureCount = summary.RepeatedFailureCount,
+                    RetryReadyCount = summary.RetryReadyCount,
+                    RetryBlockedCount = summary.RetryBlockedCount,
+                    HighChainVolumeCount = summary.HighChainVolumeCount
                 },
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 StatusItems = BuildAuditStatusItems(status),
@@ -355,6 +389,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
                     Severity = x.Severity,
                     CanRetryNow = x.CanRetryNow,
+                    RetryPolicyState = x.RetryPolicyState,
+                    RetryBlockedReason = x.RetryBlockedReason,
+                    RetryAvailableAtUtc = x.RetryAvailableAtUtc,
+                    RecentAttemptCount24h = x.RecentAttemptCount24h,
+                    ChainStartedAtUtc = x.ChainStartedAtUtc,
+                    ChainLastAttemptAtUtc = x.ChainLastAttemptAtUtc,
+                    ChainSpanHours = x.ChainSpanHours,
+                    ChainStatusMix = x.ChainStatusMix,
                     PriorAttemptCount = x.PriorAttemptCount,
                     PriorFailureCount = x.PriorFailureCount,
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
@@ -378,6 +420,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             bool businessLinkedFailuresOnly = false,
             bool repeatedFailuresOnly = false,
             bool priorSuccessOnly = false,
+            bool retryReadyOnly = false,
+            bool retryBlockedOnly = false,
+            bool highChainVolumeOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
@@ -407,6 +452,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     businessLinkedFailuresOnly,
                     repeatedFailuresOnly,
                     priorSuccessOnly,
+                    retryReadyOnly,
+                    retryBlockedOnly,
+                    highChainVolumeOnly,
                     businessId
                 });
         }

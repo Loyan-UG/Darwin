@@ -19,6 +19,9 @@ namespace Darwin.Application.Businesses.Commands
     /// </summary>
     public sealed class RetryEmailDispatchAuditHandler
     {
+        private static readonly TimeSpan RetryCooldown = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan RetryChainWindow = TimeSpan.FromHours(24);
+        private const int MaxRetryAttemptsPerWindow = 3;
         private readonly IAppDbContext _db;
         private readonly ResendBusinessInvitationHandler _resendBusinessInvitation;
         private readonly RequestEmailConfirmationHandler _requestEmailConfirmation;
@@ -51,6 +54,27 @@ namespace Darwin.Application.Businesses.Commands
             if (!CanRetryStatus(audit.Status))
             {
                 return Result.Fail("Only failed or still-pending email audit rows can be retried.");
+            }
+
+            var recentAttemptCount24h = await _db.Set<EmailDispatchAudit>()
+                .AsNoTracking()
+                .CountAsync(
+                    x => x.RecipientEmail == audit.RecipientEmail &&
+                         x.FlowKey == audit.FlowKey &&
+                         x.BusinessId == audit.BusinessId &&
+                         x.AttemptedAtUtc >= DateTime.UtcNow.Subtract(RetryChainWindow),
+                    ct)
+                .ConfigureAwait(false);
+
+            if (recentAttemptCount24h >= MaxRetryAttemptsPerWindow)
+            {
+                return Result.Fail($"Retry blocked: {recentAttemptCount24h} attempts already occurred in the last 24 hours.");
+            }
+
+            var retryAvailableAtUtc = audit.AttemptedAtUtc.Add(RetryCooldown);
+            if (retryAvailableAtUtc > DateTime.UtcNow)
+            {
+                return Result.Fail($"Retry cooldown is still active until {retryAvailableAtUtc:yyyy-MM-dd HH:mm} UTC.");
             }
 
             if (string.IsNullOrWhiteSpace(audit.RecipientEmail))

@@ -23,6 +23,14 @@ namespace Darwin.Application.Businesses.DTOs
         public bool NeedsOperatorFollowUp { get; set; }
         public string Severity { get; set; } = string.Empty;
         public bool CanRetryNow { get; set; }
+        public string RetryPolicyState { get; set; } = string.Empty;
+        public string? RetryBlockedReason { get; set; }
+        public DateTime? RetryAvailableAtUtc { get; set; }
+        public int RecentAttemptCount24h { get; set; }
+        public DateTime? ChainStartedAtUtc { get; set; }
+        public DateTime? ChainLastAttemptAtUtc { get; set; }
+        public int? ChainSpanHours { get; set; }
+        public string ChainStatusMix { get; set; } = string.Empty;
         public int PriorAttemptCount { get; set; }
         public int PriorFailureCount { get; set; }
         public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
@@ -51,5 +59,8 @@ namespace Darwin.Application.Businesses.DTOs
         public int RetriedFlowCount { get; set; }
         public int PriorSuccessContextCount { get; set; }
         public int RepeatedFailureCount { get; set; }
+        public int RetryReadyCount { get; set; }
+        public int RetryBlockedCount { get; set; }
+        public int HighChainVolumeCount { get; set; }
     }
 }
