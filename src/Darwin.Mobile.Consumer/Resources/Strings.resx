@@ -121,6 +121,18 @@
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
   </data>
+  <data name="LoginReadinessBusy" xml:space="preserve">
+    <value>Signing you in and restoring your customer session...</value>
+  </data>
+  <data name="LoginReadinessEmail" xml:space="preserve">
+    <value>Enter your email address to continue.</value>
+  </data>
+  <data name="LoginReadinessPassword" xml:space="preserve">
+    <value>Enter your password to continue.</value>
+  </data>
+  <data name="LoginReadinessReady" xml:space="preserve">
+    <value>Your sign-in details are ready. You can continue now.</value>
+  </data>
   <data name="LoginEmailConfirmationRequired" xml:space="preserve">
     <value>Please confirm your email address before signing in.</value>
   </data>
@@ -268,8 +280,14 @@
   <data name="FirstNameLabel" xml:space="preserve">
     <value>First name</value>
   </data>
+  <data name="FirstNamePlaceholder" xml:space="preserve">
+    <value>Enter your first name</value>
+  </data>
   <data name="LastNameLabel" xml:space="preserve">
     <value>Last name</value>
+  </data>
+  <data name="LastNamePlaceholder" xml:space="preserve">
+    <value>Enter your last name</value>
   </data>
   <data name="PhoneLabel" xml:space="preserve">
     <value>Phone</value>
@@ -787,6 +805,15 @@
   <data name="ForgotPasswordDescription" xml:space="preserve">
     <value>Enter your email and we will send you password reset instructions if an account exists.</value>
   </data>
+  <data name="ForgotPasswordReadinessBusy" xml:space="preserve">
+    <value>Preparing and sending your password reset instructions...</value>
+  </data>
+  <data name="ForgotPasswordReadinessEmail" xml:space="preserve">
+    <value>Enter your email address to receive reset instructions.</value>
+  </data>
+  <data name="ForgotPasswordReadinessReady" xml:space="preserve">
+    <value>Your email is ready. Send the reset instructions when you are ready.</value>
+  </data>
   <data name="ForgotPasswordButton" xml:space="preserve">
     <value>Forgot password?</value>
   </data>
@@ -841,6 +868,9 @@
   <data name="DiscoverLoadExploreFailed" xml:space="preserve">
     <value>Unable to load explore businesses.</value>
   </data>
+  <data name="DiscoverLoadingMessage" xml:space="preserve">
+    <value>Loading your businesses and nearby discovery results...</value>
+  </data>
   <data name="DiscoverCategoryFilterLabel" xml:space="preserve">
     <value>Category</value>
   </data>
@@ -870,6 +900,9 @@
   </data>
   <data name="FeedLoadMoreButton" xml:space="preserve">
     <value>Load more</value>
+  </data>
+  <data name="FeedLoadingMessage" xml:space="preserve">
+    <value>Preparing your loyalty timeline and promotions...</value>
   </data>
   <data name="FeedNoAccountsMessage" xml:space="preserve">
     <value>Join a business first to see your feed.</value>
@@ -1116,6 +1149,30 @@
   </data>
   <data name="RegisterAcknowledgementsTitle" xml:space="preserve">
     <value>Required acknowledgements</value>
+  </data>
+  <data name="RegisterReadinessBusy" xml:space="preserve">
+    <value>Creating your account and preparing your first session...</value>
+  </data>
+  <data name="RegisterReadinessProfileDetails" xml:space="preserve">
+    <value>Add your first and last name to continue.</value>
+  </data>
+  <data name="RegisterReadinessEmail" xml:space="preserve">
+    <value>Add your email address to continue.</value>
+  </data>
+  <data name="RegisterReadinessPassword" xml:space="preserve">
+    <value>Enter and confirm your password to continue.</value>
+  </data>
+  <data name="RegisterReadinessPasswordLength" xml:space="preserve">
+    <value>Your password must contain at least 8 characters.</value>
+  </data>
+  <data name="RegisterReadinessPasswordMismatch" xml:space="preserve">
+    <value>Your password confirmation must match exactly.</value>
+  </data>
+  <data name="RegisterReadinessAcknowledgements" xml:space="preserve">
+    <value>Confirm the required legal acknowledgements to enable account creation.</value>
+  </data>
+  <data name="RegisterReadinessReady" xml:space="preserve">
+    <value>Your account details are ready. You can create your account now.</value>
   </data>
   <data name="RegisterTermsAcknowledgementLabel" xml:space="preserve">
     <value>I accept the consumer terms before creating my account.</value>

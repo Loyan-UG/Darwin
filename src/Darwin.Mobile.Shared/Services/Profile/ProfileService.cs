@@ -1,130 +1,293 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Darwin.Contracts.Profile;
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Caching;
+using Darwin.Mobile.Shared.Security;
 using Darwin.Shared.Results;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Darwin.Mobile.Shared.Services.Profile
+namespace Darwin.Mobile.Shared.Services.Profile;
+
+/// <summary>
+/// Profile service for the current authenticated user.
+/// Responsibilities:
+/// - Load the current user's profile payloads with short-lived local caching.
+/// - Keep profile reads scoped to the authenticated user identity to avoid cache bleed between accounts.
+/// - Invalidate profile caches immediately after write operations so optimistic concurrency remains correct.
+/// </summary>
+public sealed class ProfileService : IProfileService
 {
-    /// <summary>
-    /// Profile service for the current authenticated user.
-    /// Responsibilities:
-    /// - Load the current user's profile (edit-ready shape including concurrency token).
-    /// - Update the profile using optimistic concurrency (RowVersion) via HTTP PUT.
-    /// </summary>
-    public sealed class ProfileService : IProfileService
+    private static readonly TimeSpan ProfileCacheTtl = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan ProfileFallbackMaxAge = TimeSpan.FromMinutes(10);
+
+    private readonly IApiClient _api;
+    private readonly IMobileCacheService _cache;
+    private readonly ITokenStore _tokenStore;
+
+    public ProfileService(IApiClient api, IMobileCacheService cache, ITokenStore tokenStore)
     {
-        private readonly IApiClient _api;
+        _api = api ?? throw new ArgumentNullException(nameof(api));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
+    }
 
-        public ProfileService(IApiClient api) => _api = api ?? throw new ArgumentNullException(nameof(api));
-
-        /// <summary>
-        /// Retrieves the current user's profile using the canonical member-profile endpoint.
-        /// </summary>
-        public Task<CustomerProfile?> GetMeAsync(CancellationToken ct)
-            => _api.GetAsync<CustomerProfile>(ApiRoutes.Profile.GetMe, ct);
-
-        /// <summary>
-        /// Updates the current user's profile using the canonical member-profile endpoint.
-        /// The server returns 204 No Content on success; this method maps that to true.
-        /// </summary>
-        public async Task<Result> UpdateMeAsync(CustomerProfile profile, CancellationToken ct)
+    /// <summary>
+    /// Retrieves the current user's profile using the canonical member-profile endpoint.
+    /// </summary>
+    public async Task<CustomerProfile?> GetMeAsync(CancellationToken ct)
+    {
+        var cacheKey = await GetScopedCacheKeyAsync("profile.me", ct).ConfigureAwait(false);
+        var cached = await _cache.GetFreshAsync<CustomerProfile>(cacheKey, ct).ConfigureAwait(false);
+        if (cached is not null)
         {
-            if (profile is null) throw new ArgumentNullException(nameof(profile));
-
-            return await _api.PutNoContentAsync(ApiRoutes.Profile.UpdateMe, profile, ct).ConfigureAwait(false);
+            return cached;
         }
 
-        /// <summary>
-        /// Retrieves the current user's privacy and communication preferences.
-        /// </summary>
-        public Task<MemberPreferences?> GetPreferencesAsync(CancellationToken ct)
-            => _api.GetAsync<MemberPreferences>(ApiRoutes.Profile.GetPreferences, ct);
-
-        /// <summary>
-        /// Retrieves the current user's reusable address book.
-        /// </summary>
-        public async Task<IReadOnlyList<MemberAddress>> GetAddressesAsync(CancellationToken ct)
-            => await _api.GetAsync<IReadOnlyList<MemberAddress>>(ApiRoutes.Profile.GetAddresses, ct).ConfigureAwait(false)
-               ?? Array.Empty<MemberAddress>();
-
-        /// <summary>
-        /// Updates the current user's privacy and communication preferences using optimistic concurrency.
-        /// </summary>
-        public async Task<Result> UpdatePreferencesAsync(UpdateMemberPreferencesRequest preferences, CancellationToken ct)
+        var response = await _api.GetAsync<CustomerProfile>(ApiRoutes.Profile.GetMe, ct).ConfigureAwait(false);
+        if (response is not null)
         {
-            if (preferences is null) throw new ArgumentNullException(nameof(preferences));
-
-            return await _api.PutNoContentAsync(ApiRoutes.Profile.UpdatePreferences, preferences, ct).ConfigureAwait(false);
+            await _cache.SetAsync(cacheKey, response, ProfileCacheTtl, ct).ConfigureAwait(false);
+            return response;
         }
 
-        /// <summary>
-        /// Creates a reusable address for the current user.
-        /// </summary>
-        public async Task<Result<MemberAddress>> CreateAddressAsync(CreateMemberAddressRequest request, CancellationToken ct)
-        {
-            if (request is null) throw new ArgumentNullException(nameof(request));
+        return await _cache.GetUsableAsync<CustomerProfile>(cacheKey, ProfileFallbackMaxAge, ct).ConfigureAwait(false);
+    }
 
-            return await _api.PostResultAsync<CreateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.CreateAddress, request, ct).ConfigureAwait(false);
+    /// <summary>
+    /// Updates the current user's profile using the canonical member-profile endpoint.
+    /// The server returns 204 No Content on success; this method maps that to a functional result.
+    /// </summary>
+    public async Task<Result> UpdateMeAsync(CustomerProfile profile, CancellationToken ct)
+    {
+        if (profile is null) throw new ArgumentNullException(nameof(profile));
+
+        var result = await _api.PutNoContentAsync(ApiRoutes.Profile.UpdateMe, profile, ct).ConfigureAwait(false);
+        if (result.Succeeded)
+        {
+            await RemoveProfileReadCachesAsync(ct).ConfigureAwait(false);
         }
 
-        /// <summary>
-        /// Updates an owned address using optimistic concurrency.
-        /// </summary>
-        public async Task<Result<MemberAddress>> UpdateAddressAsync(Guid addressId, UpdateMemberAddressRequest request, CancellationToken ct)
-        {
-            if (addressId == Guid.Empty) return Result<MemberAddress>.Fail("AddressId is required.");
-            if (request is null) throw new ArgumentNullException(nameof(request));
+        return result;
+    }
 
-            return await _api.PutResultAsync<UpdateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.UpdateAddress(addressId), request, ct).ConfigureAwait(false);
+    /// <summary>
+    /// Retrieves the current user's privacy and communication preferences.
+    /// </summary>
+    public async Task<MemberPreferences?> GetPreferencesAsync(CancellationToken ct)
+    {
+        var cacheKey = await GetScopedCacheKeyAsync("profile.preferences", ct).ConfigureAwait(false);
+        var cached = await _cache.GetFreshAsync<MemberPreferences>(cacheKey, ct).ConfigureAwait(false);
+        if (cached is not null)
+        {
+            return cached;
         }
 
-        /// <summary>
-        /// Deletes an owned address using optimistic concurrency.
-        /// </summary>
-        public async Task<Result> DeleteAddressAsync(Guid addressId, DeleteMemberAddressRequest request, CancellationToken ct)
+        var response = await _api.GetAsync<MemberPreferences>(ApiRoutes.Profile.GetPreferences, ct).ConfigureAwait(false);
+        if (response is not null)
         {
-            if (addressId == Guid.Empty) return Result.Fail("AddressId is required.");
-            if (request is null) throw new ArgumentNullException(nameof(request));
-
-            return await _api.PostNoContentAsync(ApiRoutes.Profile.DeleteAddress(addressId), request, ct).ConfigureAwait(false);
+            await _cache.SetAsync(cacheKey, response, ProfileCacheTtl, ct).ConfigureAwait(false);
+            return response;
         }
 
-        /// <summary>
-        /// Sets default billing and shipping flags for an owned address.
-        /// </summary>
-        public async Task<Result<MemberAddress>> SetDefaultAddressAsync(Guid addressId, SetMemberDefaultAddressRequest request, CancellationToken ct)
-        {
-            if (addressId == Guid.Empty) return Result<MemberAddress>.Fail("AddressId is required.");
-            if (request is null) throw new ArgumentNullException(nameof(request));
+        return await _cache.GetUsableAsync<MemberPreferences>(cacheKey, ProfileFallbackMaxAge, ct).ConfigureAwait(false);
+    }
 
-            return await _api.PostResultAsync<SetMemberDefaultAddressRequest, MemberAddress>(ApiRoutes.Profile.SetDefaultAddress(addressId), request, ct).ConfigureAwait(false);
+    /// <summary>
+    /// Retrieves the current user's reusable address book.
+    /// </summary>
+    public async Task<IReadOnlyList<MemberAddress>> GetAddressesAsync(CancellationToken ct)
+    {
+        var cacheKey = await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false);
+        var cached = await _cache.GetFreshAsync<IReadOnlyList<MemberAddress>>(cacheKey, ct).ConfigureAwait(false);
+        if (cached is not null)
+        {
+            return cached;
         }
 
-        /// <summary>
-        /// Retrieves the CRM customer profile linked to the current identity account.
-        /// </summary>
-        public Task<LinkedCustomerProfile?> GetLinkedCustomerAsync(CancellationToken ct)
-            => _api.GetAsync<LinkedCustomerProfile>(ApiRoutes.Profile.GetLinkedCustomer, ct);
-
-        /// <summary>
-        /// Retrieves richer CRM customer context linked to the current identity account.
-        /// </summary>
-        public Task<MemberCustomerContext?> GetLinkedCustomerContextAsync(CancellationToken ct)
-            => _api.GetAsync<MemberCustomerContext>(ApiRoutes.Profile.GetLinkedCustomerContext, ct);
-
-        /// <summary>
-        /// Requests deactivation and anonymization of the current authenticated user account.
-        /// </summary>
-        /// <param name="request">Deletion confirmation payload.</param>
-        /// <param name="ct">Cancellation token.</param>
-        /// <returns>A functional result indicating whether the server accepted the deletion request.</returns>
-        public async Task<Result> RequestAccountDeletionAsync(RequestAccountDeletionRequest request, CancellationToken ct)
+        var response = await _api.GetAsync<IReadOnlyList<MemberAddress>>(ApiRoutes.Profile.GetAddresses, ct).ConfigureAwait(false);
+        if (response is not null)
         {
-            if (request is null) throw new ArgumentNullException(nameof(request));
+            await _cache.SetAsync(cacheKey, response, ProfileCacheTtl, ct).ConfigureAwait(false);
+            return response;
+        }
 
-            return await _api.PostNoContentAsync(ApiRoutes.Profile.RequestAccountDeletion, request, ct).ConfigureAwait(false);
+        return await _cache.GetUsableAsync<IReadOnlyList<MemberAddress>>(cacheKey, ProfileFallbackMaxAge, ct).ConfigureAwait(false)
+            ?? Array.Empty<MemberAddress>();
+    }
+
+    /// <summary>
+    /// Updates the current user's privacy and communication preferences using optimistic concurrency.
+    /// </summary>
+    public async Task<Result> UpdatePreferencesAsync(UpdateMemberPreferencesRequest preferences, CancellationToken ct)
+    {
+        if (preferences is null) throw new ArgumentNullException(nameof(preferences));
+
+        var result = await _api.PutNoContentAsync(ApiRoutes.Profile.UpdatePreferences, preferences, ct).ConfigureAwait(false);
+        if (result.Succeeded)
+        {
+            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.preferences", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Creates a reusable address for the current user.
+    /// </summary>
+    public async Task<Result<MemberAddress>> CreateAddressAsync(CreateMemberAddressRequest request, CancellationToken ct)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var result = await _api.PostResultAsync<CreateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.CreateAddress, request, ct).ConfigureAwait(false);
+        if (result.Succeeded)
+        {
+            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Updates an owned address using optimistic concurrency.
+    /// </summary>
+    public async Task<Result<MemberAddress>> UpdateAddressAsync(Guid addressId, UpdateMemberAddressRequest request, CancellationToken ct)
+    {
+        if (addressId == Guid.Empty) return Result<MemberAddress>.Fail("AddressId is required.");
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var result = await _api.PutResultAsync<UpdateMemberAddressRequest, MemberAddress>(ApiRoutes.Profile.UpdateAddress(addressId), request, ct).ConfigureAwait(false);
+        if (result.Succeeded)
+        {
+            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Deletes an owned address using optimistic concurrency.
+    /// </summary>
+    public async Task<Result> DeleteAddressAsync(Guid addressId, DeleteMemberAddressRequest request, CancellationToken ct)
+    {
+        if (addressId == Guid.Empty) return Result.Fail("AddressId is required.");
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var result = await _api.PostNoContentAsync(ApiRoutes.Profile.DeleteAddress(addressId), request, ct).ConfigureAwait(false);
+        if (result.Succeeded)
+        {
+            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Sets default billing and shipping flags for an owned address.
+    /// </summary>
+    public async Task<Result<MemberAddress>> SetDefaultAddressAsync(Guid addressId, SetMemberDefaultAddressRequest request, CancellationToken ct)
+    {
+        if (addressId == Guid.Empty) return Result<MemberAddress>.Fail("AddressId is required.");
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var result = await _api.PostResultAsync<SetMemberDefaultAddressRequest, MemberAddress>(ApiRoutes.Profile.SetDefaultAddress(addressId), request, ct).ConfigureAwait(false);
+        if (result.Succeeded)
+        {
+            await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.addresses", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Retrieves the CRM customer profile linked to the current identity account.
+    /// </summary>
+    public async Task<LinkedCustomerProfile?> GetLinkedCustomerAsync(CancellationToken ct)
+    {
+        var cacheKey = await GetScopedCacheKeyAsync("profile.customer", ct).ConfigureAwait(false);
+        var cached = await _cache.GetFreshAsync<LinkedCustomerProfile>(cacheKey, ct).ConfigureAwait(false);
+        if (cached is not null)
+        {
+            return cached;
+        }
+
+        var response = await _api.GetAsync<LinkedCustomerProfile>(ApiRoutes.Profile.GetLinkedCustomer, ct).ConfigureAwait(false);
+        if (response is not null)
+        {
+            await _cache.SetAsync(cacheKey, response, ProfileCacheTtl, ct).ConfigureAwait(false);
+            return response;
+        }
+
+        return await _cache.GetUsableAsync<LinkedCustomerProfile>(cacheKey, ProfileFallbackMaxAge, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Retrieves richer CRM customer context linked to the current identity account.
+    /// </summary>
+    public async Task<MemberCustomerContext?> GetLinkedCustomerContextAsync(CancellationToken ct)
+    {
+        var cacheKey = await GetScopedCacheKeyAsync("profile.customer-context", ct).ConfigureAwait(false);
+        var cached = await _cache.GetFreshAsync<MemberCustomerContext>(cacheKey, ct).ConfigureAwait(false);
+        if (cached is not null)
+        {
+            return cached;
+        }
+
+        var response = await _api.GetAsync<MemberCustomerContext>(ApiRoutes.Profile.GetLinkedCustomerContext, ct).ConfigureAwait(false);
+        if (response is not null)
+        {
+            await _cache.SetAsync(cacheKey, response, ProfileCacheTtl, ct).ConfigureAwait(false);
+            return response;
+        }
+
+        return await _cache.GetUsableAsync<MemberCustomerContext>(cacheKey, ProfileFallbackMaxAge, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Requests deactivation and anonymization of the current authenticated user account.
+    /// </summary>
+    public async Task<Result> RequestAccountDeletionAsync(RequestAccountDeletionRequest request, CancellationToken ct)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        return await _api.PostNoContentAsync(ApiRoutes.Profile.RequestAccountDeletion, request, ct).ConfigureAwait(false);
+    }
+
+    private async Task RemoveProfileReadCachesAsync(CancellationToken ct)
+    {
+        await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.me", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.customer", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        await _cache.RemoveAsync(await GetScopedCacheKeyAsync("profile.customer-context", ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+    }
+
+    private async Task<string> GetScopedCacheKeyAsync(string suffix, CancellationToken ct)
+    {
+        var (accessToken, _) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+        var subject = ResolveSubject(accessToken);
+        return string.IsNullOrWhiteSpace(subject)
+            ? suffix
+            : $"{suffix}:{subject}";
+    }
+
+    private static string? ResolveSubject(string? accessToken)
+    {
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            return null;
+        }
+
+        try
+        {
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            return jwt.Claims.FirstOrDefault(static claim =>
+                string.Equals(claim.Type, JwtRegisteredClaimNames.Sub, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(claim.Type, "sub", StringComparison.OrdinalIgnoreCase))?.Value;
+        }
+        catch (ArgumentException)
+        {
+            return null;
         }
     }
 }

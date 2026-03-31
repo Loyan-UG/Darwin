@@ -9,102 +9,137 @@
     Title="{x:Static res:AppResources.RegisterTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{x:Static res:AppResources.RegisterTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
+        <VerticalStackLayout Padding="24,28,24,32" Spacing="18">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.RegisterTitle}"
+                           Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.RegisterDescription}"
+                           Style="{StaticResource BodyLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="{x:Static res:AppResources.RegisterDescription}"
-                   Style="{StaticResource BodyLabelStyle}" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="{x:Static res:AppResources.ProfileSectionTitle}"
+                           Style="{StaticResource SectionEyebrowLabelStyle}" />
 
-            <Label Text="{x:Static res:AppResources.FirstNameLabel}"
-                   TextColor="{StaticResource Neutral900}" />
-            <Entry Text="{Binding FirstName}"
-                   Placeholder="John"
-                   TextColor="{StaticResource Neutral900}"
-                   PlaceholderColor="Gray" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.FirstNameLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding FirstName}"
+                                   Placeholder="{x:Static res:AppResources.FirstNamePlaceholder}"
+                                   Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Label Text="{x:Static res:AppResources.LastNameLabel}"
-                   TextColor="{StaticResource Neutral900}" />
-            <Entry Text="{Binding LastName}"
-                   Placeholder="Doe"
-                   TextColor="{StaticResource Neutral900}"
-                   PlaceholderColor="Gray" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.LastNameLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding LastName}"
+                                   Placeholder="{x:Static res:AppResources.LastNamePlaceholder}"
+                                   Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Label Text="{x:Static res:AppResources.EmailLabel}"
-                   TextColor="{StaticResource Neutral900}" />
-            <Entry Text="{Binding Email}"
-                   Keyboard="Email"
-                   Placeholder="user@example.com"
-                   TextColor="{StaticResource Neutral900}"
-                   PlaceholderColor="Gray" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.EmailLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding Email}"
+                                   Keyboard="Email"
+                                   Placeholder="{x:Static res:AppResources.EmailPlaceholder}"
+                                   Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Label Text="{x:Static res:AppResources.PasswordLabel}"
-                   TextColor="{StaticResource Neutral900}" />
-            <Entry Text="{Binding Password}"
-                   IsPassword="True"
-                   Placeholder="••••••••"
-                   TextColor="{StaticResource Neutral900}"
-                   PlaceholderColor="Gray" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.PasswordLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding Password}"
+                                   IsPassword="True"
+                                   Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
+                                   Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Label Text="{x:Static res:AppResources.ConfirmNewPasswordLabel}"
-                   TextColor="{StaticResource Neutral900}" />
-            <Entry Text="{Binding ConfirmPassword}"
-                   IsPassword="True"
-                   Placeholder="••••••••"
-                   TextColor="{StaticResource Neutral900}"
-                   PlaceholderColor="Gray" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.ConfirmNewPasswordLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Text="{Binding ConfirmPassword}"
+                                   IsPassword="True"
+                                   Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
+                                   Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
 
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
-                <VerticalStackLayout Spacing="12">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
                     <Label Text="{x:Static res:AppResources.RegisterAcknowledgementsTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                        <CheckBox IsChecked="{Binding AcceptConsumerTerms}" VerticalOptions="Start" />
-                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                        <CheckBox IsChecked="{Binding AcceptConsumerTerms}"
+                                  Color="{StaticResource BrandGold500}"
+                                  VerticalOptions="Start" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="{x:Static res:AppResources.RegisterTermsAcknowledgementLabel}"
-                                   LineBreakMode="WordWrap" />
+                                   Style="{StaticResource BodyLabelStyle}" />
                             <Button Text="{x:Static res:AppResources.LegalTermsButton}"
-                                    BackgroundColor="Transparent"
-                                    TextColor="{StaticResource BrandGold500}"
+                                    Style="{StaticResource LinkButtonStyle}"
                                     HorizontalOptions="Start"
                                     Command="{Binding OpenTermsCommand}" />
                         </VerticalStackLayout>
                     </Grid>
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                        <CheckBox IsChecked="{Binding AcknowledgePrivacyNotice}" VerticalOptions="Start" />
-                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                        <CheckBox IsChecked="{Binding AcknowledgePrivacyNotice}"
+                                  Color="{StaticResource BrandGold500}"
+                                  VerticalOptions="Start" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="{x:Static res:AppResources.RegisterPrivacyAcknowledgementLabel}"
-                                   LineBreakMode="WordWrap" />
+                                   Style="{StaticResource BodyLabelStyle}" />
                             <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
-                                    BackgroundColor="Transparent"
-                                    TextColor="{StaticResource BrandGold500}"
+                                    Style="{StaticResource LinkButtonStyle}"
                                     HorizontalOptions="Start"
                                     Command="{Binding OpenPrivacyPolicyCommand}" />
                         </VerticalStackLayout>
                     </Grid>
+
+                    <Button Text="{x:Static res:AppResources.LegalHubTitle}"
+                            Style="{StaticResource LegalLinkButtonStyle}"
+                            HorizontalOptions="Start"
+                            Clicked="OnLegalHubClicked" />
                 </VerticalStackLayout>
             </Border>
 
-            <Button Text="{x:Static res:AppResources.LegalHubTitle}"
-                    BackgroundColor="Transparent"
-                    TextColor="{StaticResource BrandGold500}"
-                    HorizontalOptions="Start"
-                    Clicked="OnLegalHubClicked" />
-
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
 
             <Label Text="{Binding InfoMessage}"
-                   TextColor="{StaticResource BrandGold500}"
+                   Style="{StaticResource InfoLabelStyle}"
                    IsVisible="{Binding HasInfo}" />
+
+            <Border Style="{StaticResource MutedCardBorderStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{x:Static res:AppResources.RegisterButton}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{Binding RegistrationReadinessMessage}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
 
             <Button Text="{x:Static res:AppResources.RegisterButton}"
                     Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding RegisterCommand}" />
+                    Command="{Binding RegisterCommand}"
+                    IsEnabled="{Binding IsRegistrationReady}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"

@@ -1,6 +1,8 @@
-﻿using Darwin.Mobile.Consumer.Services.Navigation;
+using Darwin.Mobile.Consumer.Services.Navigation;
 using Darwin.Mobile.Consumer.Services.Notifications;
+using Darwin.Mobile.Consumer.Services.Startup;
 using Darwin.Mobile.Shared.Services;
+using Darwin.Mobile.Shared.Storage.Abstractions;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
 using System;
@@ -11,27 +13,29 @@ namespace Darwin.Mobile.Consumer;
 
 /// <summary>
 /// Application entry point for the Consumer app.
-///
-/// Startup responsibility:
-/// - Create the first window.
-/// - Resolve authentication state.
-/// - Delegate root-page switching to a window-aware navigator.
 /// </summary>
 public partial class App : Application
 {
     private readonly IAuthService _authService;
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
+    private readonly IConsumerStartupWarmupCoordinator _startupWarmupCoordinator;
+    private readonly ILocalDbMigrator _localDbMigrator;
 
-    public App(IAuthService authService, IAppRootNavigator appRootNavigator, IConsumerPushRegistrationCoordinator pushRegistrationCoordinator)
+    public App(
+        IAuthService authService,
+        IAppRootNavigator appRootNavigator,
+        IConsumerPushRegistrationCoordinator pushRegistrationCoordinator,
+        IConsumerStartupWarmupCoordinator startupWarmupCoordinator,
+        ILocalDbMigrator localDbMigrator)
     {
         InitializeComponent();
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _appRootNavigator = appRootNavigator ?? throw new ArgumentNullException(nameof(appRootNavigator));
         _pushRegistrationCoordinator = pushRegistrationCoordinator ?? throw new ArgumentNullException(nameof(pushRegistrationCoordinator));
+        _startupWarmupCoordinator = startupWarmupCoordinator ?? throw new ArgumentNullException(nameof(startupWarmupCoordinator));
+        _localDbMigrator = localDbMigrator ?? throw new ArgumentNullException(nameof(localDbMigrator));
 
-        // Force a deterministic visual theme for the Consumer app.
-        // We intentionally do not follow device Dark/Light mode for now.
         UserAppTheme = AppTheme.Light;
     }
 
@@ -40,29 +44,19 @@ public partial class App : Application
     /// </summary>
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // Use a minimal placeholder page while token refresh is evaluated.
         var window = new Window(new ContentPage());
-
-        // Register this specific window as the primary target for root changes.
         _appRootNavigator.AttachWindow(window);
-
-        // Fire-and-forget startup bootstrap; exceptions are contained inside the method.
         _ = InitializeRootAsync();
-
         return window;
     }
 
     /// <summary>
-    /// When the app resumes after being backgrounded for a while, attempt a best-effort token refresh
-    /// so subsequent API calls do not fail with stale access tokens.
+    /// Revalidates authentication and starts background warmup when the app resumes.
     /// </summary>
     protected override void OnResume()
     {
         base.OnResume();
-
-        // Re-assert theme to keep UI deterministic after OS/theme transitions.
         UserAppTheme = AppTheme.Light;
-
         _ = TryRefreshSilentlyAsync();
     }
 
@@ -70,11 +64,14 @@ public partial class App : Application
     {
         try
         {
-            var refreshed = await _authService.TryRefreshAsync(CancellationToken.None);
-            if (refreshed)
+            var refreshed = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None).ConfigureAwait(false);
+            if (!refreshed)
             {
-                _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
+                return;
             }
+
+            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
+            _ = _startupWarmupCoordinator.WarmAuthenticatedExperienceAsync(CancellationToken.None);
         }
         catch
         {
@@ -84,23 +81,33 @@ public partial class App : Application
 
     private async Task InitializeRootAsync()
     {
+        try
+        {
+            await _localDbMigrator.MigrateAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Startup authentication must stay resilient even if local persistence initialization fails.
+        }
+
         bool tokenValid;
         try
         {
-            tokenValid = await _authService.TryRefreshAsync(CancellationToken.None);
+            tokenValid = await _authService.EnsureAuthenticatedSessionAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch
         {
             tokenValid = false;
         }
 
-        if (tokenValid)
+        if (!tokenValid)
         {
-            _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
-            await _appRootNavigator.NavigateToAuthenticatedShellAsync();
+            await _appRootNavigator.NavigateToLoginAsync();
             return;
         }
 
-        await _appRootNavigator.NavigateToLoginAsync();
+        _ = _pushRegistrationCoordinator.TryRegisterCurrentDeviceAsync(CancellationToken.None);
+        await _appRootNavigator.NavigateToAuthenticatedShellAsync();
+        _ = _startupWarmupCoordinator.WarmAuthenticatedExperienceAsync(CancellationToken.None);
     }
 }

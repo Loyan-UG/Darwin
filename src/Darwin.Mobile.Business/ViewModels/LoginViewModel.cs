@@ -62,7 +62,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 #endif
 
         LoginCommand = new AsyncCommand(LoginAsync, CanLogin);
-        RequestActivationEmailCommand = new AsyncCommand(RequestActivationEmailAsync, () => !IsBusy);
+        RequestActivationEmailCommand = new AsyncCommand(RequestActivationEmailAsync, () => !IsBusy && !string.IsNullOrWhiteSpace(Email));
         OpenInvitationAcceptanceCommand = new AsyncCommand(OpenInvitationAcceptanceAsync, () => !IsBusy);
         OpenImpressumCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.Impressum), () => !IsBusy);
         OpenPrivacyPolicyCommand = new AsyncCommand(() => OpenLegalLinkAsync(LegalLinkKind.PrivacyPolicy), () => !IsBusy);
@@ -73,14 +73,45 @@ public sealed partial class LoginViewModel : BaseViewModel
     public string? Email
     {
         get => _email;
-        set => SetProperty(ref _email, value);
+        set
+        {
+            if (SetProperty(ref _email, value))
+            {
+                RaiseReadinessChanged();
+                RaiseCommandStates();
+            }
+        }
     }
 
     public string? Password
     {
         get => _password;
-        set => SetProperty(ref _password, value);
+        set
+        {
+            if (SetProperty(ref _password, value))
+            {
+                RaiseReadinessChanged();
+                RaiseCommandStates();
+            }
+        }
     }
+
+    /// <summary>
+    /// Gets whether the sign-in form is locally ready for submission.
+    /// </summary>
+    public bool IsLoginReady => !IsBusy && !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Password);
+
+    /// <summary>
+    /// Gets contextual guidance for the operator sign-in flow.
+    /// </summary>
+    public string LoginReadinessMessage =>
+        IsBusy
+            ? AppResources.LoginReadinessBusy
+            : string.IsNullOrWhiteSpace(Email)
+                ? AppResources.LoginReadinessEmail
+                : string.IsNullOrWhiteSpace(Password)
+                    ? AppResources.LoginReadinessPassword
+                    : AppResources.LoginReadinessReady;
 
     /// <summary>
     /// Gets or sets a non-error informational message shown for auth recovery flows.
@@ -116,7 +147,7 @@ public sealed partial class LoginViewModel : BaseViewModel
 
     public AsyncCommand OpenLegalHubCommand { get; }
 
-    private bool CanLogin() => !IsBusy;
+    private bool CanLogin() => IsLoginReady;
 
     private async Task LoginAsync()
     {
@@ -138,6 +169,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         }
 
         IsBusy = true;
+        RaiseReadinessChanged();
         RaiseCommandStates();
 
         try
@@ -162,6 +194,7 @@ public sealed partial class LoginViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
+                RaiseReadinessChanged();
                 RaiseCommandStates();
             });
         }
@@ -175,6 +208,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         }
 
         IsBusy = true;
+        RaiseReadinessChanged();
         RaiseCommandStates();
 
         try
@@ -186,6 +220,7 @@ public sealed partial class LoginViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
+                RaiseReadinessChanged();
                 RaiseCommandStates();
             });
         }
@@ -219,6 +254,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
+        RaiseReadinessChanged();
         RaiseCommandStates();
 
         try
@@ -249,6 +285,7 @@ public sealed partial class LoginViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 IsBusy = false;
+                RaiseReadinessChanged();
                 RaiseCommandStates();
             });
         }
@@ -261,6 +298,12 @@ public sealed partial class LoginViewModel : BaseViewModel
         {
             RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
         }
+    }
+
+    private void RaiseReadinessChanged()
+    {
+        OnPropertyChanged(nameof(IsLoginReady));
+        OnPropertyChanged(nameof(LoginReadinessMessage));
     }
 
     private void RaiseCommandStates()

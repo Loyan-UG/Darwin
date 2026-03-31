@@ -10,6 +10,8 @@ using Darwin.Contracts.Common;
 using Darwin.Shared.Results;
 using Darwin.Mobile.Shared.Resilience;
 using Darwin.Mobile.Shared.Security;
+using Darwin.Mobile.Shared.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Darwin.Mobile.Shared.Api
 {
@@ -45,16 +47,18 @@ namespace Darwin.Mobile.Shared.Api
         private readonly HttpClient _http;
         private readonly IRetryPolicy _retry;
         private readonly ITokenStore _tokenStore;
+        private readonly IServiceProvider _serviceProvider;
 
         /// <summary>
         /// Creates a new instance bound to a pre-configured <see cref="HttpClient"/>,
         /// an <see cref="IRetryPolicy"/>, and persistent <see cref="ITokenStore"/>.
         /// </summary>
-        public ApiClient(HttpClient httpClient, IRetryPolicy retryPolicy, ITokenStore tokenStore)
+        public ApiClient(HttpClient httpClient, IRetryPolicy retryPolicy, ITokenStore tokenStore, IServiceProvider serviceProvider)
         {
             _http = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _retry = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
             _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
         /// <inheritdoc />
@@ -79,11 +83,15 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+                await ApplyAuthorizationAsync(normalized, ct).ConfigureAwait(false);
 
                 return await _retry.ExecuteAsync(async token =>
                 {
-                    using var response = await _http.GetAsync(normalized, token).ConfigureAwait(false);
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        retryToken => _http.GetAsync(normalized, retryToken),
+                        token).ConfigureAwait(false);
+
                     return await ReadAsResultAsync<TResponse>(response, token).ConfigureAwait(false);
                 }, ct).ConfigureAwait(false);
             }
@@ -107,11 +115,15 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+                await ApplyAuthorizationAsync(normalized, ct).ConfigureAwait(false);
 
                 return await _retry.ExecuteAsync(async token =>
                 {
-                    using var response = await _http.GetAsync(normalized, token).ConfigureAwait(false);
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        retryToken => _http.GetAsync(normalized, retryToken),
+                        token).ConfigureAwait(false);
+
                     if (response.IsSuccessStatusCode)
                     {
                         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -153,11 +165,15 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+                await ApplyAuthorizationAsync(normalized, ct).ConfigureAwait(false);
 
                 return await _retry.ExecuteAsync(async token =>
                 {
-                    using var response = await _http.PostAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        retryToken => _http.PostAsJsonAsync(normalized, request, _jsonOptions, retryToken),
+                        token).ConfigureAwait(false);
+
                     return await ReadAsResultAsync<TResponse>(response, token).ConfigureAwait(false);
                 }, ct).ConfigureAwait(false);
             }
@@ -233,11 +249,15 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+                await ApplyAuthorizationAsync(normalized, ct).ConfigureAwait(false);
 
                 return await _retry.ExecuteAsync(async token =>
                 {
-                    using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        retryToken => _http.PutAsJsonAsync(normalized, request, _jsonOptions, retryToken),
+                        token).ConfigureAwait(false);
+
                     return await ReadAsResultAsync<TResponse>(response, token).ConfigureAwait(false);
                 }, ct).ConfigureAwait(false);
             }
@@ -271,11 +291,14 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+                await ApplyAuthorizationAsync(normalized, ct).ConfigureAwait(false);
 
                 return await _retry.ExecuteAsync(async token =>
                 {
-                    using var response = await _http.PutAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        retryToken => _http.PutAsJsonAsync(normalized, request, _jsonOptions, retryToken),
+                        token).ConfigureAwait(false);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -311,11 +334,14 @@ namespace Darwin.Mobile.Shared.Api
 
             try
             {
-                await ApplyBearerFromStoreAsync().ConfigureAwait(false);
+                await ApplyAuthorizationAsync(normalized, ct).ConfigureAwait(false);
 
                 return await _retry.ExecuteAsync(async token =>
                 {
-                    using var response = await _http.PostAsJsonAsync(normalized, request, _jsonOptions, token).ConfigureAwait(false);
+                    using var response = await SendWithAuthenticationRetryAsync(
+                        normalized,
+                        retryToken => _http.PostAsJsonAsync(normalized, request, _jsonOptions, retryToken),
+                        token).ConfigureAwait(false);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -338,17 +364,112 @@ namespace Darwin.Mobile.Shared.Api
             }
         }
 
-        private async Task ApplyBearerFromStoreAsync()
+        private async Task ApplyAuthorizationAsync(string route, CancellationToken ct)
         {
             var (accessToken, expiresAtUtc) = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+            var nowUtc = DateTime.UtcNow;
 
-            if (string.IsNullOrWhiteSpace(accessToken) || (expiresAtUtc.HasValue && expiresAtUtc.Value <= DateTime.UtcNow))
+            if (!string.IsNullOrWhiteSpace(accessToken) &&
+                (!expiresAtUtc.HasValue || expiresAtUtc.Value > nowUtc))
+            {
+                _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                return;
+            }
+
+            if (RouteRequiresAuthentication(route) && await TryRefreshSessionAsync(ct).ConfigureAwait(false))
+            {
+                var refreshed = await _tokenStore.GetAccessAsync().ConfigureAwait(false);
+                if (!string.IsNullOrWhiteSpace(refreshed.AccessToken) &&
+                    (!refreshed.AccessExpiresUtc.HasValue || refreshed.AccessExpiresUtc.Value > DateTime.UtcNow))
+                {
+                    _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshed.AccessToken);
+                    return;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(accessToken) || (expiresAtUtc.HasValue && expiresAtUtc.Value <= nowUtc))
             {
                 _http.DefaultRequestHeaders.Authorization = null;
                 return;
             }
 
             _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
+        private async Task<HttpResponseMessage> SendWithAuthenticationRetryAsync(
+            string route,
+            Func<CancellationToken, Task<HttpResponseMessage>> sendAsync,
+            CancellationToken ct)
+        {
+            var response = await sendAsync(ct).ConfigureAwait(false);
+            if (response.StatusCode != HttpStatusCode.Unauthorized || !RouteRequiresAuthentication(route))
+            {
+                return response;
+            }
+
+            var refreshed = await TryRefreshSessionAsync(ct).ConfigureAwait(false);
+            if (!refreshed)
+            {
+                return response;
+            }
+
+            response.Dispose();
+            await ApplyAuthorizationAsync(route, ct).ConfigureAwait(false);
+            return await sendAsync(ct).ConfigureAwait(false);
+        }
+
+        private async Task<bool> TryRefreshSessionAsync(CancellationToken ct)
+        {
+            var authService = _serviceProvider.GetService<IAuthService>();
+            if (authService is null)
+            {
+                return false;
+            }
+
+            try
+            {
+                return await authService.TryRefreshAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool RouteRequiresAuthentication(string route)
+        {
+            if (string.IsNullOrWhiteSpace(route))
+            {
+                return false;
+            }
+
+            var normalized = ApiRoutes.Normalize(route);
+
+            if (normalized.StartsWith("api/v1/public/", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (string.Equals(normalized, ApiRoutes.Auth.Login, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.Auth.Refresh, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.Auth.Register, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.Auth.RequestPasswordReset, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.Auth.ResetPassword, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.Auth.RequestEmailConfirmation, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.BusinessAuth.PreviewInvitation, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.BusinessAuth.AcceptInvitation, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.Meta.Health, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, ApiRoutes.Meta.Info, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return normalized.StartsWith("api/v1/member/", StringComparison.OrdinalIgnoreCase) ||
+                   normalized.StartsWith("api/v1/business/", StringComparison.OrdinalIgnoreCase);
         }
 
         private static async Task<Result<TResponse>> ReadAsResultAsync<TResponse>(HttpResponseMessage response, CancellationToken ct)

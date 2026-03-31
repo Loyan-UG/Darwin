@@ -9,63 +9,79 @@
              x:Name="PageRoot">
 
     <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="12">
-            <Label Text="{x:Static res:AppResources.RewardsTitle}"
-                   FontSize="22"
-                   FontAttributes="Bold" />
+        <VerticalStackLayout Padding="20,24,20,32"
+                             Spacing="18">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.RewardsTitle}"
+                           Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.RewardsSubtitle}"
+                           Style="{StaticResource BodyLabelStyle}" />
+                    <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.RewardsOperatorRoleFormat}'}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRewardEdit}"
+                           Style="{StaticResource WarningLabelStyle}"
+                           IsVisible="{Binding CanManageRewards, Converter={StaticResource InverseBoolConverter}}" />
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Button Text="{x:Static res:AppResources.RewardsRefreshButton}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding RefreshCommand}" />
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.RewardsNewTierButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                IsEnabled="{Binding CanManageRewards}"
+                                Command="{Binding CreateNewCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="{x:Static res:AppResources.RewardsSubtitle}"
-                   FontSize="13"
-                   Opacity="0.8" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{Binding SaveButtonText}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{Binding RewardEditorSelectionHint}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
 
-            <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.RewardsOperatorRoleFormat}'}"
-                   FontSize="12"
-                   Opacity="0.8" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.RewardsPointsPlaceholder}"
+                               Keyboard="Numeric"
+                               Text="{Binding PointsRequiredInput}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRewardEdit}"
-                   TextColor="OrangeRed"
-                   IsVisible="{Binding CanManageRewards, Converter={StaticResource InverseBoolConverter}}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Picker Title="{x:Static res:AppResources.RewardsTypePickerTitle}"
+                                ItemsSource="{Binding RewardTypeOptions}"
+                                SelectedItem="{Binding SelectedRewardType}"
+                                TextColor="{StaticResource BrushOnSurface}" />
+                    </Border>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                <Button Text="{x:Static res:AppResources.RewardsRefreshButton}"
-                        Command="{Binding RefreshCommand}" />
-                <Button Grid.Column="1"
-                        Text="{x:Static res:AppResources.RewardsNewTierButton}"
-                        IsEnabled="{Binding CanManageRewards}"
-                        Command="{Binding CreateNewCommand}" />
-            </Grid>
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.RewardsValuePlaceholder}"
+                               Keyboard="Numeric"
+                               Text="{Binding RewardValueInput}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-            <Border StrokeThickness="1" Stroke="{StaticResource BrushPrimary}" Padding="12">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="10" />
-                </Border.StrokeShape>
-
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="{Binding SaveButtonText}" FontAttributes="Bold" />
-
-                    <Entry Placeholder="{x:Static res:AppResources.RewardsPointsPlaceholder}"
-                           Keyboard="Numeric"
-                           Text="{Binding PointsRequiredInput}" />
-
-                    <Picker Title="{x:Static res:AppResources.RewardsTypePickerTitle}"
-                            ItemsSource="{Binding RewardTypeOptions}"
-                            SelectedItem="{Binding SelectedRewardType}" />
-
-                    <Entry Placeholder="{x:Static res:AppResources.RewardsValuePlaceholder}"
-                           Keyboard="Numeric"
-                           Text="{Binding RewardValueInput}" />
-
-                    <Editor Placeholder="{x:Static res:AppResources.RewardsDescriptionPlaceholder}"
-                            AutoSize="TextChanges"
-                            Text="{Binding DescriptionInput}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}"
+                            Padding="14,10">
+                        <Editor Placeholder="{x:Static res:AppResources.RewardsDescriptionPlaceholder}"
+                                AutoSize="TextChanges"
+                                Text="{Binding DescriptionInput}"
+                                TextColor="{StaticResource BrushOnSurface}"
+                                PlaceholderColor="{StaticResource BrushOnSurfaceSecondary}" />
+                    </Border>
 
                     <HorizontalStackLayout Spacing="8">
                         <Switch IsToggled="{Binding AllowSelfRedemption}" />
                         <Label Text="{x:Static res:AppResources.RewardsAllowSelfRedemptionLabel}"
-                               VerticalOptions="Center" />
+                               VerticalOptions="Center"
+                               Style="{StaticResource BodyLabelStyle}" />
                     </HorizontalStackLayout>
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
                         <Button Text="{Binding SaveButtonText}"
                                 Command="{Binding SaveCommand}"
                                 IsEnabled="{Binding CanManageRewards}"
@@ -74,141 +90,191 @@
                         <Button Grid.Column="1"
                                 Text="{x:Static res:AppResources.RewardsDeleteButton}"
                                 Command="{Binding DeleteCommand}"
-                                IsEnabled="{Binding CanDeleteReward}" />
+                                IsEnabled="{Binding CanDeleteReward}"
+                                Style="{StaticResource OutlinedButtonStyle}" />
                     </Grid>
+
+                    <Label Text="{x:Static res:AppResources.RewardsDeleteSelectionRequiredHint}"
+                           Style="{StaticResource CaptionLabelStyle}"
+                           IsVisible="{Binding CanDeleteReward, Converter={StaticResource InverseBoolConverter}}" />
                 </VerticalStackLayout>
             </Border>
 
-            <Label Text="{x:Static res:AppResources.RewardsCurrentTiersLabel}"
-                   FontAttributes="Bold" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.RewardsCurrentTiersLabel}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
 
-            <CollectionView x:Name="RewardTiersCollectionView"
-                            ItemsSource="{Binding RewardTiers}"
-                            SelectionMode="Single">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:RewardTierEditorItem">
-                        <Border StrokeThickness="1" Stroke="#555555" Padding="10" Margin="0,4,0,4">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
+                    <Border Style="{StaticResource EmptyStateCardBorderStyle}"
+                            IsVisible="{Binding HasRewardTiers, Converter={StaticResource InverseBoolConverter}}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{x:Static res:AppResources.RewardsCurrentTiersLabel}"
+                                   Style="{StaticResource SectionHeadingLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.RewardsTiersEmptyStateMessage}"
+                                   Style="{StaticResource BodyLabelStyle}" />
+                        </VerticalStackLayout>
+                    </Border>
 
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding PointsRequired, StringFormat='{x:Static res:AppResources.RewardsTierPointsFormat}'}"
-                                       FontAttributes="Bold"
-                                       FontSize="15" />
+                    <CollectionView x:Name="RewardTiersCollectionView"
+                                    ItemsSource="{Binding RewardTiers}"
+                                    SelectionMode="Single"
+                                    IsVisible="{Binding HasRewardTiers}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RewardTierEditorItem">
+                                <Border Style="{StaticResource MutedCardBorderStyle}"
+                                        Margin="0,4,0,4">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding PointsRequired, StringFormat='{x:Static res:AppResources.RewardsTierPointsFormat}'}"
+                                               Style="{StaticResource BodyLabelStyle}" />
+                                        <Label Text="{Binding RewardType}"
+                                               Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding RewardValue, StringFormat='{x:Static res:AppResources.RewardsTierValueFormat}'}"
+                                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                                               IsVisible="{Binding RewardValue, Converter={StaticResource NullCheckConverter}}" />
+                                        <Label Text="{Binding Description}"
+                                               Style="{StaticResource SecondaryBodyLabelStyle}"
+                                               IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
+                                        <Label Text="{Binding AllowSelfRedemption, StringFormat='{x:Static res:AppResources.RewardsTierSelfRedemptionFormat}'}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
 
-                                <Label Text="{Binding RewardType}"
-                                       FontSize="13"
-                                       Opacity="0.85" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{Binding CampaignSaveButtonText}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{Binding CampaignEditorSelectionHint}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
 
-                                <Label Text="{Binding RewardValue, StringFormat='{x:Static res:AppResources.RewardsTierValueFormat}'}"
-                                       FontSize="13"
-                                       IsVisible="{Binding RewardValue, Converter={StaticResource NullCheckConverter}}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignNamePlaceholder}"
+                               Text="{Binding CampaignNameInput}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                                <Label Text="{Binding Description}"
-                                       FontSize="13"
-                                       IsVisible="{Binding Description, Converter={StaticResource NullCheckConverter}}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignTitlePlaceholder}"
+                               Text="{Binding CampaignTitleInput}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                                <Label Text="{Binding AllowSelfRedemption, StringFormat='{x:Static res:AppResources.RewardsTierSelfRedemptionFormat}'}"
-                                       FontSize="12"
-                                       Opacity="0.7" />
-                            </VerticalStackLayout>
+                    <Border Style="{StaticResource FormFieldBorderStyle}"
+                            Padding="14,10">
+                        <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignBodyPlaceholder}"
+                                AutoSize="TextChanges"
+                                Text="{Binding CampaignBodyInput}"
+                                TextColor="{StaticResource BrushOnSurface}"
+                                PlaceholderColor="{StaticResource BrushOnSurfaceSecondary}" />
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Border Grid.Column="0"
+                                Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignStartsAtPlaceholder}"
+                                   Text="{Binding CampaignStartsAtInput}"
+                                   Style="{StaticResource FormEntryStyle}" />
                         </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                        <Border Grid.Column="1"
+                                Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignEndsAtPlaceholder}"
+                                   Text="{Binding CampaignEndsAtInput}"
+                                   Style="{StaticResource FormEntryStyle}" />
+                        </Border>
+                    </Grid>
 
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Picker Title="{x:Static res:AppResources.RewardsCampaignChannelPickerTitle}"
+                                ItemsSource="{Binding CampaignChannelOptions}"
+                                SelectedItem="{Binding SelectedCampaignChannel}"
+                                TextColor="{StaticResource BrushOnSurface}" />
+                    </Border>
 
-            <Border StrokeThickness="1" Stroke="#666666" Padding="12">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="10" />
-                </Border.StrokeShape>
-
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="{Binding CampaignSaveButtonText}" FontAttributes="Bold" />
-
-                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignNamePlaceholder}"
-                           Text="{Binding CampaignNameInput}" />
-
-                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignTitlePlaceholder}"
-                           Text="{Binding CampaignTitleInput}" />
-
-                    <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignBodyPlaceholder}"
-                            AutoSize="TextChanges"
-                            Text="{Binding CampaignBodyInput}" />
-
-                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignStartsAtPlaceholder}"
-                           Text="{Binding CampaignStartsAtInput}" />
-
-                    <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignEndsAtPlaceholder}"
-                           Text="{Binding CampaignEndsAtInput}" />
-
-                    <Picker Title="{x:Static res:AppResources.RewardsCampaignChannelPickerTitle}"
-                            ItemsSource="{Binding CampaignChannelOptions}"
-                            SelectedItem="{Binding SelectedCampaignChannel}" />
-
-                    <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignTargetingJsonPlaceholder}"
-                            AutoSize="TextChanges"
-                            Text="{Binding CampaignTargetingJsonInput}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}"
+                            Padding="14,10">
+                        <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignTargetingJsonPlaceholder}"
+                                AutoSize="TextChanges"
+                                Text="{Binding CampaignTargetingJsonInput}"
+                                TextColor="{StaticResource BrushOnSurface}"
+                                PlaceholderColor="{StaticResource BrushOnSurfaceSecondary}" />
+                    </Border>
 
                     <Label Text="{x:Static res:AppResources.RewardsCampaignTargetingPresetTitle}"
-                           FontSize="12"
-                           Opacity="0.75" />
+                           Style="{StaticResource CaptionLabelStyle}" />
 
-                    <HorizontalStackLayout Spacing="6">
+                    <FlexLayout Wrap="Wrap"
+                                Direction="Row"
+                                JustifyContent="Start"
+                                AlignItems="Start">
                         <Button Text="{x:Static res:AppResources.RewardsCampaignAudienceJoinedMembers}"
                                 Command="{Binding ApplyCampaignTargetingPresetCommand}"
                                 CommandParameter="JoinedMembers"
-                                FontSize="12" />
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
                         <Button Text="{x:Static res:AppResources.RewardsCampaignAudienceTierSegment}"
                                 Command="{Binding ApplyCampaignTargetingPresetCommand}"
                                 CommandParameter="TierSegment"
-                                FontSize="12" />
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
                         <Button Text="{x:Static res:AppResources.RewardsCampaignAudiencePointsThreshold}"
                                 Command="{Binding ApplyCampaignTargetingPresetCommand}"
                                 CommandParameter="PointsThreshold"
-                                FontSize="12" />
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
                         <Button Text="{x:Static res:AppResources.RewardsCampaignAudienceDateWindow}"
                                 Command="{Binding ApplyCampaignTargetingPresetCommand}"
                                 CommandParameter="DateWindow"
-                                FontSize="12" />
-                    </HorizontalStackLayout>
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                    </FlexLayout>
 
                     <Label Text="{Binding CampaignTargetingHint}"
-                           FontSize="11"
-                           Opacity="0.75" />
+                           Style="{StaticResource CaptionLabelStyle}" />
 
                     <Label Text="{Binding CampaignTargetingSchemaValidationMessage}"
-                           FontSize="11"
-                           TextColor="OrangeRed"
+                           Style="{StaticResource WarningLabelStyle}"
                            IsVisible="{Binding HasCampaignTargetingSchemaValidationError}" />
 
                     <Button Text="{x:Static res:AppResources.RewardsCampaignTargetingApplyFixButton}"
                             Command="{Binding ApplyCampaignTargetingSchemaFixCommand}"
+                            Style="{StaticResource OutlinedButtonStyle}"
                             IsVisible="{Binding HasCampaignTargetingSchemaValidationError}" />
 
                     <Label Text="{Binding CampaignTargetingFixStatusMessage}"
-                           FontSize="11"
-                           TextColor="SeaGreen"
+                           Style="{StaticResource SuccessLabelStyle}"
                            IsVisible="{Binding HasCampaignTargetingFixStatusMessage}" />
 
                     <Label Text="{Binding CampaignTargetingFixMetricsSummary}"
-                           FontSize="11"
-                           Opacity="0.7" />
+                           Style="{StaticResource CaptionLabelStyle}" />
 
                     <Label Text="{Binding CampaignTargetingFixMetricsWindowSummary}"
-                           FontSize="11"
-                           Opacity="0.65" />
+                           Style="{StaticResource CaptionLabelStyle}" />
 
                     <Button Text="{x:Static res:AppResources.RewardsCampaignTargetingFixMetricsResetButton}"
                             Command="{Binding ResetCampaignTargetingFixMetricsCommand}"
+                            Style="{StaticResource OutlinedButtonStyle}"
                             IsVisible="{Binding HasCampaignTargetingFixMetrics}" />
 
-                    <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignPayloadJsonPlaceholder}"
-                            AutoSize="TextChanges"
-                            Text="{Binding CampaignPayloadJsonInput}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}"
+                            Padding="14,10">
+                        <Editor Placeholder="{x:Static res:AppResources.RewardsCampaignPayloadJsonPlaceholder}"
+                                AutoSize="TextChanges"
+                                Text="{Binding CampaignPayloadJsonInput}"
+                                TextColor="{StaticResource BrushOnSurface}"
+                                PlaceholderColor="{StaticResource BrushOnSurfaceSecondary}" />
+                    </Border>
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
                         <Button Text="{Binding CampaignSaveButtonText}"
                                 Command="{Binding SaveCampaignCommand}"
                                 IsEnabled="{Binding CanManageRewards}"
@@ -217,183 +283,241 @@
                         <Button Grid.Column="1"
                                 Text="{x:Static res:AppResources.RewardsCampaignNewButton}"
                                 Command="{Binding NewCampaignCommand}"
-                                IsEnabled="{Binding CanManageRewards}" />
+                                IsEnabled="{Binding CanManageRewards}"
+                                Style="{StaticResource OutlinedButtonStyle}" />
                     </Grid>
+
+                    <Label Text="{x:Static res:AppResources.RewardsCampaignSelectionHint}"
+                           Style="{StaticResource CaptionLabelStyle}"
+                           IsVisible="{Binding IsCampaignEditMode, Converter={StaticResource InverseBoolConverter}}" />
                 </VerticalStackLayout>
             </Border>
 
-            <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
-                   FontAttributes="Bold" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
 
-            <Grid ColumnDefinitions="*,Auto,*,*,*" ColumnSpacing="8">
-                <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignSearchPlaceholder}"
-                       Text="{Binding CampaignSearchQuery}" />
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Entry Placeholder="{x:Static res:AppResources.RewardsCampaignSearchPlaceholder}"
+                               Text="{Binding CampaignSearchQuery}"
+                               Style="{StaticResource FormEntryStyle}" />
+                    </Border>
 
-                <Button Grid.Column="1"
-                        Text="{x:Static res:AppResources.RewardsCampaignClearSearchButton}"
-                        Command="{Binding ClearCampaignSearchCommand}"
-                        IsEnabled="{Binding HasCampaignSearchQuery}" />
-
-                <Picker Grid.Column="2"
-                        Title="{x:Static res:AppResources.RewardsCampaignStateFilterPickerTitle}"
-                        ItemsSource="{Binding CampaignStateFilterOptions}"
-                        SelectedItem="{Binding SelectedCampaignStateFilter}" />
-
-                <Picker Grid.Column="3"
-                        Title="{x:Static res:AppResources.RewardsCampaignAudienceFilterPickerTitle}"
-                        ItemsSource="{Binding CampaignAudienceFilterOptions}"
-                        SelectedItem="{Binding SelectedCampaignAudienceFilter}" />
-
-                <Picker Grid.Column="4"
-                        Title="{x:Static res:AppResources.RewardsCampaignSortPickerTitle}"
-                        ItemsSource="{Binding CampaignSortOptions}"
-                        SelectedItem="{Binding SelectedCampaignSortOption}" />
-            </Grid>
-
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <Label Text="{Binding CampaignFilterSummary}"
-                       VerticalOptions="Center"
-                       Opacity="0.8" />
-
-                <Button Grid.Column="1"
-                        Text="{x:Static res:AppResources.RewardsCampaignClearFiltersButton}"
-                        Command="{Binding ClearCampaignFiltersCommand}"
-                        IsEnabled="{Binding HasActiveCampaignFilters}" />
-            </Grid>
-
-            <Label Text="{Binding CampaignDiagnosticsSnapshotAtText}"
-                   FontSize="11"
-                   Opacity="0.75"
-                   IsVisible="{Binding HasCampaignDiagnosticsSnapshotAt}" />
-
-            <Label Text="{Binding CampaignDiagnosticsFreshnessText}"
-                   FontSize="11"
-                   Opacity="0.75"
-                   TextColor="OrangeRed"
-                   IsVisible="{Binding IsCampaignDiagnosticsSnapshotStale}" />
-
-            <Label Text="{Binding CampaignDiagnosticsFreshnessText}"
-                   FontSize="11"
-                   Opacity="0.75"
-                   TextColor="{StaticResource BrushPrimary}"
-                   IsVisible="{Binding IsCampaignDiagnosticsSnapshotStale, Converter={StaticResource InverseBoolConverter}}" />
-
-            <Label Text="{Binding CampaignDiagnosticsVisibleCampaignsPreview}"
-                   FontSize="11"
-                   Opacity="0.75" />
-
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                <Button Text="{x:Static res:AppResources.RewardsCampaignCopyDiagnosticsButton}"
-                        Command="{Binding CopyCampaignDiagnosticsCommand}"
-                        IsEnabled="{Binding HasCampaignDataset}" />
-                <Button Grid.Column="1"
-                        Text="{x:Static res:AppResources.RewardsCampaignClearDiagnosticsStatusButton}"
-                        Command="{Binding ClearCampaignDiagnosticsStatusCommand}"
-                        IsEnabled="{Binding HasCampaignDiagnosticsCopyStatus}" />
-            </Grid>
-
-            <Label Text="{Binding CampaignDiagnosticsCopyStatus}"
-                   FontSize="11"
-                   TextColor="SeaGreen"
-                   IsVisible="{Binding HasCampaignDiagnosticsCopyStatus}" />
-
-            <Label Text="{Binding CampaignStateMetricsSummary}"
-                   FontSize="12"
-                   Opacity="0.75" />
-
-            <HorizontalStackLayout Spacing="6">
-                <Button Text="{Binding AllCampaignMetricText}"
-                        Command="{Binding ApplyCampaignStateFilterCommand}"
-                        CommandParameter=""
-                        FontSize="12" />
-                <Button Text="{Binding DraftCampaignMetricText}"
-                        Command="{Binding ApplyCampaignStateFilterCommand}"
-                        CommandParameter="Draft"
-                        FontSize="12" />
-                <Button Text="{Binding ScheduledCampaignMetricText}"
-                        Command="{Binding ApplyCampaignStateFilterCommand}"
-                        CommandParameter="Scheduled"
-                        FontSize="12" />
-                <Button Text="{Binding ActiveCampaignMetricText}"
-                        Command="{Binding ApplyCampaignStateFilterCommand}"
-                        CommandParameter="Active"
-                        FontSize="12" />
-                <Button Text="{Binding ExpiredCampaignMetricText}"
-                        Command="{Binding ApplyCampaignStateFilterCommand}"
-                        CommandParameter="Expired"
-                        FontSize="12" />
-            </HorizontalStackLayout>
-
-            <Label Text="{Binding CampaignAudienceMetricsSummary}"
-                   FontSize="12"
-                   Opacity="0.75" />
-
-            <Label Text="{Binding CampaignChannelMetricsSummary}"
-                   FontSize="12"
-                   Opacity="0.75" />
-
-            <HorizontalStackLayout Spacing="6">
-                <Button Text="{Binding AllCampaignAudienceMetricText}"
-                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
-                        CommandParameter=""
-                        FontSize="12" />
-                <Button Text="{Binding JoinedMembersCampaignMetricText}"
-                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
-                        CommandParameter="JoinedMembers"
-                        FontSize="12" />
-                <Button Text="{Binding TierSegmentCampaignMetricText}"
-                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
-                        CommandParameter="TierSegment"
-                        FontSize="12" />
-                <Button Text="{Binding PointsThresholdCampaignMetricText}"
-                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
-                        CommandParameter="PointsThreshold"
-                        FontSize="12" />
-                <Button Text="{Binding DateWindowCampaignMetricText}"
-                        Command="{Binding ApplyCampaignAudienceFilterCommand}"
-                        CommandParameter="DateWindow"
-                        FontSize="12" />
-            </HorizontalStackLayout>
-
-            <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyFiltered}"
-                   Opacity="0.8"
-                   IsVisible="{Binding HasCampaigns, Converter={StaticResource InverseBoolConverter}}" />
-
-            <CollectionView x:Name="CampaignsCollectionView"
-                            ItemsSource="{Binding Campaigns}"
-                            SelectionMode="Single"
-                            IsVisible="{Binding HasCampaigns}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:BusinessCampaignEditorItem">
-                        <Border StrokeThickness="1" Stroke="#444444" Padding="10" Margin="0,4,0,4">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-
-                            <VerticalStackLayout Spacing="6">
-                                <Label Text="{Binding Title}" FontAttributes="Bold" />
-                                <Label Text="{Binding Name}" Opacity="0.8" FontSize="13" />
-                                <Label Text="{Binding CampaignState, StringFormat='{x:Static res:AppResources.RewardsCampaignStateFormat}'}" FontSize="12" Opacity="0.8" />
-                                <Label Text="{Binding AudienceSummary}" FontSize="12" Opacity="0.8" />
-                                <Label Text="{Binding ChannelSummary}" FontSize="12" Opacity="0.8" />
-                                <Label Text="{Binding StartsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignStartAtFormat}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />
-                                <Label Text="{Binding EndsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignEndAtFormat}'}" FontSize="12" Opacity="0.75" IsVisible="{Binding EndsAtUtc, Converter={StaticResource NullCheckConverter}}" />
-                                <Button Text="{Binding ActivationButtonText}"
-                                        Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.ToggleCampaignActivationCommand}"
-                                        CommandParameter="{Binding .}"
-                                        IsEnabled="{Binding Source={x:Reference PageRoot}, Path=BindingContext.CanManageRewards}" />
-                            </VerticalStackLayout>
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Border Grid.Column="0"
+                                Style="{StaticResource FormFieldBorderStyle}">
+                            <Picker Title="{x:Static res:AppResources.RewardsCampaignStateFilterPickerTitle}"
+                                    ItemsSource="{Binding CampaignStateFilterOptions}"
+                                    SelectedItem="{Binding SelectedCampaignStateFilter}"
+                                    TextColor="{StaticResource BrushOnSurface}" />
                         </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+
+                        <Border Grid.Column="1"
+                                Style="{StaticResource FormFieldBorderStyle}">
+                            <Picker Title="{x:Static res:AppResources.RewardsCampaignAudienceFilterPickerTitle}"
+                                    ItemsSource="{Binding CampaignAudienceFilterOptions}"
+                                    SelectedItem="{Binding SelectedCampaignAudienceFilter}"
+                                    TextColor="{StaticResource BrushOnSurface}" />
+                        </Border>
+                    </Grid>
+
+                    <Border Style="{StaticResource FormFieldBorderStyle}">
+                        <Picker Title="{x:Static res:AppResources.RewardsCampaignSortPickerTitle}"
+                                ItemsSource="{Binding CampaignSortOptions}"
+                                SelectedItem="{Binding SelectedCampaignSortOption}"
+                                TextColor="{StaticResource BrushOnSurface}" />
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Button Text="{x:Static res:AppResources.RewardsCampaignClearSearchButton}"
+                                Command="{Binding ClearCampaignSearchCommand}"
+                                IsEnabled="{Binding HasCampaignSearchQuery}"
+                                Style="{StaticResource OutlinedButtonStyle}" />
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.RewardsCampaignClearFiltersButton}"
+                                Command="{Binding ClearCampaignFiltersCommand}"
+                                IsEnabled="{Binding HasActiveCampaignFilters}"
+                                Style="{StaticResource OutlinedButtonStyle}" />
+                    </Grid>
+
+                    <Label Text="{Binding CampaignFilterSummary}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Label Text="{Binding CampaignDiagnosticsSnapshotAtText}"
+                           Style="{StaticResource CaptionLabelStyle}"
+                           IsVisible="{Binding HasCampaignDiagnosticsSnapshotAt}" />
+                    <Label Text="{Binding CampaignDiagnosticsFreshnessText}"
+                           Style="{StaticResource WarningLabelStyle}"
+                           IsVisible="{Binding IsCampaignDiagnosticsSnapshotStale}" />
+                    <Label Text="{Binding CampaignDiagnosticsFreshnessText}"
+                           Style="{StaticResource CaptionLabelStyle}"
+                           IsVisible="{Binding IsCampaignDiagnosticsSnapshotStale, Converter={StaticResource InverseBoolConverter}}" />
+                    <Label Text="{Binding CampaignDiagnosticsVisibleCampaignsPreview}"
+                           Style="{StaticResource CaptionLabelStyle}" />
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Button Text="{x:Static res:AppResources.RewardsCampaignCopyDiagnosticsButton}"
+                                Command="{Binding CopyCampaignDiagnosticsCommand}"
+                                IsEnabled="{Binding HasCampaignDataset}"
+                                Style="{StaticResource OutlinedButtonStyle}" />
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.RewardsCampaignClearDiagnosticsStatusButton}"
+                                Command="{Binding ClearCampaignDiagnosticsStatusCommand}"
+                                IsEnabled="{Binding HasCampaignDiagnosticsCopyStatus}"
+                                Style="{StaticResource OutlinedButtonStyle}" />
+                    </Grid>
+
+                    <Label Text="{Binding CampaignDiagnosticsCopyStatus}"
+                           Style="{StaticResource SuccessLabelStyle}"
+                           IsVisible="{Binding HasCampaignDiagnosticsCopyStatus}" />
+
+                    <Label Text="{Binding CampaignStateMetricsSummary}"
+                           Style="{StaticResource CaptionLabelStyle}" />
+                    <Label Text="{Binding CampaignAudienceMetricsSummary}"
+                           Style="{StaticResource CaptionLabelStyle}" />
+                    <Label Text="{Binding CampaignChannelMetricsSummary}"
+                           Style="{StaticResource CaptionLabelStyle}" />
+
+                    <FlexLayout Wrap="Wrap"
+                                Direction="Row"
+                                JustifyContent="Start"
+                                AlignItems="Start">
+                        <Button Text="{Binding AllCampaignMetricText}"
+                                Command="{Binding ApplyCampaignStateFilterCommand}"
+                                CommandParameter=""
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding DraftCampaignMetricText}"
+                                Command="{Binding ApplyCampaignStateFilterCommand}"
+                                CommandParameter="Draft"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding ScheduledCampaignMetricText}"
+                                Command="{Binding ApplyCampaignStateFilterCommand}"
+                                CommandParameter="Scheduled"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding ActiveCampaignMetricText}"
+                                Command="{Binding ApplyCampaignStateFilterCommand}"
+                                CommandParameter="Active"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding ExpiredCampaignMetricText}"
+                                Command="{Binding ApplyCampaignStateFilterCommand}"
+                                CommandParameter="Expired"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                    </FlexLayout>
+
+                    <FlexLayout Wrap="Wrap"
+                                Direction="Row"
+                                JustifyContent="Start"
+                                AlignItems="Start">
+                        <Button Text="{Binding AllCampaignAudienceMetricText}"
+                                Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                                CommandParameter=""
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding JoinedMembersCampaignMetricText}"
+                                Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                                CommandParameter="JoinedMembers"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding TierSegmentCampaignMetricText}"
+                                Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                                CommandParameter="TierSegment"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding PointsThresholdCampaignMetricText}"
+                                Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                                CommandParameter="PointsThreshold"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                        <Button Text="{Binding DateWindowCampaignMetricText}"
+                                Command="{Binding ApplyCampaignAudienceFilterCommand}"
+                                CommandParameter="DateWindow"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                FontSize="12"
+                                Margin="0,0,8,8" />
+                    </FlexLayout>
+
+                    <Border Style="{StaticResource EmptyStateCardBorderStyle}"
+                            IsVisible="{Binding ShowCampaignDatasetEmptyState}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
+                                   Style="{StaticResource SectionHeadingLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyDataset}"
+                                   Style="{StaticResource BodyLabelStyle}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource EmptyStateCardBorderStyle}"
+                            IsVisible="{Binding ShowCampaignFilteredEmptyState}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="{x:Static res:AppResources.RewardsCampaignsLabel}"
+                                   Style="{StaticResource SectionHeadingLabelStyle}" />
+                            <Label Text="{x:Static res:AppResources.RewardsCampaignsEmptyFiltered}"
+                                   Style="{StaticResource BodyLabelStyle}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <CollectionView x:Name="CampaignsCollectionView"
+                                    ItemsSource="{Binding Campaigns}"
+                                    SelectionMode="Single"
+                                    IsVisible="{Binding HasCampaigns}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BusinessCampaignEditorItem">
+                                <Border Style="{StaticResource MutedCardBorderStyle}"
+                                        Margin="0,4,0,4">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding Title}"
+                                               Style="{StaticResource BodyLabelStyle}" />
+                                        <Label Text="{Binding Name}"
+                                               Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                        <Label Text="{Binding CampaignState, StringFormat='{x:Static res:AppResources.RewardsCampaignStateFormat}'}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding AudienceSummary}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding ChannelSummary}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding StartsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignStartAtFormat}'}"
+                                               Style="{StaticResource CaptionLabelStyle}"
+                                               IsVisible="{Binding StartsAtUtc, Converter={StaticResource NullCheckConverter}}" />
+                                        <Label Text="{Binding EndsAtUtc, StringFormat='{x:Static res:AppResources.RewardsCampaignEndAtFormat}'}"
+                                               Style="{StaticResource CaptionLabelStyle}"
+                                               IsVisible="{Binding EndsAtUtc, Converter={StaticResource NullCheckConverter}}" />
+                                        <Button Text="{Binding ActivationButtonText}"
+                                                Command="{Binding Source={x:Reference PageRoot}, Path=BindingContext.ToggleCampaignActivationCommand}"
+                                                CommandParameter="{Binding .}"
+                                                IsEnabled="{Binding Source={x:Reference PageRoot}, Path=BindingContext.CanManageRewards}"
+                                                Style="{StaticResource OutlinedButtonStyle}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsRunning="{Binding IsBusy}"
-                               IsVisible="{Binding IsBusy}" />
+                               IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource BrushPrimary}" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

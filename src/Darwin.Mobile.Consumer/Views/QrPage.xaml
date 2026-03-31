@@ -9,77 +9,76 @@
     Title="{x:Static res:AppResources.QrTitle}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <Label Text="{Binding GuidanceMessage}"
-                   FontSize="14"
-                   TextColor="{StaticResource Neutral900}"
-                   LineBreakMode="WordWrap"
-                   HorizontalTextAlignment="Center" />
+        <VerticalStackLayout Padding="24,28,24,32" Spacing="18">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.QrTitle}"
+                           Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{Binding GuidanceMessage}"
+                           Style="{StaticResource BodyLabelStyle}" />
+                    <Label Text="{Binding BusinessDisplayName, StringFormat='{x:Static res:AppResources.QrBusinessFormat}'}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
+                           IsVisible="{Binding BusinessDisplayName, Converter={StaticResource NullCheckConverter}}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="{Binding BusinessDisplayName, StringFormat='{x:Static res:AppResources.QrBusinessFormat}'}"
-                   FontSize="16"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   IsVisible="{Binding BusinessDisplayName, Converter={StaticResource NullCheckConverter}}" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="{Binding StatusMessage}"
+                           Style="{StaticResource SuccessLabelStyle}"
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
 
-            <Label Text="{Binding StatusMessage}"
-                   FontSize="14"
-                   TextColor="Green"
-                   HorizontalTextAlignment="Center"
-                   IsVisible="{Binding StatusMessage, Converter={StaticResource NullCheckConverter}}" />
+                    <Border Style="{StaticResource MutedCardBorderStyle}"
+                            Padding="22"
+                            HorizontalOptions="Center">
+                        <Image Source="{Binding QrImage}"
+                               HeightRequest="220"
+                               WidthRequest="220"
+                               HorizontalOptions="Center"
+                               IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
+                    </Border>
 
-            <!-- Render the QR image; fallback to hidden if no token is available -->
-            <Image Source="{Binding QrImage}"
-                   HeightRequest="200"
-                   WidthRequest="200"
-                   HorizontalOptions="Center"
-                   IsVisible="{Binding QrImage, Converter={StaticResource NullCheckConverter}}" />
+                    <Label Text="{Binding ExpiresAtUtc, StringFormat='{x:Static res:AppResources.QrExpiresAtFormat}'}"
+                           Style="{StaticResource BodyLabelStyle}"
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding HasBusinessContext}" />
 
-            <!-- Optional text representation for debugging -->
-            <Label Text="{Binding QrToken}"
-                   FontSize="14"
-                   HorizontalOptions="Center"
-                   Opacity="0.5"
-                   IsVisible="{Binding HasBusinessContext}" />
+                    <Label Text="{Binding ExpiresInText}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
+                           HorizontalTextAlignment="Center"
+                           IsVisible="{Binding HasBusinessContext}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <!-- Show expiry countdown -->
-            <Label Text="{Binding ExpiresAtUtc, StringFormat='{x:Static res:AppResources.QrExpiresAtFormat}'}"
-                   FontSize="16"
-                   TextColor="{StaticResource Neutral900}"
-                   HorizontalOptions="Center"
-                   IsVisible="{Binding HasBusinessContext}" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="{x:Static res:AppResources.RefreshAccrualButton}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding RefreshAccrualSessionCommand}"
+                            IsEnabled="{Binding HasBusinessContext}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="{Binding ExpiresInText}"
-                   FontSize="13"
-                   TextColor="{StaticResource Neutral900}"
-                   HorizontalOptions="Center"
-                   IsVisible="{Binding HasBusinessContext}" />
-
-            <!-- Refresh button for accrual -->
-            <Button Text="{x:Static res:AppResources.RefreshAccrualButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding RefreshAccrualSessionCommand}"
-                    IsEnabled="{Binding HasBusinessContext}" />
-            <Label Text="{x:Static res:AppResources.QrAccrualHelpText}"
-                   FontSize="12"
-                   TextColor="{StaticResource Neutral900}"
-                   HorizontalTextAlignment="Center"
-                   IsVisible="{Binding HasBusinessContext}" />
-
-            <!-- Refresh button for redemption -->
-            <Button Text="{x:Static res:AppResources.RefreshRedemptionButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding RefreshRedemptionSessionCommand}"
-                    IsEnabled="{Binding HasBusinessContext}" />
-            <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
-                   FontSize="12"
-                   TextColor="{StaticResource Neutral900}"
-                   HorizontalTextAlignment="Center"
-                   IsVisible="{Binding HasBusinessContext}" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="{x:Static res:AppResources.RefreshRedemptionButton}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.QrRedemptionHelpText}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Button Text="{x:Static res:AppResources.RefreshRedemptionButton}"
+                            Style="{StaticResource OutlinedButtonStyle}"
+                            Command="{Binding RefreshRedemptionSessionCommand}"
+                            IsEnabled="{Binding HasBusinessContext}" />
+                </VerticalStackLayout>
+            </Border>
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"

@@ -4,37 +4,32 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!--
-        Unified Light Theme (Consumer)
-        Kept identical to Business for visual consistency across the mobile suite.
-    -->
-
-    <!-- Core neutrals -->
     <Color x:Key="Neutral0">#FFFFFF</Color>
-    <Color x:Key="Neutral50">#F8F9FB</Color>
-    <Color x:Key="Neutral100">#EEF1F4</Color>
-    <Color x:Key="Neutral300">#D0D7DE</Color>
-    <Color x:Key="Neutral700">#4A5565</Color>
-    <Color x:Key="Neutral900">#1F2328</Color>
+    <Color x:Key="Neutral50">#FFFFFF</Color>
+    <Color x:Key="Neutral100">#FFF8E7</Color>
+    <Color x:Key="Neutral300">#FFF8E7</Color>
+    <Color x:Key="Neutral700">#717182</Color>
+    <Color x:Key="Neutral900">#2C2416</Color>
 
-    <!-- Brand palette -->
-    <Color x:Key="BrandGold500">#C9A227</Color>
-    <Color x:Key="BrandGold600">#B6911F</Color>
-    <Color x:Key="BrandGold700">#8E7118</Color>
+    <Color x:Key="BrandGold500">#F4B223</Color>
+    <Color x:Key="BrandGold300">#FFD24C</Color>
+    <Color x:Key="BrandGold600">#E09F1A</Color>
+    <Color x:Key="BrandGold700">#C98713</Color>
 
-    <!-- Semantic -->
     <Color x:Key="Success500">#1F8B4C</Color>
     <Color x:Key="Warning500">#B7791F</Color>
     <Color x:Key="Danger500">#C53030</Color>
     <Color x:Key="Info500">#2B6CB0</Color>
 
-    <!-- Brushes -->
     <SolidColorBrush x:Key="BrushBackground" Color="{StaticResource Neutral50}" />
     <SolidColorBrush x:Key="BrushSurface" Color="{StaticResource Neutral0}" />
     <SolidColorBrush x:Key="BrushPrimary" Color="{StaticResource BrandGold500}" />
+    <SolidColorBrush x:Key="BrushPrimaryLight" Color="{StaticResource BrandGold300}" />
     <SolidColorBrush x:Key="BrushPrimaryPressed" Color="{StaticResource BrandGold600}" />
-    <SolidColorBrush x:Key="BrushOnPrimary" Color="{StaticResource Neutral900}" />
+    <SolidColorBrush x:Key="BrushOnPrimary" Color="{StaticResource Neutral0}" />
     <SolidColorBrush x:Key="BrushOnSurface" Color="{StaticResource Neutral900}" />
     <SolidColorBrush x:Key="BrushOnSurfaceSecondary" Color="{StaticResource Neutral700}" />
     <SolidColorBrush x:Key="BrushBorder" Color="{StaticResource Neutral100}" />
+    <SolidColorBrush x:Key="BrushLink" Color="{StaticResource BrandGold500}" />
+    <SolidColorBrush x:Key="BrushLegalLink" Color="{StaticResource Neutral700}" />
 </ResourceDictionary>

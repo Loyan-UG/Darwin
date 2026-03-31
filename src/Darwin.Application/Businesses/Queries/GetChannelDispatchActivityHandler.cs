@@ -150,7 +150,28 @@ namespace Darwin.Application.Businesses.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
+            var chainContext = BuildChainContext(rows);
             var filteredRows = rows.AsEnumerable();
+            if (filter.RepeatedFailuresOnly)
+            {
+                filteredRows = filteredRows.Where(x => IsRepeatedFailure(chainContext[x.Id]));
+            }
+
+            if (filter.PriorSuccessOnly)
+            {
+                filteredRows = filteredRows.Where(x => chainContext[x.Id].LastSuccessfulAttemptAtUtc.HasValue);
+            }
+
+            if (filter.ActionReadyOnly)
+            {
+                filteredRows = filteredRows.Where(x => BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow);
+            }
+
+            if (filter.ActionBlockedOnly)
+            {
+                filteredRows = filteredRows.Where(x => !BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow);
+            }
+
             if (filter.ChainFollowUpOnly)
             {
                 filteredRows = filteredRows.Where(NeedsOperatorFollowUp);
@@ -166,24 +187,35 @@ namespace Darwin.Application.Businesses.Queries
             var items = filteredRowsList
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(x => new ChannelDispatchAuditListItemDto
+                .Select(x =>
                 {
-                    Id = x.Id,
-                    Channel = x.Channel,
-                    Provider = x.Provider,
-                    FlowKey = x.FlowKey,
-                    BusinessId = x.BusinessId,
-                    RecipientAddress = x.RecipientAddress,
-                    MessagePreview = x.MessagePreview,
-                    Status = x.Status,
-                    AttemptedAtUtc = x.AttemptedAtUtc,
-                    CompletedAtUtc = x.CompletedAtUtc,
-                    FailureMessage = x.FailureMessage,
-                    NeedsOperatorFollowUp = NeedsOperatorFollowUp(x)
+                    var actionPolicy = BuildActionPolicy(x, chainContext[x.Id]);
+                    return new ChannelDispatchAuditListItemDto
+                    {
+                        Id = x.Id,
+                        Channel = x.Channel,
+                        Provider = x.Provider,
+                        FlowKey = x.FlowKey,
+                        BusinessId = x.BusinessId,
+                        RecipientAddress = x.RecipientAddress,
+                        MessagePreview = x.MessagePreview,
+                        Status = x.Status,
+                        AttemptedAtUtc = x.AttemptedAtUtc,
+                        CompletedAtUtc = x.CompletedAtUtc,
+                        FailureMessage = x.FailureMessage,
+                        NeedsOperatorFollowUp = NeedsOperatorFollowUp(x),
+                        PriorAttemptCount = chainContext[x.Id].PriorAttemptCount,
+                        PriorFailureCount = chainContext[x.Id].PriorFailureCount,
+                        LastSuccessfulAttemptAtUtc = chainContext[x.Id].LastSuccessfulAttemptAtUtc,
+                        CanRerunNow = actionPolicy.CanRerunNow,
+                        ActionPolicyState = actionPolicy.State,
+                        ActionBlockedReason = actionPolicy.BlockedReason,
+                        ActionAvailableAtUtc = actionPolicy.AvailableAtUtc
+                    };
                 })
                 .ToList();
 
-            var summary = BuildSummary(rows);
+            var summary = BuildSummary(rows, chainContext);
             ChannelDispatchAuditChainSummaryDto? chainSummary = null;
             if (!string.IsNullOrWhiteSpace(filter.RecipientAddress))
             {
@@ -193,7 +225,9 @@ namespace Darwin.Application.Businesses.Queries
             return (items, filteredRowsList.Count, summary, chainSummary);
         }
 
-        private static ChannelDispatchAuditSummaryDto BuildSummary(List<ChannelDispatchAudit> rows)
+        private static ChannelDispatchAuditSummaryDto BuildSummary(
+            List<ChannelDispatchAudit> rows,
+            Dictionary<Guid, ChannelDispatchAuditChainContext> chainContext)
         {
             var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
             return new ChannelDispatchAuditSummaryDto
@@ -205,7 +239,11 @@ namespace Darwin.Application.Businesses.Queries
                 SmsCount = rows.Count(x => string.Equals(x.Channel, "SMS", StringComparison.OrdinalIgnoreCase)),
                 WhatsAppCount = rows.Count(x => string.Equals(x.Channel, "WhatsApp", StringComparison.OrdinalIgnoreCase)),
                 PhoneVerificationCount = rows.Count(x => string.Equals(x.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase)),
-                AdminTestCount = rows.Count(x => string.Equals(x.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+                AdminTestCount = rows.Count(x => string.Equals(x.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase)),
+                RepeatedFailureCount = rows.Count(x => IsRepeatedFailure(chainContext[x.Id])),
+                PriorSuccessContextCount = rows.Count(x => chainContext[x.Id].LastSuccessfulAttemptAtUtc.HasValue),
+                ActionReadyCount = rows.Count(x => BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow),
+                ActionBlockedCount = rows.Count(x => !BuildActionPolicy(x, chainContext[x.Id]).CanRerunNow)
             };
         }
 
@@ -258,6 +296,113 @@ namespace Darwin.Application.Businesses.Queries
                     })
                     .ToList()
             };
+        }
+
+        private static Dictionary<Guid, ChannelDispatchAuditChainContext> BuildChainContext(List<ChannelDispatchAudit> rows)
+        {
+            var lookup = new Dictionary<Guid, ChannelDispatchAuditChainContext>(rows.Count);
+            foreach (var group in rows
+                         .GroupBy(x => new
+                         {
+                             x.BusinessId,
+                             FlowKey = x.FlowKey ?? string.Empty,
+                             x.RecipientAddress
+                         }))
+            {
+                var ordered = group.OrderBy(x => x.AttemptedAtUtc).ToList();
+                var priorFailures = 0;
+                var priorAttempts = 0;
+                DateTime? lastSuccessfulAttemptAtUtc = null;
+                foreach (var row in ordered)
+                {
+                    lookup[row.Id] = new ChannelDispatchAuditChainContext
+                    {
+                        PriorAttemptCount = priorAttempts,
+                        PriorFailureCount = priorFailures,
+                        LastSuccessfulAttemptAtUtc = lastSuccessfulAttemptAtUtc
+                    };
+
+                    priorAttempts++;
+                    if (string.Equals(row.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        priorFailures++;
+                    }
+
+                    if (string.Equals(row.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                    {
+                        lastSuccessfulAttemptAtUtc = row.AttemptedAtUtc;
+                    }
+                }
+            }
+
+            return lookup;
+        }
+
+        private static bool IsRepeatedFailure(ChannelDispatchAuditChainContext context)
+        {
+            return context.PriorFailureCount > 0;
+        }
+
+        private static ChannelDispatchActionPolicy BuildActionPolicy(
+            ChannelDispatchAudit row,
+            ChannelDispatchAuditChainContext context)
+        {
+            if (string.Equals(row.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ChannelDispatchActionPolicy
+                {
+                    CanRerunNow = false,
+                    State = "Canonical flow",
+                    BlockedReason = "Do not replay historical verification messages. Request a fresh code through the canonical phone-verification flow.",
+                    AvailableAtUtc = null
+                };
+            }
+
+            if (string.Equals(row.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+            {
+                var cooldownUntil = row.AttemptedAtUtc.AddMinutes(5);
+                if (cooldownUntil > DateTime.UtcNow)
+                {
+                    return new ChannelDispatchActionPolicy
+                    {
+                        CanRerunNow = false,
+                        State = "Cooldown",
+                        BlockedReason = "Wait for the transport cooldown window before rerunning the same diagnostic channel test.",
+                        AvailableAtUtc = cooldownUntil
+                    };
+                }
+
+                return new ChannelDispatchActionPolicy
+                {
+                    CanRerunNow = true,
+                    State = context.PriorFailureCount > 0 ? "Retry ready" : "Ready",
+                    BlockedReason = null,
+                    AvailableAtUtc = null
+                };
+            }
+
+            return new ChannelDispatchActionPolicy
+            {
+                CanRerunNow = false,
+                State = "Unsupported",
+                BlockedReason = "No operator rerun path is defined for this non-email flow yet.",
+                AvailableAtUtc = null
+            };
+        }
+
+        private sealed class ChannelDispatchAuditChainContext
+        {
+            public int PriorAttemptCount { get; init; }
+            public int PriorFailureCount { get; init; }
+            public DateTime? LastSuccessfulAttemptAtUtc { get; init; }
+        }
+
+        private sealed class ChannelDispatchActionPolicy
+        {
+            public bool CanRerunNow { get; init; }
+            public string State { get; init; } = string.Empty;
+            public string? BlockedReason { get; init; }
+            public DateTime? AvailableAtUtc { get; init; }
         }
     }
 }

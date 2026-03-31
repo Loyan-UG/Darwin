@@ -2,6 +2,7 @@
 // https://github.com/shahramvafadar/Darwin/blob/301147077eba61b84e0eec8656aec08e20a1795a/src/Darwin.Mobile.Shared/Extensions/ServiceCollectionExtensions.cs
 
 using Darwin.Mobile.Shared.Api;
+using Darwin.Mobile.Shared.Caching;
 using Darwin.Mobile.Shared.Common;
 using Darwin.Mobile.Shared.Configuration;
 using Darwin.Mobile.Shared.Navigation;
@@ -14,6 +15,9 @@ using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.Services.Notifications;
 using Darwin.Mobile.Shared.Services.Permissions;
 using Darwin.Mobile.Shared.Services.Profile;
+using Darwin.Mobile.Shared.Storage.Abstractions;
+using Darwin.Mobile.Shared.Storage.Repositories;
+using Darwin.Mobile.Shared.Storage.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Diagnostics;
@@ -123,6 +127,15 @@ namespace Darwin.Mobile.Shared.Extensions
 
             // Token storage (SecureStorage under the hood in platform-specific implementation).
             services.AddSingleton<ITokenStore, TokenStore>();
+
+            // Local persistence foundation shared by both apps.
+            // The database is intentionally registered once in the shared layer so future
+            // feature caches, offline workflows, and telemetry can reuse the same schema owner.
+            services.AddSingleton<LocalDatabase>();
+            services.AddSingleton<ILocalDbMigrator, SqliteLocalDbMigrator>();
+            services.AddSingleton<IKeyValueStore, SqliteKeyValueStore>();
+            services.AddSingleton<IOutboxRepository, OutboxRepository>();
+            services.AddSingleton<IMobileCacheService, MobileCacheService>();
 
             // Navigation service for MAUI Shell integration (shared).
             services.AddSingleton<INavigationService, ShellNavigationService>();

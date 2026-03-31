@@ -8,53 +8,120 @@
     x:DataType="vm:ScannerViewModel"
     Title="{x:Static res:AppResources.ScanTitle}">
 
-    <!-- Named scroll root to reveal feedback when needed -->
     <ScrollView x:Name="RootScrollView">
-        <VerticalStackLayout Spacing="16" Padding="24">
+        <VerticalStackLayout Spacing="18"
+                             Padding="24,24,24,32">
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.ScanTitle}"
+                           Style="{StaticResource TitleLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.ScannerSingleOwnerHint}"
+                           Style="{StaticResource BodyLabelStyle}" />
+                    <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Button Text="{x:Static res:AppResources.ScanTitle}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding ScanCommand}"
-                    IsEnabled="{Binding CanStartScan}"
-                    HorizontalOptions="Fill" />
+            <Label Text="{Binding SuccessMessage}"
+                   Style="{StaticResource SuccessLabelStyle}"
+                   IsVisible="{Binding HasSuccess}" />
 
-            <Label Text="{Binding OperatorRole, StringFormat='{x:Static res:AppResources.OperatorRoleFormat}'}"
-                   FontSize="12"
-                   Opacity="0.8"
-                   TextColor="{StaticResource BrushOnSurface}" />
-
-            <Label Text="{x:Static res:AppResources.LastTokenLabel}"
-                   Style="{StaticResource TitleLabelStyle}" />
-            <Label Text="{Binding LastScannedToken}"
-                   TextColor="{StaticResource BrushPrimary}"
-                   FontSize="16"
-                   LineBreakMode="CharacterWrap" />
-
-            <Label Text="{x:Static res:AppResources.ScannerSingleOwnerHint}"
-                   FontSize="12"
-                   Opacity="0.75"
-                   TextColor="{StaticResource BrushOnSurface}" />
-
-            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedAccrual}"
-                   TextColor="OrangeRed"
-                   FontSize="12"
-                   IsVisible="{Binding HasAccrualPermission, Converter={StaticResource InverseBoolConverter}}" />
-
-            <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRedemption}"
-                   TextColor="OrangeRed"
-                   FontSize="12"
-                   IsVisible="{Binding HasRedemptionPermission, Converter={StaticResource InverseBoolConverter}}" />
-
-            <Label Text="{x:Static res:AppResources.BusinessNoScannerPermissionWarning}"
-                   TextColor="OrangeRed"
-                   FontSize="12"
-                   IsVisible="{Binding HasAnyProcessingPermission, Converter={StaticResource InverseBoolConverter}}" />
+            <Label Text="{Binding WarningMessage}"
+                   Style="{StaticResource WarningLabelStyle}"
+                   IsVisible="{Binding HasWarning}" />
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
-                   IsVisible="{Binding HasError}"
-                   LineBreakMode="WordWrap" />
+                   Style="{StaticResource ErrorLabelStyle}"
+                   IsVisible="{Binding HasError}" />
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="{Binding ScannerReadinessMessage}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}" />
+                    <Button Text="{x:Static res:AppResources.ScanTitle}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding ScanCommand}"
+                            IsEnabled="{Binding CanStartScan}"
+                            HorizontalOptions="Fill" />
+
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Border Grid.Column="0"
+                                Style="{StaticResource MutedCardBorderStyle}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{x:Static res:AppResources.ConfirmAccrualButton}"
+                                       Style="{StaticResource CaptionLabelStyle}" />
+                                <Label Text="{x:Static res:AppResources.AccrualHelpText}"
+                                       Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Style="{StaticResource MutedCardBorderStyle}">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="{x:Static res:AppResources.ConfirmRedemptionButton}"
+                                       Style="{StaticResource CaptionLabelStyle}" />
+                                <Label Text="{x:Static res:AppResources.RedemptionHelpText}"
+                                       Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource EmptyStateCardBorderStyle}"
+                    IsVisible="False">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border"
+                                 Binding="{Binding LastScannedToken}"
+                                 Value="">
+                        <Setter Property="IsVisible"
+                                Value="True" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border"
+                                 Binding="{Binding LastScannedToken}"
+                                 Value="{x:Null}">
+                        <Setter Property="IsVisible"
+                                Value="True" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{x:Static res:AppResources.LastTokenLabel}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{x:Static res:AppResources.NoQrDetected}"
+                           Style="{StaticResource BodyLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}"
+                    IsVisible="{Binding HasLastScannedToken}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.LastTokenLabel}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+                    <Label Text="{Binding LastScannedToken}"
+                           Style="{StaticResource BodyLabelStyle}"
+                           LineBreakMode="CharacterWrap" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.HomeStatusTitle}"
+                           Style="{StaticResource SectionHeadingLabelStyle}" />
+
+                    <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedAccrual}"
+                           Style="{StaticResource WarningLabelStyle}"
+                           IsVisible="{Binding HasAccrualPermission, Converter={StaticResource InverseBoolConverter}}" />
+
+                    <Label Text="{x:Static res:AppResources.BusinessPermissionDeniedRedemption}"
+                           Style="{StaticResource WarningLabelStyle}"
+                           IsVisible="{Binding HasRedemptionPermission, Converter={StaticResource InverseBoolConverter}}" />
+
+                    <Label Text="{x:Static res:AppResources.BusinessNoScannerPermissionWarning}"
+                           Style="{StaticResource WarningLabelStyle}"
+                           IsVisible="{Binding HasAnyProcessingPermission, Converter={StaticResource InverseBoolConverter}}" />
+                </VerticalStackLayout>
+            </Border>
 
             <ActivityIndicator IsRunning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}"

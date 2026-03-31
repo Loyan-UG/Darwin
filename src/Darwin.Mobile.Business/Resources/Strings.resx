@@ -94,6 +94,9 @@
   <data name="HomeTitle" xml:space="preserve">
     <value>Home</value>
   </data>
+  <data name="HomeLoadingMessage" xml:space="preserve">
+    <value>Loading your business context and operator access...</value>
+  </data>
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Invalid email or password.</value>
   </data>
@@ -117,6 +120,18 @@
   </data>
   <data name="LoginButton" xml:space="preserve">
     <value>Sign in</value>
+  </data>
+  <data name="LoginReadinessBusy" xml:space="preserve">
+    <value>Signing you in and restoring your business access...</value>
+  </data>
+  <data name="LoginReadinessEmail" xml:space="preserve">
+    <value>Enter your business email to continue.</value>
+  </data>
+  <data name="LoginReadinessPassword" xml:space="preserve">
+    <value>Enter your password to continue.</value>
+  </data>
+  <data name="LoginReadinessReady" xml:space="preserve">
+    <value>Your operator credentials are ready. You can continue now.</value>
   </data>
   <data name="LoginTitle" xml:space="preserve">
     <value>Login</value>
@@ -472,8 +487,20 @@
   <data name="RewardsDeleteButton" xml:space="preserve">
     <value>Delete tier</value>
   </data>
+  <data name="RewardsDeleteSelectionRequiredHint" xml:space="preserve">
+    <value>Select an existing reward tier below before deleting it.</value>
+  </data>
   <data name="RewardsCurrentTiersLabel" xml:space="preserve">
     <value>Current tiers</value>
+  </data>
+  <data name="RewardsTiersEmptyStateMessage" xml:space="preserve">
+    <value>No reward tiers have been configured yet. Create the first tier above to define your loyalty offer.</value>
+  </data>
+  <data name="RewardsEditorNewHint" xml:space="preserve">
+    <value>Create a new reward tier here, or select an existing tier below to revise it.</value>
+  </data>
+  <data name="RewardsEditorEditingHint" xml:space="preserve">
+    <value>You are editing an existing reward tier. Save to apply updates, or delete it if the offer is no longer valid.</value>
   </data>
   <data name="RewardsPointsPlaceholder" xml:space="preserve">
     <value>Points required</value>
@@ -513,6 +540,9 @@
   </data>
   <data name="DashboardTitle" xml:space="preserve">
     <value>Dashboard</value>
+  </data>
+  <data name="DashboardLoadingMessage" xml:space="preserve">
+    <value>Preparing business KPIs and recent activity...</value>
   </data>
   <data name="DashboardSubtitle" xml:space="preserve">
     <value>Operational snapshot for recent scanner activity.</value>
@@ -573,6 +603,15 @@
   </data>
   <data name="ScannerSingleOwnerHint" xml:space="preserve">
     <value>After scanning, the session screen will load details and handle confirmation in one place.</value>
+  </data>
+  <data name="ScannerReadinessBusy" xml:space="preserve">
+    <value>Preparing scanner access and processing the current scan...</value>
+  </data>
+  <data name="ScannerReadinessReady" xml:space="preserve">
+    <value>Scanner access is ready. Start a scan when the customer QR is available.</value>
+  </data>
+  <data name="ScannerScanSuccessMessage" xml:space="preserve">
+    <value>QR code scanned successfully.</value>
   </data>
   <data name="RewardsCampaignsLabel" xml:space="preserve">
     <value>Campaigns</value>
@@ -754,8 +793,20 @@
   <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
     <value>No campaigns match the current search/filter.</value>
   </data>
+  <data name="RewardsCampaignsEmptyDataset" xml:space="preserve">
+    <value>No campaigns have been created yet. Use the campaign editor above to prepare your first campaign draft.</value>
+  </data>
   <data name="RewardsCampaignClearFiltersButton" xml:space="preserve">
     <value>Clear filters</value>
+  </data>
+  <data name="RewardsCampaignEditorNewHint" xml:space="preserve">
+    <value>Create a new campaign draft here, or select an existing campaign below to revise targeting and schedule.</value>
+  </data>
+  <data name="RewardsCampaignEditorEditingHint" xml:space="preserve">
+    <value>You are editing an existing campaign. Save to keep changes aligned with the current activation and targeting rules.</value>
+  </data>
+  <data name="RewardsCampaignSelectionHint" xml:space="preserve">
+    <value>Select an existing campaign below if you want to revise it instead of creating a new draft.</value>
   </data>
   <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
     <value>Showing {0} of {1} campaigns</value>
@@ -1245,6 +1296,12 @@
   </data>
   <data name="HomeCurrentBusinessContextTitle" xml:space="preserve">
     <value>Current business context</value>
+  </data>
+  <data name="BusinessCategoryLabel" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="BusinessCityLabel" xml:space="preserve">
+    <value>City</value>
   </data>
   <data name="HomeOperatorLabel" xml:space="preserve">
     <value>Operator:</value>

@@ -6,96 +6,111 @@
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
     x:Class="Darwin.Mobile.Consumer.Views.LoginPage"
     x:DataType="vm:LoginViewModel"
-    Title="{x:Static res:AppResources.LoginTitle}">
+    Title="{x:Static res:AppResources.LoginTitle}"
+    BackgroundColor="{StaticResource Neutral0}">
 
     <ScrollView x:Name="RootScrollView">
-        <VerticalStackLayout Padding="24" Spacing="20">
-            <Image Source="loyan_logo.png"
-                   WidthRequest="120" HeightRequest="120"
-                   HorizontalOptions="Center" />
+        <VerticalStackLayout Padding="24,32,24,28" Spacing="18">
+            <Border StrokeThickness="0"
+                    HorizontalOptions="Center"
+                    WidthRequest="132"
+                    HeightRequest="132"
+                    StrokeShape="RoundRectangle 66">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="{StaticResource BrandGold500}" Offset="0" />
+                        <GradientStop Color="{StaticResource BrandGold300}" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid Padding="22">
+                    <Image Source="loyan_logo.png"
+                           Aspect="AspectFit" />
+                </Grid>
+            </Border>
 
-            <Label Text="{x:Static res:AppResources.LoginTitle}"
-                   Style="{StaticResource TitleLabelStyle}"
-                   HorizontalOptions="Center" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.LoginTitle}"
+                           Style="{StaticResource TitleLabelStyle}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding LoginReadinessMessage}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="{x:Static res:AppResources.EmailLabel}"
-                   TextColor="{StaticResource Neutral900}" />
-            <Entry Text="{Binding Email}"
-                   Keyboard="Email"
-                   Placeholder="{x:Static res:AppResources.LoginEmailPlaceholder}"
-                   TextColor="{StaticResource Neutral900}"
-                   PlaceholderColor="Gray" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.EmailLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border x:Name="EmailBorder"
+                                Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry x:Name="EmailEntry"
+                                   Text="{Binding Email}"
+                                   Keyboard="Email"
+                                   Placeholder="{x:Static res:AppResources.LoginEmailPlaceholder}"
+                                   Style="{StaticResource FormEntryStyle}"
+                                   Focused="OnEmailEntryFocused"
+                                   Unfocused="OnEmailEntryUnfocused" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Label Text="{x:Static res:AppResources.PasswordLabel}"
-                   TextColor="{StaticResource Neutral900}" />
-            <Entry Text="{Binding Password}"
-                   IsPassword="True"
-                   Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
-                   TextColor="{StaticResource Neutral900}"
-                   PlaceholderColor="Gray" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.PasswordLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border x:Name="PasswordBorder"
+                                Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry x:Name="PasswordEntry"
+                                   Text="{Binding Password}"
+                                   IsPassword="True"
+                                   Placeholder="{x:Static res:AppResources.LoginPasswordPlaceholder}"
+                                   Style="{StaticResource FormEntryStyle}"
+                                   Focused="OnPasswordEntryFocused"
+                                   Unfocused="OnPasswordEntryUnfocused" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Button Text="{x:Static res:AppResources.LoginButton}"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding LoginCommand}" />
+                    <Button Text="{x:Static res:AppResources.LoginButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding LoginCommand}"
+                            IsEnabled="{Binding IsLoginReady}" />
 
-            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
-                <Button Text="{x:Static res:AppResources.RegisterButton}"
-                        Clicked="OnRegisterClicked"
-                        BackgroundColor="Transparent"
-                        TextColor="{StaticResource BrandGold500}" />
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Button Text="{x:Static res:AppResources.RegisterButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                Clicked="OnRegisterClicked" />
 
-                <Button Text="{x:Static res:AppResources.ForgotPasswordButton}"
-                        Clicked="OnForgotPasswordClicked"
-                        BackgroundColor="Transparent"
-                        TextColor="{StaticResource BrandGold500}" />
-            </HorizontalStackLayout>
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.ForgotPasswordButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                Clicked="OnForgotPasswordClicked" />
+                    </Grid>
 
-            <Button Text="{x:Static res:AppResources.RequestActivationEmailButton}"
-                    BackgroundColor="Transparent"
-                    TextColor="{StaticResource BrandGold500}"
-                    Command="{Binding RequestActivationEmailCommand}" />
-
-            <Border Stroke="{StaticResource Neutral300}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="{x:Static res:AppResources.AuthLegalSectionTitle}"
-                           FontAttributes="Bold"
-                           FontSize="16" />
-
-                    <Label Text="{x:Static res:AppResources.AuthLegalSectionSubtitle}"
-                           FontSize="13"
-                           LineBreakMode="WordWrap"
-                           Opacity="0.85" />
-
-                    <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding OpenImpressumCommand}" />
-
-                    <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding OpenPrivacyPolicyCommand}" />
-
-                    <Button Text="{x:Static res:AppResources.LegalTermsButton}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding OpenTermsCommand}" />
-
-                    <Button Text="{x:Static res:AppResources.LegalHubTitle}"
-                            BackgroundColor="Transparent"
-                            TextColor="{StaticResource BrandGold500}"
-                            Clicked="OnLegalHubClicked" />
+                    <Button Text="{x:Static res:AppResources.RequestActivationEmailButton}"
+                            Style="{StaticResource LinkButtonStyle}"
+                            HorizontalOptions="Start"
+                            Command="{Binding RequestActivationEmailCommand}" />
                 </VerticalStackLayout>
             </Border>
 
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
+                   Style="{StaticResource ErrorLabelStyle}"
                    IsVisible="{Binding HasError}" />
 
             <Label Text="{Binding InfoMessage}"
-                   TextColor="{StaticResource BrandGold500}"
+                   Style="{StaticResource InfoLabelStyle}"
                    IsVisible="{Binding HasInfo}" />
 
             <ActivityIndicator IsVisible="{Binding IsBusy}"
                                IsRunning="{Binding IsBusy}"
                                Color="{StaticResource BrandGold500}" />
+
+            <Button Text="{x:Static res:AppResources.LegalHubTitle}"
+                    Style="{StaticResource LegalLinkButtonStyle}"
+                    HorizontalOptions="Center"
+                    Clicked="OnLegalHubClicked" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

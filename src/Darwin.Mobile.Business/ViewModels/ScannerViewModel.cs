@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,9 +46,6 @@ public sealed class ScannerViewModel : BaseViewModel
     /// <summary>
     /// Initializes a new instance of the <see cref="ScannerViewModel"/> class.
     /// </summary>
-    /// <param name="scanner">The scanner implementation used to read QR codes.</param>
-    /// <param name="navigationService">Shell navigation service for page transitions.</param>
-    /// <param name="authorizationService">Business authorization context used for role/permission labels.</param>
     public ScannerViewModel(
         IScanner scanner,
         INavigationService navigationService,
@@ -60,7 +57,7 @@ public sealed class ScannerViewModel : BaseViewModel
         _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         _businessAccessService = businessAccessService ?? throw new ArgumentNullException(nameof(businessAccessService));
 
-        ScanCommand = new AsyncCommand(ScanAsync);
+        ScanCommand = new AsyncCommand(ScanAsync, () => CanStartScan);
     }
 
     /// <summary>
@@ -82,8 +79,7 @@ public sealed class ScannerViewModel : BaseViewModel
         {
             if (SetProperty(ref _hasAccrualPermission, value))
             {
-                OnPropertyChanged(nameof(HasAnyProcessingPermission));
-                OnPropertyChanged(nameof(CanStartScan));
+                RaiseScannerStateChanged();
             }
         }
     }
@@ -98,8 +94,7 @@ public sealed class ScannerViewModel : BaseViewModel
         {
             if (SetProperty(ref _hasRedemptionPermission, value))
             {
-                OnPropertyChanged(nameof(HasAnyProcessingPermission));
-                OnPropertyChanged(nameof(CanStartScan));
+                RaiseScannerStateChanged();
             }
         }
     }
@@ -116,13 +111,50 @@ public sealed class ScannerViewModel : BaseViewModel
     public bool CanStartScan => HasAnyProcessingPermission && _isOperationsAllowed && !IsBusy;
 
     /// <summary>
+    /// Gets a contextual readiness message for the main scanner CTA.
+    /// </summary>
+    public string ScannerReadinessMessage
+    {
+        get
+        {
+            if (IsBusy)
+            {
+                return AppResources.ScannerReadinessBusy;
+            }
+
+            if (!HasAnyProcessingPermission)
+            {
+                return AppResources.BusinessNoScannerPermissionWarning;
+            }
+
+            if (!_isOperationsAllowed)
+            {
+                return WarningMessage ?? AppResources.BusinessAccessStateLoadFailed;
+            }
+
+            return AppResources.ScannerReadinessReady;
+        }
+    }
+
+    /// <summary>
     /// Gets the last scanned QR token, mainly for debugging or display only.
     /// </summary>
     public string LastScannedToken
     {
         get => _lastScannedToken;
-        private set => SetProperty(ref _lastScannedToken, value);
+        private set
+        {
+            if (SetProperty(ref _lastScannedToken, value))
+            {
+                OnPropertyChanged(nameof(HasLastScannedToken));
+            }
+        }
     }
+
+    /// <summary>
+    /// Gets whether a last scanned token is available for display.
+    /// </summary>
+    public bool HasLastScannedToken => !string.IsNullOrWhiteSpace(LastScannedToken);
 
     /// <summary>
     /// Success banner text shown at top of page.
@@ -150,6 +182,7 @@ public sealed class ScannerViewModel : BaseViewModel
             if (SetProperty(ref _warningMessage, value))
             {
                 OnPropertyChanged(nameof(HasWarning));
+                OnPropertyChanged(nameof(ScannerReadinessMessage));
             }
         }
     }
@@ -183,7 +216,7 @@ public sealed class ScannerViewModel : BaseViewModel
         }
 
         IsBusy = true;
-        OnPropertyChanged(nameof(CanStartScan));
+        RaiseScannerStateChanged();
         ClearFeedback();
 
         try
@@ -193,38 +226,29 @@ public sealed class ScannerViewModel : BaseViewModel
                 return;
             }
 
-            // Read a QR code from the scanner. If the user cancels or no QR is found,
-            // scanner returns null or empty string.
-            // IMPORTANT: keep default await context in view-model methods because we update
-            // UI-bound properties right after awaits (Android requires main-thread UI access).
             var token = await _scanner.ScanAsync(CancellationToken.None);
 
             if (string.IsNullOrWhiteSpace(token))
             {
                 LastScannedToken = string.Empty;
-                SetWarning("No QR code detected.");
+                SetWarning(AppResources.NoQrDetected);
                 return;
             }
 
             LastScannedToken = token;
 
-            // IMPORTANT:
-            // Do not call ProcessScanSessionForBusinessAsync here.
-            // The session page is the single owner of scan/session resolution and will call
-            // the API exactly once after navigation. This avoids duplicate process requests
-            // and prevents inconsistent UI state when the same token is processed twice.
             var parameters = new Dictionary<string, object?>
             {
                 ["token"] = token
             };
 
-            SetSuccess("QR code scanned successfully.");
+            SetSuccess(AppResources.ScannerScanSuccessMessage);
             await _navigationService.GoToAsync(Routes.Session, parameters);
         }
         finally
         {
             IsBusy = false;
-            OnPropertyChanged(nameof(CanStartScan));
+            RaiseScannerStateChanged();
         }
     }
 
@@ -286,14 +310,14 @@ public sealed class ScannerViewModel : BaseViewModel
             RunOnMain(() =>
             {
                 SetWarning(AppResources.BusinessAccessStateLoadFailed);
-                OnPropertyChanged(nameof(CanStartScan));
+                RaiseScannerStateChanged();
             });
 
             return false;
         }
 
         _isOperationsAllowed = result.Value.IsOperationsAllowed;
-        RunOnMain(() => OnPropertyChanged(nameof(CanStartScan)));
+        RunOnMain(RaiseScannerStateChanged);
 
         if (_isOperationsAllowed)
         {
@@ -302,5 +326,16 @@ public sealed class ScannerViewModel : BaseViewModel
 
         RunOnMain(() => SetWarning(BusinessAccessStateUiMapper.GetOperationalStatusMessage(result.Value)));
         return false;
+    }
+
+    /// <summary>
+    /// Raises all scanner readiness properties together so CTA and helper states stay aligned.
+    /// </summary>
+    private void RaiseScannerStateChanged()
+    {
+        OnPropertyChanged(nameof(HasAnyProcessingPermission));
+        OnPropertyChanged(nameof(CanStartScan));
+        OnPropertyChanged(nameof(ScannerReadinessMessage));
+        ScanCommand.RaiseCanExecuteChanged();
     }
 }

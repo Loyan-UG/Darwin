@@ -177,6 +177,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int WhatsAppCount { get; set; }
         public int PhoneVerificationCount { get; set; }
         public int AdminTestCount { get; set; }
+        public int RepeatedFailureCount { get; set; }
+        public int PriorSuccessContextCount { get; set; }
+        public int ActionReadyCount { get; set; }
+        public int ActionBlockedCount { get; set; }
     }
 
     public sealed class ChannelDispatchAuditListItemVm
@@ -193,6 +197,13 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public DateTime? CompletedAtUtc { get; set; }
         public string? FailureMessage { get; set; }
         public bool NeedsOperatorFollowUp { get; set; }
+        public int PriorAttemptCount { get; set; }
+        public int PriorFailureCount { get; set; }
+        public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
+        public bool CanRerunNow { get; set; }
+        public string ActionPolicyState { get; set; } = string.Empty;
+        public string? ActionBlockedReason { get; set; }
+        public DateTime? ActionAvailableAtUtc { get; set; }
     }
 
     public sealed class ChannelDispatchAuditChainSummaryVm
@@ -233,8 +244,14 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool FailedOnly { get; set; }
         public bool PhoneVerificationOnly { get; set; }
         public bool AdminTestOnly { get; set; }
+        public bool RepeatedFailuresOnly { get; set; }
+        public bool PriorSuccessOnly { get; set; }
+        public bool ActionReadyOnly { get; set; }
+        public bool ActionBlockedOnly { get; set; }
         public bool ChainFollowUpOnly { get; set; }
         public bool ChainResolvedOnly { get; set; }
+        public bool CanSendTestSms { get; set; }
+        public bool CanSendTestWhatsApp { get; set; }
         public ChannelDispatchAuditSummaryVm Summary { get; set; } = new();
         public ChannelDispatchAuditChainSummaryVm? ChainSummary { get; set; }
         public List<ChannelDispatchAuditListItemVm> Items { get; set; } = new();

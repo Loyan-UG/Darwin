@@ -67,31 +67,61 @@ public sealed class RegisterViewModel : BaseViewModel
     public string FirstName
     {
         get => _firstName;
-        set => SetProperty(ref _firstName, value);
+        set
+        {
+            if (SetProperty(ref _firstName, value))
+            {
+                RaiseRegistrationStateChanged();
+            }
+        }
     }
 
     public string LastName
     {
         get => _lastName;
-        set => SetProperty(ref _lastName, value);
+        set
+        {
+            if (SetProperty(ref _lastName, value))
+            {
+                RaiseRegistrationStateChanged();
+            }
+        }
     }
 
     public string Email
     {
         get => _email;
-        set => SetProperty(ref _email, value);
+        set
+        {
+            if (SetProperty(ref _email, value))
+            {
+                RaiseRegistrationStateChanged();
+            }
+        }
     }
 
     public string Password
     {
         get => _password;
-        set => SetProperty(ref _password, value);
+        set
+        {
+            if (SetProperty(ref _password, value))
+            {
+                RaiseRegistrationStateChanged();
+            }
+        }
     }
 
     public string ConfirmPassword
     {
         get => _confirmPassword;
-        set => SetProperty(ref _confirmPassword, value);
+        set
+        {
+            if (SetProperty(ref _confirmPassword, value))
+            {
+                RaiseRegistrationStateChanged();
+            }
+        }
     }
 
     /// <summary>
@@ -124,7 +154,7 @@ public sealed class RegisterViewModel : BaseViewModel
         {
             if (SetProperty(ref _acceptConsumerTerms, value))
             {
-                RegisterCommand.RaiseCanExecuteChanged();
+                RaiseRegistrationStateChanged();
             }
         }
     }
@@ -139,12 +169,72 @@ public sealed class RegisterViewModel : BaseViewModel
         {
             if (SetProperty(ref _acknowledgePrivacyNotice, value))
             {
-                RegisterCommand.RaiseCanExecuteChanged();
+                RaiseRegistrationStateChanged();
             }
         }
     }
 
-    private bool CanRegister() => !IsBusy && AcceptConsumerTerms && AcknowledgePrivacyNotice;
+    /// <summary>
+    /// Gets a value indicating whether the registration form meets minimum local requirements to enable submission.
+    /// </summary>
+    public bool IsRegistrationReady =>
+        !IsBusy &&
+        !string.IsNullOrWhiteSpace(FirstName) &&
+        !string.IsNullOrWhiteSpace(LastName) &&
+        !string.IsNullOrWhiteSpace(Email) &&
+        !string.IsNullOrWhiteSpace(Password) &&
+        Password.Length >= 8 &&
+        string.Equals(Password, ConfirmPassword, StringComparison.Ordinal) &&
+        AcceptConsumerTerms &&
+        AcknowledgePrivacyNotice;
+
+    /// <summary>
+    /// Gets a contextual status message that explains what still blocks registration.
+    /// </summary>
+    public string RegistrationReadinessMessage
+    {
+        get
+        {
+            if (IsBusy)
+            {
+                return AppResources.RegisterReadinessBusy;
+            }
+
+            if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName))
+            {
+                return AppResources.RegisterReadinessProfileDetails;
+            }
+
+            if (string.IsNullOrWhiteSpace(Email))
+            {
+                return AppResources.RegisterReadinessEmail;
+            }
+
+            if (string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
+            {
+                return AppResources.RegisterReadinessPassword;
+            }
+
+            if (Password.Length < 8)
+            {
+                return AppResources.RegisterReadinessPasswordLength;
+            }
+
+            if (!string.Equals(Password, ConfirmPassword, StringComparison.Ordinal))
+            {
+                return AppResources.RegisterReadinessPasswordMismatch;
+            }
+
+            if (!AcceptConsumerTerms || !AcknowledgePrivacyNotice)
+            {
+                return AppResources.RegisterReadinessAcknowledgements;
+            }
+
+            return AppResources.RegisterReadinessReady;
+        }
+    }
+
+    private bool CanRegister() => IsRegistrationReady;
 
     private async Task RegisterAsync()
     {
@@ -156,7 +246,7 @@ public sealed class RegisterViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
-        RegisterCommand.RaiseCanExecuteChanged();
+        RaiseRegistrationStateChanged();
 
         var normalizedEmail = Email.Trim();
         var rawPassword = Password;
@@ -216,10 +306,20 @@ public sealed class RegisterViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
-            RegisterCommand.RaiseCanExecuteChanged();
+            RaiseRegistrationStateChanged();
             OpenTermsCommand.RaiseCanExecuteChanged();
             OpenPrivacyPolicyCommand.RaiseCanExecuteChanged();
         }
+    }
+
+    /// <summary>
+    /// Raises all UI-bound registration readiness properties together so the submit action and helper text remain aligned.
+    /// </summary>
+    private void RaiseRegistrationStateChanged()
+    {
+        OnPropertyChanged(nameof(IsRegistrationReady));
+        OnPropertyChanged(nameof(RegistrationReadinessMessage));
+        RegisterCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>

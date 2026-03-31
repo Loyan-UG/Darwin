@@ -5,97 +5,111 @@
     xmlns:vm="clr-namespace:Darwin.Mobile.Business.ViewModels"
     x:Class="Darwin.Mobile.Business.Views.LoginPage"
     x:DataType="vm:LoginViewModel"
-    Title="{x:Static res:AppResources.LoginTitle}"
-    BackgroundColor="{DynamicResource PageBackgroundColor}">
+    Title="{x:Static res:AppResources.LoginTitle}">
 
-    <ScrollView x:Name="RootScrollView" VerticalOptions="Fill" HorizontalOptions="Fill">
-        <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*" Padding="24">
-            <StackLayout Grid.Row="1" Spacing="20" HorizontalOptions="Center" WidthRequest="360">
-                <Image Source="loyan_logo.png"
-                       WidthRequest="160"
-                       HeightRequest="160"
-                       HorizontalOptions="Center"
-                       Aspect="AspectFit"
-                       SemanticProperties.Description="{x:Static res:AppResources.LoginLogoDescription}" />
+    <ScrollView x:Name="RootScrollView"
+                VerticalOptions="Fill"
+                HorizontalOptions="Fill">
+        <VerticalStackLayout Padding="24,32,24,28"
+                             Spacing="18">
+            <Border StrokeThickness="0"
+                    HorizontalOptions="Center"
+                    WidthRequest="132"
+                    HeightRequest="132"
+                    StrokeShape="RoundRectangle 66">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0"
+                                         EndPoint="1,1">
+                        <GradientStop Color="{StaticResource BrandGold500}"
+                                      Offset="0" />
+                        <GradientStop Color="{StaticResource BrandGold600}"
+                                      Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid Padding="22">
+                    <Image Source="loyan_logo.png"
+                           Aspect="AspectFit"
+                           SemanticProperties.Description="{x:Static res:AppResources.LoginLogoDescription}" />
+                </Grid>
+            </Border>
 
-                <Label Text="{x:Static res:AppResources.LoginTitle}"
-                       FontSize="22"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static res:AppResources.LoginTitle}"
+                           Style="{StaticResource TitleLabelStyle}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding LoginReadinessMessage}"
+                           Style="{StaticResource SecondaryBodyLabelStyle}"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Border>
 
-                <Entry Placeholder="{x:Static res:AppResources.EmailLabel}"
-                       Keyboard="Email"
-                       Text="{Binding Email}"
-                       ReturnType="Next"
-                       AutomationId="EmailEntry" />
-
-                <Entry Placeholder="{x:Static res:AppResources.PasswordLabel}"
-                       IsPassword="True"
-                       Text="{Binding Password}"
-                       ReturnType="Done"
-                       AutomationId="PasswordEntry" />
-
-                <Button Text="{x:Static res:AppResources.LoginButton}"
-                        Command="{Binding LoginCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                        HeightRequest="48"
-                        CornerRadius="6"
-                        AutomationId="SignInButton" />
-
-                <Button Text="{x:Static res:AppResources.LoginAcceptInvitationButton}"
-                        Command="{Binding OpenInvitationAcceptanceCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                        HeightRequest="44"
-                        CornerRadius="6"
-                        AutomationId="OpenInvitationAcceptanceButton" />
-
-                <Button Text="{x:Static res:AppResources.RequestActivationEmailButton}"
-                        Command="{Binding RequestActivationEmailCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                        HeightRequest="44"
-                        CornerRadius="6"
-                        AutomationId="RequestActivationEmailButton" />
-
-                <Border StrokeThickness="1" Padding="16">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="{x:Static res:AppResources.AuthLegalSectionTitle}"
-                               FontAttributes="Bold"
-                               FontSize="16" />
-
-                        <Label Text="{x:Static res:AppResources.AuthLegalSectionSubtitle}"
-                               FontSize="13"
-                               LineBreakMode="WordWrap"
-                               Opacity="0.85" />
-
-                        <Button Text="{x:Static res:AppResources.LegalImpressumButton}"
-                                Command="{Binding OpenImpressumCommand}" />
-
-                        <Button Text="{x:Static res:AppResources.LegalPrivacyNoticeButton}"
-                                Command="{Binding OpenPrivacyPolicyCommand}" />
-
-                        <Button Text="{x:Static res:AppResources.LegalTermsButton}"
-                                Command="{Binding OpenTermsCommand}" />
-
-                        <Button Text="{x:Static res:AppResources.LegalHubTitle}"
-                                Command="{Binding OpenLegalHubCommand}" />
+            <Border Style="{StaticResource CardBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.EmailLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.EmailLabel}"
+                                   Keyboard="Email"
+                                   Text="{Binding Email}"
+                                   ReturnType="Next"
+                                   Style="{StaticResource FormEntryStyle}"
+                                   AutomationId="EmailEntry" />
+                        </Border>
                     </VerticalStackLayout>
-                </Border>
 
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="Crimson"
-                       FontSize="14"
-                       LineBreakMode="WordWrap"
-                       IsVisible="{Binding HasError}"
-                       AutomationId="ErrorLabel" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{x:Static res:AppResources.PasswordLabel}"
+                               Style="{StaticResource FormLabelStyle}" />
+                        <Border Style="{StaticResource FormFieldBorderStyle}">
+                            <Entry Placeholder="{x:Static res:AppResources.PasswordLabel}"
+                                   IsPassword="True"
+                                   Text="{Binding Password}"
+                                   ReturnType="Done"
+                                   Style="{StaticResource FormEntryStyle}"
+                                   AutomationId="PasswordEntry" />
+                        </Border>
+                    </VerticalStackLayout>
 
-                <Label Text="{Binding InfoMessage}"
-                       TextColor="DarkGoldenrod"
-                       FontSize="14"
-                       LineBreakMode="WordWrap"
-                       IsVisible="{Binding HasInfo}"
-                       AutomationId="InfoLabel" />
+                    <Button Text="{x:Static res:AppResources.LoginButton}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding LoginCommand}"
+                            IsEnabled="{Binding IsLoginReady}"
+                            AutomationId="SignInButton" />
 
-            </StackLayout>
-        </Grid>
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="12">
+                        <Button Text="{x:Static res:AppResources.LoginAcceptInvitationButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                Command="{Binding OpenInvitationAcceptanceCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                                AutomationId="OpenInvitationAcceptanceButton" />
+
+                        <Button Grid.Column="1"
+                                Text="{x:Static res:AppResources.RequestActivationEmailButton}"
+                                Style="{StaticResource OutlinedButtonStyle}"
+                                Command="{Binding RequestActivationEmailCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                                AutomationId="RequestActivationEmailButton" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="{Binding ErrorMessage}"
+                   Style="{StaticResource ErrorLabelStyle}"
+                   IsVisible="{Binding HasError}"
+                   AutomationId="ErrorLabel" />
+
+            <Label Text="{Binding InfoMessage}"
+                   Style="{StaticResource InfoLabelStyle}"
+                   IsVisible="{Binding HasInfo}"
+                   AutomationId="InfoLabel" />
+
+            <Button Text="{x:Static res:AppResources.LegalHubTitle}"
+                    Style="{StaticResource LegalLinkButtonStyle}"
+                    HorizontalOptions="Center"
+                    Command="{Binding OpenLegalHubCommand}" />
+        </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

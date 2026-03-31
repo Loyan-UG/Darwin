@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Common;
 using Darwin.Contracts.Loyalty;
+using Darwin.Mobile.Consumer.Services.Caching;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Integration;
 using Darwin.Mobile.Shared.Services;
-using Darwin.Mobile.Shared.Services.Loyalty;
 using Darwin.Mobile.Shared.ViewModels;
 
 namespace Darwin.Mobile.Consumer.ViewModels;
@@ -33,7 +33,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class DiscoverViewModel : BaseViewModel
 {
     private readonly IBusinessService _businessService;
-    private readonly ILoyaltyService _loyaltyService;
+    private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly ILocation _location;
 
     private bool _hasLoaded;
@@ -47,11 +47,11 @@ public sealed class DiscoverViewModel : BaseViewModel
 
     public DiscoverViewModel(
         IBusinessService businessService,
-        ILoyaltyService loyaltyService,
+        IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
         ILocation location)
     {
         _businessService = businessService ?? throw new ArgumentNullException(nameof(businessService));
-        _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _location = location ?? throw new ArgumentNullException(nameof(location));
 
         JoinedAccounts = new ObservableCollection<LoyaltyAccountSummary>();
@@ -270,7 +270,7 @@ public sealed class DiscoverViewModel : BaseViewModel
 
     private async Task LoadJoinedAccountsAsync()
     {
-        var accountsResult = await _loyaltyService.GetMyAccountsAsync(CancellationToken.None);
+        var accountsResult = await _loyaltySnapshotCache.GetMyAccountsAsync(CancellationToken.None);
 
         if (!accountsResult.Succeeded || accountsResult.Value is null)
         {

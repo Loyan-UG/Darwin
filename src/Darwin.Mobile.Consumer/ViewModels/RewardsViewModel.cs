@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
 using Darwin.Mobile.Consumer.Resources;
+using Darwin.Mobile.Consumer.Services.Caching;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -38,6 +39,7 @@ namespace Darwin.Mobile.Consumer.ViewModels;
 public sealed class RewardsViewModel : BaseViewModel
 {
     private readonly ILoyaltyService _loyaltyService;
+    private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
 
     private Guid _businessId;
@@ -55,9 +57,13 @@ public sealed class RewardsViewModel : BaseViewModel
     private int _pointsExpiringSoon;
     private DateTime? _nextPointsExpiryAtUtc;
 
-    public RewardsViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
+    public RewardsViewModel(
+        ILoyaltyService loyaltyService,
+        IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
+        INavigationService navigationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         AvailableRewards = new ObservableCollection<LoyaltyRewardSummary>();
@@ -388,7 +394,7 @@ public sealed class RewardsViewModel : BaseViewModel
 
         try
         {
-            var overviewResult = await _loyaltyService.GetMyOverviewAsync(CancellationToken.None);
+            var overviewResult = await _loyaltySnapshotCache.GetMyOverviewAsync(CancellationToken.None);
 
             if (!overviewResult.Succeeded || overviewResult.Value is null)
             {

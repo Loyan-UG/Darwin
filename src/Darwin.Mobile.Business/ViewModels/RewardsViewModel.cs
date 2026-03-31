@@ -294,6 +294,11 @@ public sealed partial class RewardsViewModel : BaseViewModel
     public bool HasCampaigns => Campaigns.Count > 0;
 
     /// <summary>
+    /// Indicates whether at least one reward tier is available for selection.
+    /// </summary>
+    public bool HasRewardTiers => RewardTiers.Count > 0;
+
+    /// <summary>
     /// Gets total campaign count returned from server before filters are applied.
     /// </summary>
     public int TotalCampaignCount => _allCampaigns.Count;
@@ -302,6 +307,16 @@ public sealed partial class RewardsViewModel : BaseViewModel
     /// Gets whether at least one campaign exists in the current dataset (before filters are applied).
     /// </summary>
     public bool HasCampaignDataset => TotalCampaignCount > 0;
+
+    /// <summary>
+    /// Gets whether the campaigns section is empty because no campaigns have been created yet.
+    /// </summary>
+    public bool ShowCampaignDatasetEmptyState => !HasCampaignDataset;
+
+    /// <summary>
+    /// Gets whether active search or filter criteria removed all campaigns from the visible list.
+    /// </summary>
+    public bool ShowCampaignFilteredEmptyState => HasCampaignDataset && !HasCampaigns;
 
     /// <summary>
     /// Gets campaign count currently visible after active filters are applied.
@@ -329,6 +344,20 @@ public sealed partial class RewardsViewModel : BaseViewModel
         AppResources.RewardsCampaignFilterSummaryFormat,
         FilteredCampaignCount,
         TotalCampaignCount);
+
+    /// <summary>
+    /// Gets contextual guidance for the reward editor based on whether an existing tier is currently selected.
+    /// </summary>
+    public string RewardEditorSelectionHint => IsEditMode
+        ? AppResources.RewardsEditorEditingHint
+        : AppResources.RewardsEditorNewHint;
+
+    /// <summary>
+    /// Gets contextual guidance for the campaign editor based on whether an existing campaign is currently selected.
+    /// </summary>
+    public string CampaignEditorSelectionHint => IsCampaignEditMode
+        ? AppResources.RewardsCampaignEditorEditingHint
+        : AppResources.RewardsCampaignEditorNewHint;
 
     /// <summary>
     /// Gets count of campaigns currently in Draft state from full campaign dataset.
@@ -936,6 +965,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                     RewardTiers.Add(tier);
                 }
 
+                OnPropertyChanged(nameof(HasRewardTiers));
                 ReplaceCampaigns(campaigns);
             });
 
@@ -986,6 +1016,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
             OnPropertyChanged(nameof(IsEditMode));
             OnPropertyChanged(nameof(SaveButtonText));
             OnPropertyChanged(nameof(CanDeleteReward));
+            OnPropertyChanged(nameof(RewardEditorSelectionHint));
             DeleteCommand.RaiseCanExecuteChanged();
         });
     }
@@ -1023,6 +1054,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
             OnPropertyChanged(nameof(IsCampaignEditMode));
             OnPropertyChanged(nameof(CampaignSaveButtonText));
+            OnPropertyChanged(nameof(CampaignEditorSelectionHint));
         });
     }
 
@@ -1848,6 +1880,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
                 RewardTiers.Add(tier);
             }
 
+            OnPropertyChanged(nameof(HasRewardTiers));
             ReplaceCampaigns(campaigns);
         });
     }
@@ -1911,6 +1944,8 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(TotalCampaignCount));
         OnPropertyChanged(nameof(FilteredCampaignCount));
         OnPropertyChanged(nameof(HasCampaignDataset));
+        OnPropertyChanged(nameof(ShowCampaignDatasetEmptyState));
+        OnPropertyChanged(nameof(ShowCampaignFilteredEmptyState));
         OnPropertyChanged(nameof(CampaignFilterSummary));
         OnPropertyChanged(nameof(CampaignDiagnosticsVisibleCampaignsPreview));
         OnPropertyChanged(nameof(DraftCampaignCount));
@@ -2259,6 +2294,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
         OnPropertyChanged(nameof(IsEditMode));
         OnPropertyChanged(nameof(SaveButtonText));
         OnPropertyChanged(nameof(CanDeleteReward));
+        OnPropertyChanged(nameof(RewardEditorSelectionHint));
         DeleteCommand.RaiseCanExecuteChanged();
     }
 
@@ -2285,6 +2321,7 @@ public sealed partial class RewardsViewModel : BaseViewModel
 
         OnPropertyChanged(nameof(IsCampaignEditMode));
         OnPropertyChanged(nameof(CampaignSaveButtonText));
+        OnPropertyChanged(nameof(CampaignEditorSelectionHint));
     }
 
     /// <summary>

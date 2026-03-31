@@ -94,6 +94,9 @@
   <data name="HomeTitle" xml:space="preserve">
     <value>Startseite</value>
   </data>
+  <data name="HomeLoadingMessage" xml:space="preserve">
+    <value>Unternehmenskontext und Operatorzugriff werden geladen...</value>
+  </data>
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Ungültige E-Mail oder Passwort.</value>
   </data>
@@ -117,6 +120,18 @@
   </data>
   <data name="LoginButton" xml:space="preserve">
     <value>Anmelden</value>
+  </data>
+  <data name="LoginReadinessBusy" xml:space="preserve">
+    <value>Sie werden angemeldet und Ihr Business-Zugriff wird wiederhergestellt...</value>
+  </data>
+  <data name="LoginReadinessEmail" xml:space="preserve">
+    <value>Geben Sie Ihre Business-E-Mail ein, um fortzufahren.</value>
+  </data>
+  <data name="LoginReadinessPassword" xml:space="preserve">
+    <value>Geben Sie Ihr Passwort ein, um fortzufahren.</value>
+  </data>
+  <data name="LoginReadinessReady" xml:space="preserve">
+    <value>Ihre Operator-Zugangsdaten sind vollständig. Sie können jetzt fortfahren.</value>
   </data>
   <data name="LoginTitle" xml:space="preserve">
     <value>Anmeldung</value>
@@ -472,8 +487,20 @@
   <data name="RewardsDeleteButton" xml:space="preserve">
     <value>Stufe löschen</value>
   </data>
+  <data name="RewardsDeleteSelectionRequiredHint" xml:space="preserve">
+    <value>Wählen Sie unten zuerst eine bestehende Belohnungsstufe aus, bevor Sie sie löschen.</value>
+  </data>
   <data name="RewardsCurrentTiersLabel" xml:space="preserve">
     <value>Aktuelle Stufen</value>
+  </data>
+  <data name="RewardsTiersEmptyStateMessage" xml:space="preserve">
+    <value>Es wurden noch keine Belohnungsstufen konfiguriert. Erstellen Sie oben die erste Stufe, um Ihr Treueangebot festzulegen.</value>
+  </data>
+  <data name="RewardsEditorNewHint" xml:space="preserve">
+    <value>Erstellen Sie hier eine neue Belohnungsstufe oder wählen Sie unten eine bestehende Stufe aus, um sie zu überarbeiten.</value>
+  </data>
+  <data name="RewardsEditorEditingHint" xml:space="preserve">
+    <value>Sie bearbeiten eine bestehende Belohnungsstufe. Speichern Sie Änderungen oder löschen Sie die Stufe, wenn das Angebot nicht mehr gültig ist.</value>
   </data>
   <data name="RewardsPointsPlaceholder" xml:space="preserve">
     <value>Benötigte Punkte</value>
@@ -513,6 +540,9 @@
   </data>
   <data name="DashboardTitle" xml:space="preserve">
     <value>Dashboard</value>
+  </data>
+  <data name="DashboardLoadingMessage" xml:space="preserve">
+    <value>Geschäfts-KPIs und letzte Aktivitäten werden vorbereitet...</value>
   </data>
   <data name="DashboardSubtitle" xml:space="preserve">
     <value>Betriebsübersicht für aktuelle Scanner-Aktivitäten.</value>
@@ -573,6 +603,15 @@
   </data>
   <data name="ScannerSingleOwnerHint" xml:space="preserve">
     <value>Nach dem Scannen lädt die Sitzungsseite die Details und bestätigt alle Aktionen zentral.</value>
+  </data>
+  <data name="ScannerReadinessBusy" xml:space="preserve">
+    <value>Scanner-Zugriff wird vorbereitet und der aktuelle Scan verarbeitet...</value>
+  </data>
+  <data name="ScannerReadinessReady" xml:space="preserve">
+    <value>Der Scanner ist bereit. Starten Sie den Scan, sobald der Kunden-QR verfügbar ist.</value>
+  </data>
+  <data name="ScannerScanSuccessMessage" xml:space="preserve">
+    <value>QR-Code erfolgreich gescannt.</value>
   </data>
   <data name="RewardsCampaignsLabel" xml:space="preserve">
     <value>Kampagnen</value>
@@ -754,8 +793,20 @@
   <data name="RewardsCampaignsEmptyFiltered" xml:space="preserve">
     <value>Keine Kampagnen entsprechen der aktuellen Suche/Filterung.</value>
   </data>
+  <data name="RewardsCampaignsEmptyDataset" xml:space="preserve">
+    <value>Es wurden noch keine Kampagnen erstellt. Nutzen Sie oben den Kampagneneditor, um den ersten Entwurf vorzubereiten.</value>
+  </data>
   <data name="RewardsCampaignClearFiltersButton" xml:space="preserve">
     <value>Filter zurücksetzen</value>
+  </data>
+  <data name="RewardsCampaignEditorNewHint" xml:space="preserve">
+    <value>Erstellen Sie hier einen neuen Kampagnenentwurf oder wählen Sie unten eine bestehende Kampagne aus, um Targeting und Zeitplan zu überarbeiten.</value>
+  </data>
+  <data name="RewardsCampaignEditorEditingHint" xml:space="preserve">
+    <value>Sie bearbeiten eine bestehende Kampagne. Speichern Sie, damit Änderungen mit den aktuellen Aktivierungs- und Targeting-Regeln konsistent bleiben.</value>
+  </data>
+  <data name="RewardsCampaignSelectionHint" xml:space="preserve">
+    <value>Wählen Sie unten eine bestehende Kampagne aus, wenn Sie sie überarbeiten möchten, statt einen neuen Entwurf zu erstellen.</value>
   </data>
   <data name="RewardsCampaignFilterSummaryFormat" xml:space="preserve">
     <value>{0} von {1} Kampagnen werden angezeigt</value>
@@ -1245,6 +1296,12 @@
   </data>
   <data name="HomeCurrentBusinessContextTitle" xml:space="preserve">
     <value>Aktueller Unternehmenskontext</value>
+  </data>
+  <data name="BusinessCategoryLabel" xml:space="preserve">
+    <value>Kategorie</value>
+  </data>
+  <data name="BusinessCityLabel" xml:space="preserve">
+    <value>Stadt</value>
   </data>
   <data name="HomeOperatorLabel" xml:space="preserve">
     <value>Betreiber:</value>

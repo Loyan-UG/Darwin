@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
+using Darwin.Mobile.Consumer.Services.Caching;
 using Darwin.Mobile.Shared.Commands;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -35,6 +36,7 @@ public sealed class FeedViewModel : BaseViewModel
     private const int PromotionDisplayCap = 6;
 
     private readonly ILoyaltyService _loyaltyService;
+    private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
 
     private bool _hasLoaded;
@@ -57,9 +59,13 @@ public sealed class FeedViewModel : BaseViewModel
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedViewModel"/> class.
     /// </summary>
-    public FeedViewModel(ILoyaltyService loyaltyService, INavigationService navigationService)
+    public FeedViewModel(
+        ILoyaltyService loyaltyService,
+        IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
+        INavigationService navigationService)
     {
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         Items = new ObservableCollection<LoyaltyTimelineEntry>();
@@ -459,7 +465,7 @@ public sealed class FeedViewModel : BaseViewModel
     {
         var previousBusinessId = SelectedAccount?.BusinessId ?? Guid.Empty;
 
-        var accountsResult = await _loyaltyService.GetMyAccountsAsync(CancellationToken.None);
+        var accountsResult = await _loyaltySnapshotCache.GetMyAccountsAsync(CancellationToken.None);
         if (!accountsResult.Succeeded || accountsResult.Value is null)
         {
             ErrorMessage = Resources.AppResources.FeedLoadFailed;

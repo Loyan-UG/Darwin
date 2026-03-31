@@ -121,6 +121,18 @@
   <data name="InvalidCredentials" xml:space="preserve">
     <value>Ungültige E-Mail oder Passwort</value>
   </data>
+  <data name="LoginReadinessBusy" xml:space="preserve">
+    <value>Sie werden angemeldet und Ihre Kundensitzung wird wiederhergestellt...</value>
+  </data>
+  <data name="LoginReadinessEmail" xml:space="preserve">
+    <value>Geben Sie Ihre E-Mail-Adresse ein, um fortzufahren.</value>
+  </data>
+  <data name="LoginReadinessPassword" xml:space="preserve">
+    <value>Geben Sie Ihr Passwort ein, um fortzufahren.</value>
+  </data>
+  <data name="LoginReadinessReady" xml:space="preserve">
+    <value>Ihre Anmeldedaten sind vollständig. Sie können jetzt fortfahren.</value>
+  </data>
   <data name="LoginEmailConfirmationRequired" xml:space="preserve">
     <value>Bitte bestÃ¤tigen Sie zuerst Ihre E-Mail-Adresse, bevor Sie sich anmelden.</value>
   </data>
@@ -268,8 +280,14 @@
   <data name="FirstNameLabel" xml:space="preserve">
     <value>Vorname</value>
   </data>
+  <data name="FirstNamePlaceholder" xml:space="preserve">
+    <value>Vornamen eingeben</value>
+  </data>
   <data name="LastNameLabel" xml:space="preserve">
     <value>Nachname</value>
+  </data>
+  <data name="LastNamePlaceholder" xml:space="preserve">
+    <value>Nachnamen eingeben</value>
   </data>
   <data name="PhoneLabel" xml:space="preserve">
     <value>Telefon</value>
@@ -787,6 +805,15 @@
   <data name="ForgotPasswordDescription" xml:space="preserve">
     <value>Geben Sie Ihre E-Mail ein. Falls ein Konto existiert, senden wir Anweisungen zum Zurücksetzen des Passworts.</value>
   </data>
+  <data name="ForgotPasswordReadinessBusy" xml:space="preserve">
+    <value>Ihre Anweisungen zum Zurücksetzen des Passworts werden vorbereitet und gesendet...</value>
+  </data>
+  <data name="ForgotPasswordReadinessEmail" xml:space="preserve">
+    <value>Geben Sie Ihre E-Mail-Adresse ein, um Anweisungen zum Zurücksetzen zu erhalten.</value>
+  </data>
+  <data name="ForgotPasswordReadinessReady" xml:space="preserve">
+    <value>Ihre E-Mail-Adresse ist eingetragen. Sie können die Reset-Anweisungen jetzt senden.</value>
+  </data>
   <data name="ForgotPasswordButton" xml:space="preserve">
     <value>Passwort vergessen?</value>
   </data>
@@ -841,6 +868,9 @@
   <data name="DiscoverLoadExploreFailed" xml:space="preserve">
     <value>Unternehmenssuche konnte nicht geladen werden.</value>
   </data>
+  <data name="DiscoverLoadingMessage" xml:space="preserve">
+    <value>Ihre Unternehmen und nahegelegenen Ergebnisse werden geladen...</value>
+  </data>
   <data name="DiscoverCategoryFilterLabel" xml:space="preserve">
     <value>Kategorie</value>
   </data>
@@ -870,6 +900,9 @@
   </data>
   <data name="FeedLoadMoreButton" xml:space="preserve">
     <value>Mehr laden</value>
+  </data>
+  <data name="FeedLoadingMessage" xml:space="preserve">
+    <value>Ihre Treuechronik und Aktionen werden vorbereitet...</value>
   </data>
   <data name="FeedNoAccountsMessage" xml:space="preserve">
     <value>Tritt zuerst einem Geschäft bei, um deinen Feed zu sehen.</value>
@@ -1116,6 +1149,30 @@
   </data>
   <data name="RegisterAcknowledgementsTitle" xml:space="preserve">
     <value>Erforderliche Bestätigungen</value>
+  </data>
+  <data name="RegisterReadinessBusy" xml:space="preserve">
+    <value>Ihr Konto wird erstellt und Ihre erste Sitzung vorbereitet...</value>
+  </data>
+  <data name="RegisterReadinessProfileDetails" xml:space="preserve">
+    <value>Geben Sie Ihren Vor- und Nachnamen ein, um fortzufahren.</value>
+  </data>
+  <data name="RegisterReadinessEmail" xml:space="preserve">
+    <value>Geben Sie Ihre E-Mail-Adresse ein, um fortzufahren.</value>
+  </data>
+  <data name="RegisterReadinessPassword" xml:space="preserve">
+    <value>Geben Sie Ihr Passwort ein und bestätigen Sie es, um fortzufahren.</value>
+  </data>
+  <data name="RegisterReadinessPasswordLength" xml:space="preserve">
+    <value>Ihr Passwort muss mindestens 8 Zeichen enthalten.</value>
+  </data>
+  <data name="RegisterReadinessPasswordMismatch" xml:space="preserve">
+    <value>Die Passwortbestätigung muss exakt übereinstimmen.</value>
+  </data>
+  <data name="RegisterReadinessAcknowledgements" xml:space="preserve">
+    <value>Bestätigen Sie die erforderlichen rechtlichen Hinweise, um die Kontoerstellung zu aktivieren.</value>
+  </data>
+  <data name="RegisterReadinessReady" xml:space="preserve">
+    <value>Ihre Kontodaten sind vollständig. Sie können Ihr Konto jetzt erstellen.</value>
   </data>
   <data name="RegisterTermsAcknowledgementLabel" xml:space="preserve">
     <value>Ich akzeptiere die Nutzungsbedingungen für Verbraucher, bevor ich mein Konto erstelle.</value>

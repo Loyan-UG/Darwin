@@ -19,15 +19,17 @@ namespace Darwin.Mobile.Business;
 /// </summary>
 public sealed partial class AppShell : Shell
 {
+    private readonly string _initialRoute;
     private bool _startupNavigationDone;
     private bool _logoutAttached = true;
 
     /// <summary>
     /// Initializes shell and registers route handlers.
     /// </summary>
-    public AppShell()
+    public AppShell(string initialRoute)
     {
         InitializeComponent();
+        _initialRoute = string.IsNullOrWhiteSpace(initialRoute) ? $"//{Routes.Login}" : initialRoute;
 
         Routing.RegisterRoute(Routes.Home, typeof(HomePage));
         Routing.RegisterRoute(Routes.Scanner, typeof(ScannerPage));
@@ -64,7 +66,7 @@ public sealed partial class AppShell : Shell
 
         Dispatcher.Dispatch(async () =>
         {
-            await GoToAsync($"//{Routes.Login}");
+            await GoToAsync(_initialRoute);
         });
     }
 

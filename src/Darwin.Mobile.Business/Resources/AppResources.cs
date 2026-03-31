@@ -18,6 +18,7 @@ public static class AppResources
 
     // Navigation / generic
     public static string HomeTitle => ResourceManager.GetString(nameof(HomeTitle), Culture) ?? "Home";
+    public static string HomeLoadingMessage => ResourceManager.GetString(nameof(HomeLoadingMessage), Culture) ?? "Loading your business context and operator access...";
     public static string StartButton => ResourceManager.GetString(nameof(StartButton), Culture) ?? "Start";
     public static string LogoutButtonText => ResourceManager.GetString(nameof(LogoutButtonText), Culture) ?? "Logout";
 
@@ -60,6 +61,10 @@ public static class AppResources
     public static string EmailLabel => ResourceManager.GetString(nameof(EmailLabel), Culture) ?? "Email";
     public static string PasswordLabel => ResourceManager.GetString(nameof(PasswordLabel), Culture) ?? "Password";
     public static string LoginButton => ResourceManager.GetString(nameof(LoginButton), Culture) ?? "Sign in";
+    public static string LoginReadinessBusy => ResourceManager.GetString(nameof(LoginReadinessBusy), Culture) ?? "Signing you in and restoring your business access...";
+    public static string LoginReadinessEmail => ResourceManager.GetString(nameof(LoginReadinessEmail), Culture) ?? "Enter your business email to continue.";
+    public static string LoginReadinessPassword => ResourceManager.GetString(nameof(LoginReadinessPassword), Culture) ?? "Enter your password to continue.";
+    public static string LoginReadinessReady => ResourceManager.GetString(nameof(LoginReadinessReady), Culture) ?? "Your operator credentials are ready. You can continue now.";
     public static string LoginAcceptInvitationButton => ResourceManager.GetString(nameof(LoginAcceptInvitationButton), Culture) ?? "Accept invitation";
     public static string LoginLogoDescription => ResourceManager.GetString(nameof(LoginLogoDescription), Culture) ?? "Loyan Business app logo";
     public static string InvalidCredentials => ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
@@ -190,10 +195,14 @@ public static class AppResources
     public static string BusinessPermissionsUnavailableWarning => ResourceManager.GetString(nameof(BusinessPermissionsUnavailableWarning), Culture) ?? "Operator permissions could not be loaded. Please refresh and try again.";
     public static string BusinessNoScannerPermissionWarning => ResourceManager.GetString(nameof(BusinessNoScannerPermissionWarning), Culture) ?? "Your account does not currently have scanner processing permissions.";
     public static string ScannerSingleOwnerHint => ResourceManager.GetString(nameof(ScannerSingleOwnerHint), Culture) ?? "After scanning, the session screen will load details and handle confirmation in one place.";
+    public static string ScannerReadinessBusy => ResourceManager.GetString(nameof(ScannerReadinessBusy), Culture) ?? "Preparing scanner access and processing the current scan...";
+    public static string ScannerReadinessReady => ResourceManager.GetString(nameof(ScannerReadinessReady), Culture) ?? "Scanner access is ready. Start a scan when the customer QR is available.";
+    public static string ScannerScanSuccessMessage => ResourceManager.GetString(nameof(ScannerScanSuccessMessage), Culture) ?? "QR code scanned successfully.";
 
 
     // Dashboard + reporting
     public static string DashboardTitle => ResourceManager.GetString(nameof(DashboardTitle), Culture) ?? "Dashboard";
+    public static string DashboardLoadingMessage => ResourceManager.GetString(nameof(DashboardLoadingMessage), Culture) ?? "Preparing business KPIs and recent activity...";
     public static string DashboardSubtitle => ResourceManager.GetString(nameof(DashboardSubtitle), Culture) ?? "Operational snapshot for recent scanner activity.";
     public static string DashboardLookbackLabel => ResourceManager.GetString(nameof(DashboardLookbackLabel), Culture) ?? "Window";
     public static string DashboardRefreshButton => ResourceManager.GetString(nameof(DashboardRefreshButton), Culture) ?? "Refresh";
@@ -281,7 +290,11 @@ public static class AppResources
     public static string RewardsCreateButton => ResourceManager.GetString(nameof(RewardsCreateButton), Culture) ?? "Create tier";
     public static string RewardsUpdateButton => ResourceManager.GetString(nameof(RewardsUpdateButton), Culture) ?? "Update tier";
     public static string RewardsDeleteButton => ResourceManager.GetString(nameof(RewardsDeleteButton), Culture) ?? "Delete tier";
+    public static string RewardsDeleteSelectionRequiredHint => ResourceManager.GetString(nameof(RewardsDeleteSelectionRequiredHint), Culture) ?? "Select an existing reward tier below before deleting it.";
     public static string RewardsCurrentTiersLabel => ResourceManager.GetString(nameof(RewardsCurrentTiersLabel), Culture) ?? "Current tiers";
+    public static string RewardsTiersEmptyStateMessage => ResourceManager.GetString(nameof(RewardsTiersEmptyStateMessage), Culture) ?? "No reward tiers have been configured yet. Create the first tier above to define your loyalty offer.";
+    public static string RewardsEditorNewHint => ResourceManager.GetString(nameof(RewardsEditorNewHint), Culture) ?? "Create a new reward tier here, or select an existing tier below to revise it.";
+    public static string RewardsEditorEditingHint => ResourceManager.GetString(nameof(RewardsEditorEditingHint), Culture) ?? "You are editing an existing reward tier. Save to apply updates, or delete it if the offer is no longer valid.";
     public static string RewardsPointsPlaceholder => ResourceManager.GetString(nameof(RewardsPointsPlaceholder), Culture) ?? "Points required";
     public static string RewardsTypePickerTitle => ResourceManager.GetString(nameof(RewardsTypePickerTitle), Culture) ?? "Reward type";
     public static string RewardsValuePlaceholder => ResourceManager.GetString(nameof(RewardsValuePlaceholder), Culture) ?? "Reward value (optional)";
@@ -354,7 +367,11 @@ public static class AppResources
     public static string RewardsCampaignSortTitleAsc => ResourceManager.GetString(nameof(RewardsCampaignSortTitleAsc), Culture) ?? "Title (A-Z)";
     public static string RewardsCampaignSortTitleDesc => ResourceManager.GetString(nameof(RewardsCampaignSortTitleDesc), Culture) ?? "Title (Z-A)";
     public static string RewardsCampaignsEmptyFiltered => ResourceManager.GetString(nameof(RewardsCampaignsEmptyFiltered), Culture) ?? "No campaigns match the current search/filter.";
+    public static string RewardsCampaignsEmptyDataset => ResourceManager.GetString(nameof(RewardsCampaignsEmptyDataset), Culture) ?? "No campaigns have been created yet. Use the campaign editor above to prepare your first campaign draft.";
     public static string RewardsCampaignClearFiltersButton => ResourceManager.GetString(nameof(RewardsCampaignClearFiltersButton), Culture) ?? "Clear filters";
+    public static string RewardsCampaignEditorNewHint => ResourceManager.GetString(nameof(RewardsCampaignEditorNewHint), Culture) ?? "Create a new campaign draft here, or select an existing campaign below to revise targeting and schedule.";
+    public static string RewardsCampaignEditorEditingHint => ResourceManager.GetString(nameof(RewardsCampaignEditorEditingHint), Culture) ?? "You are editing an existing campaign. Save to keep changes aligned with the current activation and targeting rules.";
+    public static string RewardsCampaignSelectionHint => ResourceManager.GetString(nameof(RewardsCampaignSelectionHint), Culture) ?? "Select an existing campaign below if you want to revise it instead of creating a new draft.";
     public static string RewardsCampaignFilterSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignFilterSummaryFormat), Culture) ?? "Showing {0} of {1} campaigns";
     public static string RewardsCampaignAudienceSummaryDefault => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryDefault), Culture) ?? "Audience: all joined members";
     public static string RewardsCampaignAudienceSummaryFormat => ResourceManager.GetString(nameof(RewardsCampaignAudienceSummaryFormat), Culture) ?? "Audience: {0}";
@@ -415,6 +432,8 @@ public static class AppResources
     public static string HomeDashboardSubtitle => ResourceManager.GetString(nameof(HomeDashboardSubtitle), Culture) ?? "Business dashboard";
     public static string HomeStatusTitle => ResourceManager.GetString(nameof(HomeStatusTitle), Culture) ?? "Status";
     public static string HomeCurrentBusinessContextTitle => ResourceManager.GetString(nameof(HomeCurrentBusinessContextTitle), Culture) ?? "Current business context";
+    public static string BusinessCategoryLabel => ResourceManager.GetString(nameof(BusinessCategoryLabel), Culture) ?? "Category";
+    public static string BusinessCityLabel => ResourceManager.GetString(nameof(BusinessCityLabel), Culture) ?? "City";
     public static string HomeOperatorLabel => ResourceManager.GetString(nameof(HomeOperatorLabel), Culture) ?? "Operator:";
     public static string HomeOperatorRoleLabel => ResourceManager.GetString(nameof(HomeOperatorRoleLabel), Culture) ?? "Operator role:";
     public static string HomeTestingHintTitle => ResourceManager.GetString(nameof(HomeTestingHintTitle), Culture) ?? "Testing hint";

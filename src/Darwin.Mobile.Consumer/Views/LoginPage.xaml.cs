@@ -75,6 +75,26 @@ public partial class LoginPage
         await PushPageSafelyAsync<LegalHubPage>();
     }
 
+    private void OnEmailEntryFocused(object? sender, FocusEventArgs e)
+    {
+        EmailBorder.Stroke = (Color)Application.Current!.Resources["BrandGold500"];
+    }
+
+    private void OnEmailEntryUnfocused(object? sender, FocusEventArgs e)
+    {
+        EmailBorder.Stroke = (Color)Application.Current!.Resources["Neutral100"];
+    }
+
+    private void OnPasswordEntryFocused(object? sender, FocusEventArgs e)
+    {
+        PasswordBorder.Stroke = (Color)Application.Current!.Resources["BrandGold500"];
+    }
+
+    private void OnPasswordEntryUnfocused(object? sender, FocusEventArgs e)
+    {
+        PasswordBorder.Stroke = (Color)Application.Current!.Resources["Neutral100"];
+    }
+
     private async Task PushPageSafelyAsync<TPage>() where TPage : Page
     {
         try

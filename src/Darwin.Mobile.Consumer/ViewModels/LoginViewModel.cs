@@ -21,6 +21,8 @@ public sealed partial class LoginViewModel : BaseViewModel
     private readonly IAppRootNavigator _appRootNavigator;
     private readonly IConsumerPushRegistrationCoordinator _pushRegistrationCoordinator;
     private readonly ILegalLinkService _legalLinkService;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
     private string? _infoMessage;
 
     /// <summary>
@@ -60,12 +62,49 @@ public sealed partial class LoginViewModel : BaseViewModel
     /// <summary>
     /// Gets or sets the email entered by the user.
     /// </summary>
-    public string Email { get; set; } = string.Empty;
+    public string Email
+    {
+        get => _email;
+        set
+        {
+            if (SetProperty(ref _email, value))
+            {
+                RaiseReadinessChanged();
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets the password entered by the user.
     /// </summary>
-    public string Password { get; set; } = string.Empty;
+    public string Password
+    {
+        get => _password;
+        set
+        {
+            if (SetProperty(ref _password, value))
+            {
+                RaiseReadinessChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the login form contains the minimum data required to continue.
+    /// </summary>
+    public bool IsLoginReady => !IsBusy && !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Password);
+
+    /// <summary>
+    /// Gets contextual guidance that explains the next step in the sign-in flow.
+    /// </summary>
+    public string LoginReadinessMessage =>
+        IsBusy
+            ? AppResources.LoginReadinessBusy
+            : string.IsNullOrWhiteSpace(Email)
+                ? AppResources.LoginReadinessEmail
+                : string.IsNullOrWhiteSpace(Password)
+                    ? AppResources.LoginReadinessPassword
+                    : AppResources.LoginReadinessReady;
 
     /// <summary>
     /// Gets or sets a non-error informational message shown for self-service authentication flows.
@@ -102,6 +141,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
+        RaiseReadinessChanged();
 
         try
         {
@@ -137,6 +177,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            RaiseReadinessChanged();
         }
     }
 
@@ -168,6 +209,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         InfoMessage = null;
+        RaiseReadinessChanged();
 
         try
         {
@@ -190,6 +232,7 @@ public sealed partial class LoginViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            RaiseReadinessChanged();
         }
     }
 
@@ -200,6 +243,15 @@ public sealed partial class LoginViewModel : BaseViewModel
         {
             RunOnMain(() => ErrorMessage = AppResources.LegalOpenFailed);
         }
+    }
+
+    /// <summary>
+    /// Raises readiness properties together so the login card and CTA stay aligned.
+    /// </summary>
+    private void RaiseReadinessChanged()
+    {
+        OnPropertyChanged(nameof(IsLoginReady));
+        OnPropertyChanged(nameof(LoginReadinessMessage));
     }
 
     /// <summary>

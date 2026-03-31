@@ -18,10 +18,21 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+		<!--
+		sqlite-net-pcl brings SQLitePCLRaw native assets for Alpine Linux alongside the assets we actually
+		use on mobile and desktop targets. .NET 10 warns about those distribution-specific runtime identifiers
+		during Windows validation builds even though they are irrelevant for our supported deployment matrix.
+		Suppress NETSDK1206 only for the Windows validation target to keep build output actionable.
+		-->
+		<NoWarn>$(NoWarn);NETSDK1206</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="HtmlSanitizer" Version="9.0.892" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.50" />
+		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
 	</ItemGroup>
 

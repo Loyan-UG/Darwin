@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Darwin.Contracts.Businesses;
 using Darwin.Contracts.Loyalty;
 using Darwin.Mobile.Consumer.Constants;
+using Darwin.Mobile.Consumer.Services.Caching;
 using Darwin.Mobile.Shared.Navigation;
 using Darwin.Mobile.Shared.Services;
 using Darwin.Mobile.Shared.Services.Loyalty;
@@ -24,6 +25,7 @@ public sealed class BusinessDetailViewModel : BaseViewModel
 {
     private readonly IBusinessService _businessService;
     private readonly ILoyaltyService _loyaltyService;
+    private readonly IConsumerLoyaltySnapshotCache _loyaltySnapshotCache;
     private readonly INavigationService _navigationService;
 
     private BusinessDetail? _business;
@@ -42,10 +44,12 @@ public sealed class BusinessDetailViewModel : BaseViewModel
     public BusinessDetailViewModel(
         IBusinessService businessService,
         ILoyaltyService loyaltyService,
+        IConsumerLoyaltySnapshotCache loyaltySnapshotCache,
         INavigationService navigationService)
     {
         _businessService = businessService ?? throw new ArgumentNullException(nameof(businessService));
         _loyaltyService = loyaltyService ?? throw new ArgumentNullException(nameof(loyaltyService));
+        _loyaltySnapshotCache = loyaltySnapshotCache ?? throw new ArgumentNullException(nameof(loyaltySnapshotCache));
         _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
 
         Reviews = new ObservableCollection<BusinessReviewItem>();
@@ -421,6 +425,8 @@ public sealed class BusinessDetailViewModel : BaseViewModel
                 ErrorMessage = joinResult.Error ?? Resources.AppResources.BusinessJoinFailed;
                 return;
             }
+
+            await _loyaltySnapshotCache.InvalidateAsync(CancellationToken.None);
 
             var sessionResult = await _loyaltyService.PrepareScanSessionAsync(
                 BusinessId,

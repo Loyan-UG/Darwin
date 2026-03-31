@@ -43,12 +43,13 @@
 		<DefaultLanguage>de-DE</DefaultLanguage>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+	<PropertyGroup>
 		<!--
-		Windows validation builds do not consume the Android dependency graph at runtime,
-		but NuGet still evaluates transitive AndroidX constraints from MAUI/Firebase packages.
-		Suppress those package-graph warnings only for the Windows target so local desktop validation
-		stays signal-heavy while Android package alignment can be handled in a dedicated pass.
+		Firebase currently pulls an AndroidX package graph that declares restrictive upper bounds
+		on several Activity/Lifecycle/SavedState packages, while the .NET 10 / MAUI Android toolchain
+		resolves newer compatible platform packages. This produces NU1608 restore noise even though
+		the resolved graph is the intended one for the current MAUI stack and the app builds cleanly.
+		Suppress the warning at project scope so genuine restore/build regressions remain visible.
 		-->
 		<NoWarn>$(NoWarn);NU1608</NoWarn>
 	</PropertyGroup>

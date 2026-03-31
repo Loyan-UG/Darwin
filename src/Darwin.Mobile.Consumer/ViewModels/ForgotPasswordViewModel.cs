@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Mobile.Consumer.Resources;
@@ -25,7 +25,7 @@ public sealed class ForgotPasswordViewModel : BaseViewModel
     public ForgotPasswordViewModel(IAuthService authService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
-        SendResetLinkCommand = new AsyncCommand(SendResetLinkAsync, () => !IsBusy);
+        SendResetLinkCommand = new AsyncCommand(SendResetLinkAsync, () => IsSendReady);
     }
 
     /// <summary>
@@ -36,8 +36,30 @@ public sealed class ForgotPasswordViewModel : BaseViewModel
     public string Email
     {
         get => _email;
-        set => SetProperty(ref _email, value);
+        set
+        {
+            if (SetProperty(ref _email, value))
+            {
+                RaiseReadinessChanged();
+                SendResetLinkCommand.RaiseCanExecuteChanged();
+            }
+        }
     }
+
+    /// <summary>
+    /// Gets whether the reset-request form is locally ready to submit.
+    /// </summary>
+    public bool IsSendReady => !IsBusy && !string.IsNullOrWhiteSpace(Email);
+
+    /// <summary>
+    /// Gets a contextual helper message for the reset-request flow.
+    /// </summary>
+    public string ForgotPasswordReadinessMessage =>
+        IsBusy
+            ? AppResources.ForgotPasswordReadinessBusy
+            : string.IsNullOrWhiteSpace(Email)
+                ? AppResources.ForgotPasswordReadinessEmail
+                : AppResources.ForgotPasswordReadinessReady;
 
     public string? SuccessMessage
     {
@@ -63,6 +85,7 @@ public sealed class ForgotPasswordViewModel : BaseViewModel
         IsBusy = true;
         ErrorMessage = null;
         SuccessMessage = null;
+        RaiseReadinessChanged();
 
         try
         {
@@ -90,8 +113,18 @@ public sealed class ForgotPasswordViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            RaiseReadinessChanged();
             SendResetLinkCommand.RaiseCanExecuteChanged();
         }
+    }
+
+    /// <summary>
+    /// Raises readiness properties together so helper text and CTA state stay consistent.
+    /// </summary>
+    private void RaiseReadinessChanged()
+    {
+        OnPropertyChanged(nameof(IsSendReady));
+        OnPropertyChanged(nameof(ForgotPasswordReadinessMessage));
     }
 
     private static string ResolveFriendlyError(Exception ex)

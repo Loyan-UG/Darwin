@@ -43,6 +43,14 @@ public static class AppResources
         ResourceManager.GetString(nameof(LoginPasswordPlaceholder), Culture) ?? "••••••";
     public static string InvalidCredentials =>
         ResourceManager.GetString(nameof(InvalidCredentials), Culture) ?? "Invalid email or password.";
+    public static string LoginReadinessBusy =>
+        ResourceManager.GetString(nameof(LoginReadinessBusy), Culture) ?? "Signing you in and restoring your customer session...";
+    public static string LoginReadinessEmail =>
+        ResourceManager.GetString(nameof(LoginReadinessEmail), Culture) ?? "Enter your email address to continue.";
+    public static string LoginReadinessPassword =>
+        ResourceManager.GetString(nameof(LoginReadinessPassword), Culture) ?? "Enter your password to continue.";
+    public static string LoginReadinessReady =>
+        ResourceManager.GetString(nameof(LoginReadinessReady), Culture) ?? "Your sign-in details are ready. You can continue now.";
     public static string LoginEmailConfirmationRequired =>
         ResourceManager.GetString(nameof(LoginEmailConfirmationRequired), Culture) ?? "Please confirm your email address before signing in.";
     public static string LoginAccountLocked =>
@@ -117,7 +125,9 @@ public static class AppResources
 
     public static string ProfileSectionTitle => ResourceManager.GetString(nameof(ProfileSectionTitle), Culture) ?? "My profile";
     public static string FirstNameLabel => ResourceManager.GetString(nameof(FirstNameLabel), Culture) ?? "First name";
+    public static string FirstNamePlaceholder => ResourceManager.GetString(nameof(FirstNamePlaceholder), Culture) ?? "Enter your first name";
     public static string LastNameLabel => ResourceManager.GetString(nameof(LastNameLabel), Culture) ?? "Last name";
+    public static string LastNamePlaceholder => ResourceManager.GetString(nameof(LastNamePlaceholder), Culture) ?? "Enter your last name";
     public static string PhoneLabel => ResourceManager.GetString(nameof(PhoneLabel), Culture) ?? "Phone";
     public static string LocaleLabel => ResourceManager.GetString(nameof(LocaleLabel), Culture) ?? "Locale";
     public static string TimezoneLabel => ResourceManager.GetString(nameof(TimezoneLabel), Culture) ?? "Timezone";
@@ -293,6 +303,9 @@ public static class AppResources
 
     public static string ForgotPasswordTitle => ResourceManager.GetString(nameof(ForgotPasswordTitle), Culture) ?? "Forgot password";
     public static string ForgotPasswordDescription => ResourceManager.GetString(nameof(ForgotPasswordDescription), Culture) ?? "Enter your email and we will send you password reset instructions if an account exists.";
+    public static string ForgotPasswordReadinessBusy => ResourceManager.GetString(nameof(ForgotPasswordReadinessBusy), Culture) ?? "Preparing and sending your password reset instructions...";
+    public static string ForgotPasswordReadinessEmail => ResourceManager.GetString(nameof(ForgotPasswordReadinessEmail), Culture) ?? "Enter your email address to receive reset instructions.";
+    public static string ForgotPasswordReadinessReady => ResourceManager.GetString(nameof(ForgotPasswordReadinessReady), Culture) ?? "Your email is ready. Send the reset instructions when you are ready.";
     public static string ForgotPasswordButton => ResourceManager.GetString(nameof(ForgotPasswordButton), Culture) ?? "Forgot password?";
     public static string ForgotPasswordSendButton => ResourceManager.GetString(nameof(ForgotPasswordSendButton), Culture) ?? "Send reset instructions";
     public static string ForgotPasswordSuccess => ResourceManager.GetString(nameof(ForgotPasswordSuccess), Culture) ?? "If the email exists, password reset instructions have been sent.";
@@ -324,6 +337,7 @@ public static class AppResources
     public static string DiscoverAlreadyJoinedLabel => ResourceManager.GetString(nameof(DiscoverAlreadyJoinedLabel), Culture) ?? "Already joined";
     public static string DiscoverLoadJoinedFailed => ResourceManager.GetString(nameof(DiscoverLoadJoinedFailed), Culture) ?? "Unable to load your joined businesses.";
     public static string DiscoverLoadExploreFailed => ResourceManager.GetString(nameof(DiscoverLoadExploreFailed), Culture) ?? "Unable to load explore businesses.";
+    public static string DiscoverLoadingMessage => ResourceManager.GetString(nameof(DiscoverLoadingMessage), Culture) ?? "Loading your businesses and nearby discovery results...";
 
     public static string DiscoverJoinedBusinessesCountFormat => ResourceManager.GetString(nameof(DiscoverJoinedBusinessesCountFormat), Culture) ?? "Joined businesses: {0}";
     public static string DiscoverTotalPointsFormat => ResourceManager.GetString(nameof(DiscoverTotalPointsFormat), Culture) ?? "Total points: {0}";
@@ -340,6 +354,7 @@ public static class AppResources
     public static string FeedEmptyMessage => ResourceManager.GetString(nameof(FeedEmptyMessage), Culture) ?? "No feed items yet.";
     public static string FeedLoadFailed => ResourceManager.GetString(nameof(FeedLoadFailed), Culture) ?? "Unable to load feed right now.";
     public static string FeedLoadMoreButton => ResourceManager.GetString(nameof(FeedLoadMoreButton), Culture) ?? "Load more";
+    public static string FeedLoadingMessage => ResourceManager.GetString(nameof(FeedLoadingMessage), Culture) ?? "Preparing your loyalty timeline and promotions...";
     public static string FeedNoAccountsMessage => ResourceManager.GetString(nameof(FeedNoAccountsMessage), Culture) ?? "Join a business first to see your feed.";
     public static string BusinessDetailsNotFound => ResourceManager.GetString(nameof(BusinessDetailsNotFound), Culture) ?? "Business not found.";
     public static string BusinessDetailsLoadFailed => ResourceManager.GetString(nameof(BusinessDetailsLoadFailed), Culture) ?? "Unable to load business details.";
@@ -434,6 +449,14 @@ public static class AppResources
     public static string SettingsLegalHubButton => ResourceManager.GetString(nameof(SettingsLegalHubButton), Culture) ?? "Legal & Privacy";
     public static string SettingsDeleteAccountButton => ResourceManager.GetString(nameof(SettingsDeleteAccountButton), Culture) ?? "Delete account";
     public static string RegisterAcknowledgementsTitle => ResourceManager.GetString(nameof(RegisterAcknowledgementsTitle), Culture) ?? "Required acknowledgements";
+    public static string RegisterReadinessBusy => ResourceManager.GetString(nameof(RegisterReadinessBusy), Culture) ?? "Creating your account and preparing your first session...";
+    public static string RegisterReadinessProfileDetails => ResourceManager.GetString(nameof(RegisterReadinessProfileDetails), Culture) ?? "Add your first and last name to continue.";
+    public static string RegisterReadinessEmail => ResourceManager.GetString(nameof(RegisterReadinessEmail), Culture) ?? "Add your email address to continue.";
+    public static string RegisterReadinessPassword => ResourceManager.GetString(nameof(RegisterReadinessPassword), Culture) ?? "Enter and confirm your password to continue.";
+    public static string RegisterReadinessPasswordLength => ResourceManager.GetString(nameof(RegisterReadinessPasswordLength), Culture) ?? "Your password must contain at least 8 characters.";
+    public static string RegisterReadinessPasswordMismatch => ResourceManager.GetString(nameof(RegisterReadinessPasswordMismatch), Culture) ?? "Your password confirmation must match exactly.";
+    public static string RegisterReadinessAcknowledgements => ResourceManager.GetString(nameof(RegisterReadinessAcknowledgements), Culture) ?? "Confirm the required legal acknowledgements to enable account creation.";
+    public static string RegisterReadinessReady => ResourceManager.GetString(nameof(RegisterReadinessReady), Culture) ?? "Your account details are ready. You can create your account now.";
     public static string RegisterTermsAcknowledgementLabel => ResourceManager.GetString(nameof(RegisterTermsAcknowledgementLabel), Culture) ?? "I accept the consumer terms before creating my account.";
     public static string RegisterPrivacyAcknowledgementLabel => ResourceManager.GetString(nameof(RegisterPrivacyAcknowledgementLabel), Culture) ?? "I confirm that I have reviewed the privacy notice before creating my account.";
     public static string RegisterTermsAcceptanceRequired => ResourceManager.GetString(nameof(RegisterTermsAcceptanceRequired), Culture) ?? "Please accept the terms before creating your account.";

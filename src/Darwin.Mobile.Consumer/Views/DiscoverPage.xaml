@@ -4,188 +4,308 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Darwin.Mobile.Consumer.ViewModels"
     xmlns:res="clr-namespace:Darwin.Mobile.Consumer.Resources"
-    xmlns:contracts="clr-namespace:Darwin.Contracts.Businesses;assembly=Darwin.Contracts"
     xmlns:loyalty="clr-namespace:Darwin.Contracts.Loyalty;assembly=Darwin.Contracts"
     xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
     x:Class="Darwin.Mobile.Consumer.Views.DiscoverPage"
     x:DataType="vm:DiscoverViewModel"
     Title="{x:Static res:AppResources.DiscoverTitle}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="20,18,20,28" Spacing="18">
 
-            <Label Text="{x:Static res:AppResources.DiscoverTitle}"
-                   Style="{StaticResource TitleLabelStyle}" />
+                <Border Style="{StaticResource CardBorderStyle}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="{x:Static res:AppResources.DiscoverTitle}"
+                               Style="{StaticResource SectionEyebrowLabelStyle}" />
 
-            <!--
-              Discover tab switcher:
-              - My Businesses: joined memberships and quick actions.
-              - Explore: searchable catalog for finding/joining new businesses.
-            -->
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                <Button Grid.Column="0"
-                        Text="{x:Static res:AppResources.DiscoverMyBusinessesTab}"
-                        Command="{Binding ShowJoinedTabCommand}" />
-                <Button Grid.Column="1"
-                        Text="{x:Static res:AppResources.DiscoverExploreTab}"
-                        Command="{Binding ShowExploreTabCommand}" />
-            </Grid>
+                        <Label Text="{x:Static res:AppResources.DiscoverTitle}"
+                               Style="{StaticResource SectionHeadingLabelStyle}" />
 
-            <!-- Joined businesses section (quick access for frequent usage). -->
-            <VerticalStackLayout IsVisible="{Binding IsJoinedTabSelected}" Spacing="12">
-                <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesHeadline}"
-                       FontAttributes="Bold" />
+                        <Label Text="{x:Static res:AppResources.DiscoverExploreHeadline}"
+                               Style="{StaticResource BodyLabelStyle}" />
 
-                <Border Stroke="{StaticResource BrushGray300}"
-                        StrokeThickness="1"
-                        Padding="10"
-                        IsVisible="{Binding HasJoinedAccounts}">
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="{Binding JoinedBusinessCount, StringFormat='{x:Static res:AppResources.DiscoverJoinedBusinessesCountFormat}'}" FontSize="13" />
-                        <Label Text="{Binding TotalJoinedPointsBalance, StringFormat='{x:Static res:AppResources.DiscoverTotalPointsFormat}'}" FontSize="13" />
-                        <Label Text="{Binding TopJoinedBusinessName, StringFormat='{x:Static res:AppResources.DiscoverTopBalanceBusinessFormat}'}" FontSize="13" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0"
+                                    Text="{x:Static res:AppResources.DiscoverMyBusinessesTab}"
+                                    Command="{Binding ShowJoinedTabCommand}"
+                                    Style="{StaticResource OutlinedButtonStyle}">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button"
+                                                 Binding="{Binding IsJoinedTabSelected}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
+                                        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+                                        <Setter Property="BorderWidth" Value="0" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                            <Button Grid.Column="1"
+                                    Text="{x:Static res:AppResources.DiscoverExploreTab}"
+                                    Command="{Binding ShowExploreTabCommand}"
+                                    Style="{StaticResource OutlinedButtonStyle}">
+                                <Button.Triggers>
+                                    <DataTrigger TargetType="Button"
+                                                 Binding="{Binding IsExploreTabSelected}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource BrushPrimary}" />
+                                        <Setter Property="TextColor" Value="{StaticResource BrushOnPrimary}" />
+                                        <Setter Property="BorderWidth" Value="0" />
+                                    </DataTrigger>
+                                </Button.Triggers>
+                            </Button>
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
-                <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesEmpty}"
-                       IsVisible="{Binding HasJoinedAccounts, Converter={StaticResource InverseBoolConverter}}" />
+                <VerticalStackLayout IsVisible="{Binding IsJoinedTabSelected}" Spacing="14">
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesHeadline}"
+                                   Style="{StaticResource SectionHeadingLabelStyle}" />
 
-                <CollectionView x:Name="JoinedAccountsCollectionView"
-                                ItemsSource="{Binding JoinedAccounts}"
-                                SelectionMode="Single"
-                                SelectionChanged="OnJoinedBusinessSelected"
-                                IsVisible="{Binding HasJoinedAccounts}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="loyalty:LoyaltyAccountSummary">
-                            <Border Stroke="{StaticResource BrushPrimary}"
-                                    StrokeThickness="1"
-                                    Padding="12"
-                                    Margin="4">
-                                <VerticalStackLayout Spacing="8">
-                                    <Label Text="{Binding BusinessName}"
-                                           FontSize="16"
-                                           FontAttributes="Bold" />
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10"
+                                  IsVisible="{Binding HasJoinedAccounts}">
+                                <Border Grid.Column="0" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding JoinedBusinessCount, StringFormat='{x:Static res:AppResources.DiscoverJoinedBusinessesCountFormat}'}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding JoinedBusinessCount}"
+                                               Style="{StaticResource MetricValueLabelStyle}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-                                    <Label Text="{Binding PointsBalance,
-                                                          StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
-                                           FontSize="14" />
+                                <Border Grid.Column="1" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding TotalJoinedPointsBalance, StringFormat='{x:Static res:AppResources.DiscoverTotalPointsFormat}'}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding TotalJoinedPointsBalance}"
+                                               Style="{StaticResource MetricValueLabelStyle}" />
+                                    </VerticalStackLayout>
+                                </Border>
 
-                                    <HorizontalStackLayout Spacing="10">
-                                        <Button Text="{x:Static res:AppResources.DiscoverOpenQrButton}"
-                                                Clicked="OnOpenQrClicked"
-                                                CommandParameter="{Binding BusinessId}" />
+                                <Border Grid.Column="2" Style="{StaticResource MutedCardBorderStyle}" Padding="14,12">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding TopJoinedBusinessName, StringFormat='{x:Static res:AppResources.DiscoverTopBalanceBusinessFormat}'}"
+                                               Style="{StaticResource CaptionLabelStyle}" />
+                                        <Label Text="{Binding TopJoinedBusinessName}"
+                                               FontAttributes="Bold"
+                                               FontSize="15"
+                                               LineBreakMode="TailTruncation"
+                                               TextColor="{StaticResource BrushOnSurface}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </Grid>
 
-                                        <Button Text="{x:Static res:AppResources.DiscoverOpenRewardsButton}"
-                                                Clicked="OnOpenRewardsClicked"
-                                                CommandParameter="{Binding BusinessId}" />
-                                    </HorizontalStackLayout>
+                            <Label Text="{x:Static res:AppResources.DiscoverMyBusinessesEmpty}"
+                                   Style="{StaticResource BodyLabelStyle}"
+                                   IsVisible="{Binding HasJoinedAccounts, Converter={StaticResource InverseBoolConverter}}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <CollectionView x:Name="JoinedAccountsCollectionView"
+                                    ItemsSource="{Binding JoinedAccounts}"
+                                    SelectionMode="Single"
+                                    SelectionChanged="OnJoinedBusinessSelected"
+                                    IsVisible="{Binding HasJoinedAccounts}">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="loyalty:LoyaltyAccountSummary">
+                                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
+                                    <VerticalStackLayout Spacing="12">
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Border Style="{StaticResource MutedCardBorderStyle}" Padding="10,8">
+                                                <Label Text="{Binding PointsBalance}"
+                                                       FontAttributes="Bold"
+                                                       FontSize="16"
+                                                       TextColor="{StaticResource BrushPrimaryPressed}" />
+                                            </Border>
+
+                                            <VerticalStackLayout Spacing="3" HorizontalOptions="FillAndExpand">
+                                                <Label Text="{Binding BusinessName}"
+                                                       FontSize="17"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrushOnSurface}" />
+                                                <Label Text="{Binding PointsBalance, StringFormat='{x:Static res:AppResources.PointsBalanceFormat}'}"
+                                                       Style="{StaticResource SecondaryBodyLabelStyle}" />
+                                            </VerticalStackLayout>
+                                        </HorizontalStackLayout>
+
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                            <Button Grid.Column="0"
+                                                    Text="{x:Static res:AppResources.DiscoverOpenQrButton}"
+                                                    Clicked="OnOpenQrClicked"
+                                                    CommandParameter="{Binding BusinessId}"
+                                                    Style="{StaticResource PrimaryButtonStyle}" />
+
+                                            <Button Grid.Column="1"
+                                                    Text="{x:Static res:AppResources.DiscoverOpenRewardsButton}"
+                                                    Clicked="OnOpenRewardsClicked"
+                                                    CommandParameter="{Binding BusinessId}"
+                                                    Style="{StaticResource OutlinedButtonStyle}" />
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout IsVisible="{Binding IsExploreTabSelected}" Spacing="14">
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <VerticalStackLayout Spacing="14">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="{x:Static res:AppResources.DiscoverExploreHeadline}"
+                                       Style="{StaticResource SectionHeadingLabelStyle}" />
+                                <Label Text="{x:Static res:AppResources.DiscoverSearchPlaceholder}"
+                                       Style="{StaticResource SecondaryBodyLabelStyle}" />
+                            </VerticalStackLayout>
+
+                            <SearchBar Text="{Binding SearchQuery}"
+                                       Placeholder="{x:Static res:AppResources.DiscoverSearchPlaceholder}"
+                                       SearchCommand="{Binding SearchCommand}" />
+
+                            <Picker Title="{x:Static res:AppResources.DiscoverCategoryFilterLabel}"
+                                    ItemsSource="{Binding CategoryKinds}"
+                                    ItemDisplayBinding="{Binding DisplayName}"
+                                    SelectedItem="{Binding SelectedCategory}" />
+
+                            <HorizontalStackLayout Spacing="8">
+                                <Button Text="{x:Static res:AppResources.DiscoverSearchButton}"
+                                        Command="{Binding SearchCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        HorizontalOptions="FillAndExpand" />
+
+                                <Button Text="{x:Static res:AppResources.DiscoverClearFiltersButton}"
+                                        Command="{Binding ClearFiltersCommand}"
+                                        Style="{StaticResource SoftButtonStyle}"
+                                        HorizontalOptions="FillAndExpand" />
+                            </HorizontalStackLayout>
+
+                            <Border Style="{StaticResource MutedCardBorderStyle}" Padding="14">
+                                <VerticalStackLayout Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="{x:Static res:AppResources.DiscoverNearbyOnlyLabel}"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource BrushOnSurface}" />
+                                            <Label Text="{x:Static res:AppResources.DiscoverNearbyRadiusLabel}"
+                                                   Style="{StaticResource CaptionLabelStyle}" />
+                                        </VerticalStackLayout>
+                                        <Switch Grid.Column="1"
+                                                IsToggled="{Binding IsNearbyOnly}"
+                                                OnColor="{StaticResource BrandGold500}" />
+                                    </Grid>
+
+                                    <Picker ItemsSource="{Binding NearbyRadiusOptions}"
+                                            SelectedItem="{Binding SelectedNearbyRadiusMeters}"
+                                            IsVisible="{Binding IsNearbyOnly}">
+                                        <Picker.ItemDisplayBinding>
+                                            <Binding Path="." StringFormat="{x:Static res:AppResources.DiscoverNearbyRadiusMetersFormat}" />
+                                        </Picker.ItemDisplayBinding>
+                                    </Picker>
                                 </VerticalStackLayout>
                             </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            Padding="0"
+                            IsVisible="{Binding HasExploreResults}">
+                        <maps:Map x:Name="ExploreMap"
+                                  HeightRequest="260"
+                                  IsVisible="{Binding HasExploreResults}"
+                                  IsShowingUser="{Binding IsNearbyOnly}"
+                                  MapType="Street" />
+                    </Border>
+
+                    <Label Text="{x:Static res:AppResources.DiscoverExploreEmpty}"
+                           Style="{StaticResource BodyLabelStyle}"
+                           IsVisible="{Binding HasExploreResults, Converter={StaticResource InverseBoolConverter}}" />
+
+                    <CollectionView x:Name="ExploreBusinessesCollectionView"
+                                    ItemsSource="{Binding ExploreBusinesses}"
+                                    SelectionMode="Single"
+                                    SelectionChanged="OnExploreBusinessSelected"
+                                    IsVisible="{Binding HasExploreResults}">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DiscoverExploreItem">
+                                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,2">
+                                    <VerticalStackLayout Spacing="8">
+                                        <HorizontalStackLayout Spacing="10">
+                                            <VerticalStackLayout HorizontalOptions="FillAndExpand" Spacing="4">
+                                                <Label Text="{Binding Business.Name}"
+                                                       FontSize="17"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrushOnSurface}" />
+
+                                                <Label Text="{Binding Business.Category, StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}"
+                                                       Style="{StaticResource SecondaryBodyLabelStyle}"
+                                                       IsVisible="{Binding Business.Category, Converter={StaticResource InverseBoolConverter}}" />
+
+                                                <Label Text="{Binding Business.City}"
+                                                       Style="{StaticResource SecondaryBodyLabelStyle}"
+                                                       IsVisible="{Binding Business.City, Converter={StaticResource NullCheckConverter}}" />
+                                            </VerticalStackLayout>
+
+                                            <Border Style="{StaticResource MutedCardBorderStyle}"
+                                                    Padding="10,8"
+                                                    IsVisible="{Binding IsJoined}">
+                                                <Label Text="{x:Static res:AppResources.DiscoverAlreadyJoinedLabel}"
+                                                       FontSize="12"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource BrushPrimaryPressed}" />
+                                            </Border>
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <Border Style="{StaticResource MutedCardBorderStyle}"
+                        IsVisible="{Binding HasError}">
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="{StaticResource Danger500}"
+                           FontSize="14" />
+                </Border>
             </VerticalStackLayout>
+        </ScrollView>
 
-            <!-- Explore section for name/address/category/nearby based discovery and joining. -->
-            <VerticalStackLayout IsVisible="{Binding IsExploreTabSelected}" Spacing="12">
-                <Label Text="{x:Static res:AppResources.DiscoverExploreHeadline}"
-                       FontAttributes="Bold" />
+        <Grid BackgroundColor="#40FFFFFF"
+              IsVisible="{Binding IsBusy}"
+              InputTransparent="False">
+            <VerticalStackLayout HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 WidthRequest="280"
+                                 Spacing="14">
+                <Border Style="{StaticResource CardBorderStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Border Style="{StaticResource SkeletonBlockBorderStyle}"
+                                HeightRequest="18"
+                                WidthRequest="120"
+                                HorizontalOptions="Center" />
+                        <Border Style="{StaticResource SkeletonBlockBorderStyle}"
+                                HeightRequest="14" />
+                        <Border Style="{StaticResource SkeletonBlockBorderStyle}"
+                                HeightRequest="14"
+                                WidthRequest="210" />
+                    </VerticalStackLayout>
+                </Border>
 
-                <SearchBar Text="{Binding SearchQuery}"
-                           Placeholder="{x:Static res:AppResources.DiscoverSearchPlaceholder}"
-                           SearchCommand="{Binding SearchCommand}" />
-
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-                    <Picker Grid.Column="0"
-                            Title="{x:Static res:AppResources.DiscoverCategoryFilterLabel}"
-                            ItemsSource="{Binding CategoryKinds}"
-                            ItemDisplayBinding="{Binding DisplayName}"
-                            SelectedItem="{Binding SelectedCategory}" />
-
-                    <Button Grid.Column="1"
-                            Text="{x:Static res:AppResources.DiscoverSearchButton}"
-                            Command="{Binding SearchCommand}" />
-
-                    <Button Grid.Column="2"
-                            Text="{x:Static res:AppResources.DiscoverClearFiltersButton}"
-                            Command="{Binding ClearFiltersCommand}" />
-                </Grid>
-
-                <HorizontalStackLayout Spacing="8">
-                    <Label Text="{x:Static res:AppResources.DiscoverNearbyOnlyLabel}" VerticalOptions="Center" />
-                    <Switch IsToggled="{Binding IsNearbyOnly}" />
-                </HorizontalStackLayout>
-
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding IsNearbyOnly}">
-                    <Label Grid.Column="0"
-                           Text="{x:Static res:AppResources.DiscoverNearbyRadiusLabel}"
-                           VerticalOptions="Center" />
-                    <Picker Grid.Column="1"
-                            ItemsSource="{Binding NearbyRadiusOptions}"
-                            SelectedItem="{Binding SelectedNearbyRadiusMeters}">
-                        <Picker.ItemDisplayBinding>
-                            <Binding Path="." StringFormat="{x:Static res:AppResources.DiscoverNearbyRadiusMetersFormat}" />
-                        </Picker.ItemDisplayBinding>
-                    </Picker>
-                </Grid>
-
-
-                <maps:Map x:Name="ExploreMap"
-                          HeightRequest="260"
-                          IsVisible="{Binding HasExploreResults}"
-                          IsShowingUser="{Binding IsNearbyOnly}"
-                          MapType="Street" />
-
-                <Label Text="{x:Static res:AppResources.DiscoverExploreEmpty}"
-                       IsVisible="{Binding HasExploreResults, Converter={StaticResource InverseBoolConverter}}" />
-
-                <CollectionView x:Name="ExploreBusinessesCollectionView"
-                                ItemsSource="{Binding ExploreBusinesses}"
-                                SelectionMode="Single"
-                                SelectionChanged="OnExploreBusinessSelected"
-                                IsVisible="{Binding HasExploreResults}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:DiscoverExploreItem">
-                            <Border Stroke="{StaticResource BrushGray300}"
-                                    StrokeThickness="1"
-                                    Padding="12"
-                                    Margin="4">
-                                <VerticalStackLayout Spacing="6">
-                                    <Label Text="{Binding Business.Name}"
-                                           FontSize="16"
-                                           FontAttributes="Bold" />
-
-                                    <Label Text="{Binding Business.Category,
-                                                          StringFormat='{x:Static res:AppResources.BusinessCategoryFormat}'}"
-                                           FontSize="14"
-                                           IsVisible="{Binding Business.Category, Converter={StaticResource InverseBoolConverter}}" />
-
-                                    <Label Text="{Binding Business.City}"
-                                           FontSize="13"
-                                           Opacity="0.8"
-                                           IsVisible="{Binding Business.City, Converter={StaticResource NullCheckConverter}}" />
-
-                                    <Label Text="{x:Static res:AppResources.DiscoverAlreadyJoinedLabel}"
-                                           TextColor="Green"
-                                           FontSize="12"
-                                           FontAttributes="Bold"
-                                           IsVisible="{Binding IsJoined}" />
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                <ActivityIndicator IsVisible="{Binding IsBusy}"
+                                   IsRunning="{Binding IsBusy}"
+                                   Color="{StaticResource BrushPrimary}" />
+                <Label Text="{x:Static res:AppResources.DiscoverLoadingMessage}"
+                       Style="{StaticResource SecondaryBodyLabelStyle}"
+                       HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
-
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="Red"
-                   FontSize="14"
-                   IsVisible="{Binding HasError}" />
-
-            <ActivityIndicator IsVisible="{Binding IsBusy}"
-                               IsRunning="{Binding IsBusy}"
-                               Color="{StaticResource BrushPrimary}" />
-
-        </VerticalStackLayout>
-    </ScrollView>
+        </Grid>
+    </Grid>
 </ContentPage>
