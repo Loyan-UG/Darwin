@@ -3,7 +3,16 @@
     ViewData["Title"] = "Order " + Model.OrderNumber;
 }
 
-<h1 class="mb-2"><i class="fa fa-receipt"></i> Order @Model.OrderNumber</h1>
+<div id="order-details-workspace-shell">
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h1 class="mb-0"><i class="fa fa-receipt"></i> Order @Model.OrderNumber</h1>
+    <a asp-action="Index"
+       hx-get="@Url.Action("Index", "Orders")"
+       hx-target="#order-details-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true"
+       class="btn btn-outline-secondary">Back to Orders</a>
+</div>
 <partial name="~/Views/Shared/_Alerts.cshtml" />
 
 <div class="card mb-3">
@@ -140,6 +149,23 @@
                 <div class="small text-muted">E-Invoice Baseline</div>
                 <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? "Ready" : "Not ready")</div>
                 <div class="small text-muted mt-2">@Model.TaxPolicy.ComplianceScopeNote</div>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Tax Settings</a>
+                    @if (!Model.TaxPolicy.ArchiveReadinessComplete)
+                    {
+                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-warning">Complete Issuer Data</a>
+                    }
+                    @if (!Model.TaxPolicy.EInvoiceBaselineReady)
+                    {
+                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-danger">Review E-Invoice Baseline</a>
+                    }
+                    <button class="btn btn-sm btn-outline-primary"
+                            type="button"
+                            data-bs-toggle="tab"
+                            data-bs-target="#invoices">
+                        Review Invoices
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -150,6 +176,10 @@
                 <a asp-controller="Orders"
                    asp-action="ShipmentsQueue"
                    asp-route-filter="Returned"
+                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = "Returned" })"
+                   hx-target="#order-details-workspace-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true"
                    class="btn btn-sm btn-outline-secondary">
                     Open Returned Queue
                 </a>
@@ -329,3 +359,4 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+</div>

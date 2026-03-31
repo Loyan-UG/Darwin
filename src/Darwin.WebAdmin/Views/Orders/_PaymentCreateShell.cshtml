@@ -59,7 +59,7 @@
                 <span asp-validation-for="FailureReason" class="text-danger"></span>
             </div>
             <div class="col-12">
-                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary">
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId })" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">
                     <i class="fa fa-arrow-left"></i> Back
                 </a>
                 <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i> Save</button>

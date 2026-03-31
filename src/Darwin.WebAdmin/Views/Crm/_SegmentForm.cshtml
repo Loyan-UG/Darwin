@@ -24,6 +24,6 @@
     </div>
     <div class="col-12 d-flex gap-2">
         <button type="submit" class="btn btn-primary">@(isCreate ? "Create" : "Save")</button>
-        <a asp-action="Segments" class="btn btn-outline-secondary">Back</a>
+        <a asp-action="Segments" hx-get="@Url.Action("Segments", "Crm")" hx-target="#crm-segment-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Back</a>
     </div>
 </form>

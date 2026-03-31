@@ -30,7 +30,12 @@
             <button type="submit" class="btn btn-primary">
                 <i class="fa fa-upload"></i> Upload
             </button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            <a asp-action="Index"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Media")"
+               hx-target="#media-create-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">Cancel</a>
         </div>
     </form>
 </div>

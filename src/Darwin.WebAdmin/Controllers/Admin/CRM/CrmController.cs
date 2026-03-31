@@ -126,7 +126,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> Index(CancellationToken ct = default)
         {
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
-            return View("Overview", MapSummary(summary));
+            return RenderOverviewWorkspace(MapSummary(summary));
         }
 
         [HttpGet]
@@ -178,7 +178,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             });
 
             await PopulateCustomerOptionsAsync(vm, ct).ConfigureAwait(false);
-            return View(vm);
+            return RenderCustomerEditor(vm, nameof(CreateCustomer));
         }
 
         [HttpPost]
@@ -227,7 +227,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (dto is null)
             {
                 TempData["Error"] = "Customer not found.";
-                return RedirectToAction(nameof(Customers));
+                return RedirectOrHtmx(nameof(Customers), new { });
             }
 
             var vm = new CustomerEditVm
@@ -327,7 +327,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the customer and try again.";
-                return RedirectToAction(nameof(EditCustomer), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditCustomer), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -344,7 +344,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             var (items, total) = await _getInvoicesPage.HandleAsync(page, pageSize, q, ct).ConfigureAwait(false);
             var summary = await _getCrmSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
-            return View(new InvoicesListVm
+            return RenderInvoicesWorkspace(new InvoicesListVm
             {
                 Summary = MapSummary(summary),
                 TaxPolicy = MapTaxPolicy(settings),
@@ -386,7 +386,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (dto is null)
             {
                 TempData["Error"] = "Invoice not found.";
-                return RedirectToAction(nameof(Invoices));
+                return RedirectOrHtmx(nameof(Invoices), new { });
             }
 
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
@@ -463,7 +463,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the invoice and try again.";
-                return RedirectToAction(nameof(EditInvoice), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditInvoice), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -561,7 +561,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderLeadsWorkspace(vm);
         }
 
         [HttpGet]
@@ -616,7 +616,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (dto is null)
             {
                 TempData["Error"] = "Lead not found.";
-                return RedirectToAction(nameof(Leads));
+                return RedirectOrHtmx(nameof(Leads), new { });
             }
 
             var vm = new LeadEditVm
@@ -680,7 +680,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the lead and try again.";
-                return RedirectToAction(nameof(EditLead), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditLead), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -720,7 +720,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderOpportunitiesWorkspace(vm);
         }
 
         [HttpGet]
@@ -784,7 +784,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (dto is null)
             {
                 TempData["Error"] = "Opportunity not found.";
-                return RedirectToAction(nameof(Opportunities));
+                return RedirectOrHtmx(nameof(Opportunities), new { });
             }
 
             var vm = new OpportunityEditVm
@@ -851,7 +851,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the opportunity and try again.";
-                return RedirectToAction(nameof(EditOpportunity), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditOpportunity), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -896,7 +896,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderSegmentsWorkspace(vm);
         }
 
         [HttpPost]
@@ -914,7 +914,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }, ct).ConfigureAwait(false);
 
                 TempData["Success"] = "Lead converted to customer.";
-                return RedirectToAction(nameof(EditCustomer), new { id = customerId });
+                return RedirectOrHtmx(nameof(EditCustomer), new { id = customerId });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -925,7 +925,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(EditLead), new { id = vm.LeadId });
+            return RedirectOrHtmx(nameof(EditLead), new { id = vm.LeadId });
         }
 
         [HttpGet]
@@ -965,7 +965,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             if (dto is null)
             {
                 TempData["Error"] = "Segment not found.";
-                return RedirectToAction(nameof(Segments));
+                return RedirectOrHtmx(nameof(Segments), new { });
             }
 
             return RenderSegmentEditor(new CustomerSegmentEditVm
@@ -1002,7 +1002,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the segment and try again.";
-                return RedirectToAction(nameof(EditSegment), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditSegment), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -1371,6 +1371,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             return View("Customers", vm);
         }
 
+        private IActionResult RenderOverviewWorkspace(CrmSummaryVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Crm/Overview.cshtml", vm);
+            }
+
+            return View("Overview", vm);
+        }
+
         private static IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)
         {
             yield return new SelectListItem("All leads", LeadQueueFilter.All.ToString(), selectedFilter == LeadQueueFilter.All);
@@ -1425,6 +1435,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             return actionName == nameof(CreateCustomer) ? View("CreateCustomer", vm) : View("EditCustomer", vm);
         }
 
+        private IActionResult RenderSegmentsWorkspace(CustomerSegmentsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Crm/Segments.cshtml", vm);
+            }
+
+            return View("Segments", vm);
+        }
+
+        private IActionResult RenderInvoicesWorkspace(InvoicesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Crm/Invoices.cshtml", vm);
+            }
+
+            return View("Invoices", vm);
+        }
+
         private IActionResult RenderInvoiceEditor(InvoiceEditVm vm)
         {
             if (IsHtmxRequest())
@@ -1446,6 +1476,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             return actionName == nameof(CreateLead) ? View("CreateLead", vm) : View("EditLead", vm);
         }
 
+        private IActionResult RenderLeadsWorkspace(LeadsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Crm/Leads.cshtml", vm);
+            }
+
+            return View("Leads", vm);
+        }
+
         private IActionResult RenderOpportunityEditor(OpportunityEditVm vm, string actionName)
         {
             if (IsHtmxRequest())
@@ -1455,6 +1495,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             }
 
             return actionName == nameof(CreateOpportunity) ? View("CreateOpportunity", vm) : View("EditOpportunity", vm);
+        }
+
+        private IActionResult RenderOpportunitiesWorkspace(OpportunitiesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Crm/Opportunities.cshtml", vm);
+            }
+
+            return View("Opportunities", vm);
         }
 
         private IActionResult RenderSegmentEditor(CustomerSegmentEditVm vm, string actionName)

@@ -147,6 +147,21 @@
                         </div>
                     </div>
                     <div class="small text-muted mt-3">@Model.TaxPolicy.ComplianceScopeNote</div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Tax Settings</a>
+                        @if (Model.CustomerId.HasValue)
+                        {
+                            <a asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="btn btn-sm btn-outline-secondary">Customer Tax Profile</a>
+                            @if (Model.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(Model.CustomerVatId))
+                            {
+                                <a asp-action="EditCustomer" asp-route-id="@Model.CustomerId.Value" class="btn btn-sm btn-outline-danger">Fix VAT ID</a>
+                            }
+                        }
+                        @if (!Model.TaxPolicy.ArchiveReadinessComplete)
+                        {
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-warning">Complete Issuer Data</a>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -279,7 +294,7 @@
 
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="Invoices" class="btn btn-outline-secondary">Back</a>
+            <a asp-action="Invoices" hx-get="@Url.Action("Invoices", "Crm")" hx-target="#crm-invoice-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Back</a>
         </div>
     </form>
 </div>

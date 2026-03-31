@@ -40,7 +40,7 @@
                 <span asp-validation-for="DueAtUtc" class="text-danger"></span>
             </div>
             <div class="col-12">
-                <a asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary">Back</a>
+                <a asp-action="Details" asp-route-id="@Model.OrderId" hx-get="@Url.Action("Details", "Orders", new { id = Model.OrderId })" hx-target="#order-details-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Back</a>
                 <button type="submit" class="btn btn-primary">Create Invoice</button>
             </div>
         </form>

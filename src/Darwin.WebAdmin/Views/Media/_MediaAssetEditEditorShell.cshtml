@@ -47,7 +47,12 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fa fa-save"></i> Save
                     </button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary"
+                       hx-get="@Url.Action("Index", "Media")"
+                       hx-target="#media-edit-editor-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">Back</a>
                 </div>
             </form>
         </div>

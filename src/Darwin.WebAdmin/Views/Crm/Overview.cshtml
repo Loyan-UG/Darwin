@@ -3,7 +3,24 @@
     ViewData["Title"] = "CRM Overview";
 }
 
-<h1 class="mb-4">CRM Overview</h1>
+<div id="crm-overview-workspace-shell">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">CRM Overview</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Customers"
+           hx-get="@Url.Action("Customers", "Crm")"
+           hx-target="#crm-overview-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true"
+           class="btn btn-outline-primary">Customers</a>
+        <a asp-action="Invoices"
+           hx-get="@Url.Action("Invoices", "Crm")"
+           hx-target="#crm-overview-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true"
+           class="btn btn-outline-secondary">Invoices</a>
+    </div>
+</div>
 
 <div class="row g-3">
     <div class="col-md-4 col-xl-2">
@@ -34,8 +51,9 @@
 </div>
 
 <div class="mt-4 d-flex gap-2 flex-wrap">
-    <a asp-action="Customers" class="btn btn-outline-primary">Customers</a>
-    <a asp-action="Leads" class="btn btn-outline-primary">Leads</a>
-    <a asp-action="Opportunities" class="btn btn-outline-primary">Opportunities</a>
-    <a asp-action="Segments" class="btn btn-outline-primary">Segments</a>
+    <a asp-action="Customers" hx-get="@Url.Action("Customers", "Crm")" hx-target="#crm-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">Customers</a>
+    <a asp-action="Leads" hx-get="@Url.Action("Leads", "Crm")" hx-target="#crm-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">Leads</a>
+    <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">Opportunities</a>
+    <a asp-action="Segments" hx-get="@Url.Action("Segments", "Crm")" hx-target="#crm-overview-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-primary">Segments</a>
+</div>
 </div>

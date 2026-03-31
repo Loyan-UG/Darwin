@@ -102,7 +102,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderOrdersWorkspace(vm);
         }
 
         [HttpGet]
@@ -310,7 +310,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var assignedWarehouseIds = dto.Lines
@@ -371,7 +371,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderOrderDetailsWorkspace(vm);
         }
 
         [HttpGet]
@@ -546,7 +546,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new PaymentCreateVm
@@ -602,7 +602,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new ShipmentCreateVm
@@ -669,7 +669,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new RefundCreateVm
@@ -731,7 +731,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             if (dto is null)
             {
                 TempData["Error"] = "Order not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var businessOptions = await _getBusinessLookup.HandleAsync(ct).ConfigureAwait(false);
@@ -790,7 +790,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             if (vm.RowVersion is null || vm.RowVersion.Length == 0)
             {
                 TempData["Error"] = "Missing concurrency token.";
-                return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+                return RedirectOrHtmxDetails(vm.OrderId);
             }
 
             try
@@ -810,7 +810,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(Details), new { id = vm.OrderId });
+            return RedirectOrHtmxDetails(vm.OrderId);
         }
 
         private static IEnumerable<SelectListItem> BuildOrderFilterItems(OrderQueueFilter selectedFilter)
@@ -951,6 +951,26 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             return View("ShipmentsQueue", vm);
         }
 
+        private IActionResult RenderOrdersWorkspace(OrdersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
+        }
+
+        private IActionResult RenderOrderDetailsWorkspace(OrderDetailVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Orders/Details.cshtml", vm);
+            }
+
+            return View("Details", vm);
+        }
+
         private IActionResult RedirectOrHtmxDetails(Guid orderId)
         {
             if (IsHtmxRequest())
@@ -960,6 +980,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             }
 
             return RedirectToAction(nameof(Details), new { id = orderId });
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, object routeValues)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, routeValues);
         }
 
         private bool IsHtmxRequest()

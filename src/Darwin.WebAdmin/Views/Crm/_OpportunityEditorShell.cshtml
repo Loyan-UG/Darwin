@@ -19,7 +19,7 @@
         <partial name="_OpportunityForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
-            <a asp-action="Opportunities" class="btn btn-outline-secondary">Back</a>
+            <a asp-action="Opportunities" hx-get="@Url.Action("Opportunities", "Crm")" hx-target="#crm-opportunity-editor-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-outline-secondary">Back</a>
         </div>
     </form>
 </div>

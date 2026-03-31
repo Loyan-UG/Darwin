@@ -3,17 +3,24 @@
     ViewData["Title"] = "Invoices";
 }
 
+<div id="crm-invoices-workspace-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="mb-1">Invoices</h1>
         <div class="text-muted small">CRM and order-generated invoices in one operational queue.</div>
     </div>
+    <a asp-action="Index"
+       hx-get="@Url.Action("Index", "Crm")"
+       hx-target="#crm-invoices-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true"
+       class="btn btn-outline-secondary">Overview</a>
 </div>
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Tax &amp; Invoicing Policy</span>
-        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
+        <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Open Tax Settings</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
@@ -73,10 +80,25 @@
                 </div>
             </div>
         </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Tax Settings</a>
+            @if (!Model.TaxPolicy.ArchiveReadinessComplete)
+            {
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-warning">Complete Issuer Data</a>
+            }
+            @if (!Model.TaxPolicy.EInvoiceBaselineReady)
+            {
+                <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">Review E-Invoice Baseline</a>
+            }
+        </div>
     </div>
 </div>
 
-<form asp-action="Invoices" method="get" class="row g-2 mb-3">
+<form asp-action="Invoices" method="get" class="row g-2 mb-3"
+      hx-get="@Url.Action("Invoices", "Crm")"
+      hx-target="#crm-invoices-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
     <div class="col-md-4">
         <input name="q" value="@Model.Query" class="form-control" placeholder="Search by id, order, customer, payment" />
     </div>
@@ -114,7 +136,7 @@
                         <td>
                             @if (item.CustomerId.HasValue)
                             {
-                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none">
+                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="text-decoration-none">
                                     @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
                                 </a>
                             }
@@ -126,7 +148,7 @@
                         <td>
                             @if (item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" class="text-decoration-none">
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="text-decoration-none">
                                     @(string.IsNullOrWhiteSpace(item.OrderNumber) ? item.OrderId.Value.ToString() : item.OrderNumber)
                                 </a>
                             }
@@ -179,18 +201,22 @@
                         <td>@item.Status</td>
                         <td>@item.DueDateUtc.ToString("yyyy-MM-dd")</td>
                         <td class="text-end">
-                            <a asp-action="EditInvoice" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Open</a>
+                            <a asp-action="EditInvoice" asp-route-id="@item.Id" hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.Id })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Open</a>
                             @if (item.CustomerId.HasValue)
                             {
-                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="btn btn-sm btn-outline-primary">Customer</a>
+                                <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-primary">Customer</a>
+                                @if (item.CustomerTaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(item.CustomerVatId))
+                                {
+                                    <a asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-danger">Fix VAT ID</a>
+                                }
                             }
                             @if (item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" class="btn btn-sm btn-outline-info">Order</a>
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-info">Order</a>
                             }
                             @if (item.PaymentId.HasValue && item.OrderId.HasValue)
                             {
-                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-dark">Payment</a>
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value, fragment = "payments" })" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML" hx-push-url="true" class="btn btn-sm btn-outline-dark">Payment</a>
                             }
                             @if (item.Status == Darwin.Domain.Enums.InvoiceStatus.Draft)
                             {
@@ -220,4 +246,5 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Crm" asp-action="Invoices" asp-route-q="@Model.Query"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Crm" asp-action="Invoices" asp-route-q="@Model.Query" hx-target="#crm-invoices-workspace-shell" hx-swap="outerHTML"></pager>
+</div>
