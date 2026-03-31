@@ -7,18 +7,35 @@
     var query = Model.Query;
     var filter = Model.Filter;
 }
+<div id="pages-workspace-shell">
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
     <h2 class="mb-0">Pages</h2>
     <div class="d-flex flex-wrap gap-2">
-        <form asp-action="Index" method="get" class="d-flex gap-2">
+        <form asp-action="Index"
+              method="get"
+              class="d-flex gap-2"
+              hx-get="@Url.Action("Index", "Pages")"
+              hx-target="#pages-workspace-shell"
+              hx-swap="outerHTML"
+              hx-push-url="true">
             <input type="text" name="query" value="@query" class="form-control" placeholder="Search..." />
             <input type="hidden" name="filter" value="@filter" />
             <button class="btn btn-outline-secondary" type="submit">
                 <i class="fa fa-search"></i> Search
             </button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+            <a asp-action="Index"
+               class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Pages")"
+               hx-target="#pages-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">Reset</a>
         </form>
-        <a asp-action="Create" class="btn btn-primary">Create Page</a>
+        <a asp-action="Create"
+           class="btn btn-primary"
+           hx-get="@Url.Action("Create", "Pages")"
+           hx-target="#pages-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Create Page</a>
     </div>
 </div>
 
@@ -61,11 +78,16 @@
     <div class="card-body">
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
             <div class="d-flex flex-wrap gap-2">
-                <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")">All</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="draft" class="btn @(filter == "draft" ? "btn-primary" : "btn-outline-primary")">Draft</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="published" class="btn @(filter == "published" ? "btn-primary" : "btn-outline-primary")">Published</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="windowed" class="btn @(filter == "windowed" ? "btn-primary" : "btn-outline-primary")">Windowed</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="live-window" class="btn @(filter == "live-window" ? "btn-primary" : "btn-outline-primary")">Live Window</a>
+                <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Pages", new { query })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">All</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="draft" class="btn @(filter == "draft" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "draft" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Draft</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="published" class="btn @(filter == "published" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "published" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Published</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="windowed" class="btn @(filter == "windowed" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "windowed" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Windowed</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="live-window" class="btn @(filter == "live-window" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Pages", new { query, filter = "live-window" })" hx-target="#pages-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Live Window</a>
             </div>
             <div class="text-muted small">Total pages: @Model.Summary.TotalCount</div>
         </div>
@@ -138,7 +160,11 @@
                                 <td>@(p.PublishStartUtc?.ToString("u") ?? "-") to @(p.PublishEndUtc?.ToString("u") ?? "-")</td>
                                 <td>@p.ModifiedAtUtc.ToString("u")</td>
                                 <td class="text-end">
-                                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">
+                                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("Edit", "Pages", new { id = p.Id })"
+                                       hx-target="#pages-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">
                                         <i class="fas fa-pen"></i> Edit
                                     </a>
                                     <button type="button"
@@ -148,7 +174,10 @@
                                             data-action="@Url.Action("Delete", "Pages")"
                                             data-id="@p.Id"
                                             data-name="@(p.Title ?? p.Id.ToString())"
-                                            data-rowversion="@Convert.ToBase64String(p.RowVersion)">
+                                            data-rowversion="@Convert.ToBase64String(p.RowVersion)"
+                                            data-hx-target="#pages-workspace-shell"
+                                            data-hx-swap="outerHTML"
+                                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                         <i class="fa fa-trash"></i> Delete
                                     </button>
                                 </td>
@@ -164,9 +193,13 @@
                asp-controller="Pages"
                asp-action="Index"
                asp-route-query="@query"
-               asp-route-filter="@filter"></pager>
+               asp-route-filter="@filter"
+               hx-target="#pages-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true"></pager>
 
         <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 
     </div>
+</div>
 </div>

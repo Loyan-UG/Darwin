@@ -57,6 +57,22 @@
         <div class="small text-muted mt-3">
             This is a phase-1 VAT support surface for invoice review. It exposes current tax defaults and issuer identity without claiming full tax-engine automation or compliance completion.
         </div>
+        <div class="row g-3 mt-1">
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Archive Readiness</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.ArchiveReadinessComplete ? "Ready" : "Needs issuer data")</div>
+                    <div class="small text-muted mt-2">@Model.TaxPolicy.ArchiveReadinessLabel</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">E-Invoice Baseline</div>
+                    <div class="fw-semibold mt-1">@(Model.TaxPolicy.EInvoiceBaselineReady ? "Ready" : "Not ready")</div>
+                    <div class="small text-muted mt-2">@Model.TaxPolicy.ComplianceScopeNote</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

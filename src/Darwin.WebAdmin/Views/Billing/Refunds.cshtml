@@ -191,7 +191,10 @@
             {
                 <tr>
                     <td>
-                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="text-decoration-none fw-semibold">
+                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="text-decoration-none fw-semibold"
+                           hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })"
+                           hx-target="#billing-refunds-workspace-shell"
+                           hx-swap="outerHTML">
                             @(string.IsNullOrWhiteSpace(item.OrderNumber) ? item.OrderId.ToString() : item.OrderNumber)
                         </a>
                     </td>
@@ -216,7 +219,10 @@
                         @if (item.CustomerId.HasValue)
                         {
                             <div>
-                                <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none">
+                                <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none"
+                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })"
+                                   hx-target="#billing-refunds-workspace-shell"
+                                   hx-swap="outerHTML">
                                     @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
                                 </a>
                             </div>
@@ -248,7 +254,20 @@
                     </td>
                     <td class="text-end">@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
                     <td class="text-end">
-                        <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-secondary">Payment</a>
+                        <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId })"
+                           hx-target="#billing-refunds-workspace-shell"
+                           hx-swap="outerHTML">Payment</a>
+                        @if (item.NeedsSupportAttention)
+                        {
+                            <a asp-action="Refunds"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-queue="@BillingRefundQueueFilter.NeedsSupport"
+                               class="btn btn-sm btn-outline-danger"
+                               hx-get="@Url.Action("Refunds", "Billing", new { businessId = Model.BusinessId, queue = BillingRefundQueueFilter.NeedsSupport })"
+                               hx-target="#billing-refunds-workspace-shell"
+                               hx-swap="outerHTML">Support Queue</a>
+                        }
                         @if (item.IsStripe && item.NeedsSupportAttention)
                         {
                             <a asp-action="Webhooks"
@@ -257,8 +276,18 @@
                                hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
                                hx-target="#billing-refunds-workspace-shell"
                                hx-swap="outerHTML">Webhook Exceptions</a>
+                            <a asp-action="Payments"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
+                               class="btn btn-sm btn-outline-dark"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })"
+                               hx-target="#billing-refunds-workspace-shell"
+                               hx-swap="outerHTML">Dispute Queue</a>
                         }
-                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-primary">Order</a>
+                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })"
+                           hx-target="#billing-refunds-workspace-shell"
+                           hx-swap="outerHTML">Order</a>
                     </td>
                 </tr>
             }

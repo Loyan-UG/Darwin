@@ -91,7 +91,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 Playbooks = BuildProductPlaybooks()
             };
 
-            return View(vm);
+            return RenderIndexWorkspace(vm);
         }
 
         [HttpGet]
@@ -105,7 +105,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             vm.Variants ??= new();
             if (vm.Variants.Count == 0) vm.Variants.Add(new ProductVariantCreateVm { Currency = "EUR" });
 
-            return View(vm);
+            return RenderCreateEditor(vm);
         }
 
         [ValidateAntiForgeryToken]
@@ -233,7 +233,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             };
 
             await LoadLookupsAsync(ct);
-            return View(vm);
+            return RenderEditEditor(vm);
         }
 
         [ValidateAntiForgeryToken]
@@ -322,7 +322,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             try { await _softDeleteProduct.HandleAsync(id, ct); TempData["Success"] = "Product deleted."; }
             catch { TempData["Error"] = "Failed to delete the product."; }
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         private async Task LoadLookupsAsync(CancellationToken ct)
@@ -336,6 +336,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             ViewBag.Cultures = cultures;
 
             ViewBag.Currencies = new[] { "EUR", "USD", "GBP" }; // TODO: will move to SiteSetting/table later
+        }
+
+        private IActionResult RenderIndexWorkspace(ProductsIndexVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Products/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
         }
 
         private IActionResult RenderCreateEditor(ProductCreateVm vm)

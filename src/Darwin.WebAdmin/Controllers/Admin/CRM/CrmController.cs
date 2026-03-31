@@ -133,6 +133,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
         public async Task<IActionResult> Customers(int page = 1, int pageSize = 20, string? q = null, CustomerQueueFilter filter = CustomerQueueFilter.All, CancellationToken ct = default)
         {
             var (items, total) = await _getCustomersPage.HandleAsync(page, pageSize, q, filter, ct).ConfigureAwait(false);
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var vm = new CustomersListVm
             {
                 Page = page,
@@ -140,6 +141,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 Total = total,
                 Query = q ?? string.Empty,
                 Filter = filter,
+                PlatformDefaultCulture = settings.DefaultCulture,
                 FilterItems = BuildCustomerFilterItems(filter),
                 Items = items.Select(x => new CustomerListItemVm
                 {
@@ -151,6 +153,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                     CompanyName = x.CompanyName,
                     TaxProfileType = x.TaxProfileType,
                     VatId = x.VatId,
+                    Locale = x.Locale,
+                    UsesPlatformLocaleFallback = x.UsesPlatformLocaleFallback,
                     SegmentCount = x.SegmentCount,
                     OpportunityCount = x.OpportunityCount,
                     CreatedAtUtc = x.CreatedAtUtc,
@@ -159,7 +163,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderCustomersWorkspace(vm);
         }
 
         [HttpGet]
@@ -1319,15 +1323,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
 
         private static TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
         {
+            var issuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName);
+            var issuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId);
+            var issuerAddressConfigured =
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerAddressLine1) &&
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerPostalCode) &&
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerCity) &&
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerCountry);
+            var archiveReady = issuerConfigured && issuerTaxIdConfigured && issuerAddressConfigured;
+            var eInvoiceBaselineReady = archiveReady && dto.VatEnabled;
+
             return new TaxPolicySnapshotVm
             {
                 VatEnabled = dto.VatEnabled,
                 DefaultVatRatePercent = dto.DefaultVatRatePercent,
                 PricesIncludeVat = dto.PricesIncludeVat,
                 AllowReverseCharge = dto.AllowReverseCharge,
-                IssuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName),
+                IssuerConfigured = issuerConfigured,
                 InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
-                InvoiceIssuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId)
+                InvoiceIssuerTaxIdConfigured = issuerTaxIdConfigured,
+                ArchiveReadinessComplete = archiveReady,
+                ArchiveReadinessLabel = archiveReady ? "Issuer archive-ready" : "Archive issuer data incomplete",
+                EInvoiceBaselineReady = eInvoiceBaselineReady,
+                EInvoiceBaselineLabel = eInvoiceBaselineReady ? "Baseline ready" : "Baseline incomplete",
+                ComplianceScopeNote = "Phase-1 exposes issuer/VAT readiness only. Archive and e-invoice workflows still require deeper compliance implementation."
             };
         }
 
@@ -1339,6 +1358,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.CRM
             yield return new SelectListItem("Has opportunities", CustomerQueueFilter.HasOpportunities.ToString(), selectedFilter == CustomerQueueFilter.HasOpportunities);
             yield return new SelectListItem("B2B", CustomerQueueFilter.Business.ToString(), selectedFilter == CustomerQueueFilter.Business);
             yield return new SelectListItem("B2B missing VAT ID", CustomerQueueFilter.MissingVatId.ToString(), selectedFilter == CustomerQueueFilter.MissingVatId);
+            yield return new SelectListItem("Uses platform locale fallback", CustomerQueueFilter.UsesPlatformLocaleFallback.ToString(), selectedFilter == CustomerQueueFilter.UsesPlatformLocaleFallback);
+        }
+
+        private IActionResult RenderCustomersWorkspace(CustomersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Crm/Customers.cshtml", vm);
+            }
+
+            return View("Customers", vm);
         }
 
         private static IEnumerable<SelectListItem> BuildLeadFilterItems(LeadQueueFilter selectedFilter)

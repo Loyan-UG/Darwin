@@ -62,6 +62,8 @@ public sealed class GetShipmentsPageHandler
                  s.Status == Domain.Enums.ShipmentStatus.Returned ||
                  ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                   (s.TrackingNumber == null || s.TrackingNumber == string.Empty)))),
+            ShipmentQueueFilter.ReturnFollowUp => shipments.Where(s =>
+                s.Status == Domain.Enums.ShipmentStatus.Returned),
             _ => shipments
         };
 
@@ -138,6 +140,11 @@ public sealed class GetShipmentsPageHandler
 
             item.TrackingState = ResolveTrackingState(item);
             item.ExceptionNote = ResolveExceptionNote(item);
+            item.NeedsReturnFollowUp =
+                item.Status == Domain.Enums.ShipmentStatus.Returned &&
+                (!item.HasRefundablePayment ||
+                 item.NeedsCarrierReview ||
+                 string.IsNullOrWhiteSpace(item.TrackingNumber));
         }
 
         return (items, total);
@@ -255,6 +262,9 @@ public sealed class GetShipmentOpsSummaryHandler
                       s.Status == Domain.Enums.ShipmentStatus.Returned ||
                       ((s.Status == Domain.Enums.ShipmentStatus.Shipped || s.Status == Domain.Enums.ShipmentStatus.Delivered) &&
                        (s.TrackingNumber == null || s.TrackingNumber == string.Empty))),
+                ct).ConfigureAwait(false),
+            ReturnFollowUpCount = await shipments.CountAsync(
+                s => s.Status == Domain.Enums.ShipmentStatus.Returned,
                 ct).ConfigureAwait(false)
         };
     }

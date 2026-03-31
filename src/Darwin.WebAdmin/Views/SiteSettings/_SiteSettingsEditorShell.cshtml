@@ -42,6 +42,129 @@
         </div>
     </div>
 
+    <div class="card mb-4">
+        <div class="card-header">Settings Ownership Matrix</div>
+        <div class="card-body">
+            <div class="small text-muted mb-3">
+                Use site settings only for platform-wide defaults, provider credentials, and shared policy. Business-specific branding, sender identity, local defaults, and communication enablement belong in business setup.
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Area</th>
+                            <th>Owned Here</th>
+                            <th>Business Scope</th>
+                            <th>Operator Handoff</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-semibold">Localization defaults</td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary-emphasis">Global owner</span>
+                                <div class="mt-2">Fallback culture, currency, time zone, supported cultures</div>
+                            </td>
+                            <td>Per-business culture, currency, and time zone overrides</td>
+                            <td>
+                                <div class="small text-muted mb-2">Adjust final business defaults from business setup after changing platform fallbacks.</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-controller="Businesses"
+                                       asp-action="Index"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Index", "Businesses")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Business Setup Queue</a>
+                                    <a asp-controller="Businesses"
+                                       asp-action="SupportQueue"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Needs Attention</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Transactional communication policy</td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary-emphasis">Global owner</span>
+                                <div class="mt-2">SMTP/SMS/WhatsApp providers, admin routing, subject/body templates, test targets</div>
+                            </td>
+                            <td>Sender name, reply-to, support email, channel enablement flags</td>
+                            <td>
+                                <div class="small text-muted mb-2">Use Business Setup and Business Communications for business-level readiness and flow support.</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-controller="Businesses"
+                                       asp-action="SupportQueue"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Business Support</a>
+                                    <a asp-controller="BusinessCommunications"
+                                       asp-action="Index"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Index", "BusinessCommunications")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Communication Ops</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Payments and shipping</td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary-emphasis">Global owner</span>
+                                <div class="mt-2">Stripe and DHL credentials, webhook/carrier thresholds, VAT and issuer defaults</div>
+                            </td>
+                            <td>Subscription plan choice, business-facing billing state, business communication around those flows</td>
+                            <td>
+                                <div class="small text-muted mb-2">Use business subscription/support surfaces for tenant-specific triage after platform credentials are ready.</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-controller="Billing"
+                                       asp-action="Payments"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Payments", "Billing")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Payment Ops</a>
+                                    <a asp-controller="Orders"
+                                       asp-action="ShipmentsQueue"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("ShipmentsQueue", "Orders")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Shipment Ops</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Business branding and sender defaults</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis">Business owner</span>
+                                <div class="mt-2">Leave brand display name, logo, support email, sender defaults, and channel toggles in business setup.</div>
+                            </td>
+                            <td>Business setup and communication readiness drive the final customer-facing defaults.</td>
+                            <td>
+                                <div class="small text-muted mb-2">Do not duplicate these values globally unless they are true platform defaults.</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a asp-controller="Businesses"
+                                       asp-action="Index"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Index", "Businesses")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Open Businesses</a>
+                                    <a asp-controller="Businesses"
+                                       asp-action="SupportQueue"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                       hx-target="#site-settings-editor-shell"
+                                       hx-swap="outerHTML">Subscriber Support</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Basics -->
     <div id="site-settings-basics" class="card mb-4">
         <div class="card-header">Basics</div>
@@ -74,6 +197,42 @@
     <div id="site-settings-localization" class="card mb-4">
         <div class="card-header">Localization</div>
         <div class="card-body">
+            <div class="alert alert-secondary mb-3">
+                Platform localization owns fallback culture, supported cultures, shared date/time formatting, and the default currency/country baseline. Tenant-specific wording and day-to-day customer-facing defaults still belong in business setup and CRM support follow-up.
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Fallback governance</div>
+                        <div class="small text-muted">Use these fields when a culture, currency, or time-zone default should change for every new business or for platform-wide fallback behavior.</div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Business override path</div>
+                        <div class="small text-muted">If only one tenant needs a different culture, currency, or time zone, keep the override in business setup instead of mutating the platform fallback.</div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Operator handoff</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="Businesses"
+                               asp-action="Index"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Index", "Businesses")"
+                               hx-target="#site-settings-editor-shell"
+                               hx-swap="outerHTML">Business Defaults</a>
+                            <a asp-controller="CRM"
+                               asp-action="Customers"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Customers", "Crm")"
+                               hx-target="#site-settings-editor-shell"
+                               hx-swap="outerHTML">Customer Locale Review</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label asp-for="DefaultCulture" class="form-label"></label>
@@ -122,6 +281,9 @@
                     <field-help title="Home slug" content="Slug of the homepage when building localized routes." placement="right"></field-help>
                     <input asp-for="HomeSlug" class="form-control" />
                 </div>
+            </div>
+            <div class="alert alert-light border small mb-0">
+                Fallback rule: keep <code>SupportedCulturesCsv</code> aligned with what admin and customer surfaces can actually render. Add a business-level override only when one tenant must differ from the platform default; otherwise update the global fallback here and review tenant defaults from Business Setup.
             </div>
 
             <div class="row">
@@ -244,6 +406,9 @@
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
                 These URLs are used by business-facing mobile flows that hand operators off to external legal or billing pages rather than executing those actions inside the app.
+            </div>
+            <div class="small text-muted mb-3">
+                Keep only platform-wide handoff URLs here. Validate the final brand, sender, and local business defaults from Business Setup before treating a tenant as go-live ready.
             </div>
             <div class="row g-3">
                 <div class="col-md-6">

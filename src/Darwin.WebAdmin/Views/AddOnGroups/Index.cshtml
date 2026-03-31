@@ -3,6 +3,7 @@
     ViewData["Title"] = "Add-on Groups";
 }
 
+<div id="add-on-groups-workspace-shell">
 <h1 class="mb-3"><i class="fa fa-layer-group"></i> Add-on Groups</h1>
 
 <div class="row g-3 mb-3">
@@ -41,7 +42,11 @@
     </div>
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3"
+      hx-get="@Url.Action("Index", "AddOnGroups")"
+      hx-target="#add-on-groups-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
     <div class="col-auto">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search name/currency..." />
     </div>
@@ -50,10 +55,18 @@
     </div>
     <div class="col-auto">
         <button class="btn btn-outline-primary"><i class="fa fa-search"></i> Search</button>
-        <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "AddOnGroups")"
+           hx-target="#add-on-groups-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Reset</a>
     </div>
     <div class="col-auto ms-auto">
-        <a asp-controller="AddOnGroups" asp-action="Create" class="btn btn-primary">
+        <a asp-controller="AddOnGroups" asp-action="Create" class="btn btn-primary"
+           hx-get="@Url.Action("Create", "AddOnGroups")"
+           hx-target="#add-on-groups-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">
             <i class="fa fa-plus"></i> New Group
         </a>
     </div>
@@ -122,7 +135,11 @@
                         <td class="text-center">@g.AttachmentCount</td>
                         <td>@g.ModifiedAtUtc?.ToLocalTime()</td>
                         <td class="text-end">
-                            <a asp-controller="AddOnGroups" asp-action="Edit" asp-route-id="@g.Id" class="btn btn-sm btn-outline-secondary">
+                            <a asp-controller="AddOnGroups" asp-action="Edit" asp-route-id="@g.Id" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "AddOnGroups", new { id = g.Id })"
+                               hx-target="#add-on-groups-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
                                 <i class="fa fa-pen"></i> Edit
                             </a>
 
@@ -154,7 +171,10 @@
                                     data-action="@Url.Action("Delete", "AddOnGroups")"
                                     data-id="@g.Id"
                                     data-name="@g.Name"
-                                    data-rowversion="@Convert.ToBase64String(g.RowVersion)">
+                                    data-rowversion="@Convert.ToBase64String(g.RowVersion)"
+                                    data-hx-target="#add-on-groups-workspace-shell"
+                                    data-hx-swap="outerHTML"
+                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                 <i class="fa fa-trash"></i> Delete
                             </button>
                         </td>
@@ -172,7 +192,11 @@
        asp-controller="AddOnGroups"
        asp-action="Index"
        asp-route-query="@Model.Query"
-       asp-route-filter="@Model.Filter">
+       asp-route-filter="@Model.Filter"
+       hx-target="#add-on-groups-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">
 </pager>
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
+</div>

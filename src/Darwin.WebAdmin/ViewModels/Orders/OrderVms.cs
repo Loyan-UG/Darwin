@@ -211,6 +211,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
 
         public bool IsDhl { get; set; }
         public bool NeedsCarrierReview { get; set; }
+        public bool NeedsReturnFollowUp { get; set; }
         public bool AwaitingHandoff { get; set; }
         public bool TrackingOverdue { get; set; }
         public int OpenAgeHours { get; set; }
@@ -463,6 +464,7 @@ namespace Darwin.WebAdmin.ViewModels.Orders
         public int AwaitingHandoffCount { get; set; }
         public int TrackingOverdueCount { get; set; }
         public int CarrierReviewCount { get; set; }
+        public int ReturnFollowUpCount { get; set; }
     }
 
     public sealed class ShipmentPlaybookVm

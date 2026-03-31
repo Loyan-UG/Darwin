@@ -226,12 +226,13 @@
                 <th>Attempts</th>
                 <th>Timeline</th>
                 <th>Correlation</th>
+                <th class="text-end">Operator Follow-up</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Deliveries.Count == 0)
         {
-            <tr><td colspan="6" class="text-center text-muted">No webhook deliveries found.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted">No webhook deliveries found.</td></tr>
         }
         else
         {
@@ -288,6 +289,52 @@
                         {
                             <div class="small text-muted mt-1">Treat as payment-callback evidence, then confirm the linked payment/refund queue.</div>
                         }
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-2 flex-wrap">
+                            @if (item.SuggestedQueueTarget == "Payments")
+                            {
+                                <a asp-action="Payments"
+                                   asp-route-queue="NeedsReconciliation"
+                                   class="btn btn-sm btn-outline-primary"
+                                   hx-get="@Url.Action("Payments", "Billing", new { queue = "NeedsReconciliation" })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    @item.SuggestedOperatorAction
+                                </a>
+                            }
+                            else if (item.SuggestedQueueTarget == "Refunds")
+                            {
+                                <a asp-action="Refunds"
+                                   asp-route-queue="NeedsSupport"
+                                   class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("Refunds", "Billing", new { queue = "NeedsSupport" })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    @item.SuggestedOperatorAction
+                                </a>
+                            }
+                            else if (item.SuggestedQueueTarget == "DisputeSignals")
+                            {
+                                <a asp-action="Payments"
+                                   asp-route-queue="NeedsReconciliation"
+                                   class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("Payments", "Billing", new { queue = "NeedsReconciliation" })"
+                                   hx-target="#billing-webhooks-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    @item.SuggestedOperatorAction
+                                </a>
+                            }
+                            <a asp-controller="SiteSettings"
+                               asp-action="Edit"
+                               asp-fragment="site-settings-payments"
+                               class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+                               hx-target="#billing-webhooks-workspace-shell"
+                               hx-swap="outerHTML">
+                                Payment Settings
+                            </a>
+                        </div>
                     </td>
                 </tr>
             }

@@ -86,7 +86,7 @@ public sealed class ShippingMethodsController : AdminBaseController
             }).ToList()
         };
 
-        return View(vm);
+        return RenderIndexWorkspace(vm);
     }
 
     [HttpGet]
@@ -97,7 +97,7 @@ public sealed class ShippingMethodsController : AdminBaseController
             Currency = "EUR",
             Rates = new List<ShippingRateEditVm> { new() { SortOrder = 0 } }
         };
-        return View(vm);
+        return RenderEditor(vm, true);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -140,7 +140,7 @@ public sealed class ShippingMethodsController : AdminBaseController
         if (dto is null)
         {
             TempData["Error"] = "Shipping method not found.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         var vm = new ShippingMethodEditVm
@@ -164,7 +164,7 @@ public sealed class ShippingMethodsController : AdminBaseController
         };
 
         EnsureRates(vm);
-        return View(vm);
+        return RenderEditor(vm, false);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -241,7 +241,21 @@ public sealed class ShippingMethodsController : AdminBaseController
     private IActionResult RenderEditor(ShippingMethodEditVm vm, bool isCreate)
     {
         ViewData["IsCreate"] = isCreate;
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/ShippingMethods/_ShippingMethodEditorShell.cshtml", vm);
+        }
         return isCreate ? View("Create", vm) : View("Edit", vm);
+    }
+
+    private IActionResult RenderIndexWorkspace(ShippingMethodsListVm vm)
+    {
+        if (IsHtmxRequest())
+        {
+            return PartialView("~/Views/ShippingMethods/Index.cshtml", vm);
+        }
+
+        return View("Index", vm);
     }
 
     private IActionResult RedirectOrHtmx(string actionName, object routeValues)

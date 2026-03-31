@@ -8,18 +8,31 @@
     var filter = Model.Filter;
 }
 
+<div id="products-workspace-shell">
 <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
     <h2 class="m-0">Products</h2>
     <div class="d-flex flex-wrap gap-2">
-        <form asp-action="Index" method="get" class="d-flex gap-2">
+        <form asp-action="Index" method="get" class="d-flex gap-2"
+              hx-get="@Url.Action("Index", "Products")"
+              hx-target="#products-workspace-shell"
+              hx-swap="outerHTML"
+              hx-push-url="true">
             <input type="text" name="query" value="@query" class="form-control" placeholder="Search..." />
             <input type="hidden" name="filter" value="@filter" />
             <button class="btn btn-outline-secondary" type="submit">
                 <i class="fa fa-search"></i> Search
             </button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+            <a asp-action="Index" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Index", "Products")"
+               hx-target="#products-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">Reset</a>
         </form>
-        <a asp-action="Create" class="btn btn-primary">Create New</a>
+        <a asp-action="Create" class="btn btn-primary"
+           hx-get="@Url.Action("Create", "Products")"
+           hx-target="#products-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Create New</a>
     </div>
 </div>
 
@@ -62,11 +75,16 @@
     <div class="card-body">
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
             <div class="d-flex flex-wrap gap-2">
-                <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")">All</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="inactive" class="btn @(filter == "inactive" ? "btn-primary" : "btn-outline-primary")">Inactive</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="hidden" class="btn @(filter == "hidden" ? "btn-primary" : "btn-outline-primary")">Hidden</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="single-variant" class="btn @(filter == "single-variant" ? "btn-primary" : "btn-outline-primary")">Single Variant</a>
-                <a asp-action="Index" asp-route-query="@query" asp-route-filter="scheduled" class="btn @(filter == "scheduled" ? "btn-primary" : "btn-outline-primary")">Scheduled</a>
+                <a asp-action="Index" asp-route-query="@query" class="btn @(string.IsNullOrEmpty(filter) ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Products", new { query })" hx-target="#products-workspace-shell" hx-swap="outerHTML" hx-push-url="true">All</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="inactive" class="btn @(filter == "inactive" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Products", new { query, filter = "inactive" })" hx-target="#products-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Inactive</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="hidden" class="btn @(filter == "hidden" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Products", new { query, filter = "hidden" })" hx-target="#products-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Hidden</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="single-variant" class="btn @(filter == "single-variant" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Products", new { query, filter = "single-variant" })" hx-target="#products-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Single Variant</a>
+                <a asp-action="Index" asp-route-query="@query" asp-route-filter="scheduled" class="btn @(filter == "scheduled" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Products", new { query, filter = "scheduled" })" hx-target="#products-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Scheduled</a>
             </div>
             <div class="text-muted small">Total products: @Model.Summary.TotalCount</div>
         </div>
@@ -158,7 +176,11 @@
                                 </td>
                                 <td class="text-nowrap text-muted small">@p.ModifiedAtUtc.ToString("u")</td>
                                 <td class="text-end">
-                                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">
+                                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"
+                                       hx-get="@Url.Action("Edit", "Products", new { id = p.Id })"
+                                       hx-target="#products-workspace-shell"
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
                                     <button type="button"
@@ -168,7 +190,10 @@
                                             data-action="@Url.Action("Delete", "Products")"
                                             data-id="@p.Id"
                                             data-rowversion="@Convert.ToBase64String(p.RowVersion)"
-                                            data-name="@(string.IsNullOrWhiteSpace(p.DefaultName) ? p.Id.ToString() : p.DefaultName)">
+                                            data-name="@(string.IsNullOrWhiteSpace(p.DefaultName) ? p.Id.ToString() : p.DefaultName)"
+                                            data-hx-target="#products-workspace-shell"
+                                            data-hx-swap="outerHTML"
+                                            data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                         <i class="fas fa-trash-alt"></i> Delete
                                     </button>
 
@@ -186,9 +211,13 @@
                asp-controller="Products"
                asp-action="Index"
                asp-route-query="@query"
-               asp-route-filter="@filter"></pager>
+               asp-route-filter="@filter"
+               hx-target="#products-workspace-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true"></pager>
 
         <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
 
     </div>
+</div>
 </div>

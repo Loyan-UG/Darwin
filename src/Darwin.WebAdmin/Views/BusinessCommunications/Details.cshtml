@@ -13,11 +13,13 @@
         <a asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-communication-profile-shell"
-           hx-swap="outerHTML">Back to Communications</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Back to Communications</a>
         <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
-           hx-swap="outerHTML">Email Audits</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Email Audits</a>
         <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-primary"
            hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
            hx-target="#business-communication-profile-shell"
@@ -226,12 +228,13 @@
                 @if (Model.OpenInvitationCount > 0)
                 {
                     <div class="mt-3">
-                        <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary"
-                           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, flowKey = "BusinessInvitation" })"
-                           hx-target="#business-communication-profile-shell"
-                           hx-swap="outerHTML">
-                            View Invitation Email Audits
-                        </a>
+                    <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-flowKey="BusinessInvitation" class="btn btn-sm btn-outline-secondary"
+                       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, flowKey = "BusinessInvitation" })"
+                       hx-target="#business-communication-profile-shell"
+                       hx-swap="outerHTML"
+                       hx-push-url="true">
+                        View Invitation Email Audits
+                    </a>
                     </div>
                 }
             </div>
@@ -279,12 +282,14 @@
                                 <th>Flow</th>
                                 <th>Recipient</th>
                                 <th>Status</th>
+                                <th>Delivery Context</th>
+                                <th>Follow-up</th>
                             </tr>
                         </thead>
                         <tbody>
                         @if (Model.RecentEmailAudits.Count == 0)
                         {
-                            <tr><td colspan="4" class="text-center text-muted py-3">No recent business-scoped email activity.</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-3">No recent business-scoped email activity.</td></tr>
                         }
                         else
                         {
@@ -308,6 +313,74 @@
                                             <span class="badge text-bg-secondary">@item.Status</span>
                                         }
                                     </td>
+                                    <td>
+                                        @if (string.Equals(item.Severity, "High", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge text-bg-danger">High</span>
+                                        }
+                                        else if (string.Equals(item.Severity, "Medium", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge text-bg-warning">Medium</span>
+                                        }
+                                        else if (string.Equals(item.Severity, "Watch", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge text-bg-secondary">Watch</span>
+                                        }
+                                        else if (string.Equals(item.Severity, "Slow", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge text-bg-info">Slow</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-light">Normal</span>
+                                        }
+                                        <div class="small text-muted mt-1">Open for @item.AttemptAgeMinutes min</div>
+                                        @if (item.CompletionLatencySeconds.HasValue)
+                                        {
+                                            <div class="small text-muted">Latency @item.CompletionLatencySeconds.Value s</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="small">@item.RecommendedAction</div>
+                                        @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
+                                        {
+                                            <div class="small text-danger mt-1">@item.FailureMessage</div>
+                                        }
+                                        <div class="mt-2 d-flex flex-wrap gap-2">
+                                            @if (string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
+                                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = "Open" })"
+                                                   hx-target="#business-communication-profile-shell"
+                                                   hx-swap="outerHTML">Search Invitation</a>
+                                            }
+                                            else if (string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) || string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" asp-route-query="@item.RecipientEmail" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
+                                                   hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id, query = item.RecipientEmail, filter = "Attention" })"
+                                                   hx-target="#business-communication-profile-shell"
+                                                   hx-swap="outerHTML">Member Support</a>
+                                                <a asp-controller="Users" asp-action="Index" asp-route-q="@item.RecipientEmail" class="btn btn-sm btn-outline-secondary"
+                                                   hx-get="@Url.Action("Index", "Users", new { q = item.RecipientEmail })"
+                                                   hx-target="#business-communication-profile-shell"
+                                                   hx-swap="outerHTML">Open Users</a>
+                                            }
+                                            else if (string.Equals(item.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase) && Model.CanSendTestEmail)
+                                            {
+                                                <form asp-action="SendTestEmail" method="post" class="d-inline"
+                                                      hx-post="@Url.Action("SendTestEmail", "BusinessCommunications")"
+                                                      hx-target="#business-communication-profile-shell"
+                                                      hx-swap="outerHTML">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Rerun Test</button>
+                                                </form>
+                                            }
+                                            <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" asp-route-status="Failed" asp-route-flowKey="@item.FlowKey" class="btn btn-sm btn-outline-dark"
+                                               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id, status = "Failed", flowKey = item.FlowKey })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">Failed Audits</a>
+                                        </div>
+                                    </td>
                                 </tr>
                             }
                         }
@@ -318,8 +391,22 @@
                     <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-sm btn-outline-primary"
                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">Open Business Email Audits</a>
+                       hx-swap="outerHTML"
+                       hx-push-url="true">Open Business Email Audits</a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Delivery Backlog Snapshot</div>
+            <div class="card-body">
+                <div class="mb-2">Needs Follow-up: <strong>@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</strong></div>
+                <div class="mb-2">High Severity: <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</strong></div>
+                <div>Slow Deliveries: <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</strong></div>
             </div>
         </div>
     </div>
@@ -339,6 +426,8 @@
                             <tr>
                                 <th>Flow</th>
                                 <th>Template Surface</th>
+                                <th>Current Template Preview</th>
+                                <th>Supported Tokens</th>
                                 <th>Operator Control</th>
                                 <th>Actions</th>
                             </tr>
@@ -349,6 +438,11 @@
                             <tr>
                                 <td class="fw-semibold">@item.FlowName</td>
                                 <td>@item.TemplateSurface</td>
+                                <td>
+                                    <div class="small"><strong>Subject:</strong> @item.CurrentSubjectTemplate</div>
+                                    <div class="small text-muted mt-1"><strong>Body:</strong> @item.CurrentBodyTemplate</div>
+                                </td>
+                                <td><code>@item.SupportedTokens</code></td>
                                 <td>@item.OperatorControl</td>
                                 <td>
                                     <div class="d-flex flex-wrap gap-2">
@@ -390,6 +484,13 @@
                                                hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
                                                hx-target="#business-communication-profile-shell"
                                                hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                        }
+                                        @if (item.OperatorActionTarget != "AdminAlerts")
+                                        {
+                                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                               hx-target="#business-communication-profile-shell"
+                                               hx-swap="outerHTML">Open Policy</a>
                                         }
                                     </div>
                                 </td>

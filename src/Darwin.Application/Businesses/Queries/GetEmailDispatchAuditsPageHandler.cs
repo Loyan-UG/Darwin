@@ -36,6 +36,9 @@ namespace Darwin.Application.Businesses.Queries
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
+            var nowUtc = DateTime.UtcNow;
+            var stalePendingThresholdUtc = nowUtc.AddMinutes(-15);
+            const int slowDeliveryThresholdSeconds = 60;
 
             var baseQuery =
                 from audit in _db.Set<EmailDispatchAudit>().AsNoTracking()
@@ -73,7 +76,6 @@ namespace Darwin.Application.Businesses.Queries
 
             if (stalePendingOnly)
             {
-                var stalePendingThresholdUtc = DateTime.UtcNow.AddMinutes(-15);
                 baseQuery = baseQuery.Where(x => x.Audit.Status == "Pending" && x.Audit.AttemptedAtUtc <= stalePendingThresholdUtc);
             }
 
@@ -110,6 +112,24 @@ namespace Darwin.Application.Businesses.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
+            foreach (var item in items)
+            {
+                item.AttemptAgeMinutes = (int)Math.Max(0, (nowUtc - item.AttemptedAtUtc).TotalMinutes);
+                item.CompletionLatencySeconds = item.CompletedAtUtc.HasValue
+                    ? (int)Math.Max(0, (item.CompletedAtUtc.Value - item.AttemptedAtUtc).TotalSeconds)
+                    : null;
+                item.NeedsOperatorFollowUp =
+                    string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) ||
+                    (string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) && item.AttemptedAtUtc <= stalePendingThresholdUtc);
+                item.Severity =
+                    string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) && item.BusinessId != null ? "High" :
+                    string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) ? "Medium" :
+                    string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) && item.AttemptedAtUtc <= stalePendingThresholdUtc ? "High" :
+                    string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) ? "Watch" :
+                    item.CompletionLatencySeconds.HasValue && item.CompletionLatencySeconds.Value > slowDeliveryThresholdSeconds ? "Slow" :
+                    "Normal";
+            }
+
             return (items, total);
         }
 
@@ -123,20 +143,37 @@ namespace Darwin.Application.Businesses.Queries
 
             var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
             var stalePendingThresholdUtc = DateTime.UtcNow.AddMinutes(-15);
+            const int slowDeliveryThresholdSeconds = 60;
+
+            var summaryRows = await audits
+                .Select(x => new
+                {
+                    x.Status,
+                    x.FlowKey,
+                    x.BusinessId,
+                    x.AttemptedAtUtc,
+                    x.CompletedAtUtc
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
 
             return new EmailDispatchAuditSummaryDto
             {
-                TotalCount = await audits.CountAsync(ct).ConfigureAwait(false),
-                FailedCount = await audits.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
-                SentCount = await audits.CountAsync(x => x.Status == "Sent", ct).ConfigureAwait(false),
-                PendingCount = await audits.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
-                StalePendingCount = await audits.CountAsync(x => x.Status == "Pending" && x.AttemptedAtUtc <= stalePendingThresholdUtc, ct).ConfigureAwait(false),
-                BusinessLinkedFailureCount = await audits.CountAsync(x => x.Status == "Failed" && x.BusinessId != null, ct).ConfigureAwait(false),
-                Recent24HourCount = await audits.CountAsync(x => x.AttemptedAtUtc >= recentThresholdUtc, ct).ConfigureAwait(false),
-                FailedInvitationCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "BusinessInvitation", ct).ConfigureAwait(false),
-                FailedActivationCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "AccountActivation", ct).ConfigureAwait(false),
-                FailedPasswordResetCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "PasswordReset", ct).ConfigureAwait(false),
-                FailedAdminTestCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "AdminCommunicationTest", ct).ConfigureAwait(false)
+                TotalCount = summaryRows.Count,
+                FailedCount = summaryRows.Count(x => x.Status == "Failed"),
+                SentCount = summaryRows.Count(x => x.Status == "Sent"),
+                PendingCount = summaryRows.Count(x => x.Status == "Pending"),
+                StalePendingCount = summaryRows.Count(x => x.Status == "Pending" && x.AttemptedAtUtc <= stalePendingThresholdUtc),
+                BusinessLinkedFailureCount = summaryRows.Count(x => x.Status == "Failed" && x.BusinessId != null),
+                Recent24HourCount = summaryRows.Count(x => x.AttemptedAtUtc >= recentThresholdUtc),
+                FailedInvitationCount = summaryRows.Count(x => x.Status == "Failed" && x.FlowKey == "BusinessInvitation"),
+                FailedActivationCount = summaryRows.Count(x => x.Status == "Failed" && x.FlowKey == "AccountActivation"),
+                FailedPasswordResetCount = summaryRows.Count(x => x.Status == "Failed" && x.FlowKey == "PasswordReset"),
+                FailedAdminTestCount = summaryRows.Count(x => x.Status == "Failed" && x.FlowKey == "AdminCommunicationTest"),
+                NeedsOperatorFollowUpCount = summaryRows.Count(
+                    x => x.Status == "Failed" || (x.Status == "Pending" && x.AttemptedAtUtc <= stalePendingThresholdUtc)),
+                SlowCompletedCount = summaryRows.Count(
+                    x => x.CompletedAtUtc.HasValue && (x.CompletedAtUtc.Value - x.AttemptedAtUtc).TotalSeconds > slowDeliveryThresholdSeconds)
             };
         }
     }

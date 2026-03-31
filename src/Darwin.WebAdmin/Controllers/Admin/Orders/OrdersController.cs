@@ -144,6 +144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     CreatedAtUtc = x.CreatedAtUtc,
                     IsDhl = x.IsDhl,
                     NeedsCarrierReview = x.NeedsCarrierReview,
+                    NeedsReturnFollowUp = x.NeedsReturnFollowUp,
                     AwaitingHandoff = x.AwaitingHandoff,
                     TrackingOverdue = x.TrackingOverdue,
                     OpenAgeHours = x.OpenAgeHours,
@@ -192,15 +193,30 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
 
         private static TaxPolicySnapshotVm MapTaxPolicy(Darwin.Application.Settings.DTOs.SiteSettingDto dto)
         {
+            var issuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName);
+            var issuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId);
+            var issuerAddressConfigured =
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerAddressLine1) &&
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerPostalCode) &&
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerCity) &&
+                !string.IsNullOrWhiteSpace(dto.InvoiceIssuerCountry);
+            var archiveReady = issuerConfigured && issuerTaxIdConfigured && issuerAddressConfigured;
+            var eInvoiceBaselineReady = archiveReady && dto.VatEnabled;
+
             return new TaxPolicySnapshotVm
             {
                 VatEnabled = dto.VatEnabled,
                 DefaultVatRatePercent = dto.DefaultVatRatePercent,
                 PricesIncludeVat = dto.PricesIncludeVat,
                 AllowReverseCharge = dto.AllowReverseCharge,
-                IssuerConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerLegalName),
+                IssuerConfigured = issuerConfigured,
                 InvoiceIssuerLegalName = dto.InvoiceIssuerLegalName ?? string.Empty,
-                InvoiceIssuerTaxIdConfigured = !string.IsNullOrWhiteSpace(dto.InvoiceIssuerTaxId)
+                InvoiceIssuerTaxIdConfigured = issuerTaxIdConfigured,
+                ArchiveReadinessComplete = archiveReady,
+                ArchiveReadinessLabel = archiveReady ? "Issuer archive-ready" : "Archive issuer data incomplete",
+                EInvoiceBaselineReady = eInvoiceBaselineReady,
+                EInvoiceBaselineLabel = eInvoiceBaselineReady ? "Baseline ready" : "Baseline incomplete",
+                ComplianceScopeNote = "Phase-1 exposes issuer/VAT readiness only. Archive and e-invoice workflows still require deeper compliance implementation."
             };
         }
 
@@ -217,7 +233,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                 MissingServiceCount = summary.MissingServiceCount,
                 AwaitingHandoffCount = summary.AwaitingHandoffCount,
                 TrackingOverdueCount = summary.TrackingOverdueCount,
-                CarrierReviewCount = summary.CarrierReviewCount
+                CarrierReviewCount = summary.CarrierReviewCount,
+                ReturnFollowUpCount = summary.ReturnFollowUpCount
             };
         }
 
@@ -273,6 +290,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ScopeNote = "Treat these as return-support follow-up, not just delivery completion.",
                     OperatorAction = "Open the order and coordinate refund, restock, or customer-support follow-up from the linked order workspace.",
                     SettingsDependency = "DHL readiness alone does not complete returns; this queue is a phase-1 operational signal until full RMA tooling lands."
+                },
+                new()
+                {
+                    Title = "Return follow-up queue",
+                    ScopeNote = "Use this subset for returned shipments that still need refund-path or carrier-completion review.",
+                    OperatorAction = "Open refunds from the shipment row, start a return refund when a refundable payment exists, and keep carrier review attached if tracking or service evidence is still incomplete.",
+                    SettingsDependency = "DHL readiness and visible refundable payments are both needed before treating returned rows as operationally closed."
                 }
             };
         }
@@ -422,6 +446,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     CreatedAtUtc = x.CreatedAtUtc,
                     IsDhl = x.IsDhl,
                     NeedsCarrierReview = x.NeedsCarrierReview,
+                    NeedsReturnFollowUp = x.NeedsReturnFollowUp,
                     AwaitingHandoff = x.AwaitingHandoff,
                     TrackingOverdue = x.TrackingOverdue,
                     OpenAgeHours = x.OpenAgeHours,
@@ -815,6 +840,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
             yield return new SelectListItem("Awaiting handoff", ShipmentQueueFilter.AwaitingHandoff.ToString(), selectedFilter == ShipmentQueueFilter.AwaitingHandoff);
             yield return new SelectListItem("Tracking overdue", ShipmentQueueFilter.TrackingOverdue.ToString(), selectedFilter == ShipmentQueueFilter.TrackingOverdue);
             yield return new SelectListItem("Carrier review", ShipmentQueueFilter.CarrierReview.ToString(), selectedFilter == ShipmentQueueFilter.CarrierReview);
+            yield return new SelectListItem("Return follow-up", ShipmentQueueFilter.ReturnFollowUp.ToString(), selectedFilter == ShipmentQueueFilter.ReturnFollowUp);
         }
 
         private static IEnumerable<SelectListItem> BuildRefundFilterItems(RefundQueueFilter selectedFilter)

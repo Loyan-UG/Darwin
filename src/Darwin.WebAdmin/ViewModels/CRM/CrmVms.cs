@@ -16,6 +16,7 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
         public CustomerQueueFilter Filter { get; set; } = CustomerQueueFilter.All;
+        public string PlatformDefaultCulture { get; set; } = "de-DE";
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     }
 
@@ -29,6 +30,8 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public string? CompanyName { get; set; }
         public CustomerTaxProfileType TaxProfileType { get; set; }
         public string? VatId { get; set; }
+        public string? Locale { get; set; }
+        public bool UsesPlatformLocaleFallback { get; set; }
         public int SegmentCount { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }
@@ -499,6 +502,11 @@ namespace Darwin.WebAdmin.ViewModels.CRM
         public bool IssuerConfigured { get; set; }
         public string InvoiceIssuerLegalName { get; set; } = string.Empty;
         public bool InvoiceIssuerTaxIdConfigured { get; set; }
+        public bool ArchiveReadinessComplete { get; set; }
+        public string ArchiveReadinessLabel { get; set; } = string.Empty;
+        public bool EInvoiceBaselineReady { get; set; }
+        public string EInvoiceBaselineLabel { get; set; } = string.Empty;
+        public string ComplianceScopeNote { get; set; } = string.Empty;
     }
 
     public sealed class InvoiceStatusTransitionVm

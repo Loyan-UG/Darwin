@@ -18,6 +18,10 @@ namespace Darwin.Application.Businesses.DTOs
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
         public string? FailureMessage { get; set; }
+        public int AttemptAgeMinutes { get; set; }
+        public int? CompletionLatencySeconds { get; set; }
+        public bool NeedsOperatorFollowUp { get; set; }
+        public string Severity { get; set; } = string.Empty;
     }
 
     public sealed class EmailDispatchAuditSummaryDto
@@ -33,5 +37,7 @@ namespace Darwin.Application.Businesses.DTOs
         public int FailedActivationCount { get; set; }
         public int FailedPasswordResetCount { get; set; }
         public int FailedAdminTestCount { get; set; }
+        public int NeedsOperatorFollowUpCount { get; set; }
+        public int SlowCompletedCount { get; set; }
     }
 }

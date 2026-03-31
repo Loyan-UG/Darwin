@@ -15,6 +15,7 @@
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Shipped" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Shipped ? "btn-primary" : "btn-outline-primary")">Shipped/Delivered</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="Returned" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.Returned ? "btn-dark" : "btn-outline-dark")">Returned</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="CarrierReview" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.CarrierReview ? "btn-danger" : "btn-outline-danger")">Carrier Review</a>
+        <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="ReturnFollowUp" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.ReturnFollowUp ? "btn-dark" : "btn-outline-dark")">Return Follow-up</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="AwaitingHandoff" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.AwaitingHandoff ? "btn-danger" : "btn-outline-danger")">Awaiting Handoff</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" asp-route-filter="TrackingOverdue" class="btn btn-sm @(Model.Filter == Darwin.Application.Orders.DTOs.ShipmentQueueFilter.TrackingOverdue ? "btn-danger" : "btn-outline-danger")">Tracking Overdue</a>
         <a asp-controller="Orders" asp-action="Shipments" asp-route-orderId="@Model.OrderId" class="btn btn-sm btn-outline-secondary">Clear</a>
@@ -39,6 +40,8 @@
                 {
                     foreach (var s in Model.Items)
                     {
+                        var needsServiceResolution = string.IsNullOrWhiteSpace(s.Service);
+                        var needsThresholdReview = s.AwaitingHandoff || s.TrackingOverdue;
                         <tr>
                             <td>
                                 @s.Carrier
@@ -69,6 +72,10 @@
                                 {
                                     <div><span class="badge text-bg-warning mt-1">Carrier review</span></div>
                                 }
+                                @if (s.NeedsReturnFollowUp)
+                                {
+                                    <div><span class="badge text-bg-dark mt-1">Return follow-up</span></div>
+                                }
                             </td>
                             <td>
                                 <div>@s.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</div>
@@ -94,6 +101,42 @@
                                             data-bs-target="#refunds">
                                         Review Refunds
                                     </button>
+                                }
+                                @if (s.NeedsReturnFollowUp)
+                                {
+                                    <a asp-controller="Orders"
+                                       asp-action="Shipments"
+                                       asp-route-orderId="@Model.OrderId"
+                                       asp-route-filter="CarrierReview"
+                                       class="btn btn-sm btn-outline-dark">
+                                        Carrier Review
+                                    </a>
+                                }
+                                @if (needsServiceResolution)
+                                {
+                                    <a asp-controller="ShippingMethods"
+                                       asp-action="Index"
+                                       asp-route-filter="Dhl"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                                       hx-target="#order-operation-shell"
+                                       hx-swap="innerHTML"
+                                       hx-push-url="false">
+                                        Shipping Methods
+                                    </a>
+                                }
+                                @if (needsThresholdReview)
+                                {
+                                    <a asp-controller="SiteSettings"
+                                       asp-action="Edit"
+                                       asp-fragment="site-settings-shipping"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                       hx-target="#order-operation-shell"
+                                       hx-swap="innerHTML"
+                                       hx-push-url="false">
+                                        Shipping Settings
+                                    </a>
                                 }
                                 @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned && Model.DefaultRefundPaymentId.HasValue)
                                 {

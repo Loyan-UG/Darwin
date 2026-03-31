@@ -29,6 +29,8 @@
            hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.TrackingOverdue })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">Tracking Overdue</a>
         <a asp-action="ShipmentsQueue" asp-route-filter="CarrierReview" class="btn btn-outline-danger btn-sm"
            hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">Carrier Review</a>
+        <a asp-action="ShipmentsQueue" asp-route-filter="ReturnFollowUp" class="btn btn-outline-dark btn-sm"
+           hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.ReturnFollowUp })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">Return Follow-up</a>
     </div>
 </div>
 
@@ -88,6 +90,13 @@
             <div class="text-muted small">Carrier Review</div>
             <div class="fs-4 fw-semibold">@Model.Summary.CarrierReviewCount</div>
             <div class="small text-muted mt-1">DHL exception follow-up</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Return Follow-up</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.ReturnFollowUpCount</div>
+            <div class="small text-muted mt-1">Returned parcels needing refund or carrier completion</div>
         </div>
     </div>
 </div>
@@ -225,6 +234,8 @@
         {
             foreach (var item in Model.Items)
             {
+                var needsServiceResolution = string.IsNullOrWhiteSpace(item.Service);
+                var needsThresholdReview = item.AwaitingHandoff || item.TrackingOverdue;
                 <tr>
                     <td>
                         <div class="fw-semibold">@item.OrderNumber</div>
@@ -239,6 +250,10 @@
                         @if (item.NeedsCarrierReview)
                         {
                             <div><span class="badge text-bg-warning mt-1">Needs carrier review</span></div>
+                        }
+                        @if (item.NeedsReturnFollowUp)
+                        {
+                            <div><span class="badge text-bg-dark mt-1">Return follow-up</span></div>
                         }
                         @if (item.TrackingOverdue)
                         {
@@ -305,6 +320,41 @@
                                 <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-danger"
                                    hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
                                     <i class="fa-solid fa-rotate-left"></i> Refunds
+                                </a>
+                            }
+                            @if (item.NeedsReturnFollowUp)
+                            {
+                                <a asp-action="ShipmentsQueue"
+                                   asp-route-filter="@ShipmentQueueFilter.CarrierReview"
+                                   class="btn btn-sm btn-outline-dark"
+                                   hx-get="@Url.Action("ShipmentsQueue", "Orders", new { filter = ShipmentQueueFilter.CarrierReview })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Carrier Review Queue
+                                </a>
+                            }
+                            @if (needsServiceResolution)
+                            {
+                                <a asp-controller="ShippingMethods"
+                                   asp-action="Index"
+                                   asp-route-filter="Dhl"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Index", "ShippingMethods", new { filter = "Dhl" })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-box"></i> Shipping Methods
+                                </a>
+                            }
+                            @if (needsThresholdReview)
+                            {
+                                <a asp-controller="SiteSettings"
+                                   asp-action="Edit"
+                                   asp-fragment="site-settings-shipping"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-sliders"></i> Shipping Settings
                                 </a>
                             }
                             @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned && item.DefaultRefundPaymentId.HasValue)

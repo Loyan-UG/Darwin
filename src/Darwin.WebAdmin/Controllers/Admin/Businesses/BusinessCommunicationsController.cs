@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Abstractions.Notifications;
+using Darwin.Application.Settings.DTOs;
 using Darwin.WebAdmin.Security;
 using Darwin.WebAdmin.Services.Settings;
 using Darwin.WebAdmin.ViewModels.Admin;
@@ -115,7 +116,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     BusinessesRequiringEmailSetupCount = summary.BusinessesRequiringEmailSetupCount
                 },
                 BuiltInFlows = BuildBuiltInFlows(),
-                TemplateInventory = BuildTemplateInventory(),
+                TemplateInventory = BuildTemplateInventory(settings),
                 CapabilityCoverage = BuildCapabilityCoverage(),
                 ResendPolicies = BuildResendPolicies(),
                 RecentEmailAudits = emailAudits.Select(x => new EmailDispatchAuditListItemVm
@@ -131,6 +132,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
                     FailureMessage = x.FailureMessage,
+                    AttemptAgeMinutes = x.AttemptAgeMinutes,
+                    CompletionLatencySeconds = x.CompletionLatencySeconds,
+                    NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
+                    Severity = x.Severity,
                     RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList(),
                 Items = items.Select(x => new BusinessCommunicationSetupListItemVm
@@ -221,7 +226,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TransactionalSubjectPrefix = settings.TransactionalEmailSubjectPrefix,
                 TestInboxEmail = settings.CommunicationTestInboxEmail,
                 ActiveFlowNames = BuildActiveFlowNames(profile),
-                TemplateInventory = BuildTemplateInventory(),
+                TemplateInventory = BuildTemplateInventory(settings),
                 ResendPolicies = BuildResendPolicies(),
                 ReadinessIssues = BuildReadinessIssues(profile, emailTransportConfigured, adminAlertRoutingConfigured),
                 RecommendedActions = BuildRecommendedActions(profile, emailTransportConfigured, adminAlertRoutingConfigured),
@@ -238,6 +243,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
                     FailureMessage = x.FailureMessage,
+                    AttemptAgeMinutes = x.AttemptAgeMinutes,
+                    CompletionLatencySeconds = x.CompletionLatencySeconds,
+                    NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
+                    Severity = x.Severity,
                     RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList()
             };
@@ -286,7 +295,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FailedInvitationCount = summary.FailedInvitationCount,
                     FailedActivationCount = summary.FailedActivationCount,
                     FailedPasswordResetCount = summary.FailedPasswordResetCount,
-                    FailedAdminTestCount = summary.FailedAdminTestCount
+                    FailedAdminTestCount = summary.FailedAdminTestCount,
+                    NeedsOperatorFollowUpCount = summary.NeedsOperatorFollowUpCount,
+                    SlowCompletedCount = summary.SlowCompletedCount
                 },
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 StatusItems = BuildAuditStatusItems(status),
@@ -305,6 +316,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     AttemptedAtUtc = x.AttemptedAtUtc,
                     CompletedAtUtc = x.CompletedAtUtc,
                     FailureMessage = x.FailureMessage,
+                    AttemptAgeMinutes = x.AttemptAgeMinutes,
+                    CompletionLatencySeconds = x.CompletionLatencySeconds,
+                    NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
+                    Severity = x.Severity,
                     RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList()
             };
@@ -523,7 +538,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 {
                     Capability = "Template Engine",
                     CurrentState = "Not implemented as a reusable platform capability",
-                    OperatorVisibility = "Flows are documented in the workspace, but body/subject editing is not exposed",
+                    OperatorVisibility = "Workspace and business profile now show configured subject/body previews, supported tokens, and direct policy handoffs",
                     NextStep = "Move invitation, activation, and password reset into Communication Core templates"
                 },
                 new()
@@ -557,17 +572,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             };
         }
 
-        private static List<CommunicationTemplateInventoryVm> BuildTemplateInventory()
+        private static List<CommunicationTemplateInventoryVm> BuildTemplateInventory(SiteSettingDto settings)
         {
             return new List<CommunicationTemplateInventoryVm>
             {
                 new()
                 {
                     FlowName = "Business Invitation",
-                    TemplateSurface = "Hard-coded transactional composition",
-                    SubjectSource = "Transactional subject prefix + fixed invitation subject",
-                    BodySource = "Inline HTML generated in the invitation handler",
-                    OperatorControl = "No body editor. Operators can only resend or revoke the invitation from business support surfaces.",
+                    TemplateSurface = "Site-setting template fields feeding the invitation handler",
+                    SubjectSource = "Transactional subject prefix + BusinessInvitationEmailSubjectTemplate",
+                    BodySource = "BusinessInvitationEmailBodyTemplate",
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.BusinessInvitationEmailSubjectTemplate, "Invitation to join {business_name} on Darwin"),
+                    CurrentBodyTemplate = SummarizeTemplate(settings.BusinessInvitationEmailBodyTemplate, "Hello {recipient_name}, use {invitation_link} to join {business_name}."),
+                    SupportedTokens = "{recipient_name}, {business_name}, {invitation_link}, {support_email}",
+                    OperatorControl = "Operators can edit subject/body in communication policy and resend/revoke invitations from support surfaces.",
                     AuditFlowKey = "BusinessInvitation",
                     OperatorActionLabel = "Open Invitations",
                     OperatorActionTarget = "Invitations",
@@ -576,10 +594,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     FlowName = "Account Activation",
-                    TemplateSurface = "Hard-coded transactional composition",
-                    SubjectSource = "Transactional subject prefix + fixed activation subject",
-                    BodySource = "Inline HTML generated in the confirmation handler",
-                    OperatorControl = "No template editing. Operators can trigger activation support but not rewrite the message.",
+                    TemplateSurface = "Site-setting template fields feeding the confirmation handler",
+                    SubjectSource = "Transactional subject prefix + AccountActivationEmailSubjectTemplate",
+                    BodySource = "AccountActivationEmailBodyTemplate",
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.AccountActivationEmailSubjectTemplate, "Confirm your Darwin account email"),
+                    CurrentBodyTemplate = SummarizeTemplate(settings.AccountActivationEmailBodyTemplate, "Hello {recipient_name}, confirm your email with {confirmation_link}."),
+                    SupportedTokens = "{recipient_name}, {confirmation_link}, {support_email}",
+                    OperatorControl = "Operators can edit subject/body in communication policy and trigger activation support, but not bypass confirmation policy.",
                     AuditFlowKey = "AccountActivation",
                     OperatorActionLabel = "Open Users",
                     OperatorActionTarget = "Users",
@@ -588,10 +609,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     FlowName = "Password Reset",
-                    TemplateSurface = "Hard-coded transactional composition",
-                    SubjectSource = "Transactional subject prefix + fixed password-reset subject",
-                    BodySource = "Inline HTML generated in the password-reset handler",
-                    OperatorControl = "No template editing. Operators can reissue support actions only after identity validation.",
+                    TemplateSurface = "Site-setting template fields feeding the password-reset handler",
+                    SubjectSource = "Transactional subject prefix + PasswordResetEmailSubjectTemplate",
+                    BodySource = "PasswordResetEmailBodyTemplate",
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.PasswordResetEmailSubjectTemplate, "Reset your Darwin account password"),
+                    CurrentBodyTemplate = SummarizeTemplate(settings.PasswordResetEmailBodyTemplate, "Hello {recipient_name}, reset your password with {reset_link}."),
+                    SupportedTokens = "{recipient_name}, {reset_link}, {support_email}",
+                    OperatorControl = "Operators can edit subject/body in communication policy and reissue reset support only after identity validation.",
                     AuditFlowKey = "PasswordReset",
                     OperatorActionLabel = "Open Users",
                     OperatorActionTarget = "Users",
@@ -603,6 +627,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     TemplateSurface = "Operator-only diagnostic email",
                     SubjectSource = "Transactional subject prefix + fixed diagnostic subject",
                     BodySource = "Inline HTML generated in WebAdmin for the configured test inbox only",
+                    CurrentSubjectTemplate = "Fixed diagnostic subject in WebAdmin",
+                    CurrentBodyTemplate = "Fixed operator test body in WebAdmin",
+                    SupportedTokens = "Not tokenized",
                     OperatorControl = "Operators can send the test email when SMTP and the test inbox are configured.",
                     AuditFlowKey = "AdminCommunicationTest",
                     OperatorActionLabel = "Open Audit Log",
@@ -615,6 +642,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     TemplateSurface = "Configuration visibility only",
                     SubjectSource = "Not centralized",
                     BodySource = "Not centralized",
+                    CurrentSubjectTemplate = "No shared template surface",
+                    CurrentBodyTemplate = "No shared template surface",
+                    SupportedTokens = "Not centralized",
                     OperatorControl = "No template catalog yet; only routing readiness and policy visibility are exposed.",
                     AuditFlowKey = string.Empty,
                     OperatorActionLabel = "Open Alert Settings",
@@ -622,6 +652,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     NextStep = "Create alert template + routing inventory before adding delivery actions."
                 }
             };
+        }
+
+        private static string SummarizeTemplate(string? template, string fallback)
+        {
+            var value = string.IsNullOrWhiteSpace(template) ? fallback : template.Trim();
+            return value.Length <= 120 ? value : string.Concat(value.AsSpan(0, 117), "...");
         }
 
         private static List<CommunicationResendPolicyVm> BuildResendPolicies()
@@ -813,18 +849,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (string.Equals(item.FlowKey, "BusinessInvitation", System.StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Check SMTP readiness, then review the business invitation and use resend/revoke from the business workspace."
+                    ? "Check SMTP readiness, then open the recipient-scoped invitation queue and use resend/revoke from the business workspace."
                     : "Check SMTP readiness, then review the invitation source before resending.";
             }
 
             if (string.Equals(item.FlowKey, "AccountActivation", System.StringComparison.OrdinalIgnoreCase))
             {
-                return "Check SMTP readiness, then direct the user to self-service resend activation or use admin activation support.";
+                return item.BusinessId.HasValue
+                    ? "Check SMTP readiness, then open member support or the user queue with the failed recipient prefilled before sending activation support."
+                    : "Check SMTP readiness, then direct the user to self-service resend activation or use admin activation support.";
             }
 
             if (string.Equals(item.FlowKey, "PasswordReset", System.StringComparison.OrdinalIgnoreCase))
             {
-                return "Check SMTP readiness, then reissue password reset only after support validation.";
+                return item.BusinessId.HasValue
+                    ? "Check SMTP readiness, then open member support or the user queue with the failed recipient prefilled and reissue reset only after support validation."
+                    : "Check SMTP readiness, then reissue password reset only after support validation.";
             }
 
             return "Review global transport readiness and the source workflow before attempting manual intervention.";

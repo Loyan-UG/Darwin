@@ -134,7 +134,12 @@
                 <div class="small text-muted">Reverse Charge</div>
                 <div class="fw-semibold mb-2">@(Model.TaxPolicy.AllowReverseCharge ? "Allowed" : "Disabled")</div>
                 <div class="small text-muted">Issuer</div>
-                <div class="fw-semibold">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.IssuerConfigured ? Model.TaxPolicy.InvoiceIssuerLegalName : "Missing")</div>
+                <div class="small text-muted">Archive Readiness</div>
+                <div class="fw-semibold mb-2">@(Model.TaxPolicy.ArchiveReadinessComplete ? "Ready" : "Missing data")</div>
+                <div class="small text-muted">E-Invoice Baseline</div>
+                <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? "Ready" : "Not ready")</div>
+                <div class="small text-muted mt-2">@Model.TaxPolicy.ComplianceScopeNote</div>
             </div>
         </div>
     </div>

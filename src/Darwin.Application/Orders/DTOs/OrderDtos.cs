@@ -30,7 +30,8 @@ namespace Darwin.Application.Orders.DTOs
         MissingService = 6,
         AwaitingHandoff = 7,
         TrackingOverdue = 8,
-        CarrierReview = 9
+        CarrierReview = 9,
+        ReturnFollowUp = 10
     }
 
     public enum RefundQueueFilter
@@ -341,6 +342,7 @@ namespace Darwin.Application.Orders.DTOs
 
         public bool IsDhl { get; set; }
         public bool NeedsCarrierReview { get; set; }
+        public bool NeedsReturnFollowUp { get; set; }
         public bool AwaitingHandoff { get; set; }
         public bool TrackingOverdue { get; set; }
         public int OpenAgeHours { get; set; }
@@ -368,6 +370,7 @@ namespace Darwin.Application.Orders.DTOs
         public int AwaitingHandoffCount { get; set; }
         public int TrackingOverdueCount { get; set; }
         public int CarrierReviewCount { get; set; }
+        public int ReturnFollowUpCount { get; set; }
     }
 
     /// <summary>

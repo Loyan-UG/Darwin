@@ -9,7 +9,11 @@
             <h1 class="mb-1">@(isCreate ? "Create Shipping Method" : "Edit Shipping Method")</h1>
             <p class="text-muted mb-0">Use this screen to manage carrier/service combinations and the rate tiers used by checkout and order shipping snapshots.</p>
         </div>
-        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        <a asp-action="Index" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "ShippingMethods")"
+           hx-target="#shipping-methods-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Back</a>
     </div>
 
     <form asp-action="@(isCreate ? "Create" : "Edit")"

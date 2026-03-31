@@ -3,27 +3,94 @@
     ViewData["Title"] = "CRM Customers";
 }
 
+<div id="crm-customers-workspace-shell">
 <h1 class="mb-3">Customers</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Customers" method="get" class="d-flex gap-2">
+    <form asp-action="Customers" method="get" class="d-flex gap-2"
+          hx-get="@Url.Action("Customers", "Crm")"
+          hx-target="#crm-customers-workspace-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true">
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search customers">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
+        <a asp-action="Customers" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Customers", "Crm")"
+           hx-target="#crm-customers-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Reset</a>
     </form>
 
-    <a asp-action="CreateCustomer" class="btn btn-primary">
+    <a asp-action="CreateCustomer" class="btn btn-primary"
+       hx-get="@Url.Action("CreateCustomer", "Crm")"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">
         <i class="fa fa-plus"></i> New Customer
     </a>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Platform fallback culture</div>
+            <div class="fw-semibold mt-1">@Model.PlatformDefaultCulture</div>
+            <div class="small text-muted mt-2">Used when no linked-user locale is available for customer-level follow-up.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Visible locale fallbacks</div>
+            <div class="fw-semibold mt-1">@Model.Items.Count(x => x.UsesPlatformLocaleFallback)</div>
+            <div class="small text-muted mt-2">Current page rows relying on platform locale fallback instead of a linked-user locale.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Visible linked-user locales</div>
+            <div class="fw-semibold mt-1">@Model.Items.Count(x => !x.UsesPlatformLocaleFallback)</div>
+            <div class="small text-muted mt-2">Current page rows where locale comes from the linked identity profile.</div>
+        </div>
+    </div>
+</div>
+
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="Customers" asp-route-filter="LinkedUser" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.LinkedUser ? "btn-info" : "btn-outline-info")">Linked User</a>
-    <a asp-action="Customers" asp-route-filter="NeedsSegmentation" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.NeedsSegmentation ? "btn-warning" : "btn-outline-warning")">Needs Segmentation</a>
-    <a asp-action="Customers" asp-route-filter="HasOpportunities" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.HasOpportunities ? "btn-primary" : "btn-outline-primary")">Has Opportunities</a>
-    <a asp-action="Customers" asp-route-filter="Business" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.Business ? "btn-dark" : "btn-outline-dark")">B2B</a>
-    <a asp-action="Customers" asp-route-filter="MissingVatId" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")">B2B Missing VAT ID</a>
-    <a asp-action="Customers" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+    <a asp-action="Customers" asp-route-filter="LinkedUser" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.LinkedUser ? "btn-info" : "btn-outline-info")"
+       hx-get="@Url.Action("Customers", "Crm", new { filter = "LinkedUser" })"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Linked User</a>
+    <a asp-action="Customers" asp-route-filter="NeedsSegmentation" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.NeedsSegmentation ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("Customers", "Crm", new { filter = "NeedsSegmentation" })"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Needs Segmentation</a>
+    <a asp-action="Customers" asp-route-filter="HasOpportunities" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.HasOpportunities ? "btn-primary" : "btn-outline-primary")"
+       hx-get="@Url.Action("Customers", "Crm", new { filter = "HasOpportunities" })"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Has Opportunities</a>
+    <a asp-action="Customers" asp-route-filter="Business" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.Business ? "btn-dark" : "btn-outline-dark")"
+       hx-get="@Url.Action("Customers", "Crm", new { filter = "Business" })"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">B2B</a>
+    <a asp-action="Customers" asp-route-filter="MissingVatId" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.MissingVatId ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@Url.Action("Customers", "Crm", new { filter = "MissingVatId" })"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">B2B Missing VAT ID</a>
+    <a asp-action="Customers" asp-route-filter="UsesPlatformLocaleFallback" class="btn btn-sm @(Model.Filter == Darwin.Application.CRM.DTOs.CustomerQueueFilter.UsesPlatformLocaleFallback ? "btn-secondary" : "btn-outline-secondary")"
+       hx-get="@Url.Action("Customers", "Crm", new { filter = "UsesPlatformLocaleFallback" })"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Locale Fallback</a>
+    <a asp-action="Customers" class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("Customers", "Crm")"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Clear Queue Filters</a>
 </div>
 
 <div class="table-responsive">
@@ -34,6 +101,7 @@
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Company</th>
+                <th>Locale</th>
                 <th>Tax Profile</th>
                 <th>Segments</th>
                 <th>Opportunities</th>
@@ -44,7 +112,7 @@
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="9" class="text-center text-muted">No customers found.</td></tr>
+            <tr><td colspan="10" class="text-center text-muted">No customers found.</td></tr>
         }
         else
         {
@@ -61,6 +129,18 @@
                     <td>@item.Email</td>
                     <td>@item.Phone</td>
                     <td>@item.CompanyName</td>
+                    <td>
+                        @if (item.UsesPlatformLocaleFallback)
+                        {
+                            <span class="badge text-bg-secondary">Fallback</span>
+                            <div class="small text-muted">@Model.PlatformDefaultCulture</div>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-info">User locale</span>
+                            <div class="small text-muted">@item.Locale</div>
+                        }
+                    </td>
                     <td>
                         <span class="badge @(item.TaxProfileType == Darwin.Domain.Enums.CustomerTaxProfileType.Business ? "text-bg-dark" : "text-bg-secondary")">@item.TaxProfileType</span>
                         @if (!string.IsNullOrWhiteSpace(item.VatId))
@@ -79,22 +159,42 @@
                         <div class="small text-muted">@((item.ModifiedAtUtc.HasValue ? "Updated" : "Created"))</div>
                     </td>
                     <td class="text-end">
-                        <a asp-action="EditCustomer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                        <a asp-action="EditCustomer" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.Id })"
+                           hx-target="#crm-customers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
                             <i class="fa fa-pen"></i> Edit
                         </a>
                         @if (item.UserId.HasValue)
                         {
-                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId.Value" class="btn btn-sm btn-outline-info">
+                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId.Value" class="btn btn-sm btn-outline-info"
+                               hx-get="@Url.Action("Edit", "Users", new { id = item.UserId.Value })"
+                               hx-target="#crm-customers-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
                                 <i class="fa fa-user"></i> User
                             </a>
                         }
-                        <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-primary">
+                        <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-primary"
+                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.Id, fragment = "customer-interactions-section" })"
+                           hx-target="#crm-customers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
                             <i class="fa fa-comments"></i> Interactions
                         </a>
-                        <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-segments-section" class="btn btn-sm btn-outline-warning">
+                        <a asp-action="EditCustomer" asp-route-id="@item.Id" asp-fragment="customer-segments-section" class="btn btn-sm btn-outline-warning"
+                           hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.Id, fragment = "customer-segments-section" })"
+                           hx-target="#crm-customers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
                             <i class="fa fa-tags"></i> Segments
                         </a>
-                        <a asp-action="CreateOpportunity" asp-route-customerId="@item.Id" class="btn btn-sm btn-outline-success">
+                        <a asp-action="CreateOpportunity" asp-route-customerId="@item.Id" class="btn btn-sm btn-outline-success"
+                           hx-get="@Url.Action("CreateOpportunity", "Crm", new { customerId = item.Id })"
+                           hx-target="#crm-customers-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">
                             <i class="fa fa-briefcase"></i> Opportunity
                         </a>
                     </td>
@@ -111,5 +211,8 @@
        asp-controller="Crm"
        asp-action="Customers"
        asp-route-q="@Model.Query"
-       asp-route-filter="@Model.Filter">
+       asp-route-filter="@Model.Filter"
+       hx-target="#crm-customers-workspace-shell"
+       hx-swap="outerHTML">
 </pager>
+</div>

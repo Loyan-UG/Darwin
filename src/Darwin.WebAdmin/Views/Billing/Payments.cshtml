@@ -239,6 +239,12 @@
             <div class="fs-4 fw-semibold">@Model.Summary.NeedsReconciliationCount</div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Dispute Follow-up</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.DisputeFollowUpCount</div>
+        </div>
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -290,6 +296,7 @@
             <option value="@PaymentQueueFilter.MissingProviderRef" selected="@(Model.QueueFilter == PaymentQueueFilter.MissingProviderRef)">Missing Provider Ref</option>
             <option value="@PaymentQueueFilter.FailedStripe" selected="@(Model.QueueFilter == PaymentQueueFilter.FailedStripe)">Failed Stripe</option>
             <option value="@PaymentQueueFilter.NeedsReconciliation" selected="@(Model.QueueFilter == PaymentQueueFilter.NeedsReconciliation)">Needs Reconciliation</option>
+            <option value="@PaymentQueueFilter.DisputeFollowUp" selected="@(Model.QueueFilter == PaymentQueueFilter.DisputeFollowUp)">Dispute Follow-up</option>
         </select>
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-filter"></i> Filter</button>
         <a asp-action="Payments"
@@ -338,6 +345,7 @@
         {
             foreach (var item in Model.Items)
             {
+                var missingProviderReference = string.IsNullOrWhiteSpace(item.ProviderTransactionRef);
                 <tr>
                     <td>
                         <div class="fw-semibold">@item.Provider</div>
@@ -352,6 +360,10 @@
                         {
                             <div><span class="badge text-bg-warning mt-1">Reconciliation</span></div>
                         }
+                        @if (item.NeedsDisputeFollowUp)
+                        {
+                            <div><span class="badge text-bg-dark mt-1">Dispute follow-up</span></div>
+                        }
                         @if (item.NeedsSupportAttention)
                         {
                             <div><span class="badge text-bg-secondary mt-1">Needs support</span></div>
@@ -360,7 +372,10 @@
                     <td>
                         @if (item.OrderId.HasValue)
                         {
-                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" class="text-decoration-none">
+                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" class="text-decoration-none"
+                               hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">
                                 @(string.IsNullOrWhiteSpace(item.OrderNumber) ? item.OrderId.Value.ToString() : item.OrderNumber)
                             </a>
                         }
@@ -400,7 +415,10 @@
                         @if (item.CustomerId.HasValue)
                         {
                             <div>
-                                <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none">
+                                <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none"
+                                   hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })"
+                                   hx-target="#billing-payments-workspace-shell"
+                                   hx-swap="outerHTML">
                                     @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
                                 </a>
                             </div>
@@ -416,7 +434,10 @@
                         @if (item.UserId.HasValue)
                         {
                             <div class="small">
-                                <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId.Value" class="text-decoration-none">
+                                <a asp-controller="Users" asp-action="Edit" asp-route-id="@item.UserId.Value" class="text-decoration-none"
+                                   hx-get="@Url.Action("Edit", "Users", new { id = item.UserId.Value })"
+                                   hx-target="#billing-payments-workspace-shell"
+                                   hx-swap="outerHTML">
                                     @(string.IsNullOrWhiteSpace(item.UserDisplayName) ? "Open linked user" : item.UserDisplayName)
                                 </a>
                             </div>
@@ -453,7 +474,17 @@
                            hx-get="@Url.Action("EditPayment", "Billing", new { id = item.Id })"
                            hx-target="#billing-payments-workspace-shell"
                            hx-swap="outerHTML">Edit</a>
-                        @if (item.IsStripe && (item.NeedsReconciliation || string.IsNullOrWhiteSpace(item.ProviderTransactionRef)))
+                        @if (item.NeedsReconciliation)
+                        {
+                            <a asp-action="Payments"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-queue="@PaymentQueueFilter.NeedsReconciliation"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Reconciliation Queue</a>
+                        }
+                        @if (item.IsStripe && (item.NeedsReconciliation || missingProviderReference))
                         {
                             <a asp-action="Webhooks"
                                asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
@@ -462,21 +493,49 @@
                                hx-target="#billing-payments-workspace-shell"
                                hx-swap="outerHTML">Webhook Exceptions</a>
                         }
+                        @if (item.IsStripe && item.NeedsDisputeFollowUp)
+                        {
+                            <a asp-action="Payments"
+                               asp-route-businessId="@Model.BusinessId"
+                               asp-route-queue="@PaymentQueueFilter.DisputeFollowUp"
+                               class="btn btn-sm btn-outline-dark"
+                               hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Dispute Queue</a>
+                            <a asp-action="Webhooks"
+                               asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
+                               class="btn btn-sm btn-outline-dark"
+                               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Dispute Signals</a>
+                        }
                         @if (item.OrderId.HasValue)
                         {
-                            <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@item.OrderId.Value" asp-route-paymentId="@item.Id" class="btn btn-sm btn-outline-danger">Refund</a>
+                            <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@item.OrderId.Value" asp-route-paymentId="@item.Id" class="btn btn-sm btn-outline-danger"
+                               hx-get="@Url.Action("AddRefund", "Orders", new { orderId = item.OrderId.Value, paymentId = item.Id })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Refund</a>
                         }
                         @if (item.InvoiceId.HasValue)
                         {
-                            <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.InvoiceId.Value" class="btn btn-sm btn-outline-primary">Invoice</a>
+                            <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.InvoiceId.Value" class="btn btn-sm btn-outline-primary"
+                               hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.InvoiceId.Value })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Invoice</a>
                         }
                         @if (item.OrderId.HasValue)
                         {
-                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-info">Order</a>
+                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-info"
+                               hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId.Value })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Order</a>
                         }
                         @if (item.CustomerId.HasValue)
                         {
-                            <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-success">Customer</a>
+                            <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" asp-fragment="customer-interactions-section" class="btn btn-sm btn-outline-success"
+                               hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Customer</a>
                         }
                     </td>
                 </tr>
@@ -505,6 +564,8 @@
        hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.FailedStripe })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Failed Stripe</a>
     <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning"
        hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.NeedsReconciliation })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Needs Reconciliation</a>
+    <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.DisputeFollowUp" class="btn btn-sm btn-outline-dark"
+       hx-get="@Url.Action("Payments", "Billing", new { businessId = Model.BusinessId, queue = PaymentQueueFilter.DisputeFollowUp })" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML">Dispute Follow-up</a>
 </div>
 
 <pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Billing" asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-queue="@Model.QueueFilter" hx-target="#billing-payments-workspace-shell" hx-swap="outerHTML"></pager>

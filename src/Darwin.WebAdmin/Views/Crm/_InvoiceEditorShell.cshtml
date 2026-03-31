@@ -137,7 +137,16 @@
                             <div class="text-muted">Tax ID</div>
                             <div class="fw-semibold">@(Model.TaxPolicy.InvoiceIssuerTaxIdConfigured ? "Ready" : "Missing")</div>
                         </div>
+                        <div class="col-md-2">
+                            <div class="text-muted">Archive</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.ArchiveReadinessComplete ? "Ready" : "Missing data")</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-muted">E-Invoice</div>
+                            <div class="fw-semibold">@(Model.TaxPolicy.EInvoiceBaselineReady ? "Baseline ready" : "Not ready")</div>
+                        </div>
                     </div>
+                    <div class="small text-muted mt-3">@Model.TaxPolicy.ComplianceScopeNote</div>
                 </div>
             </div>
         </div>

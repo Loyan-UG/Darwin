@@ -103,6 +103,83 @@
         </div>
     }
 
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Settings Ownership</span>
+            <a asp-controller="SiteSettings"
+               asp-action="Edit"
+               asp-fragment="site-settings-communications-policy"
+               class="btn btn-sm btn-outline-secondary"
+               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+               hx-target="#business-setup-shell"
+               hx-swap="outerHTML">Open Global Settings</a>
+        </div>
+        <div class="card-body">
+            <div class="small text-muted mb-3">
+                This setup page owns business-specific defaults and customer-facing identity. Platform credentials, global templates, carrier/provider thresholds, and VAT issuer defaults still live in site settings.
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Business-owned here</div>
+                        <ul class="small mb-0">
+                            <li>Brand display name and logo</li>
+                            <li>Default culture, currency, and time zone</li>
+                            <li>Support email, sender name, reply-to</li>
+                            <li>Email/marketing/alert enablement flags</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Global dependencies</div>
+                        <ul class="small mb-0">
+                            <li>SMTP, SMS, and WhatsApp providers</li>
+                            <li>Invitation, activation, and reset templates</li>
+                            <li>Stripe and DHL credentials and thresholds</li>
+                            <li>VAT defaults and invoice issuer identity</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">Direct handoff</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-business-app" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-business-app" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML">Business App</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-localization" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML">Localization</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML">Communication Policy</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-payments" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-payments" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML">Payments</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-tax" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-tax" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML">Tax</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-shipping" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-shipping" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML">Shipping</a>
+                            <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
+                               hx-target="#business-setup-shell"
+                               hx-swap="outerHTML">Admin Alerts</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form asp-action="Setup"
           method="post"
           hx-post="@Url.Action("Setup", "Businesses")"
@@ -167,6 +244,24 @@
         <div class="card mb-4">
             <div class="card-header">Localization and Operational Defaults</div>
             <div class="card-body">
+                <div class="alert alert-light border small">
+                    Business setup owns the tenant-facing override for culture, currency, and time zone. Change these only when this business must differ from the platform fallback. If every tenant should inherit a new baseline, change Site Settings instead.
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <a asp-controller="SiteSettings"
+                           asp-action="Edit"
+                           asp-fragment="site-settings-localization"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-localization" })"
+                           hx-target="#business-setup-shell"
+                           hx-swap="outerHTML">Open Global Localization</a>
+                        <a asp-controller="CRM"
+                           asp-action="Customers"
+                           class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("Customers", "Crm")"
+                           hx-target="#business-setup-shell"
+                           hx-swap="outerHTML">Customer Locale Review</a>
+                    </div>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label asp-for="DefaultCulture" class="form-label">Default culture</label>
@@ -484,6 +579,9 @@
                 <p class="text-muted mb-3">
                     Some settings are still managed globally in phase 1. Business-specific provider configuration is planned, but not yet part of the domain model.
                 </p>
+                <div class="alert alert-light border small">
+                    Operator rule: if a change affects every business or any provider secret, threshold, tax issuer default, or admin route, keep it in Site Settings. If it is brand, sender identity, support contact, or local defaults for one tenant, keep it in Business Setup.
+                </div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <div class="border rounded p-3 h-100">

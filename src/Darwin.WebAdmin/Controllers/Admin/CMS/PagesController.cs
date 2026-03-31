@@ -83,14 +83,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
                 Playbooks = BuildPagePlaybooks()
             };
 
-            return View(vm);
+            return RenderIndex(vm);
         }
 
         [HttpGet]
         public async Task<IActionResult> Create(CancellationToken ct)
         {
             await LoadCulturesAsync(ct).ConfigureAwait(false);
-            return View(new PageCreateVm());
+            return RenderCreateEditor(new PageCreateVm());
         }
 
         [ValidateAntiForgeryToken]
@@ -167,7 +167,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
 
             await LoadCulturesAsync(ct).ConfigureAwait(false);
 
-            return View(vm);
+            return RenderEditEditor(vm);
         }
 
         [ValidateAntiForgeryToken]
@@ -238,13 +238,23 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
             {
                 TempData["Error"] = "Failed to delete the page.";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         private async Task LoadCulturesAsync(CancellationToken ct)
         {
             var (_, cultures) = await _getCultures.HandleAsync(ct).ConfigureAwait(false);
             ViewBag.Cultures = cultures;
+        }
+
+        private IActionResult RenderIndex(PagesIndexVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Pages/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
         }
 
         private IActionResult RenderCreateEditor(PageCreateVm vm)

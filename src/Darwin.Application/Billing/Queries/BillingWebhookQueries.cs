@@ -111,6 +111,11 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
+        foreach (var item in items)
+        {
+            (item.SuggestedOperatorAction, item.SuggestedQueueTarget) = ResolveSuggestedQueueTarget(item);
+        }
+
         return new GetBillingWebhookDeliveriesPageDto
         {
             Items = items,
@@ -137,6 +142,28 @@ public sealed class GetBillingWebhookDeliveriesPageHandler
         };
 
         return deliveries;
+    }
+
+    private static (string Action, string QueueTarget) ResolveSuggestedQueueTarget(BillingWebhookDeliveryListItemDto item)
+    {
+        if (item.EventType.Contains("dispute", StringComparison.OrdinalIgnoreCase) ||
+            item.EventType.Contains("charge.dispute", StringComparison.OrdinalIgnoreCase))
+        {
+            return ("Review payment anomalies", "DisputeSignals");
+        }
+
+        if (item.EventType.Contains("refund", StringComparison.OrdinalIgnoreCase))
+        {
+            return ("Review refunds", "Refunds");
+        }
+
+        if (item.EventType.Contains("payment_intent", StringComparison.OrdinalIgnoreCase) ||
+            item.EventType.Contains("charge", StringComparison.OrdinalIgnoreCase))
+        {
+            return ("Review payments", "Payments");
+        }
+
+        return ("Review callback history", string.Empty);
     }
 }
 

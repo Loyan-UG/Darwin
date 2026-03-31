@@ -98,6 +98,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string TemplateSurface { get; set; } = string.Empty;
         public string SubjectSource { get; set; } = string.Empty;
         public string BodySource { get; set; } = string.Empty;
+        public string CurrentSubjectTemplate { get; set; } = string.Empty;
+        public string CurrentBodyTemplate { get; set; } = string.Empty;
+        public string SupportedTokens { get; set; } = string.Empty;
         public string OperatorControl { get; set; } = string.Empty;
         public string AuditFlowKey { get; set; } = string.Empty;
         public string OperatorActionLabel { get; set; } = string.Empty;
@@ -130,6 +133,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public DateTime AttemptedAtUtc { get; set; }
         public DateTime? CompletedAtUtc { get; set; }
         public string? FailureMessage { get; set; }
+        public int AttemptAgeMinutes { get; set; }
+        public int? CompletionLatencySeconds { get; set; }
+        public bool NeedsOperatorFollowUp { get; set; }
+        public string Severity { get; set; } = string.Empty;
         public string RecommendedAction { get; set; } = string.Empty;
     }
 
@@ -166,6 +173,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int FailedActivationCount { get; set; }
         public int FailedPasswordResetCount { get; set; }
         public int FailedAdminTestCount { get; set; }
+        public int NeedsOperatorFollowUpCount { get; set; }
+        public int SlowCompletedCount { get; set; }
     }
 
     public sealed class CommunicationFlowPlaybookVm

@@ -49,6 +49,7 @@ namespace Darwin.Application.CRM.Queries
                 CustomerQueueFilter.HasOpportunities => baseQuery.Where(x => x.customer.Opportunities.Count > 0),
                 CustomerQueueFilter.Business => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business),
                 CustomerQueueFilter.MissingVatId => baseQuery.Where(x => x.customer.TaxProfileType == CustomerTaxProfileType.Business && string.IsNullOrWhiteSpace(x.customer.VatId)),
+                CustomerQueueFilter.UsesPlatformLocaleFallback => baseQuery.Where(x => !x.customer.UserId.HasValue || x.user == null || string.IsNullOrWhiteSpace(x.user.Locale)),
                 _ => baseQuery
             };
 
@@ -70,6 +71,8 @@ namespace Darwin.Application.CRM.Queries
                     CompanyName = x.customer.CompanyName,
                     TaxProfileType = x.customer.TaxProfileType,
                     VatId = x.customer.VatId,
+                    Locale = x.customer.UserId.HasValue && x.user != null ? x.user.Locale : null,
+                    UsesPlatformLocaleFallback = !x.customer.UserId.HasValue || x.user == null || string.IsNullOrWhiteSpace(x.user.Locale),
                     SegmentCount = x.customer.CustomerSegments.Count,
                     OpportunityCount = x.customer.Opportunities.Count,
                     CreatedAtUtc = x.customer.CreatedAtUtc,

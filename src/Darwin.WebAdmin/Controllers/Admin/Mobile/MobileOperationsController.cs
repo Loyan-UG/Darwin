@@ -51,7 +51,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             if (settings is null)
             {
                 TempData["Error"] = "Site settings are missing. Configure system settings before relying on mobile operations diagnostics.";
-                return RedirectToAction("Edit", "SiteSettings");
+                return RedirectOrHtmx("Edit", "SiteSettings", new { fragment = "site-settings-mobile" });
             }
 
             var support = await _getBusinessSupportSummary.HandleAsync(ct: ct).ConfigureAwait(false);
@@ -59,7 +59,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
             var deviceSummary = await _getDeviceSummary.HandleAsync(ct).ConfigureAwait(false);
             var devicesPage = await _getDevicesPage.HandleAsync(page, pageSize, q, platform, state, ct).ConfigureAwait(false);
 
-            return View(new MobileOperationsVm
+            var vm = new MobileOperationsVm
             {
                 JwtEnabled = settings.JwtEnabled,
                 JwtSingleDeviceOnly = settings.JwtSingleDeviceOnly,
@@ -125,7 +125,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
                 Page = page,
                 PageSize = pageSize,
                 Total = devicesPage.Total
-            });
+            };
+
+            return RenderIndex(vm);
         }
 
         [HttpPost]
@@ -134,7 +136,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         {
             var result = await _clearDevicePushToken.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Push token cleared." : result.Error;
-            return RedirectToAction(nameof(Index), new { q, platform, state, page });
+            return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
         }
 
         [HttpPost]
@@ -143,7 +145,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Mobile
         {
             var result = await _deactivateDevice.HandleAsync(id, rowVersion, ct).ConfigureAwait(false);
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded ? "Device deactivated." : result.Error;
-            return RedirectToAction(nameof(Index), new { q, platform, state, page });
+            return RedirectOrHtmx(nameof(Index), null, new { q, platform, state, page });
+        }
+
+        private IActionResult RenderIndex(MobileOperationsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/MobileOperations/Index.cshtml", vm);
+            }
+
+            return View(vm);
+        }
+
+        private IActionResult RedirectOrHtmx(string actionName, string? controllerName = null, object? routeValues = null)
+        {
+            if (IsHtmxRequest())
+            {
+                Response.Headers["HX-Redirect"] = Url.Action(actionName, controllerName, routeValues) ?? string.Empty;
+                return new EmptyResult();
+            }
+
+            return RedirectToAction(actionName, controllerName, routeValues);
+        }
+
+        private bool IsHtmxRequest()
+        {
+            return string.Equals(Request.Headers["HX-Request"], "true", StringComparison.OrdinalIgnoreCase);
         }
 
         private static List<SelectListItem> BuildPlatformItems(MobilePlatform? selected)

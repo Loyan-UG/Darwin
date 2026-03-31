@@ -1,3 +1,4 @@
+@using Darwin.Application.Billing.DTOs
 @model Darwin.WebAdmin.ViewModels.Billing.PaymentEditVm
 
 @if (Model.OrderId.HasValue || Model.InvoiceId.HasValue || Model.CustomerId.HasValue || Model.UserId.HasValue)
@@ -65,6 +66,10 @@
                 {
                     <div class="small">Paid @Model.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                 }
+                @if (Model.LastFinancialEventAtUtc.HasValue)
+                {
+                    <div class="small">Last event @Model.LastFinancialEventAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                }
                 @if (Model.IsStripe)
                 {
                     <div><span class="badge text-bg-info mt-2">Stripe</span></div>
@@ -96,6 +101,63 @@
                 <div class="small text-uppercase text-muted fw-semibold">Net Collected</div>
                 <div class="fs-5">@Model.Currency @((Model.NetCapturedAmountMinor / 100M).ToString("0.00"))</div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Reconciliation and Dispute Snapshot</span>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="Settings" asp-action="PaymentSettings" class="btn btn-sm btn-outline-secondary">Payment Settings</a>
+            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.NeedsReconciliation" class="btn btn-sm btn-outline-warning">Needs Reconciliation Queue</a>
+            <a asp-action="Payments" asp-route-businessId="@Model.BusinessId" asp-route-queue="@PaymentQueueFilter.DisputeFollowUp" class="btn btn-sm btn-outline-danger">Dispute Follow-up Queue</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="small text-uppercase text-muted fw-semibold">Provider Ref</div>
+                <div class="fw-semibold">@Model.ProviderReferenceState</div>
+            </div>
+            <div class="col-md-3">
+                <div class="small text-uppercase text-muted fw-semibold">Open Age</div>
+                <div class="fw-semibold">@Model.OpenAgeHours h</div>
+            </div>
+            <div class="col-md-3">
+                <div class="small text-uppercase text-muted fw-semibold">Reconciliation</div>
+                <div>
+                    @if (Model.NeedsReconciliation)
+                    {
+                        <span class="badge text-bg-warning">Needs reconciliation</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-success">No open reconciliation flag</span>
+                    }
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="small text-uppercase text-muted fw-semibold">Dispute Review</div>
+                <div>
+                    @if (Model.NeedsDisputeFollowUp)
+                    {
+                        <span class="badge text-bg-danger">Dispute follow-up</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">No dispute flag</span>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions" class="btn btn-sm btn-outline-warning">Payment Exceptions</a>
+            <a asp-action="Webhooks" asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals" class="btn btn-sm btn-outline-danger">Dispute Signals</a>
+            @if (Model.OrderId.HasValue)
+            {
+                <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId.Value" asp-fragment="payments" class="btn btn-sm btn-outline-secondary">Open Order Payments</a>
+            }
         </div>
     </div>
 </div>

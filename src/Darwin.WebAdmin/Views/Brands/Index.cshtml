@@ -3,17 +3,30 @@
     ViewData["Title"] = "Brands";
 }
 
+<div id="brands-workspace-shell">
 <h1 class="mb-3">Brands</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="Index" method="get" class="d-flex gap-2">
+    <form asp-action="Index" method="get" class="d-flex gap-2"
+          hx-get="@Url.Action("Index", "Brands")"
+          hx-target="#brands-workspace-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search...">
         <input type="hidden" name="filter" value="@Model.Filter">
         <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i> Search</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="Index" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "Brands")"
+           hx-target="#brands-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Reset</a>
     </form>
 
-    <a asp-action="Create" class="btn btn-primary">
+    <a asp-action="Create" class="btn btn-primary"
+       hx-get="@Url.Action("Create", "Brands")"
+       hx-target="#brands-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">
         <i class="fa fa-plus"></i> New Brand
     </a>
 </div>
@@ -57,10 +70,14 @@
     <div class="card-body">
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
             <div class="d-flex flex-wrap gap-2">
-                <a asp-action="Index" asp-route-query="@Model.Query" class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-primary")">All</a>
-                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="unpublished" class="btn @(Model.Filter == "unpublished" ? "btn-primary" : "btn-outline-primary")">Unpublished</a>
-                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-slug" class="btn @(Model.Filter == "missing-slug" ? "btn-primary" : "btn-outline-primary")">Missing Slug</a>
-                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-logo" class="btn @(Model.Filter == "missing-logo" ? "btn-primary" : "btn-outline-primary")">Missing Logo</a>
+                <a asp-action="Index" asp-route-query="@Model.Query" class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">All</a>
+                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="unpublished" class="btn @(Model.Filter == "unpublished" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "unpublished" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Unpublished</a>
+                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-slug" class="btn @(Model.Filter == "missing-slug" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "missing-slug" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Missing Slug</a>
+                <a asp-action="Index" asp-route-query="@Model.Query" asp-route-filter="missing-logo" class="btn @(Model.Filter == "missing-logo" ? "btn-primary" : "btn-outline-primary")"
+                   hx-get="@Url.Action("Index", "Brands", new { query = Model.Query, filter = "missing-logo" })" hx-target="#brands-workspace-shell" hx-swap="outerHTML" hx-push-url="true">Missing Logo</a>
             </div>
         </div>
     </div>
@@ -135,7 +152,11 @@
                         </td>
                         <td>@b.ModifiedAtUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                         <td class="text-end">
-                            <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-secondary">
+                            <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-secondary"
+                               hx-get="@Url.Action("Edit", "Brands", new { id = b.Id })"
+                               hx-target="#brands-workspace-shell"
+                               hx-swap="outerHTML"
+                               hx-push-url="true">
                                 <i class="fa fa-pen"></i> Edit
                             </a>
 
@@ -146,7 +167,10 @@
                                     data-action="@Url.Action("Delete", "Brands")"
                                     data-id="@b.Id"
                                     data-name="@b.Name"
-                                    data-rowversion="@Convert.ToBase64String(b.RowVersion)">
+                                    data-rowversion="@Convert.ToBase64String(b.RowVersion)"
+                                    data-hx-target="#brands-workspace-shell"
+                                    data-hx-swap="outerHTML"
+                                    data-hx-success="window.darwinAdmin.refreshAlerts(); window.darwinAdmin.hideModal('confirmDeleteModal');">
                                 <i class="fa fa-trash"></i> Delete
                             </button>
                         </td>
@@ -167,8 +191,12 @@
        asp-controller="Brands"
        asp-action="Index"
        asp-route-query="@Model.Query"
-       asp-route-filter="@Model.Filter">
+       asp-route-filter="@Model.Filter"
+       hx-target="#brands-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">
 </pager>
 
 
 <partial name="~/Views/Shared/_ConfirmDeleteModal.cshtml" />
+</div>

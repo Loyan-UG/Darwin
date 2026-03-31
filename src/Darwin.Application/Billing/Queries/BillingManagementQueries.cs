@@ -51,6 +51,11 @@ namespace Darwin.Application.Billing.Queries
                         x.Status == PaymentStatus.Failed ||
                         (x.Provider == "Stripe" && (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty)) ||
                         _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)),
+                    PaymentQueueFilter.DisputeFollowUp => paymentsQuery.Where(x =>
+                        x.Provider == "Stripe" &&
+                        (x.Status == PaymentStatus.Failed ||
+                         x.Status == PaymentStatus.Refunded ||
+                         _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed))),
                     _ => paymentsQuery
                 };
             }
@@ -242,8 +247,14 @@ namespace Darwin.Application.Billing.Queries
                     item.Status == PaymentStatus.Authorized ||
                     item.RefundedAmountMinor > 0 ||
                     (item.IsStripe && string.IsNullOrWhiteSpace(item.ProviderTransactionRef));
+                item.NeedsDisputeFollowUp =
+                    item.IsStripe &&
+                    (item.Status == PaymentStatus.Failed ||
+                     item.Status == PaymentStatus.Refunded ||
+                     item.RefundedAmountMinor > 0);
                 item.NeedsSupportAttention =
                     item.NeedsReconciliation ||
+                    item.NeedsDisputeFollowUp ||
                     (!item.OrderId.HasValue && !item.InvoiceId.HasValue);
             }
         }
@@ -297,7 +308,12 @@ namespace Darwin.Application.Billing.Queries
                     x.Status == PaymentStatus.Authorized ||
                     x.Status == PaymentStatus.Failed ||
                     (x.Provider == "Stripe" && (x.ProviderTransactionRef == null || x.ProviderTransactionRef == string.Empty)) ||
-                    _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed), ct).ConfigureAwait(false)
+                    _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed), ct).ConfigureAwait(false),
+                DisputeFollowUpCount = await payments.CountAsync(x =>
+                    x.Provider == "Stripe" &&
+                    (x.Status == PaymentStatus.Failed ||
+                     x.Status == PaymentStatus.Refunded ||
+                     _db.Set<Refund>().Any(r => r.PaymentId == x.Id && r.Status == RefundStatus.Completed)), ct).ConfigureAwait(false)
             };
             return summary;
         }
@@ -400,6 +416,27 @@ namespace Darwin.Application.Billing.Queries
                 })
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+            dto.LastFinancialEventAtUtc = BillingPaymentTimelineFormatter.ResolveLastFinancialEventAtUtc(
+                dto.CreatedAtUtc,
+                dto.PaidAtUtc,
+                dto.Refunds.Count == 0 ? null : dto.Refunds.Max(x => x.CompletedAtUtc ?? x.CreatedAtUtc));
+            dto.OpenAgeHours = BillingPaymentTimelineFormatter.CalculateOpenAgeHours(dto.CreatedAtUtc, dto.PaidAtUtc);
+            dto.ProviderReferenceState = BillingPaymentTimelineFormatter.ResolveProviderReferenceState(
+                dto.ProviderTransactionRef,
+                dto.IsStripe,
+                dto.Status,
+                dto.RefundedAmountMinor);
+            dto.NeedsReconciliation =
+                dto.Status == PaymentStatus.Failed ||
+                dto.Status == PaymentStatus.Pending ||
+                dto.Status == PaymentStatus.Authorized ||
+                dto.RefundedAmountMinor > 0 ||
+                (dto.IsStripe && string.IsNullOrWhiteSpace(dto.ProviderTransactionRef));
+            dto.NeedsDisputeFollowUp =
+                dto.IsStripe &&
+                (dto.Status == PaymentStatus.Failed ||
+                 dto.Status == PaymentStatus.Refunded ||
+                 dto.RefundedAmountMinor > 0);
 
             User? paymentUser = null;
             if (dto.UserId.HasValue)

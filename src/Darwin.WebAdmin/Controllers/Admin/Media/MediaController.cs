@@ -101,7 +101,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderIndex(vm);
         }
 
         private static IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> BuildFilterItems(MediaAssetQueueFilter selectedFilter)
@@ -144,7 +144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         [HttpGet]
         public IActionResult Create()
         {
-            return View(new MediaAssetCreateVm());
+            return RenderCreateEditor(new MediaAssetCreateVm());
         }
 
         /// <summary>
@@ -201,10 +201,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             if (dto is null)
             {
                 TempData["Error"] = "Media asset not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
-            return View(new MediaAssetEditVm
+            return RenderEditEditor(new MediaAssetEditVm
             {
                 Id = dto.Id,
                 RowVersion = dto.RowVersion,
@@ -267,7 +267,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
         {
             await _softDelete.HandleAsync(id, ct).ConfigureAwait(false);
             TempData["Success"] = "Media asset deleted from the library.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         /// <summary>
@@ -334,6 +334,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Media
             }
 
             return View("Edit", vm);
+        }
+
+        private IActionResult RenderIndex(MediaAssetsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Media/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

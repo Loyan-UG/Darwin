@@ -135,7 +135,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     RowVersion = x.RowVersion
                 }).ToList()
             };
-            return View(vm);
+            return RenderIndexWorkspace(vm);
         }
 
         // ---------------- Create ----------------
@@ -144,7 +144,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public IActionResult Create()
         {
             // A simple example for user convenience (Option + a Value)
-            return View(new AddOnGroupCreateVm
+            return RenderCreateEditor(new AddOnGroupCreateVm
             {
                 Options = { new AddOnOptionVm { Label = "Option", Values = { new AddOnOptionValueVm { Label = "Value" } } } }
             });
@@ -209,7 +209,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (dto is null)
             {
                 TempData["Error"] = "Add-on group not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new AddOnGroupEditVm
@@ -237,7 +237,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     }).ToList()
                 }).ToList()
             };
-            return View(vm);
+            return RenderEditEditor(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -315,7 +315,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             {
                 TempData["Error"] = "Failed to delete add-on group.";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         // ---------------- Attach: Products ----------------
@@ -353,7 +353,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Selected = attachedSet.Contains(p.Id)
                 }).ToList()
             };
-            return View(vm);
+            return RenderAttachToProducts(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -370,11 +370,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!result.Succeeded)
             {
                 TempData["Error"] = result.Error ?? "Failed to attach to products.";
-                return RedirectToAction(nameof(AttachToProducts), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize });
+                return RedirectOrHtmx(nameof(AttachToProducts), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query });
             }
 
             TempData["Success"] = "Attached to products.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         // ---------------- Attach: Categories ----------------
@@ -407,7 +407,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Selected = attachedSet.Contains(c.Id)
                 }).ToList()
             };
-            return View(vm);
+            return RenderAttachToCategories(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -421,12 +421,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ct);
 
                 TempData["Success"] = "Attached to categories.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(AttachToCategories), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize });
+                return RedirectOrHtmx(nameof(AttachToCategories), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query });
             }
         }
 
@@ -460,7 +460,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     Selected = attachedSet.Contains(b.Id)
                 }).ToList()
             };
-            return View(vm);
+            return RenderAttachToBrands(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -474,12 +474,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                     ct);
 
                 TempData["Success"] = "Attached to brands.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(AttachToBrands), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize });
+                return RedirectOrHtmx(nameof(AttachToBrands), new { id = vm.AddOnGroupId, page = vm.Page, pageSize = vm.PageSize, query = vm.Query });
             }
         }
 
@@ -528,7 +528,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 SelectedVariantIds = attached.ToList()
             };
 
-            return View(vm);
+            return RenderAttachToVariants(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -545,11 +545,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (!result.Succeeded)
             {
                 TempData["Error"] = result.Error ?? "Failed to attach to variants.";
-                return RedirectToAction(nameof(AttachToVariants), new { id = vm.AddOnGroupId });
+                return RedirectOrHtmx(nameof(AttachToVariants), new { id = vm.AddOnGroupId, q = vm.Query, page = vm.Page, pageSize = vm.PageSize });
             }
 
             TempData["Success"] = "Attached to variants.";
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         private IActionResult RenderCreateEditor(AddOnGroupCreateVm vm)
@@ -570,6 +570,56 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             }
 
             return View("Edit", vm);
+        }
+
+        private IActionResult RenderIndexWorkspace(AddOnGroupsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/AddOnGroups/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
+        }
+
+        private IActionResult RenderAttachToProducts(AddOnGroupAttachToProductsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/AddOnGroups/AttachToProducts.cshtml", vm);
+            }
+
+            return View("AttachToProducts", vm);
+        }
+
+        private IActionResult RenderAttachToCategories(AddOnGroupAttachToCategoriesVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/AddOnGroups/AttachToCategories.cshtml", vm);
+            }
+
+            return View("AttachToCategories", vm);
+        }
+
+        private IActionResult RenderAttachToBrands(AddOnGroupAttachToBrandsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/AddOnGroups/AttachToBrands.cshtml", vm);
+            }
+
+            return View("AttachToBrands", vm);
+        }
+
+        private IActionResult RenderAttachToVariants(AddOnGroupAttachToVariantsVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/AddOnGroups/AttachToVariants.cshtml", vm);
+            }
+
+            return View("AttachToVariants", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

@@ -144,7 +144,11 @@
     </div>
 
     <div class="card-footer text-end">
-        <a asp-action="Index" class="btn btn-secondary">Back</a>
+        <a asp-action="Index" class="btn btn-secondary"
+           hx-get="@Url.Action("Index", "Products")"
+           hx-target="#products-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Back</a>
         <button type="submit" class="btn btn-primary">Save</button>
     </div>
 </div>

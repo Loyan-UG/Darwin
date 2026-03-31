@@ -95,6 +95,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public int MissingProviderRefCount { get; set; }
         public int FailedStripeCount { get; set; }
         public int NeedsReconciliationCount { get; set; }
+        public int DisputeFollowUpCount { get; set; }
     }
 
     public sealed class BillingWebhookOpsSummaryVm
@@ -158,6 +159,8 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime? LastAttemptAtUtc { get; set; }
         public string? IdempotencyKey { get; set; }
         public bool IsActiveSubscription { get; set; }
+        public string SuggestedOperatorAction { get; set; } = string.Empty;
+        public string SuggestedQueueTarget { get; set; } = string.Empty;
     }
 
     public sealed class RefundOpsSummaryVm
@@ -207,6 +210,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public string ProviderReferenceState { get; set; } = string.Empty;
         public bool IsStripe { get; set; }
         public bool NeedsReconciliation { get; set; }
+        public bool NeedsDisputeFollowUp { get; set; }
         public bool NeedsSupportAttention { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -244,6 +248,11 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public DateTime CreatedAtUtc { get; set; }
         public bool IsStripe { get; set; }
         public string? FailureReason { get; set; }
+        public DateTime? LastFinancialEventAtUtc { get; set; }
+        public int OpenAgeHours { get; set; }
+        public string ProviderReferenceState { get; set; } = string.Empty;
+        public bool NeedsReconciliation { get; set; }
+        public bool NeedsDisputeFollowUp { get; set; }
 
         [Required]
         public Guid BusinessId { get; set; }

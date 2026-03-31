@@ -77,14 +77,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderIndexWorkspace(vm);
         }
 
         [HttpGet]
-        public IActionResult Create() => View(new BrandEditVm
+        public IActionResult Create() => RenderBrandEditor(new BrandEditVm
         {
             Translations = { new BrandTranslationVm { Culture = "de-DE" } }
-        });
+        }, isCreate: true);
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BrandEditVm vm, CancellationToken ct = default)
@@ -128,7 +128,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             if (dto is null)
             {
                 TempData["Error"] = "Brand not found.";
-                return RedirectToAction(nameof(Index));
+                return RedirectOrHtmx(nameof(Index), new { });
             }
 
             var vm = new BrandEditVm
@@ -145,7 +145,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 }).ToList()
             };
 
-            return View(vm);
+            return RenderBrandEditor(vm, isCreate: false);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -202,15 +202,29 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             TempData[result.Succeeded ? "Success" : "Error"] =
                 result.Succeeded ? "Brand deleted." : (result.Error ?? "Failed to delete brand.");
 
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
         private IActionResult RenderBrandEditor(BrandEditVm vm, bool isCreate)
         {
             ViewData["IsCreate"] = isCreate;
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Brands/_BrandEditorShell.cshtml", vm);
+            }
             return isCreate
                 ? View("Create", vm)
                 : View("Edit", vm);
+        }
+
+        private IActionResult RenderIndexWorkspace(BrandsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Brands/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)

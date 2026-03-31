@@ -9,7 +9,8 @@ namespace Darwin.Application.CRM.DTOs
         NeedsSegmentation = 2,
         HasOpportunities = 3,
         Business = 4,
-        MissingVatId = 5
+        MissingVatId = 5,
+        UsesPlatformLocaleFallback = 6
     }
 
     public enum LeadQueueFilter
@@ -30,6 +31,8 @@ namespace Darwin.Application.CRM.DTOs
         public string? CompanyName { get; set; }
         public CustomerTaxProfileType TaxProfileType { get; set; }
         public string? VatId { get; set; }
+        public string? Locale { get; set; }
+        public bool UsesPlatformLocaleFallback { get; set; }
         public int SegmentCount { get; set; }
         public int OpportunityCount { get; set; }
         public DateTime CreatedAtUtc { get; set; }

@@ -309,6 +309,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     ProviderReferenceState = x.ProviderReferenceState,
                     IsStripe = x.IsStripe,
                     NeedsReconciliation = x.NeedsReconciliation,
+                    NeedsDisputeFollowUp = x.NeedsDisputeFollowUp,
                     NeedsSupportAttention = x.NeedsSupportAttention,
                     RowVersion = x.RowVersion
                 }).ToList();
@@ -368,7 +369,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     CreatedAtUtc = x.CreatedAtUtc,
                     LastAttemptAtUtc = x.LastAttemptAtUtc,
                     IdempotencyKey = x.IdempotencyKey,
-                    IsActiveSubscription = x.IsActiveSubscription
+                    IsActiveSubscription = x.IsActiveSubscription,
+                    SuggestedOperatorAction = x.SuggestedOperatorAction,
+                    SuggestedQueueTarget = x.SuggestedQueueTarget
                 }).ToList(),
                 Playbooks = BuildWebhookPlaybooks(),
                 Page = page,
@@ -464,7 +467,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 StripeCount = summary.StripeCount,
                 MissingProviderRefCount = summary.MissingProviderRefCount,
                 FailedStripeCount = summary.FailedStripeCount,
-                NeedsReconciliationCount = summary.NeedsReconciliationCount
+                NeedsReconciliationCount = summary.NeedsReconciliationCount,
+                DisputeFollowUpCount = summary.DisputeFollowUpCount
             };
         }
 
@@ -569,6 +573,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                     ScopeNote = "Use the new provider reference state and last financial event signal to spot rows whose provider trail is stale or incomplete.",
                     OperatorAction = "Check the provider reference state, last event timestamp, and linked refund activity before deciding whether a row is settled, stale, or missing follow-up.",
                     SettingsDependency = "Stripe webhook secret and provider credentials should be in place before operators treat these timeline signals as trustworthy settlement history."
+                },
+                new()
+                {
+                    Title = "Dispute follow-up",
+                    ScopeNote = "Use this subset for Stripe rows that should be cross-checked against dispute signals instead of being treated as routine refund noise.",
+                    OperatorAction = "Open the dispute-follow-up subset, pivot into webhook dispute signals, then decide whether the safe next step is payment correction, refund follow-up, or escalation.",
+                    SettingsDependency = "Stripe webhook lifecycle visibility and payment settings should be configured before callback anomalies are treated as resolved."
                 },
                 new()
                 {
@@ -688,11 +699,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 CreatedAtUtc = DateTime.UtcNow,
                 Currency = "EUR",
                 Status = PaymentStatus.Pending,
+                LastFinancialEventAtUtc = DateTime.UtcNow,
+                ProviderReferenceState = "Reference missing",
+                NeedsReconciliation = true,
                 SupportPlaybooks = BuildPaymentSupportPlaybooks(new PaymentEditDto
                 {
                     CreatedAtUtc = DateTime.UtcNow,
                     Currency = "EUR",
-                    Status = PaymentStatus.Pending
+                    Status = PaymentStatus.Pending,
+                    LastFinancialEventAtUtc = DateTime.UtcNow,
+                    ProviderReferenceState = "Reference missing",
+                    NeedsReconciliation = true
                 })
             };
 
@@ -756,6 +773,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 CreatedAtUtc = dto.CreatedAtUtc,
                 IsStripe = dto.IsStripe,
                 FailureReason = dto.FailureReason,
+                LastFinancialEventAtUtc = dto.LastFinancialEventAtUtc,
+                OpenAgeHours = dto.OpenAgeHours,
+                ProviderReferenceState = dto.ProviderReferenceState,
+                NeedsReconciliation = dto.NeedsReconciliation,
+                NeedsDisputeFollowUp = dto.NeedsDisputeFollowUp,
                 BusinessId = dto.BusinessId,
                 OrderId = dto.OrderId,
                 OrderNumber = dto.OrderNumber,

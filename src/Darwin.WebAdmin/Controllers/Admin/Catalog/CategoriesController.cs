@@ -87,7 +87,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 Playbooks = BuildCategoryPlaybooks()
             };
 
-            return View(vm);
+            return RenderIndexWorkspace(vm);
         }
 
         [HttpGet]
@@ -97,7 +97,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             var vm = new CategoryCreateVm();
             vm.Translations ??= new();
             if (vm.Translations.Count == 0) vm.Translations.Add(new CategoryTranslationVm { Culture = "de-DE" });
-            return View(vm);
+            return RenderCreateEditor(vm);
         }
 
         [ValidateAntiForgeryToken]
@@ -169,7 +169,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             };
 
             await LoadLookupsAsync(ct);
-            return View(vm);
+            return RenderEditEditor(vm);
         }
 
         [ValidateAntiForgeryToken]
@@ -245,7 +245,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
                 TempData["Error"] = "Failed to delete the category.";
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectOrHtmx(nameof(Index), new { });
         }
 
 
@@ -256,6 +256,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
 
             var (_, cultures) = await _getCultures.HandleAsync(ct);
             ViewBag.Cultures = cultures;
+        }
+
+        private IActionResult RenderIndexWorkspace(CategoriesIndexVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Categories/Index.cshtml", vm);
+            }
+
+            return View("Index", vm);
         }
 
         private IActionResult RenderCreateEditor(CategoryCreateVm vm)

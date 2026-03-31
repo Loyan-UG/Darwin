@@ -12,7 +12,8 @@ namespace Darwin.Application.Billing.DTOs
         Stripe = 6,
         MissingProviderRef = 7,
         FailedStripe = 8,
-        NeedsReconciliation = 9
+        NeedsReconciliation = 9,
+        DisputeFollowUp = 10
     }
 
     public enum BillingRefundQueueFilter : short
@@ -61,6 +62,7 @@ namespace Darwin.Application.Billing.DTOs
         public string ProviderReferenceState { get; set; } = string.Empty;
         public bool IsStripe { get; set; }
         public bool NeedsReconciliation { get; set; }
+        public bool NeedsDisputeFollowUp { get; set; }
         public bool NeedsSupportAttention { get; set; }
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();
     }
@@ -76,6 +78,7 @@ namespace Darwin.Application.Billing.DTOs
         public int MissingProviderRefCount { get; set; }
         public int FailedStripeCount { get; set; }
         public int NeedsReconciliationCount { get; set; }
+        public int DisputeFollowUpCount { get; set; }
     }
 
     public sealed class BillingRefundListItemDto
@@ -134,6 +137,11 @@ namespace Darwin.Application.Billing.DTOs
         public string? FailureReason { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public bool IsStripe { get; set; }
+        public DateTime? LastFinancialEventAtUtc { get; set; }
+        public int OpenAgeHours { get; set; }
+        public string ProviderReferenceState { get; set; } = string.Empty;
+        public bool NeedsReconciliation { get; set; }
+        public bool NeedsDisputeFollowUp { get; set; }
         public string? OrderNumber { get; set; }
         public InvoiceStatus? InvoiceStatus { get; set; }
         public DateTime? InvoiceDueAtUtc { get; set; }

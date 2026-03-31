@@ -13,7 +13,8 @@
         <a asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-communication-audits-workspace-shell"
-           hx-swap="outerHTML">Back to Communications</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Back to Communications</a>
     </div>
 </div>
 
@@ -161,6 +162,18 @@
             <div class="fs-4 fw-semibold">@Model.Summary.BusinessLinkedFailureCount</div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Needs Follow-up</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.NeedsOperatorFollowUpCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Slow Completed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.SlowCompletedCount</div>
+        </div>
+    </div>
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
             <div class="text-muted small">Failed Invitations</div>
@@ -229,7 +242,8 @@
         <a asp-action="EmailAudits" class="btn btn-outline-secondary"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
            hx-target="#business-communication-audits-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Reset</a>
     </div>
 </form>
 
@@ -244,13 +258,14 @@
                 <th>Business</th>
                 <th>Provider</th>
                 <th>Status</th>
+                <th>Delivery Context</th>
                 <th>Operator Response</th>
             </tr>
         </thead>
         <tbody>
         @if (Model.Items.Count == 0)
         {
-            <tr><td colspan="8" class="text-center text-muted py-4">No email audits matched the selected filters.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted py-4">No email audits matched the selected filters.</td></tr>
         }
         else
         {
@@ -290,6 +305,39 @@
                         }
                     </td>
                     <td>
+                        <div class="small">
+                            @if (string.Equals(item.Severity, "High", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="badge text-bg-danger">High</span>
+                            }
+                            else if (string.Equals(item.Severity, "Medium", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="badge text-bg-warning">Medium</span>
+                            }
+                            else if (string.Equals(item.Severity, "Watch", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="badge text-bg-secondary">Watch</span>
+                            }
+                            else if (string.Equals(item.Severity, "Slow", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="badge text-bg-info">Slow</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-light">Normal</span>
+                            }
+                        </div>
+                        <div class="small text-muted mt-1">Open for @item.AttemptAgeMinutes min</div>
+                        @if (item.CompletionLatencySeconds.HasValue)
+                        {
+                            <div class="small text-muted">Latency @item.CompletionLatencySeconds.Value s</div>
+                        }
+                        @if (item.NeedsOperatorFollowUp)
+                        {
+                            <div class="small text-danger mt-1">Needs operator follow-up</div>
+                        }
+                    </td>
+                    <td>
                         <div class="small">@item.RecommendedAction</div>
                         @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
                         {
@@ -306,10 +354,14 @@
                         @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                         {
                             <div class="mt-2 d-flex flex-wrap gap-2">
-                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId })"
+                                <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@item.BusinessId" asp-route-query="@item.RecipientEmail" asp-route-filter="Open" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("Invitations", "Businesses", new { businessId = item.BusinessId, query = item.RecipientEmail, filter = "Open" })"
                                    hx-target="#business-communication-audits-workspace-shell"
-                                   hx-swap="outerHTML">Open Invitations</a>
+                                   hx-swap="outerHTML">Search Invitation</a>
+                                <a asp-controller="Businesses" asp-action="SupportQueue" class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("SupportQueue", "Businesses")"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Support Queue</a>
                                 <a asp-action="Details" asp-route-businessId="@item.BusinessId" class="btn btn-sm btn-outline-dark"
                                    hx-get="@Url.Action("Details", "BusinessCommunications", new { businessId = item.BusinessId })"
                                    hx-target="#business-communication-audits-workspace-shell"
@@ -323,6 +375,13 @@
                                    hx-get="@Url.Action("Index", "Users", new { q = item.RecipientEmail })"
                                    hx-target="#business-communication-audits-workspace-shell"
                                    hx-swap="outerHTML">Open Users</a>
+                                @if (item.BusinessId.HasValue)
+                                {
+                                    <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@item.BusinessId" asp-route-query="@item.RecipientEmail" asp-route-filter="Attention" class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Members", "Businesses", new { businessId = item.BusinessId, query = item.RecipientEmail, filter = "Attention" })"
+                                       hx-target="#business-communication-audits-workspace-shell"
+                                       hx-swap="outerHTML">Open Member Support</a>
+                                }
                                 <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                                    hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                                    hx-target="#business-communication-audits-workspace-shell"

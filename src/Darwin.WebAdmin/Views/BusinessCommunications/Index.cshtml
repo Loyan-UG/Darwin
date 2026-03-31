@@ -13,7 +13,8 @@
         <a asp-action="EmailAudits" class="btn btn-outline-secondary"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
            hx-target="#business-communications-workspace-shell"
-           hx-swap="outerHTML">Email Audits</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Email Audits</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
            hx-target="#business-communications-workspace-shell"
@@ -191,6 +192,8 @@
                         <th>Template Surface</th>
                         <th>Subject Source</th>
                         <th>Body Source</th>
+                        <th>Current Template Preview</th>
+                        <th>Supported Tokens</th>
                         <th>Operator Control</th>
                         <th>Actions</th>
                         <th>Next Step</th>
@@ -204,6 +207,11 @@
                         <td>@item.TemplateSurface</td>
                         <td>@item.SubjectSource</td>
                         <td>@item.BodySource</td>
+                        <td>
+                            <div class="small"><strong>Subject:</strong> @item.CurrentSubjectTemplate</div>
+                            <div class="small text-muted mt-1"><strong>Body:</strong> @item.CurrentBodyTemplate</div>
+                        </td>
+                        <td><code>@item.SupportedTokens</code></td>
                         <td>@item.OperatorControl</td>
                         <td>
                             <div class="d-flex flex-wrap gap-2">
@@ -244,6 +252,13 @@
                                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
                                        hx-target="#business-communications-workspace-shell"
                                        hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                }
+                                @if (item.OperatorActionTarget != "AdminAlerts")
+                                {
+                                    <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
+                                       hx-target="#business-communications-workspace-shell"
+                                       hx-swap="outerHTML">Open Policy</a>
                                 }
                             </div>
                         </td>
@@ -380,13 +395,14 @@
                         <th>Recipient</th>
                         <th>Subject</th>
                         <th>Status</th>
+                        <th>Delivery Context</th>
                         <th>Details</th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.RecentEmailAudits.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-3">No email delivery activity has been recorded yet.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-3">No email delivery activity has been recorded yet.</td></tr>
                 }
                 else
                 {
@@ -409,6 +425,33 @@
                                 else
                                 {
                                     <span class="badge text-bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                @if (string.Equals(item.Severity, "High", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-danger">High</span>
+                                }
+                                else if (string.Equals(item.Severity, "Medium", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-warning">Medium</span>
+                                }
+                                else if (string.Equals(item.Severity, "Watch", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-secondary">Watch</span>
+                                }
+                                else if (string.Equals(item.Severity, "Slow", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-info">Slow</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-light">Normal</span>
+                                }
+                                <div class="small text-muted mt-1">Open for @item.AttemptAgeMinutes min</div>
+                                @if (item.CompletionLatencySeconds.HasValue)
+                                {
+                                    <div class="small text-muted">Latency @item.CompletionLatencySeconds.Value s</div>
                                 }
                             </td>
                             <td>
@@ -435,7 +478,32 @@
             <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
                hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
                hx-target="#business-communications-workspace-shell"
-               hx-swap="outerHTML">Open Full Email Audit Log</a>
+               hx-swap="outerHTML"
+               hx-push-url="true">Open Full Email Audit Log</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Follow-up Backlog</div>
+            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</div>
+            <div class="small text-muted mt-2">Recent failed or stale-pending rows that still need operator follow-up.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">High Severity Rows</div>
+            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</div>
+            <div class="small text-muted mt-2">Business-linked failures and stale pending rows that deserve first-pass triage.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Slow Deliveries</div>
+            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</div>
+            <div class="small text-muted mt-2">Completed deliveries that took longer than the current operator threshold.</div>
         </div>
     </div>
 </div>
@@ -469,7 +537,8 @@
         <a asp-action="Index" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Index", "BusinessCommunications")"
            hx-target="#business-communications-workspace-shell"
-           hx-swap="outerHTML">Reset</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Reset</a>
     </div>
 </form>
 

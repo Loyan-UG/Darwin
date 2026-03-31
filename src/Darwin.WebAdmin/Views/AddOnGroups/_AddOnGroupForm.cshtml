@@ -56,5 +56,9 @@
 
 <div class="mt-3">
     <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
-    <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    <a asp-controller="AddOnGroups" asp-action="Index" class="btn btn-outline-secondary"
+       hx-get="@Url.Action("Index", "AddOnGroups")"
+       hx-target="#add-on-groups-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Back</a>
 </div>
