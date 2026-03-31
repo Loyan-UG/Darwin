@@ -90,6 +90,38 @@ namespace Darwin.Tests.Unit
                     b.Property(x => x.IsDeleted);
                 });
 
+                modelBuilder.Entity<Page>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.Title).HasMaxLength(200).IsRequired();
+                    b.Property(x => x.Slug).HasMaxLength(200).IsRequired();
+                    b.Property(x => x.ContentHtml).IsRequired();
+                    b.Property(x => x.IsDeleted);
+                });
+
+                modelBuilder.Entity<Menu>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.Name).HasMaxLength(128).IsRequired();
+                    b.Property(x => x.Culture).HasMaxLength(16).IsRequired();
+                });
+
+                modelBuilder.Entity<MenuItem>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.MenuId).IsRequired();
+                    b.Property(x => x.Url).HasMaxLength(1024).IsRequired();
+                    b.Property(x => x.Title).HasMaxLength(256);
+                });
+
+                modelBuilder.Entity<MenuItemTranslation>(b =>
+                {
+                    b.HasKey(x => x.Id);
+                    b.Property(x => x.MenuItemId).IsRequired();
+                    b.Property(x => x.Culture).HasMaxLength(16).IsRequired();
+                    b.Property(x => x.Label).HasMaxLength(256).IsRequired();
+                });
+
                 // Map SiteSetting for settings handler tests.  RowVersion is configured as a concurrency token.
                 modelBuilder.Entity<SiteSetting>(b =>
                 {

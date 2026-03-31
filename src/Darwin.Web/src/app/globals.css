@@ -1,26 +1,97 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-body-ui: "Manrope", sans-serif;
+  --font-display-ui: "Fraunces", serif;
+  --color-surface-canvas: #f6f3ea;
+  --color-surface-panel: #fffdf8;
+  --color-surface-panel-strong: #f0eadb;
+  --color-surface-accent-soft: #e4f0d4;
+  --color-border-soft: rgba(52, 79, 48, 0.14);
+  --color-border-strong: rgba(52, 79, 48, 0.28);
+  --color-text-primary: #233220;
+  --color-text-secondary: #5c6d58;
+  --color-text-muted: #7a8874;
+  --color-brand: #3e6b3d;
+  --color-brand-strong: #2d512c;
+  --color-brand-contrast: #f7f4ea;
+  --color-accent: #d96f32;
+  --shadow-panel: 0 18px 50px rgba(42, 59, 37, 0.08);
+  --content-max-width: 1200px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body-ui);
+  --font-display: var(--font-display-ui);
+  --color-background: var(--color-surface-canvas);
+  --color-foreground: var(--color-text-primary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(217, 111, 50, 0.1), transparent 24rem),
+    linear-gradient(180deg, #f8f4e7 0%, var(--color-surface-canvas) 28%, #f3efe5 100%);
+  color: var(--color-text-primary);
+  font-family: var(--font-body-ui);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(62, 107, 61, 0.18);
+  color: var(--color-text-primary);
+}
+
+.cms-content {
+  color: var(--color-text-secondary);
+  line-height: 1.9;
+}
+
+.cms-content h1,
+.cms-content h2,
+.cms-content h3,
+.cms-content h4,
+.cms-content h5,
+.cms-content h6 {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-primary);
+  font-family: var(--font-display-ui);
+  line-height: 1.2;
+}
+
+.cms-content p,
+.cms-content ul,
+.cms-content ol,
+.cms-content blockquote {
+  margin-block: 1rem;
+}
+
+.cms-content a {
+  color: var(--color-brand);
+}
+
+.cms-content ul,
+.cms-content ol {
+  padding-inline-start: 1.4rem;
 }

@@ -40,6 +40,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             if (!await db.Products.AnyAsync(ct))
                 await CreateProductsDeAsync(db, ct);
 
+            await EnsureStorefrontSeedMediaAsync(db, ct);
+
             // Add-ons (create if none exist)
             if (!await db.Set<AddOnGroup>().AnyAsync(ct))
                 await SeedExtendedWarrantyAddOnsAsync(db, ct);
@@ -268,6 +270,69 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 db.Add(v);
                 await db.SaveChangesAsync(ct);
             }
+        }
+
+        /// <summary>
+        /// Ensures a representative subset of public products has primary media attached so storefront browsing
+        /// has real image data even before a content team curates the full catalog.
+        /// </summary>
+        private static async Task EnsureStorefrontSeedMediaAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            var desiredAssignments = new[]
+            {
+                new { ProductSlug = "iphone-15-pro-128", MediaUrl = "/media/sample/hero-electronics.jpg", Role = "Primary" },
+                new { ProductSlug = "galaxy-s24-256", MediaUrl = "/media/sample/smartphones.jpg", Role = "Primary" },
+                new { ProductSlug = "pixel-9-128", MediaUrl = "/media/sample/smartphones.jpg", Role = "Gallery" },
+                new { ProductSlug = "macbook-air-13-m3", MediaUrl = "/media/sample/laptops-collection.jpg", Role = "Primary" },
+                new { ProductSlug = "dell-xps-13-2025", MediaUrl = "/media/sample/laptops-collection.jpg", Role = "Gallery" },
+                new { ProductSlug = "logitech-mx-master-3s", MediaUrl = "/media/sample/accessories.jpg", Role = "Primary" },
+                new { ProductSlug = "sony-wh-1000xm5", MediaUrl = "/media/sample/accessories.jpg", Role = "Gallery" },
+                new { ProductSlug = "anker-powercore-20k", MediaUrl = "/media/sample/accessories.jpg", Role = "Gallery" }
+            };
+
+            var mediaUrls = desiredAssignments.Select(x => x.MediaUrl).Distinct().ToArray();
+            var productSlugs = desiredAssignments.Select(x => x.ProductSlug).Distinct().ToArray();
+
+            var mediaByUrl = await db.MediaAssets
+                .Where(x => mediaUrls.Contains(x.Url))
+                .ToDictionaryAsync(x => x.Url, x => x, ct);
+
+            if (mediaByUrl.Count == 0)
+            {
+                return;
+            }
+
+            var productLookup = await db.Products
+                .Include(x => x.Translations)
+                .Include(x => x.Media)
+                .Where(x => x.Translations.Any(t => t.Culture == "de-DE" && productSlugs.Contains(t.Slug)))
+                .ToListAsync(ct);
+
+            foreach (var assignment in desiredAssignments)
+            {
+                var product = productLookup.FirstOrDefault(
+                    x => x.Translations.Any(t => t.Culture == "de-DE" && t.Slug == assignment.ProductSlug));
+                if (product == null || !mediaByUrl.TryGetValue(assignment.MediaUrl, out var media))
+                {
+                    continue;
+                }
+
+                var alreadyLinked = product.Media.Any(x => x.MediaAssetId == media.Id);
+                if (alreadyLinked)
+                {
+                    continue;
+                }
+
+                product.Media.Add(new ProductMedia
+                {
+                    ProductId = product.Id,
+                    MediaAssetId = media.Id,
+                    SortOrder = product.Media.Count,
+                    Role = assignment.Role
+                });
+            }
+
+            await db.SaveChangesAsync(ct);
         }
 
         /// <summary>

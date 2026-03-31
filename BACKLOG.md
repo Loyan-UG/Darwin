@@ -13,6 +13,33 @@ Status terms used below:
 - `Planned / Near-term`
 - `Future / Later phase`
 
+## 0. Cross-Chat Coordination Ledger
+
+This section is the shared handoff ledger between the active implementation chats:
+
+- `Web`
+- `WebAdmin`
+- `Mobile`
+
+Rules:
+
+- before starting a new slice, each chat should review this ledger
+- each handoff should be recorded as one flat entry and updated in place when acknowledged or closed
+- use these statuses:
+  - `Open`
+  - `Acked`
+  - `Closed`
+  - `Superseded`
+
+Entry format:
+
+- `[Status] YYYY-MM-DD | From: <Web|WebAdmin|Mobile> | To: <Web|WebAdmin|Mobile> | Topic: <short topic> | Message: <concrete handoff> | Expected action: <what the receiving chat should do>`
+
+Active entries:
+
+- `[Closed] 2026-03-31 | From: Web | To: WebAdmin | Topic: CMS main navigation seed | Message: Darwin.Web needed a published public menu named main-navigation plus stable CMS/catalog seed content so shell and storefront slices could stop depending on hidden fallback-only behavior. | Expected action: seed and publish the menu/content in WebAdmin/backend.`
+- `[Acked] 2026-03-31 | From: WebAdmin | To: Web | Topic: CMS/storefront dependencies confirmed | Message: main-navigation is ready, CMS published page slugs such as ueber-uns and faq are available, representative catalog seed with real primary media exists, menu badge/icon/group metadata is not yet contract, publish rules are confirmed, and missing-image policy must be handled in Darwin.Web. | Expected action: treat main-navigation as the primary source, keep fallback nav emergency-only, consume CMS/catalog directly from WebApi, make fetch failures visible, and keep backlog/docs aligned with these confirmed contracts.`
+
 ## 1. Current Delivery Focus
 
 ### Primary focus
@@ -345,8 +372,86 @@ Status terms used below:
 
 ### Front-office growth
 
-- `In Progress but secondary`: continue `Darwin.Web` storefront and member portal implementation against `Darwin.WebApi`
-- `Future / Later phase`: broaden public delivery capabilities after operational admin/backend work stabilizes
+- `In Progress`: start `Darwin.Web` execution against `Darwin.WebApi` using narrow, contract-first slices
+- `Decision made`: `Darwin.Web` must consume only `Darwin.WebApi`; no `Darwin.WebAdmin` DTO or MVC view model may leak into the public/member web app
+- `Decision made`: the initial visual direction may be inspired by the Cartzilla grocery storefront, but implementation must stay theme-isolated through tokens, slots, and reusable page web parts
+- `Decision made`: the initial home page may remain intentionally minimal while shell/navigation/composition foundations are established
+
+### Darwin.Web workstreams
+
+#### Experience shell and theme foundation
+
+- `Unblocked now`: `Darwin.Web` can start with a shell, routing model, theme tokens, layout slots, and web-part composition without waiting on new backend work
+- `Unblocked now`: the first pass can keep Home intentionally minimal and use the shell/navigation to expose major site areas while the deeper pages are built incrementally
+- `Completed foundation`: `Darwin.Web` now has a theme-isolated storefront shell, Cartzilla-inspired token set, reusable page-part composer, placeholder Home, and route scaffolding for catalog/account/loyalty/orders/invoices
+- `Completed foundation`: shell navigation now treats the public CMS `main-navigation` menu as the primary source, keeps fallback links only for emergency degradation, and surfaces a visible warning banner whenever fallback mode is active
+- `Depends on WebApi/backend`: runtime theme selection, config-delivered branding, localized navigation metadata, and CMS-driven page-section composition still need explicit API/config contracts if we want them to be server-driven instead of app-configured
+- `Future / Later phase`: multi-theme runtime switching, tenant-specific theming, and full CMS-driven page-layout orchestration
+
+#### Public CMS / storefront
+
+- `Unblocked now`: public CMS page listing, page-by-slug, and menu delivery already exist in `Darwin.WebApi`
+- `Unblocked now`: WebAdmin now has real page, menu, media, and content-ops support, so storefront content does not depend on speculative operator tooling anymore
+- `In Progress`: `Darwin.Web` shell navigation is now wired to the public CMS menu contract and CMS slug pages can render sanitized HTML when content exists
+- `In Progress`: CMS dependency is now assumed ready for `main-navigation`; future web work should treat fallback navigation as emergency behavior only
+- `Completed foundation`: backend/CMS seed data now guarantees a public menu named exactly `main-navigation` plus published CMS pages such as `ueber-uns` and `faq`, so `Darwin.Web` can validate navigation and `/cms/[slug]` against true public content instead of fallback-only behavior
+- `In Progress`: `Darwin.Web` now also renders a public CMS index route against the published page-list endpoint so storefront content consumption is not limited to hard-coded slug assumptions
+- `Decision made`: future navigation metadata such as badge, icon, and featured grouping stays a design note only until `Darwin.Web` explicitly needs it; the current public menu contract remains label/url/sort-order only
+- `Depends on WebApi/backend`: explicit SEO-focused endpoints, richer homepage merchandising payloads, and formal page-composition contracts for server-driven web parts are still API/backend work if we want them beyond static app composition
+- `Depends on localization`: culture-aware CMS delivery exists through public endpoints, but broader multilingual content governance and fallback policy are still platform work and must stay explicit
+- `Later-phase only`: editorial-rich home composition, campaign landing pages, recipe/blog-style content modules, public business discovery maps, and personalization-heavy storefront experiences
+
+#### Catalog browsing
+
+- `Unblocked now`: public category list, product list, product detail, and category-slug filtering already exist in `Darwin.WebApi`
+- `Unblocked now`: catalog, media, product, category, and brand management now have real WebAdmin operator support, so catalog browsing can be built against maintained data instead of raw setup screens
+- `In Progress`: `Darwin.Web` now renders a public catalog page with category filtering, product cards, paging, degraded-mode visibility, and product-detail routing against the public catalog contracts
+- `Completed foundation`: backend/catalog seed data now guarantees representative published products with valid localized slugs and attached primary media, while product-detail media keeps real `alt` and `title` values for storefront testing
+- `Decision made`: storefront missing-image behavior must stay explicit; `PrimaryImageUrl` can still be null for some public products, so `Darwin.Web` must render a stable placeholder instead of hiding cards or assuming every public row has media
+- `Decision made`: category browsing must not assume category-image support yet, because the current public category contract does not expose category media
+- `Depends on WebApi/backend`: richer catalog filtering, sorting, search, brand/facet projections, availability signals, and merchandising-oriented product cards still need API expansion if the web UX wants more than the current baseline contracts
+- `Depends on localization`: product/category localization must continue to honor culture/fallback behavior explicitly instead of assuming one platform default language
+- `Later-phase only`: advanced discovery, personalized recommendations, cross-sell bundles, reviews-rich merchandising, and search-driven landing experiences
+
+#### Auth / account self-service
+
+- `Unblocked now`: member auth already exposes register, login, refresh, logout, change-password, email-confirmation request/confirm, password-reset request/reset, and member profile/preferences/address endpoints
+- `Unblocked now`: Communication Core phase-1 support is operational enough for activation and password-reset follow-up, and WebAdmin now has recipient-aware resend/troubleshooting support for invitation, activation, and password-reset flows
+- `Depends on Communication Core`: web self-service UX must reuse the existing activation/reset backend lifecycle and should not invent a web-only mail pipeline
+- `Depends on WebApi/backend`: the web still needs a deliberate browser auth transport strategy; the current shared surface is JWT-first, while future BFF/cookie composition remains a planned direction rather than a finished implementation
+- `Depends on business lifecycle/onboarding`: any future business-facing self-service onboarding on the web must honor the same activation, approval, suspension, and soft-gate rules already used by mobile/admin
+- `Later-phase only`: social auth, deeper magic-link onboarding, multi-business account switching, and richer browser-session/BFF hardening beyond the first self-service slice
+
+#### Loyalty / member portal
+
+- `Unblocked now`: member loyalty overview, business dashboard, reward browsing, join, promotions, and history endpoints already exist in `Darwin.WebApi`
+- `Unblocked now`: loyalty programs, tiers, campaigns, account support, redemption troubleshooting, and scan-session diagnostics now exist in WebAdmin, so member loyalty UX has a real operational fallback
+- `Depends on loyalty/mobile contracts`: loyalty contracts are shared with mobile-facing usage, so `Darwin.Web` should consume the canonical member endpoints and avoid creating web-specific DTO forks
+- `Depends on auth/account`: loyalty pages remain blocked behind the same browser auth/session decision as the broader member portal
+- `Later-phase only`: browser-based scan/QR preparation UX, promotion personalization, push-heavy engagement surfaces, and deeper loyalty gamification outside the current contract set
+
+#### Orders / invoices / payments
+
+- `Unblocked now`: public cart, shipping-rate estimation, checkout intent, order placement, payment-intent handoff, payment completion, and order confirmation already exist in `Darwin.WebApi`
+- `Unblocked now`: member order history, order detail, invoice history, invoice detail, retry-payment, and plain-text document endpoints already exist in `Darwin.WebApi`
+- `Unblocked now`: Stripe-first and DHL-first operator support now exists in WebAdmin across payments, refunds, webhooks, shipments, and carrier/support triage, so web checkout/payment flows now have real operational backing
+- `In Progress`: `Darwin.Web` now has a public cart slice with stable anonymous storefront identity, add-to-cart from product detail, cart item quantity/remove actions, and visible degraded-mode handling around public cart API failures
+- `In Progress`: `Darwin.Web` now also has a public checkout slice with server-rendered address capture, live checkout-intent preview, shipping-method selection, order placement, and storefront confirmation/payment-handoff entry points
+- `Decision made`: anonymous storefront cart identity is currently owned by `Darwin.Web` through a stable web cookie until a broader browser-session/BFF transport is introduced
+- `Decision made`: the current public cart contract does not expose product title/media snapshots for line display, so `Darwin.Web` may keep a lightweight local display snapshot for UX continuity without changing the API source of truth for cart totals and row identity
+- `Decision made`: successful public order placement must clear the web-owned anonymous cart cookie and local display snapshot so the storefront does not fall back into stale cart `not-found` states after checkout
+- `Depends on billing/compliance`: checkout, invoice, and payment UX must stay aware of B2B/B2C tax profile, VAT completeness, invoice readiness, and archive/e-invoice baseline signals without pretending the deeper compliance engine is already complete
+- `Depends on WebApi/backend`: richer public cart display contracts, anonymous-to-member cart merge behavior, payment-state polling/completion visibility, and deeper checkout composition still need front-office integration work and may require additive API composition in practice
+- `Later-phase only`: full provider callbacks/verification hardening, alternative PSPs, richer refund/return/RMA self-service, and dispute-heavy finance UX
+
+#### Localization / config-driven behavior
+
+- `Unblocked now`: the platform now has explicit localization ownership guidance, locale/fallback visibility in admin/CRM, and member profile locale/time-zone/currency fields that web flows can respect from day one
+- `Unblocked now`: site settings and business setup already expose ownership splits around localization, communication, branding, payment, shipping, and tax defaults, so config-driven web planning can align to real platform governance
+- `Depends on localization`: the platform does not yet have complete multilingual CMS/template management, so web must be built localization-ready without assuming full translated content operations already exist
+- `Depends on compliance/billing`: tax, invoice, and payment presentation should remain configuration-driven because issuer completeness, VAT handling, and archive/e-invoice readiness are still evolving
+- `Depends on Communication Core`: user-facing communication preferences and message expectations must align with the current phase-1 email-first capability instead of assuming a finished multi-channel platform
+- `Later-phase only`: full tenant-driven theming, advanced per-market payment/shipping matrices, complete multilingual content/template editing, and full compliance-driven presentation branching
 
 ## 6. Technical Foundations / Cross-Cutting
 

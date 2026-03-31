@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Darwin.Domain.Entities.CMS;
+using Darwin.Domain.Enums;
 using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -112,6 +113,8 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         /// </summary>
         private static async Task SeedMenusAsync(DarwinDbContext db, CancellationToken ct)
         {
+            await EnsurePublicMainNavigationAsync(db, ct);
+
             // MAIN
             var main = await db.Menus.FirstOrDefaultAsync(m => m.Name == "Main" && !m.IsDeleted, ct);
             if (main == null)
@@ -217,6 +220,57 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
             }
         }
 
+        private static async Task EnsurePublicMainNavigationAsync(DarwinDbContext db, CancellationToken ct)
+        {
+            var menu = await db.Menus
+                .Include(x => x.Items)
+                .ThenInclude(x => x.Translations)
+                .FirstOrDefaultAsync(x => x.Name == "main-navigation" && !x.IsDeleted, ct);
+
+            var desiredItems = new[]
+            {
+                new { Url = "/", Label = "Home", SortOrder = 0 },
+                new { Url = "/catalog", Label = "Catalog", SortOrder = 1 },
+                new { Url = "/account", Label = "Account", SortOrder = 2 },
+                new { Url = "/loyalty", Label = "Loyalty", SortOrder = 3 },
+                new { Url = "/orders", Label = "Orders", SortOrder = 4 },
+                new { Url = "/invoices", Label = "Invoices", SortOrder = 5 }
+            };
+
+            if (menu == null)
+            {
+                menu = new Menu
+                {
+                    Name = "main-navigation",
+                    Culture = "en-US"
+                };
+                db.Menus.Add(menu);
+            }
+
+            menu.Culture = "en-US";
+            menu.Items.Clear();
+            foreach (var item in desiredItems)
+            {
+                menu.Items.Add(new MenuItem
+                {
+                    Url = item.Url,
+                    Title = item.Label,
+                    SortOrder = item.SortOrder,
+                    IsActive = true,
+                    Translations =
+                    {
+                        new MenuItemTranslation
+                        {
+                            Culture = "en-US",
+                            Label = item.Label
+                        }
+                    }
+                });
+            }
+
+            await db.SaveChangesAsync(ct);
+        }
+
         #endregion
 
         #region Pages
@@ -226,8 +280,6 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
         /// </summary>
         private static async Task SeedPagesAsync(DarwinDbContext db, CancellationToken ct)
         {
-            if (await db.Pages.AnyAsync(ct)) return;
-
             // Common e-commerce pages for electronics
             var pages = new (string Slug, string Title, string Html)[]
             {
@@ -254,27 +306,49 @@ namespace Darwin.Infrastructure.Persistence.Seed.Sections
                 ("geschenkkarten","Geschenkkarten","<h1>Geschenkkarten</h1><p>Das ideale Geschenk.</p>")
             };
 
-            var list = new List<Page>(pages.Length);
+            var publishStartUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             foreach (var p in pages)
             {
-                list.Add(new Page
+                var page = await db.Pages
+                    .Include(x => x.Translations)
+                    .FirstOrDefaultAsync(
+                        x => x.Slug == p.Slug ||
+                             x.Translations.Any(t => t.Culture == "de-DE" && t.Slug == p.Slug),
+                        ct);
+
+                if (page == null)
                 {
-                    Translations = new()
-                    {
-                        new PageTranslation
-                        {
-                            Culture = "de-DE",
-                            Title = p.Title,
-                            Slug = p.Slug,
-                            ContentHtml = p.Html,
-                            MetaTitle = p.Title,
-                            MetaDescription = $"{p.Title} – Informationen & Details."
-                        }
-                    }
-                });
+                    page = new Page();
+                    db.Pages.Add(page);
+                }
+
+                page.Title = string.IsNullOrWhiteSpace(page.Title) ? p.Title : page.Title;
+                page.Slug = string.IsNullOrWhiteSpace(page.Slug) ? p.Slug : page.Slug;
+                page.ContentHtml = string.IsNullOrWhiteSpace(page.ContentHtml) ? p.Html : page.ContentHtml;
+                page.MetaTitle = string.IsNullOrWhiteSpace(page.MetaTitle) ? p.Title : page.MetaTitle;
+                page.MetaDescription = string.IsNullOrWhiteSpace(page.MetaDescription)
+                    ? $"{p.Title} – Informationen & Details."
+                    : page.MetaDescription;
+                page.IsPublished = true;
+                page.Status = PageStatus.Published;
+                page.PublishStartUtc ??= publishStartUtc;
+
+                var translation = page.Translations.FirstOrDefault(x => x.Culture == "de-DE");
+                if (translation == null)
+                {
+                    translation = new PageTranslation { Culture = "de-DE" };
+                    page.Translations.Add(translation);
+                }
+
+                translation.Title = string.IsNullOrWhiteSpace(translation.Title) ? p.Title : translation.Title;
+                translation.Slug = string.IsNullOrWhiteSpace(translation.Slug) ? p.Slug : translation.Slug;
+                translation.ContentHtml = string.IsNullOrWhiteSpace(translation.ContentHtml) ? p.Html : translation.ContentHtml;
+                translation.MetaTitle = string.IsNullOrWhiteSpace(translation.MetaTitle) ? p.Title : translation.MetaTitle;
+                translation.MetaDescription = string.IsNullOrWhiteSpace(translation.MetaDescription)
+                    ? $"{p.Title} – Informationen & Details."
+                    : translation.MetaDescription;
             }
 
-            db.Pages.AddRange(list);
             await db.SaveChangesAsync(ct);
         }
 

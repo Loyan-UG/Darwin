@@ -574,6 +574,27 @@
                                 </form>
                             </div>
                         }
+                        @if (!string.IsNullOrWhiteSpace(item.FlowKey))
+                        {
+                            <div class="mt-2">
+                                <a asp-action="EmailAudits"
+                                   asp-route-query="@item.RecipientEmail"
+                                   asp-route-flowKey="@item.FlowKey"
+                                   asp-route-status="@Model.Status"
+                                   asp-route-stalePendingOnly="false"
+                                   asp-route-businessLinkedFailuresOnly="false"
+                                   asp-route-repeatedFailuresOnly="false"
+                                   asp-route-priorSuccessOnly="false"
+                                   asp-route-retryReadyOnly="false"
+                                   asp-route-retryBlockedOnly="false"
+                                   asp-route-highChainVolumeOnly="false"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { query = item.RecipientEmail, flowKey = item.FlowKey, status = Model.Status, stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = false, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-audits-workspace-shell"
+                                   hx-swap="outerHTML">Open Similar Chain</a>
+                            </div>
+                        }
                         @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                         {
                             <div class="mt-2 d-flex flex-wrap gap-2">

@@ -1,0 +1,215 @@
+import Link from "next/link";
+import { StatusBanner } from "@/components/feedback/status-banner";
+import type { PublicCategorySummary, PublicProductSummary } from "@/features/catalog/types";
+import { formatMoney } from "@/lib/formatting";
+
+type CatalogPageProps = {
+  categories: PublicCategorySummary[];
+  products: PublicProductSummary[];
+  activeCategorySlug?: string;
+  totalProducts: number;
+  currentPage: number;
+  pageSize: number;
+  dataStatus?: {
+    categories: string;
+    products: string;
+  };
+};
+
+function buildCatalogHref(categorySlug?: string, page = 1) {
+  const params = new URLSearchParams();
+  if (categorySlug) {
+    params.set("category", categorySlug);
+  }
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const query = params.toString();
+  return query ? `/catalog?${query}` : "/catalog";
+}
+
+export function CatalogPage({
+  categories,
+  products,
+  activeCategorySlug,
+  totalProducts,
+  currentPage,
+  pageSize,
+  dataStatus,
+}: CatalogPageProps) {
+  const hasProducts = products.length > 0;
+  const totalPages = Math.max(1, Math.ceil(totalProducts / pageSize));
+
+  return (
+    <section className="mx-auto flex w-full max-w-[var(--content-max-width)] flex-1 px-5 py-10 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-col gap-8">
+        <div className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-6 py-8 shadow-[var(--shadow-panel)] sm:px-8 sm:py-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-brand)]">
+            Catalog browsing
+          </p>
+          <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h1 className="font-[family-name:var(--font-display)] text-4xl leading-tight text-[var(--color-text-primary)] sm:text-5xl">
+                Storefront catalog now reads from `Darwin.WebApi`
+              </h1>
+              <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--color-text-secondary)] sm:text-lg">
+                Categories and product cards are now driven by the public catalog contracts. This keeps storefront work aligned with real CMS/catalog data instead of placeholder-only pages.
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-[var(--color-surface-panel-strong)] px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                Current result set
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
+                {totalProducts}
+              </p>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                published products visible through the current query
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {(dataStatus?.categories !== "ok" || dataStatus?.products !== "ok") && (
+          <StatusBanner
+            tone="warning"
+            title="Storefront data is running in degraded mode."
+            message={`Categories: ${dataStatus?.categories ?? "unknown"}. Products: ${dataStatus?.products ?? "unknown"}. The page stays available, but public API connectivity or payload quality needs attention.`}
+          />
+        )}
+
+        <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <aside className="rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] px-5 py-6 shadow-[var(--shadow-panel)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent)]">
+              Categories
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <Link
+                href={buildCatalogHref(undefined)}
+                className={
+                  !activeCategorySlug
+                    ? "rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-[var(--color-brand-contrast)]"
+                    : "rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                }
+              >
+                All products
+              </Link>
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={buildCatalogHref(category.slug)}
+                  className={
+                    activeCategorySlug === category.slug
+                      ? "rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-[var(--color-brand-contrast)]"
+                      : "rounded-2xl border border-[var(--color-border-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                  }
+                >
+                  <span className="block text-[var(--color-text-primary)]">{category.name}</span>
+                  {category.description && (
+                    <span className="mt-1 block text-xs font-normal text-inherit">
+                      {category.description}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </aside>
+
+          <div className="flex flex-col gap-6">
+            {!hasProducts ? (
+              <div className="rounded-[2rem] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-panel)] px-6 py-10 text-center shadow-[var(--shadow-panel)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                  No results
+                </p>
+                <h2 className="mt-4 font-[family-name:var(--font-display)] text-3xl text-[var(--color-text-primary)]">
+                  No published products matched this category yet.
+                </h2>
+                <p className="mt-4 text-base leading-8 text-[var(--color-text-secondary)]">
+                  The storefront shell stays stable, but catalog content for this slice is empty. This is now observable instead of silently hiding behind placeholders.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {products.map((product) => (
+                  <article
+                    key={product.id}
+                    className="flex h-full flex-col rounded-[2rem] border border-[var(--color-border-soft)] bg-[var(--color-surface-panel)] p-5 shadow-[var(--shadow-panel)]"
+                  >
+                    <div className="flex min-h-48 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(145deg,rgba(228,240,212,0.95),rgba(255,253,248,1))] p-6">
+                      {product.primaryImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={product.primaryImageUrl}
+                          alt={product.name}
+                          className="max-h-36 w-auto object-contain"
+                        />
+                      ) : (
+                        <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                          No media
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-5 flex flex-1 flex-col">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent)]">
+                        Storefront product
+                      </p>
+                      <h2 className="mt-3 text-xl font-semibold text-[var(--color-text-primary)]">
+                        <Link href={`/catalog/${product.slug}`} className="transition hover:text-[var(--color-brand)]">
+                          {product.name}
+                        </Link>
+                      </h2>
+                      <p className="mt-3 flex-1 text-sm leading-7 text-[var(--color-text-secondary)]">
+                        {product.shortDescription ?? "Published product card delivered from the public catalog surface."}
+                      </p>
+                      <div className="mt-5 flex items-end justify-between gap-4">
+                        <div>
+                          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                            {formatMoney(product.priceMinor, product.currency)}
+                          </p>
+                          {product.compareAtPriceMinor ? (
+                            <p className="text-sm text-[var(--color-text-muted)] line-through">
+                              {formatMoney(product.compareAtPriceMinor, product.currency)}
+                            </p>
+                          ) : null}
+                        </div>
+                        <Link
+                          href={`/catalog/${product.slug}`}
+                          className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)]"
+                        >
+                          View details
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  aria-disabled={currentPage <= 1}
+                  href={buildCatalogHref(activeCategorySlug, Math.max(1, currentPage - 1))}
+                  className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
+                >
+                  Previous
+                </Link>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <Link
+                  aria-disabled={currentPage >= totalPages}
+                  href={buildCatalogHref(activeCategorySlug, Math.min(totalPages, currentPage + 1))}
+                  className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-panel-strong)] aria-[disabled=true]:pointer-events-none aria-[disabled=true]:opacity-40"
+                >
+                  Next
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

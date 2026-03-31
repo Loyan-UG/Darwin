@@ -1,4 +1,5 @@
-﻿using Darwin.Application.CMS.DTOs;
+using System;
+using Darwin.Application.CMS.DTOs;
 using FluentValidation;
 
 namespace Darwin.Application.CMS.Validators
@@ -36,7 +37,12 @@ namespace Darwin.Application.CMS.Validators
     {
         public MenuItemDtoValidator()
         {
-            RuleFor(i => i.Url).NotEmpty().MaximumLength(1024);
+            RuleFor(i => i.Url)
+                .NotEmpty()
+                .MaximumLength(1024)
+                .Must(BeSupportedMenuUrl)
+                .WithMessage("Menu URLs must be rooted app paths like '/catalog' or absolute http/https URLs.");
+
             RuleFor(i => i.SortOrder).GreaterThanOrEqualTo(0);
             RuleFor(i => i.Translations)
                 .NotNull().WithMessage("At least one translation is required.")
@@ -47,6 +53,23 @@ namespace Darwin.Application.CMS.Validators
                 tr.RuleFor(t => t.Culture).NotEmpty().MaximumLength(16);
                 tr.RuleFor(t => t.Label).NotEmpty().MaximumLength(256);
             });
+        }
+
+        private static bool BeSupportedMenuUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return false;
+            }
+
+            var candidate = url.Trim();
+            if (candidate.StartsWith("/", StringComparison.Ordinal))
+            {
+                return candidate.Length == 1 || !candidate.StartsWith("//", StringComparison.Ordinal);
+            }
+
+            return Uri.TryCreate(candidate, UriKind.Absolute, out var uri) &&
+                   (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
         }
     }
 }

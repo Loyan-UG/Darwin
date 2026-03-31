@@ -1,9 +1,8 @@
 # Darwin Front-End Guide
 
-[![Next.js](https://img.shields.io/badge/Next.js-14.0-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-18.0.0-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.0-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 [![Stripe](https://img.shields.io/badge/Stripe-Phase--1-635BFF?logo=stripe&logoColor=white)](https://stripe.com/)
 [![DHL](https://img.shields.io/badge/DHL-Phase--1-FFCC00?logoColor=black)](https://www.dhl.de/)
 
@@ -23,10 +22,12 @@ It is separate from `Darwin.WebAdmin`, which remains the staff-facing operationa
 ## 2. Current Status
 
 - `In Progress`: the front-office direction is defined and the main WebAdmin/operator prerequisites are now documented
-- `Secondary priority`: it is not the current execution focus
-- `Dependency-heavy`: it depends on `Darwin.WebApi`, core backend rules, and operational readiness from `Darwin.WebAdmin`
+- `Execution can start`: the public/member `Darwin.WebApi` surface is now broad enough to support a real first slice instead of only speculative planning
+- `Current codebase state`: `src/Darwin.Web` is still a minimal Next.js starter and has not yet been reshaped into a real storefront/member-portal architecture
+- `Dependency-heavy`: it still depends on `Darwin.WebApi`, core backend rules, and operational readiness from `Darwin.WebAdmin`
 
-The current platform priority is to finish `WebAdmin` and the admin/backend capabilities needed for real operations and onboarding first.
+The previous platform priority was to finish `WebAdmin` and the admin/backend capabilities needed for real operations and onboarding first.
+That work has now produced enough real public/member support that `Darwin.Web` can start with a narrow, contract-first slice.
 
 ## 2.1 What Is Now Ready Because of WebAdmin
 
@@ -46,6 +47,43 @@ Practical consequence for `Darwin.Web`:
 - the front-office can now be planned against a much clearer operational platform
 - public/member journeys should align with these operational realities instead of inventing parallel behavior
 - if a web journey needs an operator fallback or a support outcome, that fallback can usually be assumed to exist now in `Darwin.WebAdmin`
+
+## 2.2 Actual Starting Point in `src/Darwin.Web`
+
+The repository state matters as much as the platform state.
+
+The repository started as:
+
+- a bare Next.js app-router project
+- on Next.js 16, React 19, TypeScript, and Tailwind CSS 4
+- showing the default starter page and starter metadata
+- not yet organized into storefront features, API clients, page composition, or theme isolation
+
+Practical consequence:
+
+- the first implementation pass needed to establish a reusable front-office shell, theme boundary, and API-consumption pattern before deeper slices could be added safely
+
+That foundation is now in place, so the next slices should build on the existing shell and feature boundaries instead of reworking the app from scratch.
+
+### Current implementation snapshot
+
+The first web slice is now in place:
+
+- a theme-isolated storefront shell now exists in `Darwin.Web`
+- the shell uses a Cartzilla-inspired visual direction without coupling feature logic to one theme
+- primary navigation now attempts to load from the public CMS menu contract and falls back to app-defined links when the API or seed data is unavailable
+- the home page is intentionally minimal and built through a reusable page-part composition path
+- route scaffolding now exists for catalog, account, loyalty, orders, and invoices so later slices can bind feature data without reworking the shell
+
+The next storefront slice is now also underway:
+
+- the catalog listing page now consumes public category and product contracts from `Darwin.WebApi`
+- product-detail routing now consumes the public product-by-slug contract
+- a public CMS index route now consumes the published CMS page list contract
+- a public cart route now consumes the public cart contract and supports server-side add/update/remove flows for anonymous storefront usage
+- a public checkout route now consumes checkout-intent and order-placement contracts with inline address capture and shipping selection
+- a public confirmation route now consumes storefront confirmation data and exposes payment-handoff retry through the payment-intent contract
+- degraded-mode storefront data states are now visible in the UI instead of silently collapsing into placeholder-only behavior
 
 ## 3. Position in the Architecture
 
@@ -74,6 +112,107 @@ Delivery rules:
 - storefront DTOs must remain presentation-oriented
 - member DTOs must remain audience-specific
 - admin operational models must not leak into public/member delivery
+
+## 4.2 Confirmed WebApi Surfaces That Are Already Real
+
+The following routes are not just planned in docs; they are present in `Darwin.WebApi` and suitable for `Darwin.Web` planning:
+
+- public CMS:
+  - `GET /api/v1/public/cms/pages`
+  - `GET /api/v1/public/cms/pages/{slug}`
+  - `GET /api/v1/public/cms/menus/{name}`
+- public catalog:
+  - `GET /api/v1/public/catalog/categories`
+  - `GET /api/v1/public/catalog/products`
+  - `GET /api/v1/public/catalog/products/{slug}`
+- public storefront commerce:
+  - `GET /api/v1/public/cart`
+  - `POST /api/v1/public/cart/items`
+  - `PUT /api/v1/public/cart/items`
+  - `DELETE /api/v1/public/cart/items`
+  - `POST /api/v1/public/cart/coupon`
+  - `POST /api/v1/public/shipping/rates`
+  - `POST /api/v1/public/checkout/intent`
+  - `POST /api/v1/public/checkout/orders`
+  - `POST /api/v1/public/checkout/orders/{orderId}/payment-intent`
+  - `POST /api/v1/public/checkout/orders/{orderId}/payments/{paymentId}/complete`
+  - `GET /api/v1/public/checkout/orders/{orderId}/confirmation`
+- member auth/account:
+  - `POST /api/v1/member/auth/login`
+  - `POST /api/v1/member/auth/register`
+  - `POST /api/v1/member/auth/email/request-confirmation`
+  - `POST /api/v1/member/auth/email/confirm`
+  - `POST /api/v1/member/auth/password/request-reset`
+  - `POST /api/v1/member/auth/password/reset`
+  - `GET|PUT /api/v1/member/profile/me`
+  - `GET|PUT /api/v1/member/profile/preferences`
+  - `GET|POST|PUT /api/v1/member/profile/addresses*`
+  - `GET /api/v1/member/profile/customer`
+  - `GET /api/v1/member/profile/customer/context`
+- member commerce and loyalty:
+  - `GET /api/v1/member/orders`
+  - `GET /api/v1/member/orders/{id}`
+  - `POST /api/v1/member/orders/{id}/payment-intent`
+  - `GET /api/v1/member/invoices`
+  - `GET /api/v1/member/invoices/{id}`
+  - `POST /api/v1/member/invoices/{id}/payment-intent`
+  - `GET /api/v1/member/loyalty/my/overview`
+  - `GET /api/v1/member/loyalty/business/{businessId}/dashboard`
+  - `GET /api/v1/member/loyalty/business/{businessId}/rewards`
+  - `POST /api/v1/member/loyalty/my/timeline`
+  - `POST /api/v1/member/loyalty/account/{businessId}/join`
+
+## 4.3 Public Content Readiness For Storefront Work
+
+The storefront should now assume the following content/operator dependencies are provided by backend and `Darwin.WebAdmin`, not invented inside `Darwin.Web`:
+
+- a public CMS menu named exactly `main-navigation` now exists and is intended to be the primary navigation source for `Darwin.Web`
+- representative catalog seed data now exists with real published categories and products, including localized slugs and a small set of primary product media attachments for storefront testing
+- representative CMS seed pages now exist in a truly public state, not only as draft records
+
+Current public publish rules are:
+
+- categories are public when `IsActive && IsPublished`
+- products are public when `IsActive && IsVisible` and their publish window allows visibility
+- CMS pages are public when `IsPublished`, `Status == Published`, and the publish window allows visibility
+
+Current contract implications for `Darwin.Web`:
+
+- `main-navigation` should be fetched from the public CMS API and treated as the primary source of storefront navigation
+- `/cms/[slug]` should be tested against real published slugs such as `ueber-uns` and `faq`
+- catalog browsing should expect real product slugs and at least a representative set of products with primary images, but it must still tolerate `PrimaryImageUrl == null`
+- product-detail media carries `alt`, `title`, and `role` when media exists
+- category cards should not assume category-image support yet; category media is not part of the current public category contract
+
+Missing-image policy for storefront design:
+
+- do not hide a public product card because `PrimaryImageUrl` is null
+- show a stable placeholder image or placeholder panel instead
+- keep card height/layout stable when an image is missing
+- use real `alt` text when product media exists; use a neutral placeholder label when it does not
+
+Future navigation metadata:
+
+- `badge`, `icon`, `featured grouping`, and similar menu metadata are not part of the current contract
+- `Darwin.Web` must not depend on those fields yet
+- if those affordances become necessary later, add them as an explicit public CMS contract change instead of building silent client assumptions
+
+## 4.4 Responsibility Split: WebAdmin/Backend vs Darwin.Web
+
+`Darwin.WebAdmin` and backend are responsible for:
+
+- publishing and seeding baseline public navigation/content/catalog data
+- keeping public publish rules explicit and stable
+- exposing real operational support paths when storefront/member flows fail
+- documenting current contract limits such as missing-image behavior and unsupported future metadata
+
+`Darwin.Web` is responsible for:
+
+- consuming the published CMS/catalog contracts through `Darwin.WebApi`
+- rendering resilient fallback states when optional fields such as `PrimaryImageUrl` are absent
+- keeping storefront UX aligned with documented public contracts instead of inventing private assumptions
+- keeping anonymous storefront cart and checkout state coherent, including clearing stale web-owned cart cookies after successful order placement
+- updating its own backlog based on these confirmed dependencies instead of re-planning backend work inside the front-end chat
 
 ## 4.1 Planning Rule for Web Work
 
@@ -202,6 +341,61 @@ Typical split:
 - product/category pages: SSR or ISR
 - member pages: authenticated server/client fetch depending on session approach
 
+## 8.1 Theme and Page-Composition Strategy
+
+Initial visual direction may borrow from the feel of the Cartzilla grocery theme:
+
+- bright retail-forward shell
+- strong navigation and merchandising hierarchy
+- card-based catalog surfaces
+- soft promotional blocks and content bands
+
+But implementation must stay theme-independent.
+
+Rules for the first `Darwin.Web` architecture pass:
+
+- keep theme assets, tokens, and shell styling isolated from feature logic
+- treat the initial Cartzilla-inspired look as one theme, not as the application architecture
+- build page sections as reusable web parts / page components with explicit slots and composition order
+- allow the home page to remain intentionally minimal while the shell, navigation, and composition model are established
+- keep CMS/page composition ready for later server-driven placement without coupling current pages to one-off layouts
+
+Recommended separation:
+
+- theme layer:
+  - tokens
+  - typography
+  - spacing
+  - shell chrome
+  - visual variants
+- composition layer:
+  - page templates
+  - slot contracts
+  - web parts / section components
+- feature layer:
+  - CMS
+  - catalog
+  - account
+  - loyalty
+  - orders
+  - invoices
+
+This is important because the initial theme choice is temporary, while the web feature model should survive future theme replacement.
+
+### Current implementation note
+
+The first slice now concretely includes:
+
+- `themes/*` and a theme registry for the active storefront skin
+- `web-parts/*` for page composition primitives
+- a shared shell with header/footer/navigation
+- CMS-backed menu loading with observable fallback behavior
+- a minimal home page plus placeholder feature routes
+- a live catalog listing and product-detail route bound to public catalog endpoints
+- a live public cart route with server-side mutations against public cart endpoints
+
+The next CMS/storefront slice should build on this foundation rather than replacing it.
+
 ## 9. Performance and Security Expectations
 
 ### Performance
@@ -307,12 +501,15 @@ src/Darwin.Web/src/
 |-- app/
 |-- components/
 |-- features/
+|-- themes/
+|-- web-parts/
 |-- lib/
 |-- services/
 `-- types/
 ```
 
 Keep API-facing types and service abstractions clearly separated from UI components.
+Also keep theme assets and page-composition primitives separate from feature slices so future theme swaps do not force feature rewrites.
 
 ## 14. How the Web Chat Should Start
 
@@ -329,6 +526,11 @@ When starting the dedicated `Darwin.Web` chat, the implementation pass should be
    - what still depends on API or backend work
    - what is later-phase and should not pollute phase-1 web delivery
 4. pick a smallest coherent web slice and implement it end-to-end instead of scattering across many pages
+5. prefer starting with:
+   - theme-isolated storefront shell
+   - CMS-backed navigation
+   - placeholder home
+   - route scaffolding for the main storefront/member areas
 
 ## 15. Backlog Update Rules for the Web Chat
 
