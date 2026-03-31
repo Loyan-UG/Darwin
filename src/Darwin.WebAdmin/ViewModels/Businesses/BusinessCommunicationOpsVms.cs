@@ -38,8 +38,11 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public List<BuiltInCommunicationFlowVm> BuiltInFlows { get; set; } = new();
         public List<CommunicationTemplateInventoryVm> TemplateInventory { get; set; } = new();
         public List<CommunicationCapabilityCoverageVm> CapabilityCoverage { get; set; } = new();
+        public List<CommunicationChannelOpsVm> ChannelOperations { get; set; } = new();
         public List<CommunicationResendPolicyVm> ResendPolicies { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
+        public ChannelDispatchAuditSummaryVm ChannelAuditSummary { get; set; } = new();
+        public List<ChannelDispatchAuditListItemVm> RecentChannelAudits { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> FilterItems { get; set; } = Array.Empty<SelectListItem>();
     }
@@ -59,6 +62,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string? TestSmsRecipientE164 { get; set; }
         public string? TestWhatsAppRecipientE164 { get; set; }
         public bool CanSendTestEmail { get; set; }
+        public bool CanSendTestSms { get; set; }
+        public bool CanSendTestWhatsApp { get; set; }
     }
 
     public sealed class BusinessCommunicationOpsSummaryPanelVm
@@ -89,6 +94,16 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Capability { get; set; } = string.Empty;
         public string CurrentState { get; set; } = string.Empty;
         public string OperatorVisibility { get; set; } = string.Empty;
+        public string NextStep { get; set; } = string.Empty;
+    }
+
+    public sealed class CommunicationChannelOpsVm
+    {
+        public string Channel { get; set; } = string.Empty;
+        public string CurrentState { get; set; } = string.Empty;
+        public string LiveFlows { get; set; } = string.Empty;
+        public string SafeOperatorActions { get; set; } = string.Empty;
+        public string RiskBoundary { get; set; } = string.Empty;
         public string NextStep { get; set; } = string.Empty;
     }
 
@@ -152,12 +167,90 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string RecommendedAction { get; set; } = string.Empty;
     }
 
+    public sealed class ChannelDispatchAuditSummaryVm
+    {
+        public int TotalCount { get; set; }
+        public int FailedCount { get; set; }
+        public int PendingCount { get; set; }
+        public int Recent24HourCount { get; set; }
+        public int SmsCount { get; set; }
+        public int WhatsAppCount { get; set; }
+        public int PhoneVerificationCount { get; set; }
+        public int AdminTestCount { get; set; }
+    }
+
+    public sealed class ChannelDispatchAuditListItemVm
+    {
+        public Guid Id { get; set; }
+        public string Channel { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string? FlowKey { get; set; }
+        public Guid? BusinessId { get; set; }
+        public string RecipientAddress { get; set; } = string.Empty;
+        public string MessagePreview { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime AttemptedAtUtc { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+        public string? FailureMessage { get; set; }
+        public bool NeedsOperatorFollowUp { get; set; }
+    }
+
+    public sealed class ChannelDispatchAuditChainSummaryVm
+    {
+        public int TotalAttempts { get; set; }
+        public int FailedCount { get; set; }
+        public int SentCount { get; set; }
+        public int PendingCount { get; set; }
+        public int NeedsOperatorFollowUpCount { get; set; }
+        public DateTime? FirstAttemptAtUtc { get; set; }
+        public DateTime? LastAttemptAtUtc { get; set; }
+        public string StatusMix { get; set; } = string.Empty;
+        public List<ChannelDispatchAuditChainHistoryItemVm> RecentHistory { get; set; } = new();
+    }
+
+    public sealed class ChannelDispatchAuditChainHistoryItemVm
+    {
+        public DateTime AttemptedAtUtc { get; set; }
+        public string Channel { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string MessagePreview { get; set; } = string.Empty;
+        public string? FailureMessage { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+    }
+
+    public sealed class ChannelDispatchAuditsListVm
+    {
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+        public string Query { get; set; } = string.Empty;
+        public string RecipientAddress { get; set; } = string.Empty;
+        public string Channel { get; set; } = string.Empty;
+        public string FlowKey { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public Guid? BusinessId { get; set; }
+        public bool FailedOnly { get; set; }
+        public bool PhoneVerificationOnly { get; set; }
+        public bool AdminTestOnly { get; set; }
+        public bool ChainFollowUpOnly { get; set; }
+        public bool ChainResolvedOnly { get; set; }
+        public ChannelDispatchAuditSummaryVm Summary { get; set; } = new();
+        public ChannelDispatchAuditChainSummaryVm? ChainSummary { get; set; }
+        public List<ChannelDispatchAuditListItemVm> Items { get; set; } = new();
+        public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> ChannelItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> FlowItems { get; set; } = Array.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> StatusItems { get; set; } = Array.Empty<SelectListItem>();
+    }
+
     public sealed class EmailDispatchAuditsListVm
     {
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int Total { get; set; }
         public string Query { get; set; } = string.Empty;
+        public string RecipientEmail { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string FlowKey { get; set; } = string.Empty;
         public bool StalePendingOnly { get; set; }
@@ -167,9 +260,12 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool RetryReadyOnly { get; set; }
         public bool RetryBlockedOnly { get; set; }
         public bool HighChainVolumeOnly { get; set; }
+        public bool ChainFollowUpOnly { get; set; }
+        public bool ChainResolvedOnly { get; set; }
         public Guid? BusinessId { get; set; }
         public bool CanSendTestEmail { get; set; }
         public EmailDispatchAuditSummaryVm Summary { get; set; } = new();
+        public EmailDispatchAuditChainSummaryVm? ChainSummary { get; set; }
         public List<EmailDispatchAuditListItemVm> Items { get; set; } = new();
         public List<CommunicationFlowPlaybookVm> Playbooks { get; set; } = new();
         public IEnumerable<SelectListItem> PageSizeItems { get; set; } = Array.Empty<SelectListItem>();
@@ -198,6 +294,30 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int RetryReadyCount { get; set; }
         public int RetryBlockedCount { get; set; }
         public int HighChainVolumeCount { get; set; }
+    }
+
+    public sealed class EmailDispatchAuditChainSummaryVm
+    {
+        public int TotalAttempts { get; set; }
+        public int FailedCount { get; set; }
+        public int SentCount { get; set; }
+        public int PendingCount { get; set; }
+        public int NeedsOperatorFollowUpCount { get; set; }
+        public DateTime? FirstAttemptAtUtc { get; set; }
+        public DateTime? LastAttemptAtUtc { get; set; }
+        public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
+        public string StatusMix { get; set; } = string.Empty;
+        public List<EmailDispatchAuditChainHistoryItemVm> RecentHistory { get; set; } = new();
+    }
+
+    public sealed class EmailDispatchAuditChainHistoryItemVm
+    {
+        public DateTime AttemptedAtUtc { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public string? FailureMessage { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
     }
 
     public sealed class CommunicationFlowPlaybookVm
@@ -237,13 +357,18 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool TransactionalSubjectPrefixConfigured { get; set; }
         public bool TestInboxConfigured { get; set; }
         public bool CanSendTestEmail { get; set; }
+        public bool CanSendTestSms { get; set; }
+        public bool CanSendTestWhatsApp { get; set; }
         public string? TransactionalSubjectPrefix { get; set; }
         public string? TestInboxEmail { get; set; }
         public List<string> ActiveFlowNames { get; set; } = new();
         public List<CommunicationTemplateInventoryVm> TemplateInventory { get; set; } = new();
+        public List<CommunicationChannelOpsVm> ChannelOperations { get; set; } = new();
         public List<CommunicationResendPolicyVm> ResendPolicies { get; set; } = new();
         public List<string> ReadinessIssues { get; set; } = new();
         public List<string> RecommendedActions { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> RecentEmailAudits { get; set; } = new();
+        public ChannelDispatchAuditSummaryVm ChannelAuditSummary { get; set; } = new();
+        public List<ChannelDispatchAuditListItemVm> RecentChannelAudits { get; set; } = new();
     }
 }

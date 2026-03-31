@@ -1,12 +1,12 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Darwin.Application.Abstractions.Notifications
 {
-    /// <summary>Sends SMS messages. Optional in early phases.</summary>
-    public interface ISmsSender
+    /// <summary>Sends WhatsApp text messages via the configured provider.</summary>
+    public interface IWhatsAppSender
     {
-        Task SendAsync(
+        Task SendTextAsync(
             string toPhoneE164,
             string text,
             CancellationToken ct = default,

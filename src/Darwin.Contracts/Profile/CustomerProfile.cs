@@ -34,6 +34,11 @@ namespace Darwin.Contracts.Profile
         public string? PhoneE164 { get; init; }
 
         /// <summary>
+        /// Whether the current phone number has been verified.
+        /// </summary>
+        public bool PhoneNumberConfirmed { get; init; }
+
+        /// <summary>
         /// Preferred UI locale/culture (e.g., "de-DE").
         /// </summary>
         public string? Locale { get; init; }

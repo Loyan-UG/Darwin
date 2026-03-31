@@ -169,12 +169,20 @@ namespace Darwin.Application.Settings.Queries
                 CommunicationTestInboxEmail = s.CommunicationTestInboxEmail,
                 CommunicationTestSmsRecipientE164 = s.CommunicationTestSmsRecipientE164,
                 CommunicationTestWhatsAppRecipientE164 = s.CommunicationTestWhatsAppRecipientE164,
+                CommunicationTestEmailSubjectTemplate = s.CommunicationTestEmailSubjectTemplate,
+                CommunicationTestEmailBodyTemplate = s.CommunicationTestEmailBodyTemplate,
+                CommunicationTestSmsTemplate = s.CommunicationTestSmsTemplate,
+                CommunicationTestWhatsAppTemplate = s.CommunicationTestWhatsAppTemplate,
                 BusinessInvitationEmailSubjectTemplate = s.BusinessInvitationEmailSubjectTemplate,
                 BusinessInvitationEmailBodyTemplate = s.BusinessInvitationEmailBodyTemplate,
                 AccountActivationEmailSubjectTemplate = s.AccountActivationEmailSubjectTemplate,
                 AccountActivationEmailBodyTemplate = s.AccountActivationEmailBodyTemplate,
                 PasswordResetEmailSubjectTemplate = s.PasswordResetEmailSubjectTemplate,
-                PasswordResetEmailBodyTemplate = s.PasswordResetEmailBodyTemplate
+                PasswordResetEmailBodyTemplate = s.PasswordResetEmailBodyTemplate,
+                PhoneVerificationSmsTemplate = s.PhoneVerificationSmsTemplate,
+                PhoneVerificationWhatsAppTemplate = s.PhoneVerificationWhatsAppTemplate,
+                PhoneVerificationPreferredChannel = s.PhoneVerificationPreferredChannel,
+                PhoneVerificationAllowFallback = s.PhoneVerificationAllowFallback
             };
         }
     }

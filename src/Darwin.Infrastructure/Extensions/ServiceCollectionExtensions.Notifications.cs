@@ -2,7 +2,9 @@ using Darwin.Application.Abstractions.Notifications;
 using Darwin.Application.Abstractions.Services;
 using Darwin.Infrastructure.Notifications.BusinessInvitations;
 using Darwin.Infrastructure.Notifications.InactiveReminders;
+using Darwin.Infrastructure.Notifications.Sms;
 using Darwin.Infrastructure.Notifications.Smtp;
+using Darwin.Infrastructure.Notifications.WhatsApp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +28,10 @@ namespace Darwin.Infrastructure.Extensions
             services.Configure<InactiveReminderPushGatewayOptions>(configuration.GetSection("Notifications:InactiveReminderPushGateway"));
 
             services.AddScoped<IEmailSender, SmtpEmailSender>();
+            services.AddHttpClient(nameof(ProviderBackedSmsSender));
+            services.AddScoped<ISmsSender, ProviderBackedSmsSender>();
+            services.AddHttpClient(nameof(MetaWhatsAppSender));
+            services.AddScoped<IWhatsAppSender, MetaWhatsAppSender>();
             services.AddSingleton<IBusinessInvitationLinkBuilder, ConfigBusinessInvitationLinkBuilder>();
             services.AddHttpClient<HttpInactiveReminderDispatcher>();
             services.AddScoped<IInactiveReminderDispatcher, HttpInactiveReminderDispatcher>();

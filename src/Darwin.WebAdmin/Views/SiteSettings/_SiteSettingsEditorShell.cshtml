@@ -931,7 +931,7 @@
         <div class="card-header">Transactional Communication Policy</div>
         <div class="card-body">
             <div class="alert alert-secondary mb-3">
-                These phase-1 controls affect the currently implemented invitation, activation, and password-reset email flows.
+                These controls affect the currently implemented invitation, activation, password-reset, and phone-verification communication flows.
             </div>
             <div class="row g-3">
                 <div class="col-md-6">
@@ -956,8 +956,28 @@
                     <label asp-for="CommunicationTestWhatsAppRecipientE164" class="form-label"></label>
                     <input asp-for="CommunicationTestWhatsAppRecipientE164" class="form-control" placeholder="+4915112345678" />
                     <span asp-validation-for="CommunicationTestWhatsAppRecipientE164" class="text-danger"></span>
-                    <div class="form-text">Reserved test target for WhatsApp rollout and staged provider validation.</div>
+                    <div class="form-text">Used by operator-side WhatsApp transport tests before go-live.</div>
                 </div>
+                <div class="col-md-3">
+                    <label asp-for="PhoneVerificationPreferredChannel" class="form-label"></label>
+                    <select asp-for="PhoneVerificationPreferredChannel" class="form-select">
+                        <option value="Sms">SMS</option>
+                        <option value="WhatsApp">WhatsApp</option>
+                    </select>
+                    <span asp-validation-for="PhoneVerificationPreferredChannel" class="text-danger"></span>
+                    <div class="form-text">Default channel when Web or Mobile does not explicitly request one.</div>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" asp-for="PhoneVerificationAllowFallback" />
+                        <label class="form-check-label" asp-for="PhoneVerificationAllowFallback"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-light border mt-3 mb-3 small">
+                Phone verification policy:
+                if the client does not specify a channel, the platform uses the preferred channel above.
+                If fallback is enabled, the system may switch between SMS and WhatsApp when the preferred or requested channel is unavailable.
             </div>
             <div class="alert alert-light border mt-3 mb-3 small">
                 Supported placeholders:
@@ -969,9 +989,39 @@
                 <code>{acceptance_link_html}</code>,
                 <code>{invitation_action}</code>,
                 <code>{invitation_intro_html}</code>,
-                <code>{email}</code>
+                <code>{email}</code>,
+                <code>{phone_e164}</code>,
+                <code>{channel}</code>,
+                <code>{requested_by}</code>,
+                <code>{attempted_at_utc}</code>,
+                <code>{test_target}</code>,
+                <code>{transport_state}</code>
             </div>
             <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="CommunicationTestEmailSubjectTemplate" class="form-label"></label>
+                    <input asp-for="CommunicationTestEmailSubjectTemplate" class="form-control" placeholder="Darwin communication test for {channel}" />
+                    <span asp-validation-for="CommunicationTestEmailSubjectTemplate" class="text-danger"></span>
+                    <div class="form-text">Subject used for operator-side diagnostic email tests.</div>
+                </div>
+                <div class="col-md-12">
+                    <label asp-for="CommunicationTestEmailBodyTemplate" class="form-label"></label>
+                    <textarea asp-for="CommunicationTestEmailBodyTemplate" class="form-control" rows="5" placeholder="&lt;p&gt;This is a Darwin {channel} communication test.&lt;/p&gt;"></textarea>
+                    <span asp-validation-for="CommunicationTestEmailBodyTemplate" class="text-danger"></span>
+                    <div class="form-text">HTML body used for diagnostic email tests to the configured test inbox.</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CommunicationTestSmsTemplate" class="form-label"></label>
+                    <textarea asp-for="CommunicationTestSmsTemplate" class="form-control" rows="3" placeholder="Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}."></textarea>
+                    <span asp-validation-for="CommunicationTestSmsTemplate" class="text-danger"></span>
+                    <div class="form-text">Plain-text SMS used for operator-side SMS provider validation.</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CommunicationTestWhatsAppTemplate" class="form-label"></label>
+                    <textarea asp-for="CommunicationTestWhatsAppTemplate" class="form-control" rows="3" placeholder="Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}."></textarea>
+                    <span asp-validation-for="CommunicationTestWhatsAppTemplate" class="text-danger"></span>
+                    <div class="form-text">Plain-text WhatsApp message used for operator-side WhatsApp validation.</div>
+                </div>
                 <div class="col-md-6">
                     <label asp-for="BusinessInvitationEmailSubjectTemplate" class="form-label"></label>
                     <input asp-for="BusinessInvitationEmailSubjectTemplate" class="form-control" placeholder="Invitation to join {business_name} on Darwin" />
@@ -1001,6 +1051,18 @@
                     <label asp-for="PasswordResetEmailBodyTemplate" class="form-label"></label>
                     <textarea asp-for="PasswordResetEmailBodyTemplate" class="form-control" rows="5"></textarea>
                     <span asp-validation-for="PasswordResetEmailBodyTemplate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PhoneVerificationSmsTemplate" class="form-label"></label>
+                    <textarea asp-for="PhoneVerificationSmsTemplate" class="form-control" rows="3" placeholder="Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC."></textarea>
+                    <span asp-validation-for="PhoneVerificationSmsTemplate" class="text-danger"></span>
+                    <div class="form-text">Plain-text SMS template for current-user mobile verification.</div>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PhoneVerificationWhatsAppTemplate" class="form-label"></label>
+                    <textarea asp-for="PhoneVerificationWhatsAppTemplate" class="form-control" rows="3" placeholder="Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC."></textarea>
+                    <span asp-validation-for="PhoneVerificationWhatsAppTemplate" class="text-danger"></span>
+                    <div class="form-text">Plain-text WhatsApp template for current-user mobile verification.</div>
                 </div>
             </div>
         </div>

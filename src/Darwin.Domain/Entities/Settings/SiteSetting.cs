@@ -335,6 +335,14 @@ namespace Darwin.Domain.Entities.Settings
         public string? CommunicationTestSmsRecipientE164 { get; set; }
         /// <summary>Optional WhatsApp test recipient used for operator-side transport validation in phase-1 support workflows.</summary>
         public string? CommunicationTestWhatsAppRecipientE164 { get; set; }
+        /// <summary>Optional subject template for operator-side diagnostic email tests. Supports placeholders such as {requested_by}, {attempted_at_utc}, and {test_target}.</summary>
+        public string? CommunicationTestEmailSubjectTemplate { get; set; }
+        /// <summary>Optional HTML body template for operator-side diagnostic email tests. Supports placeholders such as {requested_by}, {attempted_at_utc}, {transport_state}, and {test_target}.</summary>
+        public string? CommunicationTestEmailBodyTemplate { get; set; }
+        /// <summary>Optional plain-text template for operator-side diagnostic SMS tests. Supports placeholders such as {requested_by}, {attempted_at_utc}, and {test_target}.</summary>
+        public string? CommunicationTestSmsTemplate { get; set; }
+        /// <summary>Optional plain-text template for operator-side diagnostic WhatsApp tests. Supports placeholders such as {requested_by}, {attempted_at_utc}, and {test_target}.</summary>
+        public string? CommunicationTestWhatsAppTemplate { get; set; }
 
         /// <summary>Optional subject template for business invitations. Supports placeholders such as {business_name}, {role}, and {invitation_action}.</summary>
         public string? BusinessInvitationEmailSubjectTemplate { get; set; }
@@ -353,6 +361,18 @@ namespace Darwin.Domain.Entities.Settings
 
         /// <summary>Optional HTML body template for password-reset emails. Supports placeholders such as {email}, {token}, and {expires_at_utc}.</summary>
         public string? PasswordResetEmailBodyTemplate { get; set; }
+
+        /// <summary>Optional plain-text template for SMS-based phone verification. Supports placeholders such as {phone_e164}, {token}, and {expires_at_utc}.</summary>
+        public string? PhoneVerificationSmsTemplate { get; set; }
+
+        /// <summary>Optional plain-text template for WhatsApp-based phone verification. Supports placeholders such as {phone_e164}, {token}, and {expires_at_utc}.</summary>
+        public string? PhoneVerificationWhatsAppTemplate { get; set; }
+
+        /// <summary>Preferred delivery channel for current-user phone verification. Supported values: Sms, WhatsApp.</summary>
+        public string? PhoneVerificationPreferredChannel { get; set; }
+
+        /// <summary>When enabled, phone verification may fall back to the other supported channel if the requested or preferred channel is unavailable.</summary>
+        public bool PhoneVerificationAllowFallback { get; set; }
 
     }
 }

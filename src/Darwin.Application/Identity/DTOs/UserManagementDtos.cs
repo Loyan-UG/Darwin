@@ -37,6 +37,9 @@ namespace Darwin.Application.Identity.DTOs
 
         /// <summary>The user's phone number in E.164 format; may be null.</summary>
         public string? PhoneE164 { get; set; }
+
+        /// <summary>Whether the current phone number has been verified.</summary>
+        public bool PhoneNumberConfirmed { get; set; }
     }
 
     

@@ -41,6 +41,30 @@ namespace Darwin.Application.Businesses.DTOs
         public Guid AuditId { get; set; }
     }
 
+    public sealed class EmailDispatchAuditChainSummaryDto
+    {
+        public int TotalAttempts { get; set; }
+        public int FailedCount { get; set; }
+        public int SentCount { get; set; }
+        public int PendingCount { get; set; }
+        public int NeedsOperatorFollowUpCount { get; set; }
+        public DateTime? FirstAttemptAtUtc { get; set; }
+        public DateTime? LastAttemptAtUtc { get; set; }
+        public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
+        public string StatusMix { get; set; } = string.Empty;
+        public List<EmailDispatchAuditChainHistoryItemDto> RecentHistory { get; set; } = new();
+    }
+
+    public sealed class EmailDispatchAuditChainHistoryItemDto
+    {
+        public DateTime AttemptedAtUtc { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public string? FailureMessage { get; set; }
+        public DateTime? CompletedAtUtc { get; set; }
+    }
+
     public sealed class EmailDispatchAuditSummaryDto
     {
         public int TotalCount { get; set; }

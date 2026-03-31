@@ -26,10 +26,11 @@ namespace Darwin.Application.Businesses.Queries
             _db = db ?? throw new ArgumentNullException(nameof(db));
         }
 
-        public async Task<(List<EmailDispatchAuditListItemDto> Items, int Total)> HandleAsync(
+        public async Task<(List<EmailDispatchAuditListItemDto> Items, int Total, EmailDispatchAuditChainSummaryDto? ChainSummary)> HandleAsync(
             int page,
             int pageSize,
             string? query = null,
+            string? recipientEmail = null,
             string? status = null,
             string? flowKey = null,
             bool stalePendingOnly = false,
@@ -39,6 +40,8 @@ namespace Darwin.Application.Businesses.Queries
             bool retryReadyOnly = false,
             bool retryBlockedOnly = false,
             bool highChainVolumeOnly = false,
+            bool chainFollowUpOnly = false,
+            bool chainResolvedOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
@@ -68,6 +71,12 @@ namespace Darwin.Application.Businesses.Queries
                     x.Audit.Provider.Contains(q) ||
                     (x.Audit.FlowKey != null && x.Audit.FlowKey.Contains(q)) ||
                     (x.BusinessName != null && x.BusinessName.Contains(q)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                var normalizedRecipientEmail = recipientEmail.Trim();
+                baseQuery = baseQuery.Where(x => x.Audit.RecipientEmail == normalizedRecipientEmail);
             }
 
             if (!string.IsNullOrWhiteSpace(status))
@@ -212,13 +221,30 @@ namespace Darwin.Application.Businesses.Queries
                 filteredItems = filteredItems.Where(x => x.RecentAttemptCount24h >= 3);
             }
 
+            if (chainFollowUpOnly)
+            {
+                filteredItems = filteredItems.Where(x => x.NeedsOperatorFollowUp);
+            }
+
+            if (chainResolvedOnly)
+            {
+                filteredItems = filteredItems.Where(x => !x.NeedsOperatorFollowUp);
+            }
+
+            EmailDispatchAuditChainSummaryDto? chainSummary = null;
+            if (!string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                chainSummary = await BuildChainSummaryAsync(recipientEmail.Trim(), flowKey, businessId, stalePendingThresholdUtc, ct)
+                    .ConfigureAwait(false);
+            }
+
             var total = filteredItems.Count();
             var items = filteredItems
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            return (items, total);
+            return (items, total, chainSummary);
         }
 
         public async Task<EmailDispatchAuditSummaryDto> GetSummaryAsync(Guid? businessId = null, CancellationToken ct = default)
@@ -340,6 +366,91 @@ namespace Darwin.Application.Businesses.Queries
         {
             return string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task<EmailDispatchAuditChainSummaryDto?> BuildChainSummaryAsync(
+            string recipientEmail,
+            string? flowKey,
+            Guid? businessId,
+            DateTime stalePendingThresholdUtc,
+            CancellationToken ct)
+        {
+            var chainQuery = _db.Set<EmailDispatchAudit>()
+                .AsNoTracking()
+                .Where(x => x.RecipientEmail == recipientEmail);
+
+            if (!string.IsNullOrWhiteSpace(flowKey))
+            {
+                var normalizedFlowKey = flowKey.Trim();
+                chainQuery = chainQuery.Where(x => x.FlowKey == normalizedFlowKey);
+            }
+
+            if (businessId.HasValue)
+            {
+                chainQuery = chainQuery.Where(x => x.BusinessId == businessId.Value);
+            }
+
+            var chainRows = await chainQuery
+                .OrderBy(x => x.AttemptedAtUtc)
+                .Select(x => new
+                {
+                    x.Status,
+                    x.AttemptedAtUtc,
+                    x.Provider,
+                    x.Subject,
+                    x.FailureMessage,
+                    x.CompletedAtUtc
+                })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            if (chainRows.Count == 0)
+            {
+                return null;
+            }
+
+            var hasSent = chainRows.Any(x => string.Equals(x.Status, "Sent", StringComparison.OrdinalIgnoreCase));
+            var hasFailed = chainRows.Any(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase));
+            var hasPending = chainRows.Any(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+
+            var statusMix =
+                hasSent && hasFailed ? "Mixed success/failure" :
+                hasFailed && hasPending ? "Open failure chain" :
+                hasFailed ? "Failure-only chain" :
+                hasPending ? "Pending-only chain" :
+                hasSent ? "Success-only chain" :
+                "Single attempt";
+
+            return new EmailDispatchAuditChainSummaryDto
+            {
+                TotalAttempts = chainRows.Count,
+                FailedCount = chainRows.Count(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase)),
+                SentCount = chainRows.Count(x => string.Equals(x.Status, "Sent", StringComparison.OrdinalIgnoreCase)),
+                PendingCount = chainRows.Count(x => string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase)),
+                NeedsOperatorFollowUpCount = chainRows.Count(x =>
+                    string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase) ||
+                    (string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase) && x.AttemptedAtUtc <= stalePendingThresholdUtc)),
+                FirstAttemptAtUtc = chainRows.First().AttemptedAtUtc,
+                LastAttemptAtUtc = chainRows.Last().AttemptedAtUtc,
+                LastSuccessfulAttemptAtUtc = chainRows
+                    .Where(x => string.Equals(x.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                    .Select(x => (DateTime?)x.AttemptedAtUtc)
+                    .LastOrDefault(),
+                StatusMix = statusMix,
+                RecentHistory = chainRows
+                    .OrderByDescending(x => x.AttemptedAtUtc)
+                    .Take(8)
+                    .Select(x => new EmailDispatchAuditChainHistoryItemDto
+                    {
+                        AttemptedAtUtc = x.AttemptedAtUtc,
+                        Status = x.Status,
+                        Provider = x.Provider,
+                        Subject = x.Subject,
+                        FailureMessage = x.FailureMessage,
+                        CompletedAtUtc = x.CompletedAtUtc
+                    })
+                    .ToList()
+            };
         }
     }
 }

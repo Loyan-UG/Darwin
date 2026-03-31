@@ -240,12 +240,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail,
             CommunicationTestSmsRecipientE164 = dto.CommunicationTestSmsRecipientE164,
             CommunicationTestWhatsAppRecipientE164 = dto.CommunicationTestWhatsAppRecipientE164,
+            CommunicationTestEmailSubjectTemplate = dto.CommunicationTestEmailSubjectTemplate,
+            CommunicationTestEmailBodyTemplate = dto.CommunicationTestEmailBodyTemplate,
+            CommunicationTestSmsTemplate = dto.CommunicationTestSmsTemplate,
+            CommunicationTestWhatsAppTemplate = dto.CommunicationTestWhatsAppTemplate,
             BusinessInvitationEmailSubjectTemplate = dto.BusinessInvitationEmailSubjectTemplate,
             BusinessInvitationEmailBodyTemplate = dto.BusinessInvitationEmailBodyTemplate,
             AccountActivationEmailSubjectTemplate = dto.AccountActivationEmailSubjectTemplate,
             AccountActivationEmailBodyTemplate = dto.AccountActivationEmailBodyTemplate,
             PasswordResetEmailSubjectTemplate = dto.PasswordResetEmailSubjectTemplate,
-            PasswordResetEmailBodyTemplate = dto.PasswordResetEmailBodyTemplate
+            PasswordResetEmailBodyTemplate = dto.PasswordResetEmailBodyTemplate,
+            PhoneVerificationSmsTemplate = dto.PhoneVerificationSmsTemplate,
+            PhoneVerificationWhatsAppTemplate = dto.PhoneVerificationWhatsAppTemplate,
+            PhoneVerificationPreferredChannel = dto.PhoneVerificationPreferredChannel,
+            PhoneVerificationAllowFallback = dto.PhoneVerificationAllowFallback
         };
 
         /// <summary>
@@ -390,12 +398,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
             CommunicationTestInboxEmail = vm.CommunicationTestInboxEmail,
             CommunicationTestSmsRecipientE164 = vm.CommunicationTestSmsRecipientE164,
             CommunicationTestWhatsAppRecipientE164 = vm.CommunicationTestWhatsAppRecipientE164,
+            CommunicationTestEmailSubjectTemplate = vm.CommunicationTestEmailSubjectTemplate,
+            CommunicationTestEmailBodyTemplate = vm.CommunicationTestEmailBodyTemplate,
+            CommunicationTestSmsTemplate = vm.CommunicationTestSmsTemplate,
+            CommunicationTestWhatsAppTemplate = vm.CommunicationTestWhatsAppTemplate,
             BusinessInvitationEmailSubjectTemplate = vm.BusinessInvitationEmailSubjectTemplate,
             BusinessInvitationEmailBodyTemplate = vm.BusinessInvitationEmailBodyTemplate,
             AccountActivationEmailSubjectTemplate = vm.AccountActivationEmailSubjectTemplate,
             AccountActivationEmailBodyTemplate = vm.AccountActivationEmailBodyTemplate,
             PasswordResetEmailSubjectTemplate = vm.PasswordResetEmailSubjectTemplate,
-            PasswordResetEmailBodyTemplate = vm.PasswordResetEmailBodyTemplate
+            PasswordResetEmailBodyTemplate = vm.PasswordResetEmailBodyTemplate,
+            PhoneVerificationSmsTemplate = vm.PhoneVerificationSmsTemplate,
+            PhoneVerificationWhatsAppTemplate = vm.PhoneVerificationWhatsAppTemplate,
+            PhoneVerificationPreferredChannel = vm.PhoneVerificationPreferredChannel,
+            PhoneVerificationAllowFallback = vm.PhoneVerificationAllowFallback
         };
     }
 }

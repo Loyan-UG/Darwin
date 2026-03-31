@@ -4,6 +4,7 @@ using Darwin.Infrastructure.Persistence.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Darwin.Infrastructure.Migrations
 {
     [DbContext(typeof(DarwinDbContext))]
-    partial class DarwinDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260331154845_SiteSettingCommunicationTestTemplates")]
+    partial class SiteSettingCommunicationTestTemplates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4505,92 +4508,6 @@ namespace Darwin.Infrastructure.Migrations
                         .HasFilter("[IdempotencyKey] IS NOT NULL");
 
                     b.ToTable("AnalyticsExportJobs", "Integration");
-                });
-
-            modelBuilder.Entity("Darwin.Domain.Entities.Integration.ChannelDispatchAudit", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("AttemptedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Channel")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
-
-                    b.Property<DateTime?>("CompletedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("FailureMessage")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("FlowKey")
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("MessagePreview")
-                        .IsRequired()
-                        .HasMaxLength(240)
-                        .HasColumnType("nvarchar(240)");
-
-                    b.Property<DateTime?>("ModifiedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("ModifiedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<string>("RecipientAddress")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttemptedAtUtc");
-
-                    b.HasIndex("BusinessId");
-
-                    b.HasIndex("Channel");
-
-                    b.HasIndex("FlowKey");
-
-                    b.HasIndex("RecipientAddress");
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("ChannelDispatchAudits", (string)null);
                 });
 
             modelBuilder.Entity("Darwin.Domain.Entities.Integration.EmailDispatchAudit", b =>

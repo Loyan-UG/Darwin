@@ -351,6 +351,18 @@ namespace Darwin.WebAdmin.ViewModels.Settings
         [Display(Name = "Communication Test WhatsApp Recipient")]
         public string? CommunicationTestWhatsAppRecipientE164 { get; set; }
 
+        [Display(Name = "Communication Test Email Subject Template")]
+        public string? CommunicationTestEmailSubjectTemplate { get; set; }
+
+        [Display(Name = "Communication Test Email Body Template")]
+        public string? CommunicationTestEmailBodyTemplate { get; set; }
+
+        [Display(Name = "Communication Test SMS Template")]
+        public string? CommunicationTestSmsTemplate { get; set; }
+
+        [Display(Name = "Communication Test WhatsApp Template")]
+        public string? CommunicationTestWhatsAppTemplate { get; set; }
+
         [Display(Name = "Business Invitation Subject Template")]
         public string? BusinessInvitationEmailSubjectTemplate { get; set; }
 
@@ -368,5 +380,17 @@ namespace Darwin.WebAdmin.ViewModels.Settings
 
         [Display(Name = "Password Reset Body Template")]
         public string? PasswordResetEmailBodyTemplate { get; set; }
+
+        [Display(Name = "Phone Verification SMS Template")]
+        public string? PhoneVerificationSmsTemplate { get; set; }
+
+        [Display(Name = "Phone Verification WhatsApp Template")]
+        public string? PhoneVerificationWhatsAppTemplate { get; set; }
+
+        [Display(Name = "Preferred Phone Verification Channel")]
+        public string? PhoneVerificationPreferredChannel { get; set; }
+
+        [Display(Name = "Allow Verification Channel Fallback")]
+        public bool PhoneVerificationAllowFallback { get; set; }
     }
 }

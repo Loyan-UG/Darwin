@@ -23,6 +23,8 @@ namespace Darwin.WebApi.Controllers.Profile
         private readonly UpdateCurrentUserHandler _updateCurrentUserHandler;
         private readonly UpdateCurrentUserPreferencesHandler _updateCurrentUserPreferencesHandler;
         private readonly RequestCurrentUserAccountDeletionHandler _requestCurrentUserAccountDeletionHandler;
+        private readonly RequestPhoneVerificationHandler _requestPhoneVerificationHandler;
+        private readonly ConfirmPhoneVerificationHandler _confirmPhoneVerificationHandler;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProfileController"/> class.
@@ -35,7 +37,9 @@ namespace Darwin.WebApi.Controllers.Profile
             GetCurrentUserPreferencesHandler getCurrentUserPreferencesHandler,
             UpdateCurrentUserHandler updateCurrentUserHandler,
             UpdateCurrentUserPreferencesHandler updateCurrentUserPreferencesHandler,
-            RequestCurrentUserAccountDeletionHandler requestCurrentUserAccountDeletionHandler)
+            RequestCurrentUserAccountDeletionHandler requestCurrentUserAccountDeletionHandler,
+            RequestPhoneVerificationHandler requestPhoneVerificationHandler,
+            ConfirmPhoneVerificationHandler confirmPhoneVerificationHandler)
         {
             _getCurrentUserProfileHandler =
                 getCurrentUserProfileHandler ?? throw new ArgumentNullException(nameof(getCurrentUserProfileHandler));
@@ -51,6 +55,12 @@ namespace Darwin.WebApi.Controllers.Profile
 
             _requestCurrentUserAccountDeletionHandler =
                 requestCurrentUserAccountDeletionHandler ?? throw new ArgumentNullException(nameof(requestCurrentUserAccountDeletionHandler));
+
+            _requestPhoneVerificationHandler =
+                requestPhoneVerificationHandler ?? throw new ArgumentNullException(nameof(requestPhoneVerificationHandler));
+
+            _confirmPhoneVerificationHandler =
+                confirmPhoneVerificationHandler ?? throw new ArgumentNullException(nameof(confirmPhoneVerificationHandler));
         }
 
         /// <summary>
@@ -89,6 +99,7 @@ namespace Darwin.WebApi.Controllers.Profile
                 FirstName = value.FirstName,
                 LastName = value.LastName,
                 PhoneE164 = value.PhoneE164,
+                PhoneNumberConfirmed = value.PhoneNumberConfirmed,
 
                 // These are explicitly mentioned as editable in UpdateCurrentUserHandler summary.
                 Locale = value.Locale,
@@ -194,6 +205,54 @@ namespace Darwin.WebApi.Controllers.Profile
 
             if (!result.Succeeded)
                 return ProblemFromResult(result);
+
+            return NoContent();
+        }
+
+        [HttpPost("me/phone/request-verification")]
+        [HttpPost("/api/v1/profile/me/phone/request-verification")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RequestPhoneVerificationAsync([FromBody] RequestPhoneVerificationRequest? request, CancellationToken ct)
+        {
+            var channelValue = request?.Channel?.Trim();
+            PhoneVerificationChannel? channel = string.IsNullOrWhiteSpace(channelValue)
+                ? null
+                : string.Equals(channelValue, "WhatsApp", StringComparison.OrdinalIgnoreCase)
+                ? PhoneVerificationChannel.WhatsApp
+                : PhoneVerificationChannel.Sms;
+
+            var result = await _requestPhoneVerificationHandler.HandleAsync(
+                new RequestPhoneVerificationDto { Channel = channel },
+                ct).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
+
+            return NoContent();
+        }
+
+        [HttpPost("me/phone/confirm")]
+        [HttpPost("/api/v1/profile/me/phone/confirm")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Darwin.Contracts.Common.ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ConfirmPhoneVerificationAsync([FromBody] ConfirmPhoneVerificationRequest? request, CancellationToken ct)
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.Code))
+            {
+                return BadRequestProblem("Verification code is required.");
+            }
+
+            var result = await _confirmPhoneVerificationHandler.HandleAsync(
+                new ConfirmPhoneVerificationDto { Code = request.Code },
+                ct).ConfigureAwait(false);
+
+            if (!result.Succeeded)
+            {
+                return ProblemFromResult(result);
+            }
 
             return NoContent();
         }

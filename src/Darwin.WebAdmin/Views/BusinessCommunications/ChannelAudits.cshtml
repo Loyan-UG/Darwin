@@ -1,0 +1,369 @@
+@model Darwin.WebAdmin.ViewModels.Businesses.ChannelDispatchAuditsListVm
+@{
+    ViewData["Title"] = "SMS / WhatsApp Audits";
+}
+
+<div id="business-communication-channel-audits-shell">
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1"><i class="fa-solid fa-message me-2"></i>SMS / WhatsApp Audits</h1>
+        <p class="text-muted mb-0">Operator-facing history for live non-email delivery families.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("Index", "BusinessCommunications")"
+           hx-target="#business-communication-channel-audits-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Back to Communications</a>
+    </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+    <a asp-action="ChannelAudits" asp-route-failedOnly="true" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-danger"
+       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { failedOnly = true, businessId = Model.BusinessId })"
+       hx-target="#business-communication-channel-audits-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Failed Only</a>
+    <a asp-action="ChannelAudits" asp-route-phoneVerificationOnly="true" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-primary"
+       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { phoneVerificationOnly = true, businessId = Model.BusinessId })"
+       hx-target="#business-communication-channel-audits-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Phone Verification</a>
+    <a asp-action="ChannelAudits" asp-route-adminTestOnly="true" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { adminTestOnly = true, businessId = Model.BusinessId })"
+       hx-target="#business-communication-channel-audits-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Admin Tests</a>
+    <a asp-action="ChannelAudits" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-dark"
+       hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.BusinessId })"
+       hx-target="#business-communication-channel-audits-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Reset</a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.RecipientAddress))
+{
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <strong>Exact chain mode:</strong> showing the delivery chain for <code>@Model.RecipientAddress</code>
+            @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
+            {
+                <span> in flow <code>@Model.FlowKey</code></span>
+            }
+        </div>
+        <a asp-action="ChannelAudits"
+           asp-route-query="@Model.Query"
+           asp-route-channel="@Model.Channel"
+           asp-route-flowKey="@Model.FlowKey"
+           asp-route-status="@Model.Status"
+           asp-route-failedOnly="@Model.FailedOnly"
+           asp-route-phoneVerificationOnly="@Model.PhoneVerificationOnly"
+           asp-route-adminTestOnly="@Model.AdminTestOnly"
+           asp-route-chainFollowUpOnly="false"
+           asp-route-chainResolvedOnly="false"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { query = Model.Query, channel = Model.Channel, flowKey = Model.FlowKey, status = Model.Status, failedOnly = Model.FailedOnly, phoneVerificationOnly = Model.PhoneVerificationOnly, adminTestOnly = Model.AdminTestOnly, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
+           hx-target="#business-communication-channel-audits-shell"
+           hx-swap="outerHTML">Leave Exact Chain</a>
+    </div>
+
+    @if (Model.ChainSummary is not null)
+    {
+        <div class="d-flex gap-2 flex-wrap mb-3">
+            <a asp-action="ChannelAudits"
+               asp-route-recipientAddress="@Model.RecipientAddress"
+               asp-route-flowKey="@Model.FlowKey"
+               asp-route-chainFollowUpOnly="false"
+               asp-route-chainResolvedOnly="false"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-sm @((Model.ChainFollowUpOnly || Model.ChainResolvedOnly) ? "btn-outline-secondary" : "btn-dark")"
+               hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { recipientAddress = Model.RecipientAddress, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
+               hx-target="#business-communication-channel-audits-shell"
+               hx-swap="outerHTML">Whole Chain</a>
+            <a asp-action="ChannelAudits"
+               asp-route-recipientAddress="@Model.RecipientAddress"
+               asp-route-flowKey="@Model.FlowKey"
+               asp-route-chainFollowUpOnly="true"
+               asp-route-chainResolvedOnly="false"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-sm @(Model.ChainFollowUpOnly ? "btn-warning" : "btn-outline-warning")"
+               hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { recipientAddress = Model.RecipientAddress, flowKey = Model.FlowKey, chainFollowUpOnly = true, chainResolvedOnly = false, businessId = Model.BusinessId })"
+               hx-target="#business-communication-channel-audits-shell"
+               hx-swap="outerHTML">Needs Follow-up</a>
+            <a asp-action="ChannelAudits"
+               asp-route-recipientAddress="@Model.RecipientAddress"
+               asp-route-flowKey="@Model.FlowKey"
+               asp-route-chainFollowUpOnly="false"
+               asp-route-chainResolvedOnly="true"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-sm @(Model.ChainResolvedOnly ? "btn-success" : "btn-outline-success")"
+               hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { recipientAddress = Model.RecipientAddress, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = true, businessId = Model.BusinessId })"
+               hx-target="#business-communication-channel-audits-shell"
+               hx-swap="outerHTML">Resolved History</a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Chain Attempts</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.TotalAttempts</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Failed</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.FailedCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Sent</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.SentCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Pending</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.PendingCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Follow-up</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.NeedsOperatorFollowUpCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Chain Profile</div>
+                    <div class="fw-semibold mt-1">@Model.ChainSummary.StatusMix</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-secondary mb-4">
+            <strong>Chain timeline:</strong>
+            first attempt <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
+            latest attempt <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>.
+            <div class="small text-muted mt-2">
+                This exact-chain view is meant for phone-verification and diagnostic incidents where one recipient/channel path matters more than the whole queue.
+            </div>
+        </div>
+
+        @if (Model.ChainSummary.RecentHistory.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header">Recent Exact-Chain History</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>When (UTC)</th>
+                                    <th>Channel</th>
+                                    <th>Status</th>
+                                    <th>Provider</th>
+                                    <th>Preview</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var item in Model.ChainSummary.RecentHistory)
+                            {
+                                <tr>
+                                    <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@item.Channel</td>
+                                    <td>@item.Status</td>
+                                    <td>@item.Provider</td>
+                                    <td>
+                                        <div class="small">@item.MessagePreview</div>
+                                        @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
+                                        {
+                                            <div class="small text-danger mt-1">@item.FailureMessage</div>
+                                        }
+                                        else if (item.CompletedAtUtc.HasValue)
+                                        {
+                                            <div class="small text-muted mt-1">Completed @item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Total Attempts</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.TotalCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Failed</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.FailedCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">SMS / WhatsApp</div>
+            <div class="fw-semibold mt-1">@Model.Summary.SmsCount / @Model.Summary.WhatsAppCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Verification / Admin Tests</div>
+            <div class="fw-semibold mt-1">@Model.Summary.PhoneVerificationCount / @Model.Summary.AdminTestCount</div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="row g-2 mb-3"
+      hx-get="@Url.Action("ChannelAudits", "BusinessCommunications")"
+      hx-target="#business-communication-channel-audits-shell"
+      hx-swap="outerHTML">
+    <input type="hidden" name="businessId" value="@Model.BusinessId" />
+    <input type="hidden" name="failedOnly" value="@Model.FailedOnly" />
+    <input type="hidden" name="phoneVerificationOnly" value="@Model.PhoneVerificationOnly" />
+    <input type="hidden" name="adminTestOnly" value="@Model.AdminTestOnly" />
+    <input type="hidden" name="recipientAddress" value="@Model.RecipientAddress" />
+    <input type="hidden" name="chainFollowUpOnly" value="@Model.ChainFollowUpOnly" />
+    <input type="hidden" name="chainResolvedOnly" value="@Model.ChainResolvedOnly" />
+    <div class="col-md-4">
+        <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by phone, provider, preview, or flow" />
+    </div>
+    <div class="col-md-2">
+        <select name="channel" asp-items="Model.ChannelItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <select name="flowKey" asp-items="Model.FlowItems" class="form-select"></select>
+    </div>
+    <div class="col-md-2">
+        <select name="status" asp-items="Model.StatusItems" class="form-select"></select>
+    </div>
+    <div class="col-auto">
+        <select name="pageSize" class="form-select">
+            @foreach (var item in Model.PageSizeItems)
+            {
+                <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th>When (UTC)</th>
+                <th>Channel</th>
+                <th>Flow</th>
+                <th>Recipient</th>
+                <th>Status</th>
+                <th>Preview / Details</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="6" class="text-center text-muted py-4">No channel audits matched the selected filters.</td></tr>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td><span class="badge text-bg-light">@item.Channel</span> <span class="small text-muted">@item.Provider</span></td>
+                    <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                    <td>@item.RecipientAddress</td>
+                    <td>
+                        @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="badge text-bg-success">Sent</span>
+                        }
+                        else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="badge text-bg-danger">Failed</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">@item.Status</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="small">@item.MessagePreview</div>
+                        @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
+                        {
+                            <div class="small text-danger mt-1">@item.FailureMessage</div>
+                        }
+                        else if (item.CompletedAtUtc.HasValue)
+                        {
+                            <div class="small text-muted mt-1">Completed @item.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                        }
+                        @if (string.Equals(item.FlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="small text-muted mt-2">Canonical verification flow for Web and Mobile.</div>
+                        }
+                        else if (string.Equals(item.FlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="small text-muted mt-2">Operator-side transport validation only.</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.FlowKey))
+                        {
+                            <div class="mt-2">
+                                <a asp-action="ChannelAudits"
+                                   asp-route-recipientAddress="@item.RecipientAddress"
+                                   asp-route-flowKey="@item.FlowKey"
+                                   asp-route-channel=""
+                                   asp-route-status=""
+                                   asp-route-query=""
+                                   asp-route-failedOnly="false"
+                                   asp-route-phoneVerificationOnly="false"
+                                   asp-route-adminTestOnly="false"
+                                   asp-route-chainFollowUpOnly="@Model.ChainFollowUpOnly"
+                                   asp-route-chainResolvedOnly="@Model.ChainResolvedOnly"
+                                   asp-route-businessId="@item.BusinessId"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { recipientAddress = item.RecipientAddress, flowKey = item.FlowKey, channel = string.Empty, status = string.Empty, query = string.Empty, failedOnly = false, phoneVerificationOnly = false, adminTestOnly = false, chainFollowUpOnly = Model.ChainFollowUpOnly, chainResolvedOnly = Model.ChainResolvedOnly, businessId = item.BusinessId })"
+                                   hx-target="#business-communication-channel-audits-shell"
+                                   hx-swap="outerHTML">Open Exact Chain</a>
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<pager page="Model.Page"
+       page-size="Model.PageSize"
+       total="Model.Total"
+       asp-controller="BusinessCommunications"
+       asp-action="ChannelAudits"
+       asp-route-query="@Model.Query"
+       asp-route-recipientAddress="@Model.RecipientAddress"
+       asp-route-channel="@Model.Channel"
+       asp-route-flowKey="@Model.FlowKey"
+       asp-route-status="@Model.Status"
+       asp-route-failedOnly="@Model.FailedOnly"
+       asp-route-phoneVerificationOnly="@Model.PhoneVerificationOnly"
+       asp-route-adminTestOnly="@Model.AdminTestOnly"
+       asp-route-chainFollowUpOnly="@Model.ChainFollowUpOnly"
+       asp-route-chainResolvedOnly="@Model.ChainResolvedOnly"
+       asp-route-businessId="@Model.BusinessId"
+       hx-target="#business-communication-channel-audits-shell"
+       hx-swap="outerHTML">
+</pager>
+</div>

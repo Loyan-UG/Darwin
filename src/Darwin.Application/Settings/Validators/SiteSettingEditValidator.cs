@@ -403,6 +403,22 @@ namespace Darwin.Application.Settings.Validators
                 .MaximumLength(32)
                 .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestWhatsAppRecipientE164));
 
+            RuleFor(x => x.CommunicationTestEmailSubjectTemplate)
+                .MaximumLength(300)
+                .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestEmailSubjectTemplate));
+
+            RuleFor(x => x.CommunicationTestEmailBodyTemplate)
+                .MaximumLength(4000)
+                .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestEmailBodyTemplate));
+
+            RuleFor(x => x.CommunicationTestSmsTemplate)
+                .MaximumLength(1000)
+                .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestSmsTemplate));
+
+            RuleFor(x => x.CommunicationTestWhatsAppTemplate)
+                .MaximumLength(2000)
+                .When(x => !string.IsNullOrWhiteSpace(x.CommunicationTestWhatsAppTemplate));
+
             RuleFor(x => x.BusinessInvitationEmailSubjectTemplate)
                 .MaximumLength(300)
                 .When(x => !string.IsNullOrWhiteSpace(x.BusinessInvitationEmailSubjectTemplate));
@@ -426,6 +442,20 @@ namespace Darwin.Application.Settings.Validators
             RuleFor(x => x.PasswordResetEmailBodyTemplate)
                 .MaximumLength(8000)
                 .When(x => !string.IsNullOrWhiteSpace(x.PasswordResetEmailBodyTemplate));
+
+            RuleFor(x => x.PhoneVerificationSmsTemplate)
+                .MaximumLength(1000)
+                .When(x => !string.IsNullOrWhiteSpace(x.PhoneVerificationSmsTemplate));
+
+            RuleFor(x => x.PhoneVerificationWhatsAppTemplate)
+                .MaximumLength(2000)
+                .When(x => !string.IsNullOrWhiteSpace(x.PhoneVerificationWhatsAppTemplate));
+
+            RuleFor(x => x.PhoneVerificationPreferredChannel)
+                .Must(x => string.IsNullOrWhiteSpace(x) ||
+                           string.Equals(x, "Sms", StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(x, "WhatsApp", StringComparison.OrdinalIgnoreCase))
+                .WithMessage("Preferred phone verification channel must be Sms or WhatsApp.");
         }
 
         private static bool IsCulture(string culture)

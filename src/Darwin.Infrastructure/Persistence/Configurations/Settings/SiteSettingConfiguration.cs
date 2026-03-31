@@ -131,12 +131,19 @@ namespace Darwin.Infrastructure.Persistence.Configurations.Settings
             builder.Property(x => x.CommunicationTestInboxEmail).HasMaxLength(256);
             builder.Property(x => x.CommunicationTestSmsRecipientE164).HasMaxLength(32);
             builder.Property(x => x.CommunicationTestWhatsAppRecipientE164).HasMaxLength(32);
+            builder.Property(x => x.CommunicationTestEmailSubjectTemplate).HasMaxLength(300);
+            builder.Property(x => x.CommunicationTestEmailBodyTemplate).HasMaxLength(4000);
+            builder.Property(x => x.CommunicationTestSmsTemplate).HasMaxLength(1000);
+            builder.Property(x => x.CommunicationTestWhatsAppTemplate).HasMaxLength(2000);
             builder.Property(x => x.BusinessInvitationEmailSubjectTemplate).HasMaxLength(300);
             builder.Property(x => x.BusinessInvitationEmailBodyTemplate).HasMaxLength(8000);
             builder.Property(x => x.AccountActivationEmailSubjectTemplate).HasMaxLength(300);
             builder.Property(x => x.AccountActivationEmailBodyTemplate).HasMaxLength(8000);
             builder.Property(x => x.PasswordResetEmailSubjectTemplate).HasMaxLength(300);
             builder.Property(x => x.PasswordResetEmailBodyTemplate).HasMaxLength(8000);
+            builder.Property(x => x.PhoneVerificationSmsTemplate).HasMaxLength(1000);
+            builder.Property(x => x.PhoneVerificationWhatsAppTemplate).HasMaxLength(2000);
+            builder.Property(x => x.PhoneVerificationPreferredChannel).HasMaxLength(32);
 
             // Helpful lookups
             builder.HasIndex(x => x.ContactEmail);

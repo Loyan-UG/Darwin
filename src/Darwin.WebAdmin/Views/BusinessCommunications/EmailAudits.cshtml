@@ -194,6 +194,190 @@
        hx-swap="outerHTML">Failed Admin Tests</a>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(Model.RecipientEmail))
+{
+    <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <strong>Exact chain mode:</strong> showing the delivery chain for <code>@Model.RecipientEmail</code>
+            @if (!string.IsNullOrWhiteSpace(Model.FlowKey))
+            {
+                <span> in flow <code>@Model.FlowKey</code></span>
+            }
+        </div>
+        <a asp-action="EmailAudits"
+           asp-route-query="@Model.Query"
+           asp-route-status="@Model.Status"
+           asp-route-flowKey="@Model.FlowKey"
+           asp-route-stalePendingOnly="@Model.StalePendingOnly"
+           asp-route-businessLinkedFailuresOnly="@Model.BusinessLinkedFailuresOnly"
+           asp-route-repeatedFailuresOnly="@Model.RepeatedFailuresOnly"
+           asp-route-priorSuccessOnly="@Model.PriorSuccessOnly"
+           asp-route-retryReadyOnly="@Model.RetryReadyOnly"
+           asp-route-retryBlockedOnly="@Model.RetryBlockedOnly"
+           asp-route-highChainVolumeOnly="@Model.HighChainVolumeOnly"
+           asp-route-chainFollowUpOnly="false"
+           asp-route-chainResolvedOnly="false"
+           asp-route-businessId="@Model.BusinessId"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { query = Model.Query, status = Model.Status, flowKey = Model.FlowKey, stalePendingOnly = Model.StalePendingOnly, businessLinkedFailuresOnly = Model.BusinessLinkedFailuresOnly, repeatedFailuresOnly = Model.RepeatedFailuresOnly, priorSuccessOnly = Model.PriorSuccessOnly, retryReadyOnly = Model.RetryReadyOnly, retryBlockedOnly = Model.RetryBlockedOnly, highChainVolumeOnly = Model.HighChainVolumeOnly, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
+           hx-target="#business-communication-audits-workspace-shell"
+           hx-swap="outerHTML">Leave Exact Chain</a>
+    </div>
+
+    @if (Model.ChainSummary is not null)
+    {
+        <div class="d-flex gap-2 flex-wrap mb-3">
+            <a asp-action="EmailAudits"
+               asp-route-recipientEmail="@Model.RecipientEmail"
+               asp-route-flowKey="@Model.FlowKey"
+               asp-route-chainFollowUpOnly="false"
+               asp-route-chainResolvedOnly="false"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-sm @(Model.ChainFollowUpOnly || Model.ChainResolvedOnly ? "btn-outline-secondary" : "btn-dark")"
+               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = false, businessId = Model.BusinessId })"
+               hx-target="#business-communication-audits-workspace-shell"
+               hx-swap="outerHTML">Whole Chain</a>
+            <a asp-action="EmailAudits"
+               asp-route-recipientEmail="@Model.RecipientEmail"
+               asp-route-flowKey="@Model.FlowKey"
+               asp-route-chainFollowUpOnly="true"
+               asp-route-chainResolvedOnly="false"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-sm @(Model.ChainFollowUpOnly ? "btn-warning" : "btn-outline-warning")"
+               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = true, chainResolvedOnly = false, businessId = Model.BusinessId })"
+               hx-target="#business-communication-audits-workspace-shell"
+               hx-swap="outerHTML">Needs Follow-up</a>
+            <a asp-action="EmailAudits"
+               asp-route-recipientEmail="@Model.RecipientEmail"
+               asp-route-flowKey="@Model.FlowKey"
+               asp-route-chainFollowUpOnly="false"
+               asp-route-chainResolvedOnly="true"
+               asp-route-businessId="@Model.BusinessId"
+               class="btn btn-sm @(Model.ChainResolvedOnly ? "btn-success" : "btn-outline-success")"
+               hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = Model.RecipientEmail, flowKey = Model.FlowKey, chainFollowUpOnly = false, chainResolvedOnly = true, businessId = Model.BusinessId })"
+               hx-target="#business-communication-audits-workspace-shell"
+               hx-swap="outerHTML">Resolved History</a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Chain Attempts</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.TotalAttempts</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Chain Failed</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.FailedCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Chain Sent</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.SentCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Chain Pending</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.PendingCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Needs Follow-up</div>
+                    <div class="fs-4 fw-semibold">@Model.ChainSummary.NeedsOperatorFollowUpCount</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Chain Profile</div>
+                    <div class="fw-semibold mt-1">@Model.ChainSummary.StatusMix</div>
+                </div>
+            </div>
+        </div>
+        <div class="alert alert-secondary mb-4">
+            <strong>Chain timeline:</strong>
+            first attempt
+            <code>@Model.ChainSummary.FirstAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>,
+            latest attempt
+            <code>@Model.ChainSummary.LastAttemptAtUtc?.ToString("yyyy-MM-dd HH:mm")</code>
+            @if (Model.ChainSummary.LastSuccessfulAttemptAtUtc.HasValue)
+            {
+                <span>, last success <code>@Model.ChainSummary.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</code></span>
+            }
+            else
+            {
+                <span>, no successful delivery recorded yet</span>
+            }
+            <div class="small text-muted mt-2">
+                This exact-chain summary helps support distinguish one-off failures from unstable recipient-specific delivery patterns before retrying again.
+            </div>
+        </div>
+
+        @if (Model.ChainSummary.RecentHistory.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header">Recent Exact-Chain History</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>When (UTC)</th>
+                                    <th>Status</th>
+                                    <th>Provider</th>
+                                    <th>Subject</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var history in Model.ChainSummary.RecentHistory)
+                            {
+                                <tr>
+                                    <td>@history.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        @if (string.Equals(history.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge text-bg-success">Sent</span>
+                                        }
+                                        else if (string.Equals(history.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge text-bg-danger">Failed</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-secondary">@history.Status</span>
+                                        }
+                                    </td>
+                                    <td>@history.Provider</td>
+                                    <td>@history.Subject</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(history.FailureMessage))
+                                        {
+                                            <span class="text-danger small">@history.FailureMessage</span>
+                                        }
+                                        else if (history.CompletedAtUtc.HasValue)
+                                        {
+                                            <span class="text-muted small">Completed @history.CompletedAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Attempt recorded</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
 <div class="row g-3 mb-4">
     <div class="col-md-2">
         <div class="border rounded p-3 h-100">
@@ -318,6 +502,18 @@
     <div class="col-md-4">
         <input type="text" name="query" value="@Model.Query" class="form-control" placeholder="Search by recipient, subject, provider, flow, or business" />
     </div>
+    @if (!string.IsNullOrWhiteSpace(Model.RecipientEmail))
+    {
+        <input type="hidden" name="recipientEmail" value="@Model.RecipientEmail" />
+    }
+    @if (Model.ChainFollowUpOnly)
+    {
+        <input type="hidden" name="chainFollowUpOnly" value="true" />
+    }
+    @if (Model.ChainResolvedOnly)
+    {
+        <input type="hidden" name="chainResolvedOnly" value="true" />
+    }
     <div class="col-md-3">
         <select name="status" asp-items="Model.StatusItems" class="form-select"></select>
     </div>
@@ -557,6 +753,7 @@
                                     <input type="hidden" name="page" value="@Model.Page" />
                                     <input type="hidden" name="pageSize" value="@Model.PageSize" />
                                     <input type="hidden" name="query" value="@Model.Query" />
+                                    <input type="hidden" name="recipientEmail" value="@Model.RecipientEmail" />
                                     <input type="hidden" name="status" value="@Model.Status" />
                                     <input type="hidden" name="flowKey" value="@Model.FlowKey" />
                                     <input type="hidden" name="stalePendingOnly" value="@Model.StalePendingOnly" />
@@ -566,6 +763,8 @@
                                     <input type="hidden" name="retryReadyOnly" value="@Model.RetryReadyOnly" />
                                     <input type="hidden" name="retryBlockedOnly" value="@Model.RetryBlockedOnly" />
                                     <input type="hidden" name="highChainVolumeOnly" value="@Model.HighChainVolumeOnly" />
+                                    <input type="hidden" name="chainFollowUpOnly" value="@Model.ChainFollowUpOnly" />
+                                    <input type="hidden" name="chainResolvedOnly" value="@Model.ChainResolvedOnly" />
                                     @if (Model.BusinessId.HasValue)
                                     {
                                         <input type="hidden" name="businessId" value="@Model.BusinessId" />
@@ -578,9 +777,9 @@
                         {
                             <div class="mt-2">
                                 <a asp-action="EmailAudits"
-                                   asp-route-query="@item.RecipientEmail"
+                                   asp-route-recipientEmail="@item.RecipientEmail"
                                    asp-route-flowKey="@item.FlowKey"
-                                   asp-route-status="@Model.Status"
+                                   asp-route-status=""
                                    asp-route-stalePendingOnly="false"
                                    asp-route-businessLinkedFailuresOnly="false"
                                    asp-route-repeatedFailuresOnly="false"
@@ -588,11 +787,13 @@
                                    asp-route-retryReadyOnly="false"
                                    asp-route-retryBlockedOnly="false"
                                    asp-route-highChainVolumeOnly="false"
+                                   asp-route-chainFollowUpOnly="@Model.ChainFollowUpOnly"
+                                   asp-route-chainResolvedOnly="@Model.ChainResolvedOnly"
                                    asp-route-businessId="@item.BusinessId"
                                    class="btn btn-sm btn-outline-secondary"
-                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { query = item.RecipientEmail, flowKey = item.FlowKey, status = Model.Status, stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = false, businessId = item.BusinessId })"
+                                   hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { recipientEmail = item.RecipientEmail, flowKey = item.FlowKey, status = string.Empty, stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, retryReadyOnly = false, retryBlockedOnly = false, highChainVolumeOnly = false, chainFollowUpOnly = Model.ChainFollowUpOnly, chainResolvedOnly = Model.ChainResolvedOnly, businessId = item.BusinessId })"
                                    hx-target="#business-communication-audits-workspace-shell"
-                                   hx-swap="outerHTML">Open Similar Chain</a>
+                                   hx-swap="outerHTML">Open Exact Chain</a>
                             </div>
                         }
                         @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
@@ -669,6 +870,7 @@
        asp-controller="BusinessCommunications"
        asp-action="EmailAudits"
        asp-route-query="@Model.Query"
+       asp-route-recipientEmail="@Model.RecipientEmail"
        asp-route-status="@Model.Status"
        asp-route-flowKey="@Model.FlowKey"
        asp-route-stalePendingOnly="@Model.StalePendingOnly"

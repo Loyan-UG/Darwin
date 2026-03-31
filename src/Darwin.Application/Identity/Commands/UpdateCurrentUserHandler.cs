@@ -64,7 +64,12 @@ namespace Darwin.Application.Identity.Commands
             user.Locale = dto.Locale;
             user.Timezone = dto.Timezone;
             user.Currency = dto.Currency;
+            var phoneChanged = !string.Equals(user.PhoneE164, dto.PhoneE164, System.StringComparison.Ordinal);
             user.PhoneE164 = dto.PhoneE164;
+            if (phoneChanged)
+            {
+                user.PhoneNumberConfirmed = false;
+            }
 
             await _db.SaveChangesAsync(ct);
 

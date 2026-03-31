@@ -15,6 +15,11 @@
            hx-target="#business-communication-profile-shell"
            hx-swap="outerHTML"
            hx-push-url="true">Back to Communications</a>
+        <a asp-action="ChannelAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("ChannelAudits", "BusinessCommunications", new { businessId = Model.Id })"
+           hx-target="#business-communication-profile-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">SMS / WhatsApp Audits</a>
         <a asp-action="EmailAudits" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
@@ -156,7 +161,7 @@
                     <dd class="col-sm-8">@(Model.TestInboxConfigured ? Model.TestInboxEmail : "Not rerouting")</dd>
                 </dl>
                 <div class="small text-muted mt-3">
-                    Current invitation, activation, and password-reset flows apply this prefix and reroute to the test inbox when configured.
+                    Current invitation, activation, password-reset, and phone-verification flows depend on this policy surface and its test targets.
                 </div>
                 <div class="mt-3">
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
@@ -174,6 +179,26 @@
                             <button type="submit" class="btn btn-sm btn-outline-primary">Send Test Email</button>
                         </form>
                     }
+                    @if (Model.CanSendTestSms)
+                    {
+                        <form asp-action="SendTestSms" method="post" class="d-inline"
+                              hx-post="@Url.Action("SendTestSms", "BusinessCommunications")"
+                              hx-target="#business-communication-profile-shell"
+                              hx-swap="outerHTML">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Send Test SMS</button>
+                        </form>
+                    }
+                    @if (Model.CanSendTestWhatsApp)
+                    {
+                        <form asp-action="SendTestWhatsApp" method="post" class="d-inline"
+                              hx-post="@Url.Action("SendTestWhatsApp", "BusinessCommunications")"
+                              hx-target="#business-communication-profile-shell"
+                              hx-swap="outerHTML">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Send Test WhatsApp</button>
+                        </form>
+                    }
                 </div>
             </div>
         </div>
@@ -185,6 +210,7 @@
                 <ul class="mb-0">
                     <li>Subject prefix applies to current SMTP-based invitation, activation, and password-reset subjects.</li>
                     <li>Test inbox reroute redirects those emails for controlled validation and prepends the original recipient to the body.</li>
+                    <li>SMS and WhatsApp test targets are transport-validation controls, while phone verification now uses customizable text templates.</li>
                     <li>This is an operational control, not a reusable template-engine or retry-queue replacement.</li>
                 </ul>
             </div>
@@ -422,6 +448,17 @@
 <div class="row g-3 mt-1">
     <div class="col-lg-4">
         <div class="card h-100">
+            <div class="card-header">SMS / WhatsApp Activity Snapshot</div>
+            <div class="card-body">
+                <div class="mb-2">Attempts (24h): <strong>@Model.ChannelAuditSummary.Recent24HourCount</strong></div>
+                <div class="mb-2">SMS / WhatsApp: <strong>@Model.ChannelAuditSummary.SmsCount / @Model.ChannelAuditSummary.WhatsAppCount</strong></div>
+                <div class="mb-2">Phone Verification: <strong>@Model.ChannelAuditSummary.PhoneVerificationCount</strong></div>
+                <div>Failures: <strong>@Model.ChannelAuditSummary.FailedCount</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
             <div class="card-header">Delivery Backlog Snapshot</div>
             <div class="card-body">
                 <div class="mb-2">Needs Follow-up: <strong>@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</strong></div>
@@ -430,6 +467,102 @@
                 <div class="mt-2">Retried Chains: <strong>@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</strong></div>
                 <div>Prior Success Context: <strong>@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</strong></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">Recent SMS / WhatsApp Activity</div>
+    <div class="card-body">
+        <div class="small text-muted mb-3">
+            This keeps non-email delivery visible while investigating one business. It is intentionally scoped to current live SMS and WhatsApp families, especially phone verification and operator transport tests.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>When (UTC)</th>
+                        <th>Channel</th>
+                        <th>Flow</th>
+                        <th>Recipient</th>
+                        <th>Status</th>
+                        <th>Preview</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.RecentChannelAudits.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-3">No recent SMS or WhatsApp activity for this business scope.</td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.RecentChannelAudits)
+                    {
+                        <tr>
+                            <td>@item.AttemptedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td><span class="badge text-bg-light">@item.Channel</span> <span class="small text-muted">@item.Provider</span></td>
+                            <td>@(string.IsNullOrWhiteSpace(item.FlowKey) ? "Unclassified" : item.FlowKey)</td>
+                            <td>@item.RecipientAddress</td>
+                            <td>
+                                @if (string.Equals(item.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-success">Sent</span>
+                                }
+                                else if (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="badge text-bg-danger">Failed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="small">@item.MessagePreview</div>
+                                @if (!string.IsNullOrWhiteSpace(item.FailureMessage))
+                                {
+                                    <div class="small text-danger mt-1">@item.FailureMessage</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">Channel Truth Snapshot</div>
+    <div class="card-body">
+        <div class="small text-muted mb-3">
+            This snapshot keeps channel reality visible while troubleshooting one business. It shows what is live today and where operators should stop before treating SMS or WhatsApp like a generic delivery bus.
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Channel</th>
+                        <th>Current State</th>
+                        <th>Live Flows</th>
+                        <th>Safe Operator Actions</th>
+                        <th>Risk Boundary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.ChannelOperations)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.Channel</td>
+                        <td>@item.CurrentState</td>
+                        <td>@item.LiveFlows</td>
+                        <td>@item.SafeOperatorActions</td>
+                        <td>@item.RiskBoundary</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

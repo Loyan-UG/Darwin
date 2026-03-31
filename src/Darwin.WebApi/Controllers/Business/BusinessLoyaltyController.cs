@@ -103,7 +103,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
         }
 
         var tiersResult = await _getLoyaltyRewardTiersPageHandler
-            .HandleAsync(program.Id, page: 1, pageSize: 200, ct)
+            .HandleAsync(program.Id, page: 1, pageSize: 200, filter: LoyaltyRewardTierQueueFilter.All, ct: ct)
             .ConfigureAwait(false);
 
         return Ok(new BusinessRewardConfigurationResponse
@@ -491,7 +491,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
             return errorResult!;
         }
 
-        var result = await _getBusinessCampaignsHandler.HandleAsync(businessId, page, pageSize, ct).ConfigureAwait(false);
+        var result = await _getBusinessCampaignsHandler.HandleAsync(businessId, page, pageSize, filter: LoyaltyCampaignQueueFilter.All, ct: ct).ConfigureAwait(false);
         if (!result.Succeeded || result.Value is null)
         {
             return ProblemFromResult(result);
@@ -725,7 +725,7 @@ public sealed class BusinessLoyaltyController : ApiControllerBase
     private async Task<bool> IsRewardTierOwnedByBusinessAsync(Guid programId, Guid rewardTierId, CancellationToken ct)
     {
         var tiers = await _getLoyaltyRewardTiersPageHandler
-            .HandleAsync(programId, page: 1, pageSize: 200, ct)
+            .HandleAsync(programId, page: 1, pageSize: 200, filter: LoyaltyRewardTierQueueFilter.All, ct: ct)
             .ConfigureAwait(false);
 
         return tiers.Items.Any(x => x.Id == rewardTierId);

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,26 +27,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetBusinessCommunicationSetupPageHandler _getSetupPage;
         private readonly GetBusinessCommunicationProfileHandler _getProfile;
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
+        private readonly GetChannelDispatchActivityHandler _getChannelDispatchActivity;
         private readonly RetryEmailDispatchAuditHandler _retryEmailDispatchAudit;
         private readonly ISiteSettingCache _siteSettingCache;
         private readonly IEmailSender _emailSender;
+        private readonly ISmsSender _smsSender;
+        private readonly IWhatsAppSender _whatsAppSender;
 
         public BusinessCommunicationsController(
             GetBusinessCommunicationOpsSummaryHandler getSummary,
             GetBusinessCommunicationSetupPageHandler getSetupPage,
             GetBusinessCommunicationProfileHandler getProfile,
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
+            GetChannelDispatchActivityHandler getChannelDispatchActivity,
             RetryEmailDispatchAuditHandler retryEmailDispatchAudit,
             ISiteSettingCache siteSettingCache,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            ISmsSender smsSender,
+            IWhatsAppSender whatsAppSender)
         {
             _getSummary = getSummary;
             _getSetupPage = getSetupPage;
             _getProfile = getProfile;
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
+            _getChannelDispatchActivity = getChannelDispatchActivity;
             _retryEmailDispatchAudit = retryEmailDispatchAudit;
             _siteSettingCache = siteSettingCache;
             _emailSender = emailSender;
+            _smsSender = smsSender;
+            _whatsAppSender = whatsAppSender;
         }
 
         [HttpGet]
@@ -59,11 +70,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var summary = await _getSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var (items, total) = await _getSetupPage.HandleAsync(page, pageSize, query, setupOnly, filter, ct).ConfigureAwait(false);
-            var (emailAudits, _) = await _getEmailDispatchAuditsPage
+            var (emailAudits, _, _) = await _getEmailDispatchAuditsPage
                 .HandleAsync(
                     page: 1,
                     pageSize: 10,
                     query: null,
+                    recipientEmail: null,
                     status: null,
                     flowKey: null,
                     stalePendingOnly: false,
@@ -75,6 +87,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     highChainVolumeOnly: false,
                     businessId: null,
                     ct: ct)
+                .ConfigureAwait(false);
+            var (channelAudits, channelAuditSummary) = await _getChannelDispatchActivity
+                .HandleAsync(null, 8, ct)
                 .ConfigureAwait(false);
 
             var vm = new BusinessCommunicationOpsVm
@@ -113,7 +128,15 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                                        !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
                                        settings.SmtpPort.HasValue &&
                                        !string.IsNullOrWhiteSpace(settings.SmtpFromAddress) &&
-                                       !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail)
+                                       !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail),
+                    CanSendTestSms = settings.SmsEnabled &&
+                                     !string.IsNullOrWhiteSpace(settings.SmsProvider) &&
+                                     !string.IsNullOrWhiteSpace(settings.SmsFromPhoneE164) &&
+                                     !string.IsNullOrWhiteSpace(settings.CommunicationTestSmsRecipientE164),
+                    CanSendTestWhatsApp = settings.WhatsAppEnabled &&
+                                          !string.IsNullOrWhiteSpace(settings.WhatsAppBusinessPhoneId) &&
+                                          !string.IsNullOrWhiteSpace(settings.WhatsAppAccessToken) &&
+                                          !string.IsNullOrWhiteSpace(settings.CommunicationTestWhatsAppRecipientE164)
                 },
                 Summary = new BusinessCommunicationOpsSummaryPanelVm
                 {
@@ -127,7 +150,19 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 BuiltInFlows = BuildBuiltInFlows(),
                 TemplateInventory = BuildTemplateInventory(settings),
                 CapabilityCoverage = BuildCapabilityCoverage(),
+                ChannelOperations = BuildChannelOperations(settings),
                 ResendPolicies = BuildResendPolicies(),
+                ChannelAuditSummary = new ChannelDispatchAuditSummaryVm
+                {
+                    TotalCount = channelAuditSummary.TotalCount,
+                    FailedCount = channelAuditSummary.FailedCount,
+                    PendingCount = channelAuditSummary.PendingCount,
+                    Recent24HourCount = channelAuditSummary.Recent24HourCount,
+                    SmsCount = channelAuditSummary.SmsCount,
+                    WhatsAppCount = channelAuditSummary.WhatsAppCount,
+                    PhoneVerificationCount = channelAuditSummary.PhoneVerificationCount,
+                    AdminTestCount = channelAuditSummary.AdminTestCount
+                },
                 RecentEmailAudits = emailAudits.Select(x => new EmailDispatchAuditListItemVm
                 {
                     Id = x.Id,
@@ -159,6 +194,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
                     RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList(),
+                RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm
+                {
+                    Id = x.Id,
+                    Channel = x.Channel,
+                    Provider = x.Provider,
+                    FlowKey = x.FlowKey,
+                    BusinessId = x.BusinessId,
+                    RecipientAddress = x.RecipientAddress,
+                    MessagePreview = x.MessagePreview,
+                    Status = x.Status,
+                    AttemptedAtUtc = x.AttemptedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc,
+                    FailureMessage = x.FailureMessage
+                }).ToList(),
                 Items = items.Select(x => new BusinessCommunicationSetupListItemVm
                 {
                     Id = x.Id,
@@ -189,11 +238,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
-            var (recentAudits, _) = await _getEmailDispatchAuditsPage
+            var (recentAudits, _, _) = await _getEmailDispatchAuditsPage
                 .HandleAsync(
                     page: 1,
                     pageSize: 5,
                     query: null,
+                    recipientEmail: null,
                     status: null,
                     flowKey: null,
                     stalePendingOnly: false,
@@ -249,10 +299,13 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 TransactionalSubjectPrefixConfigured = transactionalSubjectPrefixConfigured,
                 TestInboxConfigured = testInboxConfigured,
                 CanSendTestEmail = emailTransportConfigured && testInboxConfigured,
+                CanSendTestSms = smsTransportConfigured && !string.IsNullOrWhiteSpace(settings.CommunicationTestSmsRecipientE164),
+                CanSendTestWhatsApp = whatsAppTransportConfigured && !string.IsNullOrWhiteSpace(settings.CommunicationTestWhatsAppRecipientE164),
                 TransactionalSubjectPrefix = settings.TransactionalEmailSubjectPrefix,
                 TestInboxEmail = settings.CommunicationTestInboxEmail,
                 ActiveFlowNames = BuildActiveFlowNames(profile),
                 TemplateInventory = BuildTemplateInventory(settings),
+                ChannelOperations = BuildChannelOperations(settings),
                 ResendPolicies = BuildResendPolicies(),
                 ReadinessIssues = BuildReadinessIssues(profile, emailTransportConfigured, adminAlertRoutingConfigured),
                 RecommendedActions = BuildRecommendedActions(profile, emailTransportConfigured, adminAlertRoutingConfigured),
@@ -289,6 +342,35 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ToList()
             };
 
+            var (channelAudits, channelAuditSummary) = await _getChannelDispatchActivity
+                .HandleAsync(businessId, 6, ct)
+                .ConfigureAwait(false);
+            vm.ChannelAuditSummary = new ChannelDispatchAuditSummaryVm
+            {
+                TotalCount = channelAuditSummary.TotalCount,
+                FailedCount = channelAuditSummary.FailedCount,
+                PendingCount = channelAuditSummary.PendingCount,
+                Recent24HourCount = channelAuditSummary.Recent24HourCount,
+                SmsCount = channelAuditSummary.SmsCount,
+                WhatsAppCount = channelAuditSummary.WhatsAppCount,
+                PhoneVerificationCount = channelAuditSummary.PhoneVerificationCount,
+                AdminTestCount = channelAuditSummary.AdminTestCount
+            };
+            vm.RecentChannelAudits = channelAudits.Select(x => new ChannelDispatchAuditListItemVm
+            {
+                Id = x.Id,
+                Channel = x.Channel,
+                Provider = x.Provider,
+                FlowKey = x.FlowKey,
+                BusinessId = x.BusinessId,
+                RecipientAddress = x.RecipientAddress,
+                MessagePreview = x.MessagePreview,
+                Status = x.Status,
+                AttemptedAtUtc = x.AttemptedAtUtc,
+                CompletedAtUtc = x.CompletedAtUtc,
+                FailureMessage = x.FailureMessage
+            }).ToList();
+
             return RenderCommunicationProfileWorkspace(vm);
         }
 
@@ -297,6 +379,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             int page = 1,
             int pageSize = 20,
             string? query = null,
+            string? recipientEmail = null,
             string? status = null,
             string? flowKey = null,
             bool stalePendingOnly = false,
@@ -306,14 +389,17 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             bool retryReadyOnly = false,
             bool retryBlockedOnly = false,
             bool highChainVolumeOnly = false,
+            bool chainFollowUpOnly = false,
+            bool chainResolvedOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
-            var (items, total) = await _getEmailDispatchAuditsPage
+            var (items, total, chainSummary) = await _getEmailDispatchAuditsPage
                 .HandleAsync(
                     page: page,
                     pageSize: pageSize,
                     query: query,
+                    recipientEmail: recipientEmail,
                     status: status,
                     flowKey: flowKey,
                     stalePendingOnly: stalePendingOnly,
@@ -323,6 +409,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     retryReadyOnly: retryReadyOnly,
                     retryBlockedOnly: retryBlockedOnly,
                     highChainVolumeOnly: highChainVolumeOnly,
+                    chainFollowUpOnly: chainFollowUpOnly,
+                    chainResolvedOnly: chainResolvedOnly,
                     businessId: businessId,
                     ct: ct)
                 .ConfigureAwait(false);
@@ -334,6 +422,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 PageSize = pageSize,
                 Total = total,
                 Query = query ?? string.Empty,
+                RecipientEmail = recipientEmail ?? string.Empty,
                 Status = status ?? string.Empty,
                 FlowKey = flowKey ?? string.Empty,
                 StalePendingOnly = stalePendingOnly,
@@ -343,6 +432,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 RetryReadyOnly = retryReadyOnly,
                 RetryBlockedOnly = retryBlockedOnly,
                 HighChainVolumeOnly = highChainVolumeOnly,
+                ChainFollowUpOnly = chainFollowUpOnly,
+                ChainResolvedOnly = chainResolvedOnly,
                 BusinessId = businessId,
                 CanSendTestEmail = await CanSendTestEmailAsync(ct).ConfigureAwait(false),
                 Summary = new EmailDispatchAuditSummaryVm
@@ -366,6 +457,27 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     RetryReadyCount = summary.RetryReadyCount,
                     RetryBlockedCount = summary.RetryBlockedCount,
                     HighChainVolumeCount = summary.HighChainVolumeCount
+                },
+                ChainSummary = chainSummary == null ? null : new EmailDispatchAuditChainSummaryVm
+                {
+                    TotalAttempts = chainSummary.TotalAttempts,
+                    FailedCount = chainSummary.FailedCount,
+                    SentCount = chainSummary.SentCount,
+                    PendingCount = chainSummary.PendingCount,
+                    NeedsOperatorFollowUpCount = chainSummary.NeedsOperatorFollowUpCount,
+                    FirstAttemptAtUtc = chainSummary.FirstAttemptAtUtc,
+                    LastAttemptAtUtc = chainSummary.LastAttemptAtUtc,
+                    LastSuccessfulAttemptAtUtc = chainSummary.LastSuccessfulAttemptAtUtc,
+                    StatusMix = chainSummary.StatusMix,
+                    RecentHistory = chainSummary.RecentHistory.Select(x => new EmailDispatchAuditChainHistoryItemVm
+                    {
+                        AttemptedAtUtc = x.AttemptedAtUtc,
+                        Status = x.Status,
+                        Provider = x.Provider,
+                        Subject = x.Subject,
+                        FailureMessage = x.FailureMessage,
+                        CompletedAtUtc = x.CompletedAtUtc
+                    }).ToList()
                 },
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 StatusItems = BuildAuditStatusItems(status),
@@ -407,6 +519,114 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             return RenderEmailAuditsWorkspace(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ChannelAudits(
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? recipientAddress = null,
+            string? channel = null,
+            string? flowKey = null,
+            string? status = null,
+            bool failedOnly = false,
+            bool phoneVerificationOnly = false,
+            bool adminTestOnly = false,
+            bool chainFollowUpOnly = false,
+            bool chainResolvedOnly = false,
+            Guid? businessId = null,
+            CancellationToken ct = default)
+        {
+            var filter = new ChannelDispatchAuditFilterDto
+            {
+                Query = query ?? string.Empty,
+                RecipientAddress = recipientAddress ?? string.Empty,
+                Channel = channel ?? string.Empty,
+                FlowKey = flowKey ?? string.Empty,
+                Status = status ?? string.Empty,
+                BusinessId = businessId,
+                FailedOnly = failedOnly,
+                PhoneVerificationOnly = phoneVerificationOnly,
+                AdminTestOnly = adminTestOnly,
+                ChainFollowUpOnly = chainFollowUpOnly,
+                ChainResolvedOnly = chainResolvedOnly
+            };
+
+            var (items, total, summary, chainSummary) = await _getChannelDispatchActivity
+                .HandlePageAsync(page, pageSize, filter, ct)
+                .ConfigureAwait(false);
+
+            var vm = new ChannelDispatchAuditsListVm
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = total,
+                Query = filter.Query,
+                RecipientAddress = filter.RecipientAddress,
+                Channel = filter.Channel,
+                FlowKey = filter.FlowKey,
+                Status = filter.Status,
+                BusinessId = businessId,
+                FailedOnly = failedOnly,
+                PhoneVerificationOnly = phoneVerificationOnly,
+                AdminTestOnly = adminTestOnly,
+                ChainFollowUpOnly = chainFollowUpOnly,
+                ChainResolvedOnly = chainResolvedOnly,
+                Summary = new ChannelDispatchAuditSummaryVm
+                {
+                    TotalCount = summary.TotalCount,
+                    FailedCount = summary.FailedCount,
+                    PendingCount = summary.PendingCount,
+                    Recent24HourCount = summary.Recent24HourCount,
+                    SmsCount = summary.SmsCount,
+                    WhatsAppCount = summary.WhatsAppCount,
+                    PhoneVerificationCount = summary.PhoneVerificationCount,
+                    AdminTestCount = summary.AdminTestCount
+                },
+                ChainSummary = chainSummary == null ? null : new ChannelDispatchAuditChainSummaryVm
+                {
+                    TotalAttempts = chainSummary.TotalAttempts,
+                    FailedCount = chainSummary.FailedCount,
+                    SentCount = chainSummary.SentCount,
+                    PendingCount = chainSummary.PendingCount,
+                    NeedsOperatorFollowUpCount = chainSummary.NeedsOperatorFollowUpCount,
+                    FirstAttemptAtUtc = chainSummary.FirstAttemptAtUtc,
+                    LastAttemptAtUtc = chainSummary.LastAttemptAtUtc,
+                    StatusMix = chainSummary.StatusMix,
+                    RecentHistory = chainSummary.RecentHistory.Select(x => new ChannelDispatchAuditChainHistoryItemVm
+                    {
+                        AttemptedAtUtc = x.AttemptedAtUtc,
+                        Channel = x.Channel,
+                        Status = x.Status,
+                        Provider = x.Provider,
+                        MessagePreview = x.MessagePreview,
+                        FailureMessage = x.FailureMessage,
+                        CompletedAtUtc = x.CompletedAtUtc
+                    }).ToList()
+                },
+                Items = items.Select(x => new ChannelDispatchAuditListItemVm
+                {
+                    Id = x.Id,
+                    Channel = x.Channel,
+                    Provider = x.Provider,
+                    FlowKey = x.FlowKey,
+                    BusinessId = x.BusinessId,
+                    RecipientAddress = x.RecipientAddress,
+                    MessagePreview = x.MessagePreview,
+                    Status = x.Status,
+                    AttemptedAtUtc = x.AttemptedAtUtc,
+                    CompletedAtUtc = x.CompletedAtUtc,
+                    FailureMessage = x.FailureMessage,
+                    NeedsOperatorFollowUp = x.NeedsOperatorFollowUp
+                }).ToList(),
+                PageSizeItems = BuildPageSizeItems(pageSize),
+                ChannelItems = BuildChannelItems(channel),
+                FlowItems = BuildChannelFlowItems(flowKey),
+                StatusItems = BuildAuditStatusItems(status)
+            };
+
+            return RenderChannelAuditsWorkspace(vm);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RetryEmailAudit(
@@ -414,6 +634,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             int page = 1,
             int pageSize = 20,
             string? query = null,
+            string? recipientEmail = null,
             string? status = null,
             string? flowKey = null,
             bool stalePendingOnly = false,
@@ -423,6 +644,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             bool retryReadyOnly = false,
             bool retryBlockedOnly = false,
             bool highChainVolumeOnly = false,
+            bool chainFollowUpOnly = false,
+            bool chainResolvedOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
@@ -446,6 +669,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     page,
                     pageSize,
                     query,
+                    recipientEmail,
                     status,
                     flowKey,
                     stalePendingOnly,
@@ -455,6 +679,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     retryReadyOnly,
                     retryBlockedOnly,
                     highChainVolumeOnly,
+                    chainFollowUpOnly,
+                    chainResolvedOnly,
                     businessId
                 });
         }
@@ -481,21 +707,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 return RedirectOrHtmx(nameof(Index), new { });
             }
 
+            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
+            var placeholders = BuildCommunicationTestPlaceholders(
+                channel: "Email",
+                requestedBy: requestedBy,
+                attemptedAtUtc: DateTime.UtcNow,
+                testTarget: settings.CommunicationTestInboxEmail,
+                transportState: emailTransportConfigured ? "Ready" : "Not ready");
             var prefix = string.IsNullOrWhiteSpace(settings.TransactionalEmailSubjectPrefix)
                 ? string.Empty
                 : $"{settings.TransactionalEmailSubjectPrefix.Trim()} ";
-            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
-            var subject = $"{prefix}Darwin Communication Test";
-            var htmlBody = $@"
-<p>This is a Darwin WebAdmin communication test email.</p>
-<ul>
-  <li><strong>Requested by:</strong> {System.Net.WebUtility.HtmlEncode(requestedBy)}</li>
-  <li><strong>Attempted at (UTC):</strong> {System.DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}</li>
-  <li><strong>SMTP configured:</strong> {(emailTransportConfigured ? "Yes" : "No")}</li>
-  <li><strong>Transactional subject prefix:</strong> {System.Net.WebUtility.HtmlEncode(settings.TransactionalEmailSubjectPrefix ?? "(none)")}</li>
-  <li><strong>Test inbox:</strong> {System.Net.WebUtility.HtmlEncode(settings.CommunicationTestInboxEmail)}</li>
-</ul>
-<p>This test is intentionally sent only to the configured communication test inbox.</p>";
+            var subject = prefix + RenderTemplate(
+                settings.CommunicationTestEmailSubjectTemplate,
+                "Darwin communication test for {channel}",
+                placeholders);
+            var htmlBody = RenderTemplate(
+                settings.CommunicationTestEmailBodyTemplate,
+                "<p>This is a Darwin {channel} communication test.</p><ul><li><strong>Requested by:</strong> {requested_by}</li><li><strong>Attempted at (UTC):</strong> {attempted_at_utc}</li><li><strong>Target:</strong> {test_target}</li><li><strong>Transport state:</strong> {transport_state}</li></ul><p>This diagnostic is intended only for the configured communication test target.</p>",
+                placeholders);
 
             await _emailSender.SendAsync(
                 settings.CommunicationTestInboxEmail!,
@@ -508,6 +737,94 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 }).ConfigureAwait(false);
 
             TempData["Success"] = $"Communication test email sent to {settings.CommunicationTestInboxEmail}.";
+            return RedirectOrHtmx(nameof(Index), new { });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendTestSms(CancellationToken ct = default)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var smsTransportConfigured = settings.SmsEnabled &&
+                                         !string.IsNullOrWhiteSpace(settings.SmsProvider) &&
+                                         !string.IsNullOrWhiteSpace(settings.SmsFromPhoneE164);
+
+            if (!smsTransportConfigured)
+            {
+                TempData["Error"] = "SMS transport is not ready. Complete SMS provider settings before sending a test SMS.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.CommunicationTestSmsRecipientE164))
+            {
+                TempData["Error"] = "Communication test SMS recipient is not configured.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
+            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
+            var text = RenderTemplate(
+                settings.CommunicationTestSmsTemplate,
+                "Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.",
+                BuildCommunicationTestPlaceholders(
+                    channel: "SMS",
+                    requestedBy: requestedBy,
+                    attemptedAtUtc: DateTime.UtcNow,
+                    testTarget: settings.CommunicationTestSmsRecipientE164,
+                    transportState: smsTransportConfigured ? "Ready" : "Not ready"));
+            await _smsSender.SendAsync(
+                settings.CommunicationTestSmsRecipientE164,
+                text,
+                ct,
+                new ChannelDispatchContext
+                {
+                    FlowKey = "AdminCommunicationTest"
+                }).ConfigureAwait(false);
+
+            TempData["Success"] = $"Communication test SMS sent to {settings.CommunicationTestSmsRecipientE164}.";
+            return RedirectOrHtmx(nameof(Index), new { });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendTestWhatsApp(CancellationToken ct = default)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            var whatsAppTransportConfigured = settings.WhatsAppEnabled &&
+                                              !string.IsNullOrWhiteSpace(settings.WhatsAppBusinessPhoneId) &&
+                                              !string.IsNullOrWhiteSpace(settings.WhatsAppAccessToken);
+
+            if (!whatsAppTransportConfigured)
+            {
+                TempData["Error"] = "WhatsApp transport is not ready. Complete WhatsApp provider settings before sending a test message.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.CommunicationTestWhatsAppRecipientE164))
+            {
+                TempData["Error"] = "Communication test WhatsApp recipient is not configured.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
+
+            var requestedBy = User?.Identity?.Name ?? "WebAdmin operator";
+            var text = RenderTemplate(
+                settings.CommunicationTestWhatsAppTemplate,
+                "Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.",
+                BuildCommunicationTestPlaceholders(
+                    channel: "WhatsApp",
+                    requestedBy: requestedBy,
+                    attemptedAtUtc: DateTime.UtcNow,
+                    testTarget: settings.CommunicationTestWhatsAppRecipientE164,
+                    transportState: whatsAppTransportConfigured ? "Ready" : "Not ready"));
+            await _whatsAppSender.SendTextAsync(
+                settings.CommunicationTestWhatsAppRecipientE164,
+                text,
+                ct,
+                new ChannelDispatchContext
+                {
+                    FlowKey = "AdminCommunicationTest"
+                }).ConfigureAwait(false);
+
+            TempData["Success"] = $"Communication test WhatsApp message sent to {settings.CommunicationTestWhatsAppRecipientE164}.";
             return RedirectOrHtmx(nameof(Index), new { });
         }
 
@@ -545,6 +862,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             }
 
             return View("EmailAudits", vm);
+        }
+
+        private IActionResult RenderChannelAuditsWorkspace(ChannelDispatchAuditsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/BusinessCommunications/ChannelAudits.cshtml", vm);
+            }
+
+            return View("ChannelAudits", vm);
         }
 
         private IActionResult RedirectOrHtmx(string actionName, object routeValues)
@@ -601,6 +928,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             yield return new SelectListItem("Admin Communication Test", "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", System.StringComparison.OrdinalIgnoreCase));
         }
 
+        private static IEnumerable<SelectListItem> BuildChannelItems(string? selectedChannel)
+        {
+            yield return new SelectListItem("All channels", string.Empty, string.IsNullOrWhiteSpace(selectedChannel));
+            yield return new SelectListItem("SMS", "SMS", string.Equals(selectedChannel, "SMS", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem("WhatsApp", "WhatsApp", string.Equals(selectedChannel, "WhatsApp", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static IEnumerable<SelectListItem> BuildChannelFlowItems(string? selectedFlowKey)
+        {
+            yield return new SelectListItem("All channel flows", string.Empty, string.IsNullOrWhiteSpace(selectedFlowKey));
+            yield return new SelectListItem("Phone Verification", "PhoneVerification", string.Equals(selectedFlowKey, "PhoneVerification", StringComparison.OrdinalIgnoreCase));
+            yield return new SelectListItem("Admin Communication Test", "AdminCommunicationTest", string.Equals(selectedFlowKey, "AdminCommunicationTest", StringComparison.OrdinalIgnoreCase));
+        }
+
         private static List<BuiltInCommunicationFlowVm> BuildBuiltInFlows()
         {
             return new List<BuiltInCommunicationFlowVm>
@@ -634,11 +975,20 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 },
                 new()
                 {
+                    Name = "Phone Verification",
+                    Channel = "SMS / WhatsApp",
+                    Trigger = "Current user requests mobile verification",
+                    DeliveryPath = "Twilio SMS or WhatsApp Cloud API via provider-backed senders",
+                    CurrentImplementationStatus = "Live, token-based mobile verification with customizable text templates",
+                    NextStep = "Extend into richer delivery history and channel policy analytics"
+                },
+                new()
+                {
                     Name = "Admin Communication Test",
-                    Channel = "Email",
+                    Channel = "Email / SMS / WhatsApp",
                     Trigger = "Manual operator validation from WebAdmin",
-                    DeliveryPath = "SMTP via IEmailSender to the configured test inbox only",
-                    CurrentImplementationStatus = "Live, operator-safe diagnostic action",
+                    DeliveryPath = "Configured channel transport to operator test targets only",
+                    CurrentImplementationStatus = "Live, operator-safe diagnostic actions for configured channels",
                     NextStep = "Later fold into Communication Core test/delivery diagnostics"
                 },
                 new()
@@ -655,9 +1005,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Name = "SMS and WhatsApp Test Targets",
                     Channel = "SMS / WhatsApp",
                     Trigger = "Operator-side staged rollout validation",
-                    DeliveryPath = "Configuration only; no shared test-send workflow implemented yet",
-                    CurrentImplementationStatus = "Configured in site settings for visibility and later remediation planning",
-                    NextStep = "Add provider-backed test and delivery diagnostics when multi-channel Communication Core lands"
+                    DeliveryPath = "Provider-backed test send actions from Business Communications",
+                    CurrentImplementationStatus = "Live, operator-safe transport validation with configured test recipients",
+                    NextStep = "Extend from transport validation into richer multi-channel delivery history"
                 }
             };
         }
@@ -699,7 +1049,62 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     Capability = "Channel Test Targets",
                     CurrentState = "Email, SMS, and WhatsApp test recipients are now configurable in site settings",
                     OperatorVisibility = "Workspace shows whether each channel has a safe test target before go-live validation",
-                    NextStep = "Add provider-backed test-send actions only after channel-specific delivery handling is in place"
+                    NextStep = "Keep expanding from transport tests into richer multi-channel delivery history"
+                }
+            };
+        }
+
+        private static List<CommunicationChannelOpsVm> BuildChannelOperations(SiteSettingDto settings)
+        {
+            var emailReady = settings.SmtpEnabled &&
+                             !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
+                             settings.SmtpPort.HasValue &&
+                             !string.IsNullOrWhiteSpace(settings.SmtpFromAddress);
+            var smsReady = settings.SmsEnabled &&
+                           !string.IsNullOrWhiteSpace(settings.SmsProvider) &&
+                           !string.IsNullOrWhiteSpace(settings.SmsFromPhoneE164);
+            var whatsAppReady = settings.WhatsAppEnabled &&
+                                !string.IsNullOrWhiteSpace(settings.WhatsAppBusinessPhoneId) &&
+                                !string.IsNullOrWhiteSpace(settings.WhatsAppAccessToken);
+
+            return new List<CommunicationChannelOpsVm>
+            {
+                new()
+                {
+                    Channel = "Email",
+                    CurrentState = emailReady ? "Live transport and live transactional flows" : "Transport not ready",
+                    LiveFlows = "Business invitation, account activation, password reset, admin communication test",
+                    SafeOperatorActions = emailReady
+                        ? "Send test email, review failed audits, controlled retry for supported live flows"
+                        : "Complete SMTP and test-inbox settings before relying on email follow-up",
+                    RiskBoundary = "Do not treat the audit queue as a blind replay engine; only supported flows can retry safely.",
+                    NextStep = "Move deeper into richer delivery-log and template CRUD."
+                },
+                new()
+                {
+                    Channel = "SMS",
+                    CurrentState = smsReady ? "Provider-backed transport is live" : "Transport not ready",
+                    LiveFlows = "Phone verification, operator test SMS",
+                    SafeOperatorActions = smsReady
+                        ? "Send test SMS and use canonical phone-verification flow"
+                        : "Finish provider credentials and test-recipient setup",
+                    RiskBoundary = settings.PhoneVerificationAllowFallback
+                        ? $"SMS is not yet a generic notification bus; it is currently verification-first and may be used as fallback when {settings.PhoneVerificationPreferredChannel ?? "Sms"} is unavailable."
+                        : "SMS is not yet a generic notification bus; live use is currently verification-first, not broad campaign or alert fan-out.",
+                    NextStep = "Add broader delivery history and channel-policy visibility when multi-channel delivery logs deepen."
+                },
+                new()
+                {
+                    Channel = "WhatsApp",
+                    CurrentState = whatsAppReady ? "Provider-backed transport is live" : "Transport not ready",
+                    LiveFlows = "Phone verification, operator test WhatsApp",
+                    SafeOperatorActions = whatsAppReady
+                        ? "Send test WhatsApp and use canonical phone-verification flow"
+                        : "Finish WhatsApp Cloud API credentials and test-recipient setup",
+                    RiskBoundary = settings.PhoneVerificationAllowFallback
+                        ? $"WhatsApp is intentionally narrow today: safe verification and operator transport validation, with fallback allowed when {settings.PhoneVerificationPreferredChannel ?? "Sms"} cannot be used."
+                        : "WhatsApp is intentionally narrow today: safe verification and operator transport validation, not a generic alert/replay surface.",
+                    NextStep = "Expand into broader delivery telemetry only after message-policy and history depth are stronger."
                 }
             };
         }
@@ -755,18 +1160,33 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 },
                 new()
                 {
+                    FlowName = "Phone Verification",
+                    TemplateSurface = "Site-setting text template fields feeding the current-user mobile verification handler",
+                    SubjectSource = "Not used for SMS/WhatsApp code delivery",
+                    BodySource = "PhoneVerificationSmsTemplate + PhoneVerificationWhatsAppTemplate",
+                    CurrentSubjectTemplate = "No subject surface",
+                    CurrentBodyTemplate = $"{SummarizeTemplate(settings.PhoneVerificationSmsTemplate, "Your Darwin verification code is {token}. It expires at {expires_at_utc} UTC.")} / {SummarizeTemplate(settings.PhoneVerificationWhatsAppTemplate, "Confirm your Darwin mobile number with code {token}. It expires at {expires_at_utc} UTC.")}",
+                    SupportedTokens = "{phone_e164}, {token}, {expires_at_utc}",
+                    OperatorControl = "Operators can configure both SMS and WhatsApp text templates while backend policy picks the preferred or fallback channel for Web and Mobile clients.",
+                    AuditFlowKey = string.Empty,
+                    OperatorActionLabel = "Open Communication Policy",
+                    OperatorActionTarget = "SiteSettings",
+                    NextStep = "Expand from policy-driven delivery into richer multi-channel history so verification incidents can be audited across SMS and WhatsApp."
+                },
+                new()
+                {
                     FlowName = "Admin Communication Test",
-                    TemplateSurface = "Operator-only diagnostic email",
-                    SubjectSource = "Transactional subject prefix + fixed diagnostic subject",
-                    BodySource = "Inline HTML generated in WebAdmin for the configured test inbox only",
-                    CurrentSubjectTemplate = "Fixed diagnostic subject in WebAdmin",
-                    CurrentBodyTemplate = "Fixed operator test body in WebAdmin",
-                    SupportedTokens = "Not tokenized",
-                    OperatorControl = "Operators can send the test email when SMTP and the test inbox are configured.",
+                    TemplateSurface = "Site-setting templates for operator-side diagnostic email, SMS, and WhatsApp tests",
+                    SubjectSource = "Transactional subject prefix + CommunicationTestEmailSubjectTemplate",
+                    BodySource = "CommunicationTestEmailBodyTemplate + CommunicationTestSmsTemplate + CommunicationTestWhatsAppTemplate",
+                    CurrentSubjectTemplate = SummarizeTemplate(settings.CommunicationTestEmailSubjectTemplate, "Darwin communication test for {channel}"),
+                    CurrentBodyTemplate = $"{SummarizeTemplate(settings.CommunicationTestEmailBodyTemplate, "<p>This is a Darwin {channel} communication test.</p>")} / {SummarizeTemplate(settings.CommunicationTestSmsTemplate, "Darwin SMS transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.")} / {SummarizeTemplate(settings.CommunicationTestWhatsAppTemplate, "Darwin WhatsApp transport test requested by {requested_by} at {attempted_at_utc} UTC for {test_target}.")}",
+                    SupportedTokens = "{channel}, {requested_by}, {attempted_at_utc}, {test_target}, {transport_state}",
+                    OperatorControl = "Operators can customize and send channel-specific diagnostic messages when the corresponding transport and test target are configured.",
                     AuditFlowKey = "AdminCommunicationTest",
                     OperatorActionLabel = "Open Audit Log",
                     OperatorActionTarget = "EmailAudits",
-                    NextStep = "Fold into multi-channel diagnostic templates once Communication Core test sends exist."
+                    NextStep = "Keep these templates aligned with rollout diagnostics so email, SMS, and WhatsApp tests validate the real message family."
                 },
                 new()
                 {
@@ -790,6 +1210,34 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             var value = string.IsNullOrWhiteSpace(template) ? fallback : template.Trim();
             return value.Length <= 120 ? value : string.Concat(value.AsSpan(0, 117), "...");
+        }
+
+        private static Dictionary<string, string?> BuildCommunicationTestPlaceholders(
+            string channel,
+            string requestedBy,
+            DateTime attemptedAtUtc,
+            string? testTarget,
+            string transportState)
+        {
+            return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["channel"] = channel,
+                ["requested_by"] = requestedBy,
+                ["attempted_at_utc"] = attemptedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"),
+                ["test_target"] = testTarget,
+                ["transport_state"] = transportState
+            };
+        }
+
+        private static string RenderTemplate(string? template, string fallback, IReadOnlyDictionary<string, string?> placeholders)
+        {
+            var output = string.IsNullOrWhiteSpace(template) ? fallback : template;
+            foreach (var pair in placeholders)
+            {
+                output = output.Replace("{" + pair.Key + "}", pair.Value ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return output;
         }
 
         private static List<CommunicationResendPolicyVm> BuildResendPolicies()
@@ -831,14 +1279,25 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 },
                 new()
                 {
+                    FlowName = "Phone Verification",
+                    CurrentSafeAction = "Request a fresh phone-verification code through the canonical profile flow after confirming the current phone number and chosen channel.",
+                    GenericRetryStatus = "No audit-driven retry yet; re-request only through the live verification flow.",
+                    OperatorEntryPoint = "Profile/mobile verification surfaces and site settings communication policy.",
+                    AuditFlowKey = string.Empty,
+                    OperatorActionLabel = "Open Communication Policy",
+                    OperatorActionTarget = "SiteSettings",
+                    EscalationRule = "Do not manually replay old codes. If SMS or WhatsApp delivery fails repeatedly, fix the transport or switch channel before issuing another code."
+                },
+                new()
+                {
                     FlowName = "Admin Communication Test",
-                    CurrentSafeAction = "Rerun the diagnostic only to the configured test inbox after fixing SMTP or policy settings.",
+                    CurrentSafeAction = "Rerun the diagnostic only to the configured channel test target after fixing provider or policy settings.",
                     GenericRetryStatus = "No retry queue; manual rerun only.",
                     OperatorEntryPoint = "Business Communications workspace.",
                     AuditFlowKey = "AdminCommunicationTest",
                     OperatorActionLabel = "Open Audit Log",
                     OperatorActionTarget = "EmailAudits",
-                    EscalationRule = "Never switch the diagnostic to live recipients. Keep tests scoped to the configured test target."
+                    EscalationRule = "Never switch diagnostics to live recipients. Keep tests scoped to the configured test target for each channel."
                 },
                 new()
                 {

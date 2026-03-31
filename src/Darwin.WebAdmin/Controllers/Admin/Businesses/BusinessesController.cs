@@ -213,7 +213,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
             var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct).ConfigureAwait(false);
-            var (failedEmails, _) = await _getEmailDispatchAuditsPage
+            var (failedEmails, _, _) = await _getEmailDispatchAuditsPage
                 .HandleAsync(
                     page: 1,
                     pageSize: 8,
@@ -318,7 +318,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> SupportQueueFailedEmailsFragment(CancellationToken ct = default)
         {
-            var (failedEmails, _) = await _getEmailDispatchAuditsPage
+            var (failedEmails, _, _) = await _getEmailDispatchAuditsPage
                 .HandleAsync(
                     page: 1,
                     pageSize: 8,

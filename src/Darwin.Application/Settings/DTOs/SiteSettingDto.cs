@@ -226,11 +226,19 @@ namespace Darwin.Application.Settings.DTOs
         public string? CommunicationTestInboxEmail { get; set; }
         public string? CommunicationTestSmsRecipientE164 { get; set; }
         public string? CommunicationTestWhatsAppRecipientE164 { get; set; }
+        public string? CommunicationTestEmailSubjectTemplate { get; set; }
+        public string? CommunicationTestEmailBodyTemplate { get; set; }
+        public string? CommunicationTestSmsTemplate { get; set; }
+        public string? CommunicationTestWhatsAppTemplate { get; set; }
         public string? BusinessInvitationEmailSubjectTemplate { get; set; }
         public string? BusinessInvitationEmailBodyTemplate { get; set; }
         public string? AccountActivationEmailSubjectTemplate { get; set; }
         public string? AccountActivationEmailBodyTemplate { get; set; }
         public string? PasswordResetEmailSubjectTemplate { get; set; }
         public string? PasswordResetEmailBodyTemplate { get; set; }
+        public string? PhoneVerificationSmsTemplate { get; set; }
+        public string? PhoneVerificationWhatsAppTemplate { get; set; }
+        public string? PhoneVerificationPreferredChannel { get; set; }
+        public bool PhoneVerificationAllowFallback { get; set; }
     }
 }

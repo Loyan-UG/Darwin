@@ -181,12 +181,20 @@ namespace Darwin.Application.Settings.Commands
             s.CommunicationTestInboxEmail = dto.CommunicationTestInboxEmail;
             s.CommunicationTestSmsRecipientE164 = dto.CommunicationTestSmsRecipientE164;
             s.CommunicationTestWhatsAppRecipientE164 = dto.CommunicationTestWhatsAppRecipientE164;
+            s.CommunicationTestEmailSubjectTemplate = dto.CommunicationTestEmailSubjectTemplate;
+            s.CommunicationTestEmailBodyTemplate = dto.CommunicationTestEmailBodyTemplate;
+            s.CommunicationTestSmsTemplate = dto.CommunicationTestSmsTemplate;
+            s.CommunicationTestWhatsAppTemplate = dto.CommunicationTestWhatsAppTemplate;
             s.BusinessInvitationEmailSubjectTemplate = dto.BusinessInvitationEmailSubjectTemplate;
             s.BusinessInvitationEmailBodyTemplate = dto.BusinessInvitationEmailBodyTemplate;
             s.AccountActivationEmailSubjectTemplate = dto.AccountActivationEmailSubjectTemplate;
             s.AccountActivationEmailBodyTemplate = dto.AccountActivationEmailBodyTemplate;
             s.PasswordResetEmailSubjectTemplate = dto.PasswordResetEmailSubjectTemplate;
             s.PasswordResetEmailBodyTemplate = dto.PasswordResetEmailBodyTemplate;
+            s.PhoneVerificationSmsTemplate = dto.PhoneVerificationSmsTemplate;
+            s.PhoneVerificationWhatsAppTemplate = dto.PhoneVerificationWhatsAppTemplate;
+            s.PhoneVerificationPreferredChannel = dto.PhoneVerificationPreferredChannel;
+            s.PhoneVerificationAllowFallback = dto.PhoneVerificationAllowFallback;
 
             await _db.SaveChangesAsync(ct);
         }
