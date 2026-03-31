@@ -422,6 +422,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Billing
                 BusinessId = businessId,
                 Query = q ?? string.Empty,
                 QueueFilter = queue,
+                Webhooks = await BuildBillingWebhookOpsSummaryVmAsync(ct).ConfigureAwait(false),
                 Summary = businessId.HasValue
                     ? await BuildRefundOpsSummaryVmAsync(businessId.Value, ct).ConfigureAwait(false)
                     : new RefundOpsSummaryVm(),

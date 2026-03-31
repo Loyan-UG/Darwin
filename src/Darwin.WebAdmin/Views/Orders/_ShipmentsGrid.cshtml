@@ -86,6 +86,15 @@
                                 }
                             </td>
                             <td class="text-end">
+                                @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned || s.NeedsCarrierReview)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            type="button"
+                                            data-bs-toggle="tab"
+                                            data-bs-target="#refunds">
+                                        Review Refunds
+                                    </button>
+                                }
                                 @if (s.Status == Darwin.Domain.Enums.ShipmentStatus.Returned && Model.DefaultRefundPaymentId.HasValue)
                                 {
                                     <a asp-controller="Orders"

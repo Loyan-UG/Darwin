@@ -26,6 +26,62 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Webhook Anomaly Visibility</span>
+        <a asp-action="Webhooks"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Webhooks", "Billing")"
+           hx-target="#billing-refunds-workspace-shell"
+           hx-swap="outerHTML">Open Webhook Queue</a>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Payment Exceptions</div>
+                    <div class="fs-4 fw-semibold">@Model.Webhooks.PaymentExceptionCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Dispute Signals</div>
+                    <div class="fs-4 fw-semibold">@Model.Webhooks.DisputeSignalCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Retry Pending</div>
+                    <div class="fs-4 fw-semibold">@Model.Webhooks.RetryPendingCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Failed Deliveries</div>
+                    <div class="fs-4 fw-semibold">@Model.Webhooks.FailedDeliveryCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            <a asp-action="Webhooks"
+               asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+               class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+               hx-target="#billing-refunds-workspace-shell"
+               hx-swap="outerHTML">Review Payment Exceptions</a>
+            <a asp-action="Webhooks"
+               asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
+               class="btn btn-sm btn-outline-dark"
+               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+               hx-target="#billing-refunds-workspace-shell"
+               hx-swap="outerHTML">Review Dispute Signals</a>
+        </div>
+        <div class="small text-muted mt-3">
+            Refund triage may depend on callback-level evidence. Use these subsets when Stripe refund or charge behavior looks inconsistent with the queue row alone.
+        </div>
+    </div>
+</div>
+
 <div class="row g-3 mb-3">
     <div class="col-md-3">
         <div class="border rounded p-3 h-100">
@@ -193,6 +249,15 @@
                     <td class="text-end">@item.Currency @((item.AmountMinor / 100M).ToString("0.00"))</td>
                     <td class="text-end">
                         <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-secondary">Payment</a>
+                        @if (item.IsStripe && item.NeedsSupportAttention)
+                        {
+                            <a asp-action="Webhooks"
+                               asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+                               hx-target="#billing-refunds-workspace-shell"
+                               hx-swap="outerHTML">Webhook Exceptions</a>
+                        }
                         <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-primary">Order</a>
                     </td>
                 </tr>

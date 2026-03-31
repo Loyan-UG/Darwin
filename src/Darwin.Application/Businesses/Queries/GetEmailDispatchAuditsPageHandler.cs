@@ -29,6 +29,8 @@ namespace Darwin.Application.Businesses.Queries
             string? query = null,
             string? status = null,
             string? flowKey = null,
+            bool stalePendingOnly = false,
+            bool businessLinkedFailuresOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
@@ -67,6 +69,17 @@ namespace Darwin.Application.Businesses.Queries
             {
                 var normalized = flowKey.Trim();
                 baseQuery = baseQuery.Where(x => x.Audit.FlowKey == normalized);
+            }
+
+            if (stalePendingOnly)
+            {
+                var stalePendingThresholdUtc = DateTime.UtcNow.AddMinutes(-15);
+                baseQuery = baseQuery.Where(x => x.Audit.Status == "Pending" && x.Audit.AttemptedAtUtc <= stalePendingThresholdUtc);
+            }
+
+            if (businessLinkedFailuresOnly)
+            {
+                baseQuery = baseQuery.Where(x => x.Audit.Status == "Failed" && x.Audit.BusinessId != null);
             }
 
             if (businessId.HasValue)
@@ -109,6 +122,7 @@ namespace Darwin.Application.Businesses.Queries
             }
 
             var recentThresholdUtc = DateTime.UtcNow.AddHours(-24);
+            var stalePendingThresholdUtc = DateTime.UtcNow.AddMinutes(-15);
 
             return new EmailDispatchAuditSummaryDto
             {
@@ -116,6 +130,8 @@ namespace Darwin.Application.Businesses.Queries
                 FailedCount = await audits.CountAsync(x => x.Status == "Failed", ct).ConfigureAwait(false),
                 SentCount = await audits.CountAsync(x => x.Status == "Sent", ct).ConfigureAwait(false),
                 PendingCount = await audits.CountAsync(x => x.Status == "Pending", ct).ConfigureAwait(false),
+                StalePendingCount = await audits.CountAsync(x => x.Status == "Pending" && x.AttemptedAtUtc <= stalePendingThresholdUtc, ct).ConfigureAwait(false),
+                BusinessLinkedFailureCount = await audits.CountAsync(x => x.Status == "Failed" && x.BusinessId != null, ct).ConfigureAwait(false),
                 Recent24HourCount = await audits.CountAsync(x => x.AttemptedAtUtc >= recentThresholdUtc, ct).ConfigureAwait(false),
                 FailedInvitationCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "BusinessInvitation", ct).ConfigureAwait(false),
                 FailedActivationCount = await audits.CountAsync(x => x.Status == "Failed" && x.FlowKey == "AccountActivation", ct).ConfigureAwait(false),

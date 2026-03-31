@@ -153,6 +153,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ExceptionNote = x.ExceptionNote,
                     AttentionDelayHours = x.AttentionDelayHours,
                     TrackingGraceHours = x.TrackingGraceHours,
+                    DefaultRefundPaymentId = x.DefaultRefundPaymentId,
+                    HasRefundablePayment = x.HasRefundablePayment,
                     RowVersion = x.RowVersion
                 }).ToList()
             };
@@ -429,6 +431,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Orders
                     ExceptionNote = x.ExceptionNote,
                     AttentionDelayHours = x.AttentionDelayHours,
                     TrackingGraceHours = x.TrackingGraceHours,
+                    DefaultRefundPaymentId = x.DefaultRefundPaymentId,
+                    HasRefundablePayment = x.HasRefundablePayment,
                     RowVersion = x.RowVersion
                 }).ToList()
             };

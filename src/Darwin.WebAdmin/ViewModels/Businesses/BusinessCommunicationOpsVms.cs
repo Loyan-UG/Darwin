@@ -141,7 +141,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string Query { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string FlowKey { get; set; } = string.Empty;
+        public bool StalePendingOnly { get; set; }
+        public bool BusinessLinkedFailuresOnly { get; set; }
         public Guid? BusinessId { get; set; }
+        public bool CanSendTestEmail { get; set; }
         public EmailDispatchAuditSummaryVm Summary { get; set; } = new();
         public List<EmailDispatchAuditListItemVm> Items { get; set; } = new();
         public List<CommunicationFlowPlaybookVm> Playbooks { get; set; } = new();
@@ -156,6 +159,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int FailedCount { get; set; }
         public int SentCount { get; set; }
         public int PendingCount { get; set; }
+        public int StalePendingCount { get; set; }
+        public int BusinessLinkedFailureCount { get; set; }
         public int Recent24HourCount { get; set; }
         public int FailedInvitationCount { get; set; }
         public int FailedActivationCount { get; set; }
@@ -199,6 +204,7 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public bool AdminAlertRoutingConfigured { get; set; }
         public bool TransactionalSubjectPrefixConfigured { get; set; }
         public bool TestInboxConfigured { get; set; }
+        public bool CanSendTestEmail { get; set; }
         public string? TransactionalSubjectPrefix { get; set; }
         public string? TestInboxEmail { get; set; }
         public List<string> ActiveFlowNames { get; set; } = new();

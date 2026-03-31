@@ -26,6 +26,8 @@ namespace Darwin.Application.Businesses.DTOs
         public int FailedCount { get; set; }
         public int SentCount { get; set; }
         public int PendingCount { get; set; }
+        public int StalePendingCount { get; set; }
+        public int BusinessLinkedFailureCount { get; set; }
         public int Recent24HourCount { get; set; }
         public int FailedInvitationCount { get; set; }
         public int FailedActivationCount { get; set; }

@@ -113,7 +113,11 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Webhook Lifecycle Visibility</span>
-        <a asp-action="Webhooks" class="btn btn-sm btn-outline-secondary">Open Webhook Queue</a>
+        <a asp-action="Webhooks"
+           class="btn btn-sm btn-outline-secondary"
+           hx-get="@Url.Action("Webhooks", "Billing")"
+           hx-target="#billing-payments-workspace-shell"
+           hx-swap="outerHTML">Open Webhook Queue</a>
     </div>
     <div class="card-body">
         <div class="row g-3">
@@ -147,6 +151,32 @@
                     <div class="fw-semibold mt-1">@Model.Webhooks.RetryPendingCount</div>
                 </div>
             </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Payment Exceptions</div>
+                    <div class="fw-semibold mt-1">@Model.Webhooks.PaymentExceptionCount</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted small">Dispute Signals</div>
+                    <div class="fw-semibold mt-1">@Model.Webhooks.DisputeSignalCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            <a asp-action="Webhooks"
+               asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+               class="btn btn-sm btn-outline-warning"
+               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+               hx-target="#billing-payments-workspace-shell"
+               hx-swap="outerHTML">Review Payment Exceptions</a>
+            <a asp-action="Webhooks"
+               asp-route-queue="@BillingWebhookDeliveryQueueFilter.DisputeSignals"
+               class="btn btn-sm btn-outline-dark"
+               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.DisputeSignals })"
+               hx-target="#billing-payments-workspace-shell"
+               hx-swap="outerHTML">Review Dispute Signals</a>
         </div>
         <div class="small text-muted mt-3">
             This queue gives callback visibility for phase-1 payment operations. It is intentionally read-oriented and does not claim automated resend or reconciliation completion.
@@ -423,6 +453,15 @@
                            hx-get="@Url.Action("EditPayment", "Billing", new { id = item.Id })"
                            hx-target="#billing-payments-workspace-shell"
                            hx-swap="outerHTML">Edit</a>
+                        @if (item.IsStripe && (item.NeedsReconciliation || string.IsNullOrWhiteSpace(item.ProviderTransactionRef)))
+                        {
+                            <a asp-action="Webhooks"
+                               asp-route-queue="@BillingWebhookDeliveryQueueFilter.PaymentExceptions"
+                               class="btn btn-sm btn-outline-warning"
+                               hx-get="@Url.Action("Webhooks", "Billing", new { queue = BillingWebhookDeliveryQueueFilter.PaymentExceptions })"
+                               hx-target="#billing-payments-workspace-shell"
+                               hx-swap="outerHTML">Webhook Exceptions</a>
+                        }
                         @if (item.OrderId.HasValue)
                         {
                             <a asp-controller="Orders" asp-action="AddRefund" asp-route-orderId="@item.OrderId.Value" asp-route-paymentId="@item.Id" class="btn btn-sm btn-outline-danger">Refund</a>

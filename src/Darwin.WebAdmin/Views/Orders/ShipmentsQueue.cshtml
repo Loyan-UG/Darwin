@@ -300,6 +300,26 @@
                                hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
                                 <i class="fa-solid fa-receipt"></i> Order
                             </a>
+                            @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned || item.NeedsCarrierReview)
+                            {
+                                <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" asp-fragment="refunds" class="btn btn-sm btn-outline-danger"
+                                   hx-get="@Url.Action("Details", "Orders", new { id = item.OrderId })" hx-target="#shipments-queue-workspace-shell" hx-swap="outerHTML">
+                                    <i class="fa-solid fa-rotate-left"></i> Refunds
+                                </a>
+                            }
+                            @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Returned && item.DefaultRefundPaymentId.HasValue)
+                            {
+                                <a asp-controller="Orders"
+                                   asp-action="AddRefund"
+                                   asp-route-orderId="@item.OrderId"
+                                   asp-route-paymentId="@item.DefaultRefundPaymentId"
+                                   class="btn btn-sm btn-danger"
+                                   hx-get="@Url.Action("AddRefund", "Orders", new { orderId = item.OrderId, paymentId = item.DefaultRefundPaymentId })"
+                                   hx-target="#shipments-queue-workspace-shell"
+                                   hx-swap="outerHTML">
+                                    <i class="fa-solid fa-rotate-left"></i> Start Return Refund
+                                </a>
+                            }
                             @if (item.Status == Darwin.Domain.Enums.ShipmentStatus.Pending || item.Status == Darwin.Domain.Enums.ShipmentStatus.Packed)
                             {
                                 <a asp-controller="Orders" asp-action="AddShipment" asp-route-orderId="@item.OrderId" class="btn btn-sm btn-outline-primary"

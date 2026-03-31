@@ -350,6 +350,8 @@ namespace Darwin.Application.Orders.DTOs
         public string ExceptionNote { get; set; } = string.Empty;
         public int AttentionDelayHours { get; set; }
         public int TrackingGraceHours { get; set; }
+        public Guid? DefaultRefundPaymentId { get; set; }
+        public bool HasRefundablePayment { get; set; }
 
         /// <summary>RowVersion for optimistic concurrency in inline operations.</summary>
         public byte[] RowVersion { get; set; } = Array.Empty<byte>();

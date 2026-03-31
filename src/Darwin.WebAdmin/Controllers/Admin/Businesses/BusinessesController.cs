@@ -213,7 +213,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         {
             var summary = await _getBusinessSupportSummary.HandleAsync(null, ct).ConfigureAwait(false);
             var (attentionBusinesses, _) = await _getBusinessesPage.HandleAsync(1, 10, null, null, true, ct).ConfigureAwait(false);
-            var (failedEmails, _) = await _getEmailDispatchAuditsPage.HandleAsync(1, 8, null, "Failed", null, null, ct).ConfigureAwait(false);
+            var (failedEmails, _) = await _getEmailDispatchAuditsPage
+                .HandleAsync(
+                    page: 1,
+                    pageSize: 8,
+                    query: null,
+                    status: "Failed",
+                    flowKey: null,
+                    stalePendingOnly: false,
+                    businessLinkedFailuresOnly: false,
+                    businessId: null,
+                    ct: ct)
+                .ConfigureAwait(false);
 
             var vm = new BusinessSupportQueueVm
             {
@@ -303,7 +314,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
         public async Task<IActionResult> SupportQueueFailedEmailsFragment(CancellationToken ct = default)
         {
-            var (failedEmails, _) = await _getEmailDispatchAuditsPage.HandleAsync(1, 8, null, "Failed", null, null, ct).ConfigureAwait(false);
+            var (failedEmails, _) = await _getEmailDispatchAuditsPage
+                .HandleAsync(
+                    page: 1,
+                    pageSize: 8,
+                    query: null,
+                    status: "Failed",
+                    flowKey: null,
+                    stalePendingOnly: false,
+                    businessLinkedFailuresOnly: false,
+                    businessId: null,
+                    ct: ct)
+                .ConfigureAwait(false);
             var vm = failedEmails.Select(x => new BusinessSupportFailedEmailVm
             {
                 Id = x.Id,

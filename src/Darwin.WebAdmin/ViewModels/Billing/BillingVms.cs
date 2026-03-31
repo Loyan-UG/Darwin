@@ -52,6 +52,7 @@ namespace Darwin.WebAdmin.ViewModels.Billing
         public Guid? BusinessId { get; set; }
         public string Query { get; set; } = string.Empty;
         public BillingRefundQueueFilter? QueueFilter { get; set; }
+        public BillingWebhookOpsSummaryVm Webhooks { get; set; } = new();
         public RefundOpsSummaryVm Summary { get; set; } = new();
         public List<ProviderPlaybookVm> Playbooks { get; set; } = new();
         public List<SelectListItem> BusinessOptions { get; set; } = new();

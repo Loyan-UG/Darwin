@@ -154,6 +154,16 @@
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-profile-shell"
                        hx-swap="outerHTML">Open Communication Policy</a>
+                    @if (Model.CanSendTestEmail)
+                    {
+                        <form asp-action="SendTestEmail" method="post" class="d-inline"
+                              hx-post="@Url.Action("SendTestEmail", "BusinessCommunications")"
+                              hx-target="#business-communication-profile-shell"
+                              hx-swap="outerHTML">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Send Test Email</button>
+                        </form>
+                    }
                 </div>
             </div>
         </div>

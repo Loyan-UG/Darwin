@@ -54,7 +54,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             var summary = await _getSummary.HandleAsync(ct).ConfigureAwait(false);
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var (items, total) = await _getSetupPage.HandleAsync(page, pageSize, query, setupOnly, filter, ct).ConfigureAwait(false);
-            var (emailAudits, _) = await _getEmailDispatchAuditsPage.HandleAsync(1, 10, null, null, null, null, ct).ConfigureAwait(false);
+            var (emailAudits, _) = await _getEmailDispatchAuditsPage
+                .HandleAsync(
+                    page: 1,
+                    pageSize: 10,
+                    query: null,
+                    status: null,
+                    flowKey: null,
+                    stalePendingOnly: false,
+                    businessLinkedFailuresOnly: false,
+                    businessId: null,
+                    ct: ct)
+                .ConfigureAwait(false);
 
             var vm = new BusinessCommunicationOpsVm
             {
@@ -153,7 +164,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 
             var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
             var (recentAudits, _) = await _getEmailDispatchAuditsPage
-                .HandleAsync(1, 5, null, null, null, businessId, ct)
+                .HandleAsync(
+                    page: 1,
+                    pageSize: 5,
+                    query: null,
+                    status: null,
+                    flowKey: null,
+                    stalePendingOnly: false,
+                    businessLinkedFailuresOnly: false,
+                    businessId: businessId,
+                    ct: ct)
                 .ConfigureAwait(false);
             var emailTransportConfigured = settings.SmtpEnabled &&
                                            !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
@@ -197,6 +217,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 AdminAlertRoutingConfigured = adminAlertRoutingConfigured,
                 TransactionalSubjectPrefixConfigured = transactionalSubjectPrefixConfigured,
                 TestInboxConfigured = testInboxConfigured,
+                CanSendTestEmail = emailTransportConfigured && testInboxConfigured,
                 TransactionalSubjectPrefix = settings.TransactionalEmailSubjectPrefix,
                 TestInboxEmail = settings.CommunicationTestInboxEmail,
                 ActiveFlowNames = BuildActiveFlowNames(profile),
@@ -231,10 +252,14 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             string? query = null,
             string? status = null,
             string? flowKey = null,
+            bool stalePendingOnly = false,
+            bool businessLinkedFailuresOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
-            var (items, total) = await _getEmailDispatchAuditsPage.HandleAsync(page, pageSize, query, status, flowKey, businessId, ct).ConfigureAwait(false);
+            var (items, total) = await _getEmailDispatchAuditsPage
+                .HandleAsync(page, pageSize, query, status, flowKey, stalePendingOnly, businessLinkedFailuresOnly, businessId, ct)
+                .ConfigureAwait(false);
             var summary = await _getEmailDispatchAuditsPage.GetSummaryAsync(businessId, ct).ConfigureAwait(false);
 
             var vm = new EmailDispatchAuditsListVm
@@ -245,13 +270,18 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 Query = query ?? string.Empty,
                 Status = status ?? string.Empty,
                 FlowKey = flowKey ?? string.Empty,
+                StalePendingOnly = stalePendingOnly,
+                BusinessLinkedFailuresOnly = businessLinkedFailuresOnly,
                 BusinessId = businessId,
+                CanSendTestEmail = await CanSendTestEmailAsync(ct).ConfigureAwait(false),
                 Summary = new EmailDispatchAuditSummaryVm
                 {
                     TotalCount = summary.TotalCount,
                     FailedCount = summary.FailedCount,
                     SentCount = summary.SentCount,
                     PendingCount = summary.PendingCount,
+                    StalePendingCount = summary.StalePendingCount,
+                    BusinessLinkedFailureCount = summary.BusinessLinkedFailureCount,
                     Recent24HourCount = summary.Recent24HourCount,
                     FailedInvitationCount = summary.FailedInvitationCount,
                     FailedActivationCount = summary.FailedActivationCount,
@@ -384,6 +414,16 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private bool IsHtmxRequest()
         {
             return string.Equals(Request.Headers["HX-Request"], "true", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task<bool> CanSendTestEmailAsync(CancellationToken ct)
+        {
+            var settings = await _siteSettingCache.GetAsync(ct).ConfigureAwait(false);
+            return settings.SmtpEnabled &&
+                   !string.IsNullOrWhiteSpace(settings.SmtpHost) &&
+                   settings.SmtpPort.HasValue &&
+                   !string.IsNullOrWhiteSpace(settings.SmtpFromAddress) &&
+                   !string.IsNullOrWhiteSpace(settings.CommunicationTestInboxEmail);
         }
 
         private static IEnumerable<SelectListItem> BuildFilterItems(BusinessCommunicationSetupFilter selectedFilter)

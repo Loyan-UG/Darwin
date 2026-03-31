@@ -1,6 +1,8 @@
 using Darwin.Application.Abstractions.Persistence;
 using Darwin.Application.Orders.DTOs;
+using Darwin.Domain.Entities.Billing;
 using Darwin.Domain.Entities.Orders;
+using Darwin.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -107,6 +109,14 @@ public sealed class GetShipmentsPageHandler
                 LastCarrierEventAtUtc = s.DeliveredAtUtc ?? s.ShippedAtUtc ?? s.CreatedAtUtc,
                 AttentionDelayHours = attentionDelayHours,
                 TrackingGraceHours = trackingGraceHours,
+                DefaultRefundPaymentId = _db.Set<Payment>()
+                    .Where(p => p.OrderId == s.OrderId &&
+                        (p.Status == PaymentStatus.Captured ||
+                         p.Status == PaymentStatus.Completed ||
+                         p.Status == PaymentStatus.Refunded))
+                    .OrderByDescending(p => p.PaidAtUtc ?? DateTime.MinValue)
+                    .Select(p => (Guid?)p.Id)
+                    .FirstOrDefault(),
                 NeedsCarrierReview =
                     s.Carrier == "DHL" &&
                     ((s.Service == null || s.Service == string.Empty) ||
@@ -119,6 +129,7 @@ public sealed class GetShipmentsPageHandler
 
         foreach (var item in items)
         {
+            item.HasRefundablePayment = item.DefaultRefundPaymentId.HasValue;
             item.OpenAgeHours = Math.Max(0, (int)Math.Floor((nowUtc - item.CreatedAtUtc).TotalHours));
             if (item.ShippedAtUtc.HasValue && !item.DeliveredAtUtc.HasValue)
             {
