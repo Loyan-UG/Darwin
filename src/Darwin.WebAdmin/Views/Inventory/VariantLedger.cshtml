@@ -6,6 +6,7 @@
     ViewData["Title"] = "Inventory Ledger";
 }
 
+<div id="inventory-ledger-workspace-shell">
 <h2 class="mb-3">Inventory Ledger</h2>
 
 <div class="row g-3 mb-3">
@@ -42,19 +43,43 @@
     </div>
 </div>
 
-<form asp-action="VariantLedger" method="get" class="d-flex gap-2 mb-3">
+<form asp-action="VariantLedger" method="get" class="d-flex gap-2 mb-3"
+      hx-get="@Url.Action("VariantLedger", "Inventory")"
+      hx-target="#inventory-ledger-workspace-shell"
+      hx-swap="outerHTML"
+      hx-push-url="true">
     <input type="hidden" name="variantId" value="@Model.VariantId" />
     <input type="hidden" name="warehouseId" value="@Model.WarehouseId" />
     <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
     <button class="btn btn-outline-secondary" type="submit">Filter</button>
-    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Reset</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
+       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId })"
+       hx-target="#inventory-ledger-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Reset</a>
 </form>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Inbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Inbound ? "btn-success" : "btn-outline-success")">Inbound</a>
-    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Outbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Outbound ? "btn-danger" : "btn-outline-danger")">Outbound</a>
-    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reservations" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Reservations ? "btn-warning" : "btn-outline-warning")">Reservations</a>
-    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Inbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Inbound ? "btn-success" : "btn-outline-success")"
+       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Inbound" })"
+       hx-target="#inventory-ledger-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Inbound</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Outbound" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Outbound ? "btn-danger" : "btn-outline-danger")"
+       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Outbound" })"
+       hx-target="#inventory-ledger-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Outbound</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" asp-route-filter="Reservations" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.InventoryLedgerQueueFilter.Reservations ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId, filter = "Reservations" })"
+       hx-target="#inventory-ledger-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Reservations</a>
+    <a asp-action="VariantLedger" asp-route-variantId="@Model.VariantId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("VariantLedger", "Inventory", new { variantId = Model.VariantId, warehouseId = Model.WarehouseId })"
+       hx-target="#inventory-ledger-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Clear Queue Filters</a>
 </div>
 
 <div class="table-responsive">
@@ -97,11 +122,15 @@
        asp-action="VariantLedger"
        asp-route-variantId="@Model.VariantId"
        asp-route-warehouseId="@Model.WarehouseId"
-       asp-route-filter="@Model.Filter">
+       asp-route-filter="@Model.Filter"
+       hx-target="#inventory-ledger-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">
 </pager>
 
 <div class="mt-3">
     <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left"></i> Back
     </a>
+</div>
 </div>

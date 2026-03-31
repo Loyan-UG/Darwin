@@ -145,7 +145,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.CMS
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
         {
             var dto = await _get.HandleAsync(id, ct);
-            if (dto == null) return NotFound();
+            if (dto == null)
+            {
+                TempData["Error"] = "Page not found.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
 
             var vm = new PageEditVm
             {

@@ -22,7 +22,7 @@
     <div class="card-header">Operator Playbooks by Flow</div>
     <div class="card-body">
         <div class="alert alert-secondary">
-            This is a response-planning surface, not a shared retry queue. Use the flow-specific actions below instead of treating failed emails as generic resend jobs.
+            This queue now supports controlled retry only for live invitation, activation, and password-reset flows after safe target resolution. Everything else should still use the flow-specific actions below instead of blind replay.
         </div>
         <div class="row g-3">
             @foreach (var playbook in Model.Playbooks)
@@ -55,36 +55,65 @@
        asp-route-status="Failed"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-danger"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Failed Only</a>
     <a asp-action="EmailAudits"
        asp-route-stalePendingOnly="true"
        asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-warning"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = true, businessLinkedFailuresOnly = false, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = true, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Stale Pending</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-businessLinkedFailuresOnly="true"
        asp-route-stalePendingOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", businessLinkedFailuresOnly = true, stalePendingOnly = false, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", businessLinkedFailuresOnly = true, stalePendingOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Business-linked Failures</a>
+    <a asp-action="EmailAudits"
+       asp-route-status="Failed"
+       asp-route-stalePendingOnly="false"
+       asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="true"
+       asp-route-priorSuccessOnly="false"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = true, priorSuccessOnly = false, businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Repeated Failures</a>
+    <a asp-action="EmailAudits"
+       asp-route-stalePendingOnly="false"
+       asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="true"
+       asp-route-businessId="@Model.BusinessId"
+       class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = true, businessId = Model.BusinessId })"
+       hx-target="#business-communication-audits-workspace-shell"
+       hx-swap="outerHTML">Prior Success Context</a>
     <a asp-action="EmailAudits"
        asp-route-status="Failed"
        asp-route-flowKey="BusinessInvitation"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", stalePendingOnly = false, businessLinkedFailuresOnly = false, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "BusinessInvitation", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Failed Invitations</a>
     <a asp-action="EmailAudits"
@@ -92,9 +121,11 @@
        asp-route-flowKey="AccountActivation"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", stalePendingOnly = false, businessLinkedFailuresOnly = false, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "AccountActivation", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Failed Activations</a>
     <a asp-action="EmailAudits"
@@ -102,9 +133,11 @@
        asp-route-flowKey="PasswordReset"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", stalePendingOnly = false, businessLinkedFailuresOnly = false, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = "PasswordReset", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Failed Password Resets</a>
     <a asp-action="EmailAudits"
@@ -112,9 +145,11 @@
        asp-route-status="Failed"
        asp-route-stalePendingOnly="false"
        asp-route-businessLinkedFailuresOnly="false"
+       asp-route-repeatedFailuresOnly="false"
+       asp-route-priorSuccessOnly="false"
        asp-route-businessId="@Model.BusinessId"
        class="btn btn-sm btn-outline-secondary"
-       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AdminCommunicationTest", status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, businessId = Model.BusinessId })"
+       hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { flowKey = "AdminCommunicationTest", status = "Failed", stalePendingOnly = false, businessLinkedFailuresOnly = false, repeatedFailuresOnly = false, priorSuccessOnly = false, businessId = Model.BusinessId })"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">Failed Admin Tests</a>
 </div>
@@ -198,6 +233,24 @@
             <div class="fs-4 fw-semibold">@Model.Summary.FailedAdminTestCount</div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Retried Flow Chains</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.RetriedFlowCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Prior Success Contexts</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.PriorSuccessContextCount</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Repeated Failures</div>
+            <div class="fs-4 fw-semibold">@Model.Summary.RepeatedFailureCount</div>
+        </div>
+    </div>
 </div>
 
 <form method="get" class="row g-2 mb-3"
@@ -223,6 +276,18 @@
         <div class="form-check mt-2">
             <input class="form-check-input" type="checkbox" name="businessLinkedFailuresOnly" value="true" checked="@Model.BusinessLinkedFailuresOnly" id="businessLinkedFailuresOnly" />
             <label class="form-check-label" for="businessLinkedFailuresOnly">Business-linked failures only</label>
+        </div>
+    </div>
+    <div class="col-md-auto">
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="repeatedFailuresOnly" value="true" checked="@Model.RepeatedFailuresOnly" id="repeatedFailuresOnly" />
+            <label class="form-check-label" for="repeatedFailuresOnly">Repeated failures only</label>
+        </div>
+    </div>
+    <div class="col-md-auto">
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="priorSuccessOnly" value="true" checked="@Model.PriorSuccessOnly" id="priorSuccessOnly" />
+            <label class="form-check-label" for="priorSuccessOnly">Prior success context only</label>
         </div>
     </div>
     <div class="col-auto">
@@ -336,6 +401,18 @@
                         {
                             <div class="small text-danger mt-1">Needs operator follow-up</div>
                         }
+                        @if (item.PriorAttemptCount > 0)
+                        {
+                            <div class="small text-muted mt-1">Prior attempts: @item.PriorAttemptCount</div>
+                        }
+                        @if (item.PriorFailureCount > 0)
+                        {
+                            <div class="small text-muted">Prior failures: @item.PriorFailureCount</div>
+                        }
+                        @if (item.LastSuccessfulAttemptAtUtc.HasValue)
+                        {
+                            <div class="small text-muted">Last success @item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                        }
                     </td>
                     <td>
                         <div class="small">@item.RecommendedAction</div>
@@ -350,6 +427,32 @@
                         else
                         {
                             <div class="small text-muted mt-1">Attempt recorded</div>
+                        }
+                        @if (item.CanRetryNow)
+                        {
+                            <div class="mt-2">
+                                <form asp-action="RetryEmailAudit" method="post" class="d-inline"
+                                      hx-post="@Url.Action("RetryEmailAudit", "BusinessCommunications")"
+                                      hx-target="#business-communication-audits-workspace-shell"
+                                      hx-swap="outerHTML">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="page" value="@Model.Page" />
+                                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                    <input type="hidden" name="query" value="@Model.Query" />
+                                    <input type="hidden" name="status" value="@Model.Status" />
+                                    <input type="hidden" name="flowKey" value="@Model.FlowKey" />
+                                    <input type="hidden" name="stalePendingOnly" value="@Model.StalePendingOnly" />
+                                    <input type="hidden" name="businessLinkedFailuresOnly" value="@Model.BusinessLinkedFailuresOnly" />
+                                    <input type="hidden" name="repeatedFailuresOnly" value="@Model.RepeatedFailuresOnly" />
+                                    <input type="hidden" name="priorSuccessOnly" value="@Model.PriorSuccessOnly" />
+                                    @if (Model.BusinessId.HasValue)
+                                    {
+                                        <input type="hidden" name="businessId" value="@Model.BusinessId" />
+                                    }
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Retry Now</button>
+                                </form>
+                            </div>
                         }
                         @if (item.BusinessId.HasValue && string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase))
                         {
@@ -429,6 +532,8 @@
        asp-route-flowKey="@Model.FlowKey"
        asp-route-stalePendingOnly="@Model.StalePendingOnly"
        asp-route-businessLinkedFailuresOnly="@Model.BusinessLinkedFailuresOnly"
+       asp-route-repeatedFailuresOnly="@Model.RepeatedFailuresOnly"
+       asp-route-priorSuccessOnly="@Model.PriorSuccessOnly"
        asp-route-businessId="@Model.BusinessId"
        hx-target="#business-communication-audits-workspace-shell"
        hx-swap="outerHTML">

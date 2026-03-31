@@ -23,15 +23,18 @@
         <a asp-controller="Businesses" asp-action="Setup" asp-route-id="@Model.Id" class="btn btn-outline-primary"
            hx-get="@Url.Action("Setup", "Businesses", new { id = Model.Id })"
            hx-target="#business-communication-profile-shell"
-           hx-swap="outerHTML">Open Setup</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Open Setup</a>
         <a asp-controller="Businesses" asp-action="Members" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Members", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
-           hx-swap="outerHTML">Members</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Members</a>
         <a asp-controller="Businesses" asp-action="Invitations" asp-route-businessId="@Model.Id" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Invitations", "Businesses", new { businessId = Model.Id })"
            hx-target="#business-communication-profile-shell"
-           hx-swap="outerHTML">Invitations</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Invitations</a>
     </div>
 </div>
 
@@ -118,19 +121,23 @@
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">SMTP</a>
+                       hx-swap="outerHTML"
+                       hx-push-url="true">SMTP</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">SMS</a>
+                       hx-swap="outerHTML"
+                       hx-push-url="true">SMS</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">WhatsApp</a>
+                       hx-swap="outerHTML"
+                       hx-push-url="true">WhatsApp</a>
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">Admin Alerts</a>
+                       hx-swap="outerHTML"
+                       hx-push-url="true">Admin Alerts</a>
                 </div>
             </div>
         </div>
@@ -155,7 +162,8 @@
                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                        hx-target="#business-communication-profile-shell"
-                       hx-swap="outerHTML">Open Communication Policy</a>
+                       hx-swap="outerHTML"
+                       hx-push-url="true">Open Communication Policy</a>
                     @if (Model.CanSendTestEmail)
                     {
                         <form asp-action="SendTestEmail" method="post" class="d-inline"
@@ -339,6 +347,18 @@
                                         {
                                             <div class="small text-muted">Latency @item.CompletionLatencySeconds.Value s</div>
                                         }
+                                        @if (item.PriorAttemptCount > 0)
+                                        {
+                                            <div class="small text-muted">Prior attempts @item.PriorAttemptCount</div>
+                                        }
+                                        @if (item.PriorFailureCount > 0)
+                                        {
+                                            <div class="small text-muted">Prior failures @item.PriorFailureCount</div>
+                                        }
+                                        @if (item.LastSuccessfulAttemptAtUtc.HasValue)
+                                        {
+                                            <div class="small text-muted">Last success @item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                                        }
                                     </td>
                                     <td>
                                         <div class="small">@item.RecommendedAction</div>
@@ -407,6 +427,8 @@
                 <div class="mb-2">Needs Follow-up: <strong>@Model.RecentEmailAudits.Count(x => x.NeedsOperatorFollowUp)</strong></div>
                 <div class="mb-2">High Severity: <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "High", StringComparison.OrdinalIgnoreCase))</strong></div>
                 <div>Slow Deliveries: <strong>@Model.RecentEmailAudits.Count(x => string.Equals(x.Severity, "Slow", StringComparison.OrdinalIgnoreCase))</strong></div>
+                <div class="mt-2">Retried Chains: <strong>@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</strong></div>
+                <div>Prior Success Context: <strong>@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</strong></div>
             </div>
         </div>
     </div>

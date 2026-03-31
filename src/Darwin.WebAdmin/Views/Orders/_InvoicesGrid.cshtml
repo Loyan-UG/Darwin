@@ -43,7 +43,14 @@
                             <td>
                                 @if (item.CustomerId.HasValue)
                                 {
-                                    <a asp-controller="Crm" asp-action="EditCustomer" asp-route-id="@item.CustomerId.Value" class="text-decoration-none">
+                                    <a asp-controller="Crm"
+                                       asp-action="EditCustomer"
+                                       asp-route-id="@item.CustomerId.Value"
+                                       class="text-decoration-none"
+                                       hx-get="@Url.Action("EditCustomer", "Crm", new { id = item.CustomerId.Value })"
+                                       hx-target="#order-operation-shell"
+                                       hx-swap="innerHTML"
+                                       hx-push-url="false">
                                         @(string.IsNullOrWhiteSpace(item.CustomerDisplayName) ? item.CustomerId.Value.ToString() : item.CustomerDisplayName)
                                     </a>
                                 }
@@ -84,7 +91,16 @@
                                         <div class="small text-muted">@item.PaymentStatus</div>
                                     }
                                     <div class="mt-1">
-                                        <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId.Value" class="btn btn-sm btn-outline-secondary">Payment</a>
+                                        <a asp-controller="Billing"
+                                           asp-action="EditPayment"
+                                           asp-route-id="@item.PaymentId.Value"
+                                           class="btn btn-sm btn-outline-secondary"
+                                           hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId.Value })"
+                                           hx-target="#order-operation-shell"
+                                           hx-swap="innerHTML"
+                                           hx-push-url="false">
+                                            Payment
+                                        </a>
                                     </div>
                                 }
                                 else
@@ -110,7 +126,16 @@
                             <td>
                                 @(item.DueAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")
                                 <div class="mt-1">
-                                    <a asp-controller="Crm" asp-action="EditInvoice" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Invoice</a>
+                                    <a asp-controller="Crm"
+                                       asp-action="EditInvoice"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-secondary"
+                                       hx-get="@Url.Action("EditInvoice", "Crm", new { id = item.Id })"
+                                       hx-target="#order-operation-shell"
+                                       hx-swap="innerHTML"
+                                       hx-push-url="false">
+                                        Invoice
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -126,6 +151,9 @@
            asp-controller="Orders"
            asp-action="Invoices"
            asp-route-orderId="@Model.OrderId"
-           asp-route-filter="@Model.Filter">
+           asp-route-filter="@Model.Filter"
+           hx-target="#invoices-grid-content"
+           hx-swap="outerHTML"
+           hx-push-url="false">
     </pager>
 </div>

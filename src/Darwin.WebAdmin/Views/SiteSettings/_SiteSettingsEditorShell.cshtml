@@ -74,13 +74,15 @@
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("Index", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Business Setup Queue</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Business Setup Queue</a>
                                     <a asp-controller="Businesses"
                                        asp-action="SupportQueue"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("SupportQueue", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Needs Attention</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Needs Attention</a>
                                 </div>
                             </td>
                         </tr>
@@ -99,13 +101,15 @@
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("SupportQueue", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Business Support</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Business Support</a>
                                     <a asp-controller="BusinessCommunications"
                                        asp-action="Index"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("Index", "BusinessCommunications")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Communication Ops</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Communication Ops</a>
                                 </div>
                             </td>
                         </tr>
@@ -124,13 +128,15 @@
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("Payments", "Billing")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Payment Ops</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Payment Ops</a>
                                     <a asp-controller="Orders"
                                        asp-action="ShipmentsQueue"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("ShipmentsQueue", "Orders")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Shipment Ops</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Shipment Ops</a>
                                 </div>
                             </td>
                         </tr>
@@ -149,13 +155,15 @@
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("Index", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Open Businesses</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Open Businesses</a>
                                     <a asp-controller="Businesses"
                                        asp-action="SupportQueue"
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("SupportQueue", "Businesses")"
                                        hx-target="#site-settings-editor-shell"
-                                       hx-swap="outerHTML">Subscriber Support</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Subscriber Support</a>
                                 </div>
                             </td>
                         </tr>
@@ -222,13 +230,15 @@
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("Index", "Businesses")"
                                hx-target="#site-settings-editor-shell"
-                               hx-swap="outerHTML">Business Defaults</a>
+                               hx-swap="outerHTML"
+                               hx-push-url="true">Business Defaults</a>
                             <a asp-controller="CRM"
                                asp-action="Customers"
                                class="btn btn-sm btn-outline-secondary"
                                hx-get="@Url.Action("Customers", "Crm")"
                                hx-target="#site-settings-editor-shell"
-                               hx-swap="outerHTML">Customer Locale Review</a>
+                               hx-swap="outerHTML"
+                               hx-push-url="true">Customer Locale Review</a>
                         </div>
                     </div>
                 </div>

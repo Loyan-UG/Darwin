@@ -222,6 +222,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     flowKey: null,
                     stalePendingOnly: false,
                     businessLinkedFailuresOnly: false,
+                    repeatedFailuresOnly: false,
+                    priorSuccessOnly: false,
                     businessId: null,
                     ct: ct)
                 .ConfigureAwait(false);
@@ -323,6 +325,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     flowKey: null,
                     stalePendingOnly: false,
                     businessLinkedFailuresOnly: false,
+                    repeatedFailuresOnly: false,
+                    priorSuccessOnly: false,
                     businessId: null,
                     ct: ct)
                 .ConfigureAwait(false);

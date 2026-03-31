@@ -4,6 +4,7 @@
     ViewData["Title"] = isCreate ? "Create Stock Level" : "Edit Stock Level";
 }
 
+<div id="inventory-stock-level-editor-shell">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="mb-1">@(isCreate ? "Create Stock Level" : "Edit Stock Level")</h1>
@@ -11,7 +12,10 @@
     </div>
 </div>
 
-<form asp-action="@(isCreate ? "CreateStockLevel" : "EditStockLevel")" method="post">
+<form asp-action="@(isCreate ? "CreateStockLevel" : "EditStockLevel")" method="post"
+      hx-post="@Url.Action(isCreate ? "CreateStockLevel" : "EditStockLevel", "Inventory")"
+      hx-target="#inventory-stock-level-editor-shell"
+      hx-swap="outerHTML">
     @Html.AntiForgeryToken()
     @if (!isCreate)
     {
@@ -21,6 +25,11 @@
     <partial name="_StockLevelForm" model="Model" />
     <div class="mt-4 d-flex gap-2">
         <button type="submit" class="btn btn-primary">@(isCreate ? "Create" : "Save")</button>
-        <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Back</a>
+        <a asp-action="StockLevels" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("StockLevels", "Inventory", new { warehouseId = Model.WarehouseId })"
+           hx-target="#inventory-stock-level-editor-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Back</a>
     </div>
 </form>
+</div>

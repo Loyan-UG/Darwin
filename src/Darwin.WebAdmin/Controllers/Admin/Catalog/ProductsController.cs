@@ -188,7 +188,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
         {
             var dto = await _getProductForEdit.HandleAsync(id, ct);
-            if (dto == null) return NotFound();
+            if (dto == null)
+            {
+                TempData["Error"] = "Product not found.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
 
             var vm = new ProductEditVm
             {

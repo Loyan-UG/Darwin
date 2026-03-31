@@ -146,19 +146,43 @@
                             <!-- Attach routes -->
                             <div class="btn-group">
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups" asp-action="AttachToVariants" asp-route-id="@g.Id">
+                                   asp-controller="AddOnGroups"
+                                   asp-action="AttachToVariants"
+                                   asp-route-id="@g.Id"
+                                   hx-get="@Url.Action("AttachToVariants", "AddOnGroups", new { id = g.Id })"
+                                   hx-target="#add-on-groups-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
                                     <i class="fa fa-sitemap"></i> Variants
                                 </a>
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups" asp-action="AttachToProducts" asp-route-id="@g.Id">
+                                   asp-controller="AddOnGroups"
+                                   asp-action="AttachToProducts"
+                                   asp-route-id="@g.Id"
+                                   hx-get="@Url.Action("AttachToProducts", "AddOnGroups", new { id = g.Id })"
+                                   hx-target="#add-on-groups-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
                                     <i class="fa fa-box"></i> Products
                                 </a>
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups" asp-action="AttachToCategories" asp-route-id="@g.Id">
+                                   asp-controller="AddOnGroups"
+                                   asp-action="AttachToCategories"
+                                   asp-route-id="@g.Id"
+                                   hx-get="@Url.Action("AttachToCategories", "AddOnGroups", new { id = g.Id })"
+                                   hx-target="#add-on-groups-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
                                     <i class="fa fa-tags"></i> Categories
                                 </a>
                                 <a class="btn btn-sm btn-outline-primary"
-                                   asp-controller="AddOnGroups" asp-action="AttachToBrands" asp-route-id="@g.Id">
+                                   asp-controller="AddOnGroups"
+                                   asp-action="AttachToBrands"
+                                   asp-route-id="@g.Id"
+                                   hx-get="@Url.Action("AttachToBrands", "AddOnGroups", new { id = g.Id })"
+                                   hx-target="#add-on-groups-workspace-shell"
+                                   hx-swap="outerHTML"
+                                   hx-push-url="true">
                                     <i class="fa fa-industry"></i> Brands
                                 </a>
                             </div>

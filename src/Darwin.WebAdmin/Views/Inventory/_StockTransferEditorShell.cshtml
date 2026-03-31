@@ -21,7 +21,11 @@
         <partial name="_StockTransferForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="StockTransfers" asp-route-warehouseId="@Model.FromWarehouseId" class="btn btn-outline-secondary">Back</a>
+            <a asp-action="StockTransfers" asp-route-warehouseId="@Model.FromWarehouseId" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("StockTransfers", "Inventory", new { warehouseId = Model.FromWarehouseId })"
+               hx-target="#inventory-stock-transfer-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">Back</a>
         </div>
     </form>
 </div>

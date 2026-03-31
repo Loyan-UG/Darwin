@@ -99,7 +99,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
         }
 
         [HttpGet]
-        public IActionResult Index() => RedirectToAction(nameof(Warehouses));
+        public IActionResult Index() => RedirectOrHtmx(nameof(Warehouses), new { });
 
         [HttpGet]
         public async Task<IActionResult> Warehouses(Guid? businessId = null, int page = 1, int pageSize = 20, string? q = null, WarehouseQueueFilter filter = WarehouseQueueFilter.All, CancellationToken ct = default)
@@ -147,7 +147,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Total = total,
                 Items = items
             };
-            return View(vm);
+            return RenderWarehousesWorkspace(vm);
         }
 
         [HttpGet]
@@ -199,7 +199,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (dto is null)
             {
                 TempData["Error"] = "Warehouse not found.";
-                return RedirectToAction(nameof(Warehouses));
+                return RedirectOrHtmx(nameof(Warehouses), new { });
             }
 
             var vm = new WarehouseEditVm
@@ -241,12 +241,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 await _updateWarehouse.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Warehouse updated.";
-                return RedirectToAction(nameof(EditWarehouse), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditWarehouse), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the warehouse and try again.";
-                return RedirectToAction(nameof(EditWarehouse), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditWarehouse), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -301,7 +301,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Total = total,
                 Items = items
             };
-            return View(vm);
+            return RenderSuppliersWorkspace(vm);
         }
 
         [HttpGet]
@@ -354,7 +354,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (dto is null)
             {
                 TempData["Error"] = "Supplier not found.";
-                return RedirectToAction(nameof(Suppliers));
+                return RedirectOrHtmx(nameof(Suppliers), new { });
             }
 
             var vm = new SupplierEditVm
@@ -398,12 +398,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 await _updateSupplier.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Supplier updated.";
-                return RedirectToAction(nameof(EditSupplier), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditSupplier), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the supplier and try again.";
-                return RedirectToAction(nameof(EditSupplier), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditSupplier), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -455,7 +455,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Items = items
             };
             ViewBag.BusinessId = businessId;
-            return View(vm);
+            return RenderStockLevelsWorkspace(vm);
         }
 
         [HttpGet]
@@ -465,7 +465,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (vm is null)
             {
                 TempData["Error"] = "Stock level not found.";
-                return RedirectToAction(nameof(StockLevels), new { businessId });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
             return RenderAdjustStockEditor(vm);
@@ -510,7 +510,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (vm is null)
             {
                 TempData["Error"] = "Stock level not found.";
-                return RedirectToAction(nameof(StockLevels), new { businessId });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
             return RenderReserveStockEditor(vm);
@@ -555,7 +555,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (vm is null)
             {
                 TempData["Error"] = "Stock level not found.";
-                return RedirectToAction(nameof(StockLevels), new { businessId });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
             return RenderReleaseReservationEditor(vm);
@@ -600,7 +600,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (vm is null)
             {
                 TempData["Error"] = "Stock level not found.";
-                return RedirectToAction(nameof(StockLevels), new { businessId });
+                return RedirectOrHtmx(nameof(StockLevels), new { businessId });
             }
 
             return RenderReturnReceiptEditor(vm);
@@ -690,7 +690,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (dto is null)
             {
                 TempData["Error"] = "Stock level not found.";
-                return RedirectToAction(nameof(StockLevels));
+                return RedirectOrHtmx(nameof(StockLevels), new { });
             }
 
             var vm = new StockLevelEditVm
@@ -736,12 +736,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 await _updateStockLevel.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Stock level updated.";
-                return RedirectToAction(nameof(EditStockLevel), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditStockLevel), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the stock level and try again.";
-                return RedirectToAction(nameof(EditStockLevel), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditStockLevel), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -799,7 +799,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Items = items
             };
             ViewBag.BusinessId = businessId;
-            return View(vm);
+            return RenderStockTransfersWorkspace(vm);
         }
 
         [HttpGet]
@@ -862,7 +862,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (dto is null)
             {
                 TempData["Error"] = "Stock transfer not found.";
-                return RedirectToAction(nameof(StockTransfers));
+                return RedirectOrHtmx(nameof(StockTransfers), new { });
             }
 
             var vm = new StockTransferEditVm
@@ -912,12 +912,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 await _updateStockTransfer.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Stock transfer updated.";
-                return RedirectToAction(nameof(EditStockTransfer), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditStockTransfer), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the stock transfer and try again.";
-                return RedirectToAction(nameof(EditStockTransfer), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditStockTransfer), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -974,7 +974,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Total = total,
                 Items = items
             };
-            return View(vm);
+            return RenderPurchaseOrdersWorkspace(vm);
         }
 
         [HttpGet]
@@ -1041,7 +1041,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             if (dto is null)
             {
                 TempData["Error"] = "Purchase order not found.";
-                return RedirectToAction(nameof(PurchaseOrders));
+                return RedirectOrHtmx(nameof(PurchaseOrders), new { });
             }
 
             var vm = new PurchaseOrderEditVm
@@ -1099,12 +1099,12 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 await _updatePurchaseOrder.HandleAsync(dto, ct).ConfigureAwait(false);
                 TempData["Success"] = "Purchase order updated.";
-                return RedirectToAction(nameof(EditPurchaseOrder), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id = vm.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
                 TempData["Error"] = "Concurrency conflict. Reload the purchase order and try again.";
-                return RedirectToAction(nameof(EditPurchaseOrder), new { id = vm.Id });
+                return RedirectOrHtmx(nameof(EditPurchaseOrder), new { id = vm.Id });
             }
             catch (Exception ex)
             {
@@ -1152,7 +1152,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
                 Total = dto.Total
             };
 
-            return View(vm);
+            return RenderVariantLedgerWorkspace(vm);
         }
 
         private static IEnumerable<SelectListItem> BuildInventoryLedgerFilterItems(InventoryLedgerQueueFilter selectedFilter)
@@ -1433,6 +1433,66 @@ namespace Darwin.WebAdmin.Controllers.Admin.Inventory
             {
                 vm.Lines.Add(new PurchaseOrderLineVm());
             }
+        }
+
+        private IActionResult RenderWarehousesWorkspace(WarehousesListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/Warehouses.cshtml", vm);
+            }
+
+            return View("Warehouses", vm);
+        }
+
+        private IActionResult RenderSuppliersWorkspace(SuppliersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/Suppliers.cshtml", vm);
+            }
+
+            return View("Suppliers", vm);
+        }
+
+        private IActionResult RenderStockLevelsWorkspace(StockLevelsListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/StockLevels.cshtml", vm);
+            }
+
+            return View("StockLevels", vm);
+        }
+
+        private IActionResult RenderStockTransfersWorkspace(StockTransfersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/StockTransfers.cshtml", vm);
+            }
+
+            return View("StockTransfers", vm);
+        }
+
+        private IActionResult RenderPurchaseOrdersWorkspace(PurchaseOrdersListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/PurchaseOrders.cshtml", vm);
+            }
+
+            return View("PurchaseOrders", vm);
+        }
+
+        private IActionResult RenderVariantLedgerWorkspace(InventoryLedgerListVm vm)
+        {
+            if (IsHtmxRequest())
+            {
+                return PartialView("~/Views/Inventory/VariantLedger.cshtml", vm);
+            }
+
+            return View("VariantLedger", vm);
         }
 
         private IActionResult RenderWarehouseEditor(WarehouseEditVm vm, bool isCreate)

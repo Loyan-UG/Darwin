@@ -207,6 +207,26 @@ The admin and backend systems must expose enough operator visibility to support 
 - keep `Darwin.Mobile.Shared` aligned whenever contracts or canonical routes change
 - avoid introducing drift between mobile route assumptions and WebApi ownership
 
+## 12.1 Review Checklist for the Dedicated Mobile Audit
+
+When the separate mobile-review chat starts, it should explicitly verify these areas against current platform reality:
+
+- business approval soft-gate behavior and all approval-gated screens/actions
+- invitation acceptance, activation, confirmation, forgot-password, and reset-password journeys
+- self-service resend-activation behavior on login surfaces
+- preferred business-context preservation during refresh and onboarding
+- loyalty UX assumptions against the now-expanded loyalty admin/operator surfaces
+- device diagnostics and remediation assumptions against the `Mobile Operations` workspace
+- communication failure and retry assumptions for:
+  - business invitation
+  - account activation
+  - password reset
+- subscription/billing issue handling assumptions now that admin has richer invoice/payment/refund/webhook triage
+- locale/fallback assumptions now that CRM/admin exposes locale source and platform fallback visibility
+- invoice/tax/compliance assumptions now that admin exposes B2B/B2C tax profile and archive/e-invoice readiness signals
+
+This review should treat these as real platform changes to verify, not just as documentation notes.
+
 ## 13. What Is Deliberately Not the Current Priority
 
 - broad new mobile feature expansion that depends on unfinished onboarding/admin capabilities

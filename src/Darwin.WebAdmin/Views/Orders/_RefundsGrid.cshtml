@@ -73,7 +73,16 @@
                             <td>@item.Status</td>
                             <td>@item.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                             <td class="text-end">
-                                <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@item.PaymentId" class="btn btn-sm btn-outline-secondary">Payment</a>
+                                <a asp-controller="Billing"
+                                   asp-action="EditPayment"
+                                   asp-route-id="@item.PaymentId"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EditPayment", "Billing", new { id = item.PaymentId })"
+                                   hx-target="#order-operation-shell"
+                                   hx-swap="innerHTML"
+                                   hx-push-url="false">
+                                    Payment
+                                </a>
                             </td>
                         </tr>
                     }
@@ -88,6 +97,9 @@
            asp-controller="Orders"
            asp-action="Refunds"
            asp-route-orderId="@Model.OrderId"
-           asp-route-filter="@Model.Filter">
+           asp-route-filter="@Model.Filter"
+           hx-target="#refunds-grid-content"
+           hx-swap="outerHTML"
+           hx-push-url="false">
     </pager>
 </div>

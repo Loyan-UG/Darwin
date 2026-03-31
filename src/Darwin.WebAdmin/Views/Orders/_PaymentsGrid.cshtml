@@ -67,7 +67,16 @@
                             <td>@p.Status</td>
                             <td>@(p.PaidAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") ?? p.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm:ss"))</td>
                             <td class="text-end">
-                                <a asp-controller="Billing" asp-action="EditPayment" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">Open</a>
+                                <a asp-controller="Billing"
+                                   asp-action="EditPayment"
+                                   asp-route-id="@p.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   hx-get="@Url.Action("EditPayment", "Billing", new { id = p.Id })"
+                                   hx-target="#order-operation-shell"
+                                   hx-swap="innerHTML"
+                                   hx-push-url="false">
+                                    Open
+                                </a>
                                 <a asp-controller="Orders"
                                    asp-action="AddRefund"
                                    asp-route-orderId="@Model.OrderId"
@@ -93,6 +102,9 @@
            asp-controller="Orders"
            asp-action="Payments"
            asp-route-orderId="@Model.OrderId"
-           asp-route-filter="@Model.Filter">
+           asp-route-filter="@Model.Filter"
+           hx-target="#payments-grid-content"
+           hx-swap="outerHTML"
+           hx-push-url="false">
     </pager>
 </div>

@@ -166,6 +166,9 @@
            asp-controller="Orders"
            asp-action="Shipments"
            asp-route-orderId="@Model.OrderId"
-           asp-route-filter="@Model.Filter">
+           asp-route-filter="@Model.Filter"
+           hx-target="#shipments-grid-content"
+           hx-swap="outerHTML"
+           hx-push-url="false">
     </pager>
 </div>

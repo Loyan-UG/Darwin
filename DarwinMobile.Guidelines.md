@@ -130,6 +130,16 @@ Never reference raw hex values directly in UI code except in the token definitio
 - Layouts must survive longer English strings later.
 - Avoid fixed-width button labels; prefer responsive layout.
 
+### Platform-review note
+
+When mobile is reviewed in its own chat, re-check localization behavior against the current backend/admin reality:
+
+- platform default culture and fallback behavior are now more explicit in admin
+- business-level localization ownership is clearer
+- customer locale source vs platform fallback is now visible in CRM/admin
+
+Mobile should continue to feel user-owned and locale-aware, not merely tied to a platform default.
+
 ---
 
 ## 6. Phase-Aware UI (All phases visible, limited behavior)

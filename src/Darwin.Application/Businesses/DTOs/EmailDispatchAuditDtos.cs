@@ -22,6 +22,15 @@ namespace Darwin.Application.Businesses.DTOs
         public int? CompletionLatencySeconds { get; set; }
         public bool NeedsOperatorFollowUp { get; set; }
         public string Severity { get; set; } = string.Empty;
+        public bool CanRetryNow { get; set; }
+        public int PriorAttemptCount { get; set; }
+        public int PriorFailureCount { get; set; }
+        public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
+    }
+
+    public sealed class RetryEmailDispatchAuditDto
+    {
+        public Guid AuditId { get; set; }
     }
 
     public sealed class EmailDispatchAuditSummaryDto
@@ -39,5 +48,8 @@ namespace Darwin.Application.Businesses.DTOs
         public int FailedAdminTestCount { get; set; }
         public int NeedsOperatorFollowUpCount { get; set; }
         public int SlowCompletedCount { get; set; }
+        public int RetriedFlowCount { get; set; }
+        public int PriorSuccessContextCount { get; set; }
+        public int RepeatedFailureCount { get; set; }
     }
 }

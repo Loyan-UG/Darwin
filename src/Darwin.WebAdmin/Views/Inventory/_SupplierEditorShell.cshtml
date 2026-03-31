@@ -21,7 +21,11 @@
         <partial name="_SupplierForm" model="Model" />
         <div class="mt-4">
             <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Back</a>
+            <a asp-action="Suppliers" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+               hx-get="@Url.Action("Suppliers", "Inventory", new { businessId = Model.BusinessId })"
+               hx-target="#inventory-supplier-editor-shell"
+               hx-swap="outerHTML"
+               hx-push-url="true">Back</a>
         </div>
     </form>
 </div>

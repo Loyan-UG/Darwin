@@ -18,19 +18,23 @@
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-smtp" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-smtp" })"
            hx-target="#business-communications-workspace-shell"
-           hx-swap="outerHTML">SMTP</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">SMTP</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-sms" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-sms" })"
            hx-target="#business-communications-workspace-shell"
-           hx-swap="outerHTML">SMS</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">SMS</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-whatsapp" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-whatsapp" })"
            hx-target="#business-communications-workspace-shell"
-           hx-swap="outerHTML">WhatsApp</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">WhatsApp</a>
         <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-outline-secondary"
            hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
            hx-target="#business-communications-workspace-shell"
-           hx-swap="outerHTML">Admin Alerts</a>
+           hx-swap="outerHTML"
+           hx-push-url="true">Admin Alerts</a>
         @if (Model.Transport.CanSendTestEmail)
         {
             <form asp-action="SendTestEmail" method="post" class="d-inline"
@@ -134,6 +138,30 @@
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Retried Delivery Chains</div>
+            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorAttemptCount > 0)</div>
+            <div class="small text-muted mt-2">Recent audit rows that are part of a repeated delivery chain for the same flow and recipient.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Prior Success Context</div>
+            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.LastSuccessfulAttemptAtUtc.HasValue)</div>
+            <div class="small text-muted mt-2">Recent audit rows where the same flow/recipient already had a successful delivery before.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+            <div class="text-muted small">Repeated Failure Chains</div>
+            <div class="fs-4 fw-semibold">@Model.RecentEmailAudits.Count(x => x.PriorFailureCount > 0 && x.NeedsOperatorFollowUp)</div>
+            <div class="small text-muted mt-2">Recent follow-up rows that are not first-time failures and likely need deeper operator review.</div>
+        </div>
+    </div>
+</div>
+
 <div class="small text-muted mb-3">
     Transactional email enabled: <strong>@Model.Summary.TransactionalEmailBusinessesCount</strong>
     <span class="mx-2">|</span>
@@ -223,7 +251,8 @@
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
                                        hx-target="#business-communications-workspace-shell"
-                                       hx-swap="outerHTML">Failed Audits</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Failed Audits</a>
                                 }
                                 @if (item.OperatorActionTarget == "Invitations")
                                 {
@@ -244,21 +273,24 @@
                                     <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
                                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
                                        hx-target="#business-communications-workspace-shell"
-                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@item.OperatorActionLabel</a>
                                 }
                                 else if (item.OperatorActionTarget == "AdminAlerts")
                                 {
                                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
                                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
                                        hx-target="#business-communications-workspace-shell"
-                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@item.OperatorActionLabel</a>
                                 }
                                 @if (item.OperatorActionTarget != "AdminAlerts")
                                 {
                                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-communications-policy" class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-communications-policy" })"
                                        hx-target="#business-communications-workspace-shell"
-                                       hx-swap="outerHTML">Open Policy</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Open Policy</a>
                                 }
                             </div>
                         </td>
@@ -339,7 +371,8 @@
                                        class="btn btn-sm btn-outline-secondary"
                                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications", new { status = "Failed", flowKey = item.AuditFlowKey })"
                                        hx-target="#business-communications-workspace-shell"
-                                       hx-swap="outerHTML">Failed Audits</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">Failed Audits</a>
                                 }
                                 @if (item.OperatorActionTarget == "Invitations")
                                 {
@@ -360,14 +393,16 @@
                                     <a asp-action="EmailAudits" class="btn btn-sm btn-outline-primary"
                                        hx-get="@Url.Action("EmailAudits", "BusinessCommunications")"
                                        hx-target="#business-communications-workspace-shell"
-                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@item.OperatorActionLabel</a>
                                 }
                                 else if (item.OperatorActionTarget == "AdminAlerts")
                                 {
                                     <a asp-controller="SiteSettings" asp-action="Edit" asp-fragment="site-settings-admin-routing" class="btn btn-sm btn-outline-primary"
                                        hx-get="@Url.Action("Edit", "SiteSettings", new { fragment = "site-settings-admin-routing" })"
                                        hx-target="#business-communications-workspace-shell"
-                                       hx-swap="outerHTML">@item.OperatorActionLabel</a>
+                                       hx-swap="outerHTML"
+                                       hx-push-url="true">@item.OperatorActionLabel</a>
                                 }
                             </div>
                         </td>
@@ -452,6 +487,14 @@
                                 @if (item.CompletionLatencySeconds.HasValue)
                                 {
                                     <div class="small text-muted">Latency @item.CompletionLatencySeconds.Value s</div>
+                                }
+                                @if (item.PriorAttemptCount > 0)
+                                {
+                                    <div class="small text-muted">Prior attempts @item.PriorAttemptCount</div>
+                                }
+                                @if (item.LastSuccessfulAttemptAtUtc.HasValue)
+                                {
+                                    <div class="small text-muted">Last success @item.LastSuccessfulAttemptAtUtc.Value.ToString("yyyy-MM-dd HH:mm")</div>
                                 }
                             </td>
                             <td>

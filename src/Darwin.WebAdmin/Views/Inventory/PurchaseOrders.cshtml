@@ -3,24 +3,53 @@
     ViewData["Title"] = "Purchase Orders";
 }
 
+<div id="inventory-purchase-orders-workspace-shell">
 <h1 class="mb-3">Purchase Orders</h1>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form asp-action="PurchaseOrders" method="get" class="d-flex gap-2">
+    <form asp-action="PurchaseOrders" method="get" class="d-flex gap-2"
+          hx-get="@Url.Action("PurchaseOrders", "Inventory")"
+          hx-target="#inventory-purchase-orders-workspace-shell"
+          hx-swap="outerHTML"
+          hx-push-url="true">
         <select name="businessId" asp-items="Model.BusinessOptions" class="form-select"></select>
         <input type="text" name="q" value="@Model.Query" class="form-control" placeholder="Search purchase orders">
         <select name="filter" asp-items="Model.FilterItems" class="form-select"></select>
         <button class="btn btn-outline-secondary" type="submit">Filter</button>
-        <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-outline-secondary"
+           hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId })"
+           hx-target="#inventory-purchase-orders-workspace-shell"
+           hx-swap="outerHTML"
+           hx-push-url="true">Reset</a>
     </form>
-    <a asp-action="CreatePurchaseOrder" asp-route-businessId="@Model.BusinessId" class="btn btn-primary">New Purchase Order</a>
+    <a asp-action="CreatePurchaseOrder" asp-route-businessId="@Model.BusinessId" class="btn btn-primary"
+       hx-get="@Url.Action("CreatePurchaseOrder", "Inventory", new { businessId = Model.BusinessId })"
+       hx-target="#inventory-purchase-orders-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">New Purchase Order</a>
 </div>
 
 <div class="d-flex gap-2 flex-wrap mb-3">
-    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Draft" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Draft ? "btn-outline-secondary" : "btn-outline-dark")">Draft</a>
-    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Issued" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Issued ? "btn-warning" : "btn-outline-warning")">Issued</a>
-    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Received" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Received ? "btn-success" : "btn-outline-success")">Received</a>
-    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary">Clear Queue Filters</a>
+    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Draft" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Draft ? "btn-outline-secondary" : "btn-outline-dark")"
+       hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Draft" })"
+       hx-target="#inventory-purchase-orders-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Draft</a>
+    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Issued" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Issued ? "btn-warning" : "btn-outline-warning")"
+       hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Issued" })"
+       hx-target="#inventory-purchase-orders-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Issued</a>
+    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-filter="Received" class="btn btn-sm @(Model.Filter == Darwin.Application.Inventory.DTOs.PurchaseOrderQueueFilter.Received ? "btn-success" : "btn-outline-success")"
+       hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query, filter = "Received" })"
+       hx-target="#inventory-purchase-orders-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Received</a>
+    <a asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" class="btn btn-sm btn-outline-secondary"
+       hx-get="@Url.Action("PurchaseOrders", "Inventory", new { businessId = Model.BusinessId, q = Model.Query })"
+       hx-target="#inventory-purchase-orders-workspace-shell"
+       hx-swap="outerHTML"
+       hx-push-url="true">Clear Queue Filters</a>
 </div>
 
 <div class="row g-3 mb-4">
@@ -117,7 +146,11 @@
                     </td>
                     <td>@item.LineCount</td>
                     <td>@item.OrderedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td class="text-end"><a asp-action="EditPurchaseOrder" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a></td>
+                    <td class="text-end"><a asp-action="EditPurchaseOrder" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                           hx-get="@Url.Action("EditPurchaseOrder", "Inventory", new { id = item.Id })"
+                           hx-target="#inventory-purchase-orders-workspace-shell"
+                           hx-swap="outerHTML"
+                           hx-push-url="true">Edit</a></td>
                 </tr>
             }
         }
@@ -125,4 +158,5 @@
     </table>
 </div>
 
-<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter"></pager>
+<pager page="Model.Page" page-size="Model.PageSize" total="Model.Total" asp-controller="Inventory" asp-action="PurchaseOrders" asp-route-businessId="@Model.BusinessId" asp-route-q="@Model.Query" asp-route-filter="@Model.Filter" hx-target="#inventory-purchase-orders-workspace-shell" hx-swap="outerHTML" hx-push-url="true"></pager>
+</div>

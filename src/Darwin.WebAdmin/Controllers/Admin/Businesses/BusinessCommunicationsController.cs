@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Darwin.Application.Businesses.Commands;
 using Darwin.Application.Businesses.DTOs;
 using Darwin.Application.Businesses.Queries;
 using Darwin.Application.Abstractions.Notifications;
@@ -15,7 +16,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace Darwin.WebAdmin.Controllers.Admin.Businesses
 {
     /// <summary>
-    /// Read-only communication operations workspace for onboarding and support operators.
+    /// Communication operations workspace for onboarding and support operators.
     /// </summary>
     [PermissionAuthorize(PermissionKeys.ManageBusinessSupport)]
     public sealed class BusinessCommunicationsController : AdminBaseController
@@ -24,6 +25,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
         private readonly GetBusinessCommunicationSetupPageHandler _getSetupPage;
         private readonly GetBusinessCommunicationProfileHandler _getProfile;
         private readonly GetEmailDispatchAuditsPageHandler _getEmailDispatchAuditsPage;
+        private readonly RetryEmailDispatchAuditHandler _retryEmailDispatchAudit;
         private readonly ISiteSettingCache _siteSettingCache;
         private readonly IEmailSender _emailSender;
 
@@ -32,6 +34,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             GetBusinessCommunicationSetupPageHandler getSetupPage,
             GetBusinessCommunicationProfileHandler getProfile,
             GetEmailDispatchAuditsPageHandler getEmailDispatchAuditsPage,
+            RetryEmailDispatchAuditHandler retryEmailDispatchAudit,
             ISiteSettingCache siteSettingCache,
             IEmailSender emailSender)
         {
@@ -39,6 +42,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             _getSetupPage = getSetupPage;
             _getProfile = getProfile;
             _getEmailDispatchAuditsPage = getEmailDispatchAuditsPage;
+            _retryEmailDispatchAudit = retryEmailDispatchAudit;
             _siteSettingCache = siteSettingCache;
             _emailSender = emailSender;
         }
@@ -64,6 +68,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     flowKey: null,
                     stalePendingOnly: false,
                     businessLinkedFailuresOnly: false,
+                    repeatedFailuresOnly: false,
+                    priorSuccessOnly: false,
                     businessId: null,
                     ct: ct)
                 .ConfigureAwait(false);
@@ -136,6 +142,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CompletionLatencySeconds = x.CompletionLatencySeconds,
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
                     Severity = x.Severity,
+                    CanRetryNow = x.CanRetryNow,
+                    PriorAttemptCount = x.PriorAttemptCount,
+                    PriorFailureCount = x.PriorFailureCount,
+                    LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
                     RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList(),
                 Items = items.Select(x => new BusinessCommunicationSetupListItemVm
@@ -177,6 +187,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     flowKey: null,
                     stalePendingOnly: false,
                     businessLinkedFailuresOnly: false,
+                    repeatedFailuresOnly: false,
+                    priorSuccessOnly: false,
                     businessId: businessId,
                     ct: ct)
                 .ConfigureAwait(false);
@@ -247,6 +259,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CompletionLatencySeconds = x.CompletionLatencySeconds,
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
                     Severity = x.Severity,
+                    CanRetryNow = x.CanRetryNow,
+                    PriorAttemptCount = x.PriorAttemptCount,
+                    PriorFailureCount = x.PriorFailureCount,
+                    LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
                     RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList()
             };
@@ -263,11 +279,24 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             string? flowKey = null,
             bool stalePendingOnly = false,
             bool businessLinkedFailuresOnly = false,
+            bool repeatedFailuresOnly = false,
+            bool priorSuccessOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
             var (items, total) = await _getEmailDispatchAuditsPage
-                .HandleAsync(page, pageSize, query, status, flowKey, stalePendingOnly, businessLinkedFailuresOnly, businessId, ct)
+                .HandleAsync(
+                    page: page,
+                    pageSize: pageSize,
+                    query: query,
+                    status: status,
+                    flowKey: flowKey,
+                    stalePendingOnly: stalePendingOnly,
+                    businessLinkedFailuresOnly: businessLinkedFailuresOnly,
+                    repeatedFailuresOnly: repeatedFailuresOnly,
+                    priorSuccessOnly: priorSuccessOnly,
+                    businessId: businessId,
+                    ct: ct)
                 .ConfigureAwait(false);
             var summary = await _getEmailDispatchAuditsPage.GetSummaryAsync(businessId, ct).ConfigureAwait(false);
 
@@ -281,6 +310,8 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 FlowKey = flowKey ?? string.Empty,
                 StalePendingOnly = stalePendingOnly,
                 BusinessLinkedFailuresOnly = businessLinkedFailuresOnly,
+                RepeatedFailuresOnly = repeatedFailuresOnly,
+                PriorSuccessOnly = priorSuccessOnly,
                 BusinessId = businessId,
                 CanSendTestEmail = await CanSendTestEmailAsync(ct).ConfigureAwait(false),
                 Summary = new EmailDispatchAuditSummaryVm
@@ -297,7 +328,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FailedPasswordResetCount = summary.FailedPasswordResetCount,
                     FailedAdminTestCount = summary.FailedAdminTestCount,
                     NeedsOperatorFollowUpCount = summary.NeedsOperatorFollowUpCount,
-                    SlowCompletedCount = summary.SlowCompletedCount
+                    SlowCompletedCount = summary.SlowCompletedCount,
+                    RetriedFlowCount = summary.RetriedFlowCount,
+                    PriorSuccessContextCount = summary.PriorSuccessContextCount,
+                    RepeatedFailureCount = summary.RepeatedFailureCount
                 },
                 PageSizeItems = BuildPageSizeItems(pageSize),
                 StatusItems = BuildAuditStatusItems(status),
@@ -320,11 +354,61 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     CompletionLatencySeconds = x.CompletionLatencySeconds,
                     NeedsOperatorFollowUp = x.NeedsOperatorFollowUp,
                     Severity = x.Severity,
+                    CanRetryNow = x.CanRetryNow,
+                    PriorAttemptCount = x.PriorAttemptCount,
+                    PriorFailureCount = x.PriorFailureCount,
+                    LastSuccessfulAttemptAtUtc = x.LastSuccessfulAttemptAtUtc,
                     RecommendedAction = BuildAuditRecommendedAction(x)
                 }).ToList()
             };
 
             return RenderEmailAuditsWorkspace(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RetryEmailAudit(
+            Guid id,
+            int page = 1,
+            int pageSize = 20,
+            string? query = null,
+            string? status = null,
+            string? flowKey = null,
+            bool stalePendingOnly = false,
+            bool businessLinkedFailuresOnly = false,
+            bool repeatedFailuresOnly = false,
+            bool priorSuccessOnly = false,
+            Guid? businessId = null,
+            CancellationToken ct = default)
+        {
+            var result = await _retryEmailDispatchAudit
+                .HandleAsync(new RetryEmailDispatchAuditDto { AuditId = id }, ct)
+                .ConfigureAwait(false);
+
+            if (result.Succeeded)
+            {
+                TempData["Success"] = "Email flow retried successfully using the current live target.";
+            }
+            else
+            {
+                TempData["Error"] = result.Error ?? "Email retry failed.";
+            }
+
+            return RedirectOrHtmx(
+                nameof(EmailAudits),
+                new
+                {
+                    page,
+                    pageSize,
+                    query,
+                    status,
+                    flowKey,
+                    stalePendingOnly,
+                    businessLinkedFailuresOnly,
+                    repeatedFailuresOnly,
+                    priorSuccessOnly,
+                    businessId
+                });
         }
 
         [HttpPost]
@@ -551,9 +635,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     Capability = "Retry / Resend Workflow",
-                    CurrentState = "Only business invitations have explicit resend actions today",
-                    OperatorVisibility = "Operators can resend invitations, but generic failed-email retry does not exist",
-                    NextStep = "Design controlled retry/resend policies per flow before adding a shared retry action"
+                    CurrentState = "Controlled generic retry now exists for invitation, activation, and password-reset audit rows after safe target resolution",
+                    OperatorVisibility = "Operators can retry supported live flows from the failed/stale audit queue and still fall back to flow-specific support surfaces",
+                    NextStep = "Keep generic retry constrained to resolvable live flows until delivery logs and richer replay safeguards exist"
                 },
                 new()
                 {
@@ -667,9 +751,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     FlowName = "Business Invitation",
-                    CurrentSafeAction = "Use invitation resend/revoke from the business invitation workspace after SMTP readiness is green.",
-                    GenericRetryStatus = "No generic retry queue. Flow-specific resend exists.",
-                    OperatorEntryPoint = "Business setup, invitations list, and email-audit handoff.",
+                    CurrentSafeAction = "Use controlled audit retry or the invitation workspace resend/revoke after SMTP readiness is green.",
+                    GenericRetryStatus = "Supported from failed or pending audit rows when a current invitation can be resolved safely.",
+                    OperatorEntryPoint = "Business setup, invitations list, and email-audit queue.",
                     AuditFlowKey = "BusinessInvitation",
                     OperatorActionLabel = "Open Invitations",
                     OperatorActionTarget = "Invitations",
@@ -678,9 +762,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     FlowName = "Account Activation",
-                    CurrentSafeAction = "Prefer self-service resend; use admin activation support only where current policy allows.",
-                    GenericRetryStatus = "No generic retry queue and no blind resend from email audits.",
-                    OperatorEntryPoint = "Users queue, business members queue, and email-audit handoff.",
+                    CurrentSafeAction = "Prefer self-service resend; use controlled audit retry or admin activation support only where current policy allows.",
+                    GenericRetryStatus = "Supported from failed or pending audit rows after resolving the live user by recipient email.",
+                    OperatorEntryPoint = "Users queue, business members queue, and email-audit queue.",
                     AuditFlowKey = "AccountActivation",
                     OperatorActionLabel = "Open Users",
                     OperatorActionTarget = "Users",
@@ -689,9 +773,9 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                 new()
                 {
                     FlowName = "Password Reset",
-                    CurrentSafeAction = "Reissue reset only after identity validation and transport checks.",
-                    GenericRetryStatus = "No generic retry queue and no automatic replay from failed audit rows.",
-                    OperatorEntryPoint = "Users queue and business member support actions.",
+                    CurrentSafeAction = "Reissue reset only after identity validation and transport checks, whether from audit retry or support surfaces.",
+                    GenericRetryStatus = "Supported from failed or pending audit rows after resolving the live user by recipient email.",
+                    OperatorEntryPoint = "Users queue, business member support actions, and email-audit queue.",
                     AuditFlowKey = "PasswordReset",
                     OperatorActionLabel = "Open Users",
                     OperatorActionTarget = "Users",
@@ -849,22 +933,22 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
             if (string.Equals(item.FlowKey, "BusinessInvitation", System.StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Check SMTP readiness, then open the recipient-scoped invitation queue and use resend/revoke from the business workspace."
-                    : "Check SMTP readiness, then review the invitation source before resending.";
+                    ? "Check SMTP readiness, then use controlled retry or open the recipient-scoped invitation queue for resend/revoke from the business workspace."
+                    : "Check SMTP readiness, then review the invitation source before retrying.";
             }
 
             if (string.Equals(item.FlowKey, "AccountActivation", System.StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Check SMTP readiness, then open member support or the user queue with the failed recipient prefilled before sending activation support."
-                    : "Check SMTP readiness, then direct the user to self-service resend activation or use admin activation support.";
+                    ? "Check SMTP readiness, then use controlled retry or open member support or the user queue with the failed recipient prefilled before sending activation support."
+                    : "Check SMTP readiness, then use controlled retry, self-service resend activation, or admin activation support as policy allows.";
             }
 
             if (string.Equals(item.FlowKey, "PasswordReset", System.StringComparison.OrdinalIgnoreCase))
             {
                 return item.BusinessId.HasValue
-                    ? "Check SMTP readiness, then open member support or the user queue with the failed recipient prefilled and reissue reset only after support validation."
-                    : "Check SMTP readiness, then reissue password reset only after support validation.";
+                    ? "Check SMTP readiness, then use controlled retry or open member support or the user queue with the failed recipient prefilled and reissue reset only after support validation."
+                    : "Check SMTP readiness, then use controlled retry or reissue password reset only after support validation.";
             }
 
             return "Review global transport readiness and the source workflow before attempting manual intervention.";
@@ -879,7 +963,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FlowKey = "BusinessInvitation",
                     Title = "Invitation failures",
                     ScopeNote = "Use business-scoped invitation actions only.",
-                    AllowedAction = "Check SMTP readiness, then open the business invitation workspace and resend or revoke the invitation.",
+                    AllowedAction = "Check SMTP readiness, then use controlled retry from the audit row or open the business invitation workspace and resend or revoke the invitation.",
                     EscalationRule = "If repeated failures continue after transport readiness is green, treat it as communication-platform debt instead of repeatedly sending the same invitation."
                 },
                 new()
@@ -887,7 +971,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FlowKey = "AccountActivation",
                     Title = "Activation failures",
                     ScopeNote = "Prefer self-service resend; admin override only where current policy allows.",
-                    AllowedAction = "Check SMTP readiness, then direct the user to resend activation from login or use the admin activation-support action.",
+                    AllowedAction = "Check SMTP readiness, then use controlled retry or direct the user to resend activation from login or use the admin activation-support action.",
                     EscalationRule = "Do not silently bypass confirmation policy. If failures persist after resend, escalate as auth/communication troubleshooting."
                 },
                 new()
@@ -895,7 +979,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Businesses
                     FlowKey = "PasswordReset",
                     Title = "Password reset failures",
                     ScopeNote = "Reset support must stay identity-safe.",
-                    AllowedAction = "Validate the requester first, then reissue password reset only after support validation and transport checks.",
+                    AllowedAction = "Validate the requester first, then use controlled retry or reissue password reset only after support validation and transport checks.",
                     EscalationRule = "Avoid repeated resets without user verification. Persistent failures should be escalated as communication or account-lifecycle issues."
                 },
                 new()

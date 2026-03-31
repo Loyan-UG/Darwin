@@ -33,8 +33,8 @@ Status terms used below:
 ### WebAdmin operational completion
 
 - `In Progress`: complete remaining operator workflows in `Darwin.WebAdmin` so every sidebar module has usable list/detail/create/edit/support actions
-- `Planned / Near-term`: run a functional audit of all admin navigation, quick actions, and operator workflows from the perspective of daily SME usage
-- `Planned / Near-term`: close high-friction support gaps in orders, CRM, media, settings, and business/user management
+- `Completed foundation`: a broad HTMX-first completion audit has now covered the main high-traffic and lower-traffic WebAdmin workspaces, including CRM, orders, inventory, catalog, CMS, identity, business support, communication ops, and payment/shipping support
+- `Planned / Near-term`: run one final ultra-low-traffic audit pass only if we want to exhaust the remaining microscopic detours before leaving WebAdmin completion work
 - `Completed foundation`: the products workspace now exposes queue-style filters, live summary cards, and catalog-ops playbooks for inactive, hidden, single-variant, and scheduled products, so catalog follow-up is less dependent on scanning a flat list
 - `Completed foundation`: the pages workspace now exposes queue-style filters, live summary cards, and content-ops playbooks for draft, published, windowed, and currently live windowed pages, so CMS follow-up is less dependent on a flat list
 - `Completed foundation`: the categories workspace now exposes queue-style filters, live summary cards, and playbooks for inactive, unpublished, root, and child category review, so catalog-structure follow-up is less dependent on a flat list
@@ -56,7 +56,14 @@ Status terms used below:
 - `Completed foundation`: the CRM overview plus lead, opportunity, and invoice workspaces now also render through HTMX-aware workspace helpers with in-shell search, subset, pager, and editor handoff paths, so these lower-traffic CRM queues no longer fall back to older full-page navigation while the broader completion audit closes out the remaining legacy detours
 - `Completed foundation`: the admin orders list now supports queue-style filters for open orders, payment-issue orders, and fulfillment-attention orders, so post-order operations are less dependent on a flat status list
 - `Completed foundation`: the orders queue and order-details workspace now also render through HTMX-aware helpers, and add-payment/shipment/refund/invoice flows now return through the same shell-based workflow, so post-order operations no longer mix fragment-driven follow-up with older full-page queue/detail detours
+- `Completed foundation`: the lower-traffic order detail grids for payments, refunds, invoices, and shipments now also keep pager, editor/config handoff, and tax-remediation links inside HTMX-safe shells, which closes another completion-audit layer in finance and fulfillment follow-up
+- `Completed foundation`: order-detail status-change and allocation POST flows now also stay inside the HTMX shell, which closes another small completion-audit detour in lower-traffic operational follow-up
 - `Completed foundation`: CRM customer creation now uses the same HTMX-aware editor entry path as the rest of the customer workflow, and the segments workspace plus customer/segment back-navigation now also stay inside shell-based search/filter/edit flows, which closes another set of lower-traffic CRM detours found during the completion audit
+- `Completed foundation`: the remaining CRM invoice-editor order/customer handoff and tax-remediation links now also stay inside HTMX-safe shells, which closes another completion-audit layer in lower-traffic CRM remediation paths
+- `Completed foundation`: the remaining shipping-method editor cancel path now also stays inside the HTMX workspace shell, which closes another small completion-audit detour in lower-traffic shipping configuration
+- `Completed foundation`: add-on group attachment entry handoffs from the main queue now also stay inside the HTMX workspace shell, which closes another small completion-audit detour in lower-traffic catalog configuration
+- `Completed foundation`: stale or missing add-on-group attachment routes now also redirect back through HTMX-safe workspace paths instead of dropping to plain not-found responses, which closes another small controller-level completion-audit detour in lower-traffic catalog configuration
+- `Completed foundation`: missing-row edit routes in pages, categories, and products now also redirect back through HTMX-safe workspace paths instead of dropping to plain not-found responses, which closes another small controller-level completion-audit detour in lower-traffic catalog/CMS configuration
 - `Completed foundation`: the remaining page/media editor back and cancel paths now also stay inside their HTMX shells, which closes another small completion-audit gap in lower-traffic CMS/media maintenance flows
 - `Completed foundation`: order detail tabs for payments, shipments, refunds, and invoices now support queue-style filters too, so operators can work failed/refunded/pending/outstanding subsets without scanning full grids
 - `Completed foundation`: the orders queue now also exposes direct quick actions for add payment, add shipment, and create invoice from list rows, so common support follow-up no longer always requires entering the full order detail first
@@ -67,6 +74,7 @@ Status terms used below:
 - `Completed foundation`: stock-level rows now expose direct `adjust`, `reserve`, and `release reservation` actions in WebAdmin, so inventory troubleshooting can move from queue detection into manual corrective action without leaving the operational context
 - `Completed foundation`: stock-level rows now also expose a direct `return receipt` action, so phase-1 customer return intake can increase inventory from the same operational workspace without dropping into ad hoc scripts or database fixes
 - `Completed foundation`: supplier rows now deep-link into purchase-order follow-up and warehouse rows deep-link into scoped stock-level review, reducing drill-in friction for procurement and stock support work
+- `Completed foundation`: the remaining inventory workspaces for warehouses, suppliers, stock levels, stock transfers, purchase orders, and variant ledger now also render through HTMX-aware workspace helpers with in-shell search/filter/pager/editor/action flows, so inventory support no longer mixes modern editor shells with older full-page list detours
 - `Completed foundation`: WebAdmin now has first-class loyalty workspaces for programs, reward tiers, accounts, campaigns, and recent scan-session diagnostics, so business-mobile loyalty operations are no longer managed only from the mobile app or raw API usage
 - `Completed foundation`: WebAdmin now has a dedicated `Mobile Operations` workspace for JWT/mobile bootstrap settings, onboarding/support dependency counts, and transport-readiness visibility that affect the mobile apps directly
 - `Completed`: WebAdmin loyalty operations now support admin-side account provisioning for member-support cases where a consumer has not self-enrolled yet
@@ -146,7 +154,7 @@ Status terms used below:
 - `Planned / Near-term`: implement minimum viable Communication Core with email as the first operational channel
 - `Planned / Near-term`: support signup email, account activation email, invitation email, forgot-password email, reset-password email, and important account notifications
 - `In Progress`: business invitation emails now exist via SMTP-backed operational email sending, but still use simple transactional composition rather than a full Communication Core template/logging model
-- `Planned / Near-term`: add provider abstraction, template support, delivery logging, retry handling, and admin visibility for email operations
+- `In Progress`: phase-1 Communication Core admin support now includes template visibility, delivery history context, severity/backlog triage, and controlled retry for failed or pending invitation, activation, and password-reset rows; deeper outbox/provider abstraction and richer delivery-log modeling remain near-term
 
 ### Payment integration
 
@@ -201,9 +209,9 @@ Status terms used below:
 - `Completed foundation`: loyalty administration is now exposed directly in WebAdmin through programs, reward tiers, campaigns, accounts, and recent scan-session review screens
 - `Completed`: loyalty account queues now also allow admin-side account creation, so support can provision accounts without waiting for self-enrollment
 - `Completed foundation`: a dedicated mobile-operations admin page now centralizes mobile bootstrap settings and business-mobile readiness signals instead of leaving them spread across site settings and support queues
-- `Planned / Near-term`: continue removing scattered `fetch`-based fragment refreshes from older WebAdmin pages
-- `Planned / Near-term`: standardize remaining partial loading, modal submission, and alert refresh patterns on the last low-traffic legacy screens
-- `Planned / Near-term`: deepen operator workflows in Orders, CRM, and Media beyond the HTMX/list-shell refactor that now covers the media and pages queues too
+- `Completed foundation`: the remaining practical `fetch`/full-page detours across major WebAdmin workspaces have been removed or isolated to very low-traffic legacy surfaces
+- `Planned / Near-term`: standardize the last low-traffic partial/modal/alert patterns only if we decide to exhaust the completion audit beyond the current operational bar
+- `Completed foundation`: orders, CRM, media, catalog, inventory, identity, business support, and communications now all have HTMX-safe list/detail/editor paths at the current phase-1 operational bar
 - `Completed foundation`: categories and brands now also keep list filters, pagers, editor entry, and delete/back flows inside HTMX workspace shells instead of mixing queue triage with older full-page detours
 - `Completed foundation`: products, add-on groups, and shipping methods now also keep list filters, pagers, editor entry, and editor back paths inside HTMX workspace shells instead of mixing queue triage with older full-page detours
 - `Completed foundation`: add-on-group attachment screens for variants, products, categories, and brands now also keep search, save, pager, and back paths inside HTMX shell workflows instead of dropping back to older full-page list cycles
@@ -211,7 +219,7 @@ Status terms used below:
 
 ### Communication management
 
-- `Planned / Near-term`: add communication logs, resend/retry actions, and delivery-state visibility in WebAdmin
+- `In Progress`: Communication Management now includes delivery-state visibility, delivery-history context, repeated-failure triage, safe test reruns, and controlled resend/retry for supported live flows
 - `Planned / Near-term`: add per-business communication settings
 - `Planned / Near-term`: introduce localization-aware notification/email template management
 - `Planned / Near-term`: move password-reset, invitation, and future activation emails from direct SMTP composition into Communication Core templates and delivery logging
@@ -232,6 +240,9 @@ Status terms used below:
 - `Completed foundation`: each business communication profile now includes recommended next actions and recent business-scoped email activity, so troubleshooting can move from visibility into operator action without leaving the workspace
 - `Completed foundation`: the email audit-log now includes flow-specific operator playbooks, failed-flow quick filters, and business-linked shortcuts, so failed invitation/activation/password-reset emails are no longer only raw diagnostics
 - `Completed foundation`: the Business Communications workspace, business profile, and email audit-log now also surface delivery age, completion latency, severity, and follow-up backlog context, so operators can prioritize communication debt with more signal before a fuller Communication Core delivery log exists
+- `Completed foundation`: the email-audit queue now also supports controlled generic retry for failed or pending invitation, activation, and password-reset flows after safe live-target resolution, so operators can recover common transactional email failures without pretending a blind replay engine exists
+- `Completed foundation`: the communication workspace, business profile, and email-audit queue now also expose prior-attempt counts, repeated-failure chains, and last-success context for the same flow/recipient/business path, so delivery triage can distinguish isolated failures from recurring operational debt before a fuller outbox/delivery-history model exists
+- `Completed foundation`: the email-audit queue now also exposes `repeated failures` and `prior success context` as first-class subset filters and summary cards, so operators can work recurring delivery debt as a queue instead of only inferring it from per-row context
 - `Completed foundation`: the dedicated `Business Support Queue` now links business attention signals with recent failed invitation/activation/password-reset emails, so support operators can triage cross-workflow issues from one place before full automation exists
 - `Completed foundation`: the same support queue now refreshes summary, attention businesses, and failed-email signals independently via HTMX fragments, making operational triage faster under active support load
 
@@ -438,6 +449,12 @@ Status terms used below:
 - `Decision made`: business-scoped admins should receive delegated onboarding/support actions selectively; invitation issue/resend and reset-support are good candidates, while approval/suspension remain FullAdmin-only
 - `Completed foundation`: WebAdmin now enforces that selective delegation model by allowing business-support operators into business list/member/invitation support flows while keeping business lifecycle, owner management, and archive actions FullAdmin-only
 - `Planned / Near-term`: normalize legacy-encoded identity/admin views such as the role-permissions editor so future permission UX work does not keep tripping over file-encoding debt
+
+## 23. Deferred Micro-Cleanup After WebAdmin Completion
+
+- `Deferred intentionally`: ultra-low-traffic HTMX polish on remaining microscopic detours that do not block real operator workflows
+- `Deferred intentionally`: legacy encoding cleanup on a few surviving admin files where touching them now adds more risk than value
+- `Deferred intentionally`: final removal of transitional redirect helpers and stray fallback paths after we formally exit the WebAdmin completion phase
 - `Completed foundation`: completion review closed two remaining HTMX consistency gaps in the priority chains: pager navigation now supports in-shell HTMX refresh with URL push, and business archive/remove modal actions now carry HTMX refresh context on the main queue surfaces
 - `Completed foundation`: Business Communications now has HTMX-safe workspace/profile/audit flows plus direct operator handoffs from failed-email rows into invitation, user, settings, and business-support surfaces, which closes another non-later Communication Core gap without overclaiming a full template/retry engine
 - `Completed foundation`: the billing payment queue now includes a reconciliation-focused subset, summary signal, and row badges for pending, failed, refunded, and Stripe-reference-light rows, which improves Stripe-first settlement review without claiming finished reconciliation automation
@@ -468,6 +485,11 @@ Status terms used below:
 - `Completed foundation`: invoice and order tax surfaces now also expose archive-readiness and e-invoice-baseline indicators based on issuer/VAT completeness, so phase-1 tax support can distinguish missing issuer data from the still-unimplemented deeper compliance workflows
 - `Completed foundation`: Business Communications workspace/profile/audit navigation now also pushes URL state for its main HTMX transitions, so operators can move between workspace, profile, and audit triage without losing browser history fidelity
 - `Completed foundation`: the Mobile Operations workspace now also supports HTMX-safe filtering, pagination, device remediation, and cross-workspace handoffs, so mobile diagnostics no longer drop back to older full-page admin navigation
+- `Completed foundation`: inventory controller redirect debt is now closed across warehouses, suppliers, stock actions, stock levels, transfers, and purchase orders, so missing-row, success, and concurrency paths stay inside the HTMX workflow instead of falling back to plain redirects
+- `Completed foundation`: site settings now render through the same HTMX-aware editor shell on both initial GET and save redirect paths, so platform configuration no longer keeps a legacy full-page entry path while the rest of WebAdmin uses workspace shells
+- `Completed foundation`: site settings ownership and operator handoff links now also push browser URL state during HTMX transitions, so platform-to-business navigation from settings no longer loses history fidelity while staying inside the shell workflow
+- `Completed foundation`: business communication profile handoffs now also push browser URL state for setup, member, invitation, and settings-remediation links, so operator navigation out of communication troubleshooting keeps history fidelity instead of behaving like a dead-end fragment hop
+- `Completed foundation`: the main Business Communications workspace now also pushes browser URL state for settings remediation and audit/operator handoffs, so phase-1 communication triage behaves like a navigable workspace instead of a fragment-only dead end
 - `Decision made`: settings should move via staged split from global to business-specific; start with branding/localization/communications, then move payment/shipping once provider integrations mature
 - `Decision pending`: decide when to introduce a real multi-business switcher in business-facing clients instead of only preserving the preferred business context during refresh
 - `Decision pending`: decide whether phase-1 activation should allow admin-side email-confirm override only, or require every activation/resend flow to consume a public confirm-email token before go-live

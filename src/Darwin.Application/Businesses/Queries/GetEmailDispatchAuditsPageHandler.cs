@@ -31,6 +31,8 @@ namespace Darwin.Application.Businesses.Queries
             string? flowKey = null,
             bool stalePendingOnly = false,
             bool businessLinkedFailuresOnly = false,
+            bool repeatedFailuresOnly = false,
+            bool priorSuccessOnly = false,
             Guid? businessId = null,
             CancellationToken ct = default)
         {
@@ -89,12 +91,8 @@ namespace Darwin.Application.Businesses.Queries
                 baseQuery = baseQuery.Where(x => x.Audit.BusinessId == businessId.Value);
             }
 
-            var total = await baseQuery.CountAsync(ct).ConfigureAwait(false);
-
-            var items = await baseQuery
+            var baseItems = await baseQuery
                 .OrderByDescending(x => x.Audit.AttemptedAtUtc)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
                 .Select(x => new EmailDispatchAuditListItemDto
                 {
                     Id = x.Audit.Id,
@@ -112,8 +110,25 @@ namespace Darwin.Application.Businesses.Queries
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
 
-            foreach (var item in items)
+            foreach (var item in baseItems)
             {
+                var priorRows = await _db.Set<EmailDispatchAudit>()
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.Id != item.Id &&
+                        x.RecipientEmail == item.RecipientEmail &&
+                        x.FlowKey == item.FlowKey &&
+                        x.BusinessId == item.BusinessId &&
+                        x.AttemptedAtUtc < item.AttemptedAtUtc)
+                    .OrderByDescending(x => x.AttemptedAtUtc)
+                    .Select(x => new
+                    {
+                        x.Status,
+                        x.AttemptedAtUtc
+                    })
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
+
                 item.AttemptAgeMinutes = (int)Math.Max(0, (nowUtc - item.AttemptedAtUtc).TotalMinutes);
                 item.CompletionLatencySeconds = item.CompletedAtUtc.HasValue
                     ? (int)Math.Max(0, (item.CompletedAtUtc.Value - item.AttemptedAtUtc).TotalSeconds)
@@ -121,6 +136,18 @@ namespace Darwin.Application.Businesses.Queries
                 item.NeedsOperatorFollowUp =
                     string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) ||
                     (string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase) && item.AttemptedAtUtc <= stalePendingThresholdUtc);
+                item.CanRetryNow =
+                    (string.Equals(item.FlowKey, "BusinessInvitation", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(item.FlowKey, "AccountActivation", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(item.FlowKey, "PasswordReset", StringComparison.OrdinalIgnoreCase)) &&
+                    (string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(item.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+                item.PriorAttemptCount = priorRows.Count;
+                item.PriorFailureCount = priorRows.Count(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase));
+                item.LastSuccessfulAttemptAtUtc = priorRows
+                    .Where(x => string.Equals(x.Status, "Sent", StringComparison.OrdinalIgnoreCase))
+                    .Select(x => (DateTime?)x.AttemptedAtUtc)
+                    .FirstOrDefault();
                 item.Severity =
                     string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) && item.BusinessId != null ? "High" :
                     string.Equals(item.Status, "Failed", StringComparison.OrdinalIgnoreCase) ? "Medium" :
@@ -129,6 +156,24 @@ namespace Darwin.Application.Businesses.Queries
                     item.CompletionLatencySeconds.HasValue && item.CompletionLatencySeconds.Value > slowDeliveryThresholdSeconds ? "Slow" :
                     "Normal";
             }
+
+            var filteredItems = baseItems.AsEnumerable();
+
+            if (repeatedFailuresOnly)
+            {
+                filteredItems = filteredItems.Where(x => x.PriorFailureCount > 0 && x.NeedsOperatorFollowUp);
+            }
+
+            if (priorSuccessOnly)
+            {
+                filteredItems = filteredItems.Where(x => x.LastSuccessfulAttemptAtUtc.HasValue);
+            }
+
+            var total = filteredItems.Count();
+            var items = filteredItems
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             return (items, total);
         }
@@ -173,7 +218,18 @@ namespace Darwin.Application.Businesses.Queries
                 NeedsOperatorFollowUpCount = summaryRows.Count(
                     x => x.Status == "Failed" || (x.Status == "Pending" && x.AttemptedAtUtc <= stalePendingThresholdUtc)),
                 SlowCompletedCount = summaryRows.Count(
-                    x => x.CompletedAtUtc.HasValue && (x.CompletedAtUtc.Value - x.AttemptedAtUtc).TotalSeconds > slowDeliveryThresholdSeconds)
+                    x => x.CompletedAtUtc.HasValue && (x.CompletedAtUtc.Value - x.AttemptedAtUtc).TotalSeconds > slowDeliveryThresholdSeconds),
+                RetriedFlowCount = summaryRows
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId })
+                    .Count(g => g.Count() > 1 && !string.IsNullOrWhiteSpace(g.Key.FlowKey)),
+                PriorSuccessContextCount = summaryRows
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId, x.Status })
+                    .Where(g => string.Equals(g.Key.Status, "Sent", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(g.Key.FlowKey))
+                    .Count(),
+                RepeatedFailureCount = summaryRows
+                    .Where(x => string.Equals(x.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(x => new { x.FlowKey, x.BusinessId })
+                    .Count(g => g.Count() > 1 && !string.IsNullOrWhiteSpace(g.Key.FlowKey))
             };
         }
     }

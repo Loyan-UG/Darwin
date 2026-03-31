@@ -137,6 +137,10 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int? CompletionLatencySeconds { get; set; }
         public bool NeedsOperatorFollowUp { get; set; }
         public string Severity { get; set; } = string.Empty;
+        public bool CanRetryNow { get; set; }
+        public int PriorAttemptCount { get; set; }
+        public int PriorFailureCount { get; set; }
+        public DateTime? LastSuccessfulAttemptAtUtc { get; set; }
         public string RecommendedAction { get; set; } = string.Empty;
     }
 
@@ -150,6 +154,8 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public string FlowKey { get; set; } = string.Empty;
         public bool StalePendingOnly { get; set; }
         public bool BusinessLinkedFailuresOnly { get; set; }
+        public bool RepeatedFailuresOnly { get; set; }
+        public bool PriorSuccessOnly { get; set; }
         public Guid? BusinessId { get; set; }
         public bool CanSendTestEmail { get; set; }
         public EmailDispatchAuditSummaryVm Summary { get; set; } = new();
@@ -175,6 +181,9 @@ namespace Darwin.WebAdmin.ViewModels.Businesses
         public int FailedAdminTestCount { get; set; }
         public int NeedsOperatorFollowUpCount { get; set; }
         public int SlowCompletedCount { get; set; }
+        public int RetriedFlowCount { get; set; }
+        public int PriorSuccessContextCount { get; set; }
+        public int RepeatedFailureCount { get; set; }
     }
 
     public sealed class CommunicationFlowPlaybookVm

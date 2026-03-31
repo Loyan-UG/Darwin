@@ -3,6 +3,7 @@
     ViewData["Title"] = "Release Reservation";
 }
 
+<div id="inventory-release-reservation-editor-shell">
 <h1 class="mb-3">Release Reservation</h1>
 
 <div class="card shadow-sm">
@@ -28,7 +29,10 @@
             </div>
         </div>
 
-        <form asp-action="ReleaseReservation" method="post">
+        <form asp-action="ReleaseReservation" method="post"
+              hx-post="@Url.Action("ReleaseReservation", "Inventory")"
+              hx-target="#inventory-release-reservation-editor-shell"
+              hx-swap="outerHTML">
             @Html.AntiForgeryToken()
             <input asp-for="StockLevelId" type="hidden" />
             <input asp-for="BusinessId" type="hidden" />
@@ -59,8 +63,13 @@
 
             <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-info">Release Reservation</button>
-                <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary">Back to Stock Levels</a>
+                <a asp-action="StockLevels" asp-route-businessId="@Model.BusinessId" asp-route-warehouseId="@Model.WarehouseId" class="btn btn-outline-secondary"
+                   hx-get="@Url.Action("StockLevels", "Inventory", new { businessId = Model.BusinessId, warehouseId = Model.WarehouseId })"
+                   hx-target="#inventory-release-reservation-editor-shell"
+                   hx-swap="outerHTML"
+                   hx-push-url="true">Back to Stock Levels</a>
             </div>
         </form>
     </div>
+</div>
 </div>

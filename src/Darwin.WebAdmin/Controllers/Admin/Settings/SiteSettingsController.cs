@@ -36,7 +36,7 @@ namespace Darwin.WebAdmin.Controllers.Admin.Settings
         {
             var dto = await _cache.GetAsync(ct);
             var vm = MapToVm(dto);
-            return View(vm);
+            return RenderEditor(vm);
         }
 
         /// <summary>

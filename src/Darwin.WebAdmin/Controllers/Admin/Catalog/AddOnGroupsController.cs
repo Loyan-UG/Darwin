@@ -329,7 +329,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
-                return NotFound();
+            {
+                TempData["Error"] = "Add-on group not found.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
 
             var (items, total) = await _getProductsPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct); // culture-based list
 
@@ -384,7 +387,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
-                return NotFound();
+            {
+                TempData["Error"] = "Add-on group not found.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
 
             var (items, total) = await _getCategoriesPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct);
 
@@ -437,7 +443,10 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
         {
             var group = await _getForEdit.HandleAsync(id, ct);
             if (group == null)
-                return NotFound();
+            {
+                TempData["Error"] = "Add-on group not found.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
 
             var (items, total) = await _getBrandsPage.HandleAsync(page, pageSize, "de-DE", query, filter: null, ct);
 
@@ -498,7 +507,11 @@ namespace Darwin.WebAdmin.Controllers.Admin.Catalog
             CancellationToken ct = default)
         {
             var dto = await _getForEdit.HandleAsync(id, ct);
-            if (dto is null) return NotFound();
+            if (dto is null)
+            {
+                TempData["Error"] = "Add-on group not found.";
+                return RedirectOrHtmx(nameof(Index), new { });
+            }
             
             // Determine culture (fallback to "de-DE" if not resolved from site/user)
             var culture = CultureInfo.CurrentUICulture?.Name ?? "de-DE";
